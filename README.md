@@ -33,7 +33,7 @@ The monolithic `FunctionStore_tools.tox` can be found in [modules/release](https
 
 Individual `.tox` files can be found in the [modules/suspects/FunctionStore_tools](https://github.com/function-store/FunctionStore_tools/tree/main/modules/suspects/FunctionStore_tools) folder. Please note that some modules expect the presence of others in order to work, but many of these should work individually also.
 
-There is a `TDDefault.toe` project file for you to quickly test the tools, or use as default startup project file.
+There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, or use as default startup project file.
 
 ---
 
