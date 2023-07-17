@@ -15,7 +15,7 @@ Everything is documented here, so be sure to refer to this document and in gener
 
 Most of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/) and [Yea Chen](https://www.instagram.com/yeataro).  
 
-While these tools are here for all the community to enjoy, I've spent countless hours on developing them so [Patreon](patreon.com/function_store) follows are appreciated!
+While these tools are here for all the community to enjoy, I've spent countless hours on developing them so [Patreon](https://patreon.com/function_store) follows are appreciated!
 
 ## Installation
 
