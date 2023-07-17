@@ -1,21 +1,21 @@
 # FunctionStore_tools
 
-*by Daniel Molnar ([Function Store](https://linktr.ee/function.str) @function.str)* **Join my Discord**
+*by Daniel Molnar ([Function Store](https://linktr.ee/function.str))*
 
 ---
 
-This is a collection of **TouchDesigner** hacks and tools that can help you improve workflow as well as manipulate the default behavior of TD.
+This is a collection of [**TouchDesigner**](https://derivative.ca) hacks and tools that can help you improve workflow as well as manipulate the default behavior of TD.
 For example, with these tools you will be able to place operators with your preferred default parameters, operator chains, or even full render networks with one click; as well as swap operators, and more. 
 
 The design principle of these tools is to be seamlessly integrated with the user experience of TD, meaning the learning curve and adaptibility of these tools should be easy for any level of TD users.
 
 One main improvement area can be found at the bookmark toolbar. Upon installing additional icons will appear in the UI, giving you easy access to some of the main functions. However there are tools that work in the background and are accessible with simple shortcuts. 
 
-Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() blog post. If something is still not clear write an issue here on github, or write me an e-mail or on discord.
+Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() blog post. If something is still not clear write an issue here on github or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
 
-Most of the tools are made by Function Store, with notable contributions from `AlphaMoonbase.berlin` and `Yea Chen`.  
+Most of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/) and [Yea Chen](https://www.instagram.com/yeataro).  
 
-While this tool is here for all the community to enjoy, I've spent countless hours on them so subscriptions and donations are welcome to keep the efforts alive!
+While these tools are here for all the community to enjoy, I've spent countless hours on developing them so [Patreon](patreon.com/function_store) follows are appreciated!
 
 ## Installation
 
@@ -29,7 +29,7 @@ While this tool is here for all the community to enjoy, I've spent countless hou
 
 ---
 
-## Table of Contents
+## [Read the Wiki](https://github.com/function-store/FunctionStore_tools/wiki)
 
 - [OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates)
     - [Template Definiton](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#template-definiton)
@@ -73,11 +73,11 @@ While this tool is here for all the community to enjoy, I've spent countless hou
 
 ## Acknowledgements
 
-**AlphaMoonbase.berlin** with `Olib Browser`, `op_store`, `midiMapper`, `oscMapper` and lots of best practices I've learned from his components.
+[AlphaMoonbase.berlin](https://alphamoonbase.de/) with `Olib Browser`, `op_store`, `midiMapper`, `oscMapper` and lots of best practices I've learned from his components.
 
-**Yea Chen** for the ever useful TD_SearchPalette.
+[Yea Chen](https://www.instagram.com/yeataro) for the ever useful TD_SearchPalette.
 
-**Acrylicode** and **kim0slice** for the early feedback and testing.
+[Acrylicode](https://acrylicode.com/) and [kim0slice](https://www.instagram.com/kim0slice) for the early feedback and testing.
 
 # License
 
