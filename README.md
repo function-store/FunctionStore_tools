@@ -20,12 +20,20 @@ While these tools are here for all the community to enjoy, I've spent countless 
 ## Installation
 
 - Minimum TD version of the tool: TouchDesigner.2022.33910 (no guaranteess with older versions)
-- Download the latest release `FunctionStore_tools.tox` from the releases sidebar
+- Download the latest release `FunctionStore_tools.tox` from the [releases](https://github.com/function-store/FunctionStore_tools/releases) sidebar
 - Open a new project file
 - Drag and drop the downloaded `.tox` to the root (`/`) level of your network
 - Save the project file and set it as default startup file in `Preferences->General->Startup File Mode/Custom Startup File`
 - Or just drag and drop the `.tox` to an existing project file's root level
 - There might be errors shown initially but upon right clicking on the component and clicking `Clear (Children) Script Errors` they should be gone
+
+## Repo Structure
+
+The monolithic `FunctionStore_tools.tox` can be found in [modules/release](https://github.com/function-store/FunctionStore_tools/tree/main/modules/release). This is what you should be using in your project files.
+
+Individual `.tox` files can be found in the [modules/suspects/FunctionStore_tools](https://github.com/function-store/FunctionStore_tools/tree/main/modules/suspects/FunctionStore_tools) folder. Please note that some modules expect the presence of others in order to work, but many of these should work individually also.
+
+There is a `TDDefault.toe` project file for you to quickly test the tools, or use as default startup project file.
 
 ---
 
