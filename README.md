@@ -19,13 +19,14 @@ While these tools are here for all the community to enjoy, I've spent countless 
 
 ## Installation
 
-- Minimum TD version of the tool: TouchDesigner.2022.33910 (no guaranteess with older versions)
-- Download the latest release `FunctionStore_tools.tox` from the [releases](https://github.com/function-store/FunctionStore_tools/releases) sidebar
-- Open a new project file
-- Drag and drop the downloaded `.tox` to the root (`/`) level of your network
-- Save the project file and set it as default startup file in `Preferences->General->Startup File Mode/Custom Startup File`
-- Or just drag and drop the `.tox` to an existing project file's root level
-- There might be errors shown initially but upon right clicking on the component and clicking `Clear (Children) Script Errors` they should be gone
+1. Ensure that you have minimum TouchDesigner.2022.33910 version installed (no guaranteess with older versions)
+2. Download the latest release `FunctionStore_tools.tox` from the [releases](https://github.com/function-store/FunctionStore_tools/releases) sidebar
+3. Open a new project file
+4. Drag and drop the downloaded `.tox` to the root (`/`) level of your network
+5. Drag and drop the `.tox` to an existing project file's root level
+6. (Optinal) Save the project file and set it as default startup file in `Preferences->General->Startup File Mode/Custom Startup File`
+ 
+> **Note:** There might be errors shown initially but upon right clicking on the component and clicking `Clear (Children) Script Errors` they should be gone
 
 ## Repo Structure
 
@@ -96,4 +97,3 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
