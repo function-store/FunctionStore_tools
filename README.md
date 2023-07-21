@@ -1,6 +1,6 @@
 # FunctionStore_tools
 
-*by Daniel Molnar ([Function Store](https://linktr.ee/function.str))*
+*by Daniel Molnar ([Function Store](https://linktr.ee/function.str)). **Watch the InSession [stream](https://www.youtube.com/watch?v=hnpC5uh-GTs) with the TouchDesigner team covering this repo!***
 
 ---
 
