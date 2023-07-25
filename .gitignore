@@ -42,3 +42,4 @@ Backup/
 *.dmp
 !FNS_TDDefault.toe
 olib/
+TDImportCache/
