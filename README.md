@@ -1,6 +1,7 @@
 # FunctionStore_tools
 
-*by Daniel Molnar ([Function Store](https://linktr.ee/function.str)). **Watch the InSession [stream](https://www.youtube.com/watch?v=hnpC5uh-GTs) with the TouchDesigner team covering this repo!***
+*by Daniel Molnar ([Function Store](https://linktr.ee/function.str)). 
+**Watch the InSession [stream](https://www.youtube.com/watch?v=hnpC5uh-GTs) with the TouchDesigner team covering the tools in depth!***
 
 ---
 
@@ -11,9 +12,9 @@ The design principle of these tools is to be seamlessly integrated with the user
 
 One main improvement area can be found at the bookmark toolbar. Upon installing additional icons will appear in the UI, giving you easy access to some of the main functions. However there are tools that work in the background and are accessible with simple shortcuts. 
 
-Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() blog post. If something is still not clear write an issue here on github or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
+Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() (TBA) blog post. If something is still not clear write an issue here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
 
-Most of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/) and [Yea Chen](https://www.instagram.com/yeataro).  
+Most of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca).
 
 While these tools are here for all the community to enjoy, I've spent countless hours on developing them so [Patreon](https://patreon.com/function_store) follows are appreciated!
 
@@ -72,6 +73,7 @@ There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, o
     - [CustomPar Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools)
 
 - [Miscellaneous](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous)
+    - #TODO Add Greg's mod
     - [ParentHierarchy](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#parenthierarchy)
     - [Hotkeys](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#hotkeys)
     - [TD_SearchPalette](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#td_searchpalette)
@@ -83,11 +85,15 @@ There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, o
 
 ## Acknowledgements
 
-[AlphaMoonbase.berlin](https://alphamoonbase.de/) with `Olib Browser`, `op_store`, `midiMapper`, `oscMapper` and lots of best practices I've learned from his components.
+Huge thanks to the contributors:
 
-[Yea Chen](https://www.instagram.com/yeataro) for the ever useful TD_SearchPalette.
+- [AlphaMoonbase.berlin](https://alphamoonbase.de/) with `Olib Browser`, `op_store`, `midiMapper`, `oscMapper` and lots of best practices I've learned from his components.
 
-[Acrylicode](https://acrylicode.com/) and [kim0slice](https://www.instagram.com/kim0slice) for the early feedback and testing.
+- [Yea Chen](https://www.instagram.com/yeataro) for the ever useful TD_SearchPalette.
+
+- [Greg Hermanovic](https://derivative.ca) for the IO filters for the OP Create dialog, and **TouchDesigner**.
+
+- [Acrylicode](https://acrylicode.com/) and [kim0slice](https://www.instagram.com/kim0slice) for the early feedback and testing.
 
 # License
 
