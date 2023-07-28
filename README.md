@@ -64,7 +64,7 @@ There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, o
       - [Conf](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#conf)
       - [TOP, CHOP, SOP, COMP](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#top-chop-sop-comp)
       - [Misc](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#misc)
-    - [Swap OPs WIP!](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#swap-ops-wip)
+    - [Swap OPs](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#swap-ops)
     - [Show/Hide Backdrops](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#showhide-backdrops)
     - [Show/Hide Network Editor Grid](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#showhide-network-editor-grid)
     - [Set Input/Viewer Smoothness](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#set-inputviewer-smoothness)
@@ -73,7 +73,7 @@ There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, o
     - [CustomPar Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools)
 
 - [Miscellaneous](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous)
-    - #TODO Add Greg's mod
+    - [Greg's OP Create IO Filter Mod](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#gregs-op-create-io-filter-mod)
     - [ParentHierarchy](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#parenthierarchy)
     - [Hotkeys](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#hotkeys)
     - [TD_SearchPalette](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#td_searchpalette)
