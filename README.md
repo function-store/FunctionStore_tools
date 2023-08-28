@@ -12,9 +12,9 @@ The design principle of these tools is to be seamlessly integrated with the user
 
 One main improvement area can be found at the bookmark toolbar. Upon installing additional icons will appear in the UI, giving you easy access to some of the main functions. However there are tools that work in the background and are accessible with simple shortcuts. 
 
-Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() (TBA) blog post. If something is still not clear write an issue here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
+Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() (TBA) blog post. If something is still not clear write an [issue](https://github.com/function-store/FunctionStore_tools/issues) here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
 
-Most of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca).
+Most of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca), please support them!
 
 While these tools are here for all the community to enjoy, I've spent countless hours on developing them so [Patreon](https://patreon.com/function_store) follows are appreciated!
 
@@ -25,9 +25,29 @@ While these tools are here for all the community to enjoy, I've spent countless 
 3. Open a new project file
 4. Drag and drop the downloaded `.tox` to the root (`/`) level of your network
 5. Drag and drop the `.tox` to an existing project file's root level
-6. (Optinal) Save the project file and set it as default startup file in `Preferences->General->Startup File Mode/Custom Startup File`
+6. (Strongly Suggested) Save the project file and set it as default startup file in `Preferences->General->Startup File Mode/Custom Startup File` so that it is used in every project from then on!
  
-> **Note:** There might be errors shown initially but upon right clicking on the component and clicking `Clear (Children) Script Errors` they should be gone
+> **Note:** There might be errors shown initially but upon right clicking on the component and clicking `Clear (Children) Script Errors` they should be gone.
+
+## Syncing/Externalizing
+
+There are a couple of components whose states/contents you'll probably want to synchronize between your projects, such as [OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates), [ExprHotStrings](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#exprhotstrings), or [Global ResetPLS](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#global-resetpls) exceptions. These are saved into a folder inside your **User Palette**, and can be toggled On or Off.
+
+The state of some other components such as MIDI/OSC Maps get saved into your project folder for easy migration and future-proofing for updates.
+
+These can be turned off in the Custom Parameters of the toolkit.
+
+## Custom Parameters
+
+At the base level of `FunctionStore_tools.tox` you can find some custom parameters that allow you to customize its functionalities on a broad scale. Should you want further customization, it is possible at the component level of each tool.
+
+### Active tab
+
+In this tab you can choose to disable some of the components, that you might find annoying or unwanted. I only added the ones I personally might want turned off occasionally. I also crammed in `ParPromoter Ref/Bind` which is explained here: [CustomPar Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools)
+
+### Syncing
+
+Turn On or Off Syncing/Externalizing for individual modules **(On by default)**.
 
 ## Repo Structure
 
@@ -69,6 +89,7 @@ There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, o
     - [Show/Hide Network Editor Grid](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#showhide-network-editor-grid)
     - [Set Input/Viewer Smoothness](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#set-inputviewer-smoothness)
     - [Global Hog CHOP](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#global-hog-chop)
+    - [QickTime](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools)
     - [Mute and Volume](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#mute-and-volume)
     - [CustomPar Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools)
 
@@ -80,6 +101,7 @@ There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, o
     - [AltSelect](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#altselect)
     - [AutoCombine](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#autocombine)
     - [AutoRes](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#autores)
+    - [QuickOp](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickop)
 
 ---
 
