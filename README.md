@@ -12,7 +12,9 @@ The design principle of these tools is to be seamlessly integrated with the user
 
 One main improvement area can be found at the bookmark toolbar. Upon installing additional icons will appear in the UI, giving you easy access to some of the main functions. However there are tools that work in the background and are accessible with simple shortcuts. 
 
-Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() (TBA) blog post. If something is still not clear write an [issue](https://github.com/function-store/FunctionStore_tools/issues) here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
+Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() (TBA) blog post. 
+
+Please help by reporting any [issues](https://github.com/function-store/FunctionStore_tools/issues) here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
 
 Most of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca), please support them!
 
