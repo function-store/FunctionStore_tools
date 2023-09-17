@@ -37,11 +37,14 @@ There are a couple of components whose states/contents you'll probably want to s
 
 The state of some other components such as MIDI/OSC Maps get saved into your project folder for easy migration and future-proofing for updates.
 
-These can be turned off in the Custom Parameters of the toolkit.
+These can be turned on or off in the Custom Parameters of the toolkit, which you can also access by right-clicking the `fx` button in the toolbar.
 
 ## Custom Parameters
 
 At the base level of `FunctionStore_tools.tox` you can find some custom parameters that allow you to customize its functionalities on a broad scale. Should you want further customization, it is possible at the component level of each tool.
+
+> You can easily access these settings by right-clicking the `fx` button in the toolbar.
+
 
 ### Active tab
 
