@@ -16,18 +16,18 @@ Everything is documented here, so be sure to refer to this document and in gener
 
 Please help by reporting any [issues](https://github.com/function-store/FunctionStore_tools/issues) here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
 
-Most of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca), please support them!
+A lot of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca), please support them <3
 
-While these tools are here for all the community to enjoy, I've spent countless hours on developing them so [Patreon](https://patreon.com/function_store) follows are appreciated!
+While these tools are here for all the community to enjoy, [Patreon](https://patreon.com/function_store) follows are appreciated!
 
 ## Installation
 
 1. Ensure that you have minimum TouchDesigner.2022.33910 version installed (no guaranteess with older versions)
 2. Download the latest release `FunctionStore_tools.tox` from the [releases](https://github.com/function-store/FunctionStore_tools/releases) sidebar
 3. Open a new project file
-4. Drag and drop the downloaded `.tox` to the root (`/`) level of your network
-5. Drag and drop the `.tox` to an existing project file's root level
+4. Drag and drop the downloaded `.tox` to the root (`/`) level of your network, or drag and drop the `.tox` to an existing project file's root level
 6. (Strongly Suggested) Save the project file and set it as default startup file in `Preferences->General->Startup File Mode/Custom Startup File` so that it is used in every project from then on!
+7. (Alternative Strong Suggestion) There is a `FNS_TDDefault.toe` file which already has the toolkit inside, feel free to use that as a Custom Startup File!
  
 > **Note:** There might be errors shown initially but upon right clicking on the component and clicking `Clear (Children) Script Errors` they should be gone.
 
@@ -52,7 +52,7 @@ In this tab you can choose to disable some of the components, that you might fin
 
 ### Syncing
 
-Turn On or Off Syncing/Externalizing for individual modules **(On by default)**.
+Turn On or Off Syncing/Externalizing for individual modules **(On by default)**. See [Syncing/Externalizing](https://github.com/function-store/FunctionStore_tools#syncingexternalizing) for more info.
 
 ## Repo Structure
 
@@ -60,7 +60,7 @@ The monolithic `FunctionStore_tools.tox` can be found in [modules/release](https
 
 Individual `.tox` files can be found in the [modules/suspects/FunctionStore_tools](https://github.com/function-store/FunctionStore_tools/tree/main/modules/suspects/FunctionStore_tools) folder. Please note that some modules expect the presence of others in order to work, but many of these should work individually also.
 
-There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, or use as default startup project file.
+There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, or use as a default startup project file.
 
 ---
 
