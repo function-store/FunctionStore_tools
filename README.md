@@ -1,7 +1,9 @@
 # FunctionStore_tools
 
-*by Daniel Molnar ([Function Store](https://linktr.ee/function.str)). 
+*by Daniel Molnar ([Function Store](https://functionstore.xyz)). 
 **Watch the InSession [stream](https://www.youtube.com/watch?v=hnpC5uh-GTs) with the TouchDesigner team covering the tools in depth!***
+
+**Important: This toolkit has been developed under TD2022, while there is a 2023 variant available in the releases it may have bugs. Please report if you see any, thanks! See [TD2023 Migration guide](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#td2023-migration) for OpTemplates.**
 
 ---
 
@@ -16,7 +18,7 @@ Everything is documented here, so be sure to refer to this document and in gener
 
 Please help by reporting any [issues](https://github.com/function-store/FunctionStore_tools/issues) here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
 
-A lot of the tools are made by [Function Store](https://linktr.ee/function.str), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca), please support them <3
+A lot of the tools are made by [Function Store](https://functionstore.xyz), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca), please support them <3
 
 While these tools are here for all the community to enjoy, [Patreon](https://patreon.com/function_store) follows are appreciated!
 
@@ -53,6 +55,8 @@ In this tab you can choose to disable some of the components, that you might fin
 ### Syncing
 
 Turn On or Off Syncing/Externalizing for individual modules **(On by default)**. See [Syncing/Externalizing](https://github.com/function-store/FunctionStore_tools#syncingexternalizing) for more info.
+
+See [TD2023 Migration guide](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#td2023-migration) for OpTemplates.
 
 ## Repo Structure
 
