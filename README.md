@@ -111,6 +111,7 @@ There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, o
     - [AutoCombine](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#autocombine)
     - [AutoRes](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#autores)
     - [QuickOp](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickop)
+    - [QuickPane](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickpane)
 
 ---
 
