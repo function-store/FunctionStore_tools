@@ -41,6 +41,7 @@ venv.bak/
 Backup/
 *.dmp
 !FNS_TDDefault.toe
+!FNS_TDDefault_2023.toe
 olib/
 TDImportCache/
 mapping/
