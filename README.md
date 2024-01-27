@@ -6,6 +6,7 @@
 **Important: This toolkit has been developed under TD2022, while there is a 2023 variant available in the releases it may have bugs. Please report if you see any, thanks! See [TD2023 Migration guide](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#td2023-migration) for OpTemplates.**
 
 ---
+![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/main.png)
 
 This is a collection of [**TouchDesigner**](https://derivative.ca) hacks and tools that can help you improve workflow as well as manipulate the default behavior of TD.
 For example, with these tools you will be able to place operators with your preferred default parameters, operator chains, or even full render networks with one click; as well as swap operators, and more. 
@@ -14,7 +15,7 @@ The design principle of these tools is to be seamlessly integrated with the user
 
 One main improvement area can be found at the bookmark toolbar. Upon installing additional icons will appear in the UI, giving you easy access to some of the main functions. However there are tools that work in the background and are accessible with simple shortcuts. 
 
-Everything is documented here, so be sure to refer to this document and in general to my [TD Tips & Tricks & Hacks]() (TBA) blog post. 
+Everything is documented here, so be sure to refer to the [Wiki](https://github.com/function-store/FunctionStore_tools/wiki) and in general to my [TD Tips & Tricks & Hacks]() (TBA) blog post. 
 
 Please help by reporting any [issues](https://github.com/function-store/FunctionStore_tools/issues) here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
 
@@ -39,13 +40,13 @@ There are a couple of components whose states/contents you'll probably want to s
 
 The state of some other components such as MIDI/OSC Maps get saved into your project folder for easy migration and future-proofing for updates.
 
-These can be turned on or off in the Custom Parameters of the toolkit, which you can also access by right-clicking the `fx` button in the toolbar.
+These can be turned on or off in the Custom Parameters of the toolkit, which you can also access by right-clicking the (![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Fx.png) button in the toolbar.
 
 ## Custom Parameters
 
 At the base level of `FunctionStore_tools.tox` you can find some custom parameters that allow you to customize its functionalities on a broad scale. Should you want further customization, it is possible at the component level of each tool.
 
-> You can easily access these settings by right-clicking the `fx` button in the toolbar.
+> You can easily access these settings by right-clicking the ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Fx.png) button in the toolbar.
 
 
 ### Active tab
@@ -70,37 +71,33 @@ There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, o
 
 ## [Read the Wiki](https://github.com/function-store/FunctionStore_tools/wiki)
 
-- [OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates)
+- [OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/OpTemplates.png)
     - [Template Definiton](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#template-definiton)
       - [Template Snippets](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#template-snippets)
     - [Templates Usage](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#templates-usage)
     - [Maintaining OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#maintaining-optemplates)
     - [Known issues](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#known-issues)
 
-- [FNS_Toolbar](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar)
-    - [tools_ui](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#tools_ui)
-    - [op_store](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#op_store)
-    - [GlobalOutSelect](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#globaloutselect)
-      - [Known Issues](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#known-issues)
-    - [ExprHotStrings](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#exprhotstrings)
-    - [midiMapper](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#midimapper)
-    - [oscMapper](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#oscmapper)
-    - [Olib Browser](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#olib-browser)
-    - [Open Templates](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#open-templates)
-    - [Perform Window Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#perform-window-tools)
-    - [Global Mouse CHOP](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#global-mouse-chop)
-    - [Global ResetPLS](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#global-resetpls)
-      - [Conf](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#conf)
-      - [TOP, CHOP, SOP, COMP](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#top-chop-sop-comp)
-      - [Misc](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#misc)
-    - [Swap OPs](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#swap-ops)
-    - [Show/Hide Backdrops](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#showhide-backdrops)
-    - [Show/Hide Network Editor Grid](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#showhide-network-editor-grid)
-    - [Set Input/Viewer Smoothness](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#set-inputviewer-smoothness)
-    - [Global Hog CHOP](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#global-hog-chop)
-    - [QickTime](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools)
-    - [Mute and Volume](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#mute-and-volume)
-    - [CustomPar Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools)
+- [FNS_Toolbar](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/main.png)
+    - [tools_ui](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#tools_ui) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Fx.png)
+      - [op_store](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#op_store) 
+      - [GlobalOutSelect](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#globaloutselect)
+      - [ExprHotStrings](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#exprhotstrings)
+      - [midiMapper](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#midimapper)
+      - [oscMapper](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#oscmapper)
+    - [Olib Browser](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#olib-browser) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Olib.png)
+    - [OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#open-templates) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/OpTemplates.png)
+    - [Perform Window Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#perform-window-tools) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/PerformTools.png)
+    - [Global Mouse CHOP](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#global-mouse-chop) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/QuickMouse.png)
+    - [Global ResetPLS](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#global-resetpls) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/ResetPLS.png)
+    - [Swap OPs](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#swap-ops) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/SwapOPs.png)
+    - [Toggle Backdrops](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#showhide-backdrops) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/ToggleBackdrop.png)
+    - [Toggle Network Editor Grid](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#showhide-network-editor-grid) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Toggle%20Grid.png)
+    - [Set Input/Viewer Smoothness](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#set-inputviewer-smoothness) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Set%20Smoothness.png)
+    - [Global Hog CHOP](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#global-hog-chop) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/HogCHOP.png)
+    - [QuickTime](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/QuickTime.png)
+    - [Mute and Volume](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#mute-and-volume) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/GlobalVol.png)
+    - [CustomPar Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/CustomParTools.png)
 
 - [Miscellaneous](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous)
     - [Greg's OP Create IO Filter Mod](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#gregs-op-create-io-filter-mod)
