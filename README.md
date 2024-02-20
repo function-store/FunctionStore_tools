@@ -31,8 +31,18 @@ While these tools are here for all the community to enjoy, [Patreon](https://pat
 4. Drag and drop the downloaded `.tox` to the root (`/`) level of your network, or drag and drop the `.tox` to an existing project file's root level
 6. (Strongly Suggested) Save the project file and set it as default startup file in `Preferences->General->Startup File Mode/Custom Startup File` so that it is used in every project from then on!
 7. (Alternative Strong Suggestion) There is a `FNS_TDDefault.toe` file which already has the toolkit inside, feel free to use that as a Custom Startup File!
+8. Bonus: `Alt-RightClick` (or `Alt-MiddleClick`) on any of the newly added toolbar icons to open the relevant wiki in a browser! (`Option-Right/MiddleClick` for Mac users)
  
 > **Note:** There might be errors shown initially but upon right clicking on the component and clicking `Clear (Children) Script Errors` they should be gone.
+
+## Mac Compatibility
+
+While 99% of the features work identically for Mac, users should pay attention to the following:
+- Olib Browser does not work on Mac
+- **When referring to hotkeys in the Wiki `Alt` refers to `Cmd`**
+    - With the exception of opening the relevant Wiki by `Option-Right/MiddleClick`ing an icon in the toolbar
+    - Unfortunately Mac [will not open](https://forum.derivative.ca/t/ui-viewfile-urls-on-mac-inconsistent-and-incorrect/433218) these links correctly though
+
 
 ## Syncing/Externalizing
 
@@ -61,15 +71,16 @@ See [TD2023 Migration guide](https://github.com/function-store/FunctionStore_too
 
 ## Repo Structure
 
-The monolithic `FunctionStore_tools.tox` can be found in [modules/release](https://github.com/function-store/FunctionStore_tools/tree/main/modules/release). This is what you should be using in your project files.
+The monolithic `FunctionStore_tools_2023.tox` can be found in [modules/release](https://github.com/function-store/FunctionStore_tools/tree/main/modules/release). This is what you should be using in your project files.
 
 Individual `.tox` files can be found in the [modules/suspects/FunctionStore_tools](https://github.com/function-store/FunctionStore_tools/tree/main/modules/suspects/FunctionStore_tools) folder. Please note that some modules expect the presence of others in order to work, but many of these should work individually also.
 
-There is a `FNS_TDDefault.toe` project file for you to quickly test the tools, or use as a default startup project file.
+There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the tools, or use as a default startup project file.
 
 ---
 
 ## [Read the Wiki](https://github.com/function-store/FunctionStore_tools/wiki)
+`Alt-RightClick` (or `Alt-MiddleClick`) on any of the newly added toolbar icons to open the relevant wiki in a browser! (`Option-Right/MiddleClick` for Mac users)
 
 - [OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/OpTemplates.png)
     - [Template Definiton](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#template-definiton)
