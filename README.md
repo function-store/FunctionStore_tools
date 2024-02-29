@@ -3,8 +3,6 @@
 *by Daniel Molnar ([Function Store](https://functionstore.xyz)). 
 **Watch the InSession [stream](https://www.youtube.com/watch?v=hnpC5uh-GTs) with the TouchDesigner team covering the tools in depth!***
 
-**Important: This toolkit has been developed under TD2022, while there is a 2023 variant available in the releases it may have bugs. Please report if you see any, thanks! See [TD2023 Migration guide](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#td2023-migration) for OpTemplates.**
-
 ---
 ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/main.png)
 
