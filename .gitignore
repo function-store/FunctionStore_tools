@@ -45,3 +45,4 @@ Backup/
 olib/
 TDImportCache/
 mapping/
+.DS_Store
