@@ -39,8 +39,6 @@ While 99% of the features work identically for Mac, users should pay attention t
 - Olib Browser does not work on Mac
 - **When referring to hotkeys in the Wiki `Alt` refers to `Cmd`**
     - With the exception of opening the relevant Wiki by `Option-Right/MiddleClick`ing an icon in the toolbar
-    - Unfortunately Mac [will not open](https://forum.derivative.ca/t/ui-viewfile-urls-on-mac-inconsistent-and-incorrect/433218) these links correctly though
-
 
 ## Syncing/Externalizing
 
