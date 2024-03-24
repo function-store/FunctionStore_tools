@@ -40,8 +40,17 @@ While these tools are here for all the community to enjoy, [Patreon](https://pat
 
 While 99% of the features work identically for Mac, users should pay attention to the following:
 - Olib Browser does not work on Mac
-- **When referring to hotkeys in the Wiki `Alt` refers to `Cmd`**
-    - With the exception of opening the relevant Wiki by `Option-Right/MiddleClick`ing an icon in the toolbar
+- It is very hard to stay consisten with hotkeys on Mac ,so **When referring to hotkeys in the Wiki `Alt` refers to `Cmd`**
+    - With a lot of exceptions, but those will be clearly documented
+
+## Self-Update Feature
+
+If the toolkit (v2.4.0+) is installed in your project and there is an update, the `?` icon in the toolbar will have a yellow border. Clicking the icon will prompt you for an update, you can say `No` in which case it will take you to the Wiki as usual, otherwise the following is going to happen:
+- Save all configs (custom parameters of tools) to a `json` file
+- Download the new version of the toolkit `.tox` and replace the existing one with it
+- Load all the saved configs from the previously saved `json` file
+
+This way we can ensure that your settings are retained between updates, alongside the externally retained data, outlined in the next chapter.
 
 ## Syncing/Externalizing
 
@@ -51,11 +60,15 @@ The state of some other components such as MIDI/OSC Maps get saved into your pro
 
 These can be turned on or off in the Custom Parameters of the toolkit, which you can also access by right-clicking the (![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Fx.png) button in the toolbar.
 
+The general settings of the tools (the **Custom Parameters**) can also be saved and synced between projects with the `Save/Load All Configs To/From JSON` buttons. You need to explicitly hit save whenever you make some significant change you'll want to synchronize to other projects, however there is a toggle for `Auto-Load`ing the configs after startup. This `json` file is also used for the **Self-Update Feature** in which case the settings are saved and re-loaded automatically.
+
 ## Custom Parameters
 
-At the base level of `FunctionStore_tools.tox` you can find some custom parameters that allow you to customize its functionalities on a broad scale. Should you want further customization, it is possible at the component level of each tool.
+At the base level of `FunctionStore_tools.tox` you can find some custom parameters that allow you to customize its main functionalities on a broad scale. 
 
-> You can easily access these settings by right-clicking the ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Fx.png) button in the toolbar.
+Should you want further customization, it is possible at the component level of each tool, feel free to dive in and customize each!
+
+> You can easily access these main settings by right-clicking the ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Fx.png) button in the toolbar.
 
 
 ### Active tab
@@ -74,7 +87,7 @@ The monolithic `FunctionStore_tools_2023.tox` can be found in [modules/release](
 
 Individual `.tox` files can be found in the [modules/suspects/FunctionStore_tools](https://github.com/function-store/FunctionStore_tools/tree/main/modules/suspects/FunctionStore_tools) folder. Please note that some modules expect the presence of others in order to work, but many of these should work individually also.
 
-There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the tools, or use as a default startup project file.
+There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the tools, or use as a default startup project file!
 
 ---
 
