@@ -26,7 +26,7 @@ While these tools are here for all the community to enjoy, [Patreon](https://pat
 
 ## Installation
 
-1. Ensure that you have minimum TouchDesigner.2023.11600 version installed (no guaranteess with older versions)
+1. Ensure that you have minimum **TouchDesigner.2023.11600** version installed (no guaranteess with older versions)
 2. Download the latest release `FunctionStore_tools_2023.tox` from the [releases](https://github.com/function-store/FunctionStore_tools/releases/latest) sidebar
 3. Open a new project file
 4. Drag and drop the downloaded `.tox` to the root (`/`) level of your network, or drag and drop the `.tox` to an existing project file's root level
