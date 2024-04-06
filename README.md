@@ -138,6 +138,7 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
     - [QuickPane](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickpane)
     - [SwitchOPs](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#switchops)
     - [OpToClipboard](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#optoclipboard)
+    - [OpenExt](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#openext)
 
 
 ---
