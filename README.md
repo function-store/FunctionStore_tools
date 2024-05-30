@@ -41,11 +41,11 @@ While these tools are here for all the community to enjoy, [Patreon](https://pat
 While 99% of the features work identically for Mac, users should pay attention to the following:
 - Olib Browser does not work on Mac
 - It is very hard to stay consisten with hotkeys on Mac ,so **When referring to hotkeys in the Wiki `Alt` refers to `Cmd`**
-    - With a lot of exceptions, but those will be clearly documented
+    - With a lot of exceptions, but those will be clearly documented. Let me know if something is missing!
 
 ## Self-Update Feature
 
-If the toolkit (v2.4.1+) is installed in your project and there is an update, the `?` icon in the toolbar will have a yellow border. Clicking the icon will prompt you for an update, you can say `No` in which case it will take you to the Wiki as usual, otherwise the following is going to happen:
+If the toolkit (v2.4.0+) is installed in your project and there is an update, the `?` icon in the toolbar will have a yellow border. Clicking the icon will prompt you for an update, you can say `No` in which case it will take you to the Wiki as usual, otherwise the following is going to happen:
 - Save all configs (custom parameters of tools) to a `json` file
 - Download the new version of the toolkit `.tox` into the user palette, and replace the existing one with it
 - Load all the saved configs from the previously saved `json` file
@@ -127,7 +127,7 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
     - [CustomPar Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-custompar-tools) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/CustomParTools.png)
 
 - [Miscellaneous](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous)
-    - [Greg's OP Create IO Filter Mod](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#gregs-op-create-io-filter-mod)
+    - [OpMenu/OP Create Dialog Mods](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#opmenu-mod)
     - [ParentHierarchy](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#parenthierarchy)
     - [Hotkeys](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#hotkeys)
     - [TD_SearchPalette](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#td_searchpalette)
@@ -152,6 +152,8 @@ Huge thanks to the contributors:
 - [Yea Chen](https://www.instagram.com/yeataro) for the ever useful TD_SearchPalette.
 
 - [Greg Hermanovic](https://derivative.ca) for the IO filters for the OP Create dialog, and **TouchDesigner**.
+
+- [Dotsimulate](https://www.patreon.com/dotsimulate) for OP Create Dialog OpType Acronyms mod
 
 - [Acrylicode](https://acrylicode.com/) and [kim0slice](https://www.instagram.com/kim0slice) for the early feedback and testing.
 
