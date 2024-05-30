@@ -109,6 +109,7 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
       - [ExprHotStrings](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#exprhotstrings)
       - [midiMapper](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#midimapper)
       - [oscMapper](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#oscmapper)
+      - [Custom OpMenu Search Keywords](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custom-opmenu-search-keywords)
     - [Olib Browser](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-olib-browser) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Olib.png)
     - [OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-open-templates) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/OpTemplates.png)
     - [Perform Window Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-perform-window-tools) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/PerformTools.png)
