@@ -113,6 +113,7 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
     - [Olib Browser](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-olib-browser) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Olib.png)
     - [OpTemplates](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-open-templates) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/OpTemplates.png)
     - [Perform Window Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-perform-window-tools) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/PerformTools.png)
+    - [VSCode Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-vscode-tools) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/VSCodeTools.png)
     - [Global ResetPLS](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-global-resetpls) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/ResetPLS.png)
     - [Swap OPs](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-swap-ops) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/SwapOPs.png)
     - [Set Input/Viewer Smoothness](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-set-inputviewer-smoothness) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Set%20Smoothness.png)
