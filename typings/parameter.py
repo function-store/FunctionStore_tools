@@ -747,7 +747,7 @@ Throw is:
 
 			
 
-In terms of throw, it’s			
+In terms of throw, itï¿½s			
 
 			
 
@@ -1089,7 +1089,7 @@ class fbxCOMP():
 	mergegeo : togglePar
 	"""toggle : When enabled the FBX COMP will merge Geometry COMPs. Geometry COMPs are merged if they have only default parameters except transform. If they have the same material then their Import Select SOPs will be merged."""
 	mergelevel : integerPar
-	"""integer : When enabled the FBX COMP will attempt to merge up to the desired “level”. Level is how many steps down a node is from the root (FBX COMP). If its level is higher than the merge level and it is mergeable then it will be merged upward."""
+	"""integer : When enabled the FBX COMP will attempt to merge up to the desired ï¿½levelï¿½. Level is how many steps down a node is from the root (FBX COMP). If its level is higher than the merge level and it is mergeable then it will be merged upward."""
 	primgroups : togglePar
 	"""toggle : When enabled the FBX COMP will put each merged SOP into its own primitive group, so that they can be split up later if need be."""
 	maxwiredchildren : integerPar
@@ -1135,11 +1135,11 @@ class fbxCOMP():
 	trim : togglePar
 	"""toggle : A toggle to enable the Trim Start and Trim End parameters."""
 	tstart : joinpair floatPar
-	"""joinpair float : Sets an in point from the beginning of the animation, allowing you to trim the starting index of the animation. The units’ menu on the right let you specify this position by index, frames, seconds, or fraction (percentage)."""
+	"""joinpair float : Sets an in point from the beginning of the animation, allowing you to trim the starting index of the animation. The unitsï¿½ menu on the right let you specify this position by index, frames, seconds, or fraction (percentage)."""
 	tstartunit : nolabel shortvalues dropmenuPar
 	"""nolabel shortvalues dropmenu : Specifies a unit type for Trim Start. Changing this will convert the previous unit to the selected unit."""
 	tend : joinpair floatPar
-	"""joinpair float : Sets an end point from the end of the movie, allowing you to trim the ending index of the animation. The units’ menu on the right let you specify this position by index, frames, seconds, or fraction (percentage)."""
+	"""joinpair float : Sets an end point from the end of the movie, allowing you to trim the ending index of the animation. The unitsï¿½ menu on the right let you specify this position by index, frames, seconds, or fraction (percentage)."""
 	tendunit : nolabel shortvalues dropmenuPar
 	"""nolabel shortvalues dropmenu : Specifies a unit type for Trim End. Changing this will convert the previous unit to the selected unit."""
 	textendleft : dropmenuPar
@@ -2702,7 +2702,7 @@ class usdCOMP():
 	start : buttonPar
 	"""button : Resets the animation to its initial state and starts playback."""
 	cue : joinpair togglePar
-	"""joinpair toggle : A toggle to jump to Cue Point when it’s set to ON and it stays at that position. Only available when Play Mode is Sequential."""
+	"""joinpair toggle : A toggle to jump to Cue Point when itï¿½s set to ON and it stays at that position. Only available when Play Mode is Sequential."""
 	cuepulse : nolabel buttonPar
 	"""nolabel button : When pressed the animation jumps to the Cue Point and continues from that point."""
 	cuepoint : joinpair floatPar
@@ -2712,7 +2712,7 @@ class usdCOMP():
 	play : togglePar
 	"""toggle : A toggle that makes the animation to play when it sets to ON. This Parameter is only available/enabled if the Sequential mode is selected from the Play Mode."""
 	index : joinpair floatPar
-	"""joinpair float : This parameter explicitly sets the animation position when Play Mode is set to Specify Index. The units’ menu on the right lets you specify the index in the following units: Index, Frames, Seconds, and Fraction (percentage)."""
+	"""joinpair float : This parameter explicitly sets the animation position when Play Mode is set to Specify Index. The unitsï¿½ menu on the right lets you specify the index in the following units: Index, Frames, Seconds, and Fraction (percentage)."""
 	indexunit : nolabel shortvalues dropmenuPar
 	"""nolabel shortvalues dropmenu : Specifies a unit type for Index. Changing this will convert the previous unit to the selected unit."""
 	speed : floatPar
@@ -2720,11 +2720,11 @@ class usdCOMP():
 	trim : togglePar
 	"""toggle : A toggle to enable the Trim Start and Trim End parameters."""
 	tstart : joinpair floatPar
-	"""joinpair float : Sets an in point from the beginning of the animation, allowing you to trim the starting index of the animation. The units’ menu on the right let you specify this position by index, frames, seconds, or fraction (percentage)."""
+	"""joinpair float : Sets an in point from the beginning of the animation, allowing you to trim the starting index of the animation. The unitsï¿½ menu on the right let you specify this position by index, frames, seconds, or fraction (percentage)."""
 	tstartunit : nolabel shortvalues dropmenuPar
 	"""nolabel shortvalues dropmenu : Specifies a unit type for Trim Start. Changing this will convert the previous unit to the selected unit."""
 	tend : joinpair floatPar
-	"""joinpair float : Sets an end point from the end of the movie, allowing you to trim the ending index of the animation. The units’ menu on the right let you specify this position by index, frames, seconds, or fraction (percentage)."""
+	"""joinpair float : Sets an end point from the end of the movie, allowing you to trim the ending index of the animation. The unitsï¿½ menu on the right let you specify this position by index, frames, seconds, or fraction (percentage)."""
 	tendunit : nolabel shortvalues dropmenuPar
 	"""nolabel shortvalues dropmenu : Specifies a unit type for Trim End. Changing this will convert the previous unit to the selected unit."""
 	textendleft : dropmenuPar
@@ -14559,7 +14559,7 @@ class infoCHOP():
 	range : FloatPar
 	"""Float : Set the bounds for selecting channels by value."""
 	passive : TogglePar
-	"""Toggle : When Passive is Off the Info CHOP will cook the <span class='tipTextCHOP'>Operator</span> it is pointing to before querying its values. When Passive is On it will not force a cook. A side effect: If the Info CHOP and the target are both cooking that frame, the Info may cook before the target, so it’s data will be a frame late."""
+	"""Toggle : When Passive is Off the Info CHOP will cook the <span class='tipTextCHOP'>Operator</span> it is pointing to before querying its values. When Passive is On it will not force a cook. A side effect: If the Info CHOP and the target are both cooking that frame, the Info may cook before the target, so itï¿½s data will be a frame late."""
 	childcooktime : TogglePar
 	"""Toggle : When the Info CHOP is monitoring a [[Component]], this toggle will enable a channel called ```children_cpu_cook_time``` which is the total cooktime of all the component's children. This is off by default, enabling it for a large network may impact performance as all cooktimes need to be summed."""
 	pass
@@ -19356,7 +19356,7 @@ class timerCHOP():
 	timecontrol : timerCHOPtimecontrolMenu
 	"""Menu : '''Sequential''' (timeline-independent) or '''Locked to Timeline'''. In Locked to Timeline, non-deterministic features are disabled. '''External CHOP Channel''' lets you drive the master time (```.masterSeconds``` etc) using a CHOP channel defined by the parameters on the External page."""
 	initialize : PulsePar
-	"""Pulse : (pulse parameter) Initialize is the signal to get the timer ready: sets the counters to zero (delay, timer, cycle, segment), set the output channels in the proper state, ```done</code> to be off, the onInitialize() callback is run, and when initialize is complete, it indicates it’s ready by turning on the <code>ready``` channel, awaiting a Start pulse."""
+	"""Pulse : (pulse parameter) Initialize is the signal to get the timer ready: sets the counters to zero (delay, timer, cycle, segment), set the output channels in the proper state, ```done</code> to be off, the onInitialize() callback is run, and when initialize is complete, it indicates itï¿½s ready by turning on the <code>ready``` channel, awaiting a Start pulse."""
 	start : PulsePar
 	"""Pulse : (pulse) Start is the signal to commence the timers counting. It will count through the delay first, then the timer length. It does an Initialize if it is not already initialized, and then starts counting."""
 	lengthtype : timerCHOPlengthtypeMenu
@@ -19410,7 +19410,7 @@ The Segments DAT also can include any number of custom columns. See Columns to C
 	segmethod : timerCHOPsegmethodMenu
 	"""Menu : If the Segment Method is '''Serial Timers''', the timers will be played back-to-back. If the Segment Method is '''Parallel Timers''', the timers can be played at the same time, and a set of channels will be output for each timer."""
 	segunits : timerCHOPsegunitsMenu
-	"""Menu : For the columns ```delay</code>, <code>begin</code>, <code>length</code> and <code>cycleendalert```, you specify whether it’s seconds, frames or samples with this menu."""
+	"""Menu : For the columns ```delay</code>, <code>begin</code>, <code>length</code> and <code>cycleendalert```, you specify whether itï¿½s seconds, frames or samples with this menu."""
 	segsendtime : timerCHOPsegsendtimeMenu
 	"""Menu : Describes how the end time is calculated."""
 	channelcolumns : StrPar
@@ -19428,17 +19428,17 @@ The Segments DAT also can include any number of custom columns. See Columns to C
 
 ''Lingo''			
 
-*  Segment – each segment acts as one timer, with delay time, length, number of cycles to repeat and other conditions.			
+*  Segment ï¿½ each segment acts as one timer, with delay time, length, number of cycles to repeat and other conditions.			
 
-*  Begin – in Parallel Timers, the number of seconds after a Start (frames or samples) after which each timer starts counting up from zero.			
+*  Begin ï¿½ in Parallel Timers, the number of seconds after a Start (frames or samples) after which each timer starts counting up from zero.			
 
-*  Done – The state it goes into when all the timers has finished counting, whether they are in Parallel or Serial, Segments or not.			
+*  Done ï¿½ The state it goes into when all the timers has finished counting, whether they are in Parallel or Serial, Segments or not.			
 
-*  End – Cycle End is the end of each cycle, Segment End is the end of the segment.			
+*  End ï¿½ Cycle End is the end of each cycle, Segment End is the end of the segment.			
 
-*  Cumulative Time – Zero at Start, a count that is affected by speed and rises while timers are active (not during delays).			
+*  Cumulative Time ï¿½ Zero at Start, a count that is affected by speed and rises while timers are active (not during delays).			
 
-*  Running Time – Zero at Start, the wall-clock time since Start was called no matter what are the delays, speeds, cycles or premature clicking of Go To Segment End. It stops counting when Done has been reached."""
+*  Running Time ï¿½ Zero at Start, the wall-clock time since Start was called no matter what are the delays, speeds, cycles or premature clicking of Go To Segment End. It stops counting when Done has been reached."""
 	subrange : TogglePar
 	"""Toggle : Turn this parameter on to limit the timer output to a subrange of the full length."""
 	substart : FloatPar
@@ -22382,13 +22382,13 @@ class curveclaySOPdeformopMenu(MenuPar):
 class curveclaySOP():
 	""""""
 	facegroup : curveclaySOPfacegroupStrMenu
-	"""StrMenu : Subset of faces (NURBS, Bézier, Polygons) to project, or subset of proles to deform, depending on how many inputs are connected.		
+	"""StrMenu : Subset of faces (NURBS, Bï¿½zier, Polygons) to project, or subset of proles to deform, depending on how many inputs are connected.		
 
 Examples include: 0.5 1.2-3.9 5.* 			
 
 			
 
-This group can even take surfaces (possibly intermixed with profile curves) when the 2nd input is not present, indicating that all the surface’s proles must be used. <br>			
+This group can even take surfaces (possibly intermixed with profile curves) when the 2nd input is not present, indicating that all the surfaceï¿½s proles must be used. <br>			
 
 Then, the example above becomes: 0.5 1.2-3.9 5"""
 	surfgroup : curveclaySOPsurfgroupStrMenu
@@ -31150,7 +31150,7 @@ class inMAT():
 class lineMAT():
 	""""""
 	depthinterpolationmodel : dropmenuPar
-	"""dropmenu : Depth Interpolation Model depthmodel – a menu to select how the width of line items changes by their distance from the camera."""
+	"""dropmenu : Depth Interpolation Model depthmodel ï¿½ a menu to select how the width of line items changes by their distance from the camera."""
 	inversedistanceexponent : floatPar
 	"""float : When the Depth Interpolation Model is Inverse Distance, this determines how fast the widths/sizes decrease with distance. If it is set to 1 (default), the width goes down at the rate of 1/r. If it set to 2, it goes down by 1/(r* r), meaning that for lines/dots at a distance r that have a width of w, that line/dot at a distance twice as far away (2r) are 1/4 the width/size as they are at distance r."""
 	distancenear : floatPar
@@ -31164,13 +31164,13 @@ class lineMAT():
 	widthaffectedbyfov/orthowidth : togglePar
 	"""toggle : With this off (default), looking at a rendered image of a certain resolution, a line of with w will always be the same # of pixels wide as you change the field-of-view or ortho width. With this parameter on, a line of width w will be half the number of pixels wide if you double the field-of-view or double the ortho width. Relevant if you are animating camera zoom, for instance."""
 	widthbias : floatPar
-	"""float : Moves the S Curve’s bias backward or forward for width interpolation (only S Curve depth model)."""
+	"""float : Moves the S Curveï¿½s bias backward or forward for width interpolation (only S Curve depth model)."""
 	widthsteepness : floatPar
 	"""float : Controls the steepness of the S Curve for width interpolation (only S Curve depth model). The higher the value of the steepness, you will notice more dramatic changes (higher slope) in the curve width. Also, with lower values of steepness, the curve transforms into a more linear form."""
 	widthlinearize : floatPar
 	"""float : Control the amount of curvature in the curve for width interpolation (only S Curve depth model)."""
 	colorbias : floatPar
-	"""float : Moves the S Curve’s bias backward or forward for color interpolation."""
+	"""float : Moves the S Curveï¿½s bias backward or forward for color interpolation."""
 	colorsteepness : floatPar
 	"""float : Controls the steepness of the S Curve for color interpolation."""
 	colorlinearize : floatPar
@@ -31210,7 +31210,7 @@ class lineMAT():
 	pointtype : dropmenuPar
 	"""dropmenu : A menu to select the Point type."""
 	pointsizemultiplier : floatPar
-	"""float : Specifies a scale coefficient to the size of the Point. By default, the point radius size equals to the width at the point’s location from the camera."""
+	"""float : Specifies a scale coefficient to the size of the Point. By default, the point radius size equals to the width at the pointï¿½s location from the camera."""
 	pointnearcolor : rgbPar
 	"""rgb : Specifies the color value for the Point at the Distance Near plane and any location closer to camera."""
 	pointnearalpha : floatPar
