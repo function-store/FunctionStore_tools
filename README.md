@@ -130,7 +130,7 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
 
 - [Miscellaneous](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous)
     - [OpMenu/OP Create Dialog Mods](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#opmenu-mod)
-    - [ParentHierarchy](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#parenthierarchy)
+    - [NavBar Mods](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#navbar-mods)
     - [Hotkeys](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#hotkeys)
     - [TD_SearchPalette](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#td_searchpalette)
     - [AltSelect](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#altselect)
