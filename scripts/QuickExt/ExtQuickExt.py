@@ -49,12 +49,15 @@ class ExtQuickExt:
 									'promoteextension' + str(extIndex))
 			extNamePar = getattr(self.ConfigComp.par,
 								'extname' + str(extIndex))
-			edges =TDF.findNetworkEdges(self.ConfigComp)
-			edgeX = edges['positions']['left']
-			edgeY = edges['positions']['top']
+			edges = TDF.findNetworkEdges(self.ConfigComp)
+			if edges:
+				edgeX = edges['positions']['left']
+				edgeY = edges['positions']['top']
+			else:
+				edgeX = 0
+				edgeY = 0
 			xPos = edgeX - 500 - (extIndex - 1) * 200
 			yPos = edgeY
-			#extDat = self.ConfigComp.create(textDAT, extModuleName)
 
 			masterExt = self.ownerComp.op(self.extType.lower() +
 											'ExtensionText')
@@ -85,10 +88,14 @@ class ExtQuickExt:
 			extDat.docked[0].showDocked = True
 			extDat.current = True
 
+			self.__purgeTags(extDat)
+			self.__purgeTags(extUtils)
+			
 			for idx, _dock in enumerate(extUtils.docked):
 				_dock.nodeX = extUtils.nodeX
 				_dock.nodeY = extUtils.nodeY - 120 * (idx + 1)
 				_dock.showDocked = False
+				self.__purgeTags(_dock)
 				if hasattr(_dock.par, 'file'):
 					_dock.par.file.mode = ParMode.CONSTANT
 					_dock.par.file.expr = ''
@@ -96,6 +103,12 @@ class ExtQuickExt:
 			
 			self.ConfigComp.par.reinitextensions.pulse()
 			# fin
+
+	def __purgeTags(self, _op):
+		TAGS_TO_REMOVE = ['FNS_externalized', 'pi_suspect']
+		for _tag in TAGS_TO_REMOVE:
+			if _tag in _op.tags:
+				_op.tags.remove(_tag)
 
 	def OnOpen(self, info):
 		pass
