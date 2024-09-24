@@ -31,3 +31,27 @@ class ExtToolbar:
 			ui.status = 'Function Store - Toolbar installed'
 		except:
 			pass
+
+	def CreatePars(self):
+		owner = self.ownerComp
+		seq = owner.seq.Def
+		containers: COMP = op('containers')
+		children = containers.findChildren(tags=['FNS'])
+
+		# order children by _child.par.alignorder.eval()
+		children = sorted(children, key=lambda _child: _child.par.alignorder.eval())
+		numChildren = len(children)
+		debug(numChildren)
+		seq.numBlocks = numChildren-1
+
+		for _block, _child in zip(seq.blocks, children):
+			_block.par.Comp = _child.name
+			_block.par.Order = _child.par.alignorder.eval()-self.ownerComp.par.Layoutstart.eval()
+
+	def OnResetdefs(self):
+		mainTable = self.ownerComp.op('ToolbarDef')
+		defaultTable = self.ownerComp.op('ToolbarDef_default')
+
+		mainTable.clear()
+		mainTable.text = defaultTable.text
+
