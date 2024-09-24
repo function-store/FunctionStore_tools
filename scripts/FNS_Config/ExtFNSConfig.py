@@ -32,7 +32,8 @@ class ExtFNSConfig:
 		full_data = {}
 		full_data['op.FNS'] = TDJSON.opToJSONOp(op.FNS, forceAttrLists=False, extraAttrs=self.extraAttrs)
 		for _op in parent.FNS.findChildren(depth=1, key=lambda x: x.family == 'COMP' and not x.type in ['annotate','comment','network']):
-			full_data[f"op.FNS.op('{_op.name}')"] = TDJSON.opToJSONOp(op.FNS.op(_op.name), forceAttrLists=False, extraAttrs=self.extraAttrs)
+			if _op is not None:
+				full_data[f"op.FNS.op('{_op.name}')"] = TDJSON.opToJSONOp(_op, forceAttrLists=False, extraAttrs=self.extraAttrs)
 
 		filtered_data = self.filter_keys_from_second_level(full_data, self.exceptions)
 		self.toFile(filtered_data)
