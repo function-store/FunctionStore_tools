@@ -18,10 +18,9 @@ class ExtQuickExt:
 	def __init__(self, ownerComp):
 		# The component to which this extension is attached
 		self.ownerComp = ownerComp
-		self.dialog = op('popDialog')
+		self.dialog = self.ownerComp.op('popDialog')
 		self.ConfigComp = None
-		self.extType = 'empty'
-
+		self.extTemplate = self.ownerComp.op('extTemplate')
 
 	def CreateExtension(self, _target):
 		if not _target:
@@ -59,15 +58,13 @@ class ExtQuickExt:
 			xPos = edgeX - 500 - (extIndex - 1) * 200
 			yPos = edgeY
 
-			masterExt = self.ownerComp.op(self.extType.lower() +
-											'ExtensionText')
+			masterExt = self.extTemplate
 			masterUtils = self.ownerComp.op('extUtils')
 			extDat = self.ConfigComp.copy(masterExt, name=extModuleName)
 			extUtils = self.ConfigComp.copy(masterUtils, includeDocked=True)
 			extUtils.dock = extDat
 
-			extensionText = self.ownerComp.op(self.extType.lower() +
-											'ExtensionText').text
+			extensionText = masterExt.text
 			extensionText = extensionText.replace('DefaultExt',
 												extModuleName)
 			extDat.par.file.mode = ParMode.CONSTANT
