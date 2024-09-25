@@ -19,16 +19,26 @@ class CustomParHelper:
     1. Import the CustomParHelper class:
        from utils import CustomParHelper
     
-    2. Initialize in your extension's __init__ method:
-       CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
+    2. Initialize in your extension's __init__ method as follows:
+       CustomParHelper.Init(self, ownerComp)
 
-       Full signature:
-       CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True, enable_parGroups=True, expose_public=False,
+       Full signature and optional parameters:
+       CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [])
 
+        Additional options:
+            - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
+            - expose_public: If True, uses capitalized property and method names (e.g., Par, Eval instead of par, eval)
+            - par_properties: List of parameter names to include in property creation, by default all parameters are included
+            - par_callbacks: List of parameter names to include in callback handling, by default all parameters are included
+            - except_properties: List of parameter names to exclude from property creation
+            - except_callbacks: List of parameter names to exclude from callback handling
+            - except_pages: List of parameter pages to exclude from property and callback handling
+            - except_sequences: List of sequence names to exclude from property and callback handling
+
     > NOTE: this class should only be attached to one extension, otherwise it will cause conflicts    
-       
+
     3. Access custom parameters as properties (if enable_properties=True (default)):
        - self.par<ParamName>: Access the parameter object
        - self.eval<ParamName>: Get the evaluated value of the parameter
@@ -38,33 +48,24 @@ class CustomParHelper:
 
     4. Implement callbacks (if enable_callbacks=True (default)):
        - For regular parameters:
-         def on<ParamName>(self, _par, _val, _prev):
+         def onPar<ParamName>(self, _par, _val, _prev):
            # _par and _prev can be omitted if not needed
 
        - For pulse parameters:
-         def on<PulseParamName>(self, _par):
+         def onPar<PulseParamName>(self, _par):
            # _par can be omitted if not needed
 
+       - For sequence blocks:
+         def onSeq<SeqName>N(self, idx):
+
        - For sequence parameters:
-         def on<SeqName>N<ParName>(self, _par, idx, _val, _prev):
+         def onSeq<SeqName>N<ParName>(self, _par, idx, _val, _prev):
            # _par and _prev can be omitted if not needed
 
        - For parameter groups if enable_parGroups=True (default):
          def onParGroup<GroupName>(self, _parGroup, _val):
            # _parGroup can be omitted if not needed
     
-    > NOTE: to expose public methods, eg. self.OnPar<ParamName> instead of self.onPar<ParamName>, set expose_public=True in the Init function
-
-    Additional options:
-    - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
-    - expose_public: If True, uses capitalized property and method names (e.g., Par, Eval instead of par, eval)
-    - par_properties: List of parameter names to include in property creation, by default all parameters are included
-    - par_callbacks: List of parameter names to include in callback handling, by default all parameters are included
-    - except_properties: List of parameter names to exclude from property creation
-    - except_callbacks: List of parameter names to exclude from callback handling
-    - except_pages: List of parameter pages to exclude from property and callback handling
-    - except_sequences: List of sequence names to exclude from property and callback handling
-
     > NOTE: This class only works with the docked helper ParExec DATs, which also perform filtering of parameters in a lot of cases.
     '''
     
@@ -75,16 +76,16 @@ class CustomParHelper:
     EXCEPT_SEQUENCES: list[str] = []
     PAR_PROPS: list[str] = ['*']
     PAR_CALLBACKS: list[str] = ['*']
-    SEQUENCE_PATTERN = r'(\w+?)(\d+)(.+)'
-    IS_EXPOSE_PUBLIC = False
-    SELF = None
+    SEQUENCE_PATTERN: str = r'(\w+?)(\d+)(.+)'
+    IS_EXPOSE_PUBLIC: bool = False
+    EXT_SELF = None
     
     @staticmethod
     def Init(extension_self, ownerComp: COMP, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = []) -> None:
         """Initialize the CustomParHelper."""
-        CustomParHelper.SELF = extension_self
+        CustomParHelper.EXT_SELF = extension_self
         CustomParHelper.IS_EXPOSE_PUBLIC = expose_public
         CustomParHelper.PAR_PROPS = par_properties
         CustomParHelper.PAR_CALLBACKS = par_callbacks
@@ -93,8 +94,8 @@ class CustomParHelper:
         CustomParHelper.EXCEPT_CALLBACKS = except_callbacks
         CustomParHelper.EXCEPT_SEQUENCES = except_sequences
 
-        # me: textDAT = me
-        for _docked in me.docked:
+        me_me: textDAT = me # just to have autocomplete on this
+        for _docked in me_me.docked:
             if 'extDatExec' in _docked.tags:
                 _docked.par.active = enable_properties
 
@@ -125,7 +126,7 @@ class CustomParHelper:
 
 
     @staticmethod
-    def _create_propertyEval(extension_self, owner_comp: COMP, Parname: str, enable_parGroups: bool = True):
+    def _create_propertyEval(extension_self, owner_comp: COMP, Parname: str, enable_parGroups: bool = True) -> None:
         """Create a property for the evaluated value of a parameter."""
         def getter(instance):
             return getattr(owner_comp.par, Parname).eval()
@@ -134,13 +135,13 @@ class CustomParHelper:
 
         property_name = f'{"Eval" if CustomParHelper.IS_EXPOSE_PUBLIC else "eval"}{Parname}'
         setattr(extension_self.__class__, property_name, property(getter))
-        # this might be overkill
+        
         if enable_parGroups and CustomParHelper.__isParGroup(getattr(owner_comp.par, Parname)):
             setattr(extension_self.__class__, f'{"EvalGroup" if CustomParHelper.IS_EXPOSE_PUBLIC else "evalGroup"}{Parname[:-1]}', property(getter_group))
         
 
     @staticmethod
-    def _create_propertyPar(extension_self, owner_comp: COMP, Parname: str, enable_parGroups: bool = True):
+    def _create_propertyPar(extension_self, owner_comp: COMP, Parname: str, enable_parGroups: bool = True) -> None:
         """Create a property for the parameter object."""
         def getter(instance):
             return getattr(owner_comp.par, Parname)
@@ -149,7 +150,7 @@ class CustomParHelper:
 
         property_name = f'{"Par" if CustomParHelper.IS_EXPOSE_PUBLIC else "par"}{Parname}'
         setattr(extension_self.__class__, property_name, property(getter))
-        # this might be overkill
+        
         if enable_parGroups and CustomParHelper.__isParGroup(getattr(owner_comp.par, Parname)):
             setattr(extension_self.__class__, f'{"ParGroup" if CustomParHelper.IS_EXPOSE_PUBLIC else "parGroup"}{Parname[:-1]}', property(getter_group))
 
@@ -176,7 +177,7 @@ class CustomParHelper:
         # exceptions are handled in the parExec itself
         # except for sequence parameters
 
-        comp = CustomParHelper.SELF # a bit hacky to be able to call non-exposed methods too
+        comp = CustomParHelper.EXT_SELF # a bit hacky to be able to call non-exposed methods too
 
         # check if we are a sequence parameter first
         match = re.match(CustomParHelper.SEQUENCE_PATTERN, par.name)
@@ -214,7 +215,7 @@ class CustomParHelper:
         # exceptions are handled in the parExec itself
         # except for sequence parameters
         
-        comp = CustomParHelper.SELF # a bit hacky to be able to call non-exposed methods too
+        comp = CustomParHelper.EXT_SELF # a bit hacky to be able to call non-exposed methods too
 
         # check if we are a sequence parameter first
         match = re.match(CustomParHelper.SEQUENCE_PATTERN, par.name)
@@ -242,8 +243,7 @@ class CustomParHelper:
 
     @staticmethod
     def OnValuesChanged(changes: list[tuple[Par, Par]]) -> None:
-        """Handle value change events for custom parameters. 
-        Using this for ParGroup callbacks only"""
+        """Handle value change events for ParGroups."""
         # exceptions are handled in the parExec itself
         # except for sequence parameters
         parGroupsCalled = []
@@ -251,10 +251,9 @@ class CustomParHelper:
             _par = change[0]
             # _prev = change[1]
             # _comp = _par.owner
-            _comp = CustomParHelper.SELF # a bit hacky to be able to call non-exposed methods too
+            _comp = CustomParHelper.EXT_SELF # a bit hacky to be able to call non-exposed methods too
             # handle sequence exceptions
             # check if we are a sequence parameter first
-            # TODO: should we check for sequence exceptions here?
             match = re.match(CustomParHelper.SEQUENCE_PATTERN, _par.name)
             if match:
                 sequence_name, sequence_index, parameter_name = match.groups()
@@ -270,7 +269,7 @@ class CustomParHelper:
                 match = re.match(r'(\w+)(.)', _par.name)
                 if match:
                     ParGroup, ParName = match.groups()
-                    _par = _comp.parGroup[ParGroup] 
+                    _par = _comp.ownerComp.parGroup[ParGroup] 
                     method_name = f'{"OnParGroup" if CustomParHelper.IS_EXPOSE_PUBLIC else "onParGroup"}{ParGroup}'
                     if hasattr(_comp, method_name):
                         method = getattr(_comp, method_name)
@@ -280,10 +279,37 @@ class CustomParHelper:
                         elif arg_count == 3:
                             method(_par, _par.eval())
 
-
+    @staticmethod
+    def OnSeqValuesChanged(changes: list[tuple[Par, Par]]) -> None:
+        """Handle value change events for Sequence blocks."""
+        seqsCalled = []
+        for change in changes:
+            _par = change[0]
+            # _prev = change[1]
+            # _comp = _par.owner
+            _comp = CustomParHelper.EXT_SELF # a bit hacky to be able to call non-exposed methods too
+            # handle sequence exceptions
+            # check if we are a sequence parameter first
+            match = re.match(CustomParHelper.SEQUENCE_PATTERN, _par.name)
+            if match:
+                sequence_name, sequence_index, parameter_name = match.groups()
+                sequence_index = int(sequence_index)
+                if sequence_name in CustomParHelper.EXCEPT_SEQUENCES:
+                    return
+                if f'{sequence_name}{sequence_index}' not in seqsCalled:
+                    seqsCalled.append(f'{sequence_name}{sequence_index}')
+                else:
+                    continue
+                method_name = f'{"OnSeq" if CustomParHelper.IS_EXPOSE_PUBLIC else "onSeq"}{sequence_name}N'
+                if hasattr(_comp, method_name):
+                    method = getattr(_comp, method_name)
+                    arg_count = method.__code__.co_argcount
+                    if arg_count == 2:
+                        method(sequence_index)
+                        
     @staticmethod
     def __isParGroup(par: Par) -> bool:
-        """Check if a parameter is a ParGroup."""
+        """Check if a parameter is a ParGroup. Is there no better way?"""
         par_name = par.name[:-1]
         try:
             pg = par.owner.parGroup[par_name]
