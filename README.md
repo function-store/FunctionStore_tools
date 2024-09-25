@@ -159,6 +159,11 @@ Huge thanks to the contributors:
 
 - [Acrylicode](https://acrylicode.com/) and [kim0slice](https://www.instagram.com/kim0slice) for the early feedback and testing.
 
+## Notable Mentions
+Here are some links of mostly free tools/resources:
+- [Olib](https://td-olib.org/) by Wieland Hilker (Alphamoonbase.berlin): the de-facto free TD .tox marketplace
+- [TD-Launcher](https://github.com/EnviralDesign/TD-Launcher/) by Lucas Morgan: if you're using multiple TD version installs this is a must have
+
 # License
 
 Copyright 2024 Daniel Molnar / Function Store
