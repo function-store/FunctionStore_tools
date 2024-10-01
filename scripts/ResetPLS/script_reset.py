@@ -44,7 +44,10 @@ for r in toreset.rows()[1:]:
 # misc		
 if parent().par.Timeline.eval():
 	op('/').time.frame = parent().par.Frame.eval()
-	ui.panes.current.owner.time.frame = parent().par.Frame.eval()
+	try:
+		ui.panes.current.owner.time.frame = parent().par.Frame.eval()
+	except:
+		pass
 	
 if parent().par.Customscript.eval():
 	op('callbackManager').Execute('onReset')()
