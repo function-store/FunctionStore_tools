@@ -21,6 +21,7 @@ class ExtQuickExt:
 		self.dialog = self.ownerComp.op('popDialog')
 		self.ConfigComp = None
 		self.extTemplate = self.ownerComp.op('extTemplate')
+		self.stubser = self.ownerComp.op('stubser')
 
 	def CreateExtension(self, _target):
 		if not _target:
@@ -51,11 +52,11 @@ class ExtQuickExt:
 			edges = TDF.findNetworkEdges(self.ConfigComp)
 			if edges:
 				edgeX = edges['positions']['left']
-				edgeY = edges['positions']['top']
+				edgeY = edges['positions']['top'] - 220
 			else:
 				edgeX = 0
 				edgeY = 0
-			xPos = edgeX - 500 - (extIndex - 1) * 200
+			xPos = edgeX - 400
 			yPos = edgeY
 
 			masterExt = self.extTemplate
@@ -64,6 +65,8 @@ class ExtQuickExt:
 			extUtils = self.ConfigComp.copy(masterUtils, includeDocked=True)
 			extUtils.dock = extDat
 			extUtils.par.file = ''
+
+			self.stubser.StubifyDat(masterUtils)
 
 			extensionText = masterExt.text
 			extensionText = extensionText.replace('DefaultExt',
