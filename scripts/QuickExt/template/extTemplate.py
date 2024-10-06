@@ -1,9 +1,3 @@
-'''Info Header Start
-Name : extTemplate
-Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.148.toe
-Saveversion : 2023.11600
-Info Header End'''
 from extUtils import CustomParHelper
 
 class DefaultExt:

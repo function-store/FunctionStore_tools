@@ -63,6 +63,7 @@ class ExtQuickExt:
 			extDat = self.ConfigComp.copy(masterExt, name=extModuleName)
 			extUtils = self.ConfigComp.copy(masterUtils, includeDocked=True)
 			extUtils.dock = extDat
+			extUtils.par.file = ''
 
 			extensionText = masterExt.text
 			extensionText = extensionText.replace('DefaultExt',

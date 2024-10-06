@@ -12,6 +12,7 @@ class CustomParHelper:
     - Simplified custom parameter callbacks
     - Support for sequence parameters
     - Support for parameter groups (parGroups)
+    - Keyboard shortcuts handling
     - Configurable inclusion for properties and callbacks (by default all parameters are included)
     - Configurable exceptions for pages, properties, callbacks, and sequences
 
@@ -25,7 +26,7 @@ class CustomParHelper:
        Full signature and optional parameters:
        CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
-             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [])
+             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], enable_keyboard_shortcuts=False)
 
         Additional options:
             - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
@@ -36,6 +37,7 @@ class CustomParHelper:
             - except_callbacks: List of parameter names to exclude from callback handling
             - except_pages: List of parameter pages to exclude from property and callback handling
             - except_sequences: List of sequence names to exclude from property and callback handling
+            - enable_keyboard_shortcuts: If True, enables keyboard shortcut handling with callbacks (default: False)
 
     > NOTE: this class should only be attached to one extension, otherwise it will cause conflicts    
 
@@ -65,7 +67,16 @@ class CustomParHelper:
        - For parameter groups if enable_parGroups=True (default):
          def onParGroup<GroupName>(self, _parGroup, _val):
            # _parGroup can be omitted if not needed
-    
+
+    5. Handle keyboard shortcuts (if enable_keyboard_shortcuts=True (default)):
+       - Enable keyboard shortcuts:
+         CustomParHelper.Init(self, ownerComp, enable_keyboard_shortcuts=True)
+       - Register a keyboard shortcut and its callback:
+         CustomParHelper.RegisterKeyboardShortcut("ctrl.k", self.onKeyboardShortcut)
+       - Implement the callback method:
+         def onKeyboardShortcut(self):
+           # This method will be called when the registered keyboard shortcut is pressed
+
     > NOTE: This class only works with the docked helper ParExec DATs, which also perform filtering of parameters in a lot of cases.
     '''
     
@@ -79,11 +90,13 @@ class CustomParHelper:
     SEQUENCE_PATTERN: str = r'(\w+?)(\d+)(.+)'
     IS_EXPOSE_PUBLIC: bool = False
     EXT_SELF = None
+    KEYBOARD_SHORTCUTS: dict = {}
     
     @staticmethod
     def Init(extension_self, ownerComp: COMP, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
-             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = []) -> None:
+             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [],
+             enable_keyboard_shortcuts: bool = False) -> None:
         """Initialize the CustomParHelper."""
         CustomParHelper.EXT_SELF = extension_self
         CustomParHelper.IS_EXPOSE_PUBLIC = expose_public
@@ -107,6 +120,11 @@ class CustomParHelper:
         else:
             CustomParHelper.DisableCallbacks()
 
+        if enable_keyboard_shortcuts:
+            CustomParHelper.EnableKeyboardShortcuts()
+            CustomParHelper._UpdateKeyboardShortcuts()
+        else:
+            CustomParHelper.DisableKeyboardShortcuts()
 
     @staticmethod
     def CustomParsAsProperties(extension_self, ownerComp: COMP, enable_parGroups: bool = True) -> None:
@@ -317,3 +335,41 @@ class CustomParHelper:
         except:
             return False
 
+    @staticmethod
+    def EnableKeyboardShortcuts() -> None:
+        """Enable keyboard shortcut handling."""
+        for _docked in me.docked:
+            if 'extKeyboardin' in _docked.tags:
+                _docked.par.active = True
+
+    @staticmethod
+    def DisableKeyboardShortcuts() -> None:
+        """Disable keyboard shortcut handling."""
+        for _docked in me.docked:
+            if 'extKeyboardin' in _docked.tags:
+                _docked.par.active = False
+
+    @staticmethod
+    def RegisterKeyboardShortcut(shortcut: str, callback: callable) -> None:
+        """Register a keyboard shortcut and its callback."""
+        CustomParHelper.KEYBOARD_SHORTCUTS[shortcut] = callback
+        CustomParHelper._UpdateKeyboardShortcuts()
+
+    @staticmethod
+    def UnregisterKeyboardShortcut(shortcut: str) -> None:
+        """Unregister a keyboard shortcut."""
+        CustomParHelper.KEYBOARD_SHORTCUTS.pop(shortcut, None)
+        CustomParHelper._UpdateKeyboardShortcuts()
+
+    @staticmethod
+    def _UpdateKeyboardShortcuts() -> None:
+        """Update the extKeyboardIn operator's shortcuts parameter."""
+        for _docked in me.docked:
+            if 'extKeyboardin' in _docked.tags:
+                _docked.par.shortcuts = ' '.join(CustomParHelper.KEYBOARD_SHORTCUTS.keys())
+
+    @staticmethod
+    def OnKeyboardShortcut(shortcut: str) -> None:
+        """Handle keyboard shortcut events."""
+        if shortcut in CustomParHelper.KEYBOARD_SHORTCUTS:
+            CustomParHelper.KEYBOARD_SHORTCUTS[shortcut]()
