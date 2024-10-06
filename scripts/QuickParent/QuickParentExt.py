@@ -14,12 +14,12 @@ class QuickParentExt:
 
 	def AddParentshortcut(self):
 		defaultText = self.paneParent.name if self.paneParent.par.parentshortcut.eval() is None else self.paneParent.par.parentshortcut.eval()
-		self.popDialog.Open(text='Add Parent Shortcut', title='Add Parent Shortcut', buttons=['Cancel', 'Add'],
-			escButton=1, enterButton=2, escOnClickAway=True, textEntry=defaultText, callback=self.OnAddParentshortcutCallback)
+		self.popDialog.Open(text='Add Parent Shortcut', title='Add Parent Shortcut', buttons=['OK', 'Cancel'],
+			escButton=2, enterButton=1, escOnClickAway=True, textEntry=defaultText, callback=self.OnAddParentshortcutCallback)
 	
 
 	def OnAddParentshortcutCallback(self, result):
-		if result['button'] == 'Add':
+		if result['button'] == 'OK':
 			parentshortcutpar = self.paneParent.par.parentshortcut
 			if parentshortcutpar is not None:
 				parentshortcutpar.val = result['enteredText']
