@@ -66,7 +66,8 @@ class ExtQuickExt:
 			extUtils.dock = extDat
 			extUtils.par.file = ''
 
-			self.stubser.StubifyDat(masterUtils)
+			if self.ownerComp.par.DeployStubs.eval():
+				self.stubser.StubifyDat(masterUtils)
 
 			extensionText = masterExt.text
 			extensionText = extensionText.replace('DefaultExt',
