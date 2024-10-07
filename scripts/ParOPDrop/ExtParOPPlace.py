@@ -29,8 +29,6 @@ class ExtParOPPlace:
 			self.parameterExecDat = None
 
 	def OnPlaceParOp(self, _par = None):
-		if not (self.chopPreEnabled or self.datPreEnabled or self.datExecPreEnabled):
-			return
 
 		current_parameter = _par if _par is not None else ui.rolloverPar
 
@@ -48,13 +46,13 @@ class ExtParOPPlace:
 				op_type = 'parameterexecuteDAT'
 				op_name = 'parexec1'
 				param_name = 'pars'  # Parameter attribute name for parameterexecuteDAT
-			elif self.chopPreEnabled:
-				parameter_instance = self.parameterChop
-				op_type = 'parameterCHOP'
-				op_name = 'parameter1'
 			elif self.datPreEnabled:
 				parameter_instance = self.parameterDat
 				op_type = 'parameterDAT'
+				op_name = 'parameter1'
+			else:
+				parameter_instance = self.parameterChop
+				op_type = 'parameterCHOP'
 				op_name = 'parameter1'
 
 			newly_created = False
