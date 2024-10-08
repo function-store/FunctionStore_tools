@@ -26,7 +26,8 @@ class CustomParHelper:
        Full signature and optional parameters:
        CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
-             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], enable_keyboard_shortcuts=False)
+             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
+             enable_keyboard_shortcuts=False, auto_stubs: bool = False)
 
         Additional options:
             - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
@@ -38,6 +39,7 @@ class CustomParHelper:
             - except_pages: List of parameter pages to exclude from property and callback handling
             - except_sequences: List of sequence names to exclude from property and callback handling
             - enable_keyboard_shortcuts: If True, enables keyboard shortcut handling with callbacks (default: False)
+            - auto_stubs: If True, automatically creates and updates stubs for the extension (default: False)
 
     > NOTE: this class should only be attached to one extension, otherwise it will cause conflicts    
 
@@ -68,7 +70,7 @@ class CustomParHelper:
          def onParGroup<GroupName>(self, _parGroup, _val):
            # _parGroup can be omitted if not needed
 
-    5. Handle keyboard shortcuts (if enable_keyboard_shortcuts=True (default)):
+    5. Handle keyboard shortcuts (if enable_keyboard_shortcuts=True (default is False)):
        - Enable keyboard shortcuts:
          CustomParHelper.Init(self, ownerComp, enable_keyboard_shortcuts=True)
        - Register a keyboard shortcut and its callback:
@@ -90,9 +92,10 @@ class CustomParHelper:
     IS_EXPOSE_PUBLIC: bool = False
     EXT_SELF = None
     KEYBOARD_SHORTCUTS: dict = {}
+    AUTO_STUBS: bool = False
 
     @staticmethod
-    def Init(extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_keyboard_shortcuts: bool=False) -> None:
+    def Init(extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_keyboard_shortcuts: bool=False, auto_stubs: bool=False) -> None:
         """Initialize the CustomParHelper."""
         pass
 
@@ -154,4 +157,9 @@ class CustomParHelper:
     @staticmethod
     def OnKeyboardShortcut(shortcut: str) -> None:
         """Handle keyboard shortcut events."""
+        pass
+
+    @staticmethod
+    def UpdateStubs() -> None:
+        """Update the stubs for the extension."""
         pass

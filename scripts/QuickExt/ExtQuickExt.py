@@ -141,6 +141,7 @@ class ExtQuickExt:
 			self.__purgeTags(extUtils)
 			
 			for idx, _dock in enumerate(extUtils.docked):
+				_dock.expose = False
 				_dock.nodeX = extUtils.nodeX
 				_dock.nodeY = extUtils.nodeY - 120 * (idx + 1)
 				_dock.showDocked = False
@@ -154,7 +155,7 @@ class ExtQuickExt:
 						+ extModuleName + '(me)'
 			extDat.text = extensionText
 
-			self.ConfigComp.par.reinitextensions.pulse()
+			self.ConfigComp.initializeExtensions(extIndex-1)
 			self.__updateCompEditor(extIndex)
 
 			if self.ownerComp.par.Deploystubs.eval():
