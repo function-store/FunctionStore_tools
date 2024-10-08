@@ -27,7 +27,7 @@ class CustomParHelper:
        CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
-             enable_keyboard_shortcuts=False, auto_stubs: bool = False)
+             enable_keyboard_shortcuts=False, enable_stubs: bool = False)
 
         Additional options:
             - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
@@ -39,7 +39,7 @@ class CustomParHelper:
             - except_pages: List of parameter pages to exclude from property and callback handling
             - except_sequences: List of sequence names to exclude from property and callback handling
             - enable_keyboard_shortcuts: If True, enables keyboard shortcut handling with callbacks (default: False)
-            - auto_stubs: If True, automatically creates and updates stubs for the extension (default: False)
+            - enable_stubs: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
 
     3. Access custom parameters as properties (if enable_properties=True (default)):
        - self.par<ParamName>: Access the parameter object
@@ -100,7 +100,7 @@ class CustomParHelper:
     def Init(extension_self, ownerComp: COMP, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [],
-             enable_keyboard_shortcuts: bool = False, auto_stubs: bool = False) -> None:
+             enable_keyboard_shortcuts: bool = False, enable_stubs: bool = False) -> None:
         """Initialize the CustomParHelper."""
         CustomParHelper.EXT_SELF = extension_self
         CustomParHelper.IS_EXPOSE_PUBLIC = expose_public
@@ -126,13 +126,11 @@ class CustomParHelper:
 
         if enable_keyboard_shortcuts:
             CustomParHelper.EnableKeyboardShortcuts()
-            CustomParHelper._UpdateKeyboardShortcuts()
         else:
             CustomParHelper.DisableKeyboardShortcuts()
 
-        if auto_stubs:
+        if enable_stubs:
             CustomParHelper.EnableStubs()
-            CustomParHelper.UpdateStubs()
         else:
             CustomParHelper.DisableStubs()
 
@@ -351,6 +349,7 @@ class CustomParHelper:
         for _docked in me.docked:
             if 'extKeyboardin' in _docked.tags:
                 _docked.par.active = True
+                CustomParHelper._UpdateKeyboardShortcuts()
 
     @staticmethod
     def DisableKeyboardShortcuts() -> None:
@@ -388,6 +387,7 @@ class CustomParHelper:
     def EnableStubs() -> None:
         """Enable stubs for the extension."""
         CustomParHelper.STUBS_ENABLED = True
+        CustomParHelper.UpdateStubs()
 
     @staticmethod
     def DisableStubs() -> None:
