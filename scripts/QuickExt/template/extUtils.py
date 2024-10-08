@@ -26,7 +26,8 @@ class CustomParHelper:
        Full signature and optional parameters:
        CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
-             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], enable_keyboard_shortcuts=False)
+             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
+             enable_keyboard_shortcuts=False, auto_stubs: bool = False)
 
         Additional options:
             - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
@@ -38,6 +39,7 @@ class CustomParHelper:
             - except_pages: List of parameter pages to exclude from property and callback handling
             - except_sequences: List of sequence names to exclude from property and callback handling
             - enable_keyboard_shortcuts: If True, enables keyboard shortcut handling with callbacks (default: False)
+            - auto_stubs: If True, automatically creates and updates stubs for the extension (default: False)
 
     > NOTE: this class should only be attached to one extension, otherwise it will cause conflicts    
 
@@ -68,7 +70,7 @@ class CustomParHelper:
          def onParGroup<GroupName>(self, _parGroup, _val):
            # _parGroup can be omitted if not needed
 
-    5. Handle keyboard shortcuts (if enable_keyboard_shortcuts=True (default)):
+    5. Handle keyboard shortcuts (if enable_keyboard_shortcuts=True (default is False)):
        - Enable keyboard shortcuts:
          CustomParHelper.Init(self, ownerComp, enable_keyboard_shortcuts=True)
        - Register a keyboard shortcut and its callback:
@@ -91,12 +93,13 @@ class CustomParHelper:
     IS_EXPOSE_PUBLIC: bool = False
     EXT_SELF = None
     KEYBOARD_SHORTCUTS: dict = {}
-    
+    STUBS_ENABLED: bool = False
+
     @staticmethod
     def Init(extension_self, ownerComp: COMP, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [],
-             enable_keyboard_shortcuts: bool = False) -> None:
+             enable_keyboard_shortcuts: bool = False, auto_stubs: bool = False) -> None:
         """Initialize the CustomParHelper."""
         CustomParHelper.EXT_SELF = extension_self
         CustomParHelper.IS_EXPOSE_PUBLIC = expose_public
@@ -125,6 +128,12 @@ class CustomParHelper:
             CustomParHelper._UpdateKeyboardShortcuts()
         else:
             CustomParHelper.DisableKeyboardShortcuts()
+
+        if auto_stubs:
+            CustomParHelper.EnableStubs()
+            CustomParHelper.UpdateStubs()
+        else:
+            CustomParHelper.DisableStubs()
 
     @staticmethod
     def CustomParsAsProperties(extension_self, ownerComp: COMP, enable_parGroups: bool = True) -> None:
@@ -373,3 +382,25 @@ class CustomParHelper:
         """Handle keyboard shortcut events."""
         if shortcut in CustomParHelper.KEYBOARD_SHORTCUTS:
             CustomParHelper.KEYBOARD_SHORTCUTS[shortcut]()
+
+    @staticmethod
+    def EnableStubs() -> None:
+        """Enable stubs for the extension."""
+        CustomParHelper.STUBS_ENABLED = True
+
+    @staticmethod
+    def DisableStubs() -> None:
+        """Disable stubs for the extension."""
+        CustomParHelper.STUBS_ENABLED = False
+
+    @staticmethod
+    def UpdateStubs() -> None:
+        """Update the stubs for the extension."""
+        if CustomParHelper.STUBS_ENABLED:
+            for _docked in me.docked:
+                if 'extStubser' in _docked.tags:
+                    # get class name from extension object
+                    class_name = CustomParHelper.EXT_SELF.__class__.__name__
+                    op_ext = op(class_name)
+                    _docked.StubifyDat(op_ext)
+
