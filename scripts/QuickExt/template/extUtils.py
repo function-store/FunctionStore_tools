@@ -41,8 +41,6 @@ class CustomParHelper:
             - enable_keyboard_shortcuts: If True, enables keyboard shortcut handling with callbacks (default: False)
             - auto_stubs: If True, automatically creates and updates stubs for the extension (default: False)
 
-    > NOTE: this class should only be attached to one extension, otherwise it will cause conflicts    
-
     3. Access custom parameters as properties (if enable_properties=True (default)):
        - self.par<ParamName>: Access the parameter object
        - self.eval<ParamName>: Get the evaluated value of the parameter
@@ -79,7 +77,10 @@ class CustomParHelper:
          def onKeyboardShortcut(self):
            # This method will be called when the registered keyboard shortcut is pressed
 
-    > NOTE: This class only works with the docked helper ParExec DATs, which also perform filtering of parameters in a lot of cases.
+    > NOTE: This class only works docked to an extension with the tag 'extTemplate' and 
+      with the docked helper operators, which create the interface to the TouchDesigner environment.
+      Note that the docked helpers are hidden by default.
+    > NOTE: The reason this is implemented with static methods, is to omit the need to instantiate the class, providing a simpler interface (arguably).
     '''
     
     EXCEPT_PAGES_STATIC: list[str]  = ['Version Ctrl', 'About', 'Info']
