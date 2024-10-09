@@ -1,4 +1,5 @@
 import re
+import TDStoreTools
 
 class CustomParHelper:
     '''
@@ -93,14 +94,13 @@ class CustomParHelper:
     SEQUENCE_PATTERN: str = r'(\w+?)(\d+)(.+)'
     IS_EXPOSE_PUBLIC: bool = False
     EXT_SELF = None
-    KEYBOARD_SHORTCUTS: dict = {}
     STUBS_ENABLED: bool = False
 
     @staticmethod
     def Init(extension_self, ownerComp: COMP, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [],
-             enable_keyboard_shortcuts: bool = False, enable_stubs: bool = False) -> None:
+             enable_stubs: bool = False) -> None:
         """Initialize the CustomParHelper."""
         CustomParHelper.EXT_SELF = extension_self
         CustomParHelper.IS_EXPOSE_PUBLIC = expose_public
@@ -123,11 +123,6 @@ class CustomParHelper:
             CustomParHelper.EnableCallbacks(enable_parGroups)
         else:
             CustomParHelper.DisableCallbacks()
-
-        if enable_keyboard_shortcuts:
-            CustomParHelper.EnableKeyboardShortcuts()
-        else:
-            CustomParHelper.DisableKeyboardShortcuts()
 
         if enable_stubs:
             CustomParHelper.EnableStubs()
@@ -344,46 +339,6 @@ class CustomParHelper:
             return False
 
     @staticmethod
-    def EnableKeyboardShortcuts() -> None:
-        """Enable keyboard shortcut handling."""
-        for _docked in me.docked:
-            if 'extKeyboardin' in _docked.tags:
-                _docked.par.active = True
-                CustomParHelper._UpdateKeyboardShortcuts()
-
-    @staticmethod
-    def DisableKeyboardShortcuts() -> None:
-        """Disable keyboard shortcut handling."""
-        for _docked in me.docked:
-            if 'extKeyboardin' in _docked.tags:
-                _docked.par.active = False
-
-    @staticmethod
-    def RegisterKeyboardShortcut(shortcut: str, callback: callable) -> None:
-        """Register a keyboard shortcut and its callback."""
-        CustomParHelper.KEYBOARD_SHORTCUTS[shortcut] = callback
-        CustomParHelper._UpdateKeyboardShortcuts()
-
-    @staticmethod
-    def UnregisterKeyboardShortcut(shortcut: str) -> None:
-        """Unregister a keyboard shortcut."""
-        CustomParHelper.KEYBOARD_SHORTCUTS.pop(shortcut, None)
-        CustomParHelper._UpdateKeyboardShortcuts()
-
-    @staticmethod
-    def _UpdateKeyboardShortcuts() -> None:
-        """Update the extKeyboardIn operator's shortcuts parameter."""
-        for _docked in me.docked:
-            if 'extKeyboardin' in _docked.tags:
-                _docked.par.shortcuts = ' '.join(CustomParHelper.KEYBOARD_SHORTCUTS.keys())
-
-    @staticmethod
-    def OnKeyboardShortcut(shortcut: str) -> None:
-        """Handle keyboard shortcut events."""
-        if shortcut in CustomParHelper.KEYBOARD_SHORTCUTS:
-            CustomParHelper.KEYBOARD_SHORTCUTS[shortcut]()
-
-    @staticmethod
     def EnableStubs() -> None:
         """Enable stubs for the extension."""
         CustomParHelper.STUBS_ENABLED = True
@@ -405,3 +360,123 @@ class CustomParHelper:
                     op_ext = op(class_name)
                     _docked.StubifyDat(op_ext)
 
+
+class NoNode:
+    """
+    NoNode is a utility class that provides functionality for handling keyboard shortcuts
+    without the need for a specific node in TouchDesigner.
+    """
+
+    CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[CHOP, list[dict[str, callable]]] = TDStoreTools.DependDict()
+    KEYBOARD_SHORTCUTS: dict = {}
+    
+    KEYBOARD_IS_ENABLED: bool = False
+    CHOPEXEC_IS_ENABLED: bool = False
+
+    @staticmethod
+    def Init(enable_chopexec: bool = True, enable_keyboard_shortcuts: bool = True) -> None:
+        """Initialize the NoNode functionality."""
+        NoNode.CHOPEXEC_IS_ENABLED = enable_chopexec
+        NoNode.KEYBOARD_IS_ENABLED = enable_keyboard_shortcuts
+
+        if enable_chopexec:
+            NoNode.EnableChopExec()
+        else:
+            NoNode.DisableChopExec()
+
+        if enable_keyboard_shortcuts:
+            NoNode.EnableKeyboardShortcuts()
+        else:
+            NoNode.DisableKeyboardShortcuts()
+
+    @staticmethod       
+    def EnableChopExec() -> None:
+        """Enable chopExec handling."""
+        NoNode.CHOPEXEC_IS_ENABLED = True
+        for _docked in me.docked:
+            if 'extChopExec' in _docked.tags:
+                _docked.par.active = True
+
+    @staticmethod
+    def DisableChopExec() -> None:
+        """Disable chopExec handling."""
+        NoNode.CHOPEXEC_IS_ENABLED = False
+        for _docked in me.docked:
+            if 'extChopExec' in _docked.tags:
+                _docked.par.active = False
+
+    @staticmethod
+    def RegisterChopExec(chop: CHOP, channels: str, callback: callable) -> None:
+        """Register a chopExec callback"""
+        if chop not in NoNode.CHOPEXEC_CALLBACKS:
+            NoNode.CHOPEXEC_CALLBACKS.setItem(chop, [], raw=True)
+        NoNode.CHOPEXEC_CALLBACKS.getDependency(chop).val.append({channels: callback})
+        if NoNode.CHOPEXEC_IS_ENABLED:
+            NoNode._UpdateChopExec()
+
+    @staticmethod
+    def DeregisterChopExec(chop: CHOP, channels: str = '*') -> None:
+        """Deregister a chopExec callback"""
+        if chop in NoNode.CHOPEXEC_CALLBACKS:
+            NoNode.CHOPEXEC_CALLBACKS[chop] = [callback for callback in NoNode.CHOPEXEC_CALLBACKS[chop] if channels not in callback]
+            if not NoNode.CHOPEXEC_CALLBACKS[chop]:
+                del NoNode.CHOPEXEC_CALLBACKS[chop]
+        if NoNode.CHOPEXEC_IS_ENABLED:
+            NoNode._UpdateChopExec()
+            
+    @staticmethod
+    def _UpdateChopExec() -> None:
+        """Update the chopExec operator's channels parameter."""
+        for _docked in me.docked:
+            if 'extChopExec' in _docked.tags:
+                _docked.par.chop = ' '.join(NoNode.CHOPEXEC_CALLBACKS.keys())
+                _docked.par.channel = ' '.join([' '.join(callback.keys()) for callbacks in NoNode.CHOPEXEC_CALLBACKS.values() for callback in callbacks])
+
+    @staticmethod
+    def OnChopExec(chop: CHOP, channels: str) -> None:
+        """Handle chopExec events."""
+        pass
+    
+    @staticmethod
+    def EnableKeyboardShortcuts() -> None:
+        """Enable keyboard shortcut handling."""
+        NoNode.KEYBOARD_IS_ENABLED = True
+        for _docked in me.docked:
+            if 'extKeyboardin' in _docked.tags:
+                _docked.par.active = True
+                NoNode._UpdateKeyboardShortcuts()
+
+    @staticmethod
+    def DisableKeyboardShortcuts() -> None:
+        """Disable keyboard shortcut handling."""
+        NoNode.KEYBOARD_IS_ENABLED = False
+        for _docked in me.docked:
+            if 'extKeyboardin' in _docked.tags:
+                _docked.par.active = False
+
+    @staticmethod
+    def RegisterKeyboardShortcut(shortcut: str, callback: callable) -> None:
+        """Register a keyboard shortcut and its callback."""
+        NoNode.KEYBOARD_SHORTCUTS[shortcut] = callback
+        if NoNode.KEYBOARD_IS_ENABLED:
+            NoNode._UpdateKeyboardShortcuts()
+
+    @staticmethod
+    def UnregisterKeyboardShortcut(shortcut: str) -> None:
+        """Unregister a keyboard shortcut."""
+        NoNode.KEYBOARD_SHORTCUTS.pop(shortcut, None)
+        if NoNode.KEYBOARD_IS_ENABLED:
+            NoNode._UpdateKeyboardShortcuts()
+
+    @staticmethod
+    def _UpdateKeyboardShortcuts() -> None:
+        """Update the extKeyboardIn operator's shortcuts parameter."""
+        for _docked in me.docked:
+            if 'extKeyboardin' in _docked.tags:
+                _docked.par.shortcuts = ' '.join(NoNode.KEYBOARD_SHORTCUTS.keys())
+
+    @staticmethod
+    def OnKeyboardShortcut(shortcut: str) -> None:
+        """Handle keyboard shortcut events."""
+        if NoNode.KEYBOARD_IS_ENABLED and shortcut in NoNode.KEYBOARD_SHORTCUTS:
+            NoNode.KEYBOARD_SHORTCUTS[shortcut]()
