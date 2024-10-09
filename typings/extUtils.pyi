@@ -1,5 +1,7 @@
+CustomParHelper: CustomParHelper = mod(next((d.name for d in me.docked if 'CustomParHelper' in d.tags)))
 import re
 import TDStoreTools
+from typing import Callable, Dict, List, TypeAlias, Union, overload
 
 class CustomParHelper:
     """
@@ -95,122 +97,143 @@ class CustomParHelper:
     EXT_SELF = None
     STUBS_ENABLED: bool = False
 
-    @staticmethod
-    def Init(extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_stubs: bool=False) -> None:
+    @classmethod
+    def Init(cls, extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_stubs: bool=False) -> None:
         """Initialize the CustomParHelper."""
         pass
 
-    @staticmethod
-    def CustomParsAsProperties(extension_self, ownerComp: COMP, enable_parGroups: bool=True) -> None:
+    @classmethod
+    def CustomParsAsProperties(cls, extension_self, ownerComp: COMP, enable_parGroups: bool=True) -> None:
         """Create properties for custom parameters."""
         pass
 
-    @staticmethod
-    def EnableCallbacks(enable_parGroups: bool=True) -> None:
+    @classmethod
+    def EnableCallbacks(cls, enable_parGroups: bool=True) -> None:
         """Enable callbacks for custom parameters."""
         pass
 
-    @staticmethod
-    def DisableCallbacks() -> None:
+    @classmethod
+    def DisableCallbacks(cls) -> None:
         """Disable callbacks for custom parameters."""
         pass
 
-    @staticmethod
-    def OnValueChange(comp: COMP, par: Par, prev: Par) -> None:
+    @classmethod
+    def OnValueChange(cls, comp: COMP, par: Par, prev: Par) -> None:
         """Handle value change events for custom parameters."""
         pass
 
-    @staticmethod
-    def OnPulse(comp: COMP, par: Par) -> None:
+    @classmethod
+    def OnPulse(cls, comp: COMP, par: Par) -> None:
         """Handle pulse events for custom parameters."""
         pass
 
-    @staticmethod
-    def OnValuesChanged(changes: list[tuple[Par, Par]]) -> None:
+    @classmethod
+    def OnValuesChanged(cls, changes: list[tuple[Par, Par]]) -> None:
         """Handle value change events for ParGroups."""
         pass
 
-    @staticmethod
-    def OnSeqValuesChanged(changes: list[tuple[Par, Par]]) -> None:
+    @classmethod
+    def OnSeqValuesChanged(cls, changes: list[tuple[Par, Par]]) -> None:
         """Handle value change events for Sequence blocks."""
         pass
 
-    @staticmethod
-    def EnableStubs() -> None:
+    @classmethod
+    def EnableStubs(cls) -> None:
         """Enable stubs for the extension."""
         pass
 
-    @staticmethod
-    def DisableStubs() -> None:
+    @classmethod
+    def DisableStubs(cls) -> None:
         """Disable stubs for the extension."""
         pass
 
-    @staticmethod
-    def UpdateStubs() -> None:
+    @classmethod
+    def UpdateStubs(cls) -> None:
         """Update the stubs for the extension."""
         pass
 
 class NoNode:
     """
     NoNode is a utility class that provides functionality for handling keyboard shortcuts
-    without the need for a specific node in TouchDesigner.
+    and CHOP executions without the need for a specific node in TouchDesigner.
     """
-    CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[CHOP, list[dict[str, callable]]] = TDStoreTools.DependDict()
+    CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[str, dict[CHOP, dict[str, Callable]]] = TDStoreTools.DependDict()
     KEYBOARD_SHORTCUTS: dict = {}
     KEYBOARD_IS_ENABLED: bool = False
     CHOPEXEC_IS_ENABLED: bool = False
 
-    @staticmethod
-    def Init(enable_chopexec: bool=True, enable_keyboard_shortcuts: bool=True) -> None:
+    @classmethod
+    def Init(cls, enable_chopexec: bool=True, enable_keyboard_shortcuts: bool=True) -> None:
         """Initialize the NoNode functionality."""
         pass
 
-    @staticmethod
-    def EnableChopExec() -> None:
+    @classmethod
+    def EnableChopExec(cls) -> None:
         """Enable chopExec handling."""
         pass
 
-    @staticmethod
-    def DisableChopExec() -> None:
+    @classmethod
+    def DisableChopExec(cls) -> None:
         """Disable chopExec handling."""
         pass
 
-    @staticmethod
-    def RegisterChopExec(chop: CHOP, channels: str, callback: callable) -> None:
-        """Register a chopExec callback"""
+    @classmethod
+    def RegisterChopExec(cls, event_type: str, chop: COMP, channels: str, callback: Callable) -> None:
+        """
+        Register a CHOP execute callback.
+
+        Args:
+            event_type (str): The type of event to listen for ('OffToOn', 'WhileOn', 'WhileOff', 'ValueChange').
+            chop (CHOP): The CHOP operator to register the callback for.
+            channels (str): The channel(s) to listen to. Use '*' for all channels.
+            callback (Callable): The callback function to be called on CHOP execution.
+
+        Example:
+            def my_callback(event_type, channel, index, value, prev):
+                print(f"Event: {event_type}, Channel {channel} at index {index} changed from {prev} to {value}")
+            
+            NoNode.RegisterChopExec('ValueChange', op('constant1'), '*', my_callback)
+        """
         pass
 
-    @staticmethod
-    def DeregisterChopExec(chop: CHOP, channels: str='*') -> None:
-        """Deregister a chopExec callback"""
+    @classmethod
+    def DeregisterChopExec(cls, event_type: str, chop: CHOP=None, channels: str=None) -> None:
+        """
+        Deregister a chopExec callback
+
+        Args:
+            event_type (str): The event type to deregister ('OffToOn', 'WhileOn', 'WhileOff', 'ValueChange').
+            chop (CHOP, optional): The CHOP operator to deregister the callback for. If None, deregisters all CHOPs for the event type.
+            channels (str, optional): The channel(s) to deregister. If None, deregisters all channels for the specified CHOP.
+        """
         pass
 
-    @staticmethod
-    def OnChopExec(chop: CHOP, channels: str) -> None:
+    @classmethod
+    def OnChopExec(cls, event_type: str, channel: Channel, sampleIndex: int, val: float, prev: float) -> None:
         """Handle chopExec events."""
         pass
 
-    @staticmethod
-    def EnableKeyboardShortcuts() -> None:
+    @classmethod
+    def EnableKeyboardShortcuts(cls) -> None:
         """Enable keyboard shortcut handling."""
         pass
 
-    @staticmethod
-    def DisableKeyboardShortcuts() -> None:
+    @classmethod
+    def DisableKeyboardShortcuts(cls) -> None:
         """Disable keyboard shortcut handling."""
         pass
 
-    @staticmethod
-    def RegisterKeyboardShortcut(shortcut: str, callback: callable) -> None:
+    @classmethod
+    def RegisterKeyboardShortcut(cls, shortcut: str, callback: callable) -> None:
         """Register a keyboard shortcut and its callback."""
         pass
 
-    @staticmethod
-    def UnregisterKeyboardShortcut(shortcut: str) -> None:
+    @classmethod
+    def UnregisterKeyboardShortcut(cls, shortcut: str) -> None:
         """Unregister a keyboard shortcut."""
         pass
 
-    @staticmethod
-    def OnKeyboardShortcut(shortcut: str) -> None:
+    @classmethod
+    def OnKeyboardShortcut(cls, shortcut: str) -> None:
         """Handle keyboard shortcut events."""
         pass
