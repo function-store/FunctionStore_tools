@@ -1,4 +1,5 @@
 import re
+import TDStoreTools
 
 class CustomParHelper:
     """
@@ -27,7 +28,7 @@ class CustomParHelper:
        CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
-             enable_keyboard_shortcuts=False, auto_stubs: bool = False)
+             enable_keyboard_shortcuts=False, enable_stubs: bool = False)
 
         Additional options:
             - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
@@ -39,9 +40,7 @@ class CustomParHelper:
             - except_pages: List of parameter pages to exclude from property and callback handling
             - except_sequences: List of sequence names to exclude from property and callback handling
             - enable_keyboard_shortcuts: If True, enables keyboard shortcut handling with callbacks (default: False)
-            - auto_stubs: If True, automatically creates and updates stubs for the extension (default: False)
-
-    > NOTE: this class should only be attached to one extension, otherwise it will cause conflicts    
+            - enable_stubs: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
 
     3. Access custom parameters as properties (if enable_properties=True (default)):
        - self.par<ParamName>: Access the parameter object
@@ -79,7 +78,10 @@ class CustomParHelper:
          def onKeyboardShortcut(self):
            # This method will be called when the registered keyboard shortcut is pressed
 
-    > NOTE: This class only works with the docked helper ParExec DATs, which also perform filtering of parameters in a lot of cases.
+    > NOTE: This class only works docked to an extension with the tag 'extTemplate' and 
+      with the docked helper operators, which create the interface to the TouchDesigner environment.
+      Note that the docked helpers are hidden by default.
+    > NOTE: The reason this is implemented with static methods, is to omit the need to instantiate the class, providing a simpler interface (arguably).
     """
     EXCEPT_PAGES_STATIC: list[str] = ['Version Ctrl', 'About', 'Info']
     EXCEPT_PAGES: list[str] = EXCEPT_PAGES_STATIC
@@ -91,11 +93,10 @@ class CustomParHelper:
     SEQUENCE_PATTERN: str = '(\\w+?)(\\d+)(.+)'
     IS_EXPOSE_PUBLIC: bool = False
     EXT_SELF = None
-    KEYBOARD_SHORTCUTS: dict = {}
-    AUTO_STUBS: bool = False
+    STUBS_ENABLED: bool = False
 
     @staticmethod
-    def Init(extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_keyboard_shortcuts: bool=False, auto_stubs: bool=False) -> None:
+    def Init(extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_stubs: bool=False) -> None:
         """Initialize the CustomParHelper."""
         pass
 
@@ -135,6 +136,61 @@ class CustomParHelper:
         pass
 
     @staticmethod
+    def EnableStubs() -> None:
+        """Enable stubs for the extension."""
+        pass
+
+    @staticmethod
+    def DisableStubs() -> None:
+        """Disable stubs for the extension."""
+        pass
+
+    @staticmethod
+    def UpdateStubs() -> None:
+        """Update the stubs for the extension."""
+        pass
+
+class NoNode:
+    """
+    NoNode is a utility class that provides functionality for handling keyboard shortcuts
+    without the need for a specific node in TouchDesigner.
+    """
+    CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[CHOP, list[dict[str, callable]]] = TDStoreTools.DependDict()
+    KEYBOARD_SHORTCUTS: dict = {}
+    KEYBOARD_IS_ENABLED: bool = False
+    CHOPEXEC_IS_ENABLED: bool = False
+
+    @staticmethod
+    def Init(enable_chopexec: bool=True, enable_keyboard_shortcuts: bool=True) -> None:
+        """Initialize the NoNode functionality."""
+        pass
+
+    @staticmethod
+    def EnableChopExec() -> None:
+        """Enable chopExec handling."""
+        pass
+
+    @staticmethod
+    def DisableChopExec() -> None:
+        """Disable chopExec handling."""
+        pass
+
+    @staticmethod
+    def RegisterChopExec(chop: CHOP, channels: str, callback: callable) -> None:
+        """Register a chopExec callback"""
+        pass
+
+    @staticmethod
+    def DeregisterChopExec(chop: CHOP, channels: str='*') -> None:
+        """Deregister a chopExec callback"""
+        pass
+
+    @staticmethod
+    def OnChopExec(chop: CHOP, channels: str) -> None:
+        """Handle chopExec events."""
+        pass
+
+    @staticmethod
     def EnableKeyboardShortcuts() -> None:
         """Enable keyboard shortcut handling."""
         pass
@@ -157,9 +213,4 @@ class CustomParHelper:
     @staticmethod
     def OnKeyboardShortcut(shortcut: str) -> None:
         """Handle keyboard shortcut events."""
-        pass
-
-    @staticmethod
-    def UpdateStubs() -> None:
-        """Update the stubs for the extension."""
         pass
