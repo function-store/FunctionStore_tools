@@ -115,7 +115,7 @@ class ExtQuickExt:
 
 			extUtils = self.ConfigComp.copy(masterUtils, includeDocked=True)
 			extUtils.dock = extDat
-			extUtils.par.file = ''
+			#extUtils.par.file = ''
 			
 			extensionText = copy.deepcopy(masterExt.text)
 			
@@ -132,19 +132,16 @@ class ExtQuickExt:
 			extDat.tags.add('TDExtension')
 			extPromotePar.val = True
 			extNamePar.val = ''
-			extDat.docked[0].nodeX = extDat.nodeX + 150
-			extDat.docked[0].nodeY = extDat.nodeY - 120
+			extDat.docked[0].nodeX = extDat.nodeX 
+			extDat.docked[0].nodeY = extDat.nodeY - 200
 			extDat.docked[0].showDocked = True
 			extDat.current = True
 
 			self.__purgeTags(extDat)
 			self.__purgeTags(extUtils)
-			
-			for idx, _dock in enumerate(extUtils.docked):
-				_dock.expose = False
-				_dock.nodeX = extUtils.nodeX
-				_dock.nodeY = extUtils.nodeY - 120 * (idx + 1)
-				_dock.showDocked = False
+
+			for _dock in extUtils.ops('*'):
+				#_dock.showDocked = False
 				self.__purgeTags(_dock)
 				if hasattr(_dock.par, 'file'):
 					_dock.par.file.mode = ParMode.CONSTANT
@@ -158,8 +155,9 @@ class ExtQuickExt:
 			self.ConfigComp.initializeExtensions(extIndex-1)
 			self.__updateCompEditor(extIndex)
 
-			if self.ownerComp.par.Deploystubs.eval():
-				self.stubser.StubifyDat(masterUtils)
+			# TODO: stubify packages
+			#if self.ownerComp.par.Deploystubs.eval():
+				#self.stubser.StubifyDat(masterUtils)
 
 	def __updateCompEditor(self, index):
 		compEditor = op.TDDialogs.op('CompEditor')
