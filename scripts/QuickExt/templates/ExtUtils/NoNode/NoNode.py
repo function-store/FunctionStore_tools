@@ -6,8 +6,8 @@ from enum import Enum, auto
 
 class NoNode:
     """
-    NoNode is a utility class that provides functionality for handling keyboard shortcuts
-    and CHOP executions without the need for a specific node in TouchDesigner.
+    NoNode is a utility class that provides functionality for handling keyboard shortcuts,
+    CHOP executions, and DAT executions without the need for a specific node in TouchDesigner.
     """
 
     class ChopExecType(Enum):
@@ -16,46 +16,78 @@ class NoNode:
         OnToOff = auto()
         WhileOff = auto()
         ValueChange = auto()
-        
-    CHOPVALUE_EXEC: COMP = op('extChopValueExec')
-    CHOPOFFTOON_EXEC: COMP = op('extChopOffToOnExec')
-    CHOPONTOOFF_EXEC: COMP = op('extChopOnToOffExec')
-    CHOPWHILEON_EXEC: COMP = op('extChopWhileOnExec')
-    CHOPWHILEOFF_EXEC: COMP = op('extChopWhileOffExec')
 
-    CHOP_EXECS: list[COMP] = [CHOPVALUE_EXEC, CHOPOFFTOON_EXEC, CHOPWHILEON_EXEC, CHOPWHILEOFF_EXEC]
+    class DatExecType(Enum):
+        TableChange = auto()
+        RowChange = auto()
+        ColChange = auto()
+        CellChange = auto()
+        SizeChange = auto()
+
+    CHOP_VALUECHANGE_EXEC: COMP = op('extChopValueChangeExec')
+    CHOP_OFFTOON_EXEC: COMP = op('extChopOffToOnExec')
+    CHOP_ONTOOFF_EXEC: COMP = op('extChopOnToOffExec')
+    CHOP_WHILEON_EXEC: COMP = op('extChopWhileOnExec')
+    CHOP_WHILEOFF_EXEC: COMP = op('extChopWhileOffExec')
+
+    DAT_TABLECHANGE_EXEC: COMP = op('extDatTableChangeExec')
+    DAT_ROWCHANGE_EXEC: COMP = op('extDatRowChangeExec')
+    DAT_COLCHANGE_EXEC: COMP = op('extDatColChangeExec')
+    DAT_CELLCHANGE_EXEC: COMP = op('extDatCellChangeExec')
+    DAT_SIZECHANGE_EXEC: COMP = op('extDatSizeChangeExec')
+
+    CHOP_EXECS: list[COMP] = [CHOP_VALUECHANGE_EXEC, CHOP_OFFTOON_EXEC, CHOP_ONTOOFF_EXEC, CHOP_WHILEON_EXEC, CHOP_WHILEOFF_EXEC]
+    DAT_EXECS: list[COMP] = [DAT_TABLECHANGE_EXEC, DAT_ROWCHANGE_EXEC, DAT_COLCHANGE_EXEC, DAT_CELLCHANGE_EXEC, DAT_SIZECHANGE_EXEC]
+    
+    CHOP_EXEC_MAP: Dict[ChopExecType, COMP] = {
+        ChopExecType.ValueChange: CHOP_VALUECHANGE_EXEC,
+        ChopExecType.OffToOn: CHOP_OFFTOON_EXEC,
+        ChopExecType.WhileOn: CHOP_WHILEON_EXEC,
+        ChopExecType.WhileOff: CHOP_WHILEOFF_EXEC
+    }
+
+    DAT_EXEC_MAP: Dict[DatExecType, COMP] = {
+        DatExecType.TableChange: DAT_TABLECHANGE_EXEC,
+        DatExecType.RowChange: DAT_ROWCHANGE_EXEC,
+        DatExecType.ColChange: DAT_COLCHANGE_EXEC,
+        DatExecType.CellChange: DAT_CELLCHANGE_EXEC,
+        DatExecType.SizeChange: DAT_SIZECHANGE_EXEC
+    }
+
     CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[ChopExecType, dict[CHOP, dict[str, Callable]]] = TDStoreTools.DependDict()
-
+    DATEXEC_CALLBACKS: TDStoreTools.DependDict[DatExecType, dict[DAT, Callable]] = TDStoreTools.DependDict()
     CHOPEXEC_IS_ENABLED: bool = False
-
-    ALL_EXECS: list[COMP] = CHOP_EXECS
+    DATEXEC_IS_ENABLED: bool = False
 
     KEYBOARD_SHORTCUTS: dict = {}
     KEYBOARD_IS_ENABLED: bool = False
 
-    CHOP_EXEC_MAP: Dict[ChopExecType, COMP] = {
-        ChopExecType.ValueChange: CHOPVALUE_EXEC,
-        ChopExecType.OffToOn: CHOPOFFTOON_EXEC,
-        ChopExecType.WhileOn: CHOPWHILEON_EXEC,
-        ChopExecType.WhileOff: CHOPWHILEOFF_EXEC
-    }
+    ALL_EXECS: list[COMP] = CHOP_EXECS + DAT_EXECS
 
     @classmethod
-    def Init(cls, enable_chopexec: bool = True, enable_keyboard_shortcuts: bool = True) -> None:
+    def Init(cls, enable_chopexec: bool = True, enable_datexec: bool = True, enable_keyboard_shortcuts: bool = True) -> None:
         """Initialize the NoNode functionality."""
         cls.CHOPEXEC_IS_ENABLED = enable_chopexec
+        cls.DATEXEC_IS_ENABLED = enable_datexec
         cls.KEYBOARD_IS_ENABLED = enable_keyboard_shortcuts
         cls.CHOPEXEC_CALLBACKS = TDStoreTools.DependDict()
+        cls.DATEXEC_CALLBACKS = TDStoreTools.DependDict()
         cls.KEYBOARD_SHORTCUTS = {}
 
-        # Disable all CHOP execute operators by default
+        # Disable all execute operators by default
         for exec in cls.ALL_EXECS:
-            exec.par.active = False
+            if exec is not None:
+                exec.par.active = False
 
         if enable_chopexec:
             cls.EnableChopExec()
         else:
             cls.DisableChopExec()
+
+        if enable_datexec:
+            cls.EnableDatExec()
+        else:
+            cls.DisableDatExec()
 
         if enable_keyboard_shortcuts:
             cls.EnableKeyboardShortcuts()
@@ -68,15 +100,29 @@ class NoNode:
         cls.CHOPEXEC_IS_ENABLED = True
 
     @classmethod
+    def EnableDatExec(cls) -> None:
+        """Enable datExec handling."""
+        cls.DATEXEC_IS_ENABLED = True
+
+    @classmethod
     def DisableChopExec(cls, event_type: ChopExecType = None) -> None:
         """Disable chopExec handling for a specific event type or all event types."""
-        
         if event_type is None:
             # disable all active operators
             for chop_exec in cls.CHOP_EXECS:
                 chop_exec.par.active = False
         elif event_type in cls.CHOP_EXEC_MAP:
             cls.CHOP_EXEC_MAP[event_type].par.active = False
+
+    @classmethod
+    def DisableDatExec(cls, event_type: DatExecType = None) -> None:
+        """Disable datExec handling for a specific event type or all event types."""
+        if event_type is None:
+            # disable all active operators
+            for dat_exec in cls.DAT_EXECS:
+                dat_exec.par.active = False
+        elif event_type in cls.DAT_EXEC_MAP:
+            cls.DAT_EXEC_MAP[event_type].par.active = False
 
     @classmethod
     def RegisterChopExec(cls, event_type: ChopExecType, chop: COMP, channels: str, callback: Callable) -> None:
@@ -109,6 +155,33 @@ class NoNode:
             cls.CHOP_EXEC_MAP[event_type].par.active = True
 
     @classmethod
+    def RegisterDatExec(cls, event_type: DatExecType, dat: DAT, callback: Callable) -> None:
+        """
+        Register a DAT execute callback.
+
+        Args:
+            event_type (DatExecType): The type of event to listen for.
+            dat (DAT): The DAT operator to register the callback for.
+            callback (Callable): The callback function to be called on DAT execution.
+
+        Example:
+            def my_callback(dat, rows, cols):
+                print(f"DAT {dat} changed. New size: {rows}x{cols}")
+            
+            NoNode.RegisterDatExec(DatExecType.SizeChange, op('table1'), my_callback)
+        """
+        if event_type not in cls.DATEXEC_CALLBACKS.getRaw():
+            cls.DATEXEC_CALLBACKS.setItem(event_type, {}, raw=True)
+
+        current_callbacks = cls.DATEXEC_CALLBACKS.getDependency(event_type)
+        current_callbacks.val[dat] = callback
+        cls.DATEXEC_CALLBACKS.setItem(event_type, current_callbacks)
+
+        # Enable the appropriate docked operator based on the event type
+        if event_type in cls.DAT_EXEC_MAP:
+            cls.DAT_EXEC_MAP[event_type].par.active = True
+
+    @classmethod
     def DeregisterChopExec(cls, event_type: ChopExecType, chop: CHOP = None, channels: str = None) -> None:
         """
         Deregister a chopExec callback
@@ -137,7 +210,26 @@ class NoNode:
                 for chop in cls.CHOPEXEC_CALLBACKS[event_type]:
                     if cls.CHOPEXEC_CALLBACKS[event_type][chop]:
                         return
-                cls.DisableChopExec()
+                cls.DisableChopExec(event_type)
+
+    @classmethod
+    def DeregisterDatExec(cls, event_type: DatExecType, dat: DAT = None) -> None:
+        """
+        Deregister a datExec callback
+
+        Args:
+            event_type (DatExecType): The event type to deregister.
+            dat (DAT, optional): The DAT operator to deregister the callback for. If None, deregisters all DATs for the event type.
+        """
+        if event_type in cls.DATEXEC_CALLBACKS:
+            if dat is None:
+                del cls.DATEXEC_CALLBACKS[event_type]
+            elif dat in cls.DATEXEC_CALLBACKS[event_type]:
+                del cls.DATEXEC_CALLBACKS[event_type][dat]
+            
+            if not cls.DATEXEC_CALLBACKS[event_type]:
+                del cls.DATEXEC_CALLBACKS[event_type]
+                cls.DisableDatExec(event_type)
 
     @classmethod
     def OnChopExec(cls, event_type: ChopExecType, channel: Channel, sampleIndex: int, val: float, prev: float) -> None:
@@ -164,6 +256,32 @@ class NoNode:
             for ch, callback in callbacks.items():
                 if ch == '*' or channel.name == ch:
                     execute_callback(callback)
+
+    @classmethod
+    def OnDatExec(cls, event_type: DatExecType, dat: DAT, rows: int = None, cols: int = None, cells: list[Cell] = None, prev = None) -> None:
+        """Handle datExec events."""
+        debug('hejj')
+        debug(cls.DATEXEC_IS_ENABLED)
+        if not cls.DATEXEC_IS_ENABLED:
+            return
+
+        if event_type in cls.DATEXEC_CALLBACKS and dat in cls.DATEXEC_CALLBACKS[event_type]:
+            callback = cls.DATEXEC_CALLBACKS[event_type][dat]
+            arg_count = callback.__code__.co_argcount
+            debug(f'wouldcall {callback} with {arg_count} args')
+            if arg_count == 1:
+                callback()
+            elif arg_count == 2:
+                callback(dat)
+            elif arg_count == 3:
+                if event_type == DatExecType.RowChange:
+                    callback(dat, rows)
+                elif event_type == DatExecType.ColumnChange:
+                    callback(dat, cols)
+                elif event_type == DatExecType.CellChange:
+                    callback(dat, cells)
+            elif arg_count == 4:
+                callback(dat, cells, prev)
 
     @classmethod
     def EnableKeyboardShortcuts(cls) -> None:
