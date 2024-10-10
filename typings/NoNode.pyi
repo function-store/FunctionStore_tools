@@ -5,8 +5,45 @@ from enum import Enum, auto
 
 class NoNode:
     """
-    NoNode is a utility class that provides functionality for handling keyboard shortcuts,
-    CHOP executions, and DAT executions without the need for a specific node in TouchDesigner.
+    NoNode is a versatile utility class designed to enhance TouchDesigner workflows by providing a centralized system for managing various types of executions and callbacks without requiring dedicated nodes.
+
+    Key features include:
+    1. Keyboard shortcut handling: Easily define and manage custom keyboard shortcuts.
+    2. CHOP executions: Handle different types of CHOP events (e.g., value changes, on/off states).
+    3. DAT executions: Manage various DAT-related events (e.g., table, row, or cell changes).
+
+    This class simplifies the process of setting up complex interactions and automations within TouchDesigner projects, 
+    reducing clutter and improving organization. It's particularly useful for larger projects or when working with 
+    multiple extensions that need to respond to similar events.
+
+    Usage examples:
+    0. Initialize the NoNode system in your extension:
+       NoNode.Init(enable_chopexec=True, enable_datexec=True, enable_keyboard_shortcuts=True)
+
+    1. CHOP executions:
+       - Register a callback for CHOP value changes:
+         NoNode.RegisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name, callback_function)
+         # callback signature: def on_value_change_function(channel: Channel, sampleIndex: int, val: float, prev: float):
+         # can omit parameters from the right side of the signature if not needed
+       - Handle CHOP state changes:
+         NoNode.RegisterChopExec(NoNode.ChopExecType.OffToOn, chop_op, channel_name, on_activate_function)
+         # callback signature: def on_activate_function(channel: Channel, sampleIndex: int, val: float, prev: float):
+         # can omit parameters from the right side of the signature if not needed
+
+    2. DAT executions:
+       - React to table changes in a DAT:
+         NoNode.RegisterDatExec(NoNode.DatExecType.TableChange, dat_op, on_table_change_function)
+         # callback signature depends on the event type, eg.: def on_table_change_function(dat: DAT):
+       - Handle cell value changes:
+         NoNode.RegisterDatExec(NoNode.DatExecType.CellChange, dat_op, on_cell_change_function)
+         # callback signature depends on the event type, eg.: def on_cell_change_function(dat: DAT, cells: list[Cell], prev: Cell):
+
+    3. Keyboard shortcuts:
+       - Register a keyboard shortcut:
+         NoNode.RegisterKeyboardShortcut('ctrl.k', onKeyboardShortcut)
+         # callback signature: def onKeyboardShortcut():
+
+    These examples demonstrate how NoNode can be used to centralize and simplify event handling in TouchDesigner projects.
     """
 
     class ChopExecType(Enum):
@@ -22,19 +59,19 @@ class NoNode:
         ColChange = auto()
         CellChange = auto()
         SizeChange = auto()
-    CHOP_VALUECHANGE_EXEC: COMP = op('extChopValueChangeExec')
-    CHOP_OFFTOON_EXEC: COMP = op('extChopOffToOnExec')
-    CHOP_ONTOOFF_EXEC: COMP = op('extChopOnToOffExec')
-    CHOP_WHILEON_EXEC: COMP = op('extChopWhileOnExec')
-    CHOP_WHILEOFF_EXEC: COMP = op('extChopWhileOffExec')
-    DAT_TABLECHANGE_EXEC: COMP = op('extDatTableChangeExec')
-    DAT_ROWCHANGE_EXEC: COMP = op('extDatRowChangeExec')
-    DAT_COLCHANGE_EXEC: COMP = op('extDatColChangeExec')
-    DAT_CELLCHANGE_EXEC: COMP = op('extDatCellChangeExec')
-    DAT_SIZECHANGE_EXEC: COMP = op('extDatSizeChangeExec')
-    KEYBOARD_EXEC: COMP = op('extKeyboardIn')
-    CHOP_EXECS: list[COMP] = [CHOP_VALUECHANGE_EXEC, CHOP_OFFTOON_EXEC, CHOP_ONTOOFF_EXEC, CHOP_WHILEON_EXEC, CHOP_WHILEOFF_EXEC]
-    DAT_EXECS: list[COMP] = [DAT_TABLECHANGE_EXEC, DAT_ROWCHANGE_EXEC, DAT_COLCHANGE_EXEC, DAT_CELLCHANGE_EXEC, DAT_SIZECHANGE_EXEC]
+    CHOP_VALUECHANGE_EXEC: DAT = op('extChopValueChangeExec')
+    CHOP_OFFTOON_EXEC: DAT = op('extChopOffToOnExec')
+    CHOP_ONTOOFF_EXEC: DAT = op('extChopOnToOffExec')
+    CHOP_WHILEON_EXEC: DAT = op('extChopWhileOnExec')
+    CHOP_WHILEOFF_EXEC: DAT = op('extChopWhileOffExec')
+    DAT_TABLECHANGE_EXEC: DAT = op('extDatTableChangeExec')
+    DAT_ROWCHANGE_EXEC: DAT = op('extDatRowChangeExec')
+    DAT_COLCHANGE_EXEC: DAT = op('extDatColChangeExec')
+    DAT_CELLCHANGE_EXEC: DAT = op('extDatCellChangeExec')
+    DAT_SIZECHANGE_EXEC: DAT = op('extDatSizeChangeExec')
+    KEYBOARD_EXEC: DAT = op('extKeyboardIn')
+    CHOP_EXECS: list[DAT] = [CHOP_VALUECHANGE_EXEC, CHOP_OFFTOON_EXEC, CHOP_ONTOOFF_EXEC, CHOP_WHILEON_EXEC, CHOP_WHILEOFF_EXEC]
+    DAT_EXECS: list[DAT] = [DAT_TABLECHANGE_EXEC, DAT_ROWCHANGE_EXEC, DAT_COLCHANGE_EXEC, DAT_CELLCHANGE_EXEC, DAT_SIZECHANGE_EXEC]
     CHOP_EXEC_MAP: Dict[ChopExecType, COMP] = {ChopExecType.ValueChange: CHOP_VALUECHANGE_EXEC, ChopExecType.OffToOn: CHOP_OFFTOON_EXEC, ChopExecType.WhileOn: CHOP_WHILEON_EXEC, ChopExecType.WhileOff: CHOP_WHILEOFF_EXEC}
     DAT_EXEC_MAP: Dict[DatExecType, COMP] = {DatExecType.TableChange: DAT_TABLECHANGE_EXEC, DatExecType.RowChange: DAT_ROWCHANGE_EXEC, DatExecType.ColChange: DAT_COLCHANGE_EXEC, DatExecType.CellChange: DAT_CELLCHANGE_EXEC, DatExecType.SizeChange: DAT_SIZECHANGE_EXEC}
     CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[ChopExecType, dict[CHOP, dict[str, Callable]]] = TDStoreTools.DependDict()
@@ -43,7 +80,7 @@ class NoNode:
     CHOPEXEC_IS_ENABLED: bool = False
     DATEXEC_IS_ENABLED: bool = False
     KEYBOARD_IS_ENABLED: bool = False
-    ALL_EXECS: list[COMP] = CHOP_EXECS + DAT_EXECS + [KEYBOARD_EXEC]
+    ALL_EXECS: list[DAT] = CHOP_EXECS + DAT_EXECS + [KEYBOARD_EXEC]
 
     @classmethod
     def Init(cls, enable_chopexec: bool=True, enable_datexec: bool=True, enable_keyboard_shortcuts: bool=True) -> None:
@@ -71,7 +108,7 @@ class NoNode:
         pass
 
     @classmethod
-    def RegisterChopExec(cls, event_type: ChopExecType, chop: COMP, channels: str, callback: Callable) -> None:
+    def RegisterChopExec(cls, event_type: ChopExecType, chop: CHOP, channels: str, callback: Callable) -> None:
         """
         Register a CHOP execute callback.
 

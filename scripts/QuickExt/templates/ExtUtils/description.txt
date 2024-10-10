@@ -1,0 +1,134 @@
+# TouchDesigner Extension Utilities: NoNode and CustomParHelper
+
+These utility classes are part of the extUtils package, designed to enhance and streamline TouchDesigner extension development. They provide powerful tools for managing events, parameters, and callbacks without cluttering your project with additional nodes.
+
+They can be invoked by docking this COMP to an extension, after which the two packages can be imported as follows:
+
+CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+
+> This might look complicated at first but it's just a fancy import statement to avoid any conflicts when
+> having multiple extension classes with ExtUtils attached
+
+#### Common Benefits:
+
+1. **Code Organization**: Both utilities help centralize and structure code, improving readability and maintainability.
+2. **Reduced Boilerplate**: Simplify common TouchDesigner tasks with less repetitive code.
+3. **Enhanced Development Experience**: Provide more intuitive and IDE-friendly ways to interact with TouchDesigner's features.
+4. **Flexibility**: Offer configurable options to suit various project needs and coding styles.
+5. **Performance**: Optimize event handling and parameter management without adding unnecessary nodes.
+
+#### Usage:
+
+These utilities are designed to work within the QuickExt framework for TouchDesigner. They offer static method interfaces, eliminating the need for instantiation and providing clean, simple APIs for event and parameter management.
+
+By leveraging NoNode and CustomParHelper, TouchDesigner developers can create more efficient, organized, and maintainable extensions, ultimately leading to smoother workflow and improved project scalability.
+
+
+## CustomParHelper
+
+CustomParHelper simplifies the management of custom parameters in TouchDesigner extensions, providing an intuitive interface for accessing and manipulating parameters, implementing callbacks, and handling parameter groups.
+
+### Key Features:
+- Easy parameter access as properties
+- Simplified custom parameter callbacks
+- Support for sequence parameters and blocks
+- Parameter group (parGroups) management
+- Flexible configuration for inclusion/exclusion of properties and callbacks
+- Optional public/private naming conventions
+- Automatic stub generation for improved IDE support
+
+##  Usage examples in your extension class:
+    0. Make sure ExtUtils is docked to your extension
+
+    1. Import the CustomParHelper class:
+        CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+    
+    2. Initialize in your extension's __init__ method as follows:
+       CustomParHelper.Init(self, ownerComp)
+
+       Full signature and optional parameters:
+       CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
+             par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
+             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], enable_stubs: bool = False)
+
+        Additional options:
+            - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
+            - expose_public: If True, uses capitalized property and method names (e.g., Par, Eval instead of par, eval)
+            - par_properties: List of parameter names to include in property creation, by default all parameters are included
+            - par_callbacks: List of parameter names to include in callback handling, by default all parameters are included
+            - except_properties: List of parameter names to exclude from property creation
+            - except_callbacks: List of parameter names to exclude from callback handling
+            - except_pages: List of parameter pages to exclude from property and callback handling
+            - except_sequences: List of sequence names to exclude from property and callback handling
+            - enable_stubs: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
+
+    3. Access custom parameters as properties (if enable_properties=True (default)):
+       - self.par<ParamName>: Access the parameter object
+       - self.eval<ParamName>: Get the evaluated value of the parameter
+       - self.parGroup<GroupName>: Access the parameter group object (if enable_parGroups=True (default))
+       - self.evalGroup<GroupName>: Get the evaluated value of the parameter group (if enable_parGroups=True (default))
+    > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
+
+    4. Implement callbacks (if enable_callbacks=True (default)):
+       - For regular parameters:
+         def onPar<ParamName>(self, _par, _val, _prev):
+           # _par and _prev can be omitted if not needed
+
+       - For pulse parameters:
+         def onPar<PulseParamName>(self, _par):
+           # _par can be omitted if not needed
+
+       - For sequence blocks:
+         def onSeq<SeqName>N(self, idx):
+
+       - For sequence parameters:
+         def onSeq<SeqName>N<ParName>(self, _par, idx, _val, _prev):
+           # _par and _prev can be omitted if not needed
+
+       - For parameter groups if enable_parGroups=True (default):
+         def onParGroup<GroupName>(self, _parGroup, _val):
+           # _parGroup can be omitted if not needed
+
+## NoNode
+
+NoNode is a versatile utility class that centralizes the management of various types of executions and callbacks in TouchDesigner, eliminating the need for dedicated nodes.
+
+### Key Features:
+- Keyboard shortcut handling
+- CHOP executions (value changes, on/off states)
+- DAT executions (table, row, or cell changes)
+- Centralized event management
+- Reduced node clutter
+
+### Usage examples:
+    0. Make sure ExtUtils is docked to your extension
+
+    1. Import the NoNode class:
+        NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+
+    2. Initialize the NoNode system in your extension:
+       NoNode.Init(enable_chopexec=True, enable_datexec=True, enable_keyboard_shortcuts=True)
+
+    3. CHOP executions:
+       - Register a callback for CHOP value changes:
+         NoNode.RegisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name, callback_function)
+         # callback signature: def on_value_change_function(channel: Channel, sampleIndex: int, val: float, prev: float):
+         # can omit parameters from the right side of the signature if not needed
+       - Handle CHOP state changes:
+         NoNode.RegisterChopExec(NoNode.ChopExecType.OffToOn, chop_op, channel_name, on_activate_function)
+         # callback signature: def on_activate_function(channel: Channel, sampleIndex: int, val: float, prev: float):
+         # can omit parameters from the right side of the signature if not needed
+
+    4. DAT executions:
+       - React to table changes in a DAT:
+         NoNode.RegisterDatExec(NoNode.DatExecType.TableChange, dat_op, on_table_change_function)
+         # callback signature depends on the event type, eg.: def on_table_change_function(dat: DAT):
+       - Handle cell value changes:
+         NoNode.RegisterDatExec(NoNode.DatExecType.CellChange, dat_op, on_cell_change_function)
+         # callback signature depends on the event type, eg.: def on_cell_change_function(dat: DAT, cells: list[Cell], prev: Cell):
+
+    5. Keyboard shortcuts:
+       - Register a keyboard shortcut:
+         NoNode.RegisterKeyboardShortcut('ctrl.k', onKeyboardShortcut)
+         # callback signature: def onKeyboardShortcut():
