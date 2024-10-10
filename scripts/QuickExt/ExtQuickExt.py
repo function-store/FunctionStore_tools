@@ -75,7 +75,7 @@ class ExtQuickExt:
 			return
 		sel = True if inject_ext is not None or info['buttonNum'] == 1 else False
 		if sel and self.ConfigComp:
-			masterUtils = self.ownerComp.op('extUtils')
+			masterUtils = self.ownerComp.op('ExtUtils')
 			masterExt = self.extTemplate
 
 			extIndex = self.getExtIndex()
