@@ -14,7 +14,6 @@ class CustomParHelper:
     - Simplified custom parameter callbacks
     - Support for sequence parameters
     - Support for parameter groups (parGroups)
-    - Keyboard shortcuts handling
     - Configurable inclusion for properties and callbacks (by default all parameters are included)
     - Configurable exceptions for pages, properties, callbacks, and sequences
 
@@ -28,8 +27,7 @@ class CustomParHelper:
        Full signature and optional parameters:
        CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
-             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
-             enable_keyboard_shortcuts=False, enable_stubs: bool = False)
+             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], enable_stubs: bool = False)
 
         Additional options:
             - enable_parGroups: If True, creates properties and methods for parGroups (default: True)
@@ -40,7 +38,6 @@ class CustomParHelper:
             - except_callbacks: List of parameter names to exclude from callback handling
             - except_pages: List of parameter pages to exclude from property and callback handling
             - except_sequences: List of sequence names to exclude from property and callback handling
-            - enable_keyboard_shortcuts: If True, enables keyboard shortcut handling with callbacks (default: False)
             - enable_stubs: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
 
     3. Access custom parameters as properties (if enable_properties=True (default)):
@@ -69,15 +66,6 @@ class CustomParHelper:
        - For parameter groups if enable_parGroups=True (default):
          def onParGroup<GroupName>(self, _parGroup, _val):
            # _parGroup can be omitted if not needed
-
-    5. Handle keyboard shortcuts (if enable_keyboard_shortcuts=True (default is False)):
-       - Enable keyboard shortcuts:
-         CustomParHelper.Init(self, ownerComp, enable_keyboard_shortcuts=True)
-       - Register a keyboard shortcut and its callback:
-         CustomParHelper.RegisterKeyboardShortcut("ctrl.k", self.onKeyboardShortcut)
-       - Implement the callback method:
-         def onKeyboardShortcut(self):
-           # This method will be called when the registered keyboard shortcut is pressed
 
     > NOTE: This class is part of the extUtils package, and is designed to work with the QuickExt framework.
     > NOTE: The reason this is implemented with static methods, is to omit the need to instantiate the class, providing a simpler interface (arguably).

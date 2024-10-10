@@ -36,6 +36,8 @@ class NoNode:
     DAT_CELLCHANGE_EXEC: COMP = op('extDatCellChangeExec')
     DAT_SIZECHANGE_EXEC: COMP = op('extDatSizeChangeExec')
 
+    KEYBOARD_EXEC: COMP = op('extKeyboardIn')
+
     CHOP_EXECS: list[COMP] = [CHOP_VALUECHANGE_EXEC, CHOP_OFFTOON_EXEC, CHOP_ONTOOFF_EXEC, CHOP_WHILEON_EXEC, CHOP_WHILEOFF_EXEC]
     DAT_EXECS: list[COMP] = [DAT_TABLECHANGE_EXEC, DAT_ROWCHANGE_EXEC, DAT_COLCHANGE_EXEC, DAT_CELLCHANGE_EXEC, DAT_SIZECHANGE_EXEC]
     
@@ -56,13 +58,12 @@ class NoNode:
 
     CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[ChopExecType, dict[CHOP, dict[str, Callable]]] = TDStoreTools.DependDict()
     DATEXEC_CALLBACKS: TDStoreTools.DependDict[DatExecType, dict[DAT, Callable]] = TDStoreTools.DependDict()
+    KEYBOARD_CALLBACKS: TDStoreTools.DependDict[str, Callable] = TDStoreTools.DependDict()
     CHOPEXEC_IS_ENABLED: bool = False
     DATEXEC_IS_ENABLED: bool = False
-
-    KEYBOARD_SHORTCUTS: dict = {}
     KEYBOARD_IS_ENABLED: bool = False
 
-    ALL_EXECS: list[COMP] = CHOP_EXECS + DAT_EXECS
+    ALL_EXECS: list[COMP] = CHOP_EXECS + DAT_EXECS + [KEYBOARD_EXEC]
 
     @classmethod
     def Init(cls, enable_chopexec: bool = True, enable_datexec: bool = True, enable_keyboard_shortcuts: bool = True) -> None:
@@ -72,7 +73,7 @@ class NoNode:
         cls.KEYBOARD_IS_ENABLED = enable_keyboard_shortcuts
         cls.CHOPEXEC_CALLBACKS = TDStoreTools.DependDict()
         cls.DATEXEC_CALLBACKS = TDStoreTools.DependDict()
-        cls.KEYBOARD_SHORTCUTS = {}
+        cls.KEYBOARD_CALLBACKS = TDStoreTools.DependDict()
 
         # Disable all execute operators by default
         for exec in cls.ALL_EXECS:
@@ -93,6 +94,8 @@ class NoNode:
             cls.EnableKeyboardShortcuts()
         else:
             cls.DisableKeyboardShortcuts()
+
+    ### CHOP and DAT Exec ###
 
     @classmethod       
     def EnableChopExec(cls) -> None:
@@ -283,46 +286,43 @@ class NoNode:
             elif arg_count == 4:
                 callback(dat, cells, prev)
 
+
+    ### Keyboard Shortcuts ###
+
     @classmethod
     def EnableKeyboardShortcuts(cls) -> None:
         """Enable keyboard shortcut handling."""
         cls.KEYBOARD_IS_ENABLED = True
-        for _docked in me.docked:
-            if 'extKeyboardin' in _docked.tags:
-                _docked.par.active = True
-                cls._UpdateKeyboardShortcuts()
+        cls.KEYBOARD_EXEC.par.active = True
 
     @classmethod
     def DisableKeyboardShortcuts(cls) -> None:
         """Disable keyboard shortcut handling."""
         cls.KEYBOARD_IS_ENABLED = False
-        for _docked in me.docked:
-            if 'extKeyboardin' in _docked.tags:
-                _docked.par.active = False
+        cls.KEYBOARD_EXEC.par.active = False
 
     @classmethod
     def RegisterKeyboardShortcut(cls, shortcut: str, callback: callable) -> None:
-        """Register a keyboard shortcut and its callback."""
-        cls.KEYBOARD_SHORTCUTS[shortcut] = callback
-        if cls.KEYBOARD_IS_ENABLED:
-            cls._UpdateKeyboardShortcuts()
+        """ Register a keyboard shortcut and its callback.
+        Handle keyboard shortcuts (if enable_keyboard_shortcuts=True (default is False)):
+       - Enable keyboard shortcuts:
+         CustomParHelper.Init(self, ownerComp, enable_keyboard_shortcuts=True)
+       - Register a keyboard shortcut and its callback:
+         CustomParHelper.RegisterKeyboardShortcut("ctrl.k", self.onKeyboardShortcut)
+       - Implement the callback method:
+         def onKeyboardShortcut(self):
+           # This method will be called when the registered keyboard shortcut is pressed
+        """
+        cls.KEYBOARD_CALLBACKS[shortcut] = callback
 
     @classmethod
     def UnregisterKeyboardShortcut(cls, shortcut: str) -> None:
         """Unregister a keyboard shortcut."""
-        cls.KEYBOARD_SHORTCUTS.pop(shortcut, None)
-        if cls.KEYBOARD_IS_ENABLED:
-            cls._UpdateKeyboardShortcuts()
+        cls.KEYBOARD_CALLBACKS.pop(shortcut, None)
 
-    @classmethod
-    def _UpdateKeyboardShortcuts(cls) -> None:
-        """Update the extKeyboardIn operator's shortcuts parameter."""
-        for _docked in me.docked:
-            if 'extKeyboardin' in _docked.tags:
-                _docked.par.shortcuts = ' '.join(cls.KEYBOARD_SHORTCUTS.keys())
 
     @classmethod
     def OnKeyboardShortcut(cls, shortcut: str) -> None:
         """Handle keyboard shortcut events."""
-        if cls.KEYBOARD_IS_ENABLED and shortcut in cls.KEYBOARD_SHORTCUTS:
-            cls.KEYBOARD_SHORTCUTS[shortcut]()
+        if cls.KEYBOARD_IS_ENABLED and shortcut in cls.KEYBOARD_CALLBACKS:
+            cls.KEYBOARD_CALLBACKS[shortcut]()
