@@ -158,7 +158,9 @@ class ExtQuickExt:
 
 			# TODO: stubify packages
 			#if self.ownerComp.par.Deploystubs.eval():
-				#self.stubser.StubifyDat(masterUtils)
+			for _op in extUtils.findChildren(type=DAT):
+				if 'extPackage' in _op.tags:
+					self.stubser.StubifyDat(_op)
 
 	def __updateCompEditor(self, index):
 		compEditor = op.TDDialogs.op('CompEditor')
