@@ -12,8 +12,8 @@ def onValueChange(par, prev):
 # Called at end of frame with complete list of individual parameter changes.
 # The changes are a list of named tuples, where each tuple is (Par, previous value)
 def onValuesChanged(changes):
-	extUtils = mod(me.dock.name)
-	extUtils.CustomParHelper.OnValuesChanged(changes)
+	package = mod(me.dock.name)
+	package.CustomParHelper.OnValuesChanged(changes)
 	return
 
 def onPulse(par):

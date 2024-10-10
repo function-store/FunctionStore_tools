@@ -1,6 +1,7 @@
 import re
 import TDStoreTools
 from typing import Callable, Dict, List, TypeAlias, Union, overload
+from enum import Enum, auto
 
 
 class NoNode:
@@ -9,11 +10,35 @@ class NoNode:
     and CHOP executions without the need for a specific node in TouchDesigner.
     """
 
-    CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[str, dict[CHOP, dict[str, Callable]]] = TDStoreTools.DependDict()
-    KEYBOARD_SHORTCUTS: dict = {}
-    
-    KEYBOARD_IS_ENABLED: bool = False
+    class ChopExecType(Enum):
+        OffToOn = auto()
+        WhileOn = auto()
+        OnToOff = auto()
+        WhileOff = auto()
+        ValueChange = auto()
+        
+    CHOPVALUE_EXEC: COMP = op('extChopValueExec')
+    CHOPOFFTOON_EXEC: COMP = op('extChopOffToOnExec')
+    CHOPONTOOFF_EXEC: COMP = op('extChopOnToOffExec')
+    CHOPWHILEON_EXEC: COMP = op('extChopWhileOnExec')
+    CHOPWHILEOFF_EXEC: COMP = op('extChopWhileOffExec')
+
+    CHOP_EXECS: list[COMP] = [CHOPVALUE_EXEC, CHOPOFFTOON_EXEC, CHOPWHILEON_EXEC, CHOPWHILEOFF_EXEC]
+    CHOPEXEC_CALLBACKS: TDStoreTools.DependDict[ChopExecType, dict[CHOP, dict[str, Callable]]] = TDStoreTools.DependDict()
+
     CHOPEXEC_IS_ENABLED: bool = False
+
+    ALL_EXECS: list[COMP] = CHOP_EXECS
+
+    KEYBOARD_SHORTCUTS: dict = {}
+    KEYBOARD_IS_ENABLED: bool = False
+
+    CHOP_EXEC_MAP: Dict[ChopExecType, COMP] = {
+        ChopExecType.ValueChange: CHOPVALUE_EXEC,
+        ChopExecType.OffToOn: CHOPOFFTOON_EXEC,
+        ChopExecType.WhileOn: CHOPWHILEON_EXEC,
+        ChopExecType.WhileOff: CHOPWHILEOFF_EXEC
+    }
 
     @classmethod
     def Init(cls, enable_chopexec: bool = True, enable_keyboard_shortcuts: bool = True) -> None:
@@ -24,9 +49,8 @@ class NoNode:
         cls.KEYBOARD_SHORTCUTS = {}
 
         # Disable all CHOP execute operators by default
-        for _docked in me.docked:
-            if any(tag in _docked.tags for tag in ['extChopValueExec', 'extChopOffToOnExec', 'extChopWhileOnExec', 'extChopWhileOffExec']):
-                _docked.par.active = False
+        for exec in cls.ALL_EXECS:
+            exec.par.active = False
 
         if enable_chopexec:
             cls.EnableChopExec()
@@ -42,23 +66,25 @@ class NoNode:
     def EnableChopExec(cls) -> None:
         """Enable chopExec handling."""
         cls.CHOPEXEC_IS_ENABLED = True
-        # Note: We don't enable any specific operators here anymore
 
     @classmethod
-    def DisableChopExec(cls) -> None:
-        """Disable chopExec handling."""
-        cls.CHOPEXEC_IS_ENABLED = False
-        for _docked in me.docked:
-            if any(tag in _docked.tags for tag in ['extChopValueExec', 'extChopOffToOnExec', 'extChopWhileOnExec', 'extChopWhileOffExec']):
-                _docked.par.active = False
+    def DisableChopExec(cls, event_type: ChopExecType = None) -> None:
+        """Disable chopExec handling for a specific event type or all event types."""
+        
+        if event_type is None:
+            # disable all active operators
+            for chop_exec in cls.CHOP_EXECS:
+                chop_exec.par.active = False
+        elif event_type in cls.CHOP_EXEC_MAP:
+            cls.CHOP_EXEC_MAP[event_type].par.active = False
 
     @classmethod
-    def RegisterChopExec(cls, event_type: str, chop: COMP, channels: str, callback: Callable) -> None:
+    def RegisterChopExec(cls, event_type: ChopExecType, chop: COMP, channels: str, callback: Callable) -> None:
         """
         Register a CHOP execute callback.
 
         Args:
-            event_type (str): The type of event to listen for ('OffToOn', 'WhileOn', 'WhileOff', 'ValueChange').
+            event_type (ChopExecType): The type of event to listen for.
             chop (CHOP): The CHOP operator to register the callback for.
             channels (str): The channel(s) to listen to. Use '*' for all channels.
             callback (Callable): The callback function to be called on CHOP execution.
@@ -67,7 +93,7 @@ class NoNode:
             def my_callback(event_type, channel, index, value, prev):
                 print(f"Event: {event_type}, Channel {channel} at index {index} changed from {prev} to {value}")
             
-            NoNode.RegisterChopExec('ValueChange', op('constant1'), '*', my_callback)
+            NoNode.RegisterChopExec(ChopExecType.VALUE_CHANGE, op('constant1'), '*', my_callback)
         """
         if event_type not in cls.CHOPEXEC_CALLBACKS.getRaw():
             cls.CHOPEXEC_CALLBACKS.setItem(event_type, {}, raw=True)
@@ -79,27 +105,16 @@ class NoNode:
         cls.CHOPEXEC_CALLBACKS.setItem(event_type, current_callbacks)
 
         # Enable the appropriate docked operator based on the event type
-        for _docked in me.docked:
-            if 'extChopValueExec' in _docked.tags:
-                if event_type == 'ValueChange':
-                    _docked.par.active = True
-            elif 'extChopOffToOnExec' in _docked.tags:
-                if event_type == 'OffToOn':
-                    _docked.par.active = True
-            elif 'extChopWhileOnExec' in _docked.tags:
-                if event_type == 'WhileOn':
-                    _docked.par.active = True
-            elif 'extChopWhileOffExec' in _docked.tags:
-                if event_type == 'WhileOff':
-                    _docked.par.active = True
+        if event_type in cls.CHOP_EXEC_MAP:
+            cls.CHOP_EXEC_MAP[event_type].par.active = True
 
     @classmethod
-    def DeregisterChopExec(cls, event_type: str, chop: CHOP = None, channels: str = None) -> None:
+    def DeregisterChopExec(cls, event_type: ChopExecType, chop: CHOP = None, channels: str = None) -> None:
         """
         Deregister a chopExec callback
 
         Args:
-            event_type (str): The event type to deregister ('OffToOn', 'WhileOn', 'WhileOff', 'ValueChange').
+            event_type (ChopExecType): The event type to deregister.
             chop (CHOP, optional): The CHOP operator to deregister the callback for. If None, deregisters all CHOPs for the event type.
             channels (str, optional): The channel(s) to deregister. If None, deregisters all channels for the specified CHOP.
         """
@@ -117,9 +132,15 @@ class NoNode:
             
             if not cls.CHOPEXEC_CALLBACKS[event_type]:
                 del cls.CHOPEXEC_CALLBACKS[event_type]
+            # check if there are any callbacks left for this event type if not disable the operator
+            if event_type in cls.CHOPEXEC_CALLBACKS:
+                for chop in cls.CHOPEXEC_CALLBACKS[event_type]:
+                    if cls.CHOPEXEC_CALLBACKS[event_type][chop]:
+                        return
+                cls.DisableChopExec()
 
     @classmethod
-    def OnChopExec(cls, event_type: str, channel: Channel, sampleIndex: int, val: float, prev: float) -> None:
+    def OnChopExec(cls, event_type: ChopExecType, channel: Channel, sampleIndex: int, val: float, prev: float) -> None:
         """Handle chopExec events."""
         if not cls.CHOPEXEC_IS_ENABLED:
             return
