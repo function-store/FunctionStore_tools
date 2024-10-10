@@ -11,7 +11,8 @@ class ExtQuickExt:
 		self.extTemplate = self.ownerComp.op('extTemplate')
 		self.stubser = self.ownerComp.op('stubser')
 		self.my_ext_type = 'QuickExt'
-		self.MY_FORCED_TAG = f'# DO NOT REMOVE, used by {self.my_ext_type} to inject extension'
+		# < - DO NOT REMOVE THIS VERY IMPORTANT LINE!!! used by QuickExt to inject extension - >
+		self.MY_FORCED_TAG = f'# < - DO NOT REMOVE THIS VERY IMPORTANT LINE!!! used by {self.my_ext_type} to inject extension - >'
 		self.__modifyCompEditor()
 
 	def __modifyCompEditor(self):

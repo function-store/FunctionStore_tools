@@ -1,5 +1,5 @@
-# DO NOT REMOVE, used by QuickExt to inject extension
-# Below is the import of CustomParHelper --- see `extUtils` for more info
+# DO NOT REMOVE THIS VERY IMPORTANT LINE!!! used by QuickExt to inject extension
+
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
 ###
