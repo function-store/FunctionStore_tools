@@ -12,8 +12,8 @@
 
 
 def onTableChange(dat):
-	extUtils = mod(me.dock.name)
-	extUtils.CustomParHelper.CustomParsAsProperties(parent().extensions[0], parent())
+	package = mod(me.dock.name)
+	package.CustomParHelper.UpdateCustomParsAsProperties()
 	return
 
 def onRowChange(dat, rows):

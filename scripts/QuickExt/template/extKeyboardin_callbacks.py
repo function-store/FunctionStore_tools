@@ -30,7 +30,7 @@ def onKey(dat, keyInfo):
 # shortcutName is the name of the shortcut
 
 def onShortcut(dat, shortcutName, time):
-	extUtils = mod(me.dock.name)
-	extUtils.CustomParHelper.OnKeyboardShortcut(shortcutName)
+	package = mod(me.dock.name)
+	package.CustomParHelper.OnKeyboardShortcut(shortcutName)
 	return;
 	

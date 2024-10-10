@@ -79,12 +79,18 @@ class CustomParHelper:
          def onKeyboardShortcut(self):
            # This method will be called when the registered keyboard shortcut is pressed
 
-    > NOTE: This class only works docked to an extension with the tag 'extTemplate' and 
-      with the docked helper operators, which create the interface to the TouchDesigner environment.
-      Note that the docked helpers are hidden by default.
+    > NOTE: This class is part of the extUtils package, and is designed to work with the QuickExt framework.
     > NOTE: The reason this is implemented with static methods, is to omit the need to instantiate the class, providing a simpler interface (arguably).
     '''
     
+    EXT_SELF = None
+    EXT_OWNERCOMP = None
+
+    PAR_EXEC = op('extParExec')
+    DAT_EXEC = op('extParPropDatExec')
+    PAR_GROUP_EXEC = op('extParGroupExec')
+    STUBSER = op('extStubser')
+
     EXCEPT_PAGES_STATIC: list[str]  = ['Version Ctrl', 'About', 'Info']
     EXCEPT_PAGES: list[str] = EXCEPT_PAGES_STATIC
     EXCEPT_PROPS: list[str] = []
@@ -94,8 +100,6 @@ class CustomParHelper:
     PAR_CALLBACKS: list[str] = ['*']
     SEQUENCE_PATTERN: str = r'(\w+?)(\d+)(.+)'
     IS_EXPOSE_PUBLIC: bool = False
-    EXT_SELF = None
-    EXT_OWNERCOMP = None
     STUBS_ENABLED: bool = False
 
     @classmethod
@@ -115,9 +119,7 @@ class CustomParHelper:
         cls.EXCEPT_SEQUENCES = except_sequences
 
         me_me: textDAT = me # just to have autocomplete on this
-        for _docked in me_me.docked:
-            if 'extDatExec' in _docked.tags:
-                _docked.par.active = enable_properties
+        cls.DAT_EXEC.par.active = enable_properties
 
         if enable_properties:
             cls.CustomParsAsProperties(extension_self, ownerComp, enable_parGroups=enable_parGroups)
@@ -125,7 +127,7 @@ class CustomParHelper:
         if enable_callbacks:
             cls.EnableCallbacks(enable_parGroups)
         else:
-            cls.DisableCallbacks()
+            cls.DisableCallbacks(enable_parGroups)
 
         if enable_stubs:
             cls.EnableStubs()
@@ -148,6 +150,10 @@ class CustomParHelper:
             cls._create_propertyEval(extension_self, ownerComp, _par.name, enable_parGroups=enable_parGroups)
             cls._create_propertyPar(extension_self, ownerComp, _par.name, enable_parGroups=enable_parGroups)
 
+    @classmethod
+    def UpdateCustomParsAsProperties(cls) -> None:
+        """Update the properties for custom parameters."""
+        cls.CustomParsAsProperties(cls.EXT_SELF, cls.EXT_OWNERCOMP)
 
     @classmethod
     def _create_propertyEval(cls, extension_self, owner_comp: COMP, Parname: str, enable_parGroups: bool = True) -> None:
@@ -182,17 +188,17 @@ class CustomParHelper:
     @classmethod
     def EnableCallbacks(cls, enable_parGroups: bool = True) -> None:
         """Enable callbacks for custom parameters."""
-        for _docked in me.docked:
-            if 'extParExec' in _docked.tags or ('extParGroupExec' in _docked.tags and enable_parGroups):
-                _docked.par.active = True
+        cls.PAR_EXEC.par.active = True
+        if enable_parGroups:
+            cls.PAR_GROUP_EXEC.par.active = True
 
 
     @classmethod
-    def DisableCallbacks(cls) -> None:
+    def DisableCallbacks(cls, enable_parGroups: bool = True) -> None:
         """Disable callbacks for custom parameters."""
-        for _docked in me.docked:
-            if 'extParExec' in _docked.tags or 'extParGroupExec' in _docked.tags:
-                _docked.par.active = False
+        cls.PAR_EXEC.par.active = False
+        if enable_parGroups:
+            cls.PAR_GROUP_EXEC.par.active = False
 
 
     @classmethod
@@ -355,10 +361,8 @@ class CustomParHelper:
     @classmethod
     def UpdateStubs(cls) -> None:
         """Update the stubs for the extension."""
-        if cls.STUBS_ENABLED:
-            for _docked in me.docked:
-                if 'extStubser' in _docked.tags:
-                    # get class name from extension object
-                    class_name = cls.EXT_SELF.__class__.__name__
-                    op_ext = op(class_name)
-                    _docked.StubifyDat(op_ext)
+        if cls.STUBS_ENABLED and cls.STUBSER is not None:
+            # get class name from extension object
+            class_name = cls.EXT_SELF.__class__.__name__
+            op_ext = op(class_name)
+            cls.STUBSER.StubifyDat(op_ext)
