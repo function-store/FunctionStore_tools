@@ -30,7 +30,7 @@ def onKey(dat, keyInfo):
 # shortcutName is the name of the shortcut
 
 def onShortcut(dat, shortcutName, time):
-	package = mod(me.dock.dock.name)
-	package.NoNode.OnKeyboardShortcut(shortcutName)
+	package = mod(me.dock.dock.name).NoNode
+	package.OnKeyboardShortcut(shortcutName)
 	return;
 	
