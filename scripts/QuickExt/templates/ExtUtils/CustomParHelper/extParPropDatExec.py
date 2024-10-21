@@ -12,7 +12,7 @@
 
 
 def onTableChange(dat):
-	package = mod(me.dock.name)
+	package = mod(me.dock.dock.name)
 	package.CustomParHelper.UpdateCustomParsAsProperties()
 	return
 

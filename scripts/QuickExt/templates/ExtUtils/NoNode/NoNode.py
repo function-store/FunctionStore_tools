@@ -1,14 +1,17 @@
 import re
 import TDStoreTools
-from typing import Callable, Dict, List, TypeAlias, Union, overload
+from typing import Callable, Dict, Union, List
 from enum import Enum, auto
 
 
 class NoNode:
-    """
+    '''
+    # NoNode
+
     NoNode is a versatile utility class designed to enhance TouchDesigner workflows by providing a centralized system for managing various types of executions and callbacks without requiring dedicated nodes.
 
-    Key features include:
+    ## Key Features
+
     1. Keyboard shortcut handling: Easily define and manage custom keyboard shortcuts.
     2. CHOP executions: Handle different types of CHOP events (e.g., value changes, on/off states).
     3. DAT executions: Manage various DAT-related events (e.g., table, row, or cell changes).
@@ -17,11 +20,12 @@ class NoNode:
     reducing clutter and improving organization. It's particularly useful for larger projects or when working with 
     multiple extensions that need to respond to similar events.
 
-    Usage examples:
-    0. Initialize the NoNode system in your extension:
+    ## Usage Examples
+
+    ### 0. Initialize the NoNode system in your extension:
        NoNode.Init(enable_chopexec=True, enable_datexec=True, enable_keyboard_shortcuts=True)
 
-    1. CHOP executions:
+    ### 1. CHOP executions:
        - Register a callback for CHOP value changes:
          NoNode.RegisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name, callback_function)
          # callback signature: def on_value_change_function(channel: Channel, sampleIndex: int, val: float, prev: float):
@@ -31,7 +35,7 @@ class NoNode:
          # callback signature: def on_activate_function(channel: Channel, sampleIndex: int, val: float, prev: float):
          # can omit parameters from the right side of the signature if not needed
 
-    2. DAT executions:
+    ### 2. DAT executions:
        - React to table changes in a DAT:
          NoNode.RegisterDatExec(NoNode.DatExecType.TableChange, dat_op, on_table_change_function)
          # callback signature depends on the event type, eg.: def on_table_change_function(dat: DAT):
@@ -39,13 +43,15 @@ class NoNode:
          NoNode.RegisterDatExec(NoNode.DatExecType.CellChange, dat_op, on_cell_change_function)
          # callback signature depends on the event type, eg.: def on_cell_change_function(dat: DAT, cells: list[Cell], prev: Cell):
 
-    3. Keyboard shortcuts:
+    ### 3. Keyboard shortcuts:
        - Register a keyboard shortcut:
          NoNode.RegisterKeyboardShortcut('ctrl.k', onKeyboardShortcut)
          # callback signature: def onKeyboardShortcut():
 
+    > Note: relevant operators are marked with a color to make them easier to identify.
+
     These examples demonstrate how NoNode can be used to centralize and simplify event handling in TouchDesigner projects.
-    """
+    '''
 
     class ChopExecType(Enum):
         OffToOn = auto()
@@ -60,6 +66,8 @@ class NoNode:
         ColChange = auto()
         CellChange = auto()
         SizeChange = auto()
+
+    MARK_COLOR = (0.5, 0.05, 0.5)
 
     CHOP_VALUECHANGE_EXEC: DAT = op('extChopValueChangeExec')
     CHOP_OFFTOON_EXEC: DAT = op('extChopOffToOnExec')
@@ -81,6 +89,7 @@ class NoNode:
     CHOP_EXEC_MAP: Dict[ChopExecType, COMP] = {
         ChopExecType.ValueChange: CHOP_VALUECHANGE_EXEC,
         ChopExecType.OffToOn: CHOP_OFFTOON_EXEC,
+        ChopExecType.OnToOff: CHOP_ONTOOFF_EXEC,
         ChopExecType.WhileOn: CHOP_WHILEON_EXEC,
         ChopExecType.WhileOff: CHOP_WHILEOFF_EXEC
     }
@@ -165,14 +174,14 @@ class NoNode:
             cls.DAT_EXEC_MAP[event_type].par.active = False
 
     @classmethod
-    def RegisterChopExec(cls, event_type: ChopExecType, chop: CHOP, channels: str, callback: Callable) -> None:
+    def RegisterChopExec(cls, event_type: ChopExecType, chop: CHOP, channels: Union[str, List[str]], callback: Callable) -> None:
         """
         Register a CHOP execute callback.
 
         Args:
             event_type (ChopExecType): The type of event to listen for.
             chop (CHOP): The CHOP operator to register the callback for.
-            channels (str): The channel(s) to listen to. Use '*' for all channels.
+            channels (Union[str, List[str]]): The channel(s) to listen to. Can be a whitespace and/or comma separated string, or a list. Use '*' for all channels.
             callback (Callable): The callback function to be called on CHOP execution.
 
         Example:
@@ -180,6 +189,10 @@ class NoNode:
                 print(f"Event: {event_type}, Channel {channel} at index {index} changed from {prev} to {value}")
             
             NoNode.RegisterChopExec(ChopExecType.VALUE_CHANGE, op('constant1'), '*', my_callback)
+            # Or with multiple channels:
+            NoNode.RegisterChopExec(ChopExecType.VALUE_CHANGE, op('constant1'), ['chan1', 'chan2'], my_callback)
+            # Or with comma and/or whitespace separated channels:
+            NoNode.RegisterChopExec(ChopExecType.VALUE_CHANGE, op('constant1'), 'chan1, chan2 chan3,chan4', my_callback)
         """
         if event_type not in cls.CHOPEXEC_CALLBACKS.getRaw():
             cls.CHOPEXEC_CALLBACKS.setItem(event_type, {}, raw=True)
@@ -187,7 +200,12 @@ class NoNode:
         current_callbacks = cls.CHOPEXEC_CALLBACKS.getDependency(event_type)
         if chop not in current_callbacks.val:
             current_callbacks.val[chop] = {}
-        current_callbacks.val[chop][channels] = callback
+            cls.__markOperatorAsWatched(chop)
+
+        if isinstance(channels, str):
+            channels = re.split(r'[,\s]+', channels.strip())
+        for channel in channels:
+            current_callbacks.val[chop][channel] = callback
         cls.CHOPEXEC_CALLBACKS.setItem(event_type, current_callbacks)
 
         # Enable the appropriate docked operator based on the event type
@@ -214,7 +232,9 @@ class NoNode:
             cls.DATEXEC_CALLBACKS.setItem(event_type, {}, raw=True)
 
         current_callbacks = cls.DATEXEC_CALLBACKS.getDependency(event_type)
-        current_callbacks.val[dat] = callback
+        if dat not in current_callbacks.val:
+            current_callbacks.val[dat] = callback
+            cls.__markOperatorAsWatched(dat)
         cls.DATEXEC_CALLBACKS.setItem(event_type, current_callbacks)
 
         # Enable the appropriate docked operator based on the event type
@@ -222,26 +242,35 @@ class NoNode:
             cls.DAT_EXEC_MAP[event_type].par.active = True
 
     @classmethod
-    def DeregisterChopExec(cls, event_type: ChopExecType, chop: CHOP = None, channels: str = None) -> None:
+    def DeregisterChopExec(cls, event_type: ChopExecType, chop: CHOP = None, channels: Union[str, List[str]] = None) -> None:
         """
         Deregister a chopExec callback
 
         Args:
             event_type (ChopExecType): The event type to deregister.
             chop (CHOP, optional): The CHOP operator to deregister the callback for. If None, deregisters all CHOPs for the event type.
-            channels (str, optional): The channel(s) to deregister. If None, deregisters all channels for the specified CHOP.
+            channels (Union[str, List[str]], optional): The channel(s) to deregister. Can be a string (single channel, comma/space-separated list, or wildcard pattern) or a list of strings. If None, deregisters all channels for the specified CHOP.
         """
         if event_type in cls.CHOPEXEC_CALLBACKS:
             if chop is None:
+                for registered_chop in cls.CHOPEXEC_CALLBACKS[event_type]:
+                    cls.__checkAndResetOperatorColor(registered_chop)
                 del cls.CHOPEXEC_CALLBACKS[event_type]
             elif chop in cls.CHOPEXEC_CALLBACKS[event_type]:
                 if channels is None:
                     del cls.CHOPEXEC_CALLBACKS[event_type][chop]
+                    cls.__checkAndResetOperatorColor(chop)
                 else:
-                    cls.CHOPEXEC_CALLBACKS[event_type][chop].pop(channels, None)
+                    if isinstance(channels, str):
+                        channels = re.split(r'[,\s]+', channels.strip())
+                    for channel in channels:
+                        for registered_channel in list(cls.CHOPEXEC_CALLBACKS[event_type][chop].keys()):
+                            if channel == '*' or tdu.match(channel, [registered_channel]):
+                                del cls.CHOPEXEC_CALLBACKS[event_type][chop][registered_channel]
                 
                 if not cls.CHOPEXEC_CALLBACKS[event_type][chop]:
                     del cls.CHOPEXEC_CALLBACKS[event_type][chop]
+                    cls.__checkAndResetOperatorColor(chop)
             
             if not cls.CHOPEXEC_CALLBACKS[event_type]:
                 del cls.CHOPEXEC_CALLBACKS[event_type]
@@ -263,9 +292,12 @@ class NoNode:
         """
         if event_type in cls.DATEXEC_CALLBACKS:
             if dat is None:
+                for registered_dat in cls.DATEXEC_CALLBACKS[event_type]:
+                    cls.__checkAndResetOperatorColor(registered_dat)
                 del cls.DATEXEC_CALLBACKS[event_type]
             elif dat in cls.DATEXEC_CALLBACKS[event_type]:
                 del cls.DATEXEC_CALLBACKS[event_type][dat]
+                cls.__checkAndResetOperatorColor(dat)
             
             if not cls.DATEXEC_CALLBACKS[event_type]:
                 del cls.DATEXEC_CALLBACKS[event_type]
@@ -289,36 +321,39 @@ class NoNode:
                 callback(channel, sampleIndex, val)
             elif arg_count == 5:
                 callback(channel, sampleIndex, val, prev)
-
         chop = channel.owner
+
+        # execute the callback for the channel if it matches the event type
         if event_type in cls.CHOPEXEC_CALLBACKS:
             callbacks = cls.CHOPEXEC_CALLBACKS[event_type].get(chop, {})
+            executed_callbacks = set() # to avoid executing the same callback multiple times for the same channel
             for ch, callback in callbacks.items():
-                if ch == '*' or channel.name == ch:
-                    execute_callback(callback)
+                channel_names = ch.split() if ch != '*' else ['*']
+                for channel_name in channel_names:
+                    if (channel_name == '*' or tdu.match(channel_name, [channel.name])) and (channel.name, callback) not in executed_callbacks:
+                        execute_callback(callback)
+                        executed_callbacks.add((channel.name, callback))
+                        break  # Exit the inner loop after executing the callback
 
     @classmethod
     def OnDatExec(cls, event_type: DatExecType, dat: DAT, rows: int = None, cols: int = None, cells: list[Cell] = None, prev = None) -> None:
         """Handle datExec events."""
-        debug('hejj')
-        debug(cls.DATEXEC_IS_ENABLED)
         if not cls.DATEXEC_IS_ENABLED:
             return
 
         if event_type in cls.DATEXEC_CALLBACKS and dat in cls.DATEXEC_CALLBACKS[event_type]:
             callback = cls.DATEXEC_CALLBACKS[event_type][dat]
             arg_count = callback.__code__.co_argcount
-            debug(f'wouldcall {callback} with {arg_count} args')
             if arg_count == 1:
                 callback()
             elif arg_count == 2:
                 callback(dat)
             elif arg_count == 3:
-                if event_type == DatExecType.RowChange:
+                if event_type == cls.DatExecType.RowChange:
                     callback(dat, rows)
-                elif event_type == DatExecType.ColumnChange:
+                elif event_type == cls.DatExecType.ColChange:
                     callback(dat, cols)
-                elif event_type == DatExecType.CellChange:
+                elif event_type == cls.DatExecType.CellChange:
                     callback(dat, cells)
             elif arg_count == 4:
                 callback(dat, cells, prev)
@@ -363,3 +398,30 @@ class NoNode:
         """Handle keyboard shortcut events."""
         if cls.KEYBOARD_IS_ENABLED and shortcut in cls.KEYBOARD_CALLBACKS:
             cls.KEYBOARD_CALLBACKS[shortcut]()
+
+    @classmethod
+    def __markOperatorAsWatched(cls, _op: OP) -> None:
+        """Mark an operator as watched by changing its color."""
+        _op.color = cls.MARK_COLOR
+
+    @classmethod
+    def __resetOperatorColor(cls, _op: OP) -> None:
+        """Reset an operator's color to the default."""
+        _op.color = (0.55, 0.55, 0.55) # td default color, probably available somewhere in the TD API/vars
+
+    @classmethod
+    def __checkAndResetOperatorColor(cls, _op: OP) -> None:
+        """Check if an operator is still registered for any event type, and reset its color if not."""
+        for event_type in cls.CHOPEXEC_CALLBACKS.getRaw().keys() | cls.DATEXEC_CALLBACKS.getRaw().keys():
+            if _op in cls.CHOPEXEC_CALLBACKS.getRaw().get(event_type, {}) or _op in cls.DATEXEC_CALLBACKS.getRaw().get(event_type, {}):
+                return
+        cls.__resetOperatorColor(_op)
+
+    @classmethod
+    def SetMarkColor(cls, color: tuple[float, float, float]) -> None:
+        """Set the mark color."""
+        cls.MARK_COLOR = color
+        # list all registered operators (chops and dats) and update their color
+        for event_type in cls.CHOPEXEC_CALLBACKS.getRaw().keys() | cls.DATEXEC_CALLBACKS.getRaw().keys():
+            for _op in cls.CHOPEXEC_CALLBACKS.getRaw().get(event_type, {}).keys() | cls.DATEXEC_CALLBACKS.getRaw().get(event_type, {}).keys():
+                _op.color = cls.MARK_COLOR
