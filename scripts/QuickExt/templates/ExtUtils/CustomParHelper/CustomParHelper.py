@@ -352,5 +352,5 @@ class CustomParHelper:
         if cls.STUBS_ENABLED and cls.STUBSER is not None:
             # get class name from extension object
             class_name = cls.EXT_SELF.__class__.__name__
-            op_ext = op(class_name)
+            op_ext = cls.EXT_OWNERCOMP.op(class_name)
             cls.STUBSER.StubifyDat(op_ext)
