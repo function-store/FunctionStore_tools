@@ -141,7 +141,9 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
     - [SwitchOPs](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#switchops)
     - [OpToClipboard](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#optoclipboard)
     - [OpenExt](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#openext)
-
+- [QuickExt](https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt)
+    - [CustomParHelper](https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt#customparhelper)
+    - [NoNode](https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt#nonode)
 
 ---
 
