@@ -75,6 +75,9 @@ class ExtOpenVSCode:
 			fallback_path = ui.preferences['dats.texteditor']
 			if fallback_path and Path(fallback_path).exists():
 				self.logger.Log(f"Falling back to preference's text editor at: {fallback_path}")
+				# Detect MacOS
+				if fallback_path.endswith(".app"):
+					fallback_path = f"{fallback_path}/Contents/MacOS/Electron"
 				self.codeexe = fallback_path  # Update Codeexe to the fallback path
 			else:
 				# Step 4: Error Handling
