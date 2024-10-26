@@ -86,7 +86,7 @@ class CustomParHelper:
     """
     
     EXT_SELF = None
-    EXT_OWNERCOMP = None
+    EXT_OWNERCOMP = tdu.Dependency(None)
 
     PAR_EXEC = op('extParExec')
     DAT_EXEC = op('extParPropDatExec')
@@ -111,7 +111,7 @@ class CustomParHelper:
              enable_stubs: bool = False) -> None:
         """Initialize the CustomParHelper."""
         cls.EXT_SELF = extension_self
-        cls.EXT_OWNERCOMP = ownerComp
+        cls.EXT_OWNERCOMP.val = ownerComp
         cls.IS_EXPOSE_PUBLIC = expose_public
         cls.PAR_PROPS = par_properties
         cls.PAR_CALLBACKS = par_callbacks
@@ -157,7 +157,7 @@ class CustomParHelper:
     @classmethod
     def UpdateCustomParsAsProperties(cls) -> None:
         """Update the properties for custom parameters."""
-        cls.CustomParsAsProperties(cls.EXT_SELF, cls.EXT_OWNERCOMP)
+        cls.CustomParsAsProperties(cls.EXT_SELF, cls.EXT_OWNERCOMP.peekVal)
 
     @classmethod
     def _create_propertyEval(cls, extension_self, owner_comp: COMP, Parname: str, enable_parGroups: bool = True) -> None:
@@ -368,5 +368,5 @@ class CustomParHelper:
         if cls.STUBS_ENABLED and cls.STUBSER is not None:
             # get class name from extension object
             class_name = cls.EXT_SELF.__class__.__name__
-            op_ext = cls.EXT_OWNERCOMP.op(class_name)
+            op_ext = cls.EXT_OWNERCOMP.peekVal.op(class_name)
             cls.STUBSER.StubifyDat(op_ext)
