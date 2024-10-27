@@ -65,6 +65,11 @@ class NoNode:
         ColChange = auto()
         CellChange = auto()
         SizeChange = auto()
+
+    class ParExecType(Enum):
+        ValueChange = auto()
+        ValuesChanged = auto()
+        OnPulse = auto()
     MARK_COLOR = (0.5, 0.05, 0.5)
     CHOP_VALUECHANGE_EXEC: DAT = op('extChopValueChangeExec')
     CHOP_OFFTOON_EXEC: DAT = op('extChopOffToOnExec')
@@ -87,10 +92,18 @@ class NoNode:
     CHOPEXEC_IS_ENABLED: bool = False
     DATEXEC_IS_ENABLED: bool = False
     KEYBOARD_IS_ENABLED: bool = False
-    ALL_EXECS: list[DAT] = CHOP_EXECS + DAT_EXECS + [KEYBOARD_EXEC]
+    PAR_VALUECHANGE_EXEC: DAT = op('extParExecNoNodeValueChange')
+    PAR_VALUESCHANGED_EXEC: DAT = op('extParExecNoNodeValuesChanged')
+    PAR_ONPULSE_EXEC: DAT = op('extParExecNoNodeOnPulse')
+    PAR_EXECS: list[DAT] = [PAR_VALUECHANGE_EXEC, PAR_VALUESCHANGED_EXEC, PAR_ONPULSE_EXEC]
+    PAR_EXEC_MAP: Dict[ParExecType, COMP] = {ParExecType.ValueChange: PAR_VALUECHANGE_EXEC, ParExecType.ValuesChanged: PAR_VALUESCHANGED_EXEC, ParExecType.OnPulse: PAR_ONPULSE_EXEC}
+    PAREXEC_CALLBACKS: TDStoreTools.DependDict[ParExecType, dict[Union[Par, str], Callable]] = TDStoreTools.DependDict()
+    PAREXEC_IS_ENABLED: bool = False
+    ALL_EXECS: list[DAT] = CHOP_EXECS + DAT_EXECS + PAR_EXECS + [KEYBOARD_EXEC]
+    EXT_OWNER_COMP: COMP = None
 
     @classmethod
-    def Init(cls, enable_chopexec: bool=True, enable_datexec: bool=True, enable_keyboard_shortcuts: bool=True) -> None:
+    def Init(cls, ownerComp, enable_chopexec: bool=True, enable_datexec: bool=True, enable_keyboard_shortcuts: bool=True, enable_parexec: bool=True) -> None:
         """Initialize the NoNode functionality."""
         pass
 
@@ -225,4 +238,51 @@ class NoNode:
     @classmethod
     def SetMarkColor(cls, color: tuple[float, float, float]) -> None:
         """Set the mark color."""
+        pass
+
+    @classmethod
+    def EnableParExec(cls) -> None:
+        """Enable parameter execute handling."""
+        pass
+
+    @classmethod
+    def DisableParExec(cls, event_type: ParExecType=None) -> None:
+        """Disable parameter execute handling for a specific event type or all event types."""
+        pass
+
+    @classmethod
+    def RegisterParExec(cls, event_type: ParExecType, parameter: Union[Par, str], callback: Callable) -> None:
+        """
+        Register a parameter execute callback.
+
+        Args:
+            event_type (ParExecType): The type of event to listen for.
+            parameter (Union[Par, str]): The parameter to watch. Can be a Par object or a string in format 'op/parameter'.
+            callback (Callable): The callback function to be called on parameter execution.
+
+        Example:
+            def my_callback(par, prev):
+                print(f"Parameter {par} changed from {prev} to {par.eval()}")
+            
+            # Using Par object
+            NoNode.RegisterParExec(ParExecType.ValueChange, op('base1').par.v, my_callback)
+            # Using string reference
+            NoNode.RegisterParExec(ParExecType.ValueChange, 'base1/v', my_callback)
+        """
+        pass
+
+    @classmethod
+    def DeregisterParExec(cls, event_type: ParExecType, parameter: Union[Par, str]=None) -> None:
+        """
+        Deregister a parameter execute callback.
+
+        Args:
+            event_type (ParExecType): The event type to deregister.
+            parameter (Union[Par, str], optional): The parameter to deregister. If None, deregisters all parameters for the event type.
+        """
+        pass
+
+    @classmethod
+    def OnParExec(cls, event_type: ParExecType, parameter: Par, value=None, prev=None) -> None:
+        """Handle parameter execute events."""
         pass
