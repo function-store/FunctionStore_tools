@@ -86,7 +86,7 @@ class CustomParHelper:
     """
     
     EXT_SELF = None
-    EXT_OWNERCOMP = tdu.Dependency(None)
+    EXT_OWNERCOMP = None
 
     PAR_EXEC = op('extParExec')
     DAT_EXEC = op('extParPropDatExec')
@@ -111,7 +111,7 @@ class CustomParHelper:
              enable_stubs: bool = False) -> None:
         """Initialize the CustomParHelper."""
         cls.EXT_SELF = extension_self
-        cls.EXT_OWNERCOMP.val = ownerComp
+        cls.EXT_OWNERCOMP = ownerComp
         cls.IS_EXPOSE_PUBLIC = expose_public
         cls.PAR_PROPS = par_properties
         cls.PAR_CALLBACKS = par_callbacks
@@ -120,7 +120,8 @@ class CustomParHelper:
         cls.EXCEPT_CALLBACKS = except_callbacks
         cls.EXCEPT_SEQUENCES = except_sequences
 
-        me_me: textDAT = me # just to have autocomplete on this
+        cls.__setOwnerCompToDocked(ownerComp)
+
         cls.DAT_EXEC.par.active = enable_properties
 
         if enable_properties:
@@ -135,6 +136,16 @@ class CustomParHelper:
             cls.EnableStubs()
         else:
             cls.DisableStubs()
+
+
+    @classmethod
+    def __setOwnerCompToDocked(cls, ownerComp: COMP) -> None:
+        for _op in me.docked:
+            if hasattr(_op.par, 'ops'):
+                _op.par.ops.val = ownerComp
+            if hasattr(_op.par, 'op'):
+                _op.par.op.val = ownerComp
+
 
     @classmethod
     def CustomParsAsProperties(cls, extension_self, ownerComp: COMP, enable_parGroups: bool = True) -> None:
@@ -157,7 +168,7 @@ class CustomParHelper:
     @classmethod
     def UpdateCustomParsAsProperties(cls) -> None:
         """Update the properties for custom parameters."""
-        cls.CustomParsAsProperties(cls.EXT_SELF, cls.EXT_OWNERCOMP.peekVal)
+        cls.CustomParsAsProperties(cls.EXT_SELF, cls.EXT_OWNERCOMP)
 
     @classmethod
     def _create_propertyEval(cls, extension_self, owner_comp: COMP, Parname: str, enable_parGroups: bool = True) -> None:
@@ -368,5 +379,5 @@ class CustomParHelper:
         if cls.STUBS_ENABLED and cls.STUBSER is not None:
             # get class name from extension object
             class_name = cls.EXT_SELF.__class__.__name__
-            op_ext = cls.EXT_OWNERCOMP.peekVal.op(class_name)
+            op_ext = cls.EXT_OWNERCOMP.op(class_name)
             cls.STUBSER.StubifyDat(op_ext)
