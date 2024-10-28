@@ -8,7 +8,7 @@ class QuickExtTemplate:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
-		NoNode.Init(enable_chopexec=False, enable_datexec=False, enable_keyboard_shortcuts=False)
+		NoNode.Init(ownerComp, enable_chopexec=True, enable_datexec=True, enable_parexec=True, enable_keyboard_shortcuts=True)
 
 	
 
