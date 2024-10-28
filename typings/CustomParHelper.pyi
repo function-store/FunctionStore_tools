@@ -28,13 +28,16 @@ class CustomParHelper:
 
        Full signature and optional parameters:
        ```python
-       CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, expose_public: bool = False,
+       CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], enable_stubs: bool = False)
        ```
 
         Additional options:
+        - `enable_properties`: If True, creates properties for custom parameters (default: True)
+        - `enable_callbacks`: If True, creates callbacks for custom parameters (default: True)
         - `enable_parGroups`: If True, creates properties and methods for parGroups (default: True)
+        - `enable_seq`: If True, creates properties and methods for sequence parameters (default: True)
         - `expose_public`: If True, uses capitalized property and method names (e.g., Par, Eval instead of par, eval)
         - `par_properties`: List of parameter names to include in property creation, by default all parameters are included
         - `par_callbacks`: List of parameter names to include in callback handling, by default all parameters are included
@@ -89,6 +92,7 @@ class CustomParHelper:
     PAR_EXEC = op('extParExec')
     DAT_EXEC = op('extParPropDatExec')
     PAR_GROUP_EXEC = op('extParGroupExec')
+    SEQ_EXEC = op('extSeqParExec')
     STUBSER = op('extStubser')
     EXCEPT_PAGES_STATIC: list[str] = ['Version Ctrl', 'About', 'Info']
     EXCEPT_PAGES: list[str] = EXCEPT_PAGES_STATIC
@@ -102,7 +106,7 @@ class CustomParHelper:
     STUBS_ENABLED: bool = False
 
     @classmethod
-    def Init(cls, extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_stubs: bool=False) -> None:
+    def Init(cls, extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, enable_seq: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_stubs: bool=False) -> None:
         """Initialize the CustomParHelper."""
         pass
 
@@ -117,12 +121,12 @@ class CustomParHelper:
         pass
 
     @classmethod
-    def EnableCallbacks(cls, enable_parGroups: bool=True) -> None:
+    def EnableCallbacks(cls, enable_parGroups: bool=True, enable_seq: bool=True) -> None:
         """Enable callbacks for custom parameters."""
         pass
 
     @classmethod
-    def DisableCallbacks(cls, enable_parGroups: bool=True) -> None:
+    def DisableCallbacks(cls, enable_parGroups: bool=True, enable_seq: bool=True) -> None:
         """Disable callbacks for custom parameters."""
         pass
 

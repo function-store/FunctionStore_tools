@@ -1,3 +1,5 @@
+See full documentation at the Wiki page: https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt
+
 # TouchDesigner Extension Utilities: NoNode and CustomParHelper
 
 These utility classes are part of the extUtils package, designed to enhance and streamline TouchDesigner extension development. They provide powerful tools for managing events, parameters, and callbacks without cluttering your project with additional nodes.
@@ -60,7 +62,10 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
    ```
 
    Additional options:
+   - `enable_properties`: If True, creates properties for custom parameters (default: True)
+   - `enable_callbacks`: If True, creates callbacks for custom parameters (default: True)
    - `enable_parGroups`: If True, creates properties and methods for parGroups (default: True)
+   - `enable_seq`: If True, creates properties and methods for sequence parameters (default: True)
    - `expose_public`: If True, uses capitalized property and method names (e.g., Par, Eval instead of par, eval)
    - `par_properties`: List of parameter names to include in property creation, by default all parameters are included
    - `par_callbacks`: List of parameter names to include in callback handling, by default all parameters are included
@@ -129,40 +134,54 @@ NoNode is a versatile utility class that centralizes the management of various t
 
 3. Initialize the NoNode system in your extension:
    ```python
-   NoNode.Init(enable_chopexec=True, enable_datexec=True, enable_keyboard_shortcuts=True)
+   NoNode.Init(enable_chopexec=True, enable_datexec=True, enable_parexec=True, enable_keyboard_shortcuts=True)
    ```
 
 4. CHOP executions:
    - Register a callback for CHOP value changes:
      ```python
-     NoNode.RegisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name(s), callback_function)
-     # callback signature: def on_value_change_function(channel: Channel, sampleIndex: int, val: float, prev: float):
+     NoNode.RegisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name(s), self.on_value_change_function)
+     # callback signature: def on_value_change_function(self, channel: Channel, sampleIndex: int, val: float, prev: float):
      # can omit parameters from the right side of the signature if not needed
      ```
    - Handle CHOP state changes:
      ```python
-     NoNode.RegisterChopExec(NoNode.ChopExecType.OffToOn, chop_op, channel_name(s), on_activate_function)
-     # callback signature: def on_activate_function(channel: Channel, sampleIndex: int, val: float, prev: float):
+     NoNode.RegisterChopExec(NoNode.ChopExecType.OffToOn, chop_op, channel_name(s), self.on_activate_function)
+     # callback signature: def on_activate_function(self, channel: Channel, sampleIndex: int, val: float, prev: float):
      # can omit parameters from the right side of the signature if not needed
      ```
 
 5. DAT executions:
    - React to table changes in a DAT:
      ```python
-     NoNode.RegisterDatExec(NoNode.DatExecType.TableChange, dat_op, on_table_change_function)
-     # callback signature depends on the event type, eg.: def on_table_change_function(dat: DAT):
+     NoNode.RegisterDatExec(NoNode.DatExecType.TableChange, dat_op, self.on_table_change_function)
+     # callback signature depends on the event type, eg.: def on_table_change_function(self, dat: DAT):
      ```
    - Handle cell value changes:
      ```python
-     NoNode.RegisterDatExec(NoNode.DatExecType.CellChange, dat_op, on_cell_change_function)
-     # callback signature depends on the event type, eg.: def on_cell_change_function(dat: DAT, cells: list[Cell], prev: Cell):
+     NoNode.RegisterDatExec(NoNode.DatExecType.CellChange, dat_op, self.on_cell_change_function)
+     # callback signature depends on the event type, eg.: def on_cell_change_function(self, dat: DAT, cells: list[Cell], prev: Cell):
      ```
 
-6. Keyboard shortcuts:
+6. Parameter executions:
+   - Register a callback for parameter value changes:
+     ```python
+     NoNode.RegisterParExec(NoNode.ParExecType.ValueChange, par_op, par_name, self.on_value_change_function)
+     # callback signature depends on the event type, eg.: def on_value_change_function(self, par: Par, val: float, prev: float):
+     # can omit prev, or use val only
+     ```
+   - Handle pulse parameters:
+     ```python
+     NoNode.RegisterParExec(NoNode.ParExecType.OnPulse, par_op, par_name, self.on_pulse_function)
+     # callback signature: def on_pulse_function(self,par: Par):
+     # can omit par if not needed
+     ```
+
+7. Keyboard shortcuts:
    - Register a keyboard shortcut:
      ```python
-     NoNode.RegisterKeyboardShortcut('ctrl.k', onKeyboardShortcut)
-     # callback signature: def onKeyboardShortcut():
+     NoNode.RegisterKeyboardShortcut('ctrl.k', self.onKeyboardShortcut)
+     # callback signature: def onKeyboardShortcut(self):
      ```
 
 7. Deregister callbacks:
@@ -174,9 +193,13 @@ NoNode is a versatile utility class that centralizes the management of various t
      ```python
      NoNode.DeregisterDatExec(NoNode.DatExecType.TableChange, dat_op)
      ```
-   - Unregister a keyboard shortcut:
+   - Deregister a parameter execution:
      ```python
-     NoNode.UnregisterKeyboardShortcut('ctrl.k')
+     NoNode.DeregisterParExec(NoNode.ParExecType.ValueChange, par_op, par_name)
+     ```  
+   - Deregister a keyboard shortcut:
+     ```python
+     NoNode.DeregisterKeyboardShortcut('ctrl.k')
      ```
 
 8. Visual indication:
