@@ -633,10 +633,10 @@ class NoNode:
             return
 
         owner = parameter.owner
-        if owner not in cls.PAREXEC_CALLBACKS[event_type]:
+        if owner not in cls.PAREXEC_CALLBACKS.getRaw()[event_type]:
             return
 
-        callback = cls.PAREXEC_CALLBACKS[event_type][owner].get(parameter)
+        callback = cls.PAREXEC_CALLBACKS.getRaw()[event_type][owner].get(parameter)
         
         if callback:
             arg_count = callback.__code__.co_argcount
