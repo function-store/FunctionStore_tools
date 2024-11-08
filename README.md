@@ -3,7 +3,7 @@
 *by Daniel Molnar ([Function Store](https://functionstore.xyz)). 
 **Watch the InSession [stream](https://www.youtube.com/watch?v=hnpC5uh-GTs) with the TouchDesigner team covering the tools in depth!***
 
-[![Download FNS_tools TOE](https://img.shields.io/badge/Download_FNS_tools.toe_%E2%86%93-blank?style=for-the-badge)](https://github.com/function-store/FunctionStore_tools/releases/latest/download/FNS_TDDefault_2023.toe) [![Download FNS_tools TOX](https://img.shields.io/badge/Download_FNS_tools.TOX_%E2%86%93-blank?style=for-the-badge)](https://github.com/function-store/FunctionStore_tools/releases/latest/download/FunctionStore_tools_2023.tox)
+[![Download TOE](https://img.shields.io/badge/Download_FNS_tools.toe_%E2%86%93-blank?style=for-the-badge)](https://github.com/function-store/FunctionStore_tools/releases/latest/download/FNS_TDDefault_2023.toe) [![Download TOX](https://img.shields.io/badge/Download_FNS_tools.TOX_%E2%86%93-blank?style=for-the-badge)](https://github.com/function-store/FunctionStore_tools/releases/latest/download/FunctionStore_tools_2023.tox)
 [![Total Downloads](https://img.shields.io/github/downloads/function-store/FunctionStore_tools/total?style=for-the-badge&label=Total%20Downloads)](https://github.com/function-store/FunctionStore_tools/releases/latest/download/FunctionStore_tools_2023.tox)
 
 ---
