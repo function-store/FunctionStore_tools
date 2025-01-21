@@ -126,7 +126,7 @@ class CustomParHelper:
         pass
 
     @classmethod
-    def DisableCallbacks(cls, enable_parGroups: bool=True, enable_seq: bool=True) -> None:
+    def DisableCallbacks(cls, disable_parGroups: bool=True, disable_seq: bool=True) -> None:
         """Disable callbacks for custom parameters."""
         pass
 
