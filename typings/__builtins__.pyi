@@ -12892,6 +12892,5 @@ class Poly(Prim):
 
 
 from ExtOpenVSCode import *
-from extUtils import *
-from NoNode import *
-from CustomParHelper import *
+from custom_typings.QuickExt.NoNode import *
+from custom_typings.QuickExt.CustomParHelper import *

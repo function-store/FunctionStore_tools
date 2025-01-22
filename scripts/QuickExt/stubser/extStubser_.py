@@ -26,66 +26,83 @@ class extStubser:
 		
 		return ast.unparse(transformedData)
 	
-	def _placeTyping(self, stubsString:str, name:str):
-		"""Export the given stubs string in to a file and add it as a builtins!"""
-		debug("Placing Typings", name)
-		interpreterPath = app.pythonExecutable
-		interpreterFolder: Path = Path(interpreterPath).parent
-		typings_dir = interpreterFolder if self.ownerComp.par.Tointerpreter.eval() else Path("typings")
-		builtins_path = typings_dir / "__builtins__.pyi" if self.ownerComp.par.Tointerpreter.eval() else None
-		
-		if builtins_path and builtins_path.exists():
-			builtinsFile = builtins_path
-			stubsFile = (typings_dir / f"{name}.pyi")
-		else:
-			if builtins_path:
-				debug("Warning: __builtins__.pyi not found in interpreter folder")
-				# Look for TouchDesigner 2023+ installation folder
-				parent_dir = interpreterFolder.parent.parent
-				debug("Parent Dir", parent_dir)
-				td_pattern = re.compile(r'TouchDesigner\.(\d+)\.(\d+)')
-				highest_match = None
-				highest_major = None
-				highest_minor = None
-				
-				for sibling in parent_dir.iterdir():
-					debug("Sibling", sibling)
-					match = td_pattern.match(sibling.name)
-					if sibling.is_dir() and match:
-						major = int(match.group(1))
-						minor = int(match.group(2))
-						
-						# Only consider versions >= 2023.3000
-						if major >= 2023 and minor >= 3000:
-							if (highest_major is None or 
-								major > highest_major or 
-								(major == highest_major and minor > highest_minor)):
-								
-								highest_major = major
-								highest_minor = minor
-								td_builtins = sibling / 'bin' / '__builtins__.pyi'
-								if td_builtins.exists():
-									highest_match = td_builtins
-								
-				if highest_match:
-					builtinsFile = highest_match
-				else:
-					builtinsFile = Path("typings", "__builtins__.pyi")
+	def _parse_td_version(self, path: Path) -> tuple[int, int] | None:
+		"""Extract TouchDesigner version from path."""
+		td_pattern = re.compile(r'TouchDesigner\.(\d+)\.(\d+)')
+		# Check folder name for version
+		match = td_pattern.match(path.name)
+		if match:
+			return (int(match.group(1)), int(match.group(2)))
+		return None
+
+	def _is_valid_td_version(self, version: tuple[int, int] | None) -> bool:
+		"""Check if version meets minimum requirements (>= 2023.3000)."""
+		return version is not None and version >= (2023, 3000)
+
+	def _find_td_builtins(self) -> Path | None:
+		"""Search for valid __builtins__.pyi in the highest version TD installation."""
+		# Start from current TD installation folder
+		current_td = Path(app.binFolder).parent
+		td_installations = current_td.parent
+		highest_match = None
+		highest_version = (0, 0)
+
+		for td_folder in td_installations.iterdir():
+			if not td_folder.is_dir():
+				continue
+
+			version = self._parse_td_version(td_folder)
+			if self._is_valid_td_version(version) and version > highest_version:
+				td_builtins = td_folder / 'bin' / '__builtins__.pyi'
+				if td_builtins.exists():
+					highest_version = version
+					highest_match = td_builtins
+					debug(f"Found builtins in TD {version[0]}.{version[1]}")
+
+		return highest_match
+
+	def _get_typing_paths(self, name: str) -> tuple[Path, Path]:
+		"""Determine paths for builtins and stubs files."""
+		if self.ownerComp.par.Tointerpreter.eval():
+			# Try to find builtins in highest version TD installation
+			td_builtins = self._find_td_builtins()
+			if td_builtins:
+				builtins_file = td_builtins
 			else:
-				builtinsFile = Path("typings", "__builtins__.pyi")
-			stubsFile = Path("typings", name).with_suffix(".pyi")
+				debug("No valid TD installation (>= 2023.3000) found with __builtins__.pyi")
+				# Fallback to local typings
+				builtins_file = Path("typings", "__builtins__.pyi")
+		else:
+			debug("Using local typings directory")
+			builtins_file = Path("typings", "__builtins__.pyi")
 
-		builtinsFile.parent.mkdir( exist_ok=True, parents=True)
-		builtinsFile.touch(exist_ok=True)
+		# Ensure parent directory exists
+		builtins_file.parent.mkdir(exist_ok=True)
+		if not builtins_file.exists():
+			debug("Creating new __builtins__.pyi file")
+			builtins_file.touch()
 
+		# Create custom_typings/QuickExt directory next to __builtins__.pyi
+		stubs_dir = builtins_file.parent / "custom_typings" / "QuickExt"
+		stubs_dir.mkdir(parents=True, exist_ok=True)
+		
+		return builtins_file, stubs_dir / f"{name}.pyi"
+
+	def _placeTyping(self, stubsString: str, name: str):
+		# TODO: factor out custom_typings.QuickExt. as optional subfolders to stubify to
+		"""Export the given stubs string into a file and add it as a builtin."""
+		debug("Placing Typings", name)
+		
+		builtinsFile, stubsFile = self._get_typing_paths(name)
+		
 		debug("Placing Typings", name)
 		debug("Typings File", stubsFile)
 		debug("Builtins File", builtinsFile)	
 
 		currentBuiltinsText = builtinsFile.read_text()
-		if not re.search(f"from {name} import *", currentBuiltinsText): 
+		if not re.search(f"from custom_typings.QuickExt.{name} import *", currentBuiltinsText): 
 			with builtinsFile.open("t+a") as builtinsFileHandler:
-				builtinsFileHandler.write(f"\nfrom { name} import *")
+				builtinsFileHandler.write(f"\nfrom custom_typings.QuickExt.{name} import *")
 		
 		
 		stubsFile.touch( exist_ok=True)
