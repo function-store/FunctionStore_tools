@@ -30,7 +30,7 @@ class extStubser:
 		"""Export the given stubs string in to a file and add it as a builtins!"""
 		debug("Placing Typings", name)
 		interpreterPath = app.pythonExecutable
-		interpreterFolder = Path(interpreterPath).parent
+		interpreterFolder: Path = Path(interpreterPath).parent
 		typings_dir = interpreterFolder if self.ownerComp.par.Tointerpreter.eval() else Path("typings")
 		builtins_path = typings_dir / "__builtins__.pyi" if self.ownerComp.par.Tointerpreter.eval() else None
 		
@@ -40,8 +40,41 @@ class extStubser:
 		else:
 			if builtins_path:
 				debug("Warning: __builtins__.pyi not found in interpreter folder")
-			builtinsFile = Path("typings", "__builtins__.pyi")
+				# Look for TouchDesigner 2023+ installation folder
+				parent_dir = interpreterFolder.parent.parent
+				debug("Parent Dir", parent_dir)
+				td_pattern = re.compile(r'TouchDesigner\.(\d+)\.(\d+)')
+				highest_match = None
+				highest_major = None
+				highest_minor = None
+				
+				for sibling in parent_dir.iterdir():
+					debug("Sibling", sibling)
+					match = td_pattern.match(sibling.name)
+					if sibling.is_dir() and match:
+						major = int(match.group(1))
+						minor = int(match.group(2))
+						
+						# Only consider versions >= 2023.3000
+						if major >= 2023 and minor >= 3000:
+							if (highest_major is None or 
+								major > highest_major or 
+								(major == highest_major and minor > highest_minor)):
+								
+								highest_major = major
+								highest_minor = minor
+								td_builtins = sibling / 'bin' / '__builtins__.pyi'
+								if td_builtins.exists():
+									highest_match = td_builtins
+								
+				if highest_match:
+					builtinsFile = highest_match
+				else:
+					builtinsFile = Path("typings", "__builtins__.pyi")
+			else:
+				builtinsFile = Path("typings", "__builtins__.pyi")
 			stubsFile = Path("typings", name).with_suffix(".pyi")
+
 		builtinsFile.parent.mkdir( exist_ok=True, parents=True)
 		builtinsFile.touch(exist_ok=True)
 
