@@ -75,7 +75,6 @@ class customParPromoterExt:
 	# unfortunately params that are for example XYZ, Float2/3 etc are not handled well by appendPar
 	# as it creates duplicates (Par[xyz] becomes Par[xyz][xyz])... therefore the below
 	def PromoteParGroup(self, _parGroup, page_name, target = None):
-		debug(f'PromoteParGroup: {_parGroup.name}')
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
@@ -123,7 +122,6 @@ class customParPromoterExt:
 
 
 	def PromotePar(self, _par, page_name, target = None):
-		debug(_par)
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
@@ -243,7 +241,6 @@ class customParPromoterExt:
 			if target.customPages:
 				try:
 					new_page = target.currentPage
-					debug(f'target: {target}, new_page: {new_page}, new_page.name: {new_page.name}')
 				except:
 					new_page = None
 			
