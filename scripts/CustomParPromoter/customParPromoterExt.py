@@ -74,41 +74,42 @@ class customParPromoterExt:
 
 	# unfortunately params that are for example XYZ, Float2/3 etc are not handled well by appendPar
 	# as it creates duplicates (Par[xyz] becomes Par[xyz][xyz])... therefore the below
-	def PromoteParGroup(self, pg, page_name, target = None):
+	def PromoteParGroup(self, _parGroup, page_name, target = None):
+		debug(f'PromoteParGroup: {_parGroup.name}')
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
 			return
 		
-		name = pg.name.title()
+		name = _parGroup.name.title()
 
 		if self.parNameExists(name):
-			if self.checkAlreadyBound(pg, name):
+			if self.checkAlreadyBound(_parGroup, name):
 				return
 			else:
 				name = self.parNameCheck(name)
 		
-		new_page = self._getTargetPage(page_name, target, pg.page)
+		new_page = self._getTargetPage(page_name, target, _parGroup.page)
 
 		target.currentPage = new_page.name
 
 		try:
-			if type(pg) == ParGroupPulse and len(pg.eval()) == 2:
-				new_pars = [new_page.appendPar(name, par=pg[0]), new_page.appendPar(f'{name}pulse',par=pg[1])]
+			if type(_parGroup) == ParGroupPulse and len(_parGroup.eval()) == 2:
+				new_pars = [new_page.appendPar(name, par=_parGroup[0]), new_page.appendPar(f'{name}pulse',par=_parGroup[1])]
 			else:
-				new_par = new_page.appendPar(name, par=pg[0])
+				new_par = new_page.appendPar(name, par=_parGroup[0])
 				new_pars = new_par.pars()
-				for i, old_par in enumerate(pg):
+				for i, old_par in enumerate(_parGroup):
 					new_pars[i].val = old_par.val
 					new_pars[i].default = old_par.default
 		except:
-			if type(pg) == ParGroupPulse:
+			if type(_parGroup) == ParGroupPulse:
 				new_pars = [new_page.owner.parGroup[name], new_page.owner.parGroup[f'{name}pulse']]
 			else:
 				new_par = new_page.owner.parGroup[name]
 				new_pars = new_par.pars()
 
-		for p, new_p in zip(pg.pars('*'), new_pars):
+		for p, new_p in zip(_parGroup.pars('*'), new_pars):
 			new_p.val = p.val
 			new_p.startSection = p.startSection
 			if not self.refBind:
@@ -122,9 +123,13 @@ class customParPromoterExt:
 
 
 	def PromotePar(self, _par, page_name, target = None):
+		debug(_par)
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
+			return
+		if self.IsParGroup(_par):
+			self.PromoteParGroup(_par.parGroup, page_name, target)
 			return
 		
 		name = _par.name.title()
@@ -236,11 +241,16 @@ class customParPromoterExt:
 		# Only if no page_name was provided, use current custom page or first available
 		if new_page is None:
 			if target.customPages:
-				new_page = target.currentPage
-				new_page = TDF.getCustomPage(target, new_page.name)
+				try:
+					new_page = target.currentPage
+					debug(f'target: {target}, new_page: {new_page}, new_page.name: {new_page.name}')
+				except:
+					new_page = None
 			
 				if new_page is None:  # means not a custom page selected, take first available
 					new_page = target.customPages[0]
+				else:
+					new_page = TDF.getCustomPage(target, new_page.name)
 			else:
 				new_page = target.appendCustomPage('Custom')
 		
