@@ -1,4 +1,5 @@
 import re
+import TDFunctions as TDF
 
 class customParPromoterExt:
 	"""
@@ -80,19 +81,16 @@ class customParPromoterExt:
 			return
 		
 		name = pg.name.title()
-  
+
 		if self.parNameExists(name):
 			if self.checkAlreadyBound(pg, name):
 				return
 			else:
 				name = self.parNameCheck(name)
 		
-		page_name_q = f'{self.Reference.name}:{pg.page.name}'
-		page_exists = any([_page.name == page_name_q for _page in target.customPages])
-		if page_exists:
-			new_page = target.customPages[page_name_q]
-		else:
-			new_page = target.appendCustomPage(page_name)
+		new_page = self._getTargetPage(page_name, target, pg.page)
+
+		target.currentPage = new_page.name
 
 		try:
 			if type(pg) == ParGroupPulse and len(pg.eval()) == 2:
@@ -121,7 +119,7 @@ class customParPromoterExt:
 				new_p.val = p.val
 				p.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
 				p.mode = ParMode.BIND	
-		
+
 
 	def PromotePar(self, _par, page_name, target = None):
 		if not target:
@@ -136,17 +134,14 @@ class customParPromoterExt:
 			else:
 				name = self.parNameCheck(name)
 
-		page_name_q = f'{self.Reference.name}:{_par.page.name}'
-		page_exists = any([_page.name == page_name_q for _page in target.customPages])
-		if page_exists:
-			new_page = target.customPages[page_name_q]
-		else:
-			new_page = target.appendCustomPage(page_name)
+		new_page = self._getTargetPage(page_name, target, _par.page)
 
 		try:
 			new_par = new_page.appendPar(name, par=_par)
 		except:
 			new_par = new_page.owner.par[name]
+
+		target.currentPage = new_par.page.name
 
 		new_par.startSection = _par.startSection
 		new_par.val = _par.val
@@ -211,3 +206,42 @@ class customParPromoterExt:
 			return len(pg.val) > 1
 		except:
 			return False
+
+	def _getTargetPage(self, page_name, target, source_page=None):
+		"""Helper method to handle page selection logic
+		Args:
+			page_name: Requested page name
+			target: Target component
+			source_page: Original page from reference component
+		Returns:
+			Page object to use for parameter promotion
+		"""
+		new_page = None
+		if page_name:
+			# Get list of existing page names
+			existing_pages = [p.name for p in target.customPages]
+			
+			# First try the exact page name
+			if page_name in existing_pages:
+				new_page = target.customPages[page_name]
+			else:
+				# Try the constructed page_name_q
+				page_name_q = f'{self.Reference.name}:{source_page.name}'
+				if page_name_q in existing_pages:
+					new_page = target.customPages[page_name_q]
+				else:
+					# If neither exists, create the page with the given name
+					new_page = target.appendCustomPage(page_name)
+		
+		# Only if no page_name was provided, use current custom page or first available
+		if new_page is None:
+			if target.customPages:
+				new_page = target.currentPage
+				new_page = TDF.getCustomPage(target, new_page.name)
+			
+				if new_page is None:  # means not a custom page selected, take first available
+					new_page = target.customPages[0]
+			else:
+				new_page = target.appendCustomPage('Custom')
+		
+		return new_page
