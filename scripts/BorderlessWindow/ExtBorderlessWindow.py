@@ -40,7 +40,7 @@ class MONITORINFO(ctypes.Structure):
 		("rcWork", ctypes.c_long * 4),  # Work area (excluding taskbar)
 		("dwFlags", ctypes.c_ulong)
 	]
-#
+##
 class ExtBorderlessWindow:#
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
@@ -76,6 +76,12 @@ class ExtBorderlessWindow:#
 			
 		self.ui_mod_bg_top.par.alpha = 0.0
 
+	def onParBorderless(self, _par, _val):#
+		if _val:
+			self.remove_borders()
+		else:
+			self.restore_borders()
+
 	def get_window_title(self, hwnd):
 		# Get the length of the title
 		length = GetWindowTextLengthW(hwnd) + 1
@@ -104,20 +110,11 @@ class ExtBorderlessWindow:#
 			return title.endswith('*')
 		return False # if we couldn't get the title, assume it's not modified
 
-	def onParMakeborderless(self):
-		self.MakeBorderless()
-
-	def onParRestoreborders(self):
-		self.UndoBorderless()
-
 	def MakeBorderless(self):
-		if self.IsBorderless:
-			self.restore_borders()
-		else:
-			self.remove_borders()
+		self.ownerComp.par.Borderless.val = not self.evalBorderless
 
 	def UndoBorderless(self):
-		self.restore_borders()
+		self.ownerComp.par.Borderless.val = False
 
 	@property
 	def IsBorderless(self):
