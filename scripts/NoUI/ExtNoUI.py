@@ -54,9 +54,9 @@ class ExtNoUI:
 
 	def SetStateTimeline(self, on_create = None, on_start = None):
 		if on_create:
-			state = self.evalStatetimeline
+			state = not self.evalHidetimeline
 		elif on_start:
-			state = self.evalStateonstartuptimeline
+			state = not self.evalStateonstartuptimeline
 		
 		self._setStateTimeline(state)
 
@@ -77,7 +77,7 @@ class ExtNoUI:
 				self._timeline_height_saved = self.timeline_height
 			self.timeline_height = 0
 			
-		self.parStatetimeline.val = state
+		self.parHidetimeline.val = not state
 
 
 	def _setShortcuts(self):
@@ -87,15 +87,15 @@ class ExtNoUI:
 		self.Shortcuts.val = shortcuts
 
 
-	def onParStatetimeline(self, value):
-		self._setStateTimeline(value)
+	def onParHidetimeline(self, value):
+		self._setStateTimeline(not value)
 
 
 	def OnShortcut(self, shortcutName):
 		self._setStateTimeline()
 
 	def UpdatePlayState(self, state):
-		if self.evalStatetimeline == False:
+		if self.evalHidetimeline:
 			self._updateUIPlayState(state)
 			
 	def _updateUIPlayState(self, state):
