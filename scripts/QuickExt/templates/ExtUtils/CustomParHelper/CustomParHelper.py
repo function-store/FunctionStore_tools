@@ -90,13 +90,13 @@ class CustomParHelper:
     4. Implement callbacks (if enable_callbacks=True (default)):
        - For regular parameters:
          ```python
-         def onPar<ParamName>(self, _par, _val, _prev):
+         def onPar<Parname>(self, _par, _val, _prev):
            # _par and _prev can be omitted if not needed
          ```
 
        - For pulse parameters:
          ```python
-         def onPar<PulseParamName>(self, _par):
+         def onPar<PulseParname>(self, _par):
            # _par can be omitted if not needed
          ```
 
@@ -107,13 +107,13 @@ class CustomParHelper:
 
        - For sequence parameters:
          ```python
-         def onSeq<SeqName>N<ParName>(self, _par, idx, _val, _prev):
+         def onSeq<SeqName>N<Parname>(self, _par, idx, _val, _prev):
            # _par and _prev can be omitted if not needed
          ```
 
        - For parameter groups if enable_parGroups=True (default):
          ```python
-         def onParGroup<GroupName>(self, _parGroup, _val):
+         def onParGroup<Groupname>(self, _parGroup, _val):
            # _parGroup can be omitted if not needed
          ```
 
@@ -140,12 +140,15 @@ class CustomParHelper:
     SEQUENCE_PATTERN: str = r'(\w+?)(\d+)(.+)'
     IS_EXPOSE_PUBLIC: bool = False
     STUBS_ENABLED: bool = False
+    GENERAL_CALLBACK_ENABLE: bool = True
+    PAR_GENERAL_CALLBACK: list[str] = ['*']
+
 
     @classmethod
     def Init(cls, extension_self, ownerComp: COMP, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [],
-             enable_stubs: bool = False) -> None:
+             enable_stubs: bool = False, general_callback_enable: bool = True, par_general_callback: list[str] = ['*']) -> None:
         """Initialize the CustomParHelper."""
         cls.EXT_SELF = extension_self
         cls.EXT_OWNERCOMP = ownerComp
@@ -156,6 +159,8 @@ class CustomParHelper:
         cls.EXCEPT_PROPS = except_properties
         cls.EXCEPT_CALLBACKS = except_callbacks
         cls.EXCEPT_SEQUENCES = except_sequences
+        cls.GENERAL_CALLBACK_ENABLE = general_callback_enable
+        cls.PAR_GENERAL_CALLBACK = par_general_callback
 
         cls.__setOwnerCompToDocked(ownerComp)
 
@@ -280,9 +285,12 @@ class CustomParHelper:
         comp = cls.EXT_SELF # a bit hacky to be able to call non-exposed methods too
 
         # check if we are a sequence parameter first
-        match = re.match(cls.SEQUENCE_PATTERN, par.name)
+        match = None
+        if par.sequence is not None:
+            match = re.match(cls.SEQUENCE_PATTERN, par.name)
         if match:
             sequence_name, sequence_index, parameter_name = match.groups()
+            parameter_name = parameter_name.capitalize()
             sequence_index = int(sequence_index)
             if sequence_name in cls.EXCEPT_SEQUENCES:
                 return
@@ -307,7 +315,18 @@ class CustomParHelper:
                 method(par, par.eval())
             elif arg_count == 4:
                 method(par, par.eval(), prev)
-                
+        elif cls.GENERAL_CALLBACK_ENABLE:
+            method_check = f'{"OnValueChange" if cls.IS_EXPOSE_PUBLIC else "onValueChange"}'
+            if hasattr(comp, method_check):
+                method = getattr(comp, method_check)
+                arg_count = method.__code__.co_argcount
+                if arg_count == 2:
+                    method(par)
+                elif arg_count == 3:
+                    method(par, par.eval())
+                elif arg_count == 4:
+                    method(par, par.eval(), prev)
+
 
     @classmethod
     def OnPulse(cls, comp: COMP, par: Par) -> None:
@@ -318,9 +337,12 @@ class CustomParHelper:
         comp = cls.EXT_SELF # a bit hacky to be able to call non-exposed methods too
 
         # check if we are a sequence parameter first
-        match = re.match(cls.SEQUENCE_PATTERN, par.name)
+        match = None
+        if par.sequence is not None:
+            match = re.match(cls.SEQUENCE_PATTERN, par.name)
         if match:
             sequence_name, sequence_index, parameter_name = match.groups()
+            parameter_name = parameter_name.capitalize()
             sequence_index = int(sequence_index)
             if sequence_name in cls.EXCEPT_SEQUENCES:
                 return
@@ -354,7 +376,9 @@ class CustomParHelper:
             _comp = cls.EXT_SELF # a bit hacky to be able to call non-exposed methods too
             # handle sequence exceptions
             # check if we are a sequence parameter first
-            match = re.match(cls.SEQUENCE_PATTERN, _par.name)
+            match = None
+            if _par.sequence is not None:
+                match = re.match(cls.SEQUENCE_PATTERN, _par.name)
             if match:
                 sequence_name, sequence_index, parameter_name = match.groups()
                 sequence_index = int(sequence_index)
@@ -410,12 +434,7 @@ class CustomParHelper:
     @classmethod
     def __isParGroup(cls, par: Par) -> bool:
         """Check if a parameter is a ParGroup. Is there no better way?"""
-        par_name = par.name[:-1]
-        try:
-            pg = par.owner.parGroup[par_name]
-            return len(pg) > 1
-        except:
-            return False
+        return len(par.parGroup) > 1
 
     @classmethod
     def EnableStubs(cls) -> None:
