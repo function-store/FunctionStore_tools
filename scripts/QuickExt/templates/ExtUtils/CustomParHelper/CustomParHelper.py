@@ -9,6 +9,7 @@ class CustomParHelper:
 
     ## Features:
     - Access custom parameters as properties
+    - Set parameter values through properties
     - Simplified custom parameter callbacks
     - Support for sequence parameters
     - Support for parameter groups (parGroups)
@@ -47,12 +48,44 @@ class CustomParHelper:
         - `except_sequences`: List of sequence names to exclude from property and callback handling
         - `enable_stubs`: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
 
-    3. Access custom parameters as properties (if enable_properties=True (default)):
-       - `self.par<ParamName>`: Access the parameter object
-       - `self.eval<ParamName>`: Get the evaluated value of the parameter
-       - `self.parGroup<GroupName>`: Access the parameter group object (if enable_parGroups=True (default))
-       - `self.evalGroup<GroupName>`: Get the evaluated value of the parameter group (if enable_parGroups=True (default))
-    > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
+    3. Access and set custom parameters as properties (if enable_properties=True (default)):
+       
+       There are two ways to access and set parameter values:
+
+       a) Using Eval properties (recommended for simple value setting):
+       - `self.eval<ParamName>`: Get/set the evaluated value of the parameter
+         ```python
+         # Get value
+         value = self.evalMyParam
+         # Set value (always sets .val regardless of parameter mode)
+         self.evalMyParam = 5
+         ```
+       - `self.evalGroup<GroupName>`: Get/set the evaluated value of the parameter group
+         ```python
+         # Get values
+         values = self.evalGroupXyz
+         # Set values (always sets .val for each parameter)
+         self.evalGroupXyz = [1, 2, 3]
+         ```
+
+       b) Using Par properties (for advanced parameter control):
+       - `self.par<ParamName>`: Access/set the parameter object
+         ```python
+         # Get parameter object for advanced operations
+         self.parMyParam.expr = "op('something').par.value"
+         self.parMyParam.bindExpr = "op('other').par.value"
+         # Set value (only works in CONSTANT or BIND modes)
+         self.parMyParam = 5  # Ignored if parameter is in EXPRESSION mode
+         ```
+       - `self.parGroup<GroupName>`: Access/set the parameter group object
+         ```python
+         # Get parameter group for advanced operations
+         myGroup = self.parGroupXyz
+         # Set values (only works for parameters in CONSTANT or BIND modes)
+         self.parGroupXyz = [1, 2, 3]  # Only affects non-expression parameters
+         ```
+
+       > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
 
     4. Implement callbacks (if enable_callbacks=True (default)):
        - For regular parameters:
@@ -179,14 +212,19 @@ class CustomParHelper:
         """Create a property for the evaluated value of a parameter."""
         def getter(instance):
             return getattr(owner_comp.par, Parname).eval()
+        def setter(instance, value):
+            getattr(owner_comp.par, Parname).val = value
         def getter_group(instance):
             return getattr(owner_comp.parGroup, Parname[:-1]).eval()
+        def setter_group(instance, value):
+            for i, val in enumerate(value):
+                getattr(owner_comp.parGroup, Parname[:-1])[i].val = val
 
         property_name = f'{"Eval" if cls.IS_EXPOSE_PUBLIC else "eval"}{Parname}'
-        setattr(extension_self.__class__, property_name, property(getter))
+        setattr(extension_self.__class__, property_name, property(getter, setter))
         
         if enable_parGroups and cls.__isParGroup(getattr(owner_comp.par, Parname)):
-            setattr(extension_self.__class__, f'{"EvalGroup" if cls.IS_EXPOSE_PUBLIC else "evalGroup"}{Parname[:-1]}', property(getter_group))
+            setattr(extension_self.__class__, f'{"EvalGroup" if cls.IS_EXPOSE_PUBLIC else "evalGroup"}{Parname[:-1]}', property(getter_group, setter_group))
         
 
     @classmethod
@@ -194,14 +232,23 @@ class CustomParHelper:
         """Create a property for the parameter object."""
         def getter(instance):
             return getattr(owner_comp.par, Parname)
+        def setter(instance, value):
+            par = getattr(owner_comp.par, Parname)
+            if par.mode in [ParMode.BIND, ParMode.CONSTANT]:
+                par.val = value
         def getter_group(instance):
             return getattr(owner_comp.parGroup, Parname[:-1])
+        def setter_group(instance, value):
+            pargroup = getattr(owner_comp.parGroup, Parname[:-1])
+            for i, val in enumerate(value):
+                if pargroup[i].mode in [ParMode.BIND, ParMode.CONSTANT]:
+                    pargroup[i].val = val
 
         property_name = f'{"Par" if cls.IS_EXPOSE_PUBLIC else "par"}{Parname}'
-        setattr(extension_self.__class__, property_name, property(getter))
+        setattr(extension_self.__class__, property_name, property(getter, setter))
         
         if enable_parGroups and cls.__isParGroup(getattr(owner_comp.par, Parname)):
-            setattr(extension_self.__class__, f'{"ParGroup" if cls.IS_EXPOSE_PUBLIC else "parGroup"}{Parname[:-1]}', property(getter_group))
+            setattr(extension_self.__class__, f'{"ParGroup" if cls.IS_EXPOSE_PUBLIC else "parGroup"}{Parname[:-1]}', property(getter_group, setter_group))
 
 
     @classmethod
