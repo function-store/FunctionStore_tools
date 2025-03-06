@@ -41,7 +41,7 @@ class MONITORINFO(ctypes.Structure):
 		("dwFlags", ctypes.c_ulong)
 	]
 #
-class ExtBorderlessWindow:
+class ExtBorderlessWindow:#
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
@@ -111,7 +111,10 @@ class ExtBorderlessWindow:
 		self.UndoBorderless()
 
 	def MakeBorderless(self):
-		self.remove_borders()
+		if self.IsBorderless:
+			self.restore_borders()
+		else:
+			self.remove_borders()
 
 	def UndoBorderless(self):
 		self.restore_borders()
