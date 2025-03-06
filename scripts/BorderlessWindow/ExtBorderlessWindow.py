@@ -69,7 +69,7 @@ class ExtBorderlessWindow:
 		return self.td_project_is_modified(self.saved_foreground_window)
 
 	def UpdateModified(self):
-		if self.is_borderless:
+		if self.IsBorderless:
 			if self.td_project_is_modified(self.saved_foreground_window):
 				self.ui_mod_bg_top.par.alpha = 0.15
 				return
@@ -119,6 +119,11 @@ class ExtBorderlessWindow:
 	@property
 	def IsBorderless(self):
 		return self.is_borderless
+	
+	@IsBorderless.setter
+	def IsBorderless(self, value):
+		self.is_borderless = value
+		self.displayProjName(value)
 
 	def get_work_area(self, hwnd):
 		monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)
@@ -162,12 +167,13 @@ class ExtBorderlessWindow:
 		width -= width_reduction
 		height -= height_reduction
 		
+		self.IsBorderless = True
+
 		# Move & resize window to final size with proper flags
 		SetWindowPos(hwnd, None, left, top, width, height, 
 					SWP_FRAMECHANGED | SWP_SHOWWINDOW)
 		
 		self.saved_foreground_window = hwnd
-		self.is_borderless = True
 
 	def restore_borders(self):
 		hwnd = GetForegroundWindow()  # Get active window
@@ -186,4 +192,13 @@ class ExtBorderlessWindow:
 		SetWindowPos(hwnd, None, left, top, width, height, 
 					SWP_FRAMECHANGED | SWP_SHOWWINDOW)
 		self.maximize_window(hwnd)  
-		self.is_borderless = False
+		self.IsBorderless = False
+
+	def displayProjName(self, state):
+		targets = [self.ownerComp.op('projname'), op('/ui/dialogs/mainmenu/projname')]
+
+		for target in targets:
+			if not target:
+				continue
+		
+			target.par.display = state
