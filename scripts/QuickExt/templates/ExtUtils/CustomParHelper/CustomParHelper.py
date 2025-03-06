@@ -133,22 +133,21 @@ class CustomParHelper:
     EXCEPT_PAGES_STATIC: list[str]  = ['Version Ctrl', 'About', 'Info']
     EXCEPT_PAGES: list[str] = EXCEPT_PAGES_STATIC
     EXCEPT_PROPS: list[str] = []
-    EXCEPT_CALLBACKS: list[str] = []
-    EXCEPT_SEQUENCES: list[str] = []
+    EXCEPT_CALLBACKS: list[str] = [] # handled outside in extParExec DAT
+    EXCEPT_SEQUENCES: list[str] = [] # handled outside in extSeqParExec DAT
     PAR_PROPS: list[str] = ['*']
-    PAR_CALLBACKS: list[str] = ['*']
+    PAR_CALLBACKS: list[str] = ['*'] # handled outside in extParExec DAT
     SEQUENCE_PATTERN: str = r'(\w+?)(\d+)(.+)'
     IS_EXPOSE_PUBLIC: bool = False
     STUBS_ENABLED: bool = False
     GENERAL_CALLBACK_ENABLE: bool = True
-    PAR_GENERAL_CALLBACK: list[str] = ['*']
 
 
     @classmethod
     def Init(cls, extension_self, ownerComp: COMP, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [],
-             enable_stubs: bool = False, general_callback_enable: bool = True, par_general_callback: list[str] = ['*']) -> None:
+             enable_stubs: bool = False, general_callback_enable: bool = True) -> None:
         """Initialize the CustomParHelper."""
         cls.EXT_SELF = extension_self
         cls.EXT_OWNERCOMP = ownerComp
@@ -160,7 +159,6 @@ class CustomParHelper:
         cls.EXCEPT_CALLBACKS = except_callbacks
         cls.EXCEPT_SEQUENCES = except_sequences
         cls.GENERAL_CALLBACK_ENABLE = general_callback_enable
-        cls.PAR_GENERAL_CALLBACK = par_general_callback
 
         cls.__setOwnerCompToDocked(ownerComp)
 
@@ -277,7 +275,7 @@ class CustomParHelper:
 
 
     @classmethod
-    def OnValueChange(cls, comp: COMP, par: Par, prev: Par) -> None:
+    def OnValueChange(cls, comp: COMP, _par: Par, prev: Par) -> None:
         """Handle value change events for custom parameters."""
         # exceptions are handled in the parExec itself
         # except for sequence parameters
@@ -286,8 +284,8 @@ class CustomParHelper:
 
         # check if we are a sequence parameter first
         match = None
-        if par.sequence is not None:
-            match = re.match(cls.SEQUENCE_PATTERN, par.name)
+        if _par.sequence is not None:
+            match = re.match(cls.SEQUENCE_PATTERN, _par.name)
         if match:
             sequence_name, sequence_index, parameter_name = match.groups()
             parameter_name = parameter_name.capitalize()
@@ -301,35 +299,36 @@ class CustomParHelper:
                 if arg_count == 2:
                     method(sequence_index)
                 if arg_count == 3:
-                    method(sequence_index, par.eval())
+                    method(sequence_index, _par.eval())
                 elif arg_count == 4:
-                    method(par, sequence_index, par.eval())
+                    method(_par, sequence_index, _par.eval())
                 elif arg_count == 5:
-                    method(par, sequence_index, par.eval(), prev)
-        elif hasattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{par.name}'):
-            method = getattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{par.name}')
+                    method(_par, sequence_index, _par.eval(), prev)
+        elif hasattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{_par.name}'):
+            method = getattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{_par.name}')
             arg_count = method.__code__.co_argcount  # Total number of arguments
             if arg_count == 2:
-                method(par.eval())
+                method(_par.eval())
             elif arg_count == 3:
-                method(par, par.eval())
+                method(_par, _par.eval())
             elif arg_count == 4:
-                method(par, par.eval(), prev)
+                method(_par, _par.eval(), prev)
         elif cls.GENERAL_CALLBACK_ENABLE:
+            # if not caught by any other callbacks, check if there is a general callback
             method_check = f'{"OnValueChange" if cls.IS_EXPOSE_PUBLIC else "onValueChange"}'
             if hasattr(comp, method_check):
                 method = getattr(comp, method_check)
                 arg_count = method.__code__.co_argcount
                 if arg_count == 2:
-                    method(par)
+                    method(_par)
                 elif arg_count == 3:
-                    method(par, par.eval())
+                    method(_par, _par.eval())
                 elif arg_count == 4:
-                    method(par, par.eval(), prev)
+                    method(_par, _par.eval(), prev)
 
 
     @classmethod
-    def OnPulse(cls, comp: COMP, par: Par) -> None:
+    def OnPulse(cls, comp: COMP, _par: Par) -> None:
         """Handle pulse events for custom parameters."""
         # exceptions are handled in the parExec itself
         # except for sequence parameters
@@ -338,8 +337,8 @@ class CustomParHelper:
 
         # check if we are a sequence parameter first
         match = None
-        if par.sequence is not None:
-            match = re.match(cls.SEQUENCE_PATTERN, par.name)
+        if _par.sequence is not None:
+            match = re.match(cls.SEQUENCE_PATTERN, _par.name)
         if match:
             sequence_name, sequence_index, parameter_name = match.groups()
             parameter_name = parameter_name.capitalize()
@@ -353,14 +352,24 @@ class CustomParHelper:
                 if arg_count == 2:
                     method(sequence_index)
                 elif arg_count == 3:
-                    method(sequence_index, par)
-        elif hasattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{par.name}'):
-            method = getattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{par.name}')
+                    method(sequence_index, _par)
+        elif hasattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{_par.name}'):
+            method = getattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{_par.name}')
             arg_count = method.__code__.co_argcount  # Total number of arguments
             if arg_count == 1:
                 method()
             elif arg_count == 2:
-                method(par)
+                method(_par)
+        elif cls.GENERAL_CALLBACK_ENABLE:
+            # if not caught by any other callbacks, check if there is a general callback
+            method_check = f'{"OnPulse" if cls.IS_EXPOSE_PUBLIC else "onPulse"}'
+            if hasattr(comp, method_check):
+                method = getattr(comp, method_check)
+                arg_count = method.__code__.co_argcount
+                if arg_count == 1:
+                    method()
+                elif arg_count == 2:
+                    method(_par)
 
 
     @classmethod
@@ -432,9 +441,9 @@ class CustomParHelper:
                         method(sequence_index)
                         
     @classmethod
-    def __isParGroup(cls, par: Par) -> bool:
+    def __isParGroup(cls, _par: Par) -> bool:
         """Check if a parameter is a ParGroup. Is there no better way?"""
-        return len(par.parGroup) > 1
+        return len(_par.parGroup) > 1
 
     @classmethod
     def EnableStubs(cls) -> None:
