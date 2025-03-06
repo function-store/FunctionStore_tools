@@ -44,33 +44,37 @@ class customParPromoterExt:
 #VVVVVVVVVVVVVVVVVVVVVVVVVVVV MAIN VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
 	def DoPromoteAll(self, exceptions=None):
-		for page in self.Reference.customPages:
-			if page.name in self.ignorePages:
+		#for _page in self.Reference.customPages:
+		if self.Reference:
+			_page = self.Reference.currentPage
+
+		if _page.name in self.ignorePages:
+			# continue
+			return
+
+		page_name = f'{self.Reference.name}:{_page.name}'
+
+		# Set to keep track of processed parGroups
+		processed_parGroups = set()
+
+		for par in _page.pars:
+			# Handle exceptions
+			if exceptions and par.name in exceptions:
 				continue
 
-			page_name = f'{self.Reference.name}:{page.name}'
+			# Check if the parameter is a parGroup
+			if self.IsParGroup(par):
+				# Extract the group name without the last character
+				pg_name = par.name[:-1]
 
-			# Set to keep track of processed parGroups
-			processed_parGroups = set()
-
-			for par in page.pars:
-				# Handle exceptions
-				if exceptions and par.name in exceptions:
+				# Check if this parGroup has been processed already
+				if pg_name in processed_parGroups:
 					continue
+				processed_parGroups.add(pg_name)
 
-				# Check if the parameter is a parGroup
-				if self.IsParGroup(par):
-					# Extract the group name without the last character
-					pg_name = par.name[:-1]
-
-					# Check if this parGroup has been processed already
-					if pg_name in processed_parGroups:
-						continue
-					processed_parGroups.add(pg_name)
-
-					self.PromoteParGroup(self.Reference.parGroup[pg_name], page_name)
-				else:
-					self.PromotePar(par, page_name)
+				self.PromoteParGroup(self.Reference.parGroup[pg_name], page_name)
+			else:
+				self.PromotePar(par, page_name)
 
 	# unfortunately params that are for example XYZ, Float2/3 etc are not handled well by appendPar
 	# as it creates duplicates (Par[xyz] becomes Par[xyz][xyz])... therefore the below
