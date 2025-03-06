@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtNoUI
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.294.toe
+Saveorigin : FunctionStore_tools_2023.331.toe
 Saveversion : 2023.11600
 Info Header End'''
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
@@ -61,9 +61,13 @@ class ExtNoUI:
 		self._setStateTimeline(state)
 
 
-	def _setStateTimeline(self, state):
+	def _setStateTimeline(self, state=None):
 		if not self.module_enabled:
 			return
+			
+		if state is None:
+			state = not bool(self.timeline_height)  # Toggle based on current height
+			
 		if state:
 			height = max(self._timeline_height_saved, 75)  # Ensure we never restore to 0
 			if self.timeline_height == 0:
@@ -72,6 +76,7 @@ class ExtNoUI:
 			if self.timeline_height != 0:  # Only save if current height is non-zero
 				self._timeline_height_saved = self.timeline_height
 			self.timeline_height = 0
+			
 		self.parStatetimeline.val = state
 
 
@@ -87,10 +92,7 @@ class ExtNoUI:
 
 
 	def OnShortcut(self, shortcutName):
-		if shortcutName == self.evalShortcuttimelinehide:
-			self._setStateTimeline(False)
-		elif shortcutName == self.evalShortcuttimelineshow:
-			self._setStateTimeline(True)
+		self._setStateTimeline()
 
 	def UpdatePlayState(self, state):
 		if self.evalStatetimeline == False:
