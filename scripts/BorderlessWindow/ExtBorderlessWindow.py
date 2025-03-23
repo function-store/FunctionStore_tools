@@ -40,47 +40,69 @@ class MONITORINFO(ctypes.Structure):
 		("rcWork", ctypes.c_long * 4),  # Work area (excluding taskbar)
 		("dwFlags", ctypes.c_ulong)
 	]
-##
+###
 class ExtBorderlessWindow:#
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
 		self.current_pid = os.getpid()  # Store current process ID
 		self.saved_foreground_window = GetForegroundWindow()
-		self.is_borderless = False  # Track borderless state
+		self.is_borderless = self.ownerComp.par.Borderless.eval() # Track borderless state
+		self.is_modified = False  # Track modified state
 		self.IsModifiedAndBorderless = tdu.Dependency(False)
-		self.ui_mod_bg_top = self.ownerComp.op('constant1')
-		self.modify_ui(self.evalModifyui)
+		self.saveStateScriptOp = self.ownerComp.op('saveStateScriptOp')
+		self.__injectUI()
 
-	def modify_ui(self, state):
-		target_op = op('/ui/dialogs/mainmenu/emptypanel')
-		if not target_op:
-			return
-		if state:
-			target_op.par.top = self.ui_mod_bg_top
+	def __injectUI(self):
+		nodetable = op('/ui/dialogs/mainmenu/menu')
+		target_op = nodetable.op('in1')
+		inject_op = self.saveStateScriptOp
+
+		if _op := nodetable.op(inject_op.name):
+			out_conns = _op.inputConnectors[0].connections
+			_op.destroy()
 		else:
-			target_op.par.top = None
+			out_conns = target_op.inputConnectors[0].connections
 
-	def onParModifyui(self, val):
-		self.modify_ui(val)
+		_op = nodetable.copy(inject_op)
+		_op.nodeX = target_op.nodeX + 150
+		_op.nodeY = target_op.nodeY
+		_op.docked[0].nodeX = _op.nodeX
+		_op.docked[0].nodeY = _op.nodeY - 100
+
+		for out_conn in out_conns:
+			_op.inputConnectors[0].connect(out_conn.owner)
+
+		_op.outputConnectors[0].connect(target_op)
+		_op.bypass = False
+		pass
+
 
 	@property
 	def TdProjectIsModified(self):
 		return self.td_project_is_modified(self.saved_foreground_window)
 
-	def UpdateModified(self):
-		if self.IsBorderless:
-			if self.td_project_is_modified(self.saved_foreground_window):
-				self.ui_mod_bg_top.par.alpha = 0.15
-				return
+	def UpdateModified(self, force=None):
+		if force is None:
+			is_modified = self.td_project_is_modified(self.saved_foreground_window)
+		else:
+			is_modified = force
+
+		# Only update if the modified state has changed
+		if is_modified != self.is_modified:
+			self.is_modified = is_modified
+			# Update the dependency
+			self.IsModifiedAndBorderless.val = self.is_modified and self.is_borderless
 			
-		self.ui_mod_bg_top.par.alpha = 0.0
 
 	def onParBorderless(self, _par, _val):#
 		if _val:
 			self.remove_borders()
 		else:
 			self.restore_borders()
+		
+		# Update the dependency whenever borderless state changes
+		self.IsModifiedAndBorderless.val = self.is_modified and self.is_borderless
 
 	def get_window_title(self, hwnd):
 		# Get the length of the title
@@ -124,6 +146,8 @@ class ExtBorderlessWindow:#
 	def IsBorderless(self, value):
 		self.is_borderless = value
 		self.displayProjName(value)
+		# Update the dependency whenever borderless state changes
+		self.IsModifiedAndBorderless.val = self.is_modified and self.is_borderless
 
 	def get_work_area(self, hwnd):
 		monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)
@@ -202,3 +226,4 @@ class ExtBorderlessWindow:#
 				continue
 		
 			target.par.display = state
+
