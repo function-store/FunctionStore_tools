@@ -45,9 +45,13 @@ class extExprHotString:
 			return '#@' in text
 
 
-	def HotstringCheck(self, OP, PAR, EXPR):
+	def HotstringCheck(self, OP, PAR, EXPR, BINDEXPR):
 		op_par = op(OP).par[PAR]
-		if op_par.mode in [ParMode.EXPRESSION, ParMode.CONSTANT] and EXPR != 'None':
+		if op_par.mode == ParMode.BIND:
+			EXPR = BINDEXPR
+		if op_par is None:
+			return
+		if op_par.mode in [ParMode.EXPRESSION, ParMode.CONSTANT, ParMode.BIND] and EXPR != 'None':
 			expands = None
 
 			if self.ownerComp.par.Openable.eval():
@@ -58,22 +62,29 @@ class extExprHotString:
 			if self.ownerComp.par.Replaceinline:
 				# match longest abbreviation first
 				abvs = [(cell.row, cell.val) for cell in self.hotstrings.col('Abbreviation')[1:]]
+				if not abvs:
+					return
 				abvs.sort(key=lambda x: len(x[1]),reverse=True)
 				abbreviation = [s for s in abvs if s[1] in EXPR]
 				
 				if abbreviation:
 					abbreviation = abbreviation[0]
-					expands = self.hotstrings.cell(abbreviation[0], 'Expands').val
+					expands = self.hotstrings.cell(abbreviation[0], 'Expands', val=True)
+					if expands is None or expands == '':
+						return
 					expands = re.sub(abbreviation[1], expands, EXPR)
 
 			else:
 				hotstring = self.hotstrings.findCell(EXPR, cols = ['Abbreviation'], valuePattern=False, caseSensitive=True)
 				if hotstring:
-					expands = self.hotstrings.cell(hotstring.row, 'Expands')
+					expands = self.hotstrings.cell(hotstring.row, 'Expands', val=True)
 					
 			if expands:
 				# replace 
-				op_par.expr = expands
+				if op_par.mode == ParMode.BIND:
+					op_par.bindExpr = expands
+				else:
+					op_par.expr = expands
 				# recurse in case multiple abbreviations were used
-				self.HotstringCheck(OP,PAR,expands)
+				self.HotstringCheck(OP,PAR,expands, expands)
 	
