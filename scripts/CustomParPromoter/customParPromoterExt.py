@@ -94,8 +94,6 @@ class customParPromoterExt:
 		
 		new_page = self._getTargetPage(page_name, target, _parGroup.page)
 
-		target.currentPage = new_page.name
-
 		try:
 			if type(_parGroup) == ParGroupPulse and len(_parGroup.eval()) == 2:
 				new_pars = [new_page.appendPar(name, par=_parGroup[0]), new_page.appendPar(f'{name}pulse',par=_parGroup[1])]
@@ -125,6 +123,7 @@ class customParPromoterExt:
 				p.mode = ParMode.BIND	
 
 
+
 	def PromotePar(self, _par, page_name, target = None):
 		if not target:
 			target = self.Target
@@ -147,8 +146,6 @@ class customParPromoterExt:
 			new_par = new_page.appendPar(name, par=_par)
 		except:
 			new_par = new_page.owner.par[name]
-
-		target.currentPage = new_par.page.name
 
 		new_par.startSection = _par.startSection
 		new_par.val = _par.val
@@ -223,19 +220,22 @@ class customParPromoterExt:
 		Returns:
 			Page object to use for parameter promotion
 		"""
+		
+		custom_page_names = [p.name for p in target.customPages]
+		all_page_names = [p.name for p in target.pages]
+		
 		new_page = None
 		# we have a target or candidate page name
 		if page_name:
 			# Get list of existing page names
-			existing_pages = [p.name for p in target.customPages]
 			
 			# First try the exact page name
-			if page_name in existing_pages:
+			if page_name in custom_page_names:
 				new_page = target.customPages[page_name]
 			else:
 				# Try the constructed page_name_q
 				page_name_q = f'{self.Reference.name}:{source_page.name}'
-				if page_name_q in existing_pages:
+				if page_name_q in custom_page_names:
 					new_page = target.customPages[page_name_q]
 				else:
 					# If neither exists, create the page with the given name
@@ -245,11 +245,11 @@ class customParPromoterExt:
 		if new_page is None:
 			if target.customPages:
 				try:
-					new_page = target.currentPage
-				except:
+					new_page = target.currentPage if target.currentPage.name in custom_page_names else None
+				except Exception as e:
 					new_page = None
 					
-				if new_page is None or new_page not in target.customPages:  # means not a custom page selected, take first available
+				if new_page is None:  # means not a custom page selected, take first available
 					new_page = target.customPages[0]
 				else:
 					new_page = TDF.getCustomPage(target, new_page.name)
