@@ -48,3 +48,5 @@ mapping/
 .DS_Store
 /.VSCodeCounter
 Log/OrbbecSDK.log.txt
+/Assets
+/clipboard_images
