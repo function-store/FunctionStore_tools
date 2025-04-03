@@ -1,7 +1,7 @@
 '''Info Header Start
 Name : install
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.390.toe
+Saveorigin : FunctionStore_tools_2023.410.toe
 Saveversion : 2023.11600
 Info Header End'''
 
@@ -46,16 +46,17 @@ inject_op = op('script_inject')
 injected_op = inject(target_comp, target_op, inject_op)
 
 # iofilter hack
-target_op = injected_op
-inject_op = op('IOFilter/script_IOFilter')
-inject(target_comp, target_op, inject_op)
-
-target_comp = op('/ui/dialogs/menu_op')
-inject_op = op('IOFilter/radioExpose')
-panelparent = target_comp.op('families')
-radioExpose = inject(target_comp, target_op=None, inject_op=inject_op, panelparent=panelparent)
-radioExpose.par.display = True
-
+if parent.FNS.par.Activeopmenuiofilter.eval():
+	target_op = injected_op
+	inject_op = op('IOFilter/script_IOFilter')
+	inject(target_comp, target_op, inject_op)
+	
+	target_comp = op('/ui/dialogs/menu_op')
+	inject_op = op('IOFilter/radioExpose')
+	panelparent = target_comp.op('families')
+	radioExpose = inject(target_comp, target_op=None, inject_op=inject_op, panelparent=panelparent)
+	radioExpose.par.display = True
+	
 
 # right click menu hack
 comp = op('/ui/dialogs/menu_op/nodetable/popMenu')
