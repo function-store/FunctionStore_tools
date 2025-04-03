@@ -12,6 +12,8 @@ class customParPromoterExt:
 		self._reference = None
 		self._target = None
 		self.hk_mod = self.ownerComp.op('null_mod')
+		self.popDialog = self.ownerComp.op('popDialog')
+		self.__parNumTypes = ['Float', 'Int', 'Xy', 'Xyz', 'Xyzw', 'Uv', 'Uvw', 'Wh','Rgb', 'Rgba']
 
 	@property
 	def Reference(self):
@@ -78,13 +80,16 @@ class customParPromoterExt:
 
 	# unfortunately params that are for example XYZ, Float2/3 etc are not handled well by appendPar
 	# as it creates duplicates (Par[xyz] becomes Par[xyz][xyz])... therefore the below
-	def PromoteParGroup(self, _parGroup, page_name, target = None):
+	def PromoteParGroup(self, _parGroup, page_name, target = None, refBind = None, parName = None, parLabel = None):
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
 			return
+		if not refBind:
+			refBind = self.refBind
 		
-		name = _parGroup.name.title()
+		label = _parGroup.label.title() if parLabel is None else parLabel
+		name = _parGroup.name.title() if parName is None else parName
 
 		if self.parNameExists(name):
 			if self.checkAlreadyBound(_parGroup, name):
@@ -96,9 +101,9 @@ class customParPromoterExt:
 
 		try:
 			if type(_parGroup) == ParGroupPulse and len(_parGroup.eval()) == 2:
-				new_pars = [new_page.appendPar(name, par=_parGroup[0]), new_page.appendPar(f'{name}pulse',par=_parGroup[1])]
+				new_pars = [new_page.appendPar(name, par=_parGroup[0]), new_page.appendPar(name=f'{name}pulse', label=f'{label}', par=_parGroup[1])]
 			else:
-				new_par = new_page.appendPar(name, par=_parGroup[0])
+				new_par = new_page.appendPar(name, label=name, par=_parGroup[0])
 				new_pars = new_par.pars()
 				for i, old_par in enumerate(_parGroup):
 					new_pars[i].val = old_par.val
@@ -113,7 +118,7 @@ class customParPromoterExt:
 		for p, new_p in zip(_parGroup.pars('*'), new_pars):
 			new_p.val = p.val
 			new_p.startSection = p.startSection
-			if not self.refBind:
+			if not refBind:
 				new_p.val = p.val
 				p.expr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
 				p.mode = ParMode.EXPRESSION
@@ -124,16 +129,21 @@ class customParPromoterExt:
 
 
 
-	def PromotePar(self, _par, page_name, target = None):
+	def PromotePar(self, _par, page_name, target = None, refBind = None, parName = None, parLabel = None, parMin = None, parMax = None):
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
 			return
+		if refBind is None:
+			refBind = self.refBind
+
 		if self.IsParGroup(_par):
-			self.PromoteParGroup(_par.parGroup, page_name, target)
+			self.PromoteParGroup(_par.parGroup, page_name, target, refBind)
 			return
 		
-		name = _par.name.title()
+		label = _par.label.title() if parLabel is None else parLabel
+		name = _par.name.title() if parName is None else parName
+
 		if self.parNameExists(name):
 			if self.checkAlreadyBound(_par, name):
 				return
@@ -143,15 +153,22 @@ class customParPromoterExt:
 		new_page = self._getTargetPage(page_name, target, _par.page)
 
 		try:
-			new_par = new_page.appendPar(name, par=_par)
-		except:
+			new_par = new_page.appendPar(name, label=label, par=_par)
+		except Exception as e:
 			new_par = new_page.owner.par[name]
+
+		if parMin is not None:
+			new_par.normMin = parMin
+			new_par.min = parMin
+		if parMax is not None:
+			new_par.normMax = parMax
+			new_par.max = parMax
 
 		new_par.startSection = _par.startSection
 		new_par.val = _par.val
 		if new_par.isMenu:
 			new_par.menuSource = target.shortcutPath(self.Reference, toParName = _par.name) 
-		if not self.refBind:
+		if not refBind:
 			_par.expr = f"{self.Reference.shortcutPath(target)}.par.{new_par.name}"
 			_par.mode = ParMode.EXPRESSION
 		else:
@@ -257,3 +274,80 @@ class customParPromoterExt:
 				new_page = target.appendCustomPage('Custom')
 		
 		return new_page
+
+	def OnEditText(self, field, text):
+		if field == 'paramname':
+			paramname = self.popDialog.op('entry2/inputText').par.text
+			prune_text = text.replace(' ', '')
+			# also remove any non-alphanumeric characters
+			prune_text = re.sub(r'[^a-zA-Z0-9]', '', prune_text)
+			# remove leading and trailing underscores
+			prune_text = prune_text.strip('_')
+			# remove any leading numbers
+			prune_text = re.sub(r'^[0-9]+', '', prune_text)
+			text = prune_text.capitalize()
+			paramname.val = text
+		elif field in ['min', 'max']:
+			minvalField = self.popDialog.op(f'entry{3 if field == "min" else 4}/inputText').par.text
+			minmaxVal = minvalField.eval()
+			# prune text of non-numeric or non dot characters
+			minmaxVal = re.sub(r'[^0-9.]', '', minmaxVal)
+			# remove leading and trailing dots
+			minmaxVal = minmaxVal.strip('.')
+			# remove any leading zeros
+			minmaxVal = re.sub(r'^0+', '', minmaxVal)
+			# ensure only one dot
+			parts = minmaxVal.split('.')
+			# ensure no non-numeric characters
+			parts = [part for part in parts if part.isdigit()]
+			if len(parts) > 2:
+				minmaxVal = parts[0] + '.' + ''.join(parts[1:])
+			minvalField.val = float(minmaxVal)
+		
+			
+
+	def OnCustomizeParameterDropped(self, dropParam):
+		details = {}
+		details['refBind'] = self.refBind
+		if type(dropParam) == ParGroup:
+			# is pargroup
+			details['parGroup'] = dropParam
+			self.popDialog.par.Minmaxentryarea = False
+			is_num = False
+		else:
+			# is par
+			details['par'] = dropParam
+			style = dropParam.style
+			is_num = style in self.__parNumTypes
+			details['isNum'] = is_num
+			self.popDialog.par.Minmaxentryarea = is_num
+
+		textEntries = [dropParam.label, dropParam.name.capitalize()]
+		if is_num:
+			textEntries.extend([dropParam.normMin, dropParam.normMax])
+
+		self.popDialog.Open(callback=self.OnCustomizeCallback, details=details, textEntries=textEntries)
+
+	def OnCustomizeCallback(self, info):
+		if info['buttonNum'] != 1:
+			return
+		
+		details = info['details']
+		parGroup = details.get('parGroup', None)
+		par = details.get('par', None)
+		is_num = details.get('isNum', False)
+
+		labelEntry = info['enteredText'][0]
+		nameEntry = info['enteredText'][1]
+		minEntry = float(info['enteredText'][2]) if is_num and info['enteredText'][2] is not None else None
+		maxEntry = float(info['enteredText'][3]) if is_num and info['enteredText'][3] is not None else None
+		
+		if parGroup is not None:
+			self.PromoteParGroup(parGroup, None, parName=nameEntry, parLabel=labelEntry)
+		elif par is not None:
+			self.PromotePar(par, None, parName=nameEntry, parLabel=labelEntry, parMin=minEntry, parMax=maxEntry)
+
+
+
+
+
