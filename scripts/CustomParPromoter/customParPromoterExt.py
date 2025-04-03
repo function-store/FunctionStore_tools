@@ -129,7 +129,7 @@ class customParPromoterExt:
 
 
 
-	def PromotePar(self, _par, page_name, target = None, refBind = None, parName = None, parLabel = None, parMin = None, parMax = None):
+	def PromotePar(self, _par, page_name, target = None, refBind = None, parName = None, parLabel = None, parMin = None, parMax = None, clamp = None, parDefault = None):
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
@@ -160,10 +160,17 @@ class customParPromoterExt:
 		if parMin is not None:
 			new_par.normMin = parMin
 			new_par.min = parMin
+			if clamp:
+				new_par.clampMin = clamp[0] # true/false
 		if parMax is not None:
 			new_par.normMax = parMax
 			new_par.max = parMax
+			if clamp:
+				new_par.clampMax = clamp[1] # true/false
 
+		if parDefault is not None:
+			new_par.default = parDefault
+			
 		new_par.startSection = _par.startSection
 		new_par.val = _par.val
 		if new_par.isMenu:
@@ -288,21 +295,7 @@ class customParPromoterExt:
 			text = prune_text.capitalize()
 			paramname.val = text
 		elif field in ['min', 'max']:
-			minvalField = self.popDialog.op(f'entry{3 if field == "min" else 4}/inputText').par.text
-			minmaxVal = minvalField.eval()
-			# prune text of non-numeric or non dot characters
-			minmaxVal = re.sub(r'[^0-9.]', '', minmaxVal)
-			# remove leading and trailing dots
-			minmaxVal = minmaxVal.strip('.')
-			# remove any leading zeros
-			minmaxVal = re.sub(r'^0+', '', minmaxVal)
-			# ensure only one dot
-			parts = minmaxVal.split('.')
-			# ensure no non-numeric characters
-			parts = [part for part in parts if part.isdigit()]
-			if len(parts) > 2:
-				minmaxVal = parts[0] + '.' + ''.join(parts[1:])
-			minvalField.val = float(minmaxVal)
+			return
 		
 			
 
@@ -318,6 +311,7 @@ class customParPromoterExt:
 			# is par
 			details['par'] = dropParam
 			style = dropParam.style
+			default = dropParam.default
 			is_num = style in self.__parNumTypes
 			details['isNum'] = is_num
 			self.popDialog.par.Minmaxentryarea = is_num
@@ -325,6 +319,7 @@ class customParPromoterExt:
 		textEntries = [dropParam.label, dropParam.name.capitalize()]
 		if is_num:
 			textEntries.extend([dropParam.normMin, dropParam.normMax])
+			textEntries.append(default)
 
 		self.popDialog.Open(callback=self.OnCustomizeCallback, details=details, textEntries=textEntries)
 
@@ -341,11 +336,13 @@ class customParPromoterExt:
 		nameEntry = info['enteredText'][1]
 		minEntry = float(info['enteredText'][2]) if is_num and info['enteredText'][2] is not None else None
 		maxEntry = float(info['enteredText'][3]) if is_num and info['enteredText'][3] is not None else None
+		chekcboxClamp = info['checkBoxes']
+		default = info['enteredText'][4] if is_num else None
 		
 		if parGroup is not None:
 			self.PromoteParGroup(parGroup, None, parName=nameEntry, parLabel=labelEntry)
 		elif par is not None:
-			self.PromotePar(par, None, parName=nameEntry, parLabel=labelEntry, parMin=minEntry, parMax=maxEntry)
+			self.PromotePar(par, None, parName=nameEntry, parLabel=labelEntry, parMin=minEntry, parMax=maxEntry, clamp=chekcboxClamp, parDefault=default)
 
 
 
