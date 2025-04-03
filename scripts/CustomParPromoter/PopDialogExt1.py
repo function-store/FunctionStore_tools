@@ -30,9 +30,12 @@ class PopDialogExt:
 		self.windowComp = ownerComp.op('popDialogWindow')
 		self.details = None
 		self.entries = self.ownerComp.ops('entry*')
+		self.checkBoxes = self.ownerComp.ops('entry*/buttonCheckbox')
 		for entry in self.entries:
 			entry_index = tdu.digits(entry.name)
 			TDF.createProperty(self, f'EnteredText{entry_index}', value='')
+		for idx, checkBox in enumerate(self.checkBoxes):
+			TDF.createProperty(self, f'CheckBox{idx+1}', value=False)
 
 		
 		# upgrade version
@@ -121,11 +124,21 @@ class PopDialogExt:
 		for idx, (entry, text) in enumerate(zip(self.entries, textEntries or [])):
 			if text is not None:
 				setattr(self, f'EnteredText{idx + 1}', text)
+
+		# set focus to first entry
+		self.entries[0].op('inputText').setKeyboardFocus(selectAll=True)
+
+		for checkBox_index, checkbox in enumerate(self.checkBoxes):
+			if checkbox.par.Value0.eval():
+				setattr(self, f'CheckBox{checkBox_index}', False)
 				
 		self.details = details
 		for idx, entry in enumerate(self.entries):
 			entry.op('inputText').par.text = getattr(self, f'EnteredText{idx + 1}')
 			entry.op('inputText').cook(force=True)
+		for idx, checkBox in enumerate(self.checkBoxes):
+			checkBox.par.Value0.val = getattr(self, f'CheckBox{idx}')
+
 		if escButton is not None:
 			if escButton is False or not (1 <= escButton <= 4):
 				self.ownerComp.par.Escbutton = 'None'
@@ -166,6 +179,8 @@ class PopDialogExt:
 		self.windowComp.par.winclose.pulse()
 		for idx, entry in enumerate(self.entries):
 			setattr(self, f'EnteredText{idx + 1}', entry.op('inputText').par.text)
+		for idx, checkBox in enumerate(self.checkBoxes):
+			setattr(self, f'CheckBox{idx}', checkBox.par.Value0.eval())
 
 	def OnButtonClicked(self, buttonNum):
 		"""
@@ -177,8 +192,12 @@ class PopDialogExt:
 					'details': self.details}
 		if self.ownerComp.par.Textentryarea.eval():
 			infoDict['enteredText'] = []
+			infoDict['checkBoxes'] = []
 			for entry in self.entries:
 				infoDict['enteredText'].append(entry.op('inputText').par.text.eval())
+			for checkBox in self.checkBoxes:
+				infoDict['checkBoxes'].append(checkBox.par.Value0.eval())
+			
 		try:
 			ext.CallbacksExt.DoCallback('onSelect', infoDict)
 		finally:
@@ -241,4 +260,4 @@ class PopDialogExt:
 	def DialogHeight(self):
 		return 65 + self.TextHeight*0 + \
 				(20 if self.ownerComp.par.Title else 0) + \
-				(37 if self.ownerComp.par.Textentryarea else 0) * len(self.ownerComp.ops('entry*')) - 20
+				(37 if self.ownerComp.par.Textentryarea else 0) * len([entry for entry in self.entries if entry.par.display.eval()]) - 20
