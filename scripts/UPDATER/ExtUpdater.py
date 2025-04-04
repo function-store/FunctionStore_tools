@@ -50,18 +50,34 @@ class ExtUpdater:
 		newComp = op(comp_path)
 		fp = tdu.FileInfo(str(callbackInfo['path']))
 		if newComp:
+			# Store docked operators information before replacement
+			oldComp = parent.FNS
+			docked_ops = []
+			for docked_op in oldComp.docked:
+				docked_info = {
+					'op': docked_op,
+					'pos': (docked_op.nodeX, docked_op.nodeY),
+				}
+				docked_ops.append(docked_info)
+				# Undock the operator before replacement
+				docked_op.dock = None
+
 			newComp.par.externaltox.mode = ParMode.EXPRESSION
 			newComp.par.externaltox.expr = f"f'{{app.userPaletteFolder}}/FNStools_ext/{fp.baseName}'"
 			newComp.par.Gittag = self.newTag
 			newComp.par.savebackup = True
-			# response = ui.messageBox('FunctionStore_tools',
-			# 	 f'Update successfully downloaded to {callbackInfo["path"]}, about to replace with {parent.FNS.path}.\nWould you like to enable as external tox?',
-			# 	 buttons=['No','Yes'])
-			# newComp.par.enableexternaltox = bool(response)
 			newComp.store('post_update', True)
 
 			TDF.replaceOp(parent.FNS, newComp)
 			newComp.destroy()
-			# after post_update this will happen
-			# op.FNS_CONFIG.LoadAllFromJSON()
+
+			# Restore docked operators
+			newComp = parent.FNS
+			for dock_info in docked_ops:
+				docked_op = dock_info['op']
+				if docked_op:
+					# Restore position first
+					docked_op.nodeX, docked_op.nodeY = dock_info['pos']
+					# Then re-dock
+					docked_op.dock = newComp
 		pass
