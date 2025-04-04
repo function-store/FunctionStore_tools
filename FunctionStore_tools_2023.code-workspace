@@ -1,1 +1,11 @@
-{"folders": [{"path": "."}]}
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "python.defaultInterpreterPath": "C:\\Program Files\\Derivative\\TouchDesigner.2023.32139\\bin\\python.exe",
+        "python.terminal.activateEnvironment": true
+    }
+}

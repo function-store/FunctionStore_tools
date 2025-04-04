@@ -1,7 +1,7 @@
 '''Info Header Start
 Name : extStubser
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.334.toe
+Saveorigin : FunctionStore_tools_2023.416.toe
 Saveversion : 2023.11600
 Info Header End'''
 import ast
@@ -37,12 +37,37 @@ class extStubser:
 
 	def _is_valid_td_version(self, version: tuple[int, int] | None) -> bool:
 		"""Check if version meets minimum requirements (>= 2023.3000)."""
-		return version is not None and version >= (2023, 3000)
+		if version is None:
+			return False
+		major, minor = version
+		if major > 2023:
+			return True
+		elif major == 2023:
+			return minor >= 30000
+		return False
 
 	def _find_td_builtins(self) -> Path | None:
 		"""Search for valid __builtins__.pyi in the highest version TD installation."""
-		# Start from current TD installation folder
-		current_td = Path(app.binFolder).parent
+		# First check current app version
+		current_td = Path(app.installFolder)
+		version = self._parse_td_version(current_td)
+		debug(f"Current TD version: {version}")
+		
+		# Always check if current builtins exists
+		td_builtins = current_td / 'bin' / '__builtins__.pyi'
+		if td_builtins.exists():
+			if self._is_valid_td_version(version):
+				debug(f"Using current TD builtins in {version[0]}.{version[1]}")
+				return td_builtins
+			else:
+				debug("Current TD version is not valid, but builtins exists")
+				# Store current builtins as fallback
+				current_builtins = td_builtins
+		else:
+			current_builtins = None
+			debug("Current TD builtins not found")
+		
+		# If current version is not valid, search for highest version
 		td_installations = current_td.parent
 		highest_match = None
 		highest_version = (0, 0)
@@ -59,7 +84,8 @@ class extStubser:
 					highest_match = td_builtins
 					debug(f"Found builtins in TD {version[0]}.{version[1]}")
 
-		return highest_match
+		# Return highest valid version if found, otherwise return current builtins
+		return highest_match if highest_match else current_builtins
 
 	def _get_typing_paths(self, name: str) -> tuple[Path, Path]:
 		"""Determine paths for builtins and stubs files."""
@@ -69,7 +95,7 @@ class extStubser:
 			if td_builtins:
 				builtins_file = td_builtins
 			else:
-				debug("No valid TD installation (>= 2023.3000) found with __builtins__.pyi")
+				debug("No valid TD installation (>= 2023.30000) found with __builtins__.pyi")
 				# Fallback to local typings
 				builtins_file = Path("typings", "__builtins__.pyi")
 		else:
