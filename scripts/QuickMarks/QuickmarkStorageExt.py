@@ -70,6 +70,7 @@ class QuickmarkStorageExt:
             if parent().par.Active:
                 quickmark_key = f"Quickmark{key_number}"
                 self.RetrieveQuickmark(quickmark_key)
+                self.RetrieveQuickmark(quickmark_key) # need to call twice to get the correct position
         
         # For storing the quickmark with 'ctrl.' but not 'ctrl.alt.' or 'ctrl.0'
         elif shortcutName.startswith('ctrl.alt.') and 'shift.' not in shortcutName and key_number in [str(i) for i in range(1, 10)]:
