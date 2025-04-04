@@ -111,12 +111,49 @@ class ExtOpenVSCode:
 		# Ensure workspace file exists, create if necessary
 		project_folder = Path(project.folder)
 		workspace_path = project_folder / self.workspace
+		
+		# Get the interpreter path
+		interpreter_path = self._get_interpreter_path()
+		
+		# Load existing workspace config or create new one
+		if workspace_path.exists():
+			with workspace_path.open('r') as file:
+				workspace_config = json.load(file)
+		else:
+			workspace_config = {"folders": [{"path": "."}]}
+		
+		# Initialize settings if it doesn't exist
+		if "settings" not in workspace_config:
+			workspace_config["settings"] = {}
+		
+		# Update Python settings to force workspace interpreter
+		python_settings = {
+			"python.defaultInterpreterPath": str(interpreter_path),
+			"python.terminal.activateEnvironment": True
+		}
+		
+		# Update workspace settings
+		workspace_config["settings"].update(python_settings)
+		
+		# Save the workspace config
+		with workspace_path.open('w') as file:
+			json.dump(workspace_config, file, indent=4)
+		
 		if not workspace_path.exists():
-			with workspace_path.open('w') as file:
-				json.dump({"folders": [{"path": "."}]}, file)
 			self.logger.Log(f"Created workspace file: {workspace_path}")
-			if TDTypings := getattr(op, FNS_TDTYPINGS, None):
+		else:
+			self.logger.Log(f"Updated interpreter path in workspace file: {workspace_path}")
+		
+		# Check if we're using a valid TD interpreter or falling back to local typings
+		interpreter_parent = interpreter_path.parent
+		version = self._parse_td_version(interpreter_parent.parent)
+		
+		# Only deploy stubs if we're not using a valid TD interpreter
+		if not self._is_valid_td_version(version):
+			if TDTypings := getattr(op, 'FNS_TDTYPINGS', None):
+				self.logger.Log("Deploying stubs because no valid TD interpreter found")
 				TDTypings.DeployStubs()
+			
 		missing_workspace = not self.workspace or not Path(self.workspace).exists()
 
 		if missing_exe or missing_workspace:
@@ -144,3 +181,77 @@ class ExtOpenVSCode:
 			ui.messageBox("Error", message, buttons=["OK"])
 			self.ownerComp.openParameters()
 		pass
+
+	def _parse_td_version(self, path: Path) -> tuple[int, int] | None:
+		"""Extract TouchDesigner version from path."""
+		td_pattern = re.compile(r'TouchDesigner\.(\d+)\.(\d+)')
+		# Check folder name for version
+		match = td_pattern.match(path.name)
+		if match:
+			return (int(match.group(1)), int(match.group(2)))
+		return None
+
+	def _is_valid_td_version(self, version: tuple[int, int] | None) -> bool:
+		"""Check if version meets minimum requirements (>= 2023.3000)."""
+		if version is None:
+			return False
+		major, minor = version
+		if major > 2023:
+			return True
+		elif major == 2023:
+			return minor >= 30000
+		return False
+
+	def _find_td_interpreter(self) -> Path | None:
+		"""Search for valid python.exe in the highest version TD installation."""
+		# First check current app version
+		current_td = Path(app.installFolder)
+		version = self._parse_td_version(current_td)
+		self.logger.Log(f"Current TD version: {version}")
+		
+		# Always check if current interpreter exists
+		td_interpreter = current_td / 'bin' / 'python.exe'
+		if td_interpreter.exists():
+			if self._is_valid_td_version(version):
+				self.logger.Log(f"Using current TD interpreter in {version[0]}.{version[1]}")
+				return td_interpreter
+			else:
+				self.logger.Log("Current TD version is not valid, but interpreter exists")
+				# Store current interpreter as fallback
+				current_interpreter = td_interpreter
+		else:
+			current_interpreter = None
+			self.logger.Log("Current TD interpreter not found")
+		
+		# If current version is not valid, search for highest version
+		td_installations = current_td.parent
+		highest_match = None
+		highest_version = (0, 0)
+
+		for td_folder in td_installations.iterdir():
+			if not td_folder.is_dir():
+				continue
+
+			version = self._parse_td_version(td_folder)
+			if self._is_valid_td_version(version) and version > highest_version:
+				td_interpreter = td_folder / 'bin' / 'python.exe'
+				if td_interpreter.exists():
+					highest_version = version
+					highest_match = td_interpreter
+					self.logger.Log(f"Found interpreter in TD {version[0]}.{version[1]}")
+
+		# Return highest valid version if found, otherwise return current interpreter
+		return highest_match if highest_match else current_interpreter
+
+	def _get_interpreter_path(self) -> Path:
+		"""Determine paths for builtins and stubs files."""
+		# Try to find builtins in highest version TD installation
+		td_interpreter = self._find_td_interpreter()
+		if td_interpreter:
+			interpreter_file = td_interpreter
+		else:
+			self.logger.Log("No valid TD installation (>= 2023.3000) found with python.exe")
+			# Fallback to local typings
+			interpreter_file = Path("typings", "python.exe")
+
+		return interpreter_file
