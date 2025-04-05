@@ -1,7 +1,7 @@
 '''Info Header Start
 Name : ExtClownUI
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.335.toe
+Saveorigin : FunctionStore_tools_2023.427.toe
 Saveversion : 2023.11600
 Info Header End'''
 
@@ -12,11 +12,12 @@ CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.
 
 import random
 
-class ExtClownUI:
+class ExtColorUI:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
 		self.table_out : tableDAT = self.ownerComp.op('table_out')
+		self.colors_saved = {}
 
 	def __randomizeColors(self):
 		for ui_element in ui.colors:
@@ -51,4 +52,26 @@ class ExtClownUI:
 	def onParCheck(self):
 		colortocheck = self.evalGroupColortocheck
 		self._whichUIElement(colortocheck)
+
+
+	def onParUielement(self, val):
+		if val in ui.colors:
+			self.ownerComp.parGroup.Color = ui.colors[val]
+#
+	def onParSetcolor(self):
+		# store current color
+		try:
+			if self.evalUielement not in self.colors_saved:
+				self.colors_saved[self.evalUielement] = ui.colors[self.evalUielement]
+			# set new color
+			ui.colors[self.evalUielement] = self.ownerComp.parGroup.Color.eval()
+		except:
+			pass
+
+	def onParResetcolor(self):
+		try:
+			ui.colors[self.evalUielement] = self.colors_saved[self.evalUielement]
+			self.ownerComp.parGroup.Color = self.colors_saved[self.evalUielement]
+		except:
+			pass
 
