@@ -154,15 +154,17 @@ class PopDialogExt:
 		self.UpdateTextHeight()
 		# HACK shouldn't be necessary - problem with clones/replicating
 		self.ownerComp.op('replicator1').par.recreateall.pulse()
-		run("op('" + self.ownerComp.path + "').ext.PopDialogExt.actualOpen()",
-										delayFrames=1, delayRef=op.TDResources)
+		self.actualOpen()
+		# run("op('" + self.ownerComp.path + "').ext.PopDialogExt.actualOpen()",
+		# 								delayFrames=1, delayRef=op.TDResources)
 
 	def actualOpen(self):
 		# needs to be deferred so that sizes can update properly
 		self.windowComp.par.winopen.pulse()
 		ext.CallbacksExt.DoCallback('onOpen')
 		if self.ownerComp.op('entry1').par.display.eval():
-			# self.ownerComp.setFocus()
+			self.ownerComp.setFocus()
+			# self.ownerComp.op('entry1/inputText').setKeyboardFocus(selectAll=True)
 			# hack shouldn't have to wait a frame
 			run('op("' + self.ownerComp.path + '").op("entry1/inputText").'
 			 				'setKeyboardFocus(selectAll=True)',
@@ -217,9 +219,17 @@ class PopDialogExt:
 				self.OnButtonClicked(button)
 		if key == 'tab':
 			# get currently focused entry
+			currIdx = None
 			for idx, entry in enumerate(self.entries):
 				if entry.op('inputText').panel.focusselect:
-					self.entries[(idx + 1) % len(self.entries)].op('inputText').setKeyboardFocus(selectAll=True)
+					currIdx = idx
+					break
+			if currIdx is not None:
+				newEntry = self.entries[(currIdx + 1) % len(self.entries)]
+				# debug(f'new entry: {newEntry.path}')
+				run('op("' + newEntry.path + '").op("inputText").setKeyboardFocus(selectAll=True)',
+					delayFrames=1, delayRef=op.TDResources)
+				#newEntry.op('inputText').setKeyboardFocus(selectAll=True)
 
 	def OnClickAway(self):
 		"""
