@@ -16,13 +16,13 @@ class ExtMidiBypasser:
 		for _op in op('/').findChildren(key=lambda x: x.opType in ['midiinCHOP', 'midioutCHOP','midiinDAT']):
 			if _op.path.startswith('/local') or _op.path.startswith('/sys') or _op.path.startswith('/ui'):
 				continue
-			if int(_op.par.id.eval()) == device_id:
-				all_midis.append(_op)
+			all_midis.append(_op)
 		return all_midis
 
-
-	def onParBypassmidis(self, _par, _val):
+	def DoBypass(self, _val: bool, channel: int = None):
 		for _op in self.AllMidiOps:
+			if channel is not None and int(_op.par.id.eval()) != channel:
+				continue
 			_op.bypass = _val
 
 			
@@ -36,3 +36,18 @@ class ExtMidiBypasser:
 				for _p in to_reset:
 					if _op.par[_p] is not None:
 						_op.par[_p].pulse()
+
+	def onParResetmidi(self):
+		self.BypassOnOff(self.evalDeviceid)
+
+	def OnParResetall(self):
+		self.onParResetall()
+
+	def onParResetall(self):
+		self.BypassOnOff()
+		pass
+
+	def BypassOnOff(self, channel: int = None):
+		self.DoBypass(True, channel)
+		run('parent().DoBypass(False, args[0])', channel, delayMilliSeconds=self.ownerComp.par.Resetdelayms.eval(), fromOP=me)
+	
