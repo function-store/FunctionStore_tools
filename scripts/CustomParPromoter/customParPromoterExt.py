@@ -98,6 +98,8 @@ class customParPromoterExt:
 				name = self.parNameCheck(name)
 		
 		new_page = self._getTargetPage(page_name, target, _parGroup.page)
+		if new_page.name in (set([p.name for p in target.customPages]) - set([p.name for p in target.pages])):
+			target.currentPage = new_page
 
 		try:
 			if type(_parGroup) == ParGroupPulse and len(_parGroup.eval()) == 2:
@@ -151,6 +153,9 @@ class customParPromoterExt:
 				name = self.parNameCheck(name)
 
 		new_page = self._getTargetPage(page_name, target, _par.page)
+		
+		if new_page.name in (set([p.name for p in target.customPages]) - set([p.name for p in target.pages])):
+			target.currentPage = new_page
 
 		try:
 			new_par = new_page.appendPar(name, label=label, par=_par)
