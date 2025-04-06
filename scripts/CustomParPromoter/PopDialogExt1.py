@@ -125,7 +125,11 @@ class PopDialogExt:
 			if text is not None:
 				setattr(self, f'EnteredText{idx + 1}', text)
 
-		# set focus to first entry
+		# set focus to first entry0
+		
+		run('op("' + self.entries[0].path + '").op("inputText").setKeyboardFocus(selectAll=True)',
+			delayFrames=3, delayRef=op.TDResources)
+		# if app.osName == 'Windows':
 		self.entries[0].op('inputText').setKeyboardFocus(selectAll=True)
 
 		for checkBox_index, checkbox in enumerate(self.checkBoxes):
@@ -169,6 +173,8 @@ class PopDialogExt:
 			run('op("' + self.ownerComp.path + '").op("entry1/inputText").'
 			 				'setKeyboardFocus(selectAll=True)',
 			 				delayFrames=1, delayRef=op.TDResources)
+			if app.osName == 'Windows':
+				self.ownerComp.op('entry1/inputText').setKeyboardFocus(selectAll=True)
 		else:
 			self.ownerComp.setFocus()
 
@@ -229,7 +235,8 @@ class PopDialogExt:
 				# debug(f'new entry: {newEntry.path}')
 				run('op("' + newEntry.path + '").op("inputText").setKeyboardFocus(selectAll=True)',
 					delayFrames=1, delayRef=op.TDResources)
-				newEntry.op('inputText').setKeyboardFocus(selectAll=True)
+				if app.osName == 'Windows':
+					newEntry.op('inputText').setKeyboardFocus(selectAll=True)
 		elif key == 'shift.tab':
 			# get currently focused entry and move to previous entry
 			currIdx = None
@@ -241,7 +248,8 @@ class PopDialogExt:
 				newEntry = self.entries[(currIdx - 1) % len(self.entries)]
 				run('op("' + newEntry.path + '").op("inputText").setKeyboardFocus(selectAll=True)',
 					delayFrames=1, delayRef=op.TDResources)
-				newEntry.op('inputText').setKeyboardFocus(selectAll=True)
+				if app.osName == 'Windows':
+					newEntry.op('inputText').setKeyboardFocus(selectAll=True)
 
 
 	def OnClickAway(self):
