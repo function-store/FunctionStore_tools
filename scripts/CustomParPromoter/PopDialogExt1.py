@@ -213,12 +213,12 @@ class PopDialogExt:
 			button = int(self.ownerComp.par.Escbutton.eval())
 			if button <= self.ownerComp.par.Buttons:
 				self.OnButtonClicked(button)
-		if key == 'enter' and self.ownerComp.par.Enterbutton.eval() != 'None':
+		elif key == 'enter' and self.ownerComp.par.Enterbutton.eval() != 'None':
 			button = int(self.ownerComp.par.Enterbutton.eval())
 			if button <= self.ownerComp.par.Buttons:
 				self.OnButtonClicked(button)
-		if key == 'tab':
-			# get currently focused entry
+		elif key == 'tab':
+			# get currently focused entry and move to next entry
 			currIdx = None
 			for idx, entry in enumerate(self.entries):
 				if entry.op('inputText').panel.focusselect:
@@ -229,7 +229,20 @@ class PopDialogExt:
 				# debug(f'new entry: {newEntry.path}')
 				run('op("' + newEntry.path + '").op("inputText").setKeyboardFocus(selectAll=True)',
 					delayFrames=1, delayRef=op.TDResources)
-				#newEntry.op('inputText').setKeyboardFocus(selectAll=True)
+				# newEntry.op('inputText').setKeyboardFocus(selectAll=True)
+		elif key == 'shift.tab':
+			# get currently focused entry and move to previous entry
+			currIdx = None
+			for idx, entry in enumerate(self.entries):
+				if entry.op('inputText').panel.focusselect:
+					currIdx = idx
+					break
+			if currIdx is not None:
+				newEntry = self.entries[(currIdx - 1) % len(self.entries)]
+				run('op("' + newEntry.path + '").op("inputText").setKeyboardFocus(selectAll=True)',
+					delayFrames=1, delayRef=op.TDResources)
+				# newEntry.op('inputText').setKeyboardFocus(selectAll=True)
+
 
 	def OnClickAway(self):
 		"""
