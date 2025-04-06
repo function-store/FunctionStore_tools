@@ -77,7 +77,10 @@ class ExtOpenVSCode:
 				self.logger.Log(f"Falling back to preference's text editor at: {fallback_path}")
 				# Detect MacOS
 				if fallback_path.endswith(".app"):
-					fallback_path = f"{fallback_path}/Contents/MacOS/Electron"
+					if 'Cursor.app' in fallback_path:
+						fallback_path = f"{fallback_path}/Contents/MacOS/Cursor"
+					else:
+						fallback_path = f"{fallback_path}/Contents/MacOS/Electron"
 				self.codeexe = fallback_path  # Update Codeexe to the fallback path
 			else:
 				# Step 4: Error Handling
@@ -114,7 +117,11 @@ class ExtOpenVSCode:
 		
 		# Get the interpreter path
 		interpreter_path = self._get_interpreter_path()
-		
+		# Check if we're using a valid TD interpreter or falling back to local typings
+		interpreter_parent = interpreter_path.parent
+		version = self._parse_td_version(interpreter_parent.parent)
+		is_valid_td = self._is_valid_td_version(version)
+
 		# Load existing workspace config or create new one
 		if workspace_path.exists():
 			with workspace_path.open('r') as file:
@@ -122,18 +129,19 @@ class ExtOpenVSCode:
 		else:
 			workspace_config = {"folders": [{"path": "."}]}
 		
-		# Initialize settings if it doesn't exist
-		if "settings" not in workspace_config:
-			workspace_config["settings"] = {}
+		if is_valid_td:
+			# Initialize settings if it doesn't exist
+			if "settings" not in workspace_config:
+				workspace_config["settings"] = {}
 		
-		# Update Python settings to force workspace interpreter
-		python_settings = {
-			"python.defaultInterpreterPath": str(interpreter_path),
-			"python.terminal.activateEnvironment": True
-		}
+			# Update Python settings to force workspace interpreter
+			python_settings = {
+				"python.defaultInterpreterPath": str(interpreter_path),
+				"python.terminal.activateEnvironment": True
+			}
 		
-		# Update workspace settings
-		workspace_config["settings"].update(python_settings)
+			# Update workspace settings
+			workspace_config["settings"].update(python_settings)
 		
 		# Save the workspace config
 		with workspace_path.open('w') as file:
@@ -144,12 +152,9 @@ class ExtOpenVSCode:
 		else:
 			self.logger.Log(f"Updated interpreter path in workspace file: {workspace_path}")
 		
-		# Check if we're using a valid TD interpreter or falling back to local typings
-		interpreter_parent = interpreter_path.parent
-		version = self._parse_td_version(interpreter_parent.parent)
 		
 		# Only deploy stubs if we're not using a valid TD interpreter
-		if not self._is_valid_td_version(version):
+		if not is_valid_td:
 			if TDTypings := getattr(op, 'FNS_TDTYPINGS', None):
 				self.logger.Log("Deploying stubs because no valid TD interpreter found")
 				TDTypings.DeployStubs()
@@ -192,7 +197,7 @@ class ExtOpenVSCode:
 		return None
 
 	def _is_valid_td_version(self, version: tuple[int, int] | None) -> bool:
-		"""Check if version meets minimum requirements (>= 2023.3000)."""
+		"""Check if version meets minimum requirements (>= 2023.30000)."""
 		if version is None:
 			return False
 		major, minor = version
@@ -208,6 +213,9 @@ class ExtOpenVSCode:
 		current_td = Path(app.installFolder)
 		version = self._parse_td_version(current_td)
 		self.logger.Log(f"Current TD version: {version}")
+		
+		if app.osName != 'Windows': # this will be the norm for windows too in the future
+			return Path(app.pythonExecutable)
 		
 		# Always check if current interpreter exists
 		td_interpreter = current_td / 'bin' / 'python.exe'
@@ -250,7 +258,7 @@ class ExtOpenVSCode:
 		if td_interpreter:
 			interpreter_file = td_interpreter
 		else:
-			self.logger.Log("No valid TD installation (>= 2023.3000) found with python.exe")
+			self.logger.Log("No valid TD installation (>= 2023.30000) found with python.exe")
 			# Fallback to local typings
 			interpreter_file = Path("typings", "python.exe")
 
