@@ -8,6 +8,7 @@ class ExtQuickCollapse:
 		self.popDialog = ownerComp.op('popDialog')
 		self.newCOMP = None
 		self.selected = None
+		#
 
 	def undoCollapse(self, isUndo, _return):
 		ui.panes.current.owner = _return
@@ -25,9 +26,12 @@ class ExtQuickCollapse:
 			self.collapse()
 		pass
 
-	def collapse(self, _name=None, _shortcut=None):
+	def collapse(self, _name=None, _shortcut=None, ok_by_enter=False):
 		ui.undo.startBlock('Collapsing')
 		ui.undo.addCallback(self.undoCollapse, info = ui.panes.current.owner)
+		
+		if not self.selected or ok_by_enter:
+			return#
 		self.selected[0].parent().collapseSelected()
 		self.newCOMP = ui.panes.current.owner.currentChild
 
@@ -47,7 +51,12 @@ class ExtQuickCollapse:
 
 	def OnCustomizeCallback(self, info):
 		if info['buttonNum'] == 1:
-			self.collapse(_name=info['enteredText'][0], _shortcut=info['enteredText'][1])
+			# we need to check if `OK` was pressed by enter key ### might be only for Mac???
+			# TODO: check if this is the case for Windows
+			key = self.ownerComp.op('keyboardin1')[1,'key'].val
+			ok_by_enter = key == 'enter' 
+			
+			self.collapse(_name=info['enteredText'][0], _shortcut=info['enteredText'][1], ok_by_enter=ok_by_enter)
 			
 
 	
