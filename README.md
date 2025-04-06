@@ -20,7 +20,7 @@ Everything is documented here, so be sure to refer to the [Wiki](https://github.
 
 Please help by reporting any [issues](https://github.com/function-store/FunctionStore_tools/issues) here on GitHub or use the **Troubleshoot** channel on my [Discord](https://discord.gg/b4CaCP3g3K).
 
-A lot of the tools are made by [Function Store](https://functionstore.xyz), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca), please support them <3
+A lot of the tools are made by [Function Store](https://functionstore.xyz), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [DotSimulate](https://www.patreon.com/c/dotsimulate), [Alex Guevara](https://alex-guevara.com) [Yea Chen](https://www.instagram.com/yeataro) and [Greg Hermanovic](https://derivative.ca), please support them <3
 
 While these tools are here for all the community to enjoy, [Patreon](https://patreon.com/function_store) follows are appreciated!
 
@@ -73,13 +73,18 @@ Should you want further customization, it is possible at the component level of 
 
 ### Active tab
 
-In this tab you can choose to disable some of the components, that you might find annoying or unwanted. I only added the ones I personally might want turned off occasionally. I also crammed in `ParPromoter Ref/Bind` which is explained here: [CustomPar Tools](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#custompar-tools)
+In this tab you can choose to disable some of the components, that you might find annoying or unwanted. Some other setting are also crammed in there.
 
 ### Syncing
 
 Turn On or Off Syncing/Externalizing for individual modules **(On by default)**. See [Syncing/Externalizing](https://github.com/function-store/FunctionStore_tools#syncingexternalizing) for more info.
 
 See [TD2023 Migration guide](https://github.com/function-store/FunctionStore_tools/wiki/01.-OpTemplates#td2023-migration) for OpTemplates.
+
+### UI
+
+By pulsing `Open Toolbar Definition` you can customize the toolbar settings: enable/disable icons and change their orders. This is saved externally to sync with other project files. Note that this does not disable backend functionalities!
+In this tab you can also set the default state of UI related mods such as windows title and timeline state, and UI color.
 
 ## Repo Structure
 
@@ -141,6 +146,14 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
     - [SwitchOPs](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#switchops)
     - [OpToClipboard](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#optoclipboard)
     - [OpenExt](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#openext)
+    - [QuickCollapse](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickcollapse)  
+    - [Clipboard Image Paste](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#clipboard-image-paste)  
+    - [QuickMarks](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickmarks)  
+    - [CustomParCustomize](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#customparcustomize)  
+    - [BorderlessTD](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#borderlesstd)  
+    - [ColorUI](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#colorui)  
+    - [ResetMIDIPls](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#resetmidipls)  
+
 - [QuickExt](https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt)
     - [CustomParHelper](https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt#customparhelper)
     - [NoNode](https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt#nonode)
@@ -157,7 +170,9 @@ Huge thanks to the contributors:
 
 - [Greg Hermanovic](https://derivative.ca) for the IO filters for the OP Create dialog, and **TouchDesigner**.
 
-- [Dotsimulate](https://www.patreon.com/dotsimulate) for OP Create Dialog OpType Acronyms mod
+- [Dotsimulate](https://www.patreon.com/dotsimulate) for Clipboard Image Paste, and OP Create Dialog OpType Acronyms mod
+ 
+- [Alex Guevara](https://alex-guevara.com) for QuickMarks
 
 - [Acrylicode](https://acrylicode.com/) and [kim0slice](https://www.instagram.com/kim0slice) for the early feedback and testing.
 
