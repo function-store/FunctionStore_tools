@@ -566,6 +566,8 @@ class ClipboardImageEXT(DotChatUtil):
                 save_top = quiet_place.copy(save_top)
             else:
                 save_top = quiet_place.op('script_save')
+
+            save_top.lock = True
             
             if not save_top:
                 self.logger.log("Missing required 'script_save' scriptTOP in component", 'ERROR')
