@@ -9,9 +9,11 @@ class CustomParHelper:
 
     ## Features:
     - Access custom parameters as properties
+    - Set parameter values through properties
     - Simplified custom parameter callbacks
     - Support for sequence parameters
     - Support for parameter groups (parGroups)
+    - Support for general callbacks that catch all parameter changes
     - Configurable inclusion for properties and callbacks (by default all parameters are included)
     - Configurable exceptions for pages, properties, callbacks, and sequences
 
@@ -30,7 +32,8 @@ class CustomParHelper:
        ```python
        CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
-             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], enable_stubs: bool = False)
+             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
+             enable_stubs: bool = False, general_callback_enable: bool = True)
        ```
 
         Additional options:
@@ -46,24 +49,58 @@ class CustomParHelper:
         - `except_pages`: List of parameter pages to exclude from property and callback handling
         - `except_sequences`: List of sequence names to exclude from property and callback handling
         - `enable_stubs`: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
+        - `general_callback_enable`: If True, enables general callbacks that catch all parameter changes (default: True)
 
-    3. Access custom parameters as properties (if enable_properties=True (default)):
-       - `self.par<ParamName>`: Access the parameter object
-       - `self.eval<ParamName>`: Get the evaluated value of the parameter
-       - `self.parGroup<GroupName>`: Access the parameter group object (if enable_parGroups=True (default))
-       - `self.evalGroup<GroupName>`: Get the evaluated value of the parameter group (if enable_parGroups=True (default))
-    > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
+    3. Access and set custom parameters as properties (if enable_properties=True (default)):
+       
+       There are two ways to access and set parameter values:
+
+       a) Using Eval properties (recommended for simple value setting):
+       - `self.eval<ParamName>`: Get/set the evaluated value of the parameter
+         ```python
+         # Get value
+         value = self.evalMyParam
+         # Set value (always sets .val regardless of parameter mode)
+         self.evalMyParam = 5
+         ```
+       - `self.evalGroup<GroupName>`: Get/set the evaluated value of the parameter group
+         ```python
+         # Get values
+         values = self.evalGroupXyz
+         # Set values (always sets .val for each parameter)
+         self.evalGroupXyz = [1, 2, 3]
+         ```
+
+       b) Using Par properties (for advanced parameter control):
+       - `self.par<ParamName>`: Access/set the parameter object
+         ```python
+         # Get parameter object for advanced operations
+         self.parMyParam.expr = "op('something').par.value"
+         self.parMyParam.bindExpr = "op('other').par.value"
+         # Set value (only works in CONSTANT or BIND modes)
+         self.parMyParam = 5  # Ignored if parameter is in EXPRESSION mode
+         ```
+       - `self.parGroup<GroupName>`: Access/set the parameter group object
+         ```python
+         # Get parameter group for advanced operations
+         myGroup = self.parGroupXyz
+         # Set values (only works for parameters in CONSTANT or BIND modes)
+         self.parGroupXyz = [1, 2, 3]  # Only affects non-expression parameters
+         ```
+
+       > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
 
     4. Implement callbacks (if enable_callbacks=True (default)):
+       a) Parameter-specific callbacks:
        - For regular parameters:
          ```python
-         def onPar<ParamName>(self, _par, _val, _prev):
+         def onPar<Parname>(self, _par, _val, _prev):
            # _par and _prev can be omitted if not needed
          ```
 
        - For pulse parameters:
          ```python
-         def onPar<PulseParamName>(self, _par):
+         def onPar<PulseParname>(self, _par):
            # _par can be omitted if not needed
          ```
 
@@ -74,14 +111,31 @@ class CustomParHelper:
 
        - For sequence parameters:
          ```python
-         def onSeq<SeqName>N<ParName>(self, _par, idx, _val, _prev):
+         def onSeq<SeqName>N<Parname>(self, _par, idx, _val, _prev):
            # _par and _prev can be omitted if not needed
          ```
 
        - For parameter groups if enable_parGroups=True (default):
          ```python
-         def onParGroup<GroupName>(self, _parGroup, _val):
+         def onParGroup<Groupname>(self, _parGroup, _val):
            # _parGroup can be omitted if not needed
+         ```
+
+       b) General callbacks (if general_callback_enable=True (default)):
+       These catch all parameter changes that aren't handled by specific callbacks:
+       
+       - For value changes:
+         ```python
+         def onValueChange(self, _par, _val, _prev):
+           # Called when any parameter value changes that doesn't have a specific callback
+           # _val and _prev can be omitted if not needed
+         ```
+
+       - For pulse parameters:
+         ```python
+         def onPulse(self, _par):
+           # Called when any pulse parameter is triggered that doesn't have a specific callback
+           # _par can be omitted if not needed
          ```
 
     > NOTE: This class is part of the extUtils package, and is designed to work with the QuickExt framework.
@@ -100,19 +154,21 @@ class CustomParHelper:
     EXCEPT_PAGES_STATIC: list[str]  = ['Version Ctrl', 'About', 'Info']
     EXCEPT_PAGES: list[str] = EXCEPT_PAGES_STATIC
     EXCEPT_PROPS: list[str] = []
-    EXCEPT_CALLBACKS: list[str] = []
-    EXCEPT_SEQUENCES: list[str] = []
+    EXCEPT_CALLBACKS: list[str] = [] # handled outside in extParExec DAT
+    EXCEPT_SEQUENCES: list[str] = [] # handled outside in extSeqParExec DAT
     PAR_PROPS: list[str] = ['*']
-    PAR_CALLBACKS: list[str] = ['*']
+    PAR_CALLBACKS: list[str] = ['*'] # handled outside in extParExec DAT
     SEQUENCE_PATTERN: str = r'(\w+?)(\d+)(.+)'
     IS_EXPOSE_PUBLIC: bool = False
     STUBS_ENABLED: bool = False
+    GENERAL_CALLBACK_ENABLE: bool = True
+
 
     @classmethod
     def Init(cls, extension_self, ownerComp: COMP, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
              except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [],
-             enable_stubs: bool = False) -> None:
+             enable_stubs: bool = False, general_callback_enable: bool = True) -> None:
         """Initialize the CustomParHelper."""
         cls.EXT_SELF = extension_self
         cls.EXT_OWNERCOMP = ownerComp
@@ -123,6 +179,7 @@ class CustomParHelper:
         cls.EXCEPT_PROPS = except_properties
         cls.EXCEPT_CALLBACKS = except_callbacks
         cls.EXCEPT_SEQUENCES = except_sequences
+        cls.GENERAL_CALLBACK_ENABLE = general_callback_enable
 
         cls.__setOwnerCompToDocked(ownerComp)
 
@@ -179,14 +236,19 @@ class CustomParHelper:
         """Create a property for the evaluated value of a parameter."""
         def getter(instance):
             return getattr(owner_comp.par, Parname).eval()
+        def setter(instance, value):
+            getattr(owner_comp.par, Parname).val = value
         def getter_group(instance):
             return getattr(owner_comp.parGroup, Parname[:-1]).eval()
+        def setter_group(instance, value):
+            for i, val in enumerate(value):
+                getattr(owner_comp.parGroup, Parname[:-1])[i].val = val
 
         property_name = f'{"Eval" if cls.IS_EXPOSE_PUBLIC else "eval"}{Parname}'
-        setattr(extension_self.__class__, property_name, property(getter))
+        setattr(extension_self.__class__, property_name, property(getter, setter))
         
         if enable_parGroups and cls.__isParGroup(getattr(owner_comp.par, Parname)):
-            setattr(extension_self.__class__, f'{"EvalGroup" if cls.IS_EXPOSE_PUBLIC else "evalGroup"}{Parname[:-1]}', property(getter_group))
+            setattr(extension_self.__class__, f'{"EvalGroup" if cls.IS_EXPOSE_PUBLIC else "evalGroup"}{Parname[:-1]}', property(getter_group, setter_group))
         
 
     @classmethod
@@ -194,14 +256,23 @@ class CustomParHelper:
         """Create a property for the parameter object."""
         def getter(instance):
             return getattr(owner_comp.par, Parname)
+        def setter(instance, value):
+            par = getattr(owner_comp.par, Parname)
+            if par.mode in [ParMode.BIND, ParMode.CONSTANT]:
+                par.val = value
         def getter_group(instance):
             return getattr(owner_comp.parGroup, Parname[:-1])
+        def setter_group(instance, value):
+            pargroup = getattr(owner_comp.parGroup, Parname[:-1])
+            for i, val in enumerate(value):
+                if pargroup[i].mode in [ParMode.BIND, ParMode.CONSTANT]:
+                    pargroup[i].val = val
 
         property_name = f'{"Par" if cls.IS_EXPOSE_PUBLIC else "par"}{Parname}'
-        setattr(extension_self.__class__, property_name, property(getter))
+        setattr(extension_self.__class__, property_name, property(getter, setter))
         
         if enable_parGroups and cls.__isParGroup(getattr(owner_comp.par, Parname)):
-            setattr(extension_self.__class__, f'{"ParGroup" if cls.IS_EXPOSE_PUBLIC else "parGroup"}{Parname[:-1]}', property(getter_group))
+            setattr(extension_self.__class__, f'{"ParGroup" if cls.IS_EXPOSE_PUBLIC else "parGroup"}{Parname[:-1]}', property(getter_group, setter_group))
 
 
     @classmethod
@@ -225,7 +296,7 @@ class CustomParHelper:
 
 
     @classmethod
-    def OnValueChange(cls, comp: COMP, par: Par, prev: Par) -> None:
+    def OnValueChange(cls, comp: COMP, _par: Par, prev: Par) -> None:
         """Handle value change events for custom parameters."""
         # exceptions are handled in the parExec itself
         # except for sequence parameters
@@ -233,9 +304,12 @@ class CustomParHelper:
         comp = cls.EXT_SELF # a bit hacky to be able to call non-exposed methods too
 
         # check if we are a sequence parameter first
-        match = re.match(cls.SEQUENCE_PATTERN, par.name)
+        match = None
+        if _par.sequence is not None:
+            match = re.match(cls.SEQUENCE_PATTERN, _par.name)
         if match:
             sequence_name, sequence_index, parameter_name = match.groups()
+            parameter_name = parameter_name.capitalize()
             sequence_index = int(sequence_index)
             if sequence_name in cls.EXCEPT_SEQUENCES:
                 return
@@ -246,24 +320,36 @@ class CustomParHelper:
                 if arg_count == 2:
                     method(sequence_index)
                 if arg_count == 3:
-                    method(sequence_index, par.eval())
+                    method(sequence_index, _par.eval())
                 elif arg_count == 4:
-                    method(par, sequence_index, par.eval())
+                    method(_par, sequence_index, _par.eval())
                 elif arg_count == 5:
-                    method(par, sequence_index, par.eval(), prev)
-        elif hasattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{par.name}'):
-            method = getattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{par.name}')
+                    method(_par, sequence_index, _par.eval(), prev)
+        elif hasattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{_par.name}'):
+            method = getattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{_par.name}')
             arg_count = method.__code__.co_argcount  # Total number of arguments
             if arg_count == 2:
-                method(par.eval())
+                method(_par.eval())
             elif arg_count == 3:
-                method(par, par.eval())
+                method(_par, _par.eval())
             elif arg_count == 4:
-                method(par, par.eval(), prev)
-                
+                method(_par, _par.eval(), prev)
+        elif cls.GENERAL_CALLBACK_ENABLE:
+            # if not caught by any other callbacks, check if there is a general callback
+            method_check = f'{"OnValueChange" if cls.IS_EXPOSE_PUBLIC else "onValueChange"}'
+            if hasattr(comp, method_check):
+                method = getattr(comp, method_check)
+                arg_count = method.__code__.co_argcount
+                if arg_count == 2:
+                    method(_par)
+                elif arg_count == 3:
+                    method(_par, _par.eval())
+                elif arg_count == 4:
+                    method(_par, _par.eval(), prev)
+
 
     @classmethod
-    def OnPulse(cls, comp: COMP, par: Par) -> None:
+    def OnPulse(cls, comp: COMP, _par: Par) -> None:
         """Handle pulse events for custom parameters."""
         # exceptions are handled in the parExec itself
         # except for sequence parameters
@@ -271,9 +357,12 @@ class CustomParHelper:
         comp = cls.EXT_SELF # a bit hacky to be able to call non-exposed methods too
 
         # check if we are a sequence parameter first
-        match = re.match(cls.SEQUENCE_PATTERN, par.name)
+        match = None
+        if _par.sequence is not None:
+            match = re.match(cls.SEQUENCE_PATTERN, _par.name)
         if match:
             sequence_name, sequence_index, parameter_name = match.groups()
+            parameter_name = parameter_name.capitalize()
             sequence_index = int(sequence_index)
             if sequence_name in cls.EXCEPT_SEQUENCES:
                 return
@@ -284,14 +373,24 @@ class CustomParHelper:
                 if arg_count == 2:
                     method(sequence_index)
                 elif arg_count == 3:
-                    method(sequence_index, par)
-        elif hasattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{par.name}'):
-            method = getattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{par.name}')
+                    method(sequence_index, _par)
+        elif hasattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{_par.name}'):
+            method = getattr(comp, f'{"OnPar" if cls.IS_EXPOSE_PUBLIC else "onPar"}{_par.name}')
             arg_count = method.__code__.co_argcount  # Total number of arguments
             if arg_count == 1:
                 method()
             elif arg_count == 2:
-                method(par)
+                method(_par)
+        elif cls.GENERAL_CALLBACK_ENABLE:
+            # if not caught by any other callbacks, check if there is a general callback
+            method_check = f'{"OnPulse" if cls.IS_EXPOSE_PUBLIC else "onPulse"}'
+            if hasattr(comp, method_check):
+                method = getattr(comp, method_check)
+                arg_count = method.__code__.co_argcount
+                if arg_count == 1:
+                    method()
+                elif arg_count == 2:
+                    method(_par)
 
 
     @classmethod
@@ -307,7 +406,9 @@ class CustomParHelper:
             _comp = cls.EXT_SELF # a bit hacky to be able to call non-exposed methods too
             # handle sequence exceptions
             # check if we are a sequence parameter first
-            match = re.match(cls.SEQUENCE_PATTERN, _par.name)
+            match = None
+            if _par.sequence is not None:
+                match = re.match(cls.SEQUENCE_PATTERN, _par.name)
             if match:
                 sequence_name, sequence_index, parameter_name = match.groups()
                 sequence_index = int(sequence_index)
@@ -361,14 +462,9 @@ class CustomParHelper:
                         method(sequence_index)
                         
     @classmethod
-    def __isParGroup(cls, par: Par) -> bool:
+    def __isParGroup(cls, _par: Par) -> bool:
         """Check if a parameter is a ParGroup. Is there no better way?"""
-        par_name = par.name[:-1]
-        try:
-            pg = par.owner.parGroup[par_name]
-            return len(pg) > 1
-        except:
-            return False
+        return len(_par.parGroup) > 1
 
     @classmethod
     def EnableStubs(cls) -> None:

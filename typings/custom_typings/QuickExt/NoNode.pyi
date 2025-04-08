@@ -144,9 +144,8 @@ class NoNode:
     DATEXEC_IS_ENABLED: bool = False
     KEYBOARD_IS_ENABLED: bool = False
     PAR_VALUECHANGE_EXEC: DAT = op('extParExecNoNodeValueChange')
-    PAR_VALUESCHANGED_EXEC: DAT = op('extParExecNoNodeValuesChanged')
     PAR_ONPULSE_EXEC: DAT = op('extParExecNoNodeOnPulse')
-    PAR_EXECS: list[DAT] = [PAR_VALUECHANGE_EXEC, PAR_VALUESCHANGED_EXEC, PAR_ONPULSE_EXEC]
+    PAR_EXECS: list[DAT] = [PAR_VALUECHANGE_EXEC, PAR_ONPULSE_EXEC]
     PAR_EXEC_MAP: Dict[ParExecType, COMP] = {ParExecType.ValueChange: PAR_VALUECHANGE_EXEC, ParExecType.OnPulse: PAR_ONPULSE_EXEC}
     PAREXEC_CALLBACKS: TDStoreTools.DependDict[ParExecType, dict[OP, dict[Union[Par, str], Callable]]] = TDStoreTools.DependDict()
     PAREXEC_IS_ENABLED: bool = False
