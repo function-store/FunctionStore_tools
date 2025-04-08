@@ -350,6 +350,34 @@ class customParPromoterExt:
 			self.PromotePar(par, None, parName=nameEntry, parLabel=labelEntry, parMin=minEntry, parMax=maxEntry, clamp=chekcboxClamp, parDefault=default)
 
 
-
+	def SetTableMenu(self, _table, _target):
+		_page = self._getTargetPage(None, _target, None)
+		_target.currentPage = _page
+		table_name = _table.name.replace('_', '').title()
+		par_name = self.parNameCheck(table_name)
+		new_par = _page.appendMenu(par_name, replace=False)
+		
+		# Check first row for label and name columns
+		label_col = -1
+		name_col = -1
+		if _table.numRows > 0 and _table.numCols > 0:
+			for col in range(_table.numCols):
+				header = str(_table[0, col]).lower()
+				if 'label' in header:
+					label_col = col
+				elif 'name' in header:
+					name_col = col
+		
+		if _table.numCols > 1 and (name_col != -1 or label_col != -1):
+			# Use the found label column if available, otherwise default to 1
+			name_col = name_col if name_col != -1 else 0
+			label_col = label_col if label_col != -1 else 1
+			expression = f'tdu.TableMenu({TDF.getShortcutPath(_target, _table)}, nameCol={name_col}, labelCol={label_col}, includeFirstRow=False)'
+		else:
+			if _table.numCols > 1:
+				expression = f'tdu.TableMenu({TDF.getShortcutPath(_target, _table)}, nameCol=0, labelCol=1, includeFirstRow=True)'
+			elif _table.numCols == 1:
+				expression = f'tdu.TableMenu({TDF.getShortcutPath(_target, _table)}, includeFirstRow=True)'
+		new_par.menuSource = expression
 
 
