@@ -95,10 +95,31 @@ class ExtParRandomizer:
 		self.RandomizePar(_par)
 		ui.undo.endBlock()
 
+	def onResetPar(self):
+		ui.undo.startBlock('Reset parameter')
+		_par = ui.rolloverPar
+		if _par is None:
+			return
+		_par.val = _par.reset()
+		ui.undo.endBlock()
+
+	def onResetAllCustom(self):
+		ui.undo.startBlock('Reset all custom parameters')
+		_par = ui.rolloverPar
+		if _par is None:
+			return
+		_owner = _par.owner
+		par_names = [_par.name for _par in _owner.currentPage.pars if not _par.readOnly and _par.enable]
+		_owner.resetPars(parNames=' '.join(par_names))
+		ui.undo.endBlock()
+
 	def OnShortcut(self, shortcutName):
 		if shortcutName == self.ownerComp.par.Shortcutop.eval():
 			self.OnRandomizeOp()
 		if shortcutName == self.ownerComp.par.Shortcutpar.eval():
 			self.OnRandomizeRolloverPar()
-
+		if shortcutName == self.ownerComp.par.Shortcutreset.eval():
+			self.onResetPar()
+		if shortcutName == self.ownerComp.par.Shortcutresetallcustom.eval():
+			self.onResetAllCustom()
 
