@@ -1,7 +1,7 @@
 '''Info Header Start
 Name : ExtClownUI
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.451.toe
+Saveorigin : FunctionStore_tools_2023.453.toe
 Saveversion : 2023.11600
 Info Header End'''
 
@@ -384,8 +384,18 @@ class ExtColorUI:
 				
 		pass
 
+	def onParFile(self, _file):
+		if not _file.endswith('.json'):
+			_file = _file + '.json'
+			self.evalFile = _file
+
+
 	def onParExport(self):
 		_file = self.evalFile
+		# check if it ends with .json, if not add it and also re-modify the file path
+		if not _file.endswith('.json'):
+			_file = _file + '.json'
+			self.evalFile = _file
 		if _file:
 			# take all colors from stored colors and save them to the file as json dictionary
 			colors = self.ownerComp.fetch('colors', {})
@@ -554,6 +564,9 @@ class ExtColorUI:
 
 	def onParClearmatchsequence(self):
 		self.seq_matching.numBlocks = 1
+		self.seq_matching[0].par.Uielement.val = ''
+		self.seq_matching[0].parGroup.Rgb.val = [0,0,0]
+		self.updateSearchStatus('Sequence cleared')
 
 #### THANKS CURSOR FOR THIS CODE ABOVE
 
