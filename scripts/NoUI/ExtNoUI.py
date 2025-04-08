@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtNoUI
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.427.toe
+Saveorigin : FunctionStore_tools_2023.441.toe
 Saveversion : 2023.11600
 Info Header End'''
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
@@ -79,6 +79,8 @@ class ExtNoUI:
 			
 		self.parHidetimeline.val = not state
 
+		self._updateUIPlayState(self.play_state)#####################
+
 
 	def _setShortcuts(self):
 		shortcuts = []
@@ -95,11 +97,14 @@ class ExtNoUI:
 		self._setStateTimeline()
 
 	def UpdatePlayState(self, state):
-		if self.evalHidetimeline:
+		if self.evalHidetimeline or (not self.evalHidetimeline and state):
 			self._updateUIPlayState(state)
 			
 	def _updateUIPlayState(self, state):
+		_save_bg_color = self.bg_color
 		self.bg_color = self.evalGroupPausestatecolor if state == False else self._save_bg_color
+		if not state and any(abs(a - b) > 0.001 for a, b in zip(_save_bg_color, self.evalGroupPausestatecolor)):
+			self._save_bg_color = _save_bg_color
 		pass
 
 	def onParGroupPausestatecolor(self, vals):
@@ -107,6 +112,5 @@ class ExtNoUI:
 
 
 	def onParPauseindicator(self, vals):
-		self._save_bg_color = self.bg_color
 		self.UpdatePlayState(self.play_state)
 
