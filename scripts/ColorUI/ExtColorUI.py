@@ -1,7 +1,7 @@
 '''Info Header Start
 Name : ExtClownUI
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.444.toe
+Saveorigin : FunctionStore_tools_2023.451.toe
 Saveversion : 2023.11600
 Info Header End'''
 
@@ -32,6 +32,15 @@ class ExtColorUI:
 	def colors_sequence(self) -> Sequence:
 		return self.ownerComp.seq.Colors
 
+	def setColor(self, _type: str, _color: list[float]):
+		if _type in ui.colors:
+			if _type not in self.default_all_colors:
+				# in case somehow the color was not saved on startup
+				self.default_all_colors[_type] = _color
+			ui.colors[_type] = _color
+			return True
+		return False
+
 	def storeDefaultColors(self):
 		# save the default colors
 		for _row in self.activeColorTable.rows(val=True):
@@ -40,6 +49,7 @@ class ExtColorUI:
 			self.default_all_colors[_color] = ui.colors[_color]
 
 	def OnStart(self):
+		self.updateSearchStatus('')
 		self.storeDefaultColors()
 
 		# cache contents from file
@@ -71,6 +81,7 @@ class ExtColorUI:
 		self.ownerComp.store('colors', {})
 		self.ownerComp.store('fam_colors', {})
 		self.storeDefaultColors()
+		self.populateSequence()
 
 	def onParSetallfamiliescolors(self):
 		for _block in self.famcolors_sequence:
@@ -322,14 +333,16 @@ class ExtColorUI:
 				abs(ui_color[2] - color[2]) <= tolerance[2]):
 				elements.append(ui_element)
 		
+		self.updateSearchStatus(f'Showing {len(elements)} of {self.evalMaxinlist if self.evalMaxinlist else "all"}')
+
 		if not elements:
 			elements = ['No match']
 		else:
 			# sort elements by distance to color
 			elements.sort(key=lambda x: sum(abs(a - b) for a, b in zip(ui.colors[x], color)))
 			# keep only the first N
-			max_elements = self.evalMaxinlist
-			elements = elements[:max_elements]
+			if self.evalMaxinlist:
+				elements = elements[:self.evalMaxinlist]
 		self.seq_matching.numBlocks = len(elements)
 		for idx, element in enumerate(elements):
 			self.seq_matching[idx].par.Uielement.val = element
@@ -381,12 +394,184 @@ class ExtColorUI:
 					json.dump(colors, f)
 		pass
 
-	######################################
-	def setColor(self, _type: str, _color: list[float]):
-		if _type in ui.colors:
-			if _type not in self.default_all_colors:
-				# in case somehow the color was not saved on startup
-				self.default_all_colors[_type] = _color
-			ui.colors[_type] = _color
-			return True
-		return False
+
+#### THANKS CURSOR FOR THIS CODE
+
+	def _calculate_word_similarity(self, word1: str, word2: str) -> float:
+		"""Calculate similarity between two words, considering partial matches."""
+		if word1 == word2:
+			return 1.0
+		if word1 in word2 or word2 in word1:
+			return 0.8
+		# Check for common prefixes/suffixes
+		prefix_len = 0
+		while prefix_len < min(len(word1), len(word2)) and word1[prefix_len] == word2[prefix_len]:
+			prefix_len += 1
+		suffix_len = 0
+		while suffix_len < min(len(word1), len(word2)) and word1[-(suffix_len+1)] == word2[-(suffix_len+1)]:
+			suffix_len += 1
+		return (prefix_len + suffix_len) / (2 * max(len(word1), len(word2)))
+
+	def _match_wildcard(self, pattern: str, text: str) -> bool:
+		"""Check if text matches a wildcard pattern."""
+		if '*' not in pattern:
+			return pattern in text
+		parts = pattern.split('*')
+		if not parts[0] and not parts[-1]:  # *pattern*
+			return all(part in text for part in parts[1:-1])
+		elif not parts[0]:  # *pattern
+			return text.endswith(parts[-1])
+		elif not parts[-1]:  # pattern*
+			return text.startswith(parts[0])
+		else:  # pattern*pattern
+			return text.startswith(parts[0]) and text.endswith(parts[-1])
+
+	def _calculate_key_score(self, key: str, search_terms: list[str]) -> float:
+		"""Calculate a sophisticated score for a key based on search terms."""
+		key_lower = key.lower()
+		key_parts = key_lower.split('.')
+		total_score = 0.0
+		
+		# First check for exact match of the entire search string
+		full_search = ' '.join(search_terms)
+		if full_search == key_lower:
+			return 2.0  # Highest possible score for exact match
+		
+		# Check for exact segment matches in order
+		search_parts = full_search.split('.')
+		if len(search_parts) > 1:
+			# Check if all search parts match segments in order
+			matches_in_order = True
+			last_match_index = -1
+			for part in search_parts:
+				try:
+					current_index = key_parts.index(part)
+					if current_index <= last_match_index:
+						matches_in_order = False
+						break
+					last_match_index = current_index
+				except ValueError:
+					matches_in_order = False
+					break
+			if matches_in_order:
+				return 1.8  # Very high score for ordered segment matches
+		
+		# Check for hierarchical matches (terms appear in order, separated by dots)
+		search_terms_dot = '.'.join(search_terms)
+		if search_terms_dot in key_lower:
+			return 1.6  # High score for hierarchical matches
+		
+		# Check if all terms appear in the key (not necessarily in order)
+		all_terms_present = all(term in key_lower for term in search_terms)
+		if all_terms_present:
+			# Calculate position-based score
+			positions = [key_lower.find(term) for term in search_terms]
+			ordered = all(positions[i] <= positions[i+1] for i in range(len(positions)-1))
+			if ordered:
+				return 1.4  # Good score for ordered terms
+			return 1.2  # Decent score for unordered terms
+		
+		# Handle single term matches with position-based scoring
+		for i, term in enumerate(search_terms):
+			term_lower = term.lower()
+			term_score = 0.0
+			
+			# Check for exact segment match
+			if term_lower in key_parts:
+				# Higher score for earlier terms in the search
+				position_weight = 1.0 - (i * 0.2)  # Each subsequent term gets 20% less weight
+				term_score = 1.0 * position_weight
+			else:
+				# Check for wildcard matches
+				if '*' in term:
+					if self._match_wildcard(term_lower, key_lower):
+						term_score = 0.7
+				else:
+					# Check for partial matches in each part
+					best_part_score = 0.0
+					for part in key_parts:
+						similarity = self._calculate_word_similarity(term_lower, part)
+						best_part_score = max(best_part_score, similarity)
+					term_score = best_part_score * 0.5  # Reduce score for partial matches
+			
+			# Weight by position in the key (earlier matches are better)
+			position_weight = 1.0
+			if term_lower in key_lower:
+				position = key_lower.find(term_lower)
+				position_weight = 1.0 - (position / len(key_lower))
+			
+			total_score += term_score * position_weight
+		
+		# Normalize score
+		final_score = total_score / len(search_terms)
+		
+		# Check if all terms appear in order (but not necessarily as exact segments)
+		ordered_terms = ' '.join(search_terms)
+		if ordered_terms in key_lower:
+			final_score = max(final_score, 1.5)  # Boost score for ordered terms
+		
+		return final_score
+
+	def searchColorKeys(self, search_term: str) -> list[tuple[str, float]]:
+		"""Enhanced search for keys in ui.colors with partial matching and wildcards.
+		
+		Args:
+			search_term: Can be multiple terms separated by spaces or dots.
+						Supports wildcards (*) and partial word matching.
+		
+		Returns:
+			list[tuple[str, float]]: List of matching keys with their colors
+		"""
+		results = []
+		exact_match = None
+		
+		# First check for exact match with dots preserved
+		if search_term in ui.colors:
+			exact_match = (search_term, ui.colors[search_term], 2.0)  # Store exact match with highest score
+		
+		# Then try with spaces instead of dots
+		search_terms = [term for term in search_term.replace('.', ' ').split() if term]
+		
+		for key in ui.colors:
+			# Skip the exact match as we already have it
+			if exact_match and key == exact_match[0]:
+				continue
+				
+			score = self._calculate_key_score(key, search_terms)
+			if score > 0.2:  # Lower threshold to include more matches
+				results.append((key, ui.colors[key], score))
+		
+		# Sort by score (higher is better)
+		results.sort(key=lambda x: x[2], reverse=True)
+		
+		# Combine results with exact match at the top
+		final_results = []
+		if exact_match:
+			final_results.append((exact_match[0], exact_match[1]))
+		final_results.extend([(key, color) for key, color, _ in results])
+		
+		return final_results
+
+	def onParClearmatchsequence(self):
+		self.seq_matching.numBlocks = 1
+
+#### THANKS CURSOR FOR THIS CODE ABOVE
+
+	def onParSearch(self):
+		term = self.evalSearchelement
+		results = self.searchColorKeys(term)
+		self.updateSearchStatus(f'Showing {len(results)} of {self.evalMaxinlist if self.evalMaxinlist else "all"}')
+		# trim results to max
+		if self.evalMaxinlist:
+			results = results[:self.evalMaxinlist]
+		self.addSearchResults(results)
+		
+	def addSearchResults(self, results: list[tuple[str, float]]):
+		self.seq_matching.numBlocks = len(results)
+		for idx, result in enumerate(results):
+			block = self.seq_matching[idx]
+			block.par.Uielement.val = result[0]
+			block.parGroup.Rgb.val = result[1]
+
+	def updateSearchStatus(self, text: str):
+		self.evalSearchstatus = text
