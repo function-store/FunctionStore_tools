@@ -1,7 +1,7 @@
 '''Info Header Start
 Name : ExtClownUI
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.434.toe
+Saveorigin : FunctionStore_tools_2023.444.toe
 Saveversion : 2023.11600
 Info Header End'''
 
@@ -96,6 +96,18 @@ class ExtColorUI:
 	def onSeqColorsNRgbb(self, idx):
 		self.setColorParGroup(idx)
 
+	def onSeqMatchingNRgbr(self, idx):
+		element = self.seq_matching[idx].par.Uielement.eval()
+		color = self.seq_matching[idx].parGroup.Rgb.eval()
+		self.setColor(element, color)
+	def onSeqMatchingNRgbg(self, idx):
+		element = self.seq_matching[idx].par.Uielement.eval()
+		color = self.seq_matching[idx].parGroup.Rgb.eval()
+		self.setColor(element, color)
+	def onSeqMatchingNRgbb(self, idx):
+		element = self.seq_matching[idx].par.Uielement.eval()
+		color = self.seq_matching[idx].parGroup.Rgb.eval()
+		self.setColor(element, color)
 	
 	def setColorParGroup(self, idx):
 		element = self.colors_sequence[idx].par.Uielement.eval()
@@ -197,7 +209,7 @@ class ExtColorUI:
 				if _fam in ui.colors:
 					ui.colors[_fam] = _color
 				else:
-					# TODO: handle custom OP families
+					# TODO: handle custom OP families##
 					pass
 		self.populateSequence()
 		
@@ -214,7 +226,8 @@ class ExtColorUI:
 		self.logger.log(f'Resetting families colors to defaults: {self.default_fam_colors}')
 		for _fam in self.default_fam_colors:
 			self.setColor(_fam, self.default_fam_colors[_fam])
-		self.ownerComp.store('fam_colors', self.default_fam_colors)
+			self.famcolors_sequence[self._available_families.index(_fam)].parGroup.Rgb.val = self.default_fam_colors[_fam]
+		self.ownerComp.store('fam_colors', {})
 		self.populateSequence()
 
 	def onSeqFamiliesNResetcolor(self, idx):
@@ -222,8 +235,66 @@ class ExtColorUI:
 		if fam in self.default_all_colors:
 			rgb = self.default_all_colors[fam]
 			self.setColor(fam, rgb)
+			self.famcolors_sequence[idx].parGroup.Rgb.val = rgb
 		else:
 			self.logger.log(f'No default color found for {fam}')
+
+	def onSeqMatchingNResetcolor(self, idx):
+		element = self.seq_matching[idx].par.Uielement.eval()
+		self.setColor(element, self.default_all_colors[element])
+		self.seq_matching[idx].parGroup.Rgb.val = self.default_all_colors[element]
+
+	def _addElementToColorsSequence(self, element, color, existing_elements=None):
+		"""Helper method to add an element to the colors sequence.
+		
+		Args:
+			element: The UI element to add
+			color: The RGB color for the element
+			existing_elements: Optional list of already existing elements to check against
+		
+		Returns:
+			bool: True if element was added or updated, False otherwise
+		"""
+		if element == 'No match':
+			return False
+			
+		if element in ui.colors and element not in self._available_families:
+			# Check if element already exists in sequence
+			current_elements = [_par.val for _par in self.colors_sequence.blockPars.Uielement]
+			if element in current_elements:
+				# Update existing element's color
+				idx = current_elements.index(element)
+				self.colors_sequence[idx].parGroup.Rgb.val = color
+				return True
+				
+			# If this is the first element and there's an empty block at the beginning, use it
+			if self.colors_sequence.numBlocks == 1 and not self.colors_sequence[0].par.Uielement.eval():
+				current_idx = 0
+			else:
+				# Otherwise add a new block
+				self.colors_sequence.numBlocks += 1
+				current_idx = self.colors_sequence.numBlocks - 1
+			
+			block = self.colors_sequence[current_idx]
+			block.par.Uielement.val = element
+			block.parGroup.Rgb.val = color
+			return True
+		return False
+
+	def onSeqMatchingNAddtosequence(self, idx):
+		element = self.seq_matching[idx].par.Uielement.eval()
+		color = self.seq_matching[idx].parGroup.Rgb.eval()
+		self._addElementToColorsSequence(element, color)
+
+	def onParAddtocolorssequence(self):
+		# takes found elements from seq_matching and adds them to the colors sequence
+		element_count = 0
+		
+		for idx in range(self.seq_matching.numBlocks):
+			element = self.seq_matching[idx].par.Uielement.eval()
+			color = ui.colors[element]
+			if self._addElementToColorsSequence(element, color):
+				element_count += 1
 
 ####
 
@@ -262,37 +333,21 @@ class ExtColorUI:
 		self.seq_matching.numBlocks = len(elements)
 		for idx, element in enumerate(elements):
 			self.seq_matching[idx].par.Uielement.val = element
+			self.seq_matching[idx].parGroup.Rgb.val = ui.colors[element]
 
 	def onParCheck(self):
 		colortocheck = self.evalGroupColortocheck
 		self._whichUIElement(colortocheck)
 
-	def onParAddtocolorssequence(self):
-		# takes found elements from seq_matching and adds them to the colors sequence
-		element_count = 0
-		
-		# Get list of elements already in the sequence
-		existing_elements = [_par.val for _par in self.colors_sequence.blockPars.Uielement]
-		#existing_elements = [block.par.Uielement.eval() for block in self.colors_sequence.blocks]
-		
-		for idx in range(self.seq_matching.numBlocks):
-			element = self.seq_matching[idx].par.Uielement.eval()
-			if element in ui.colors and element not in self._available_families and element not in existing_elements:
-				# If this is the first element and there's an empty block at the beginning, use it
-				if element_count == 0 and self.colors_sequence.numBlocks == 1 and not self.colors_sequence[0].par.Uielement.eval():
-					current_idx = 0
-				else:
-					# Otherwise add a new block
-					self.colors_sequence.numBlocks += 1
-					current_idx = self.colors_sequence.numBlocks - 1
-				
-				block = self.colors_sequence[current_idx]
-				block.par.Uielement.val = element
-				block.parGroup.Rgb.val = ui.colors[element]
-				element_count += 1
-				existing_elements.append(element) # Add to our tracking list to prevent duplicates in this batch
+	def onParGroupSetallrgb(self, _val):
+		for _block in self.seq_matching:
+			_block.parGroup.Rgb.val = _val
 
-	
+	def onParSetallrgbset(self):
+		rgb = self.evalGroupSetallrgb
+		self.onParGroupSetallrgb(rgb)
+
+####
 	def onParImport(self):
 		_file = self.evalFile
 		if _file:
