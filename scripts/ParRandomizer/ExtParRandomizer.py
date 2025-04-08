@@ -3,6 +3,43 @@ class ExtParRandomizer:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		self.random = iop.Random # this is an extension
+		self.checkShortcutRayTK()#
+	
+	@property
+	def shortcutopEval(self):
+		return self.ownerComp.par.Shortcutop.eval()
+	
+	@property#
+	def shortcutparEval(self):
+		return self.ownerComp.par.Shortcutpar.eval()
+	
+	# par callbacks
+	def Shortcutop(self, _par, _val, _prev):
+		self.checkShortcutRayTK()
+
+	# par callbacks#
+	def Shortcutpar(self, _par, _val, _prev):
+		self.checkShortcutRayTK()
+	
+	def checkShortcutRayTK(self):
+		conflict = False
+		if raytk := getattr(op, 'raytk', None):
+			if keyboardshortcut := getattr(raytk.par, 'Keyboardshortcut', None):
+				if keyboardshortcut.eval() in [self.shortcutopEval, self.shortcutparEval]:
+					conflict = True
+			if tools_keyboardshortcut := getattr(raytk.par, 'Toolskeyboardshortcut', None):
+				if tools_keyboardshortcut.eval() in [self.shortcutopEval, self.shortcutparEval]:
+					conflict = True
+		if conflict:
+			result = ui.messageBox('Conflict with RayTK shortcut','The shortcut for FNS_tools:ParRandomzier is already in use by RayTK.', buttons = ['Ignore', 'Change it'])
+			if result == 1:
+				raytk.openParameters()
+				self.ownerComp.openParameters()
+		return conflict
+
+	def OnRayTKChange(self, info):
+		if info != '<error>':
+			self.checkShortcutRayTK()
 
 	def OnRandomizeOp(self, _op = None):
 		ui.undo.startBlock('Randomize OP parameters')
@@ -52,7 +89,16 @@ class ExtParRandomizer:
 	def OnRandomizeRolloverPar(self):
 		ui.undo.startBlock('Randomize parameter')
 		_par = ui.rolloverPar
+		if _par is None:
+			return
+		
 		self.RandomizePar(_par)
 		ui.undo.endBlock()
+
+	def OnShortcut(self, shortcutName):
+		if shortcutName == self.ownerComp.par.Shortcutop.eval():
+			self.OnRandomizeOp()
+		if shortcutName == self.ownerComp.par.Shortcutpar.eval():
+			self.OnRandomizeRolloverPar()
 
 

@@ -1,4 +1,5 @@
 import re
+import TDFunctions as TDF
 
 class customParPromoterExt:
 	"""
@@ -11,6 +12,8 @@ class customParPromoterExt:
 		self._reference = None
 		self._target = None
 		self.hk_mod = self.ownerComp.op('null_mod')
+		self.popDialog = self.ownerComp.op('popDialog')
+		self.__parNumTypes = ['Float', 'Int', 'Xy', 'Xyz', 'Xyzw', 'Uv', 'Uvw', 'Wh','Rgb', 'Rgba']
 
 	@property
 	def Reference(self):
@@ -43,77 +46,81 @@ class customParPromoterExt:
 #VVVVVVVVVVVVVVVVVVVVVVVVVVVV MAIN VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
 	def DoPromoteAll(self, exceptions=None):
-		for page in self.Reference.customPages:
-			if page.name in self.ignorePages:
+		#for _page in self.Reference.customPages:
+		if self.Reference:
+			_page = self.Reference.currentPage
+
+		if _page.name in self.ignorePages:
+			# continue
+			return
+
+		page_name = f'{self.Reference.name}:{_page.name}'
+
+		# Set to keep track of processed parGroups
+		processed_parGroups = set()
+
+		for par in _page.pars:
+			# Handle exceptions
+			if exceptions and par.name in exceptions:
 				continue
 
-			page_name = f'{self.Reference.name}:{page.name}'
+			# Check if the parameter is a parGroup
+			if self.IsParGroup(par):
+				# Extract the group name without the last character
+				pg_name = par.name[:-1]
 
-			# Set to keep track of processed parGroups
-			processed_parGroups = set()
-
-			for par in page.pars:
-				# Handle exceptions
-				if exceptions and par.name in exceptions:
+				# Check if this parGroup has been processed already
+				if pg_name in processed_parGroups:
 					continue
+				processed_parGroups.add(pg_name)
 
-				# Check if the parameter is a parGroup
-				if self.IsParGroup(par):
-					# Extract the group name without the last character
-					pg_name = par.name[:-1]
-
-					# Check if this parGroup has been processed already
-					if pg_name in processed_parGroups:
-						continue
-					processed_parGroups.add(pg_name)
-
-					self.PromoteParGroup(self.Reference.parGroup[pg_name], page_name)
-				else:
-					self.PromotePar(par, page_name)
+				self.PromoteParGroup(self.Reference.parGroup[pg_name], page_name)
+			else:
+				self.PromotePar(par, page_name)
 
 	# unfortunately params that are for example XYZ, Float2/3 etc are not handled well by appendPar
 	# as it creates duplicates (Par[xyz] becomes Par[xyz][xyz])... therefore the below
-	def PromoteParGroup(self, pg, page_name, target = None):
+	def PromoteParGroup(self, _parGroup, page_name, target = None, refBind = None, parName = None, parLabel = None):
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
 			return
+		if not refBind:
+			refBind = self.refBind
 		
-		name = pg.name.title()
-  
+		label = _parGroup.label.title() if parLabel is None else parLabel
+		name = _parGroup.name.title() if parName is None else parName
+
 		if self.parNameExists(name):
-			if self.checkAlreadyBound(pg, name):
+			if self.checkAlreadyBound(_parGroup, name):
 				return
 			else:
 				name = self.parNameCheck(name)
 		
-		page_name_q = f'{self.Reference.name}:{pg.page.name}'
-		page_exists = any([_page.name == page_name_q for _page in target.customPages])
-		if page_exists:
-			new_page = target.customPages[page_name_q]
-		else:
-			new_page = target.appendCustomPage(page_name)
+		new_page = self._getTargetPage(page_name, target, _parGroup.page)
+		if new_page.name in (set([p.name for p in target.customPages]) - set([p.name for p in target.pages])):
+			target.currentPage = new_page
 
 		try:
-			if type(pg) == ParGroupPulse and len(pg.eval()) == 2:
-				new_pars = [new_page.appendPar(name, par=pg[0]), new_page.appendPar(f'{name}pulse',par=pg[1])]
+			if type(_parGroup) == ParGroupPulse and len(_parGroup.eval()) == 2:
+				new_pars = [new_page.appendPar(name, par=_parGroup[0]), new_page.appendPar(name=f'{name}pulse', label=f'{label}', par=_parGroup[1])]
 			else:
-				new_par = new_page.appendPar(name, par=pg[0])
+				new_par = new_page.appendPar(name, label=name, par=_parGroup[0])
 				new_pars = new_par.pars()
-				for i, old_par in enumerate(pg):
+				for i, old_par in enumerate(_parGroup):
 					new_pars[i].val = old_par.val
 					new_pars[i].default = old_par.default
 		except:
-			if type(pg) == ParGroupPulse:
+			if type(_parGroup) == ParGroupPulse:
 				new_pars = [new_page.owner.parGroup[name], new_page.owner.parGroup[f'{name}pulse']]
 			else:
 				new_par = new_page.owner.parGroup[name]
 				new_pars = new_par.pars()
 
-		for p, new_p in zip(pg.pars('*'), new_pars):
+		for p, new_p in zip(_parGroup.pars('*'), new_pars):
 			new_p.val = p.val
 			new_p.startSection = p.startSection
-			if not self.refBind:
+			if not refBind:
 				new_p.val = p.val
 				p.expr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
 				p.mode = ParMode.EXPRESSION
@@ -121,38 +128,59 @@ class customParPromoterExt:
 				new_p.val = p.val
 				p.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
 				p.mode = ParMode.BIND	
-		
 
-	def PromotePar(self, _par, page_name, target = None):
+
+
+	def PromotePar(self, _par, page_name, target = None, refBind = None, parName = None, parLabel = None, parMin = None, parMax = None, clamp = None, parDefault = None):
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
 			return
+		if refBind is None:
+			refBind = self.refBind
+
+		if self.IsParGroup(_par):
+			self.PromoteParGroup(_par.parGroup, page_name, target, refBind)
+			return
 		
-		name = _par.name.title()
+		label = _par.label.title() if parLabel is None else parLabel
+		name = _par.name.title() if parName is None else parName
+
 		if self.parNameExists(name):
 			if self.checkAlreadyBound(_par, name):
 				return
 			else:
 				name = self.parNameCheck(name)
 
-		page_name_q = f'{self.Reference.name}:{_par.page.name}'
-		page_exists = any([_page.name == page_name_q for _page in target.customPages])
-		if page_exists:
-			new_page = target.customPages[page_name_q]
-		else:
-			new_page = target.appendCustomPage(page_name)
+		new_page = self._getTargetPage(page_name, target, _par.page)
+		
+		if new_page.name in (set([p.name for p in target.customPages]) - set([p.name for p in target.pages])):
+			target.currentPage = new_page
 
 		try:
-			new_par = new_page.appendPar(name, par=_par)
-		except:
+			new_par = new_page.appendPar(name, label=label, par=_par)
+		except Exception as e:
 			new_par = new_page.owner.par[name]
 
+		if parMin is not None:
+			new_par.normMin = parMin
+			new_par.min = parMin
+			if clamp:
+				new_par.clampMin = clamp[0] # true/false
+		if parMax is not None:
+			new_par.normMax = parMax
+			new_par.max = parMax
+			if clamp:
+				new_par.clampMax = clamp[1] # true/false
+
+		if parDefault is not None:
+			new_par.default = parDefault
+			
 		new_par.startSection = _par.startSection
 		new_par.val = _par.val
 		if new_par.isMenu:
 			new_par.menuSource = target.shortcutPath(self.Reference, toParName = _par.name) 
-		if not self.refBind:
+		if not refBind:
 			_par.expr = f"{self.Reference.shortcutPath(target)}.par.{new_par.name}"
 			_par.mode = ParMode.EXPRESSION
 		else:
@@ -211,3 +239,117 @@ class customParPromoterExt:
 			return len(pg.val) > 1
 		except:
 			return False
+
+	def _getTargetPage(self, page_name, target, source_page=None):
+		"""Helper method to handle page selection logic
+		Args:
+			page_name: Requested page name
+			target: Target component
+			source_page: Original page from reference component
+		Returns:
+			Page object to use for parameter promotion
+		"""
+		
+		custom_page_names = [p.name for p in target.customPages]
+		all_page_names = [p.name for p in target.pages]
+		
+		new_page = None
+		# we have a target or candidate page name
+		if page_name:
+			# Get list of existing page names
+			
+			# First try the exact page name
+			if page_name in custom_page_names:
+				new_page = target.customPages[page_name]
+			else:
+				# Try the constructed page_name_q
+				page_name_q = f'{self.Reference.name}:{source_page.name}'
+				if page_name_q in custom_page_names:
+					new_page = target.customPages[page_name_q]
+				else:
+					# If neither exists, create the page with the given name
+					new_page = target.appendCustomPage(page_name)
+
+		# Only if no page_name was provided, use current custom page or first available
+		if new_page is None:
+			if target.customPages:
+				try:
+					new_page = target.currentPage if target.currentPage.name in custom_page_names else None
+				except Exception as e:
+					new_page = None
+					
+				if new_page is None:  # means not a custom page selected, take first available
+					new_page = target.customPages[0]
+				else:
+					new_page = TDF.getCustomPage(target, new_page.name)
+			else:
+				new_page = target.appendCustomPage('Custom')
+		
+		return new_page
+
+	def OnEditText(self, field, text):
+		if field == 'paramname':
+			paramname = self.popDialog.op('entry2/inputText').par.text
+			prune_text = text.replace(' ', '')
+			# also remove any non-alphanumeric characters
+			prune_text = re.sub(r'[^a-zA-Z0-9]', '', prune_text)
+			# remove leading and trailing underscores
+			prune_text = prune_text.strip('_')
+			# remove any leading numbers
+			prune_text = re.sub(r'^[0-9]+', '', prune_text)
+			text = prune_text.capitalize()
+			paramname.val = text
+		elif field in ['min', 'max']:
+			return
+		
+			
+
+	def OnCustomizeParameterDropped(self, dropParam):
+		details = {}
+		details['refBind'] = self.refBind
+		if type(dropParam) == ParGroup:
+			# is pargroup
+			details['parGroup'] = dropParam
+			self.popDialog.par.Minmaxentryarea = False
+			is_num = False
+		else:
+			# is par
+			details['par'] = dropParam
+			style = dropParam.style
+			default = dropParam.default
+			is_num = style in self.__parNumTypes
+			details['isNum'] = is_num
+			self.popDialog.par.Minmaxentryarea = is_num
+
+		textEntries = [dropParam.label, dropParam.name.capitalize()]
+		if is_num:
+			textEntries.extend([dropParam.normMin, dropParam.normMax])
+			textEntries.append(default)
+
+		self.popDialog.Open(callback=self.OnCustomizeCallback, details=details, textEntries=textEntries)
+
+	def OnCustomizeCallback(self, info):
+		if info['buttonNum'] != 1:
+			return
+		
+		details = info['details']
+		parGroup = details.get('parGroup', None)
+		par = details.get('par', None)
+		is_num = details.get('isNum', False)
+
+		labelEntry = info['enteredText'][0]
+		nameEntry = info['enteredText'][1]
+		minEntry = float(info['enteredText'][2]) if is_num and info['enteredText'][2] is not None else None
+		maxEntry = float(info['enteredText'][3]) if is_num and info['enteredText'][3] is not None else None
+		chekcboxClamp = info['checkBoxes']
+		default = info['enteredText'][4] if is_num else None
+		
+		if parGroup is not None:
+			self.PromoteParGroup(parGroup, None, parName=nameEntry, parLabel=labelEntry)
+		elif par is not None:
+			self.PromotePar(par, None, parName=nameEntry, parLabel=labelEntry, parMin=minEntry, parMax=maxEntry, clamp=chekcboxClamp, parDefault=default)
+
+
+
+
+

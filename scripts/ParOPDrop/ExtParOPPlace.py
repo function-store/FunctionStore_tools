@@ -1,3 +1,4 @@
+import TDFunctions as TDF
 
 class ExtParOPPlace:
 	def __init__(self, ownerComp):
@@ -31,7 +32,6 @@ class ExtParOPPlace:
 	def OnPlaceParOp(self, _par = None):
 
 		current_parameter = _par if _par is not None else ui.rolloverPar
-
 		if current_parameter is None or current_parameter.owner.family != "COMP":
 			return
 
@@ -41,42 +41,52 @@ class ExtParOPPlace:
 	def _update_generic_parameter(self, selected_op, curr_parameter):
 			# Determine the appropriate parameters based on enabled flags
 			param_name = 'parameters'  # Default parameter attribute name
+			operators_param_name = 'ops'
 			if self.datExecPreEnabled:
 				parameter_instance = self.parameterExecDat
 				op_type = 'parameterexecuteDAT'
 				op_name = 'parexec1'
 				param_name = 'pars'  # Parameter attribute name for parameterexecuteDAT
+				operators_param_name = 'op'
 			elif self.datPreEnabled:
 				parameter_instance = self.parameterDat
 				op_type = 'parameterDAT'
 				op_name = 'parameter1'
-			elif self.chopPreEnabled:
+			else: # self.chopPreEnabled
 				parameter_instance = self.parameterChop
 				op_type = 'parameterCHOP'
 				op_name = 'parameter1'
-			else:
-				return
 
 			newly_created = False
+			
+			# Helper function to create a new parameter instance
+			def create_new_instance():
+				new_instance = ui.panes.current.owner.create(op_type, op_name)
+				new_instance.viewer = True
+				new_instance.current = True
+				new_instance.nodeCenterX = ui.panes.current.x
+				new_instance.nodeCenterY = ui.panes.current.y
+				return new_instance
+			
 			if selected_op and selected_op.opType == op_type:
-				parameter_instance = selected_op
+				# Check if the parameter_instance's operator reference matches curr_parameter.owner
+				current_op_path = getattr(selected_op.par, operators_param_name).eval()
+				if current_op_path == curr_parameter.owner:
+					parameter_instance = selected_op
+				else:
+					# Create new instance if the referenced operator doesn't match
+					parameter_instance = create_new_instance()
+					newly_created = True
 			elif not parameter_instance:
-				parameter_instance = curr_parameter.owner.create(op_type, op_name)
-				parameter_instance.viewer = True
-				parameter_instance.current = True
+				parameter_instance = create_new_instance()
 				newly_created = True
 
 			if newly_created:
 				getattr(parameter_instance.par, param_name).val = curr_parameter.name
-				if op_type == 'parameterexecuteDAT':
-					parameter_instance.par.op.val = '..'
+				getattr(parameter_instance.par, operators_param_name).expr = TDF.getShortcutPath(parameter_instance, curr_parameter.owner)
 			elif curr_parameter.name not in getattr(parameter_instance.par, param_name).val.split(' '):
 				getattr(parameter_instance.par, param_name).val += ' ' + curr_parameter.name
 
-			# Update the instance back to the class variable
-			if self.datExecPreEnabled:
-				self.parameterExecDat = False
-			elif self.chopPreEnabled:
-				self.parameterChop = False
-			elif self.datPreEnabled:
-				self.parameterDat = False
+			self.parameterExecDat = False
+			self.parameterChop = False
+			self.parameterDat = False

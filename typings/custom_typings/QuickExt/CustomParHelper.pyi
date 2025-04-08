@@ -9,9 +9,11 @@ class CustomParHelper:
 
     ## Features:
     - Access custom parameters as properties
+    - Set parameter values through properties
     - Simplified custom parameter callbacks
     - Support for sequence parameters
     - Support for parameter groups (parGroups)
+    - Support for general callbacks that catch all parameter changes
     - Configurable inclusion for properties and callbacks (by default all parameters are included)
     - Configurable exceptions for pages, properties, callbacks, and sequences
 
@@ -30,7 +32,8 @@ class CustomParHelper:
        ```python
        CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
              par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
-             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], enable_stubs: bool = False)
+             except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
+             enable_stubs: bool = False, general_callback_enable: bool = True)
        ```
 
         Additional options:
@@ -46,24 +49,58 @@ class CustomParHelper:
         - `except_pages`: List of parameter pages to exclude from property and callback handling
         - `except_sequences`: List of sequence names to exclude from property and callback handling
         - `enable_stubs`: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
+        - `general_callback_enable`: If True, enables general callbacks that catch all parameter changes (default: True)
 
-    3. Access custom parameters as properties (if enable_properties=True (default)):
-       - `self.par<ParamName>`: Access the parameter object
-       - `self.eval<ParamName>`: Get the evaluated value of the parameter
-       - `self.parGroup<GroupName>`: Access the parameter group object (if enable_parGroups=True (default))
-       - `self.evalGroup<GroupName>`: Get the evaluated value of the parameter group (if enable_parGroups=True (default))
-    > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
+    3. Access and set custom parameters as properties (if enable_properties=True (default)):
+       
+       There are two ways to access and set parameter values:
+
+       a) Using Eval properties (recommended for simple value setting):
+       - `self.eval<ParamName>`: Get/set the evaluated value of the parameter
+         ```python
+         # Get value
+         value = self.evalMyParam
+         # Set value (always sets .val regardless of parameter mode)
+         self.evalMyParam = 5
+         ```
+       - `self.evalGroup<GroupName>`: Get/set the evaluated value of the parameter group
+         ```python
+         # Get values
+         values = self.evalGroupXyz
+         # Set values (always sets .val for each parameter)
+         self.evalGroupXyz = [1, 2, 3]
+         ```
+
+       b) Using Par properties (for advanced parameter control):
+       - `self.par<ParamName>`: Access/set the parameter object
+         ```python
+         # Get parameter object for advanced operations
+         self.parMyParam.expr = "op('something').par.value"
+         self.parMyParam.bindExpr = "op('other').par.value"
+         # Set value (only works in CONSTANT or BIND modes)
+         self.parMyParam = 5  # Ignored if parameter is in EXPRESSION mode
+         ```
+       - `self.parGroup<GroupName>`: Access/set the parameter group object
+         ```python
+         # Get parameter group for advanced operations
+         myGroup = self.parGroupXyz
+         # Set values (only works for parameters in CONSTANT or BIND modes)
+         self.parGroupXyz = [1, 2, 3]  # Only affects non-expression parameters
+         ```
+
+       > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
 
     4. Implement callbacks (if enable_callbacks=True (default)):
+       a) Parameter-specific callbacks:
        - For regular parameters:
          ```python
-         def onPar<ParamName>(self, _par, _val, _prev):
+         def onPar<Parname>(self, _par, _val, _prev):
            # _par and _prev can be omitted if not needed
          ```
 
        - For pulse parameters:
          ```python
-         def onPar<PulseParamName>(self, _par):
+         def onPar<PulseParname>(self, _par):
            # _par can be omitted if not needed
          ```
 
@@ -74,14 +111,31 @@ class CustomParHelper:
 
        - For sequence parameters:
          ```python
-         def onSeq<SeqName>N<ParName>(self, _par, idx, _val, _prev):
+         def onSeq<SeqName>N<Parname>(self, _par, idx, _val, _prev):
            # _par and _prev can be omitted if not needed
          ```
 
        - For parameter groups if enable_parGroups=True (default):
          ```python
-         def onParGroup<GroupName>(self, _parGroup, _val):
+         def onParGroup<Groupname>(self, _parGroup, _val):
            # _parGroup can be omitted if not needed
+         ```
+
+       b) General callbacks (if general_callback_enable=True (default)):
+       These catch all parameter changes that aren't handled by specific callbacks:
+       
+       - For value changes:
+         ```python
+         def onValueChange(self, _par, _val, _prev):
+           # Called when any parameter value changes that doesn't have a specific callback
+           # _val and _prev can be omitted if not needed
+         ```
+
+       - For pulse parameters:
+         ```python
+         def onPulse(self, _par):
+           # Called when any pulse parameter is triggered that doesn't have a specific callback
+           # _par can be omitted if not needed
          ```
 
     > NOTE: This class is part of the extUtils package, and is designed to work with the QuickExt framework.
@@ -104,9 +158,10 @@ class CustomParHelper:
     SEQUENCE_PATTERN: str = '(\\w+?)(\\d+)(.+)'
     IS_EXPOSE_PUBLIC: bool = False
     STUBS_ENABLED: bool = False
+    GENERAL_CALLBACK_ENABLE: bool = True
 
     @classmethod
-    def Init(cls, extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, enable_seq: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_stubs: bool=False) -> None:
+    def Init(cls, extension_self, ownerComp: COMP, enable_properties: bool=True, enable_callbacks: bool=True, enable_parGroups: bool=True, enable_seq: bool=True, expose_public: bool=False, par_properties: list[str]=['*'], par_callbacks: list[str]=['*'], except_properties: list[str]=[], except_sequences: list[str]=[], except_callbacks: list[str]=[], except_pages: list[str]=[], enable_stubs: bool=False, general_callback_enable: bool=True) -> None:
         """Initialize the CustomParHelper."""
         pass
 
@@ -126,17 +181,17 @@ class CustomParHelper:
         pass
 
     @classmethod
-    def DisableCallbacks(cls, enable_parGroups: bool=True, enable_seq: bool=True) -> None:
+    def DisableCallbacks(cls, disable_parGroups: bool=True, disable_seq: bool=True) -> None:
         """Disable callbacks for custom parameters."""
         pass
 
     @classmethod
-    def OnValueChange(cls, comp: COMP, par: Par, prev: Par) -> None:
+    def OnValueChange(cls, comp: COMP, _par: Par, prev: Par) -> None:
         """Handle value change events for custom parameters."""
         pass
 
     @classmethod
-    def OnPulse(cls, comp: COMP, par: Par) -> None:
+    def OnPulse(cls, comp: COMP, _par: Par) -> None:
         """Handle pulse events for custom parameters."""
         pass
 

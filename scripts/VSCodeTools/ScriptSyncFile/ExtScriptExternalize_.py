@@ -51,7 +51,7 @@ class ExtScriptExternalize:
 		# Check if the file exists and open a dialog to choose a new name
 		if file_path.exists() or forceDialog:
 			self.popDialog.par.Text = f"{self.__ensureForwardSlashes(file_path)} already exists. Please choose a new name." if not forceDialog else f"Please choose a new name."
-			self.popDialog.Open(textEntry=f"{self.__ensureForwardSlashes(file_path.with_suffix(''))}_")
+			self.popDialog.Open(textEntry=f"{self.__ensureForwardSlashes(file_path.with_suffix(''))}")
 			return None
 		return file_path
 
@@ -110,8 +110,11 @@ class ExtScriptExternalize:
 		# Construct the initial file path using pathlib
 		extension = self.__getFileExtensionForOp(self.ScriptOp)
 
+		if not name.endswith(f'.{extension}'):
+			name = f"{name}.{extension}"
+			
 		if 'TDExtension' not in _op.tags:
-			file_path = Path(self.Folder) / f"{name}.{extension}"
+			file_path = Path(self.Folder) / name
 		else:
-			file_path = Path(self.Folder) / _op.parent().name / f"{name}.{extension}"
+			file_path = Path(self.Folder) / _op.parent().name / name
 		return file_path
