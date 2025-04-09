@@ -158,6 +158,8 @@ class customParPromoterExt:
 			target.currentPage = new_page
 
 		try:
+			if type(_par) == ParGroupPulse: # why did it come to this???
+				_par = _par[0]
 			new_par = new_page.appendPar(name, label=label, par=_par)
 		except Exception as e:
 			new_par = new_page.owner.par[name]
