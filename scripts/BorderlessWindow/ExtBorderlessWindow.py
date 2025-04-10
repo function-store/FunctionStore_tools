@@ -12,11 +12,36 @@ SW_MAXIMIZE = 3
 SW_RESTORE = 9
 MONITOR_DEFAULTTONEAREST = 2
 
+# Window states
+SW_SHOWNORMAL = 1
+SW_SHOWMINIMIZED = 2
+SW_SHOWMAXIMIZED = 3
+
 # SetWindowPos Flags
 SWP_NOZORDER = 0x0004
 SWP_NOACTIVATE = 0x0010
 SWP_FRAMECHANGED = 0x0020
 SWP_SHOWWINDOW = 0x0040
+
+# Custom RECT structure
+class RECT(ctypes.Structure):
+	_fields_ = [
+		("left", ctypes.c_long),
+		("top", ctypes.c_long),
+		("right", ctypes.c_long),
+		("bottom", ctypes.c_long)
+	]
+
+# WINDOWPLACEMENT structure
+class WINDOWPLACEMENT(ctypes.Structure):
+	_fields_ = [
+		("length", ctypes.c_uint),
+		("flags", ctypes.c_uint),
+		("showCmd", ctypes.c_uint),
+		("ptMinPosition", ctypes.c_long * 2),
+		("ptMaxPosition", ctypes.c_long * 2),
+		("rcNormalPosition", RECT)
+	]
 
 # Windows API Functions
 GetForegroundWindow = ctypes.windll.user32.GetForegroundWindow
@@ -29,6 +54,9 @@ GetMonitorInfo = ctypes.windll.user32.GetMonitorInfoW
 GetWindowThreadProcessId = ctypes.windll.user32.GetWindowThreadProcessId
 GetWindowTextLengthW = ctypes.windll.user32.GetWindowTextLengthW
 GetWindowTextW = ctypes.windll.user32.GetWindowTextW
+GetWindowRect = ctypes.windll.user32.GetWindowRect
+GetClientRect = ctypes.windll.user32.GetClientRect
+GetWindowPlacement = ctypes.windll.user32.GetWindowPlacement
 
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 ###
@@ -52,6 +80,10 @@ class ExtBorderlessWindow:#
 		self.IsModifiedAndBorderless = tdu.Dependency(False)
 		self.saveStateScriptOp = self.ownerComp.op('saveStateScriptOp')
 		self.__injectUI()
+		self.default_width_offset = 9
+		self.default_height_offset = -9
+		self.applied_offsets = False
+		
 
 	def __injectUI(self):
 		nodetable = op('/ui/dialogs/mainmenu/menu')
@@ -76,6 +108,46 @@ class ExtBorderlessWindow:#
 		_op.outputConnectors[0].connect(target_op)
 		_op.bypass = False
 		pass
+
+	def onStart(self):
+		"""Called on component initialization"""
+		# Check if we should go fullscreen on start
+		if self.evalFixfullscreenonstart or self.evalFullscreen:
+			# Get foreground window
+			hwnd = GetForegroundWindow()
+			if self.is_main_td_window(hwnd):
+				# Get work area
+				work_left, work_top, work_width, work_height = self.get_work_area(hwnd)
+				
+				# Make window fullscreen
+				SetWindowPos(hwnd, None, work_left, work_top, work_width, work_height, 
+							SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+				
+				# Maximize the window
+				self.maximize_window(hwnd)
+		# Check if we should also remove borders on start
+		if self.evalOnstart:
+			# Remove borders
+			self.remove_borders()
+			self.ownerComp.par.Borderless = True
+
+		if self.evalHidemenubuttons:
+			pass
+
+	def onParHidemenubuttons(self, _par, _val):
+		self.hideMenuButtons(_val)
+
+	def hideMenuButtons(self, _val):
+		mainMenu = op('/ui/dialogs/mainmenu')
+		op_names_to_hide = ('wiki', 'forum', 'tutorials')
+		for op_name in op_names_to_hide:
+			_op = mainMenu.op(op_name)
+			if _op:
+				_op.par.display = not _val
+		pass
+
+	def onStartBorderless(self):
+		self.onStart()
 
 
 	@property
@@ -145,9 +217,14 @@ class ExtBorderlessWindow:#
 	@IsBorderless.setter
 	def IsBorderless(self, value):
 		self.is_borderless = value
-		self.displayProjName(value)
+		if self.evalShowprojectname:
+			self.displayProjName(value)
 		# Update the dependency whenever borderless state changes
 		self.IsModifiedAndBorderless.val = self.is_modified and self.is_borderless
+
+	def onParShowprojectname(self, _par, _val):
+		if self.is_borderless:
+			self.displayProjName(_val)
 
 	def get_work_area(self, hwnd):
 		monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST)
@@ -164,39 +241,78 @@ class ExtBorderlessWindow:#
 	def maximize_window(self, hwnd):
 		ShowWindow(hwnd, SW_MAXIMIZE)
 
+	def is_window_maximized(self, hwnd):
+		"""Check if the window is maximized"""
+		placement = WINDOWPLACEMENT()
+		placement.length = ctypes.sizeof(placement)
+		if not GetWindowPlacement(hwnd, ctypes.byref(placement)):
+			return False
+		return placement.showCmd == SW_SHOWMAXIMIZED
+
 	def remove_borders(self):
 		hwnd = GetForegroundWindow()  # Get active window
 		# Check if it's main TouchDesigner window
 		if not self.is_main_td_window(hwnd):
 			return
 		
-		# Get work area before modifying window
-		left, top, width, height = self.get_work_area(hwnd)
+		# Check if window is maximized
+		is_maximized = self.is_window_maximized(hwnd)
 		
-		# First set window to full work area size
-		SetWindowPos(hwnd, None, left, top, width, height, 
-					SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+		# Get current window dimensions
+		window_rect = RECT()
+		GetWindowRect(hwnd, ctypes.byref(window_rect))
+		current_left = window_rect.left
+		current_top = window_rect.top
+		current_width = window_rect.right - window_rect.left
+		current_height = window_rect.bottom - window_rect.top
 		
-		# Then remove borders
+		# Get work area for scaling if needed
+		work_left, work_top, work_width, work_height = self.get_work_area(hwnd)
+		
+		# Get window style
 		current_style = GetWindowLong(hwnd, GWL_STYLE)
+
+		force_fullscreen = self.ownerComp.par.Fullscreen.eval()
+
+		# Force fullscreen mode if window is maximized
+		use_fullscreen = is_maximized or force_fullscreen
+
+		# Check fullscreen parameter
+		if use_fullscreen:
+			# First set window to full work area size
+			SetWindowPos(hwnd, None, work_left, work_top, work_width, work_height, 
+						SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+		
+		# Remove borders
 		SetWindowLong(hwnd, GWL_STYLE, (current_style & ~WS_CAPTION & ~WS_THICKFRAME))  # Remove border & title bar
 		
-		# Make window smaller than screen
-		scale = 1  # 50% of screen size
-		width_reduction = int(width * (1 - scale))
-		height_reduction = int(height * (1 - scale))
-		
-		left += width_reduction // 2
-		top += height_reduction // 2
-		width -= width_reduction
-		height -= height_reduction
-		
 		self.IsBorderless = True
-
-		# Move & resize window to final size with proper flags
-		SetWindowPos(hwnd, None, left, top, width, height, 
-					SWP_FRAMECHANGED | SWP_SHOWWINDOW)
 		
+		# Apply changes and set size
+		if use_fullscreen:
+			# Scale down if needed
+			scale = 1  # 50% of screen size
+			width_reduction = int(work_width * (1 - scale))
+			height_reduction = int(work_height * (1 - scale))
+			
+			left = work_left + width_reduction // 2
+			top = work_top + height_reduction // 2
+			width = work_width - width_reduction
+			height = work_height - height_reduction
+			
+			SetWindowPos(hwnd, None, left, top, width, height, 
+						SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+		else:
+			# Apply user-defined offsets
+			width_offset = self.default_width_offset
+			height_offset = self.default_height_offset
+			
+			# Apply offsets to window size
+			SetWindowPos(hwnd, None, current_left + width_offset, current_top, 
+						current_width - width_offset*2, current_height + height_offset,
+						SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+			self.applied_offsets = True
+						
 		self.saved_foreground_window = hwnd
 
 	def restore_borders(self):
@@ -206,16 +322,40 @@ class ExtBorderlessWindow:#
 		if not self.is_main_td_window(hwnd):
 			return
 			
+		# Get current window rect before restoring borders
+		window_rect = RECT()
+		GetWindowRect(hwnd, ctypes.byref(window_rect))
+		
+		# Get window style
 		current_style = GetWindowLong(hwnd, GWL_STYLE)
+		
+		# Restore borders
 		SetWindowLong(hwnd, GWL_STYLE, (current_style | WS_CAPTION | WS_THICKFRAME))  # Restore border & title bar
 		
 		# Get work area
-		left, top, width, height = self.get_work_area(hwnd)
+		work_left, work_top, work_width, work_height = self.get_work_area(hwnd)
 		
-		# Apply changes with proper flags and restore to full size
-		SetWindowPos(hwnd, None, left, top, width, height, 
-					SWP_FRAMECHANGED | SWP_SHOWWINDOW)
-		self.maximize_window(hwnd)  
+		# Set window size and position
+		if not self.applied_offsets:
+			# Apply changes with proper flags and restore to full size
+			SetWindowPos(hwnd, None, work_left, work_top, work_width, work_height, 
+						SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+			self.maximize_window(hwnd)
+		else:
+			# Apply inverse of the user-defined offsets
+			width_offset = self.default_width_offset
+			height_offset = self.default_height_offset
+			
+			# Apply inverse offsets to compensate
+			new_left = window_rect.left - width_offset
+			new_width = window_rect.right - window_rect.left + width_offset * 2
+			new_height = window_rect.bottom - window_rect.top - height_offset
+			
+			# Keep current window dimensions but adjust for added borders
+			SetWindowPos(hwnd, None, new_left, window_rect.top, 
+						new_width, new_height,
+						SWP_FRAMECHANGED | SWP_SHOWWINDOW)
+			
 		self.IsBorderless = False
 
 	def displayProjName(self, state):
