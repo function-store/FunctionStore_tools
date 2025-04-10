@@ -132,9 +132,13 @@ class ExtBorderlessWindow:#
 			self.ownerComp.par.Borderless = True
 
 		if self.evalHidemenubuttons:
+			self.onParHidemenubuttons(self.evalHidemenubuttons)
 			pass
+		
+		if self.evalShowprojectname:
+			self.displayProjName(self.evalShowprojectname)
 
-	def onParHidemenubuttons(self, _par, _val):
+	def onParHidemenubuttons(self, _val):
 		self.hideMenuButtons(_val)
 
 	def hideMenuButtons(self, _val):
@@ -359,6 +363,8 @@ class ExtBorderlessWindow:#
 		self.IsBorderless = False
 
 	def displayProjName(self, state):
+		if not self.is_borderless:
+			return
 		targets = [self.ownerComp.op('projname'), op('/ui/dialogs/mainmenu/projname')]
 
 		for target in targets:
