@@ -66,7 +66,7 @@ class HotkeyManagerExt:##
 		self.keyboardin_dat_pars = ['keys', 'shortcuts']
 		self.comp_pars_substrings = ['key', 'shortcut', 'hotkey']
 		self.comp_pars_exceptions = ['opshortcut','parentshortcut','arrowkeys','savehotkeys','loadhotkeys','shortcutactive']
-		self.comp_except = ['popMenu']
+		self.comp_except = ['popMenu', 'popDialog', 'KeyModifiers']
 		
 		self.searchRoot = parent.FNS
 		self.hotkeyTable : tableDAT = self.ownerComp.op('table_gathered_hotkeys')
@@ -92,47 +92,47 @@ class HotkeyManagerExt:##
 		
 		# Find all keyboardinCHOP operators
 		chop_pars_found = 0
-		for op in root.findChildren(type=keyboardinCHOP):	
-			if 'KeyModifiers' in op.path:
+		for _op in root.findChildren(type=keyboardinCHOP):
+			if any(_sub in _op.path for _sub in self.comp_except):
 				continue
 				
 			for par_name in self.keyboardin_chop_pars:
-				_par = getattr(op.par, par_name, None)
+				_par = getattr(_op.par, par_name, None)
 				if _par is not None:
 					# Set the appropriate fields based on parameter
 					if par_name == "keys":
 						keys_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
 						keys_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
 						if keys_val or keys_expr:
-							result.append((op, par_name))
-							debug_info = f"CHOP: {op.path}.{par_name} - val: '{keys_val}', expr: '{keys_expr}'"
+							result.append((_op, par_name))
+							debug_info = f"CHOP: {_op.path}.{par_name} - val: '{keys_val}', expr: '{keys_expr}'"
 							pars_found_debug.append(debug_info)
 							chop_pars_found += 1
-							self.logger.log(f"AllHotkeyPars: CHOP {op.path} has {par_name} data", textport=False)
+							self.logger.log(f"AllHotkeyPars: CHOP {_op.path} has {par_name} data", textport=False)
 					elif par_name == "modifiers":
 						mod_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
 						mod_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
 						if mod_val or mod_expr:
-							result.append((op, par_name))
-							debug_info = f"CHOP: {op.path}.{par_name} - val: '{mod_val}', expr: '{mod_expr}'"
+							result.append((_op, par_name))
+							debug_info = f"CHOP: {_op.path}.{par_name} - val: '{mod_val}', expr: '{mod_expr}'"
 							pars_found_debug.append(debug_info)
 							chop_pars_found += 1
-							self.logger.log(f"AllHotkeyPars: CHOP {op.path} has {par_name} data", textport=False)
+							self.logger.log(f"AllHotkeyPars: CHOP {_op.path} has {par_name} data", textport=False)
 				
 		self.logger.log(f"AllHotkeyPars: Found {chop_pars_found} CHOP parameters", textport=True)
 		
 		# Find all keyboardinDAT operators with keys or shortcuts parameters
 		dat_pars_found = 0
-		for op in root.findChildren(type=keyboardinDAT):
-			if 'KeyModifiers' in op.path:
+		for _op in root.findChildren(type=keyboardinDAT):
+			if any(_sub in _op.path for _sub in self.comp_except):
 				continue
 				
 			# Check if the DAT has any of the relevant parameters
-			has_hotkey_pars = any(hasattr(op.par, par_name) for par_name in self.keyboardin_dat_pars)
+			has_hotkey_pars = any(hasattr(_op.par, par_name) for par_name in self.keyboardin_dat_pars)
 			
 			if has_hotkey_pars:
 				for par_name in self.keyboardin_dat_pars:
-					_par = getattr(op.par, par_name, None)
+					_par = getattr(_op.par, par_name, None)
 					if _par is not None:
 						# Set the appropriate fields based on parameter
 						if par_name == "keys":
@@ -153,35 +153,35 @@ class HotkeyManagerExt:##
 									if re.match(pattern, _keys_val.lower()):
 										continue
 									
-									result.append((op, par_name))
-									debug_info = f"DAT: {op.path}.{par_name} - val: '{_keys_val}'"
+									result.append((_op, par_name))
+									debug_info = f"DAT: {_op.path}.{par_name} - val: '{_keys_val}'"
 									pars_found_debug.append(debug_info)
 									dat_pars_found += 1
-									self.logger.log(f"AllHotkeyPars: DAT {op.path} has {par_name} value", textport=False)
+									self.logger.log(f"AllHotkeyPars: DAT {_op.path} has {par_name} value", textport=False)
 							elif _par.mode == ParMode.EXPRESSION:
 								if _par.expr and 'app.osName' in _par.expr:
-									result.append((op, par_name))
-									debug_info = f"DAT: {op.path}.{par_name} - expr: '{_par.expr}'"
+									result.append((_op, par_name))
+									debug_info = f"DAT: {_op.path}.{par_name} - expr: '{_par.expr}'"
 									pars_found_debug.append(debug_info)
 									dat_pars_found += 1
-									self.logger.log(f"AllHotkeyPars: DAT {op.path} has {par_name} expr", textport=False)
+									self.logger.log(f"AllHotkeyPars: DAT {_op.path} has {par_name} expr", textport=False)
 
 						elif par_name == "shortcuts":
 							if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND:
 								_shortcuts_val = _par.eval()
 								if _shortcuts_val:
-									result.append((op, par_name))
-									debug_info = f"DAT: {op.path}.{par_name} - val: '{_shortcuts_val}'"
+									result.append((_op, par_name))
+									debug_info = f"DAT: {_op.path}.{par_name} - val: '{_shortcuts_val}'"
 									pars_found_debug.append(debug_info)
 									dat_pars_found += 1
-									self.logger.log(f"AllHotkeyPars: DAT {op.path} has {par_name} value", textport=False)
+									self.logger.log(f"AllHotkeyPars: DAT {_op.path} has {par_name} value", textport=False)
 							elif _par.mode == ParMode.EXPRESSION:
 								if _par.expr and 'app.osName' in _par.expr:
-									result.append((op, par_name))
-									debug_info = f"DAT: {op.path}.{par_name} - expr: '{_par.expr}'"
+									result.append((_op, par_name))
+									debug_info = f"DAT: {_op.path}.{par_name} - expr: '{_par.expr}'"
 									pars_found_debug.append(debug_info)
 									dat_pars_found += 1
-									self.logger.log(f"AllHotkeyPars: DAT {op.path} has {par_name} expr", textport=False)
+									self.logger.log(f"AllHotkeyPars: DAT {_op.path} has {par_name} expr", textport=False)
 		
 		self.logger.log(f"AllHotkeyPars: Found {dat_pars_found} DAT parameters", textport=True)
 		
@@ -190,11 +190,11 @@ class HotkeyManagerExt:##
 		all_comps = root.findChildren(type=COMP)
 		self.logger.log(f"AllHotkeyPars: Searching through {len(all_comps)} COMPs", textport=True)
 		
-		for op in all_comps:
-			if any(_sub in op.path for _sub in self.comp_except):
+		for _op in all_comps:
+			if any(_sub in _op.path for _sub in self.comp_except):
 				continue
 				
-			custompar_names = [par.name for par in op.customPars]
+			custompar_names = [par.name for par in _op.customPars]
 			
 			for _par_name in custompar_names:
 				# Skip parameters that match any of our exception patterns
@@ -203,18 +203,18 @@ class HotkeyManagerExt:##
 					
 				# Check if this parameter name contains any of our hotkey substrings
 				if any(_sub in _par_name.lower() for _sub in self.comp_pars_substrings):
-					_par = getattr(op.par, _par_name, None)
+					_par = getattr(_op.par, _par_name, None)
 					if _par is not None:
 						custom_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
 						custom_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
 						
 						# Only count if we have a value or expression
 						if custom_val or custom_expr:
-							result.append((op, _par_name))
-							debug_info = f"COMP: {op.path}.{_par_name} - val: '{custom_val}', expr: '{custom_expr}'"
+							result.append((_op, _par_name))
+							debug_info = f"COMP: {_op.path}.{_par_name} - val: '{custom_val}', expr: '{custom_expr}'"
 							pars_found_debug.append(debug_info)
 							comp_pars_found += 1
-							self.logger.log(f"AllHotkeyPars: COMP {op.path} has hotkey param {_par_name}", textport=False)
+							self.logger.log(f"AllHotkeyPars: COMP {_op.path} has hotkey param {_par_name}", textport=False)
 		
 		self.logger.log(f"AllHotkeyPars: Found {comp_pars_found} COMP parameters", textport=True)
 		self.logger.log(f"AllHotkeyPars: Total parameters found: {len(result)}", textport=True)
@@ -265,7 +265,7 @@ class HotkeyManagerExt:##
 	def onShortcutChanged(self, _par: Par):
 		if self.supressWatch:
 			return
-		choice = ui.messageBox('Shortcut Changed', f'Shortcut "{_par.owner.name}:{_par.name}" changed to "{_par.eval()}". Do you want to externalize this?', buttons=['No','Yes'])
+		choice = ui.messageBox('Shortcut Changed', f'Shortcut "{_par.owner.path}:{_par.name}" changed to "{_par.eval()}". Do you want to externalize this?', buttons=['No','Yes'])
 		if choice:
 			self.logger.log(f"Shortcut '{_par.owner.name}:{_par.name}' changed to '{_par.eval()}'")
 			self.gatherAllHotkeys()
@@ -425,7 +425,7 @@ class HotkeyManagerExt:##
 		chops_found = 0
 		chop_pars_found = 0
 		for _keyboardinCHOP in root.findChildren(type=keyboardinCHOP):	
-			if 'KeyModifiers' in _keyboardinCHOP.path:
+			if any(_sub in _keyboardinCHOP.path for _sub in self.comp_except):
 				continue
 				
 			data = HotkeyParData(
@@ -473,7 +473,7 @@ class HotkeyManagerExt:##
 		dats_found = 0
 		dat_pars_found = 0
 		for _keyboardinDAT in root.findChildren(type=keyboardinDAT):
-			if 'KeyModifiers' in _keyboardinDAT.path:
+			if any(_sub in _keyboardinDAT.path for _sub in self.comp_except):
 				continue
 				
 			# Check if the DAT has any of the relevant parameters
