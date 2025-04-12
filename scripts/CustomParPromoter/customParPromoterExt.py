@@ -14,6 +14,7 @@ class customParPromoterExt:
 		self.hk_mod = self.ownerComp.op('null_mod')
 		self.popDialog = self.ownerComp.op('popDialog')
 		self.__parNumTypes = ['Float', 'Int', 'Xy', 'Xyz', 'Xyzw', 'Uv', 'Uvw', 'Wh','Rgb', 'Rgba']
+		self.__saveParamNameBeforePurge = ''
 
 	@property
 	def Reference(self):
@@ -289,22 +290,44 @@ class customParPromoterExt:
 		
 		return new_page
 
+	def purgeParName(self, text, replace=False):
+		
+		prune_text = text.replace(' ', '')
+		# also remove any non-alphanumeric characters
+		prune_text = re.sub(r'[^a-zA-Z0-9]', '', prune_text)
+		# remove leading and trailing underscores
+		prune_text = prune_text.strip('_')
+		# remove any leading numbers
+		prune_text = re.sub(r'^[0-9]+', '', prune_text)
+		text = prune_text.capitalize()
+		if replace:
+			paramname = self.popDialog.op('entry1/inputText').par.text
+			paramname.val = text
+		return text
+			
+
 	def OnEditText(self, field, text):
 		if field == 'paramname':
-			paramname = self.popDialog.op('entry2/inputText').par.text
-			prune_text = text.replace(' ', '')
-			# also remove any non-alphanumeric characters
-			prune_text = re.sub(r'[^a-zA-Z0-9]', '', prune_text)
-			# remove leading and trailing underscores
-			prune_text = prune_text.strip('_')
-			# remove any leading numbers
-			prune_text = re.sub(r'^[0-9]+', '', prune_text)
-			text = prune_text.capitalize()
-			paramname.val = text
+			# we could purge here but that's not how custom par editor works either
+			#self.purgeParName(text, replace=True)
+			self.__saveParamNameBeforePurge = text
+			#self.popDialog.op('entry2/inputText').par.text = text
+			pass
 		elif field in ['min', 'max']:
 			return
 		
-			
+	def onFocus(self, field, comp):
+		if field == 'label' and self.__saveParamNameBeforePurge and comp.editText == '':
+			self.popDialog.op('entry2/inputText').par.text = self.__saveParamNameBeforePurge
+
+	def onFocusEnd(self, field, comp):
+		if field == 'paramname':
+			text = comp.editText
+			self.__saveParamNameBeforePurge = text
+		elif field == 'label':
+			if comp.editText == '' and self.__saveParamNameBeforePurge:
+				comp.par.text = self.__saveParamNameBeforePurge
+			self.purgeParName(self.__saveParamNameBeforePurge, replace=True)
 
 	def OnCustomizeParameterDropped(self, dropParam):
 		details = {}
@@ -323,7 +346,7 @@ class customParPromoterExt:
 			details['isNum'] = is_num
 			self.popDialog.par.Minmaxentryarea = is_num
 
-		textEntries = [dropParam.label, dropParam.name.capitalize()]
+		textEntries = [dropParam.name.capitalize(), '']
 		if is_num:
 			textEntries.extend([dropParam.normMin, dropParam.normMax])
 			textEntries.append(default)
@@ -339,8 +362,12 @@ class customParPromoterExt:
 		par = details.get('par', None)
 		is_num = details.get('isNum', False)
 
-		labelEntry = info['enteredText'][0]
-		nameEntry = info['enteredText'][1]
+		labelEntry = info['enteredText'][1]
+		nameEntry = info['enteredText'][0]
+		
+		if not labelEntry:
+			labelEntry = nameEntry
+		nameEntry = self.purgeParName(nameEntry)
 		minEntry = float(info['enteredText'][2]) if is_num and info['enteredText'][2] is not None else None
 		maxEntry = float(info['enteredText'][3]) if is_num and info['enteredText'][3] is not None else None
 		chekcboxClamp = info['checkBoxes']
