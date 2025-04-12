@@ -222,12 +222,12 @@ class ExtBorderlessWindow:#
 	def IsBorderless(self, value):
 		self.is_borderless = value
 		if self.evalShowprojectname:
-			self.displayProjName(value)
+			self.displayProjName(self.is_borderless)
 		# Update the dependency whenever borderless state changes
 		self.IsModifiedAndBorderless.val = self.is_modified and self.is_borderless
 
 	def onParShowprojectname(self, _par, _val):
-		if self.is_borderless:
+		if self.is_borderless or not _val:
 			self.displayProjName(_val)
 
 	def get_work_area(self, hwnd):
@@ -363,8 +363,6 @@ class ExtBorderlessWindow:#
 		self.IsBorderless = False
 
 	def displayProjName(self, state):
-		if not self.is_borderless:
-			return
 		targets = [self.ownerComp.op('projname'), op('/ui/dialogs/mainmenu/projname')]
 
 		for target in targets:
