@@ -47,9 +47,13 @@ class ExtFNSConfig:
 		with open(self.file_path) as json_file:
 			full_data = json.load(json_file)
 			for _comp_shortcut, _data in full_data.items():
-				_op = eval(_comp_shortcut)
-				TDJSON.addParametersFromJSONOp(_op, _data)
-				self.dealWithExtraAttrs(_op, _data)
+				try:
+					_op = eval(_comp_shortcut)
+					TDJSON.addParametersFromJSONOp(_op, _data)
+					self.dealWithExtraAttrs(_op, _data)
+				except Exception as e:
+					print(f"Error loading {_comp_shortcut}: {e}")
+					#debug(_data)
 
 	def dealWithExtraAttrs(self, _op, _pages_data):
 		for _page_data in _pages_data.values():

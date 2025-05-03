@@ -262,10 +262,10 @@ class HotkeyManagerExt:##
 		if val:
 			self.onParLoaddefault()
 
-	def onShortcutChanged(self, _par: Par):
+	def onShortcutChanged(self, _par: Par, prev = None):
 		if self.supressWatch:
 			return
-		choice = ui.messageBox('Shortcut Changed', f'Shortcut "{_par.owner.path}:{_par.name}" changed to "{_par.eval()}". Do you want to externalize this?', buttons=['No','Yes'])
+		choice = ui.messageBox('Shortcut Changed', f'Shortcut "{_par.owner.path}:{_par.name}" changed from "{prev}" to "{_par.eval()}". Do you want to externalize this?', buttons=['No','Yes'])
 		if choice:
 			self.logger.log(f"Shortcut '{_par.owner.name}:{_par.name}' changed to '{_par.eval()}'")
 			self.gatherAllHotkeys()
