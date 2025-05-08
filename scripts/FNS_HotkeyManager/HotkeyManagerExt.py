@@ -52,7 +52,7 @@ class HotkeyParData:
 			self.dat_shortcuts_expr
 		]
 
-class HotkeyManagerExt:##
+class HotkeyManagerExt:####
 	'''#TODO: REFACTOR THIS!!! THERE IS A LOT OF DUPLICATED CODE!!!'''
 	def __init__(self, ownerComp):
 		if KILL:
@@ -70,15 +70,13 @@ class HotkeyManagerExt:##
 		
 		self.searchRoot = parent.FNS
 		self.hotkeyTable : tableDAT = self.ownerComp.op('table_gathered_hotkeys')
-		self.defaultTable : tableDAT = self.ownerComp.op('table_default_hotkeys')
+		self.defaultTable : tableDAT = self.ownerComp.op('table_gathered_hotkeys1')
 		self.supressWatch = False
 		self.logger = self.ownerComp.op('Logger').ext.Logger
 		self.logger.SetTextPort(False)
 		self.logger.log("HotkeysExt initialized")
 
 
-		self.AllHotkeys = self.AllHotkeyPars()
-		self.onStart()####
 		return
 
 	
@@ -221,6 +219,8 @@ class HotkeyManagerExt:##
 		return result
 
 	def onStart(self):
+		
+		self.AllHotkeys = self.AllHotkeyPars()
 		self.logger.log("Starting hotkeys initialization...")
 		self.setAllHotkeys()
 		self.logger.log("Hotkey initialization complete")
