@@ -10,10 +10,10 @@ for target in targets:
 		newOP = target.copy(cont)
 		newOP.nodeX = 500 + i*200
 		newOP.nodeY = -400
-		try:
-			newOP.inputCOMPConnectors[0].connect(target.op('emptypanel').outputCOMPConnectors[0])
-		except:
-			pass
+		#try:
+			#newOP.inputCOMPConnectors[0].connect(target.op('emptypanel').outputCOMPConnectors[0])
+		#except:
+			#pass
 		newOP.allowCooking = True
 		
 ui.status = 'Function Store - Navbar installed'
