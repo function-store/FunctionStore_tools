@@ -80,4 +80,7 @@ class ExtUpdater:
 					docked_op.nodeX, docked_op.nodeY = dock_info['pos']
 					# Then re-dock
 					docked_op.dock = newComp
+			ret = ui.messageBox('FNS_tools updated', 'Would you like to see the changelog?', buttons=['No', 'Yes'])
+			if ret:
+				ui.viewFile('https://github.com/function-store/FunctionStore_tools/releases/latest')
 		pass
