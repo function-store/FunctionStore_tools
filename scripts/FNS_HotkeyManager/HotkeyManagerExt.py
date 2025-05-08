@@ -55,9 +55,10 @@ class HotkeyParData:
 class HotkeyManagerExt:####
 	'''#TODO: REFACTOR THIS!!! THERE IS A LOT OF DUPLICATED CODE!!!'''
 	def __init__(self, ownerComp):
-		if KILL:
-			return
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
+		self._allHotkeys = tdu.Dependency([[None, None]])
+		if KILL or not self.evalActive:
+			return
 		
 		self.ownerComp = ownerComp
 
@@ -216,6 +217,8 @@ class HotkeyManagerExt:####
 		
 		self.logger.log(f"AllHotkeyPars: Found {comp_pars_found} COMP parameters", textport=True)
 		self.logger.log(f"AllHotkeyPars: Total parameters found: {len(result)}", textport=True)
+		self._allHotkeys.val = result
+		self.ownerComp.op('parexec1').cook(force=True)
 		return result
 
 	def onStart(self):
