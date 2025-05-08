@@ -189,7 +189,8 @@ class customParPromoterExt:
 		else:
 			new_par.val = _par.val
 			_par.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_par.name}"
-			_par.mode = ParMode.BIND	
+			_par.mode = ParMode.BIND
+		return new_par
 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ MAIN ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	
