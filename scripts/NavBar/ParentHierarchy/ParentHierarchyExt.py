@@ -1,7 +1,7 @@
 '''Info Header Start
 Name : ParentHierarchyExt
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.508.toe
+Saveorigin : FunctionStore_tools_2023.509.toe
 Saveversion : 2023.11880
 Info Header End'''
 
@@ -302,6 +302,8 @@ class ParentHierarchyExt:
 			if openEditor:
 				if not self.compEditor.op('window').isOpen:
 					self.compEditor.Open(nugget_comp)
+				else:
+					self.compEditor.Connect(nugget_comp)
 				self.compEditor.CurrentPage = _par.page.name
 				self.compEditor.CurrentPar = _par
 				self.compEditor.RefreshListers()
