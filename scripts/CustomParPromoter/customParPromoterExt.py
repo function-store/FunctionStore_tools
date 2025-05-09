@@ -82,6 +82,7 @@ class customParPromoterExt:
 	# unfortunately params that are for example XYZ, Float2/3 etc are not handled well by appendPar
 	# as it creates duplicates (Par[xyz] becomes Par[xyz][xyz])... therefore the below
 	def PromoteParGroup(self, _parGroup, page_name, target = None, refBind = None, parName = None, parLabel = None):
+		ui.undo.startBlock('Promote param')
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
@@ -129,10 +130,11 @@ class customParPromoterExt:
 				new_p.val = p.val
 				p.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
 				p.mode = ParMode.BIND	
-
+		ui.undo.endBlock()
 
 
 	def PromotePar(self, _par, page_name, target = None, refBind = None, parName = None, parLabel = None, parMin = None, parMax = None, clamp = None, parDefault = None):
+		ui.undo.startBlock('Promote param')
 		if not target:
 			target = self.Target
 		if page_name in self.ignorePages:
@@ -190,6 +192,7 @@ class customParPromoterExt:
 			new_par.val = _par.val
 			_par.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_par.name}"
 			_par.mode = ParMode.BIND
+		ui.undo.endBlock()
 		return new_par
 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ MAIN ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
