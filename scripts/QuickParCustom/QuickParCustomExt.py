@@ -31,16 +31,19 @@ class QuickParCustomExt:
 			return
 		
 		if shortcutName in [self.evalShortcutrolloverpromote, self.evalShortcutrolloverpromotemod]:
-
 			if _owner is not None and _par is not None:
+				if _par.mode in [ParMode.BIND, ParMode.EXPRESSION]:
+					_target, _par = self._getExpressionTarget(_par)
+					do_open = True
+					do_promote = False
 				if do_promote:
 					self.customParPromoter.Target = _owner.parent() if _target is None else _target
 					self.customParPromoter.Reference = _owner
 					ui.undo.startBlock('Promote param')
 					_new_par = self.customParPromoter.PromotePar(_par, None)
+					ui.undo.endBlock()
 					if _new_par is not None:
 						_par = _new_par[0]
-					ui.undo.endBlock()
 					_owner = _par.owner
 				if do_open:
 					self.compEditorOpenPar(_owner if _target is None else _target, _par)
