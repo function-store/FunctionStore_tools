@@ -14,7 +14,7 @@ For example, with these tools you will be able to place operators with your pref
 
 The design principle of these tools is to be seamlessly integrated with the user experience of TD, meaning the learning curve and adaptability of these tools should be easy for any level of TD users.
 
-One main improvement area can be found at the bookmark toolbar. Upon installing additional icons will appear in the UI, giving you easy access to some of the main functions. However there are tools that work in the background and are accessible with simple shortcuts. 
+One main improvement area can be found at the [bookmark toolbar]([url](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar)), the [nav/pathbar]([url](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#navbar-mods)) and the [op create dialog]([url](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#opmenu-mods)). However there are tools that work in the background and are accessible with simple shortcuts. 
 
 Everything is documented here, so be sure to refer to the [Wiki](https://github.com/function-store/FunctionStore_tools/wiki) and in general to my [TD Tips & Tricks & Hacks]() (TBA) blog post. 
 
@@ -152,7 +152,9 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
     - [CustomParCustomize](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#customparcustomize)  
     - [BorderlessTD](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#borderlesstd)  
     - [ColorUI](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#colorui)  
-    - [ResetMIDIPls](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#resetmidipls)  
+    - [ResetMIDIPls](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#resetmidipls)
+    - [HotkeyManager](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#hotkeymanager)
+    - [QuickParCustom](https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickparcustom)
 
 - [QuickExt](https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt)
     - [CustomParHelper](https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt#customparhelper)
