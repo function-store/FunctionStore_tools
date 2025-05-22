@@ -87,5 +87,10 @@ class ExtFNSConfig:
 			op.FNS_OUTPUT.par.Spoutactive = False
 			op.FNS_OUTPUT.par.Ndiactive = False
 			self.SaveAllToJSON()
+
+			
 		
+			ret = ui.messageBox('FNS_tools updated', 'Would you like to see the changelog?', buttons=['No', 'Yes'])
+			if ret:
+				ui.viewFile('https://github.com/function-store/FunctionStore_tools/releases/latest')
 		pass
