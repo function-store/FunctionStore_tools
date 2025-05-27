@@ -100,7 +100,7 @@ class QuickOpExt:
 			new_op.nodeX = self.newPos[0]
 			new_op.nodeY = self.newPos[1]
 
-			if self.isInsert:
+			if self.isInsert and len(self.origOp.outputConnectors):
 				if len(new_op.outputConnectors) and len(self.origOp.outputConnectors):
 					if output_conn := new_op.outputConnectors[0]:
 						if conns := self.origOp.outputConnectors[0].connections:
