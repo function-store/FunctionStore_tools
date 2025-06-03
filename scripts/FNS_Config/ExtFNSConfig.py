@@ -87,10 +87,21 @@ class ExtFNSConfig:
 			op.FNS_OUTPUT.par.Spoutactive = False
 			op.FNS_OUTPUT.par.Ndiactive = False
 			self.SaveAllToJSON()
+			try:
+				run(
+					"args[0].open_changelog() if args[0] "
+							"and hasattr(args[0], 'open_changelog') else None",
+					self,
+					endFrame=True,
+					delayRef=op.TDResources
+				)
+			except:
+				pass
 
-			
-		
+	def open_changelog(self):
+		try:
 			ret = ui.messageBox('FNS_tools updated', 'Would you like to see the changelog?', buttons=['No', 'Yes'])
-			if ret:
+			if ret == 1:
 				ui.viewFile('https://github.com/function-store/FunctionStore_tools/releases/latest')
-		pass
+		except:
+			pass
