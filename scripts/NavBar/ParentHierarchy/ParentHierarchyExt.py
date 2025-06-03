@@ -1,7 +1,8 @@
+
 '''Info Header Start
 Name : ParentHierarchyExt
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.509.toe
+Saveorigin : FunctionStore_tools_2023.519.toe
 Saveversion : 2023.11880
 Info Header End'''
 
@@ -49,7 +50,7 @@ class ParentHierarchyExt:
 		if self.ownerComp.op('../panenav/out1'):
 			return self.ownerComp.op('../panenav/out1').text.strip()
 		return None
-	
+		
 	# def updateNuggetList(self, state):
 	# 	# check if we have parameters in the nugget list by checking if there is an item after (!!!) the divider
 	# 	if self.parsFromIndex == -1 and self.showVals:
@@ -224,6 +225,8 @@ class ParentHierarchyExt:
 		'''Get parent shortcuts recursively in a list'''
 		if comp is None:
 			comp = op(self.NavbarContent)
+			self.ParentShortcutList = []
+			self.ParentCompList = []
 		if comp == op('/'):
 			return
 		if comp is None:
