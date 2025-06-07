@@ -24,6 +24,9 @@ for r in toreset.rows()[1:]:
 		o.par.updatecspulse.pulse()
 	elif op_type in ['timerCHOP','flexsolverCOMP','bulletsolverCOMP','flowTOP']:
 		o.par.start.pulse()
+	elif op_type.endswith('POP'):
+		if hasattr(o.par, 'start'):
+			o.par.start.pulse()
 	elif op_type not in customables:
 		# default case
 		if op_type in ['speedCHOP']:
@@ -36,10 +39,11 @@ for r in toreset.rows()[1:]:
 			
 	if op_type in customables:
 		for resetpar in op('table_custom_resetpars').rows():
-			try:
-				o.par[resetpar[0].val].pulse()
-			except:
-				continue
+			if hasattr(o.par, resetpar[0].val):
+				try:
+					o.par[resetpar[0].val].pulse()
+				except:
+					continue
 
 # misc		
 if parent().par.Timeline.eval():
