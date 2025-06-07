@@ -17,11 +17,12 @@ class OpTemplateExt:
 		self.all_optypes = self.getAllOptypes()
 		self.defaultTemplates = op('OPTemplates1')
 		self.extFolder = app.userPaletteFolder + '/FNStools_ext/OpTemplates'
-		self.inputOpTypes = ['inTOP','inCHOP','inSOP','inMAT','inDAT']
-		self.outputOpTypes = ['outTOP','outCHOP','outSOP','outMAT','outDAT']
+		self.inputOpTypes = ['inTOP','inCHOP','inSOP','inMAT','inDAT','inPOP']
+		self.outputOpTypes = ['outTOP','outCHOP','outSOP','outMAT','outDAT','outPOP']
 		self.opFamilyConvertTypes = ['choptoTOP','dattoCHOP','toptoCHOP','soptoCHOP',
 			       					'choptoDAT','soptoDAT','chopexecDAT',
-									'choptoSOP','trailSOP']
+									'choptoSOP','trailSOP','toptoPOP','poptoTOP','choptoPOP',
+									'soptoPOP','dattoPOP','poptoCHOP','poptoDAT','poptoSOP']
 		self.logger = op('logger1')
 
 	def getAllOptypes(self):

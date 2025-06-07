@@ -11,7 +11,8 @@ class AltSelectExt:
 			'TOP':'top',
 			'CHOP':'chops',
 			'DAT':'dat',
-			'COMP':'selectpanel'
+			'COMP':'selectpanel',
+			'POP': 'pop'
 		}
 		self.selectColor = (0.71, 0.53, 0.16)
 		self.lastSelectedPos = None
