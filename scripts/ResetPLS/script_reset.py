@@ -25,8 +25,8 @@ for r in toreset.rows()[1:]:
 	elif op_type in ['timerCHOP','flexsolverCOMP','bulletsolverCOMP','flowTOP']:
 		o.par.start.pulse()
 	elif op_type.endswith('POP'):
-		if hasattr(o.par, 'start'):
-			o.par.start.pulse()
+		if hasattr(o.par, 'startpulse'):
+			o.par.startpulse.pulse()
 	elif op_type not in customables:
 		# default case
 		if op_type in ['speedCHOP']:
