@@ -27,6 +27,8 @@ for r in toreset.rows()[1:]:
 	elif op_type.endswith('POP'):
 		if hasattr(o.par, 'startpulse'):
 			o.par.startpulse.pulse()
+		if hasattr(o.par, 'resetpulse'):
+			o.par.resetpulse.pulse()
 	elif op_type not in customables:
 		# default case
 		if op_type in ['speedCHOP']:
