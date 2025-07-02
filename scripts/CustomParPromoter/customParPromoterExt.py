@@ -89,7 +89,7 @@ class customParPromoterExt:
 			return
 		if not refBind:
 			refBind = self.refBind
-		
+			
 		label = _parGroup.label.title() if parLabel is None else parLabel
 		name = _parGroup.name.title() if parName is None else parName
 
@@ -105,14 +105,16 @@ class customParPromoterExt:
 
 		try:
 			if type(_parGroup) == ParGroupPulse and len(_parGroup.eval()) == 2:
-				new_pars = [new_page.appendPar(name, par=_parGroup[0]), new_page.appendPar(name=f'{name}pulse', label=f'{label}', par=_parGroup[1])]
+				name = name.capitalize()
+				new_pars = [new_page.appendPar(name, par=_parGroup[0]), new_page.appendPar(f'{name}pulse', label=f'{label}', par=_parGroup[1])]
+
 			else:
-				new_par = new_page.appendPar(name, label=name, par=_parGroup[0])
+				new_par = new_page.appendPar(name, label=label, par=_parGroup[0])
 				new_pars = new_par.pars()
 				for i, old_par in enumerate(_parGroup):
 					new_pars[i].val = old_par.val
 					new_pars[i].default = old_par.default
-		except:
+		except Exception as e:
 			if type(_parGroup) == ParGroupPulse:
 				new_pars = [new_page.owner.parGroup[name], new_page.owner.parGroup[f'{name}pulse']]
 			else:
@@ -120,6 +122,8 @@ class customParPromoterExt:
 				new_pars = new_par.pars()
 
 		for p, new_p in zip(_parGroup.pars('*'), new_pars):
+			if p is None or new_p is None:
+				continue
 			new_p.val = p.val
 			new_p.startSection = p.startSection
 			if not refBind:
