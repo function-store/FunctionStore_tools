@@ -3,6 +3,7 @@ class ExtParRandomizer:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		self.random = iop.Random # this is an extension
+		self.ignorePages = ['About','Info','Common', 'Version Ctrl']
 		self.checkShortcutRayTK()#
 	
 	@property
@@ -50,7 +51,7 @@ class ExtParRandomizer:
 
 		_page = _op.currentPage
 		for _par in _page.pars:
-			if not (_par.readOnly and _par.enable):
+			if not (_par.readOnly and _par.enable and _par.page.name not in self.ignorePages):
 				_par_list.append(_par)
 
 		for _par in _par_list:
@@ -65,7 +66,9 @@ class ExtParRandomizer:
 				self.RandomizePar(_subpar)
 			return
 		
-
+		if _par.page.name in self.ignorePages:
+			return
+		
 		if _par.mode not in [ParMode.CONSTANT, ParMode.BIND]:
 			return
 		
@@ -88,8 +91,8 @@ class ExtParRandomizer:
 
 	def OnRandomizeRolloverPar(self):
 		ui.undo.startBlock('Randomize parameter')
-		_par = ui.rolloverPar
-		if _par is None:
+		_par = ui.rolloverPar if not hasattr(ui, 'rolloverParGroup') else ui.rolloverParGroup
+		if _par is None or _par.page.name in self.ignorePages:
 			return
 		
 		self.RandomizePar(_par)
@@ -97,21 +100,36 @@ class ExtParRandomizer:
 
 	def onResetPar(self):
 		ui.undo.startBlock('Reset parameter')
-		_par = ui.rolloverPar
-		if _par is None:
+		_par = ui.rolloverPar if not hasattr(ui, 'rolloverParGroup') else ui.rolloverParGroup
+		if _par is None or _par.page.name in self.ignorePages:
 			return
-		_par.val = _par.reset()
+		_par.reset()
 		ui.undo.endBlock()
 
-	def onResetAllCustom(self):
-		ui.undo.startBlock('Reset all custom parameters')
-		_par = ui.rolloverPar
-		if _par is None:
-			return
-		_owner = _par.owner
-		par_names = [_par.name for _par in _owner.currentPage.pars if not _par.readOnly and _par.enable]
+	def OnResetAllCustom(self, all = False):
+		self.onResetAllCustom(all)
+
+	def onResetAllCustom(self, all = False):
+		ui.undo.startBlock('Reset all custom parameters on current page')
+		_owner = ui.panes.current.owner.currentChild
+			
+		par_names = [_par.name for _par in (_owner.currentPage.pars if not all else _owner.customPars)if not _par.readOnly and _par.enable and _par.page.name not in self.ignorePages]
 		_owner.resetPars(parNames=' '.join(par_names))
 		ui.undo.endBlock()
+
+	def SaveAllCustomDefaults(self, _op = None):
+		if _op is None:
+			_op = ui.panes.current.owner.currentChild
+			if not _op:
+				return
+		for _par in _op.customPars:
+			_par.defaultMode = _par.mode
+			_par.default = _par.eval()
+			if _par.mode == ParMode.BIND:
+				_par.defaultBindExpr = _par.bindExpr
+			elif _par.mode == ParMode.EXPRESSION:
+				_par.defaultExpr = _par.expr
+		
 
 	def OnShortcut(self, shortcutName):
 		if shortcutName == self.ownerComp.par.Shortcutop.eval():

@@ -5,7 +5,7 @@
         }
     ],
     "settings": {
-        "python.defaultInterpreterPath": "C:\\Program Files\\Derivative\\TouchDesigner.2025.30060\\bin\\python.exe",
+        "python.defaultInterpreterPath": "C:\\Program Files\\Derivative\\TouchDesigner.2025.30280\\bin\\python.exe",
         "python.terminal.activateEnvironment": true
     }
 }
