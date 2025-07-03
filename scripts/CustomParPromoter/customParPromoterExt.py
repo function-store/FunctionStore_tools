@@ -356,7 +356,13 @@ class customParPromoterExt:
 
 		textEntries = [dropParam.name.capitalize(), '']
 		if is_num:
-			textEntries.extend([dropParam.normMin, dropParam.normMax])
+			_max = dropParam.normMax
+			if dropParam.name == 'index':
+				_owner = dropParam.owner
+				if _owner.inputs: # if it's a table
+					_max = len(_owner.inputs) - 1
+			
+			textEntries.extend([dropParam.normMin, _max])
 			textEntries.append(default)
 
 		self.popDialog.Open(callback=self.OnCustomizeCallback, details=details, textEntries=textEntries)
