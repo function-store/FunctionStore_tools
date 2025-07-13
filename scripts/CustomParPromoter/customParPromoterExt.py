@@ -181,6 +181,14 @@ class customParPromoterExt:
 			new_par.max = parMax
 			if clamp:
 				new_par.clampMax = clamp[1] # true/false
+		else:
+			_max = _par.normMax
+			if _par.name == 'index': # special case
+				_owner = _par.owner
+				if _owner.inputs:
+					_max = len(_owner.inputs) - 1
+				new_par.normMax = _max
+				new_par.max = _max
 
 		if parDefault is not None:
 			new_par.default = parDefault
