@@ -87,7 +87,7 @@ class customParPromoterExt:
 			target = self.Target
 		if page_name in self.ignorePages:
 			return
-		if not refBind:
+		if refBind is None:
 			refBind = self.refBind
 			
 		label = _parGroup.label.title() if parLabel is None else parLabel
@@ -118,6 +118,7 @@ class customParPromoterExt:
 			if type(_parGroup) == ParGroupPulse:
 				new_pars = [new_page.owner.parGroup[name], new_page.owner.parGroup[f'{name}pulse']]
 			else:
+				name = name.capitalize()
 				new_par = new_page.owner.parGroup[name]
 				new_pars = new_par.pars()
 
@@ -135,6 +136,7 @@ class customParPromoterExt:
 				p.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
 				p.mode = ParMode.BIND	
 		ui.undo.endBlock()
+		return new_par
 
 
 	def PromotePar(self, _par, page_name, target = None, refBind = None, parName = None, parLabel = None, parMin = None, parMax = None, clamp = None, parDefault = None):
