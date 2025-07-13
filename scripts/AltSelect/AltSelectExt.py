@@ -14,6 +14,7 @@ class AltSelectExt:
 			'COMP':'selectpanel',
 			'POP': 'pop'
 		}
+		self._tag = 'FNS_AltSelect'
 		self.selectColor = (0.71, 0.53, 0.16)
 		self.lastSelectedPos = None
 			
@@ -53,6 +54,7 @@ class AltSelectExt:
 
 		new_select = _op.parent().create(f'select{sel_fam}', 
 				   f"select_{_op.name.split('_')[-1]}")
+		new_select.tags.append(self._tag)
 		new_select.nodeX = new_pos[0]
 		new_select.nodeY = new_pos[1]
 		new_select.par[sel_par] = _op
