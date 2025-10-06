@@ -181,7 +181,7 @@ class CustomParHelper:
         cls.EXCEPT_SEQUENCES = except_sequences
         cls.GENERAL_CALLBACK_ENABLE = general_callback_enable
 
-        cls.__setOwnerCompToDocked(ownerComp)
+        #cls.__setOwnerCompToDocked(ownerComp)
 
         cls.DAT_EXEC.par.active = enable_properties
 
