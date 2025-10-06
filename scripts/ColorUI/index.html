@@ -1,0 +1,121 @@
+﻿<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ExtColorUI – Color Search</title>
+    <style>
+      :root { --bg:#0f1115; --card:#151823; --text:#e6e6e6; --muted:#9aa0a6; --accent:#7aa2f7; }
+      * { box-sizing: border-box; }
+      body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, Noto Sans, Ubuntu, Cantarell, 'Segoe UI Symbol', 'Apple Color Emoji', 'Noto Color Emoji'; background: var(--bg); color: var(--text); }
+      header { padding: 18px 20px; border-bottom: 1px solid #222534; position: sticky; top:0; background: var(--bg); z-index: 10; }
+      h1 { margin:0; font-size: 18px; letter-spacing: .2px; }
+      .container { padding: 18px 20px; max-width: 1100px; margin: 0 auto; }
+      .search { display:flex; gap: 10px; align-items: center; }
+      .search input { flex:1; padding: 12px 14px; background: #0f1320; border: 1px solid #20263a; color: var(--text); border-radius: 8px; outline: none; }
+      .search button { padding: 12px 16px; background: var(--accent); border: none; color: #0b1020; font-weight: 600; border-radius: 8px; cursor: pointer; }
+      .muted { color: var(--muted); font-size: 12px; margin-top: 8px; }
+      .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 16px; }
+      .card { background: var(--card); border: 1px solid #20263a; border-radius: 10px; overflow: hidden; }
+      .swatch { height: 64px; width: 100%; }
+      .row { display:flex; justify-content: space-between; align-items: center; padding: 10px 12px; gap: 8px; flex-wrap: wrap; }
+      .key { font-weight: 600; font-size: 14px; }
+      .vals { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size: 12px; color: var(--muted); }
+      .controls { display:flex; align-items:center; gap: 8px; }
+      .controls input[type="color"] { width: 36px; height: 28px; border: 0; background: none; padding:0; }
+      .controls button { padding: 6px 10px; background: #2b3249; color: var(--text); border: 1px solid #20263a; border-radius: 6px; cursor: pointer; }
+      .footer { margin-top: 24px; color: var(--muted); font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>ExtColorUI – Color Search</h1>
+    </header>
+    <div class="container">
+      <div class="search">
+        <input id="q" type="text" placeholder="Search ui.colors… (supports dots, spaces, wildcards)" />
+        <button id="go">Search</button>
+      </div>
+      <div id="meta" class="muted"></div>
+      <div id="grid" class="grid"></div>
+      <div class="footer">Served by TouchDesigner Web Server DAT</div>
+    </div>
+    <script>
+      const q = document.getElementById('q');
+      const go = document.getElementById('go');
+      const grid = document.getElementById('grid');
+      const meta = document.getElementById('meta');
+
+      function rgbToCss(rgb) {
+        const [r,g,b] = rgb.map(v => Math.max(0, Math.min(255, Math.round(v*255))));
+        return `rgb(${r}, ${g}, ${b})`;
+      }
+
+      function render(data){
+        meta.textContent = data ? `Showing ${data.count} results for "${data.term}"` : '';
+        grid.innerHTML = '';
+        if(!data) return;
+        for(const item of data.results){
+          const card = document.createElement('div');
+          card.className = 'card';
+          const sw = document.createElement('div');
+          sw.className = 'swatch';
+          sw.style.background = rgbToCss(item.rgb);
+          const row1 = document.createElement('div');
+          row1.className = 'row';
+          const key = document.createElement('div');
+          key.className = 'key';
+          key.textContent = item.key;
+          const hex = document.createElement('div');
+          hex.className = 'vals';
+          hex.textContent = item.hex;
+          const row2 = document.createElement('div');
+          row2.className = 'row';
+          const rgb = document.createElement('div');
+          rgb.className = 'vals';
+          rgb.textContent = `rgb(${item.rgb.map(v=>v.toFixed(3)).join(', ')})`;
+          const ctrls = document.createElement('div');
+          ctrls.className = 'controls';
+          const picker = document.createElement('input');
+          picker.type = 'color';
+          picker.value = item.hex;
+          const btn = document.createElement('button');
+          btn.textContent = 'Set';
+          btn.addEventListener('click', async ()=>{
+            const hex = picker.value;
+            const res = await fetch('/api/set', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: item.key, hex })});
+            if(res.ok){
+              const r = await res.json();
+              const ok = r && r.results && r.results[0] && r.results[0].ok;
+              if(ok){
+                const updated = r.results[0];
+                sw.style.background = rgbToCss(updated.rgb);
+                hex.textContent = updated.hex;
+                rgb.textContent = `rgb(${updated.rgb.map(v=>v.toFixed(3)).join(', ')})`;
+              }
+            }
+          });
+          ctrls.appendChild(picker);
+          ctrls.appendChild(btn);
+
+          row1.appendChild(key); row1.appendChild(hex);
+          row2.appendChild(rgb); row2.appendChild(ctrls);
+          card.appendChild(sw); card.appendChild(row1); card.appendChild(row2);
+          grid.appendChild(card);
+        }
+      }
+
+      async function search(){
+        const term = (q.value || '').trim();
+        if(!term){ grid.innerHTML=''; meta.textContent=''; return; }
+        const res = await fetch(`/api/search?term=${encodeURIComponent(term)}`);
+        if(!res.ok){ meta.textContent = 'Error performing search'; return; }
+        render(await res.json());
+      }
+
+      go.addEventListener('click', search);
+      q.addEventListener('keydown', (e)=>{ if(e.key==='Enter') search(); });
+      q.focus();
+    </script>
+  </body>
+  </html>
