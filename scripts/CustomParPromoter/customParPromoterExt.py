@@ -357,6 +357,8 @@ class customParPromoterExt:
 			is_num = False
 		else:
 			# is par
+			if isinstance(dropParam, ParGroupPulse) or isinstance(dropParam, ParGroupUnit):
+				dropParam = dropParam[0]
 			details['par'] = dropParam
 			style = dropParam.style
 			default = dropParam.default
@@ -384,6 +386,8 @@ class customParPromoterExt:
 		details = info['details']
 		parGroup = details.get('parGroup', None)
 		par = details.get('par', None)
+		if isinstance(par, ParGroupPulse) or isinstance(par, ParGroupUnit):
+			par = par[0]
 		is_num = details.get('isNum', False)
 
 		labelEntry = info['enteredText'][1]

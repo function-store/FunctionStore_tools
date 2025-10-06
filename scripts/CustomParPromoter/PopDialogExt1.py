@@ -232,7 +232,6 @@ class PopDialogExt:
 					break
 			if currIdx is not None:
 				newEntry = self.entries[(currIdx + 1) % len(self.entries)]
-				# debug(f'new entry: {newEntry.path}')
 				run('op("' + newEntry.path + '").op("inputText").setKeyboardFocus(selectAll=True)',
 					delayFrames=1, delayRef=op.TDResources)
 				if app.osName == 'Windows':
