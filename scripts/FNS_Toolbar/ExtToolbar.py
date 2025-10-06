@@ -41,7 +41,6 @@ class ExtToolbar:
 		# order children by _child.par.alignorder.eval()
 		children = sorted(children, key=lambda _child: _child.par.alignorder.eval())
 		numChildren = len(children)
-		debug(numChildren)
 		seq.numBlocks = numChildren-1
 
 		for _block, _child in zip(seq.blocks, children):
