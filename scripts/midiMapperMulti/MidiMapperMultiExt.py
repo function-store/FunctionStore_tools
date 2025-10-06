@@ -73,7 +73,5 @@ class MidiMapperMultiExt:
 			_mapper.par.Resetall.pulse()
 
 	def OpenParWindow(self, _comp):
-		debug(f'opening {_comp.path}')
 		self.parComp.par.op = _comp.path
-		debug(self.parWindow)
 		self.parWindow.par.winopen.pulse()
