@@ -54,7 +54,7 @@ class AltSelectExt:
 
 		new_select = _op.parent().create(f'select{sel_fam}', 
 				   f"select_{_op.name.split('_')[-1]}")
-		new_select.tags.append(self._tag)
+		new_select.tags.add(self._tag)
 		new_select.nodeX = new_pos[0]
 		new_select.nodeY = new_pos[1]
 		new_select.par[sel_par] = _op
