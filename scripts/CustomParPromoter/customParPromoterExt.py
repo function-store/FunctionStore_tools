@@ -230,8 +230,16 @@ class customParPromoterExt:
 		suspects = [_p for _p in self.Target.pars(f'{name}*')]
 		for _par in _pars:
 			for _p in suspects:
-				if _par in _p.bindReferences:
-					return True
+				# future-proofing: use isSamePar if available, otherwise use isPar
+				if hasattr(_par, 'isSamePar'):
+					if any(_par.isSamePar(__par) for __par in _p.bindReferences):
+						return True
+				elif hasattr(_par, 'isPar'):
+					if any(_par.isPar(__par) for __par in _p.bindReferences):
+						return True
+				else:
+					if _par in _p.bindReferences:
+						return True
 		return False
 	
 	def parNameCheck(self, name):
