@@ -30,7 +30,10 @@ class ExtParOPPlace:
 			self.parameterExecDat = None
 
 	def OnPlaceParOp(self, _par = None):
-
+		if not any(_op[0].eval() for _op in self.ownerComp.ops('null_mod_*')):
+			return
+		
+		
 		current_parameter = _par if _par is not None else ui.rolloverPar
 		if current_parameter is None or current_parameter.owner.family != "COMP":
 			return
