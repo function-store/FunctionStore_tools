@@ -14,6 +14,6 @@ class ExtStubserWrapper:
 				# we need to iterate cause we can have multiple tags, but tag parameter only accepts one
 				for tag in tags:
 					self.stubser.StubifyComp(_op, tag=tag, includePrivate=includePrivate, includeUnpromoted=includeUnpromoted)
-			elif _op.family == 'DAT':
+			elif _op.family == 'DAT' and _op.isEditable:
 				ui.status = f'Stubifying DAT {_op.name}'
 				self.stubser.StubifyDat(_op)
