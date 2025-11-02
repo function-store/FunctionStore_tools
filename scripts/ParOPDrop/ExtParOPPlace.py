@@ -55,7 +55,7 @@ class ExtParOPPlace:
 				parameter_instance = self.parameterDat
 				op_type = 'parameterDAT'
 				op_name = 'parameter1'
-			else: # self.chopPreEnabled
+			elif self.chopPreEnabled: # self.chopPreEnabled
 				parameter_instance = self.parameterChop
 				op_type = 'parameterCHOP'
 				op_name = 'parameter1'

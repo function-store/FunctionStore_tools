@@ -6,7 +6,7 @@ CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.
 class QuickParCustomExt:
 	def __init__(self, ownerComp):
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
-		self.ownerComp = ownerComp
+		self.ownerComp : baseCOMP = ownerComp
 		self.compEditor = op('/sys/TDDialogs/CompEditor')
 		self.customParPromoter : customParPromoterExt = getattr(op, 'FNS_CPP', None)
 
