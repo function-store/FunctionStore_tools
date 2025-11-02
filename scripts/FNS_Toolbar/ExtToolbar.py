@@ -1,6 +1,10 @@
 class ExtToolbar:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
+		if (_table := self.ownerComp.op('ToolbarDef')) and _table.text.strip() == '':
+			_table.text = self.ownerComp.op('ToolbarDef_default').text
+		if _table and _table.text.strip() != '':
+			_table.save(_table.par.file.eval(), createFolders=True)
 		
 	# def On<Insert Paramname>(self, _par, _val, _prev):
 	# def On<Insert PulseParamName>(self, _par):
