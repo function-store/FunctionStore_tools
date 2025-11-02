@@ -1,8 +1,8 @@
 '''Info Header Start
 Name : ExtClownUI
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.453.toe
-Saveversion : 2023.11600
+Saveorigin : FunctionStore_tools_2023_DEV.5.toe
+Saveversion : 2023.11880
 Info Header End'''
 
 
@@ -50,7 +50,9 @@ class ExtColorUI:
 
 	def OnStart(self):
 		self.updateSearchStatus('')
+		self._resetFamiliesColors(save=False)
 		self.storeDefaultColors()
+		self.populateSequence()
 
 		# cache contents from file
 		if self.evalAutoloadallcolors or self.evalAutoloadfamiliescolors:
@@ -233,13 +235,17 @@ class ExtColorUI:
 		self.setColor(self.famcolors_sequence[idx].par.Family.eval(), self.famcolors_sequence[idx].parGroup.Rgb.eval())
 
 
-	def onParResetfamiliescolors(self):
+	def _resetFamiliesColors(self, save = True):
 		self.logger.log(f'Resetting families colors to defaults: {self.default_fam_colors}')
 		for _fam in self.default_fam_colors:
 			self.setColor(_fam, self.default_fam_colors[_fam])
 			self.famcolors_sequence[self._available_families.index(_fam)].parGroup.Rgb.val = self.default_fam_colors[_fam]
-		self.ownerComp.store('fam_colors', {})
+		if save:
+			self.ownerComp.store('fam_colors', {})
 		self.populateSequence()
+
+	def onParResetfamiliescolors(self):
+		self._resetFamiliesColors()
 
 	def onSeqFamiliesNResetcolor(self, idx):
 		fam = self.famcolors_sequence[idx].par.Family.eval()
