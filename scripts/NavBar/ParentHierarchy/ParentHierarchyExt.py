@@ -144,11 +144,11 @@ class ParentHierarchyExt:
 		for idx, (intopname, intop) in enumerate(list(curr_comp.internalOPs.items())):
 			self.NuggetList += [f"iop{idx+1}: {intopname or '___'}"]
 			if extraInfo:
-				self.NuggetList[-1] += f" = {curr_comp.relativePath(intop)}"
+				self.NuggetList.setItem(len(self.NuggetList)-1, f"{self.NuggetList[-1]} = {curr_comp.relativePath(intop)}")
 		
 		self.NuggetList += [self.divider[0]]
 		if showPars:
-			self.NuggetList[-1] = self.divider[1]
+			self.NuggetList.setItem(len(self.NuggetList)-1, self.divider[1])
 			self.parsFromIndex = -1
 			for par in self.curr_comp_save.customPars:
 				if self.parsFromIndex == -1:
