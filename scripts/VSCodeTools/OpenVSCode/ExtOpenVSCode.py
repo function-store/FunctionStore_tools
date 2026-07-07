@@ -153,12 +153,12 @@ class ExtOpenVSCode:
 			self.logger.Log(f"Updated interpreter path in workspace file: {workspace_path}")
 		
 		
-		# Only deploy stubs if we're not using a valid TD interpreter
-		if not is_valid_td:
-			if TDTypings := getattr(op, 'FNS_TDTYPINGS', None):
-				self.logger.Log("Deploying stubs because no valid TD interpreter found")
-				TDTypings.DeployStubs()
-			
+		# DEPRECATED: runtime stub deployment via TDTypings is disabled. The
+		# typings/ stub files are committed to the repo, so there is nothing to
+		# deploy at runtime. This call also misfired on macOS (the interpreter
+		# version regex only matches Windows install paths, so is_valid_td was
+		# always False), writing parameter.py / parameterTypes.py unnecessarily.
+	
 		missing_workspace = not self.workspace or not Path(self.workspace).exists()
 
 		if missing_exe or missing_workspace:
