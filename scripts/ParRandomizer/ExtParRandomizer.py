@@ -100,10 +100,13 @@ class ExtParRandomizer:
 
 	def onResetPar(self):
 		ui.undo.startBlock('Reset parameter')
-		_par = ui.rolloverPar if not hasattr(ui, 'rolloverParGroup') else ui.rolloverParGroup
-		if _par is None or _par.page.name in self.ignorePages:
-			return
-		_par.reset()
+		try:
+			_par = ui.rolloverPar if not hasattr(ui, 'rolloverParGroup') else ui.rolloverParGroup
+			if _par is None or _par.page.name in self.ignorePages:
+				return
+			_par.reset()
+		except:
+			pass
 		ui.undo.endBlock()
 
 	def OnResetAllCustom(self, all = False):

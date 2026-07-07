@@ -1,8 +1,8 @@
 '''Info Header Start
 Name : extStubser
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.427.toe
-Saveversion : 2023.11600
+Saveorigin : FunctionStore_tools_2023_DEV.9.toe
+Saveversion : 2023.11880
 Info Header End'''
 import ast
 from pathlib import Path
@@ -51,7 +51,6 @@ class extStubser:
 		# First check current app version
 		current_td = Path(app.installFolder)
 		version = self._parse_td_version(current_td)
-		debug(f"Current TD version: {version}")
 		
 		# Always check if current builtins exists
 		td_builtins = current_td / 'bin' / '__builtins__.pyi'
@@ -113,26 +112,33 @@ class extStubser:
 		stubs_dir.mkdir(parents=True, exist_ok=True)
 		
 		return builtins_file, stubs_dir / f"{name}.pyi"
+		
+	def _placeTyping(self, stubsString:str, name:str):
+		"""Export the stub string and register it in the project __builtins__.pyi.
 
-	def _placeTyping(self, stubsString: str, name: str):
-		# TODO: factor out custom_typings.QuickExt. as optional subfolders to stubify to
-		"""Export the given stubs string into a file and add it as a builtin."""
+		typings/__builtins__.pyi re-exports the shipped TD interface library
+		(`from tdi import *`) so built-in TD type completion is preserved, then
+		adds the helper stubs under custom_typings/QuickExt. Requires TD
+		2025.32820+ (which ships the `tdi` package). Paths are anchored to
+		project.folder so they resolve on macOS too (where the process CWD is
+		not the project folder).
+		"""
 		debug("Placing Typings", name)
-		
-		builtinsFile, stubsFile = self._get_typing_paths(name)
-		
-		debug("Placing Typings", name)
-		debug("Typings File", stubsFile)
-		debug("Builtins File", builtinsFile)	
+		typingsDir = Path(project.folder) / "typings"
 
-		currentBuiltinsText = builtinsFile.read_text()
-		if not re.search(f"from custom_typings.QuickExt.{name} import *", currentBuiltinsText): 
-			with builtinsFile.open("t+a") as builtinsFileHandler:
-				builtinsFileHandler.write(f"\nfrom custom_typings.QuickExt.{name} import *")
-		
-		
-		stubsFile.touch( exist_ok=True)
-		stubsFile.write_text( stubsString )
+		builtinsFile = typingsDir / "__builtins__.pyi"
+		builtinsFile.parent.mkdir(parents=True, exist_ok=True)
+		builtinsText = builtinsFile.read_text() if builtinsFile.exists() else ""
+		if "from tdi import *" not in builtinsText:
+			builtinsText = "from tdi import *\n" + builtinsText
+		importLine = f"from custom_typings.QuickExt.{name} import *"
+		if importLine not in builtinsText:
+			builtinsText = builtinsText.rstrip("\n") + "\n" + importLine + "\n"
+		builtinsFile.write_text(builtinsText)
+
+		stubsDir = typingsDir / "custom_typings" / "QuickExt"
+		stubsDir.mkdir(parents=True, exist_ok=True)
+		(stubsDir / f"{name}.pyi").write_text(stubsString)
 
 	
 	def StubifyDat(self, target:textDAT, includePrivate:bool = False, includeUnpromoted:bool = True):
