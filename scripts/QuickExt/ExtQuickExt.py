@@ -162,6 +162,9 @@ class ExtQuickExt:
 				if 'extPackage' in _op.tags:
 					self.stubser.StubifyDat(_op)
 
+			if hasattr(self.ConfigComp.par, 'initextonstart'):
+				self.ConfigComp.par.initextonstart.val = True
+
 	def __updateCompEditor(self, index):
 		compEditor = op.TDDialogs.op('CompEditor')
 		entry = compEditor.op('extensions/ext'+str(int(index)))
