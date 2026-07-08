@@ -148,10 +148,6 @@ class customParPromoterExt:
 		if refBind is None:
 			refBind = self.refBind
 
-		if self.IsParGroup(_par):
-			self.PromoteParGroup(_par.parGroup, page_name, target, refBind)
-			return
-		
 		label = _par.label.title() if parLabel is None else parLabel
 		name = _par.name.title() if parName is None else parName
 
@@ -169,7 +165,13 @@ class customParPromoterExt:
 		try:
 			if type(_par) == ParGroupPulse: # why did it come to this???
 				_par = _par[0]
-			new_par = new_page.appendPar(name, label=label, par=_par)
+			if self.IsParGroup(_par):
+				# single member of a multi-value group (XYZ, RGB, Float3, ...):
+				# promote just this component as a standalone scalar, otherwise
+				# appendPar(par=_par) would recreate the entire parGroup.
+				new_par = self._appendSinglePar(new_page, name, label, _par)
+			else:
+				new_par = new_page.appendPar(name, label=label, par=_par)
 		except Exception as e:
 			new_par = new_page.owner.par[name]
 
@@ -208,6 +210,38 @@ class customParPromoterExt:
 			_par.mode = ParMode.BIND
 		ui.undo.endBlock()
 		return new_par
+
+	def _appendSinglePar(self, new_page, name, label, _par):
+		"""Append a single-value par mirroring one member of a multi-value group.
+
+		appendPar(par=_par) copies the *group* style, so for a member of a
+		multi-value parGroup it recreates the whole group. To promote only the
+		dropped component we append a single par matching the member's own type.
+		Dispatch is by the member's ``is*`` flags rather than a hardcoded numeric
+		assumption, so menu/string/etc. group members -- possible in newer TD --
+		are handled too; anything unrecognised falls back to appendPar. Returns
+		the new ParGroup (size 1).
+		"""
+		if _par.style == 'StrMenu':
+			return new_page.appendStrMenu(name, label=label)
+		if _par.isMenu:
+			return new_page.appendMenu(name, label=label)
+		if _par.isPython:
+			return new_page.appendPython(name, label=label)
+		if _par.isString:
+			return new_page.appendStr(name, label=label)
+		if _par.isToggle:
+			return new_page.appendToggle(name, label=label)
+		if _par.isMomentary:
+			return new_page.appendMomentary(name, label=label)
+		if _par.isPulse:
+			return new_page.appendPulse(name, label=label)
+		if _par.isInt:
+			return new_page.appendInt(name, label=label)
+		if _par.isFloat:
+			return new_page.appendFloat(name, label=label)
+		# Unrecognised / future style: copy the member definition as a last resort.
+		return new_page.appendPar(name, label=label, par=_par)
 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ MAIN ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	
