@@ -57,6 +57,11 @@ class customParPromoterExt:
 
 		page_name = f'{self.Reference.name}:{_page.name}'
 
+		# GLSL Vectors page: promote only the vector value groups (vec<N>value),
+		# each named/labelled from its uniform (vec<N>name) via PromoteParGroup.
+		# The vec<N>name string parameters themselves are skipped.
+		glsl_vectors = self.__isGlslOp(self.Reference) and _page.name == 'Vectors'
+
 		# Set to keep track of processed parGroups
 		processed_parGroups = set()
 
@@ -76,7 +81,9 @@ class customParPromoterExt:
 				processed_parGroups.add(pg_name)
 
 				self.PromoteParGroup(self.Reference.parGroup[pg_name], page_name)
-			else:
+			elif not glsl_vectors:
+				# On the GLSL Vectors page single pars are the uniform-name
+				# strings -- skip them; elsewhere promote singles as usual.
 				self.PromotePar(par, page_name)
 
 	# unfortunately params that are for example XYZ, Float2/3 etc are not handled well by appendPar
@@ -90,8 +97,9 @@ class customParPromoterExt:
 		if refBind is None:
 			refBind = self.refBind
 			
-		label = _parGroup.label.title() if parLabel is None else parLabel
-		name = _parGroup.name.title() if parName is None else parName
+		glsl_name = self.__glslUniformName(_parGroup)
+		label = parLabel if parLabel is not None else (self.__glslLabel(glsl_name) if glsl_name else _parGroup.label.title())
+		name = parName if parName is not None else (self.purgeParName(glsl_name) if glsl_name else _parGroup.name.title())
 
 		if self.parNameExists(name):
 			if self.checkAlreadyBound(_parGroup, name):
@@ -148,8 +156,9 @@ class customParPromoterExt:
 		if refBind is None:
 			refBind = self.refBind
 
-		label = _par.label.title() if parLabel is None else parLabel
-		name = _par.name.title() if parName is None else parName
+		glsl_name = self.__glslUniformName(_par)
+		label = parLabel if parLabel is not None else (self.__glslLabel(glsl_name) if glsl_name else _par.label.title())
+		name = parName if parName is not None else (self.purgeParName(glsl_name) if glsl_name else _par.name.title())
 
 		if self.parNameExists(name):
 			if self.checkAlreadyBound(_par, name):
@@ -303,6 +312,43 @@ class customParPromoterExt:
 		except:
 			return False
 
+	def __isGlslOp(self, _op):
+		"""True if the operator is any GLSL type (glslTOP, glslmultiTOP, glslMAT)."""
+		return _op is not None and _op.OPType.lower().startswith('glsl')
+
+	def __glslUniformName(self, _par):
+		"""Shader uniform name for a GLSL 'vec<N>value' vector-uniform parameter.
+
+		On a GLSL operator's Vectors page each uniform is a 'vec' sequence block:
+		the value parGroup is vec<N>value (components vec<N>valuex/y/z/w) and the
+		shader name lives in vec<N>name. When such a value parameter is promoted
+		we want the meaningful uniform name (e.g. 'uColor') rather than the
+		generic 'Vec0value'. Returns the name string, or None if not applicable.
+		"""
+		try:
+			owner = _par.owner
+		except Exception:
+			return None
+		if not self.__isGlslOp(owner):
+			return None
+		match = re.match(r'^vec(\d+)value[xyzw]?$', _par.name)
+		if not match:
+			return None
+		name_par = owner.par[f'vec{match.group(1)}name']
+		if name_par is None:
+			return None
+		uniform = str(name_par.eval()).strip()
+		return uniform or None
+
+	def __glslLabel(self, name):
+		"""Label for a GLSL uniform name.
+
+		Keep shader-style prefixed camelCase (a lowercase letter immediately
+		followed by a capital, e.g. 'uColor', 'iCounter') untouched; otherwise
+		capitalize the first letter.
+		"""
+		return name if re.match(r'^[a-z][A-Z]', name) else name.capitalize()
+
 	def _getTargetPage(self, page_name, target, source_page=None):
 		"""Helper method to handle page selection logic
 		Args:
@@ -408,7 +454,8 @@ class customParPromoterExt:
 			details['isNum'] = is_num
 			self.popDialog.par.Minmaxentryarea = is_num
 
-		textEntries = [dropParam.name.capitalize(), '']
+		glsl_name = self.__glslUniformName(dropParam)
+		textEntries = [self.purgeParName(glsl_name) if glsl_name else dropParam.name.capitalize(), self.__glslLabel(glsl_name) if glsl_name else '']
 		if is_num:
 			_max = dropParam.normMax
 			if dropParam.name == 'index':
