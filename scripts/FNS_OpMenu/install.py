@@ -1,8 +1,8 @@
 '''Info Header Start
 Name : install
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.427.toe
-Saveversion : 2023.11600
+Saveorigin : FunctionStore_tools_2023_DEV.9.toe
+Saveversion : 2023.11880
 Info Header End'''
 
 def inject(target_comp, target_op=None, inject_op=None, panelparent=None):
@@ -53,7 +53,7 @@ if parent.FNS.par.Activeopmenuiofilter.eval():
 	
 	target_comp = op('/ui/dialogs/menu_op')
 	inject_op = op('IOFilter/radioExpose')
-	panelparent = target_comp.op('families')
+	panelparent = target_comp.op('searchpanel')
 	radioExpose = inject(target_comp, target_op=None, inject_op=inject_op, panelparent=panelparent)
 	radioExpose.par.display = True
 	
