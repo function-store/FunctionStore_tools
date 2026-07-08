@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ParentHierarchyExt
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2023.519.toe
+Saveorigin : FunctionStore_tools_2023_DEV.9.toe
 Saveversion : 2023.11880
 Info Header End'''
 
@@ -142,13 +142,15 @@ class ParentHierarchyExt:
 			self.NuggetList += [f'P: {parent_shortcut}']
 
 		for idx, (intopname, intop) in enumerate(list(curr_comp.internalOPs.items())):
-			self.NuggetList += [f"iop{idx+1}: {intopname or '___'}"]
+			# build the full string before appending -- DependList negative
+			# indexing/assignment (NuggetList[-1]) breaks in newer TD builds
+			nugget = f"iop{idx+1}: {intopname or '___'}"
 			if extraInfo:
-				self.NuggetList.setItem(len(self.NuggetList)-1, f"{self.NuggetList[-1]} = {curr_comp.relativePath(intop)}")
-		
-		self.NuggetList += [self.divider[0]]
+				nugget += f" = {curr_comp.relativePath(intop)}"
+			self.NuggetList += [nugget]
+
+		self.NuggetList += [self.divider[1] if showPars else self.divider[0]]
 		if showPars:
-			self.NuggetList.setItem(len(self.NuggetList)-1, self.divider[1])
 			self.parsFromIndex = -1
 			for par in self.curr_comp_save.customPars:
 				if self.parsFromIndex == -1:
