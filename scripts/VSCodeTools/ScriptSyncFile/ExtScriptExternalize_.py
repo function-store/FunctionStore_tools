@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 class ExtScriptExternalize:
@@ -85,23 +86,153 @@ class ExtScriptExternalize:
 	def __ensureForwardSlashes(self, path):
 		return str(path).replace('\\', '/')
 
+	# Language values that don't name a concrete language -> sniff the content.
+	__nonLanguageValues = ('input', 'parameter', 'text')
+	# Explicit language -> file extension (glsl handled separately for stage).
+	__languageExtMap = {
+		'python': 'py',
+		'json': 'json',
+		'yaml': 'yaml',
+		'yml': 'yaml',
+		'xml': 'xml',
+		'html': 'html',
+	}
+
 	def __getFileExtensionForOp(self, _op) -> str:
 		# Check if the operation is a tableDAT, return 'tsv'
 		if isinstance(_op, tableDAT):
 			return 'tsv'
-		
-		# Attempt to get the docked operation
+
+		# 1) Believe the DAT's declared language, unless it is a non-specific
+		#    value ('input'/'parameter'/'text'), in which case sniff instead.
+		lang = self.__declaredLanguage(_op)
+		if lang and lang not in self.__nonLanguageValues:
+			if lang == 'glsl':
+				return self.__shaderStage(_op) or self.__detectShaderExtension(_op) or 'glsl'
+			if lang in self.__languageExtMap:
+				return self.__languageExtMap[lang]
+			# Some other specific language TD reports -> believe it as the ext.
+			return lang
+
+		# 2) Reliable structural signal: a DAT docked to a glsl TOP/MAT.
 		if _op_dockedto := _op.dock:
 			# Check if the docked operation type includes 'glsl'
 			if 'glsl' in _op_dockedto.OPType:
-				# Determine the file extension based on the operation name
-				if '_vertex' in _op.name:
-					return 'vert'
-				elif '_pixel' in _op.name:
-					return 'frag'
-		
-		# Default return 'py' if none of the above conditions are met
+				return self.__shaderStage(_op) or 'glsl'
+
+		# 3) Non-specific language: detect by content (glsl/json/yaml/xml/html).
+		if ext := self.__detectContentExtension(_op):
+			return ext
+
+		# 4) Default return 'py' if none of the above conditions are met
 		return 'py'
+
+	def __declaredLanguage(self, _op) -> str:
+		"""The DAT's declared script language, lowercased, or None if absent."""
+		if hasattr(_op.par, 'language'):
+			try:
+				return str(_op.par.language.eval()).strip().lower()
+			except Exception:
+				return None
+		return None
+
+	def __shaderStage(self, _op) -> str:
+		"""Return 'vert'/'frag' from the op name convention, else None."""
+		name = _op.name.lower()
+		if '_vertex' in name or '_vert' in name:
+			return 'vert'
+		if '_pixel' in name or '_frag' in name:
+			return 'frag'
+		return None
+
+	def __detectContentExtension(self, _op) -> str:
+		"""Best-effort extension sniffed from a textual DAT's content.
+
+		Runs only when the DAT declares no specific language. Detects, in order
+		of decreasing reliability: GLSL/TD shaders, XML/HTML markup, JSON, YAML.
+		Returns None (caller defaults to .py) when nothing matches.
+		"""
+		if not _op.isText:
+			return None
+		text = _op.text
+		if not text or not text.strip():
+			return None
+
+		if ext := self.__detectShaderExtension(_op):
+			return ext
+		if ext := self.__detectMarkupExtension(text):
+			return ext
+		if self.__looksLikeJson(text):
+			return 'json'
+		if self.__looksLikeYaml(text):
+			return 'yaml'
+		return None
+
+	def __detectShaderExtension(self, _op) -> str:
+		"""'vert'/'frag'/'glsl' when the text is a GLSL shader, else None.
+
+		The one signature guaranteed in a TD GLSL shader is the entry point
+		``void main() {`` -- the #version pragma is injected by TD, and TD
+		builtins / gl_* variables are all optional -- so that is the gate. It
+		also never appears in Python, keeping false positives out.
+		"""
+		if not _op.isText:
+			return None
+		text = _op.text or ''
+		if not re.search(r'void\s+main\s*\(', text):
+			return None
+
+		# Disambiguate stage: explicit name convention first, then content.
+		stage = self.__shaderStage(_op)
+		if stage:
+			return stage
+		lowered = text.lower()
+		if 'gl_position' in lowered or 'tddeform' in lowered:
+			return 'vert'
+		if ('gl_fragcolor' in lowered or 'tdoutputswizzle' in lowered
+				or 'gl_fragcoord' in lowered):
+			return 'frag'
+		return 'glsl'
+
+	def __detectMarkupExtension(self, text) -> str:
+		"""'html'/'xml' when the text looks like angle-bracket markup, else None."""
+		stripped = text.lstrip()
+		if not stripped.startswith('<'):
+			return None
+		head = stripped[:1024].lower()
+		if head.startswith('<?xml'):
+			return 'xml'
+		if '<!doctype html' in head or '<html' in head:
+			return 'html'
+		if any(tag in head for tag in ('<head', '<body', '<div', '<span', '<p>', '<a ')):
+			return 'html'
+		return 'xml'
+
+	def __looksLikeJson(self, text) -> bool:
+		s = text.strip()
+		if not s or s[0] not in '{[':
+			return False
+		try:
+			import json
+			json.loads(s)
+			return True
+		except Exception:
+			return False
+
+	def __looksLikeYaml(self, text) -> bool:
+		s = text.strip()
+		if not s:
+			return False
+		# A document marker is a strong YAML signal; otherwise require a few
+		# 'key: value' lines so plain prose isn't misread as YAML.
+		if not (s.startswith('---') or s.startswith('%YAML')):
+			if len(re.findall(r'(?m)^[ \t]*[\w.\-]+:(?:\s|$)', s)) < 2:
+				return False
+		try:
+			import yaml
+			return isinstance(yaml.safe_load(s), (dict, list))
+		except Exception:
+			return False
 	
 	def __createFilePathFull(self, _op=None):
 		if _op is None:
