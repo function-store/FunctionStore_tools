@@ -6,12 +6,15 @@ customables = ['baseCOMP',
 				'scriptSOP',
 				'scriptTOP']
 
-toreset = op('null_toreset')
-custompars = op('null_custom_resetpars')
+root = op(parent().par.Root.eval() if parent().par.Root.eval() else '../')
+optypes = [r[0].val for r in op('table_optypes').rows()]
+exceptions = [p[1:] if p.startswith('^') else p for p in (r[0].val for r in op('merge1').rows())]
 
-for r in toreset.rows()[1:]:
-	op_type = r[0].val
-	o = op(r[1].val)
+def isAllowed(o):
+	return o.OPType in optypes and not any(tdu.match(p, [o.path]) for p in exceptions)
+
+for o in root.findChildren(key=isAllowed):
+	op_type = o.OPType
 	
 	# there are some exceptions
 	if 'DAT' in op_type and op_type != 'scriptDAT':
