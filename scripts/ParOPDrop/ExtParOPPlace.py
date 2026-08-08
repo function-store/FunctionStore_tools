@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : ExtParOPPlace
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 import TDFunctions as TDF
 
 class ExtParOPPlace:

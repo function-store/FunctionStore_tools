@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : ClipboardImageEXT
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 """
 Extension for TouchDesigner that allows pasting images from the clipboard
 directly into the network, similar to Figma's paste functionality.

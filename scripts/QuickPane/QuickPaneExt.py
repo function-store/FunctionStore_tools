@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : QuickPaneExt
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 class QuickPaneExt:
 	def __init__(self, ownerComp):
 		# The component to which this extension is attached

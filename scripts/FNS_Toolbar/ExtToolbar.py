@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : ExtToolbar
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 class ExtToolbar:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp

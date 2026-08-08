@@ -1,0 +1,274 @@
+
+
+'''Info Header Start
+Name : description
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
+See full documentation at the Wiki page: https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt
+
+# TouchDesigner Extension Utilities: NoNode and CustomParHelper
+
+These utility classes are part of the extUtils package, designed to enhance and streamline TouchDesigner extension development. They provide powerful tools for managing events, parameters, and callbacks without cluttering your project with additional nodes.
+
+They can be invoked by docking this COMP to an extension, after which the two packages can be imported as follows:
+
+```python
+  CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+  NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+```
+
+> This might look complicated at first but it's just a fancy import statement to avoid any conflicts when
+> having multiple extension classes with ExtUtils attached
+
+### Common Benefits:
+
+1. **Code Organization**: Both utilities help centralize and structure code, improving readability and maintainability.
+2. **Reduced Boilerplate**: Simplify common TouchDesigner tasks with less repetitive code.
+3. **Enhanced Development Experience**: Provide more intuitive and IDE-friendly ways to interact with TouchDesigner's features.
+4. **Flexibility**: Offer configurable options to suit various project needs and coding styles.
+5. **Performance**: Optimize event handling and parameter management without adding unnecessary nodes.
+
+### Usage:
+
+These utilities are designed to work within the QuickExt framework for TouchDesigner. They offer static method interfaces, eliminating the need for instantiation and providing clean, simple APIs for event and parameter management.
+
+By leveraging NoNode and CustomParHelper, TouchDesigner developers can create more efficient, organized, and maintainable extensions, ultimately leading to smoother workflow and improved project scalability.
+
+## CustomParHelper
+
+CustomParHelper simplifies the management of custom parameters in TouchDesigner extensions, providing an intuitive interface for accessing and manipulating parameters, implementing callbacks, and handling parameter groups.
+
+### Key Features:
+- Access custom parameters as properties
+- Set parameter values through properties
+- Simplified custom parameter callbacks
+- Support for sequence parameters
+- Support for parameter groups (parGroups)
+- Support for general callbacks that catch all parameter changes
+- Configurable inclusion for properties and callbacks (by default all parameters are included)
+- Configurable exceptions for pages, properties, callbacks, and sequences
+
+### Usage in your extension class:
+1. Import the CustomParHelper class:
+    ```python
+    CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+    ```
+
+2. Initialize in your extension's __init__ method as follows:
+    ```python
+    CustomParHelper.Init(self, ownerComp)
+    ```
+
+    Full signature and optional parameters:
+    ```python
+    CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
+          par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
+          except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
+          enable_stubs: bool = False, general_callback_enable: bool = True)
+    ```
+
+    Additional options:
+    - `enable_properties`: If True, creates properties for custom parameters (default: True)
+    - `enable_callbacks`: If True, creates callbacks for custom parameters (default: True)
+    - `enable_parGroups`: If True, creates properties and methods for parGroups (default: True)
+    - `enable_seq`: If True, creates properties and methods for sequence parameters (default: True)
+    - `expose_public`: If True, uses capitalized property and method names (e.g., Par, Eval instead of par, eval)
+    - `par_properties`: List of parameter names to include in property creation, by default all parameters are included
+    - `par_callbacks`: List of parameter names to include in callback handling, by default all parameters are included
+    - `except_properties`: List of parameter names to exclude from property creation
+    - `except_callbacks`: List of parameter names to exclude from callback handling
+    - `except_pages`: List of parameter pages to exclude from property and callback handling
+    - `except_sequences`: List of sequence names to exclude from property and callback handling
+    - `enable_stubs`: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
+    - `general_callback_enable`: If True, enables general callbacks that catch all parameter changes (default: True)
+
+
+3. Access and set custom parameters as properties (if enable_properties=True (default)):
+    
+    There are two ways to access and set parameter values:
+
+    a) Using Eval properties (recommended for simple value setting):
+    - `self.eval<ParamName>`: Get/set the evaluated value of the parameter
+      ```python
+      # Get value
+      value = self.evalMyParam
+      # Set value (always sets .val regardless of parameter mode)
+      self.evalMyParam = 5
+      ```
+    - `self.evalGroup<GroupName>`: Get/set the evaluated value of the parameter group
+      ```python
+      # Get values
+      values = self.evalGroupXyz
+      # Set values (always sets .val for each parameter)
+      self.evalGroupXyz = [1, 2, 3]
+      ```
+
+    b) Using Par properties (for advanced parameter control):
+    - `self.par<ParamName>`: Access/set the parameter object
+      ```python
+      # Get parameter object for advanced operations
+      self.parMyParam.expr = "op('something').par.value"
+      self.parMyParam.bindExpr = "op('other').par.value"
+      # Set value (only works in CONSTANT or BIND modes)
+      self.parMyParam = 5  # Ignored if parameter is in EXPRESSION mode
+      ```
+    - `self.parGroup<GroupName>`: Access/set the parameter group object
+      ```python
+      # Get parameter group for advanced operations
+      myGroup = self.parGroupXyz
+      # Set values (only works for parameters in CONSTANT or BIND modes)
+      self.parGroupXyz = [1, 2, 3]  # Only affects non-expression parameters
+      ```
+
+    > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
+
+4. Implement callbacks (if enable_callbacks=True (default)):
+    a) Parameter-specific callbacks:
+    - For regular parameters:
+      ```python
+      def onPar<Parname>(self, _par, _val, _prev):
+        # _par and _prev can be omitted if not needed
+      ```
+
+    - For pulse parameters:
+      ```python
+      def onPar<PulseParname>(self, _par):
+        # _par can be omitted if not needed
+      ```
+
+    - For sequence blocks:
+      ```python
+      def onSeq<SeqName>N(self, idx):
+      ```
+
+    - For sequence parameters:
+      ```python
+      def onSeq<SeqName>N<Parname>(self, _par, idx, _val, _prev):
+        # _par and _prev can be omitted if not needed
+      ```
+
+    - For parameter groups if enable_parGroups=True (default):
+      ```python
+      def onParGroup<Groupname>(self, _parGroup, _val):
+        # _parGroup can be omitted if not needed
+      ```
+
+    b) General callbacks (if general_callback_enable=True (default)):
+    These catch all parameter changes that aren't handled by specific callbacks:
+    
+    - For value changes:
+      ```python
+      def onValueChange(self, _par, _val, _prev):
+        # Called when any parameter value changes that doesn't have a specific callback
+        # _val and _prev can be omitted if not needed
+      ```
+
+    - For pulse parameters:
+      ```python
+      def onPulse(self, _par):
+        # Called when any pulse parameter is triggered that doesn't have a specific callback
+        # _par can be omitted if not needed
+      ```
+
+> NOTE: This class is part of the extUtils package, and is designed to work with the QuickExt framework.
+> NOTE: The reason this is implemented with static methods, is to omit the need to instantiate the class, providing a simpler interface (arguably).
+   
+
+## NoNode
+
+NoNode is a versatile utility class that centralizes the management of various types of executions and callbacks in TouchDesigner, eliminating the need for dedicated nodes.
+
+### Key Features:
+- Keyboard shortcut handling
+- CHOP executions (value changes, on/off states)
+- DAT executions (table, row, or cell changes)
+- Centralized event management
+- Reduced node clutter
+- Visual indication of watched operators
+
+### Usage examples:
+1. Make sure ExtUtils is docked to your extension
+
+2. Import the NoNode class:
+   ```python
+   NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+   ```
+
+3. Initialize the NoNode system in your extension:
+   ```python
+   NoNode.Init(enable_chopexec=True, enable_datexec=True, enable_parexec=True, enable_keyboard_shortcuts=True)
+   ```
+
+4. CHOP executions:
+   - Register a callback for CHOP value changes:
+     ```python
+     NoNode.RegisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name(s), self.on_value_change_function)
+     # callback signature: def on_value_change_function(self, channel: Channel, sampleIndex: int, val: float, prev: float):
+     # can omit parameters from the right side of the signature if not needed
+     ```
+   - Handle CHOP state changes:
+     ```python
+     NoNode.RegisterChopExec(NoNode.ChopExecType.OffToOn, chop_op, channel_name(s), self.on_activate_function)
+     # callback signature: def on_activate_function(self, channel: Channel, sampleIndex: int, val: float, prev: float):
+     # can omit parameters from the right side of the signature if not needed
+     ```
+
+5. DAT executions:
+   - React to table changes in a DAT:
+     ```python
+     NoNode.RegisterDatExec(NoNode.DatExecType.TableChange, dat_op, self.on_table_change_function)
+     # callback signature depends on the event type, eg.: def on_table_change_function(self, dat: DAT):
+     ```
+   - Handle cell value changes:
+     ```python
+     NoNode.RegisterDatExec(NoNode.DatExecType.CellChange, dat_op, self.on_cell_change_function)
+     # callback signature depends on the event type, eg.: def on_cell_change_function(self, dat: DAT, cells: list[Cell], prev: Cell):
+     ```
+
+6. Parameter executions:
+   - Register a callback for parameter value changes:
+     ```python
+     NoNode.RegisterParExec(NoNode.ParExecType.ValueChange, par_op, par_name, self.on_value_change_function)
+     # callback signature depends on the event type, eg.: def on_value_change_function(self, par: Par, val: float, prev: float):
+     # can omit prev, or use val only
+     ```
+   - Handle pulse parameters:
+     ```python
+     NoNode.RegisterParExec(NoNode.ParExecType.OnPulse, par_op, par_name, self.on_pulse_function)
+     # callback signature: def on_pulse_function(self,par: Par):
+     # can omit par if not needed
+     ```
+
+7. Keyboard shortcuts:
+   - Register a keyboard shortcut:
+     ```python
+     NoNode.RegisterKeyboardShortcut('ctrl.k', self.onKeyboardShortcut)
+     # callback signature: def onKeyboardShortcut(self):
+     ```
+
+7. Deregister callbacks:
+   - Deregister a CHOP execution:
+     ```python
+     NoNode.DeregisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name(s))
+     ```
+   - Deregister a DAT execution:
+     ```python
+     NoNode.DeregisterDatExec(NoNode.DatExecType.TableChange, dat_op)
+     ```
+   - Deregister a parameter execution:
+     ```python
+     NoNode.DeregisterParExec(NoNode.ParExecType.ValueChange, par_op, par_name)
+     ```  
+   - Deregister a keyboard shortcut:
+     ```python
+     NoNode.DeregisterKeyboardShortcut('ctrl.k')
+     ```
+
+8. Visual indication:
+   - Operators with registered callbacks are marked with a color for easy identification
+   - Customize the mark color:
+     ```python
+     NoNode.SetMarkColor((r, g, b))
+     ```

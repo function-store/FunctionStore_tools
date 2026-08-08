@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : NoNode
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 import re
 import TDStoreTools
 from typing import Callable, Dict, Union, List

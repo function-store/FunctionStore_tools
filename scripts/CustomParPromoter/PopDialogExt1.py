@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : PopDialogExt
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 # This file and all related intellectual property rights are
 # owned by Derivative Inc. ("Derivative").  The use and modification
 # of this file is governed by, and only permitted under, the terms

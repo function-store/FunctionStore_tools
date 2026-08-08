@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : ExtParRandomizer
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 
 class ExtParRandomizer:
 	def __init__(self, ownerComp):

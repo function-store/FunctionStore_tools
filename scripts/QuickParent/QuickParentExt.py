@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : QuickParentExt
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 class QuickParentExt:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp

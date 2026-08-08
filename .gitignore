@@ -51,6 +51,7 @@ Log/OrbbecSDK.log.txt
 /Assets
 /clipboard_images
 !FunctionStore_tools_2023_DEV.toe
+!FunctionStore_tools_2025_DEV.toe
 
 # Embody / Envoy (auto-managed)
 logs/
@@ -65,3 +66,8 @@ CrashAutoSave*
 CLAUDE.md
 AGENTS.md
 externalizations.tsv
+
+# Task briefs (session-local contracts)
+briefs/
+.tdn_backup/
+.embody/

@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : ExtClearScriptFile
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveversion : 2025.33070
+Info Header End'''
 class ExtClearScriptFile:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
