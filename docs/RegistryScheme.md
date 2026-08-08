@@ -25,7 +25,7 @@ Every registry component can play two roles, decided at runtime:
   shortcut, and is the **single manager** of its surface: which entries
   exist, which are shown, in what order, and how they are recalled. It is
   pure infrastructure — its host-publisher parameters (the Registration
-  page) are destroyed at promotion.
+  page) are neutralized at promotion (kept, reset to inert defaults).
 - **Host instance** — an unmodified copy shipped inside a tool. It never
   manages the surface. It does exactly two things: (a) on load, install or
   version-upgrade the global instance; (b) publish its one entry into the
@@ -46,7 +46,7 @@ On extension init (`postInit`), an instance that is NOT the sys-global runs:
      self to `/sys` (`_become_global_registry`), hand data over via the
      `post_update` raw-storage handoff (the copy's extension may not compile
      on the first frames — a 20-attempt `reinitextensions` retry loop
-     recovers), promote (set shortcut, strip Registration page, sync surface).
+     recovers), promote (set shortcut, neutralize Registration page, sync surface).
    - No global → reconcile any *parked* (shortcut-less) `/sys` copies
      (highest version wins, entries merged additively), then self-promote.
    - **Major**-version mismatch → `ui.messageBox` chooser; minor/patch
@@ -57,8 +57,9 @@ On extension init (`postInit`), an instance that is NOT the sys-global runs:
    and clears its local entry table (no parallel state).
 
 The sys-global branch instead: drains `post_update`, sanitizes stored
-entries, re-asserts the shortcut, **strips the Registration page**
-(`_stripHostParameters`), syncs the surface, and arms the healing watch.
+entries, re-asserts the shortcut, **neutralizes the Registration page**
+(`_neutralizeHostParameters` — pars kept, values reset), syncs the surface,
+and arms the healing watch.
 
 ## 3. Entry data model and persistence
 
@@ -123,7 +124,7 @@ MyRegistry (baseCOMP, initextonstart=1, ext: op('./MyRegistryExt').module.MyRegi
 ├── RegistryBase    textDAT  (externalized .py, syncfile — per-package copy)
 ├── ExtUtils        baseCOMP (CustomParHelper + par-callback plumbing)
 ├── pre_release     textDAT  (release scrub hook, see §6)
-└── custom pages: Registration (host-only; stripped on the global) + About (Version!)
+└── custom pages: Registration (host-only; neutralized on the global) + About (Version!)
 ```
 
 Registration page baseline: `Autoregister` (toggle), `Register` (pulse),

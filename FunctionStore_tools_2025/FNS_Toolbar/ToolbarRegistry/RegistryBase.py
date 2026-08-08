@@ -1,4 +1,4 @@
-﻿
+
 
 CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or me.parent().op('ExtUtils')).mod('CustomParHelper').CustomParHelper # import
 ###
@@ -67,7 +67,7 @@ class RegistryBase:
 				self.ownerComp.unstore('post_update')
 			self._sanitizeStoredRegistry()
 			self.ownerComp.par.opshortcut = self.SHORTCUT
-			self._stripHostParameters()
+			self._neutralizeHostParameters()
 			self._syncSurface()
 			self._armRegistryWatch()
 			self._ensureSelectionExecuteRole()
@@ -79,19 +79,22 @@ class RegistryBase:
 		self._applyHostRegistration()
 		self._ensureSelectionExecuteRole()
 
-	def _stripHostParameters(self):
+	def _neutralizeHostParameters(self):
 		"""The global /sys instance is pure infrastructure -- host-publisher
-		parameters (Registration page) are meaningless on it and are removed.
-		Hosts keep the page; every host-par read in this class is hasattr-
-		guarded, so a stripped instance degrades cleanly."""
+		parameters (Registration page) are meaningless on it. Keep the page
+		(copies stay structurally identical to hosts) but reset every par to
+		its inert default so no stale host state rides on the global."""
 		for page in list(self.ownerComp.customPages):
 			if page.name != self.HOST_PAGE_NAME:
 				continue
-			try:
-				page.destroy()
-			except Exception:
-				for p in list(page.pars):
-					p.destroy()
+			for p in page.pars:
+				try:
+					if p.style == 'Pulse':
+						continue
+					p.val = p.default
+				except Exception:
+					pass
+		self._setRegStatus('Idle (global)')
 
 	# --- host auto-registration (Registration page) ---
 
@@ -431,7 +434,7 @@ class RegistryBase:
 		registry_comp.par.opshortcut = self.SHORTCUT
 		if hasattr(registry_comp, 'ext') and hasattr(registry_comp.ext, self.EXT_NAME):
 			ext = getattr(registry_comp.ext, self.EXT_NAME)
-			ext._stripHostParameters()
+			ext._neutralizeHostParameters()
 			ext._syncSurface()
 
 	def _destroy_other_globals(self, keep=None):
