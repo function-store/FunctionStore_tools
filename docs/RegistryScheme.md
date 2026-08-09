@@ -43,7 +43,13 @@ Current implementations:
   this surface. `NavbarConfigurator` (gear in the bar, `op.NAVBARCONFIG`) has Name /
   Side / Show / Origin columns -- Side cell click flips the side.
 - **The legacy installer is retired**: `FNS_Navbar/execute1` inactive, `install.py`
-  frozen on disk; sources stay parked in `FNS_Navbar/containers`.
+  frozen on disk. Sources live UN-parked (cooking on) in `FNS_Navbar/containers`,
+  because **each source carries its own registry host INSIDE it**
+  (`containers/parent_hierarchy/NavbarRegistry`, `Comp='..'`) -- every
+  component is a standalone self-registering unit, same shape drop-to-register
+  stamps. A host inside a cook-disabled subtree cannot compile, hence no
+  parking. `_injectItem` strips the embedded host from bar copies (the
+  /sys-or-/ui guard would neutralize it anyway; bars stay lean).
 
 ---
 
@@ -209,18 +215,18 @@ copy/create alone is rarely the whole contract.
   references inside the clone (the ExtUtils `extParameter` Pages expr was
   rewritten dock-free), and a clone re-sync transiently rebuilds children.
   The `/sys` global stays unclonled (it is disposable). **`RegistryBase.py`
-  is ONE shared file** (`scripts/shared/RegistryBase.py`): every master's
-  `RegistryBase` DAT points at it via plain TD `file`+`syncfile` (NO Embody
-  tag or tsv row -- an Embody-tracked DAT identity on a much-copied module
-  is how the tracker once adopted a stray copy and dragged files away), and
-  host copies + `/sys` copies follow automatically through clone sync /
-  promotion. A base fix edits one file and hot-propagates to every registry;
-  portable releases still embed the text, so shipped toxes stay standalone.
-  PaneTypeRegistry (v0.1.0, on the shared base) distributes via the TD
-  Palette: its live instance is file-bound for dev, but palette saves go
-  through an unbind-save-rebind step so the palette tox ships with the
-  text embedded and NO file bindings (a repo-relative binding would
-  dangle in foreign projects).
+  is ONE shared dev file** (`scripts/shared/RegistryBase.py`): every master's
+  `RegistryBase` DAT points at it via plain TD `file`+`syncfile`, and hosts +
+  `/sys` copies follow automatically through clone sync / promotion -- a base
+  fix edits one file and hot-propagates to every registry. Releases stay
+  standalone because release flows strip external file references and ship
+  the text embedded. The base DATs carry NO Embody tag or tsv row (an
+  Embody-tracked DAT identity on a much-copied module is how the tracker
+  once adopted a stray copy and dragged files away). PaneTypeRegistry
+  additionally distributes via the TD Palette: palette saves go through an
+  unbind-save-rebind step so the palette tox ships with the text embedded
+  and NO file bindings (a repo-relative binding would dangle in foreign
+  projects).
 - **Release scrubbing of clones**: shipped copies must NOT carry the clone
   par. The registry's own `pre_release` scrubs it for standalone releases;
   every HOSTING TOOL's `pre_release` carries an auto-added scrub block for

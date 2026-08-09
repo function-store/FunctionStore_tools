@@ -209,9 +209,17 @@ class NavbarRegistryExt(RegistryBase):
 			inst = bar.copy(source, name=name)
 			inst.tags.add(self.ITEM_TAG)
 			inst.store('nbsrc', int(source.id))
-			inst.allowCooking = True  # sources ship parked with cooking off
+			inst.allowCooking = True
 			inst.nodeX = 500 + (len(bar.ops(self.ITEM_PREFIX + '*')) - 1) * 200
 			inst.nodeY = -700
+			# sources carry their own registry host INSIDE them (each
+			# component ships standalone); the bar copy must not -- the
+			# /sys-or-/ui guard would neutralize it anyway, but keep
+			# instances lean
+			embedded = inst.op('NavbarRegistry')
+			if embedded is not None:
+				embedded.par.Autoregister = False
+				embedded.destroy()
 		if kind == 'logic':
 			return  # presence is the whole contract
 		self._anchorItem(inst, bar)
