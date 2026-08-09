@@ -95,11 +95,17 @@ class ToolbarRegistryExt(RegistryBase):
 			return None
 		return self._resolvePanelOp(info)
 
+	def _isDividerEntry(self, info):
+		return bool(info) and info.get('divider') == '1'
+
 	def _injectWidget(self, canonical):
 		bar = self._bar()
 		if not bar:
 			return
 		info = self.stored['PaneRegistry'].get(canonical)
+		if self._isDividerEntry(info):
+			self._injectDivider(canonical, info, bar)
+			return
 		widget = self.WidgetTarget(canonical)
 		if widget is None:
 			debug(f'{self.REGISTRY_NAME}: no live widget for {canonical!r}, skipping inject')
@@ -128,6 +134,32 @@ class ToolbarRegistryExt(RegistryBase):
 		self._anchorMirror(mirror, bar)
 		# The registry is the manager: order and visibility come from the
 		# central entry, not from any table.
+		order = self._normalizeMenuOrder(info.get('menu_order'))
+		if order is None:
+			order = len(bar.ops(self.MIRROR_PREFIX + '*'))
+		self._setConst(mirror.par.display, 0 if info.get('display', '1') == '0' else 1)
+		self._setConst(mirror.par.alignorder, self.MIRROR_ORDER_BASE + order)
+
+	def _injectDivider(self, canonical, info, bar):
+		"""Virtual divider: a registry-owned blank panel -- no source widget."""
+		name = self._mirrorName(canonical)
+		mirror = bar.op(name)
+		if mirror is not None and mirror.OPType != 'containerCOMP':
+			mirror.destroy()
+			mirror = None
+		if mirror is None:
+			mirror = bar.create(containerCOMP, name)
+			mirror.tags.add(self.MIRROR_TAG)
+			siblings = bar.ops(self.MIRROR_PREFIX + '*')
+			mirror.nodeX = 500 + (len(siblings) - 1) * 200
+			mirror.nodeY = -700
+		try:
+			self._setConst(mirror.par.w, max(1, int(info.get('width', '3') or 3)))
+		except (TypeError, ValueError):
+			self._setConst(mirror.par.w, 3)
+		self._setConst(mirror.par.h, self.BAR_ICON_HEIGHT)
+		self._setConst(mirror.par.bgalpha, 0)
+		self._anchorMirror(mirror, bar)
 		order = self._normalizeMenuOrder(info.get('menu_order'))
 		if order is None:
 			order = len(bar.ops(self.MIRROR_PREFIX + '*'))
@@ -224,14 +256,14 @@ class ToolbarRegistryExt(RegistryBase):
 	# --- public API ---
 
 	def RegisterWidget(self, widget_op, canonical_name, order=None, display=True,
-					   callback=None, source_registry=None):
+					   callback=None, source_registry=None, width=None):
 		"""Publish a panel COMP as a toolbar widget under canonical_name."""
 		if not self._is_sys_global():
 			api = self._registryApi()
 			if api is not self:
 				return api.RegisterWidget(
 					widget_op, canonical_name, order=order, display=display,
-					callback=callback, source_registry=source_registry)
+					callback=callback, source_registry=source_registry, width=width)
 			debug(f'{self.REGISTRY_NAME}: RegisterWidget ignored on {self.ownerComp.path}'
 				  f' -- no global /sys registry ready')
 			return
@@ -253,6 +285,11 @@ class ToolbarRegistryExt(RegistryBase):
 		norm_order = self._normalizeMenuOrder(order)
 		if norm_order is not None:
 			entry['menu_order'] = norm_order
+		try:
+			if width and int(width) > 0:
+				entry['width'] = str(max(1, min(int(width), 800)))
+		except (TypeError, ValueError):
+			pass
 		if callback is not None:
 			entry['callback_path'] = callback.path
 			entry['callback_id'] = int(callback.id)
@@ -309,6 +346,7 @@ class ToolbarRegistryExt(RegistryBase):
 		if not info:
 			return
 		info['display'] = '1' if visible else '0'
+		self._writeBackHostPar(info, 'Displayed', 1 if visible else 0)
 		self._syncSurface()
 
 	@property
@@ -323,6 +361,21 @@ class ToolbarRegistryExt(RegistryBase):
 		if api is not self:
 			return api.WidgetSequence
 		return self._registeredNamesInOrder()
+
+	def _writeBackHostPar(self, info, par_name, value):
+		"""Persist a manager edit onto the entry's host publisher par
+		(compare-before-set so host callbacks do not storm)."""
+		src_reg = self._resolveSourceRegistry(info)
+		if src_reg is None:
+			return
+		p = getattr(src_reg.par, par_name, None)
+		if p is None:
+			return
+		try:
+			if str(p.eval()) != str(value):
+				p.val = value
+		except Exception:
+			pass
 
 	def SetWidgetSequence(self, canonical_names):
 		"""Manager API: reassign order 1..N from the given full sequence.
@@ -344,6 +397,9 @@ class ToolbarRegistryExt(RegistryBase):
 			if name not in canonical_names:
 				entries[name]['menu_order'] = order
 				order += 1
+		for name, info in entries.items():
+			if 'menu_order' in info:
+				self._writeBackHostPar(info, 'Menuorder', info['menu_order'])
 		self._syncSurface()
 
 	DIVIDER_TAG = 'ToolbarRegistryDivider'
@@ -360,11 +416,13 @@ class ToolbarRegistryExt(RegistryBase):
 			return False
 		if width in (None, '', 0, '0'):
 			info.pop('width', None)
+			self._writeBackHostPar(info, 'Barwidth', 0)
 		else:
 			try:
 				info['width'] = str(max(1, min(int(width), 800)))
 			except (TypeError, ValueError):
 				return False
+			self._writeBackHostPar(info, 'Barwidth', info['width'])
 		self._syncSurface()
 		return True
 
@@ -372,57 +430,67 @@ class ToolbarRegistryExt(RegistryBase):
 	def SetDividerWidth(self, canonical_name, width):
 		return self.SetWidgetWidth(canonical_name, width)
 
-	def AddDivider(self, after=None, width=None):
-		"""Manager API: create a registry-owned divider widget and register
-		it (after the given canonical name, or at the end). The widget is
-		copied from the toolbar package's divider template and lives in its
-		widgets shelf."""
+	def RegisterDivider(self, canonical_name, order=None, width=None, display=True):
+		"""Publish a VIRTUAL divider -- a registry-owned blank separator with
+		no backing widget. Works anywhere the registry works. Persistence is
+		the publisher's job (the Toolbar Configurator owns its dividers)."""
 		api = self._registryApi()
 		if api is not self:
-			return api.AddDivider(after=after)
-		tb = self._toolbarComp()
-		shelf = tb.op('widgets') if tb else None
-		template = shelf.op('FNS_divider1') if shelf else None
-		if template is None:
-			debug(f'{self.REGISTRY_NAME}: AddDivider needs the FNS_Toolbar package (widgets/FNS_divider1)')
-			return None
+			return api.RegisterDivider(canonical_name, order=order, width=width, display=display)
+		entry = {'virtual': '1', 'divider': '1',
+				 'display': '1' if display else '0'}
+		try:
+			entry['width'] = str(max(1, min(int(width), 400))) if width else '3'
+		except (TypeError, ValueError):
+			entry['width'] = '3'
+		norm = self._normalizeMenuOrder(order)
+		if norm is not None:
+			entry['menu_order'] = norm
+		self.stored['PaneRegistry'][canonical_name] = entry
+		if self._barReady():
+			self._injectWidget(canonical_name)
+		elif not self._pane_sync_queued:
+			self._syncSurface()
+		return canonical_name
+
+	def AddDivider(self, after=None, width=None):
+		"""Manager API: insert a new virtual divider after the given
+		canonical name (or at the end)."""
+		api = self._registryApi()
+		if api is not self:
+			return api.AddDivider(after=after, width=width)
 		i = 1
-		while shelf.op(f'divider_x{i}') or f'DividerX{i}' in self.stored['PaneRegistry']:
+		while f'DividerX{i}' in self.stored['PaneRegistry']:
 			i += 1
-		w = shelf.copy(template, name=f'divider_x{i}')
-		w.tags.add(self.DIVIDER_TAG)
-		w.nodeY = template.nodeY - 200 * i
-		if width is not None:
-			try:
-				w.par.w = max(1, min(int(width), 400))
-			except (TypeError, ValueError):
-				pass
 		canonical = f'DividerX{i}'
 		seq = self._registeredNamesInOrder()
 		if after in seq:
 			seq.insert(seq.index(after) + 1, canonical)
 		else:
 			seq.append(canonical)
-		self.RegisterWidget(w, canonical)
+		self.RegisterDivider(canonical, width=width)
 		self.SetWidgetSequence(seq)
 		return canonical
 
 	def RemoveDivider(self, canonical_name):
-		"""Manager API: unregister and destroy a registry-owned divider.
-		Refuses widgets it does not own (no DIVIDER_TAG)."""
+		"""Manager API: remove a divider (virtual, or a legacy widget-based
+		one, which also destroys its DIVIDER_TAG-owned widget)."""
 		api = self._registryApi()
 		if api is not self:
 			return api.RemoveDivider(canonical_name)
 		info = self.stored['PaneRegistry'].get(canonical_name)
 		if not info:
 			return False
+		if self._isDividerEntry(info):
+			self.UnregisterWidget(canonical_name)
+			return True
 		w = self._resolvePanelOp(info)
-		if w is None or self.DIVIDER_TAG not in w.tags:
-			debug(f'{self.REGISTRY_NAME}: RemoveDivider refused -- {canonical_name!r} is not a registry-owned divider')
-			return False
-		self.UnregisterWidget(canonical_name)
-		w.destroy()
-		return True
+		if w is not None and self.DIVIDER_TAG in w.tags:
+			self.UnregisterWidget(canonical_name)
+			w.destroy()
+			return True
+		debug(f'{self.REGISTRY_NAME}: RemoveDivider refused -- {canonical_name!r} is not a divider')
+		return False
 
 	def _validateWidget(self, widget_op):
 		if widget_op is None:
@@ -470,12 +538,20 @@ class ToolbarRegistryExt(RegistryBase):
 		api = self._registryApi()
 		if prev and prev != canonical:
 			self._unregisterOwnedMenuName(prev, api=api)
+		bar_width = None
+		if hasattr(self.ownerComp.par, 'Barwidth'):
+			try:
+				bw = int(self.ownerComp.par.Barwidth.eval())
+				bar_width = bw if bw > 0 else None
+			except (TypeError, ValueError):
+				pass
 		api.RegisterWidget(
 			widget, canonical,
 			order=self._hostMenuOrder(),
 			display=display,
 			callback=self._hostCallbackDat(),
 			source_registry=self.ownerComp,
+			width=bar_width,
 		)
 		self.stored['HostCanonical'] = canonical
 		self._setRegStatus(f'Registered: {canonical} -> {widget.path}')

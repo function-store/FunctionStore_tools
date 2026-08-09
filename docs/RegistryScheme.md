@@ -77,9 +77,16 @@ historical name, shared by all registries) as **plain-string dicts**:
   and enum members defined in a DAT module fail pickle's identity check
   after a reinit.
 
-**Persistence model: the global table is deliberately ephemeral.** The
-source of truth is the hosts: on every project open each `Autoregister`ed
-host republishes. The global additionally runs a **healing watch** (every
+**Persistence model: the global table is deliberately ephemeral** (`/sys`
+is NOT saved with the project). The source of truth is the publishers: on
+every open each `Autoregister`ed host republishes, and **manager edits
+write BACK to host pars** (`Menuorder`, `Displayed`, `Barwidth` —
+compare-before-set so host callbacks don't storm). Entries a UI component
+owns (the configurator's dividers, its gear, built-in overrides) persist in
+that component's own state table, republished on its boot. **Virtual
+entries** (`virtual: '1'`, e.g. dividers) have no backing operator; base
+healing skips them, and they exist only as long as some publisher
+re-registers them. The global additionally runs a **healing watch** (every
 120 frames): re-resolve moved ops, ask live sources to republish missing
 targets, drop entries whose host died, and (surface hook) re-inject anything
 the surface lost — this is also what makes a late-arriving surface work.
@@ -192,7 +199,9 @@ copy/create alone is rarely the whole contract.
 - **A tool that publishes** ships: its widget/panel + a configured registry
   host copy (`Comp`, `Canonicalname`, `Autoregister=on`). See
   `VSCodeTools/ToolbarRegistry` for the canonical example.
-- **Management UI is a SEPARATE package that publishes like any tool.** With
+- **Management UI is a SEPARATE package that implies a registry, never
+  ships one.** Without a registry it degrades to standalone mode (managing
+  TD's built-in bar icons via its state table).  With
   host cloning, anything inside the registry replicates into every host and
   every tool's tox — so the registry ships NO widgets at all. The editor
   (`ToolbarConfigurator`, `modules/release/ToolbarConfigurator.tox`) ships

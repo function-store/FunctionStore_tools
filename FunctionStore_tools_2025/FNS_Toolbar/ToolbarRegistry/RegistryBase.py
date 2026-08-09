@@ -650,6 +650,8 @@ class RegistryBase:
 	def _healRegistryEntries(self):
 		"""Update renamed paths; drop entries whose COMP or source registry is gone."""
 		for name, info in list(self.stored['PaneRegistry'].items()):
+			if info.get('virtual') == '1':
+				continue  # virtual entries (dividers) have no backing op by design
 			try:
 				info = dict(info)
 			except (TypeError, AttributeError):
