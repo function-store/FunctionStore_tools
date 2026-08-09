@@ -7,7 +7,9 @@
 
 comp = me.parent()
 
-for key in ('PaneRegistry', 'HostCanonical'):
+# StorageManager keeps its items inside one container key
+# ('ToolbarRegistryExtStored'); legacy top-level keys scrubbed too.
+for key in ('ToolbarRegistryExtStored', 'PaneRegistry', 'HostCanonical'):
 	if key in comp.storage:
 		comp.unstore(key)
 

@@ -199,9 +199,24 @@ copy/create alone is rarely the whole contract.
 - **A tool that publishes** ships: its widget/panel + a configured registry
   host copy (`Comp`, `Canonicalname`, `Autoregister=on`). See
   `VSCodeTools/ToolbarRegistry` for the canonical example.
-- **Management UI is a SEPARATE package that implies a registry, never
-  ships one.** Without a registry it degrades to standalone mode (managing
-  TD's built-in bar icons via its state table).  With
+- **Management UI is a SEPARATE package -- and the system's bootstrap
+  seed.** The Toolbar Configurator ships ONE ToolbarRegistry host that
+  plays three roles: bootstrap (alone in a fresh project it promotes the
+  /sys global and self-installs the gear), gear publisher (the gear's
+  order/display/width persist on that host's Registration pars like any
+  tool), and drop-to-register template. **Drop-to-register:** drop any
+  panel COMP onto the gear (modern Drag/Drop callbacks on btn_config:
+  `onHoverStartGetAccept` filters to panel COMPs, `onDropGetResults` ->
+  `PackageDrop`) and the Configurator copies its shipped host inside the
+  dropped COMP (`Comp='..'`, canonical = comp name, order = max+1) and
+  registers it -- the COMP becomes a portable self-registering package.
+  Stamping is DEFERRED a few frames and the template's `enablecloning`
+  is off during the copy: copying a clone-bound COMP inside the
+  drop-event stack has crashed TD. Scrub the copy's storage via its
+  StorageManager CONTAINER key (`ToolbarRegistryExtStored`) -- the
+  per-item keys are not top-level storage entries. Without any registry
+  the Configurator still degrades to standalone mode (built-in bar icons
+  only).  With
   host cloning, anything inside the registry replicates into every host and
   every tool's tox — so the registry ships NO widgets at all. The editor
   (`ToolbarConfigurator`, `modules/release/ToolbarConfigurator.tox`) ships
