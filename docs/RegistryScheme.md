@@ -216,7 +216,16 @@ copy/create alone is rarely the whole contract.
   StorageManager CONTAINER key (`ToolbarRegistryExtStored`) -- the
   per-item keys are not top-level storage entries. Without any registry
   the Configurator still degrades to standalone mode (built-in bar icons
-  only).  With
+  only). 
+- **Entries carry the tool's wiki page (`help_url`, 0.6.0).** On
+  registration the host resolves it from its `Helpurl` par when set,
+  else auto-discovers from the registered panel or its parent: a
+  `docsHelper` COMP (its `Url` par), or a `Url`/`Helpurl`/`Wikipage`
+  custom par on the panel itself -- both pre-registry self-reporting
+  conventions keep working with zero tool changes. `RegisterWidget`
+  accepts `help_url=`; `OpenDocs(canonical)` opens it (`ui.viewFile`).
+  Configurator surface: right-click the Name cell.
+ With
   host cloning, anything inside the registry replicates into every host and
   every tool's tox — so the registry ships NO widgets at all. The editor
   (`ToolbarConfigurator`, `modules/release/ToolbarConfigurator.tox`) ships

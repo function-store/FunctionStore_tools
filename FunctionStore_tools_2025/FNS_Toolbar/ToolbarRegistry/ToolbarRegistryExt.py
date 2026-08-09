@@ -256,14 +256,15 @@ class ToolbarRegistryExt(RegistryBase):
 	# --- public API ---
 
 	def RegisterWidget(self, widget_op, canonical_name, order=None, display=True,
-					   callback=None, source_registry=None, width=None):
+					   callback=None, source_registry=None, width=None, help_url=None):
 		"""Publish a panel COMP as a toolbar widget under canonical_name."""
 		if not self._is_sys_global():
 			api = self._registryApi()
 			if api is not self:
 				return api.RegisterWidget(
 					widget_op, canonical_name, order=order, display=display,
-					callback=callback, source_registry=source_registry, width=width)
+					callback=callback, source_registry=source_registry, width=width,
+					help_url=help_url)
 			debug(f'{self.REGISTRY_NAME}: RegisterWidget ignored on {self.ownerComp.path}'
 				  f' -- no global /sys registry ready')
 			return
@@ -290,6 +291,8 @@ class ToolbarRegistryExt(RegistryBase):
 				entry['width'] = str(max(1, min(int(width), 800)))
 		except (TypeError, ValueError):
 			pass
+		if help_url:
+			entry['help_url'] = str(help_url)
 		if callback is not None:
 			entry['callback_path'] = callback.path
 			entry['callback_id'] = int(callback.id)
@@ -552,9 +555,48 @@ class ToolbarRegistryExt(RegistryBase):
 			callback=self._hostCallbackDat(),
 			source_registry=self.ownerComp,
 			width=bar_width,
+			help_url=self._hostHelpUrl(widget),
 		)
 		self.stored['HostCanonical'] = canonical
 		self._setRegStatus(f'Registered: {canonical} -> {widget.path}')
+
+	def _hostHelpUrl(self, widget):
+		"""The tool's self-reported wiki page: the host's Helpurl par when
+		set, else auto-discovered from the registered panel or its parent --
+		either a docsHelper COMP (its Url par) or a Url/Wikipage custom par
+		on the panel itself (both pre-registry self-reporting conventions)."""
+		if hasattr(self.ownerComp.par, 'Helpurl'):
+			u = str(self.ownerComp.par.Helpurl.eval()).strip()
+			if u:
+				return u
+		for holder in (widget, widget.parent()):
+			if holder is None:
+				continue
+			dh = holder.op('docsHelper')
+			if dh is not None and hasattr(dh.par, 'Url'):
+				u = str(dh.par.Url.eval()).strip()
+				if u:
+					return u
+			for par_name in ('Url', 'Helpurl', 'Wikipage'):
+				p = getattr(holder.par, par_name, None)
+				if p is not None and p.isCustom:
+					u = str(p.eval()).strip()
+					if u:
+						return u
+		return None
+
+	def OpenDocs(self, canonical_name):
+		"""Open the tool's self-reported wiki/help page, if it has one."""
+		api = self._registryApi()
+		if api is not self:
+			return api.OpenDocs(canonical_name)
+		info = self.stored['PaneRegistry'].get(canonical_name) or {}
+		url = info.get('help_url')
+		if not url:
+			debug(f'{self.REGISTRY_NAME}: no help URL registered for {canonical_name!r}')
+			return False
+		ui.viewFile(url)
+		return True
 
 	# --- CustomParHelper callbacks (Registration page) ---
 
