@@ -433,6 +433,11 @@ class RegistryBase:
 			ext = getattr(registry_comp.ext, self.EXT_NAME)
 			ext._stripHostParameters()
 			ext._syncSurface()
+			# The copy's own postInit ran BEFORE the shortcut existed (host
+			# branch), so the healing watch was never armed there. Arm it now
+			# that the comp is the sys-global -- without this, a first-compile
+			# success promotes a global with no heal loop.
+			ext._armRegistryWatch()
 
 	def _destroy_other_globals(self, keep=None):
 		keep = keep or self.ownerComp
@@ -484,6 +489,7 @@ class RegistryBase:
 			self._destroy_other_globals()
 			self.ownerComp.par.opshortcut = self.SHORTCUT
 			self._syncSurface()
+			self._armRegistryWatch()
 			return
 
 		sys_comp = self._sys_comp()

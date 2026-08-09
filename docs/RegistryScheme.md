@@ -12,8 +12,38 @@ Current implementations:
 |---|---|---|---|
 | `PaneTypeRegistry` | `op.PANETYPEREGISTRY` | Panebar pane-type menu (rows, recall, right-click) | `PreviewPanel25/PaneTypeRegistry` |
 | `ToolbarRegistry` | `op.TOOLBARREGISTRY` | Toolbar widgets (mirrors in `/ui/dialogs/bookmark_bar`) | `FNS_Toolbar/ToolbarRegistry` |
+| `NavbarRegistry` | `op.NAVBARREGISTRY` | TD's pane bars (stamped copies in `panebar_default` + every `/ui/panes/panebar/*`) | `FNS_Navbar/NavbarRegistry` |
 
-Planned: `NavbarRegistry` (same scheme, navbar surface).
+### NavbarRegistry surface specifics (how it differs from the toolbar)
+
+- **Plural surface.** The navbar is TD's own pane bar: `/ui/dialogs/panebar/panebar_default`
+  (the template new panes inherit from) PLUS one live bar per open pane. Sync and the
+  healing tick walk ALL of them; a pane split after the last sync is populated by the
+  next watch tick.
+- **Stamped copies, not selectCOMP mirrors.** Every pane bar needs its OWN instance
+  (a breadcrumb shows ITS pane's path; mirrors would show one source everywhere), and
+  two entry kinds cannot be mirrored at all. Instances are `nbitem_<canonical>` copies
+  tagged `NavbarRegistryItem`, `allowCooking` re-enabled (sources ship parked
+  cook-disabled), re-stamped when the registered source changes (`RefreshWidget`).
+- **`side` is first-class** (`left` | `right`, the user-visible left/right adjacency).
+  TD's stock items are NEVER renumbered: at sync time the registry finds the in-flow
+  `hmode=fill` pivot (`panenav`, the path area) and fractionally subdivides the open
+  interval between the last stock-left item and the pivot (left side), or the pivot and
+  the first stock-right item (right side). Recomputed live, so Derivative inserting
+  their own fractional items (e.g. `homeAll` 5.4, `root` 5.5) heals on the next pass.
+- **`kind` is first-class**: `widget` (aligned panel; height soft-enforced to the bar's
+  inner height via the legacy `me.panelParent()` expression), `overlay` (out-of-flow
+  panel, e.g. the click-through path-cell layer -- shown/hidden but never re-ordered),
+  `logic` (non-panel COMP that just needs a running copy inside every bar, e.g. the
+  drag-drop hijacker).
+- **Display expressions survive.** A manager hide writes constant 0, but while an entry
+  says "shown", a template's own display EXPRESSION is preserved.
+- **Manager API deltas**: `SetWidgetSide`, `SideSequences`, `RefreshWidget`;
+  `SetWidgetSequence` reassigns 1..N per side (widgets keep their side). No dividers on
+  this surface. `NavbarConfigurator` (gear in the bar, `op.NAVBARCONFIG`) has Name /
+  Side / Show / Origin columns -- Side cell click flips the side.
+- **The legacy installer is retired**: `FNS_Navbar/execute1` inactive, `install.py`
+  frozen on disk; sources stay parked in `FNS_Navbar/containers`.
 
 ---
 
@@ -289,3 +319,74 @@ copy/create alone is rarely the whole contract.
    load-test the tox in a scratch COMP.
 8. Cold test: restart TD (or drop the tox in a bare project) and verify the
    full bootstrap.
+
+## 9. Migrating a legacy surface to the registry scheme (lessons from the toolbar port)
+
+What the toolbar port replaced: a monolith whose installer copied REAL
+button COMPs into `/ui/dialogs/bookmark_bar` on every launch, a
+`ToolbarDef` table owning order/visibility, widget-based dividers, a
+chrome-publisher script, and per-button self-reported wiki URLs. The
+registry scheme replaces all of it with host publishers + `/sys` manager +
+mirrors. The order below is the one that worked; the lessons were paid for.
+
+### Migration order that worked
+
+1. **Extract the base from the most mature LIVE registry** (RegistryBase
+   came from the working PaneTypeRegistry, not from a blank page), then
+   build the new surface registry on it.
+2. **Prove the contract on ONE pilot tool** (drop the package into a bare
+   project, watch it self-install) before touching the fleet.
+3. **Retire the definition table only when the registry owns
+   order/visibility** — never run two managers over the same surface.
+4. **Fleet rollout, one tool at a time**: copy the master host in, clone
+   par as an EXPRESSION (never a relative path), set Registration pars
+   (panel = sibling name), `Autoregister` on, deferred force-apply.
+   Tools stay standalone packages — do NOT fold them into the surface
+   package.
+5. **Chrome pieces get real hosts too.** A publisher *script* has no
+   pars to write back to — every entry needs a live host or persistence
+   breaks for it.
+6. **Dividers become virtual entries** owned by the manager UI's state
+   table — widgets that exist only to be gaps should not be operators.
+7. **Metadata rides discovery, not migration.** For self-reported data
+   (help/wiki URLs) teach `_hostHelpUrl`-style discovery to read the
+   legacy conventions in place instead of copying values into the new
+   scheme — copies go stale the moment the source is edited. Survey
+   first: the field had TWO conventions (`docsHelper` child with `Url`
+   par, and bare `Url`/`Wikipage` pars on the button itself).
+8. **Parity-audit against the legacy artifact before retiring it.** Load
+   the old tox in a scratch spot, build the legacy name→value map, diff
+   byte-for-byte against the registry entries (toolbar port scored 20/20
+   on URLs only because two discovery conventions were implemented).
+9. **Only then delete legacy remains**: the bar's installed button
+   copies, definition-table relics, and the legacy comp itself.
+
+### Lessons
+
+- **The legacy installer re-installs on EVERY launch.** Loading the old
+  tox anywhere — even "just to check" — repopulates the bar with real
+  buttons next to the mirrors. After ANY contact with the legacy comp,
+  audit `emptypanel`'s output connections, and never let the comp
+  survive into a project save.
+- **The legacy .toe carries zombie shells** (Embody save-strip leftovers)
+  that reinfect the bar after restarts — hunt `*1`-suffixed shells and
+  stale externalization tags inside the legacy container too, not just in
+  the bar.
+- **Mixed-era menu orders drift the sequence.** Legacy 1-based table
+  orders meeting normalized sequence indices shift dividers by one on
+  every republish. After the whole fleet publishes, renormalize ONCE with
+  `SetWidgetSequence` — write-back then stamps consistent contiguous
+  orders into every host par and state row, and the drift cannot recur.
+- **Never strip user-tooling tags** (`pi_suspect`, `FNS_externalized`) in
+  legacy-cleanup sweeps; they belong to Private Investigator and Embody,
+  not to the old toolbar.
+- **External-tox reload trumps the .toe on boot.** The surface package
+  reloads from its suspects `.tox` on start, so a stale tox silently
+  reverts live-only migration work after a crash or restart — re-save the
+  suspects tox as part of EVERY landing, not just the .toe.
+- **Same-frame verification lies.** Connector lists and par-callback
+  effects read stale in the frame that mutated them — verify a destroy or
+  re-anchor only after real frames pass.
+- **Keep the legacy artifact until the parity audit passes.** It is the
+  only authoritative record of per-tool metadata (URLs, orders, widths);
+  delete it only after the diff comes back clean.
