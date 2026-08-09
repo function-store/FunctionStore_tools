@@ -161,13 +161,27 @@ copy/create alone is rarely the whole contract.
 
 ## 6. Packaging and distribution
 
-- **Master vs copies**: each registry has ONE dev master (table §top). Rule:
-  *edit only the master, then re-copy into shipped hosts.* Runtime version
-  promotion protects users from stale copies; nothing protects developers —
-  discipline does. `RegistryBase.py` currently exists per-package (each
-  package self-sufficient by design); base fixes are applied to every
-  master. Note the masters' `/sys` copies file-sync from the SAME `.py`
-  files, so editing a master hot-updates the live global too.
+- **Master vs copies — in-project hosts are CLONES.** Every tool host's
+  `clone` par is an EXPRESSION on the stable global shortcut —
+  `op.FNS_TOOLBAR.op('ToolbarRegistry') if hasattr(op, 'FNS_TOOLBAR') else None`
+  — never a relative path (paths bake in hierarchy assumptions and break on
+  re-parenting; note par OP paths resolve from the PARENT network,
+  sibling-based). The guard makes cloning vanish silently where the toolbar
+  package is absent. Master edits propagate live; host-specific Registration par VALUES are
+  untouched by cloning. Two hazards paid for: cloning breaks `me.dock`
+  references inside the clone (the ExtUtils `extParameter` Pages expr was
+  rewritten dock-free), and a clone re-sync transiently rebuilds children.
+  The `/sys` global stays unclonled (it is disposable). `RegistryBase.py`
+  exists per-package; base fixes are applied to every master, whose `/sys`
+  copies file-sync from the SAME `.py` files.
+- **Release scrubbing of clones**: shipped copies must NOT carry the clone
+  par. The registry's own `pre_release` scrubs it for standalone releases;
+  every HOSTING TOOL's `pre_release` carries an auto-added scrub block for
+  nested hosts (nested components' own hooks do NOT run when a parent is
+  released — by Embody, and releases also go through Private Investigator,
+  which supports the same `pre_release` convention). Belt-and-suspenders:
+  the global's healing tick re-asserts host cloning in-project
+  (`_healHostClones`), so even a live-comp scrub self-repairs.
 - **Release artifact**: `op.Embody.ExportPortableTox(target, save_path)` →
   `modules/release/<Name>.tox`. The component's `pre_release` hook runs on
   the staged copy and scrubs all host state (Registration pars, `PaneRegistry`
@@ -178,6 +192,13 @@ copy/create alone is rarely the whole contract.
 - **A tool that publishes** ships: its widget/panel + a configured registry
   host copy (`Comp`, `Canonicalname`, `Autoregister=on`). See
   `VSCodeTools/ToolbarRegistry` for the canonical example.
+- **Management UI is a SEPARATE package, never inside the registry.** With
+  host cloning, anything inside the registry replicates into every host and
+  every tool's tox — so the registry ships only a tiny launcher (the gear
+  `btn_config`, ~2 KB) while the heavyweight editor (`ToolbarConfigurator`,
+  its own `modules/release/ToolbarConfigurator.tox`) is discovered at
+  runtime via its `TOOLBARCONFIG` global shortcut, with a toolbar-package
+  child lookup as fallback. Missing editor = a debug note, nothing breaks.
 
 ## 7. Known hazards (paid for once — do not rediscover)
 

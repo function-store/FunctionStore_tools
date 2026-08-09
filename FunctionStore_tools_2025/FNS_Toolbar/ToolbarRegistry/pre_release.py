@@ -20,3 +20,4 @@ p.Menuorder = -1
 p.Displayed = True
 p.Callback = ''
 p.opshortcut = ''
+p.clone = ''  # never ship with in-project cloning on

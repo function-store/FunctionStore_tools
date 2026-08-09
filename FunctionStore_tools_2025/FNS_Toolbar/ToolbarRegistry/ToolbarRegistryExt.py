@@ -38,6 +38,7 @@ class ToolbarRegistryExt(RegistryBase):
 		Defers until TD's bookmark bar exists."""
 		self._pane_sync_queued = False
 		if self._barReady():
+			self._ensureConfigEntry()
 			self._pruneMirrors()
 			for canonical in self._registeredNamesInOrder():
 				self._injectWidget(canonical)
@@ -115,6 +116,36 @@ class ToolbarRegistryExt(RegistryBase):
 		self._setConst(mirror.par.display, 0 if info.get('display', '1') == '0' else 1)
 		self._setConst(mirror.par.alignorder, self.MIRROR_ORDER_BASE + order)
 
+	CONFIG_CANONICAL = 'Configure'
+	# 0 sorts before every published widget (they start at 1), so the gear
+	# sits left-most, right after TD's own built-in bar items.
+	CONFIG_ORDER = 0
+
+	def _ensureConfigEntry(self):
+		"""Register the registry's own gear button (ships dormant in every
+		copy; only the sys-global publishes it, pinned at the bar's end)."""
+		if not self._is_sys_global():
+			return
+		btn = self.ownerComp.op('btn_config')
+		if btn is None or self.CONFIG_CANONICAL in self.stored['PaneRegistry']:
+			return
+		self.RegisterWidget(btn, self.CONFIG_CANONICAL, order=self.CONFIG_ORDER)
+
+	def OpenConfigurator(self):
+		"""Open the Toolbar Configurator (lives in the FNS_Toolbar package)."""
+		api = self._registryApi()
+		if api is not self:
+			return api.OpenConfigurator()
+		cfg = getattr(op, 'TOOLBARCONFIG', None)
+		if cfg is None:
+			tb = self._toolbarComp()
+			cfg = tb.op('ToolbarConfigurator') if tb else None
+		if cfg is None or not hasattr(cfg.ext, 'ConfiguratorExt'):
+			debug(f'{self.REGISTRY_NAME}: no ToolbarConfigurator installed (needs the FNS_Toolbar package)')
+			return
+		cfg.ext.ConfiguratorExt.Refresh()
+		cfg.ext.ConfiguratorExt.Open()
+
 	def _anchorMirror(self, mirror, bar):
 		"""Wire the mirror's panel input to the bar's emptypanel -- the same
 		anchoring the original FNS_Toolbar installer applied to every copied
@@ -161,6 +192,31 @@ class ToolbarRegistryExt(RegistryBase):
 			return
 		for canonical in self._registeredNamesInOrder():
 			self._injectWidget(canonical)
+		self._healHostClones()
+
+	# Location-independent: resolves through the toolbar package's global
+	# shortcut, evaluates to None (no clone, no warning) where it is absent.
+	CLONE_EXPR = "op.FNS_TOOLBAR.op('ToolbarRegistry') if hasattr(op, 'FNS_TOOLBAR') else None"
+
+	def _healHostClones(self):
+		"""Re-assert in-project cloning on tool hosts. Release flows scrub
+		the clone par on shipped copies (pre_release); if a release tool
+		scrubbed the LIVE host instead of a staged copy, this restores it."""
+		tb = self._toolbarComp()
+		master = tb.op('ToolbarRegistry') if tb else None
+		if master is None:
+			return
+		for info in self.stored['PaneRegistry'].values():
+			src_reg = self._resolveSourceRegistry(info)
+			if src_reg is None or src_reg is master or src_reg is self.ownerComp:
+				continue
+			try:
+				p = src_reg.par.clone
+				if p.mode != ParMode.EXPRESSION or p.expr != self.CLONE_EXPR:
+					if not p.eval():
+						p.expr = self.CLONE_EXPR
+			except Exception:
+				pass
 
 	# --- public API ---
 
@@ -250,6 +306,85 @@ class ToolbarRegistryExt(RegistryBase):
 	def Widgets(self):
 		"""Manager API: snapshot of all registered widget entries."""
 		return {k: dict(v) for k, v in self.stored['PaneRegistry'].items()}
+
+	@property
+	def WidgetSequence(self):
+		"""Manager API: canonical names in current bar order."""
+		api = self._registryApi()
+		if api is not self:
+			return api.WidgetSequence
+		return self._registeredNamesInOrder()
+
+	def SetWidgetSequence(self, canonical_names):
+		"""Manager API: reassign order 1..N from the given full sequence.
+
+		Names not in the sequence keep registration but drop to the end;
+		unknown names are ignored. One surface sync at the end -- this is
+		the batch primitive a drag-reorder UI calls."""
+		api = self._registryApi()
+		if api is not self:
+			return api.SetWidgetSequence(canonical_names)
+		entries = self.stored['PaneRegistry']
+		order = 1
+		for name in canonical_names:
+			info = entries.get(name)
+			if info is not None:
+				info['menu_order'] = order
+				order += 1
+		for name in self._registeredNamesInOrder():
+			if name not in canonical_names:
+				entries[name]['menu_order'] = order
+				order += 1
+		self._syncSurface()
+
+	DIVIDER_TAG = 'ToolbarRegistryDivider'
+
+	def AddDivider(self, after=None):
+		"""Manager API: create a registry-owned divider widget and register
+		it (after the given canonical name, or at the end). The widget is
+		copied from the toolbar package's divider template and lives in its
+		widgets shelf."""
+		api = self._registryApi()
+		if api is not self:
+			return api.AddDivider(after=after)
+		tb = self._toolbarComp()
+		shelf = tb.op('widgets') if tb else None
+		template = shelf.op('FNS_divider1') if shelf else None
+		if template is None:
+			debug(f'{self.REGISTRY_NAME}: AddDivider needs the FNS_Toolbar package (widgets/FNS_divider1)')
+			return None
+		i = 1
+		while shelf.op(f'divider_x{i}') or f'DividerX{i}' in self.stored['PaneRegistry']:
+			i += 1
+		w = shelf.copy(template, name=f'divider_x{i}')
+		w.tags.add(self.DIVIDER_TAG)
+		w.nodeY = template.nodeY - 200 * i
+		canonical = f'DividerX{i}'
+		seq = self._registeredNamesInOrder()
+		if after in seq:
+			seq.insert(seq.index(after) + 1, canonical)
+		else:
+			seq.append(canonical)
+		self.RegisterWidget(w, canonical)
+		self.SetWidgetSequence(seq)
+		return canonical
+
+	def RemoveDivider(self, canonical_name):
+		"""Manager API: unregister and destroy a registry-owned divider.
+		Refuses widgets it does not own (no DIVIDER_TAG)."""
+		api = self._registryApi()
+		if api is not self:
+			return api.RemoveDivider(canonical_name)
+		info = self.stored['PaneRegistry'].get(canonical_name)
+		if not info:
+			return False
+		w = self._resolvePanelOp(info)
+		if w is None or self.DIVIDER_TAG not in w.tags:
+			debug(f'{self.REGISTRY_NAME}: RemoveDivider refused -- {canonical_name!r} is not a registry-owned divider')
+			return False
+		self.UnregisterWidget(canonical_name)
+		w.destroy()
+		return True
 
 	def _validateWidget(self, widget_op):
 		if widget_op is None:
