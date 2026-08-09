@@ -54,7 +54,7 @@ class PaneTypeRegistryExt(RegistryBase):
 	ACTION_NAMES = ['OWNER', 'NONE']
 	ACTION_LABELS = ['Change Owner + Type', 'None (no type change)']
 
-	CALLBACK_DAT_NAME = 'callbacks'
+	CALLBACK_DAT_NAME = 'panetype_callbacks'
 	CALLBACK_SKELETON = '''"""PaneTypeRegistry recall callbacks.
 
 Called when a registered panebar entry is selected.
@@ -158,31 +158,32 @@ def onPaneRecall(ctx):
 		# ANIMATIONEDITOR, PARAMETERS, TEXTPORT, OPBROWSER: any COMP.
 		return None
 
-	def CreateCallback(self):
-		"""Deploy a callbacks DAT skeleton and assign Callback."""
-		comp = self.ownerComp
-		existing = comp.op(self.CALLBACK_DAT_NAME)
+	def CreateCallbacks(self):
+		"""Deploy a callbacks DAT skeleton into the TOOL and assign Callback.
+
+		The DAT lives beside the host, in the registered COMP -- NOT inside
+		the host. Two reasons: hosts are clones of the master, so anything
+		inside one is replaced on the next clone sync (custom recall logic
+		would silently vanish); and the behaviour belongs to the tool that
+		owns it, travelling in that tool's tox.
+		"""
+		tool = self._hostComp() or self.ownerComp
+		existing = tool.op(self.CALLBACK_DAT_NAME)
 		if existing is None:
-			ext = comp.op('PaneTypeRegistryExt')
-			cb = comp.create(textDAT, self.CALLBACK_DAT_NAME)
+			cb = tool.create(textDAT, self.CALLBACK_DAT_NAME)
 			cb.text = self.CALLBACK_SKELETON
-			if ext is not None:
-				nx = ext.nodeX + ext.nodeWidth + 200
-				# Snap up to 200-grid (works for negative coordinates).
-				import math
-				cb.nodeX = int(math.ceil(nx / 200.0) * 200)
-				cb.nodeY = ext.nodeY
-				cb.nodeWidth = 200
-				cb.nodeHeight = max(120, ext.nodeHeight)
-			else:
-				cb.nodeX = 200
-				cb.nodeY = -50
+			cb.nodeX = self.ownerComp.nodeX + self.ownerComp.nodeWidth + 200
+			cb.nodeY = self.ownerComp.nodeY
 		else:
 			cb = existing
 			if not str(cb.text or '').strip():
 				cb.text = self.CALLBACK_SKELETON
-		if hasattr(comp.par, 'Callback'):
-			comp.par.Callback = cb
+		# a copy that came from a clone must not keep the master's identity
+		for tag in ('FNS_externalized', 'py', 'tdn', 'pi_suspect'):
+			if tag in cb.tags:
+				cb.tags.remove(tag)
+		if hasattr(self.ownerComp.par, 'Callback'):
+			self.ownerComp.par.Callback = cb
 		self._setRegStatus('Callback ready: ' + cb.path)
 		if self._isAutoRegister():
 			self._applyHostRegistration()
@@ -275,8 +276,8 @@ def onPaneRecall(ctx):
 	def onParCallback(self, _par, _val, _prev):
 		self._onParRecallSetting(_par, _val, _prev)
 
-	def onParCreatecallback(self, _par):
-		self._hostExtFromPar(_par).CreateCallback()
+	def onParCreatecallbacks(self, _par):
+		self._hostExtFromPar(_par).CreateCallbacks()
 
 	@property
 	def _panebar(self):

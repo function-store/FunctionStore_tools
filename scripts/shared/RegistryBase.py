@@ -138,9 +138,19 @@ class RegistryBase:
 						tpar.val = cur
 				except Exception:
 					pass
+			# keep presentation in sync with the host par -- labels were once
+			# copied only at creation, so a corrected host label never reached
+			# the tools that had already been promoted
+			try:
+				if tpar.label != src.label:
+					tpar.label = src.label
+				if tpar.help != src.help:
+					tpar.help = src.help
+			except Exception:
+				pass
 			# the HOST par follows the tool par
 			try:
-				expr = f"op('..').par.{tname}"
+				expr = f"parent().par.{tname}"
 				if src.bindExpr != expr or src.mode != ParMode.BIND:
 					src.bindExpr = expr
 					src.mode = ParMode.BIND

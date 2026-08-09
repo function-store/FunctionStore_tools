@@ -40,7 +40,7 @@ class OpMenuRegistryExt(RegistryBase):
 
 		def onChainNodes():
 			'''Script DATs to splice into the node table's filter chain,
-			downstream of the registry's own node, in list order.'''
+			after TD's own 'families' node, in contributor order.'''
 			return []
 
 		def onPanels():
@@ -78,12 +78,12 @@ class OpMenuRegistryExt(RegistryBase):
 	# popmenu_dispatch uses the same offset.
 	BUILTIN_MENU_ITEMS = 3
 
-	# The scriptDAT this registry splices into the node table's chain. It is
-	# the registry's OWN asset, so a registry dropped into a bare project
-	# still augments the dialog with whatever is registered.
-	NODE_NAME = 'script_inject'
-	NODE_TAG = 'OpMenuRegistryNode'
-	NODE_ANCHOR = 'families'
+	# Contributed chain stages are spliced in after TD's own 'families' node.
+	# The registry owns NO stage of its own: aggregating search words and
+	# decorators is registry work, but APPLYING them to TD's operator table
+	# is a contribution like any other (FNS_OpMenu publishes that stage), so
+	# nothing here is coupled to TD's node-table schema.
+	CHAIN_ANCHOR = 'families'
 	POPMENU_HEIGHT_EXPR = '18 * op("./itemsLayout").numRows'
 
 	# Registry-owned artifacts published BY tools: filter-chain script DATs
@@ -99,12 +99,11 @@ class OpMenuRegistryExt(RegistryBase):
 			self.stored['PaneRegistry'].clear()
 
 	def _syncSurface(self, attempts=40):
-		"""Idempotent: splice our script node into the node table's chain and
+		"""Idempotent: splice contributed stages and panels into the dialog and
 		rebuild the right-click menu from registered entries. Defers until
 		TD's Insert-Operator dialog exists."""
 		self._pane_sync_queued = False
 		if self._menuReady():
-			self._ensureChainNode()
 			self._syncChain()
 			self._syncPanels()
 			self._syncPopMenu()
@@ -124,7 +123,6 @@ class OpMenuRegistryExt(RegistryBase):
 		if not self._is_sys_global() or not self._menuReady():
 			return
 		self._reapplyAutoregisterHosts()
-		self._ensureChainNode()
 		self._syncChain()
 		self._syncPanels()
 		self._syncPopMenu()
@@ -263,27 +261,6 @@ class OpMenuRegistryExt(RegistryBase):
 		new_op.bypass = False
 		return new_op
 
-	def _ensureChainNode(self):
-		"""Make sure our scriptDAT sits in the node table right after the
-		stock 'families' node. Re-injects only when missing or stale, so the
-		heal tick does not churn the dialog every few seconds."""
-		nodetable = op(self.NODETABLE_PATH)
-		if nodetable is None:
-			return None
-		source = self.ownerComp.op(self.NODE_NAME)
-		if source is None:
-			debug(f'{self.REGISTRY_NAME}: no {self.NODE_NAME!r} inside {self.ownerComp.path}')
-			return None
-		node = nodetable.op(self.NODE_NAME)
-		if (node is not None and self.NODE_TAG in node.tags
-				and node.fetch('source_id', None) == int(source.id)):
-			return node
-		node = self._injectAfter(nodetable, nodetable.op(self.NODE_ANCHOR), source)
-		if node is None:
-			return None
-		self._adoptInjected(node, source, self.NODE_TAG)
-		return node
-
 	def _adoptInjected(self, node, source, tag):
 		"""Mark an injected copy as ours and point it at its OWN docked
 		callbacks DAT (a copied callbacks par holds the SOURCE's absolute
@@ -310,8 +287,9 @@ class OpMenuRegistryExt(RegistryBase):
 		nodetable = op(self.NODETABLE_PATH)
 		if nodetable is None:
 			return
-		anchor = self._ensureChainNode()
+		anchor = nodetable.op(self.CHAIN_ANCHOR)
 		if anchor is None:
+			debug(f'{self.REGISTRY_NAME}: no {self.CHAIN_ANCHOR!r} in {self.NODETABLE_PATH}')
 			return
 		wanted = {}
 		for canonical, fn in self._contributions('onChainNodes'):
@@ -331,6 +309,7 @@ class OpMenuRegistryExt(RegistryBase):
 			if self.CHAIN_TAG in o.tags and o.name not in wanted:
 				o.destroy()
 		prev = anchor
+		stages = []
 		for name, (canonical, src) in wanted.items():
 			node = nodetable.op(name)
 			if self._isStale(node, src, self.CHAIN_TAG):
@@ -338,7 +317,61 @@ class OpMenuRegistryExt(RegistryBase):
 				if node is None:
 					continue
 				self._adoptInjected(node, src, self.CHAIN_TAG)
+			stages.append(node)
 			prev = node
+		self._relinkChain(anchor, stages)
+
+	def _relinkChain(self, anchor, stages):
+		"""Enforce anchor -> stage1 -> ... -> stageN -> (chain consumers).
+
+		Wiring must be re-asserted for EXISTING stages too, not just newly
+		injected ones: a stage that is merely 'not stale' is still wired to
+		whatever neighbour it had when it was injected, so adding, removing
+		or re-ordering any other stage silently leaves it mis-linked (and can
+		strand TD's own downstream ops on the wrong stage).
+		"""
+		chain = [anchor] + [s for s in stages if s is not None and s.valid]
+		ours = {s.id for s in chain[1:]}
+
+		# who consumed the chain before we touched it -- remember the exact
+		# input index so a multi-input consumer is reconnected faithfully
+		consumers = []
+		for member in chain:
+			if not member.outputConnectors:
+				continue
+			for conn in member.outputConnectors[0].connections:
+				dest = conn.owner
+				if dest is None or not dest.valid or dest.id in ours:
+					continue
+				for idx, in_conn in enumerate(dest.inputConnectors):
+					if any(c.owner is member for c in in_conn.connections):
+						if (dest, idx) not in consumers:
+							consumers.append((dest, idx))
+
+		# link the stages in contributor order
+		for i in range(1, len(chain)):
+			node, want = chain[i], chain[i - 1]
+			if not node.inputConnectors:
+				continue
+			first = node.inputConnectors[0]
+			if not (len(first.connections) == 1 and first.connections[0].owner is want):
+				first.disconnect()
+				first.connect(want)
+			for extra in node.inputConnectors[1:]:
+				if extra.connections:
+					extra.disconnect()
+
+		# the LAST stage feeds whatever consumed the chain
+		tail = chain[-1]
+		if tail.outputConnectors:
+			for dest, idx in consumers:
+				if idx >= len(dest.inputConnectors):
+					continue
+				in_conn = dest.inputConnectors[idx]
+				if not any(c.owner is tail for c in in_conn.connections):
+					in_conn.disconnect()
+					in_conn.connect(tail)
+		return tail
 
 	def _syncPanels(self):
 		"""Inject every publisher's dialog panels, anchored to the panel
@@ -379,14 +412,6 @@ class OpMenuRegistryExt(RegistryBase):
 			d = getattr(panel.par, 'display', None)
 			if d is not None:
 				self._setConst(d, 1)
-
-	def ChainNode(self):
-		"""The live injected scriptDAT, for tools that chain onto it."""
-		nodetable = op(self.NODETABLE_PATH)
-		if nodetable is None:
-			return None
-		node = nodetable.op(self.NODE_NAME)
-		return node if node is not None and self.NODE_TAG in node.tags else None
 
 	def _syncPopMenu(self):
 		"""Rebuild the node table's right-click menu: TD's stock items first,

@@ -47,15 +47,29 @@ Current implementations:
   travels in OpTemplates' tox. **One host per tool** -- capabilities are
   discovered, not declared, so a tool contributing three different things
   still ships one host.
-- **The registry owns its own surface machinery.** The node-table
-  `script_inject` scriptDAT (+ its callbacks) and the `popmenu_dispatch`
-  template are children of the REGISTRY, not of FNS_OpMenu -- so the package
-  augments the dialog wherever it is dropped. `_ensureChainNode` splices a
-  copy in after the stock `families` node, re-injecting only when missing or
-  stale (tag `OpMenuRegistryNode` + a stored `source_id`), so the 120-frame
-  heal tick does not churn the dialog. The injector PRESERVES whatever was
-  downstream, which is what lets FNS_OpMenu's own IOFilter chain onto it in
-  either install order.
+- **The registry owns NO chain stage of its own** (corrected 2026-08-09).
+  It owns the *mechanism* — aggregation, injection, ordering, healing,
+  menu dispatch (`popmenu_dispatch`) — and nothing that knows TD's
+  node-table schema. The stage that APPLIES the aggregated search words and
+  decorators (`script_inject` + its callbacks) belongs to **FNS_OpMenu**,
+  published through `onChainNodes` exactly like IOFilter's. It was already
+  written against the registry's public API (`SearchWords`, `Decorators`),
+  so it was a contributor in everything but location. Moving it kept the
+  schema-fragile part (column names, the `score <= 3` heuristic,
+  `layouts/{family}/{opType}` strings) inside a tool, where a TD version
+  change breaks one tool instead of the registry.
+  Consequence, and it is the honest trade: `onSearchWords` /
+  `onDecorateLabel` only take effect when some tool supplies an applier
+  stage. The registry still aggregates them regardless.
+- **Chain wiring is re-asserted every sync, not just on injection**
+  (`_relinkChain`). A stage that is merely "not stale" is still wired to
+  whatever neighbour it had when injected, so adding, removing or
+  re-ordering ANY other stage silently leaves it mis-linked — the bug that
+  produced a stage with two inputs and no outputs while TD's own downstream
+  ops sat on the wrong stage. Each sync enforces
+  `families -> stage1 -> ... -> stageN -> (whatever consumed the chain)`,
+  remembering each consumer's exact input index so multi-input consumers
+  reconnect faithfully.
 - **The right-click menu is rebuilt, not appended to.** TD's own three items
   (Help / Python Help / Snippets, `BUILTIN_MENU_ITEMS = 3`) always lead;
   registered labels follow. `popmenu_dispatch` routes any click past the
@@ -111,7 +125,7 @@ A hook that raises is contained: debug()'d, skipped, dialog keeps working.
 - **Manager API deltas**: `RegisterContributor` / `UnregisterContributor`,
   `SetContributorOrder`, `SetContributorDisplay`, `Contributors`,
   `SearchWords`, `Decorators`, `DecorateLabel`, `MenuItems`,
-  `InvokeMenuItem`, `ChainNode`, `Resync`. Tool page prefix `Om`. No
+  `InvokeMenuItem`, `Resync`. Tool page prefix `Om`. No
   configurator yet (a natural next step: enable/disable and reorder
   contributions).
 - **The global re-asks hosts to publish during the boot window** -- and this
@@ -365,10 +379,14 @@ copy/create alone is rarely the whole contract.
   the text embedded. The base DATs carry NO Embody tag or tsv row (an
   Embody-tracked DAT identity on a much-copied module is how the tracker
   once adopted a stray copy and dragged files away). PaneTypeRegistry
-  additionally distributes via the TD Palette: palette saves go through an
-  unbind-save-rebind step so the palette tox ships with the text embedded
-  and NO file bindings (a repo-relative binding would dangle in foreign
-  projects).
+  additionally distributes via the TD Palette, and is tracked exactly like
+  the others: a `pi_suspect` with its own
+  `modules/suspects/PreviewPanel25/PaneTypeRegistry.tox` plus a
+  `pre_release` hook. **No unbind-save-rebind dance** (the older rule) —
+  the dev copy KEEPS its file bindings so edits hot-reload, and
+  `pre_release` strips file/syncfile + tracker tags off every bound DAT at
+  release time, so only the shipped artifact is standalone. That is exactly
+  what the hook is for; a save is just `comp.save(externaltox)`.
 - **Release scrubbing of clones**: shipped copies must NOT carry the clone
   par. The registry's own `pre_release` scrubs it for standalone releases;
   every HOSTING TOOL's `pre_release` carries an auto-added scrub block for
