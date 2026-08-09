@@ -13,6 +13,127 @@ Current implementations:
 | `PaneTypeRegistry` | `op.PANETYPEREGISTRY` | Panebar pane-type menu (rows, recall, right-click) | `PreviewPanel25/PaneTypeRegistry` |
 | `ToolbarRegistry` | `op.TOOLBARREGISTRY` | Toolbar widgets (mirrors in `/ui/dialogs/bookmark_bar`) | `FNS_Toolbar/ToolbarRegistry` |
 | `NavbarRegistry` | `op.NAVBARREGISTRY` | TD's pane bars (stamped copies in `panebar_default` + every `/ui/panes/panebar/*`) | `FNS_Navbar/NavbarRegistry` |
+| `OpMenuRegistry` | `op.OPMENUREGISTRY` | TD's Insert Operator dialog (`/ui/dialogs/menu_op`) -- search words, row decorations, right-click items | `FNS_OpMenu/OpMenuRegistry` |
+
+### OpMenuRegistry surface specifics (how it differs again)
+
+- **Entries are BEHAVIOUR, not operators.** The other two registries publish
+  a thing to place on a surface (a widget, a bar item). This one publishes
+  *contributions to a dialog TD already owns*, in five kinds: extra fuzzy
+  **search words**, node-table **row decorations**, **right-click menu
+  items**, filter-**chain stages**, and dialog **panels**. The first three
+  create nothing in `/ui` at all; the last two are injected copies, tagged
+  `OpMenuRegistryChain` / `OpMenuRegistryPanel` so pruning only ever touches
+  what the registry owns.
+- **Chain stages and panels are what the legacy installer hardcoded.** The
+  I/O filter used to be a special case inside `install.py` (splice
+  `script_IOFilter` after the injected node; inject `radioExpose` into
+  `searchpanel`; both gated on a `parent.FNS.par.Activeopmenuiofilter`
+  check). IOFilter now declares both for itself via `onChainNodes()` /
+  `onPanels()`, and reads the toggle in its OWN callbacks -- so whether it
+  contributes is IOFilter's decision, not a branch in the installer. A
+  `parexec_active` inside IOFilter calls `op.OPMENUREGISTRY.Resync()` when
+  the toggle flips. Chain order follows contributor order and the chain
+  heals around a removed stage, so install order stops mattering.
+  `install.py` is down to ONE executable line (the compat-table patch).
+- **The contribution's CODE lives in the publishing tool.** Each tool ships
+  ONE `opmenu_callbacks` DAT of its own; the entry carries only
+  `callback_path`/`callback_id`, and the registry probes which hooks that
+  module defines (`onSearchWords`, `onDecorateLabel`, `onMenuItems`,
+  `onMenuItem` -- all optional). This is the rule that keeps the surface
+  component free of tool names: FNS_OpMenu used to call
+  `op.FNS_OPTEMPLATES.Templates` and `op.FNS_OPTEMPLATES.OpenTemplateBase()`
+  from its own callback DATs; that code now lives inside OpTemplates and
+  travels in OpTemplates' tox. **One host per tool** -- capabilities are
+  discovered, not declared, so a tool contributing three different things
+  still ships one host.
+- **The registry owns its own surface machinery.** The node-table
+  `script_inject` scriptDAT (+ its callbacks) and the `popmenu_dispatch`
+  template are children of the REGISTRY, not of FNS_OpMenu -- so the package
+  augments the dialog wherever it is dropped. `_ensureChainNode` splices a
+  copy in after the stock `families` node, re-injecting only when missing or
+  stale (tag `OpMenuRegistryNode` + a stored `source_id`), so the 120-frame
+  heal tick does not churn the dialog. The injector PRESERVES whatever was
+  downstream, which is what lets FNS_OpMenu's own IOFilter chain onto it in
+  either install order.
+- **The right-click menu is rebuilt, not appended to.** TD's own three items
+  (Help / Python Help / Snippets, `BUILTIN_MENU_ITEMS = 3`) always lead;
+  registered labels follow. `popmenu_dispatch` routes any click past the
+  builtins to `InvokeMenuItem(index - 3, optype)`, which calls back into the
+  publishing tool. Rebuilding from the live par's first 3 entries keeps it
+  idempotent across heals.
+- **Hot path**: the injected node cooks over every operator type in the
+  dialog, so it resolves `SearchWords` and `Decorators` ONCE per cook and
+  calls the functions per row -- never re-resolve contributors per row.
+#### Making a tool a publisher (the whole flow)
+
+1. Copy an `OpMenuRegistry` host into your tool; set `Comp` = `..` and
+   `Canonicalname`.
+2. **Pulse `Create Callbacks`.** It spawns `opmenu_callbacks` into your
+   tool from the registry's `callbacks_template` and wires the host's
+   `Callback` par to it. Idempotent: an existing DAT is adopted, never
+   overwritten, so pulsing again just repairs an unset `Callback`.
+3. Fill in the hooks you want. Turn `Autoregister` on.
+
+The pulse is promoted onto the tool itself (`Omcreatecallbacks`) alongside
+the other Registry-page pars, so the whole setup happens without opening
+the host. Two things the spawner does that matter: it **strips the file
+binding** off the copy (the template is a synced repo file -- an inherited
+binding would make every tool's callbacks read from, and save over, the one
+shared template), and it strips tracker tags so the copy does not get
+adopted as a tracked identity.
+
+#### The `opmenu_callbacks` protocol (what a tool author writes)
+
+**Every hook is optional** -- the registry probes the module and uses what
+it finds, so one host covers a tool that defines one hook or all six. The
+spawned template defines all six but returns empty from each, so a fresh
+publisher contributes NOTHING until you fill something in. `me.parent()` is
+your tool; resolve everything from there, never by absolute path or global
+shortcut.
+
+| Hook | Returns | When |
+|---|---|---|
+| `onSearchWords()` | `{opType: [word, ...]}` | merged into the dialog's fuzzy search |
+| `onDecorateLabel(opType, label)` | replacement `str`, or `None` | once per visible row, per cook -- keep it cheap |
+| `onMenuItems()` | `[label, ...]` | appended after TD's own three items |
+| `onMenuItem(label, opType)` | -- | one of YOUR items was clicked |
+| `onChainNodes()` | `[scriptDAT, ...]` | stages spliced into the node-table chain, in order |
+| `onPanels()` | `[(comp, anchor_name), ...]` | panels injected into the dialog, wired to `anchor_name` |
+
+Returning `[]` / `{}` WITHDRAWS a contribution -- the registry prunes what
+it injected. That is how a live toggle works: decide it in your callbacks
+(it is your tool's decision, not the registry's) and call
+`op.OPMENUREGISTRY.Resync()` when the condition changes, or let the ~2s
+healing tick pick it up. `FNS_OpMenu/IOFilter` is the worked example.
+A hook that raises is contained: debug()'d, skipped, dialog keeps working.
+
+- **Manager API deltas**: `RegisterContributor` / `UnregisterContributor`,
+  `SetContributorOrder`, `SetContributorDisplay`, `Contributors`,
+  `SearchWords`, `Decorators`, `DecorateLabel`, `MenuItems`,
+  `InvokeMenuItem`, `ChainNode`, `Resync`. Tool page prefix `Om`. No
+  configurator yet (a natural next step: enable/disable and reorder
+  contributions).
+- **The global re-asks hosts to publish during the boot window** -- and this
+  is the fix the other two registries still lack. `/sys` does NOT save with
+  the project, so on every open (and after ANY extension reinit wave,
+  including the one every `project.save()` triggers) the global comes up
+  empty while hosts believe they are registered: their `Autoregister` ran at
+  extension init, which can predate the global being ready. Symptom: hosts
+  report `Regstatus: Registered` while `Contributors` is empty.
+  `_reapplyAutoregisterHosts()` runs on the first `BOOT_SWEEPS` (6) healing
+  ticks, finds live `Autoregister` hosts the global has no entry for, and
+  asks them to republish; then it stops, because it is a project-wide
+  search. Verified: wiping the global's entries entirely and running ONE
+  heal tick restores every contributor and the whole surface.
+  **`findChildren` gotcha paid for here: TD's `depth` argument is an EXACT
+  depth, not a maximum** -- `findChildren(name=X, depth=6)` silently matched
+  nothing while the bare `findChildren(name=X)` found all three hosts. Never
+  pass `depth` when you mean "anywhere below".
+- **The legacy installer is NOT fully retired here** -- unlike the navbar.
+  `FNS_OpMenu/install` still runs (from `execute2`, 60 frames after start)
+  for FNS_OpMenu's OWN chrome: the optional IOFilter injection and the
+  family-compat patch. Only the parts the registry took over were removed.
 
 ### NavbarRegistry surface specifics (how it differs from the toolbar)
 
@@ -439,6 +560,29 @@ mirrors. The order below is the one that worked; the lessons were paid for.
   reloads from its suspects `.tox` on start, so a stale tox silently
   reverts live-only migration work after a crash or restart — re-save the
   suspects tox as part of EVERY landing, not just the .toe.
+- **ENUMERATE nested suspects before saving — never assume you know them.**
+  A `pi_suspect` at ANY depth is stored in its parent's tox as a REFERENCE
+  STUB, so the parent's tox cannot carry that child's content. Saving the
+  tool and forgetting a nested one loses everything added inside it at the
+  next boot. Proven the hard way: an unplanned restart reverted
+  `FNS_OpMenu/IOFilter` (its own suspect, tox 20 hours stale) and took its
+  registry host, callbacks DAT and parexec with it — while the sibling
+  `OpMenuRegistry.tox`, which HAD been saved, survived intact. The
+  FNS_OpMenu + OpTemplates scope has SEVEN nested suspects; a "save the
+  toxes I edited" habit covered four. Walk them and save DEEPEST-FIRST:
+
+  ```python
+  def nested_suspects(root_path):
+      r = op(root_path)
+      found = [o for o in [r] + r.findChildren()
+               if getattr(o.par, 'externaltox', None) and o.par.externaltox.eval()
+               and 'pi_suspect' in o.tags]
+      return sorted(found, key=lambda o: o.path.count('/'), reverse=True)
+  ```
+
+  Only the `.tox` reverts — externalized `.py` files have their own file
+  bindings and survive, which is what makes recovery cheap: recreate the
+  operators, rebind them to the surviving files, re-register.
 - **Same-frame verification lies.** Connector lists and par-callback
   effects read stale in the frame that mutated them — verify a destroy or
   re-anchor only after real frames pass.
