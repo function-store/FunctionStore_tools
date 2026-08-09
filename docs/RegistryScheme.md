@@ -245,6 +245,14 @@ copy/create alone is rarely the whole contract.
 - **A tool that publishes** ships: its widget/panel + a configured registry
   host copy (`Comp`, `Canonicalname`, `Autoregister=on`). See
   `VSCodeTools/ToolbarRegistry` for the canonical example.
+- **The host lives INSIDE the component it registers** (`Comp='..'`), for
+  chrome exactly like for tools: `widgets/gridshow/ToolbarRegistry`,
+  `containers/parent_hierarchy/NavbarRegistry`, drop-to-register stamps --
+  one shape everywhere, and any single widget dragged into a foreign
+  project self-registers. Requires the component to COOK (a host inside a
+  cook-disabled subtree cannot compile its extension -- un-park sources,
+  guard any `panelParent()` sizing exprs with `... if me.panelParent()
+  else N`).
 - **Management UI is a SEPARATE package -- and the system's bootstrap
   seed.** The Toolbar Configurator ships ONE ToolbarRegistry host that
   plays three roles: bootstrap (alone in a fresh project it promotes the
