@@ -264,7 +264,9 @@ copy/create alone is rarely the whole contract.
   is bound, so nothing snaps to defaults). Par names carry a per-registry
   prefix (`Tb`/`Nb`/`Pt`) so a tool with multiple registries
   (CustomParPromoter has toolbar + navbar) shares the one page without
-  collisions. The fleet self-standardizes -- no per-tool work, and
+  collisions. The page is kept ORDERED ahead of the meta pages
+  (`sortCustomPages`: tool pages first, then Registry, then About / Common /
+  Version Ctrl). The fleet self-standardizes -- no per-tool work, and
   drop-to-register packages inherit the page automatically. Hardening paid
   for once: `onDestroyTD` ALSO fires on extension REINIT, so the page is
   only removed when the host COMP is genuinely being destroyed

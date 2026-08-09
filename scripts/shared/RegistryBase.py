@@ -77,6 +77,7 @@ class RegistryBase:
 		page = next((pg for pg in tool.customPages if pg.name == self.TOOL_PAGE_NAME), None)
 		if page is None:
 			page = tool.appendCustomPage(self.TOOL_PAGE_NAME)
+		self._orderToolRegistryPage(tool)
 		head_name = self.TOOL_PAGE_PREFIX + 'section'
 		if not hasattr(tool.par, head_name):
 			page.appendHeader(head_name,
@@ -135,6 +136,25 @@ class RegistryBase:
 					src.mode = ParMode.BIND
 			except Exception as e:
 				debug(f'{self.REGISTRY_NAME}: host bind {name}: {e}')
+
+	# meta pages the Registry page must come BEFORE
+	TOOL_PAGE_BEFORE = ('About', 'Common', 'Version Ctrl')
+
+	def _orderToolRegistryPage(self, tool):
+		"""Keep the Registry page ahead of the meta pages: the tool's own
+		pages first, then Registry, then About / Common / Version Ctrl."""
+		try:
+			names = [pg.name for pg in tool.customPages]
+			if self.TOOL_PAGE_NAME not in names:
+				return
+			metas = [n for n in names if n in self.TOOL_PAGE_BEFORE]
+			rest = [n for n in names
+					if n != self.TOOL_PAGE_NAME and n not in self.TOOL_PAGE_BEFORE]
+			desired = rest + [self.TOOL_PAGE_NAME] + metas
+			if names != desired and hasattr(tool, 'sortCustomPages'):
+				tool.sortCustomPages(*desired)
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: Registry page ordering: {e}')
 
 	def _repairDanglingHostBinds(self):
 		"""Registration pars bound to a tool Registry page that no longer
