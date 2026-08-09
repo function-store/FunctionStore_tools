@@ -266,8 +266,18 @@ copy/create alone is rarely the whole contract.
   (CustomParPromoter has toolbar + navbar) shares the one page without
   collisions. The page is kept ORDERED ahead of the meta pages
   (`sortCustomPages`: tool pages first, then Registry, then About / Common /
-  Version Ctrl). The fleet self-standardizes -- no per-tool work, and
-  drop-to-register packages inherit the page automatically. Hardening paid
+  Version Ctrl). Promotion is OPT-OUT per host: the Registration page's
+  `Promotepars` toggle (default on) -- turn it off before shipping a tool
+  that should not expose registry controls; the section withdraws and the
+  host pars fall back to constants with their values intact. The fleet
+  self-standardizes -- no per-tool work, and drop-to-register packages
+  inherit the page automatically. Two framework hazards paid for here:
+  clone sync initializes a NEWLY-added master par to the TYPE default (not
+  the master's value) -- sweep the fleet after appending pars to a master;
+  and ExtUtils' callback exec DATs resolved CustomParHelper via
+  `mod(me.dock.name)`, which cloning breaks -- par callbacks were silently
+  dead on every clone host until all ExtUtils exprs AND DAT texts were
+  rewritten dock-free (`mod('CustomParHelper')`). Hardening paid
   for once: `onDestroyTD` ALSO fires on extension REINIT, so the page is
   only removed when the host COMP is genuinely being destroyed
   (`not ownerComp.valid`); and `_repairDanglingHostBinds` runs BEFORE

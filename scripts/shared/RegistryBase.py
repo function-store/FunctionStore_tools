@@ -71,6 +71,11 @@ class RegistryBase:
 			return
 		if self._is_sys_global() or self._isUnderSysOrUi():
 			return
+		# Opt-out for shippers: Promotepars off = no proxy page on the tool
+		# (and an existing section is withdrawn). Missing par = on.
+		if not self._parBool('Promotepars', True):
+			self._removeToolRegistryPage()
+			return
 		tool = self.ownerComp.parent()
 		if tool is None or not tool.valid or tool.path == '/':
 			return
@@ -79,9 +84,12 @@ class RegistryBase:
 			page = tool.appendCustomPage(self.TOOL_PAGE_NAME)
 		self._orderToolRegistryPage(tool)
 		head_name = self.TOOL_PAGE_PREFIX + 'section'
-		if not hasattr(tool.par, head_name):
+		hpar = getattr(tool.par, head_name, None)
+		if hpar is None:
 			page.appendHeader(head_name,
 							  label=self.TOOL_PAGE_LABEL or self.REGISTRY_NAME)
+		else:
+			self._reclaimToolPar(hpar, page)
 		appenders = {'Toggle': page.appendToggle, 'Pulse': page.appendPulse,
 					 'Str': page.appendStr, 'Int': page.appendInt,
 					 'Float': page.appendFloat, 'Menu': page.appendMenu}
@@ -96,6 +104,8 @@ class RegistryBase:
 			except Exception:
 				cur = None
 			tpar = getattr(tool.par, tname, None)
+			if tpar is not None:
+				self._reclaimToolPar(tpar, page)
 			if tpar is None:
 				append = appenders.get(src.style)
 				if append is None:
@@ -136,6 +146,37 @@ class RegistryBase:
 					src.mode = ParMode.BIND
 			except Exception as e:
 				debug(f'{self.REGISTRY_NAME}: host bind {name}: {e}')
+		self._orderToolSection(tool)
+
+	def _reclaimToolPar(self, tpar, page):
+		"""Move a section par back onto the Registry page. TD relocates a
+		destroyed page's pars onto another page instead of destroying them,
+		so after any page churn our pars can be stranded on About/Version
+		Ctrl -- ensure() heals that instead of skipping them as 'existing'."""
+		try:
+			if tpar.page != page:
+				tpar.page = page
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: reclaim {tpar.name}: {e}')
+
+	def _sectionParNames(self):
+		return ([self.TOOL_PAGE_PREFIX + 'section'] +
+				[self.TOOL_PAGE_PREFIX + n.lower() for n in self.TOOL_PAGE_PARS])
+
+	def _orderToolSection(self, tool):
+		"""Keep this registry's section contiguous and in declared order on
+		the Registry page (reclaimed strays land wherever TD appends them)."""
+		try:
+			ours = [getattr(tool.par, n, None) for n in self._sectionParNames()]
+			ours = [p for p in ours if p is not None]
+			orders = [p.order for p in ours]
+			if len(ours) < 2 or orders == sorted(orders):
+				return
+			base = min(orders)
+			for i, p in enumerate(ours):
+				p.order = base + i * 0.001
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: section ordering: {e}')
 
 	# meta pages the Registry page must come BEFORE
 	TOOL_PAGE_BEFORE = ('About', 'Common', 'Version Ctrl')
@@ -155,6 +196,24 @@ class RegistryBase:
 				tool.sortCustomPages(*desired)
 		except Exception as e:
 			debug(f'{self.REGISTRY_NAME}: Registry page ordering: {e}')
+
+	def onParPromotepars(self, _par, _val, _prev):
+		"""Toggle the tool-facing Registry page on the fly. Turning it off
+		unbinds the host pars first (their masters are about to go away)."""
+		ext = self._hostExtFromPar(_par)
+		if ext._parBool('Promotepars', True):
+			ext._ensureToolRegistryPage()
+		else:
+			for pg in ext.ownerComp.customPages:
+				if pg.name != ext.HOST_PAGE_NAME:
+					continue
+				for p in pg.pars:
+					try:
+						if p.mode == ParMode.BIND:
+							p.mode = ParMode.CONSTANT
+					except Exception:
+						pass
+			ext._removeToolRegistryPage()
 
 	def _repairDanglingHostBinds(self):
 		"""Registration pars bound to a tool Registry page that no longer
@@ -193,16 +252,18 @@ class RegistryBase:
 		tool = self.ownerComp.parent()
 		if tool is None or not tool.valid:
 			return
+		# destroy by exact name wherever the pars sit -- page churn can have
+		# stranded them on another page (TD relocates, never destroys, the
+		# pars of a destroyed page)
+		for pname in self._sectionParNames():
+			p = getattr(tool.par, pname, None)
+			if p is not None:
+				try:
+					p.destroy()
+				except Exception:
+					pass
 		for page in list(tool.customPages):
-			if page.name != self.TOOL_PAGE_NAME:
-				continue
-			for p in list(page.pars):
-				if p.name.startswith(self.TOOL_PAGE_PREFIX):
-					try:
-						p.destroy()
-					except Exception:
-						pass
-			if not list(page.pars):
+			if page.name == self.TOOL_PAGE_NAME and not list(page.pars):
 				try:
 					page.destroy()
 				except Exception:
