@@ -297,6 +297,27 @@ Registration page baseline: `Autoregister` (toggle), `Register` (pulse),
 extras, `Callback` (DAT). About page must carry `Version` — promotion
 depends on it.
 
+**Page ORDER is standardized across every registry** (fleet-wide as of
+2026-08-09) — five `startSection` groups reading as the setup flow a tool
+author actually follows, rather than the order pars happened to be added:
+
+| Group | Pars |
+|---|---|
+| What is registered | `Comp`, `Canonicalname` |
+| How it behaves | `Callback` (+ `Createcallbacks` where the registry spawns one) |
+| Turn it on | `Autoregister`, `Register`, `Regstatus` |
+| How it appears | `Menuorder`, `Displayed`, + surface extras (`Barwidth`, `Align`, `Kind`) |
+| Meta / shipping | `Helpurl`, `Promotepars` |
+
+`Regstatus` sits under the pars that produce it; a "create" pulse sits
+directly under the par it populates. A new registry copied from any master
+inherits this. `TOOL_PAGE_PARS` follows the same flow in its own terms
+(on the tool, the "create" pulse comes first — it is the first thing you
+do). Re-ordering is par `.order` + `.startSection` on the MASTER only,
+then `enablecloningpulse` on every host: no `.py` edit, so it costs no
+extension reinit wave. Verify entry counts against a pre-change baseline
+afterwards — the clone churn is the risk, not the ordering.
+
 ## 5. The manager principle
 
 The global registry is THE manager of its surface. Order, visibility, and
