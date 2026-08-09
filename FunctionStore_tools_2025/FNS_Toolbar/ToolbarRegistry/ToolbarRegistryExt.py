@@ -24,6 +24,14 @@ class ToolbarRegistryExt(RegistryBase):
 		"op.TOOLBARREGISTRY.WidgetTarget({canonical!r}) "
 		"if hasattr(op, 'TOOLBARREGISTRY') else None"
 	)
+	# Soft-enforced bar icon height: mirrors always render 19 px tall; the
+	# source widget's own size is never touched.
+	BAR_ICON_HEIGHT = 19
+	MIRROR_WIDTH_EXPR = (
+		"(op.TOOLBARREGISTRY.WidgetTarget({canonical!r}).width "
+		"if hasattr(op, 'TOOLBARREGISTRY') "
+		"and op.TOOLBARREGISTRY.WidgetTarget({canonical!r}) is not None else 30)"
+	)
 
 	# --- surface hooks (RegistryBase contract) ---
 
@@ -105,21 +113,18 @@ class ToolbarRegistryExt(RegistryBase):
 			mirror.nodeX = 500 + (len(siblings) - 1) * 200
 			mirror.nodeY = -700
 		self._setExpr(mirror.par.selectpanel, self.SELECTPANEL_EXPR.format(canonical=canonical))
+		# Mirrors own their geometry: height is soft-enforced to the bar
+		# standard, width follows the source live unless overridden.
+		mirror.par.matchsize = False
 		width = info.get('width', '')
 		if width:
-			mirror.par.matchsize = False
 			try:
 				self._setConst(mirror.par.w, int(width))
 			except (TypeError, ValueError):
 				pass
-			src_h = 19
-			try:
-				src_h = int(widget.height) or 19
-			except Exception:
-				pass
-			self._setConst(mirror.par.h, src_h)
 		else:
-			mirror.par.matchsize = True
+			self._setExpr(mirror.par.w, self.MIRROR_WIDTH_EXPR.format(canonical=canonical))
+		self._setConst(mirror.par.h, self.BAR_ICON_HEIGHT)
 		self._anchorMirror(mirror, bar)
 		# The registry is the manager: order and visibility come from the
 		# central entry, not from any table.
@@ -234,6 +239,12 @@ class ToolbarRegistryExt(RegistryBase):
 		if err:
 			debug(f'{self.REGISTRY_NAME}: RegisterWidget({canonical_name!r}) rejected: {err}')
 			return
+		try:
+			if int(widget_op.height) != self.BAR_ICON_HEIGHT:
+				debug(f'{self.REGISTRY_NAME}: {canonical_name!r} widget is {int(widget_op.height)}px tall; '
+					  f'the bar renders it at {self.BAR_ICON_HEIGHT}px')
+		except Exception:
+			pass
 		entry = {
 			'panel_path': widget_op.path,
 			'panel_id': int(widget_op.id),
