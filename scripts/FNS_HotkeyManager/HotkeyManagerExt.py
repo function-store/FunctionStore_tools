@@ -1,6 +1,6 @@
 import re
-from dataclasses import dataclass, field
-from typing import Optional, Union, List
+from dataclasses import dataclass
+from typing import List, Optional, Tuple
 import TDFunctions as TDF
 
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
@@ -8,641 +8,782 @@ CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.
 
 KILL = False
 
-@dataclass
-class HotkeyParData:
-	path: str
-	par: str
-	type: str = ""
-	custom_val: str = ""
-	custom_bindExpr: str = ""
-	custom_expr: str = ""
-	# CHOP specific
-	keys_val: str = ""
-	keys_bindExpr: str = ""
-	keys_expr: str = ""
-	modifiers_val: str = ""
-	modifiers_bindExpr: str = ""
-	modifiers_expr: str = ""
-	# DAT specific
-	dat_keys_val: str = ""
-	dat_keys_bindExpr: str = ""
-	dat_keys_expr: str = ""
-	dat_shortcuts_val: str = ""
-	dat_shortcuts_bindExpr: str = ""
-	dat_shortcuts_expr: str = ""
-	
-	def to_row(self) -> List[str]:
-		"""Convert the dataclass to a table row"""
-		return [
-			self.path,
-			self.par,
-			self.type,
-			"",
-			self.custom_val,
-			self.custom_expr,
-			"",
-			self.keys_val,
-			self.keys_expr,
-			self.modifiers_val,
-			self.modifiers_expr,
-			"",
-			self.dat_keys_val,
-			self.dat_keys_expr,
-			self.dat_shortcuts_val,
-			self.dat_shortcuts_expr
-		]
+# Modifier vocabulary: l/r variants normalize to their base for conflict grouping.
+MODIFIER_ALIASES = {
+	'lalt': 'alt', 'ralt': 'alt', 'alt': 'alt',
+	'lctrl': 'ctrl', 'rctrl': 'ctrl', 'ctrl': 'ctrl',
+	'lshift': 'shift', 'rshift': 'shift', 'shift': 'shift',
+	'lcmd': 'cmd', 'rcmd': 'cmd', 'cmd': 'cmd',
+}
+MODIFIER_ORDER = ['ctrl', 'alt', 'shift', 'cmd']
 
-class HotkeyManagerExt:####
-	'''#TODO: REFACTOR THIS!!! THERE IS A LOT OF DUPLICATED CODE!!!'''
+TABLE_HEADERS = [
+	"path", "par", "type", "_COMP_",
+	"custom_val", "custom_expr",
+	"_CHOP_",
+	"chop_keys_val", "chop_keys_expr",
+	"chop_modifiers_val", "chop_modifiers_expr",
+	"_DAT_",
+	"dat_keys_val", "dat_keys_expr",
+	"dat_shortcuts_val", "dat_shortcuts_expr"
+]
+
+UI_HEADERS = ["Tool", "Path", "Par", "Hotkey", "Default", "Status"]
+
+DEFAULT_HINT = "click a Hotkey cell to rebind - right-click resets to default"
+
+
+@dataclass
+class HotkeyRecord:
+	"""One hotkey-bearing parameter found in the project."""
+	owner: 'OP'
+	par_name: str
+	kind: str  # 'COMP' | 'CHOP' | 'DAT'
+	val: str = ""   # constant/bind value ("" when expression-driven)
+	expr: str = ""  # externalizable os-switch expression ("" otherwise)
+
+	@property
+	def par(self) -> Optional['Par']:
+		return getattr(self.owner.par, self.par_name, None)
+
+	@property
+	def current(self) -> str:
+		"""Evaluated runtime value (what the binding IS right now)."""
+		_par = self.par
+		if _par is None:
+			return ""
+		try:
+			return str(_par.eval())
+		except Exception:
+			return ""
+
+
+class HotkeyManagerExt:
+	"""Gathers, persists, restores and (via the HotkeyUI lister) edits every
+	hotkey-bearing parameter under the FNS tools root. Discovery is a single
+	routine shared by the watcher wiring, the externalize table and the UI."""
+
 	def __init__(self, ownerComp):
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
 		self._allHotkeys = tdu.Dependency([[None, None]])
 		if KILL or not self.evalActive:
 			return
-		
+
 		self.ownerComp = ownerComp
 
-		
 		self.keyboardin_chop_pars = ['keys', 'modifiers']
 		self.keyboardin_dat_pars = ['keys', 'shortcuts']
 		self.comp_pars_substrings = ['key', 'shortcut', 'hotkey']
-		self.comp_pars_exceptions = ['opshortcut','parentshortcut','arrowkeys','savehotkeys','loadhotkeys','shortcutactive']
-		self.comp_except = ['popMenu', 'popDialog', 'KeyModifiers']
-		
+		self.comp_pars_exceptions = ['opshortcut', 'parentshortcut', 'arrowkeys', 'savehotkeys', 'loadhotkeys', 'shortcutactive', 'deletekey']
+		self.comp_except = ['popMenu', 'popDialog', 'KeyModifiers', 'FNS_HotkeyManager']
+		# DAT `keys` values consisting only of these are modifier-listen setups, not hotkeys
+		self.ignored_keys = ['ctrl', 'alt', 'shift', 'cmd', 'esc', 'enter', 'tab']
+
 		self.searchRoot = parent.FNS
-		self.hotkeyTable : tableDAT = self.ownerComp.op('table_gathered_hotkeys')
-		self.defaultTable : tableDAT = self.ownerComp.op('table_gathered_hotkeys1')
+		self.hotkeyTable: 'tableDAT' = self.ownerComp.op('table_gathered_hotkeys')
+		self.defaultTable: 'tableDAT' = self.ownerComp.op('table_gathered_hotkeys1')
 		self.supressWatch = False
 		self.logger = self.ownerComp.op('Logger').ext.Logger
 		self.logger.SetTextPort(False)
-		self.logger.log("HotkeysExt initialized")
 
+		self._records: List[HotkeyRecord] = []
+		self._conflicts = {}          # combo -> [HotkeyRecord]
+		self._pendingChanges = {}     # (path_display, par_name) -> (prev, new)
+		self._capture = None          # None or {'path':..., 'par':...} while rebinding
+		self._jumpState = None        # cycles through conflict partners on repeated Status clicks
 
-		return
+		# retired debug machinery from the old dual-discovery comparison
+		for _key in ('propertyPaths', 'gatheredPaths', 'allHotkeyParsDebug', 'gatherParamsDebug'):
+			self.ownerComp.unstore(_key)
 
-	
-	def AllHotkeyPars(self) -> List[tuple]:
-		"""Return a list of tuples containing (operator, parameter_name) for all hotkey parameters"""
-		self.logger.log("Starting AllHotkeyPars collection...", textport=True)
-		result = []
-		pars_found_debug = []  # Store parameter details for debugging comparison
-		
-		root: COMP = self.searchRoot
-		
-		# Find all keyboardinCHOP operators
-		chop_pars_found = 0
-		for _op in root.findChildren(type=keyboardinCHOP):
-			if any(_sub in _op.path for _sub in self.comp_except):
+		self.logger.log("HotkeyManagerExt initialized")
+
+	# ------------------------------------------------------------------
+	# Discovery (single source of truth)
+	# ------------------------------------------------------------------
+
+	def _isModifierOnlyKeys(self, value: str) -> bool:
+		"""True when a DAT `keys` value contains only modifier/ignored keys."""
+		pattern = r'^(?:\s*(?:' + '|'.join(self.ignored_keys) + r')(?:\s+|$))*$'
+		return re.match(pattern, value.lower()) is not None
+
+	def _recordFromPar(self, _op: 'OP', par_name: str, kind: str) -> Optional[HotkeyRecord]:
+		"""Capture one parameter as a HotkeyRecord, or None if it holds nothing
+		externalizable. Constant/bind values are taken as-is; expressions only
+		count when they follow the os-switch convention ('app.osName' in expr)."""
+		_par = getattr(_op.par, par_name, None)
+		if _par is None:
+			return None
+		if _par.mode in (ParMode.CONSTANT, ParMode.BIND):
+			_raw = _par.eval()
+			if not _raw:  # falsy RAW value (empty string, False, 0) is not a binding
+				return None
+			_val = str(_raw)
+			if kind == 'DAT' and par_name == 'keys' and self._isModifierOnlyKeys(_val):
+				return None
+			return HotkeyRecord(_op, par_name, kind, val=_val)
+		if _par.mode == ParMode.EXPRESSION and _par.expr and 'app.osName' in _par.expr:
+			return HotkeyRecord(_op, par_name, kind, expr=_par.expr)
+		return None
+
+	def _isExcepted(self, _op: 'OP') -> bool:
+		return any(_sub in _op.path for _sub in self.comp_except)
+
+	def _isPanelScoped(self, _op: 'OP') -> bool:
+		"""A keyboardin with a Panels filter only fires while those panels have
+		focus -- that is a local control scheme, not a global hotkey."""
+		p = getattr(_op.par, 'panels', None)
+		if p is None:
+			return False
+		return bool((p.expr or '').strip() if p.mode == ParMode.EXPRESSION else str(p.val).strip())
+
+	def _scanRoots(self) -> List['COMP']:
+		"""Every top-level COMP under '/' except the Excluderoots names --
+		hotkeys can conflict project-wide, so discovery is project-wide."""
+		par = getattr(self.ownerComp.par, 'Excluderoots', None)
+		excluded = set(str(par.eval()).split()) if par is not None else {'ui', 'sys', 'local'}
+		roots = []
+		for child in op('/').children:
+			if not child.isCOMP or child.type == 'annotate':
 				continue
-				
-			for par_name in self.keyboardin_chop_pars:
-				_par = getattr(_op.par, par_name, None)
-				if _par is not None:
-					# Set the appropriate fields based on parameter
-					if par_name == "keys":
-						keys_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
-						keys_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
-						if keys_val or keys_expr:
-							result.append((_op, par_name))
-							debug_info = f"CHOP: {_op.path}.{par_name} - val: '{keys_val}', expr: '{keys_expr}'"
-							pars_found_debug.append(debug_info)
-							chop_pars_found += 1
-							self.logger.log(f"AllHotkeyPars: CHOP {_op.path} has {par_name} data", textport=False)
-					elif par_name == "modifiers":
-						mod_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
-						mod_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
-						if mod_val or mod_expr:
-							result.append((_op, par_name))
-							debug_info = f"CHOP: {_op.path}.{par_name} - val: '{mod_val}', expr: '{mod_expr}'"
-							pars_found_debug.append(debug_info)
-							chop_pars_found += 1
-							self.logger.log(f"AllHotkeyPars: CHOP {_op.path} has {par_name} data", textport=False)
-				
-		self.logger.log(f"AllHotkeyPars: Found {chop_pars_found} CHOP parameters", textport=True)
-		
-		# Find all keyboardinDAT operators with keys or shortcuts parameters
-		dat_pars_found = 0
-		for _op in root.findChildren(type=keyboardinDAT):
-			if any(_sub in _op.path for _sub in self.comp_except):
+			if child.name in excluded:
 				continue
-				
-			# Check if the DAT has any of the relevant parameters
-			has_hotkey_pars = any(hasattr(_op.par, par_name) for par_name in self.keyboardin_dat_pars)
-			
-			if has_hotkey_pars:
-				for par_name in self.keyboardin_dat_pars:
-					_par = getattr(_op.par, par_name, None)
-					if _par is not None:
-						# Set the appropriate fields based on parameter
-						if par_name == "keys":
-							if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND:
-								_keys_val = _par.eval()
-								if _keys_val:
-									# Define ignored keys pattern
-									ignored_keys = ['ctrl', 'alt', 'shift', 'cmd', 'esc', 'enter', 'tab']
-									# Dynamically create regex pattern from the ignored_keys list
-									# Remove space from the list for the pattern (handled separately)
-									keys_for_pattern = [k for k in ignored_keys if k != ' ']
-									# Join keys with | for alternation in regex
-									keys_pattern = '|'.join(keys_for_pattern)
-									# Create the full pattern - match whole string with only ignored keys separated by whitespace
-									pattern = r'^(?:\s*(?:' + keys_pattern + r')(?:\s+|$))*$'
-									
-									# If it matches the pattern (contains only ignored keys), skip this parameter
-									if re.match(pattern, _keys_val.lower()):
-										continue
-									
-									result.append((_op, par_name))
-									debug_info = f"DAT: {_op.path}.{par_name} - val: '{_keys_val}'"
-									pars_found_debug.append(debug_info)
-									dat_pars_found += 1
-									self.logger.log(f"AllHotkeyPars: DAT {_op.path} has {par_name} value", textport=False)
-							elif _par.mode == ParMode.EXPRESSION:
-								if _par.expr and 'app.osName' in _par.expr:
-									result.append((_op, par_name))
-									debug_info = f"DAT: {_op.path}.{par_name} - expr: '{_par.expr}'"
-									pars_found_debug.append(debug_info)
-									dat_pars_found += 1
-									self.logger.log(f"AllHotkeyPars: DAT {_op.path} has {par_name} expr", textport=False)
+			roots.append(child)
+		return roots
 
-						elif par_name == "shortcuts":
-							if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND:
-								_shortcuts_val = _par.eval()
-								if _shortcuts_val:
-									result.append((_op, par_name))
-									debug_info = f"DAT: {_op.path}.{par_name} - val: '{_shortcuts_val}'"
-									pars_found_debug.append(debug_info)
-									dat_pars_found += 1
-									self.logger.log(f"AllHotkeyPars: DAT {_op.path} has {par_name} value", textport=False)
-							elif _par.mode == ParMode.EXPRESSION:
-								if _par.expr and 'app.osName' in _par.expr:
-									result.append((_op, par_name))
-									debug_info = f"DAT: {_op.path}.{par_name} - expr: '{_par.expr}'"
-									pars_found_debug.append(debug_info)
-									dat_pars_found += 1
-									self.logger.log(f"AllHotkeyPars: DAT {_op.path} has {par_name} expr", textport=False)
-		
-		self.logger.log(f"AllHotkeyPars: Found {dat_pars_found} DAT parameters", textport=True)
-		
-		# Find components with custom parameters related to hotkeys
-		comp_pars_found = 0
-		all_comps = root.findChildren(type=COMP)
-		self.logger.log(f"AllHotkeyPars: Searching through {len(all_comps)} COMPs", textport=True)
-		
-		for _op in all_comps:
-			if any(_sub in _op.path for _sub in self.comp_except):
-				continue
-				
-			custompar_names = [par.name for par in _op.customPars]
-			
-			for _par_name in custompar_names:
-				# Skip parameters that match any of our exception patterns
-				if any(_sub in _par_name.lower() for _sub in self.comp_pars_exceptions):
+	def Discover(self) -> List[HotkeyRecord]:
+		"""Scan every top-level COMP (minus excluded roots) for hotkey-bearing
+		parameters. The tools root's CHILDREN are tools; other roots are each
+		a tool themselves (their own custom pars are scanned too)."""
+		records: List[HotkeyRecord] = []
+
+		def scanComp(_comp: 'COMP'):
+			for _par in _comp.customPars:
+				if _par.style not in ('Str', 'StrMenu', 'Menu'):
+					continue  # bindings live in string-valued pars; toggles like Enablekeyboardshortcuts are not bindings
+				name_l = _par.name.lower()
+				if any(_sub in name_l for _sub in self.comp_pars_exceptions):
 					continue
-					
-				# Check if this parameter name contains any of our hotkey substrings
-				if any(_sub in _par_name.lower() for _sub in self.comp_pars_substrings):
-					_par = getattr(_op.par, _par_name, None)
-					if _par is not None:
-						custom_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
-						custom_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
-						
-						# Only count if we have a value or expression
-						if custom_val or custom_expr:
-							result.append((_op, _par_name))
-							debug_info = f"COMP: {_op.path}.{_par_name} - val: '{custom_val}', expr: '{custom_expr}'"
-							pars_found_debug.append(debug_info)
-							comp_pars_found += 1
-							self.logger.log(f"AllHotkeyPars: COMP {_op.path} has hotkey param {_par_name}", textport=False)
-		
-		self.logger.log(f"AllHotkeyPars: Found {comp_pars_found} COMP parameters", textport=True)
-		self.logger.log(f"AllHotkeyPars: Total parameters found: {len(result)}", textport=True)
+				if not any(_sub in name_l for _sub in self.comp_pars_substrings):
+					continue
+				rec = self._recordFromPar(_comp, _par.name, 'COMP')
+				if rec:
+					records.append(rec)
+
+		def scanTree(root: 'COMP', include_root: bool):
+			for _op in root.findChildren(type=keyboardinCHOP):
+				if self._isExcepted(_op) or self._isPanelScoped(_op):
+					continue
+				for par_name in self.keyboardin_chop_pars:
+					rec = self._recordFromPar(_op, par_name, 'CHOP')
+					if rec:
+						records.append(rec)
+			for _op in root.findChildren(type=keyboardinDAT):
+				if self._isExcepted(_op) or self._isPanelScoped(_op):
+					continue
+				for par_name in self.keyboardin_dat_pars:
+					rec = self._recordFromPar(_op, par_name, 'DAT')
+					if rec:
+						records.append(rec)
+			if include_root and not self._isExcepted(root):
+				scanComp(root)
+			for _comp in root.findChildren(type=COMP):
+				if self._isExcepted(_comp):
+					continue
+				scanComp(_comp)
+
+		for root in self._scanRoots():
+			scanTree(root, include_root=(root != self.searchRoot))
+
+		# Bind followers mirror their master; list only the master (the editable
+		# one). Followers whose master is NOT itself discovered are kept, so no
+		# binding silently disappears from the list.
+		discovered_keys = {(r.owner.path, r.par_name) for r in records}
+		deduped = []
+		for r in records:
+			_par = r.par
+			if _par is not None and _par.mode == ParMode.BIND:
+				bm = getattr(_par, 'bindMaster', None)
+				if bm is not None and hasattr(bm, 'owner') and hasattr(bm, 'name') \
+						and (bm.owner.path, bm.name) in discovered_keys:
+					continue
+			deduped.append(r)
+		records = deduped
+
+		self._records = records
+		self.logger.log(f"Discover: {len(records)} hotkey parameters "
+						f"({sum(1 for r in records if r.kind == 'CHOP')} CHOP, "
+						f"{sum(1 for r in records if r.kind == 'DAT')} DAT, "
+						f"{sum(1 for r in records if r.kind == 'COMP')} COMP)", textport=True)
+		return records
+
+	def AllHotkeyPars(self) -> List[tuple]:
+		"""(operator, parameter_name) tuples for the parexec watcher."""
+		result = [(rec.owner, rec.par_name) for rec in self.Discover()]
 		self._allHotkeys.val = result
 		self.ownerComp.op('parexec1').cook(force=True)
 		return result
 
+	# ------------------------------------------------------------------
+	# Path helpers (no eval)
+	# ------------------------------------------------------------------
+
+	def _getPathFromOP(self, _op: 'OP') -> str:
+		p = _op.path
+		root_p = self.searchRoot.path
+		if p == root_p or p.startswith(root_p + '/'):
+			return TDF.getShortcutPath(self.searchRoot, _op)  # compact legacy form for the tools package
+		return p  # outside the tools package the full path is the unambiguous generic form
+
+	def _displayFromStored(self, path_str: str) -> str:
+		"""Normalize any stored path form to the UI display form:
+		"op('./Tool/kb')" -> 'Tool/kb'; "op.Embody.op('x')" -> 'Embody/x'."""
+		s = path_str.strip()
+		if s.startswith('/'):
+			return s[1:]
+		m = re.fullmatch(r"op\(\s*['\"](.+?)['\"]\s*\)", s)
+		if m:
+			rel = m.group(1)
+			return rel[2:] if rel.startswith('./') else rel
+		m = re.fullmatch(r"op\.(\w+)(?:\.op\(\s*['\"](.+?)['\"]\s*\))?", s)
+		if m:
+			return m.group(1) + ('/' + m.group(2) if m.group(2) else '')
+		return s
+
+	def _resolveOP(self, path_str: str) -> Optional['OP']:
+		"""Resolve a stored or display path -- root-relative forms against the
+		search root, "op.Name..." forms via global shortcuts -- no eval."""
+		s = path_str.strip()
+		if s.startswith('/'):
+			_op = op(s)
+		else:
+			m = re.fullmatch(r"op\.(\w+)(?:\.op\(\s*['\"](.+?)['\"]\s*\))?", s)
+			if m:
+				base = getattr(op, m.group(1), None)
+				_op = base.op(m.group(2)) if (base is not None and m.group(2)) else base
+			else:
+				m = re.fullmatch(r"op\(\s*['\"](.+?)['\"]\s*\)", s)
+				rel = m.group(1) if m else s
+				_op = self.searchRoot.op(rel)
+				if _op is None:
+					# display form: try as a root-level path, then a global shortcut
+					_op = op('/' + rel)
+				if _op is None:
+					seg, _, rest = rel.partition('/')
+					base = getattr(op, seg, None)
+					if base is not None:
+						_op = base.op(rest) if rest else base
+		if _op is None:
+			self.logger.log(f"Could not resolve operator for path {path_str}")
+		return _op
+
+	def _displayPath(self, _op: 'OP') -> str:
+		"""Root-relative path for UI display: './MY_HOTKEYS/kb' -> 'MY_HOTKEYS/kb'."""
+		return self._displayFromStored(self._getPathFromOP(_op))
+
+	def _toolName(self, _op: 'OP') -> str:
+		"""Grouping name for the UI: inside the tools package, the tool is the
+		direct child of the package root; anywhere else it is the top-level
+		COMP under '/' that contains the op."""
+		node = _op
+		while node.parent() is not None and node.parent() != self.searchRoot:
+			if node.parent().path == '/':
+				return node.name  # top-level COMP outside the tools package
+			node = node.parent()
+		return node.name if node.parent() == self.searchRoot else _op.name
+
+	# ------------------------------------------------------------------
+	# Conflict detection
+	# ------------------------------------------------------------------
+
+	def _combosFromRecord(self, rec: HotkeyRecord) -> set:
+		"""Normalized key combos a record currently binds. Modifier-only values
+		(hold-style bindings like 'alt') yield no combos -- they are shared by
+		design and would drown real conflicts. Character classes like
+		'ctrl.[0-9]' expand so overlaps with literal digits are caught."""
+		value = rec.current
+		if not value:
+			return set()
+		# CHOP keys pair with the op's modifiers menu par
+		prefix_mods = []
+		if rec.kind == 'CHOP':
+			if rec.par_name == 'modifiers':
+				return set()  # handled as prefix of the keys record
+			mod_par = getattr(rec.owner.par, 'modifiers', None)
+			if mod_par is not None:
+				mod_val = str(mod_par.eval()).lower()
+				if mod_val in MODIFIER_ALIASES:
+					prefix_mods = [MODIFIER_ALIASES[mod_val]]
+		combos = set()
+		for token in value.split():
+			parts = [p for p in re.split(r'[.+]', token) if p]  # '.' and '+' (Embody) separators
+			mods = set(prefix_mods)
+			keys = []
+			for p in parts:
+				p_l = p.lower()
+				if p_l in MODIFIER_ALIASES:
+					mods.add(MODIFIER_ALIASES[p_l])
+				else:
+					keys.append(p_l)
+			if not keys:
+				continue  # modifier-hold binding
+			mod_part = [m for m in MODIFIER_ORDER if m in mods]
+			for key in keys:
+				try:
+					expanded = tdu.expand(key) if ('[' in key and ']' in key) else [key]
+				except Exception:
+					expanded = [key]
+				if len(expanded) > 20:
+					expanded = [key]
+				for k in expanded:
+					combos.add('.'.join(mod_part + [k]))
+		return combos
+
+	def ComputeConflicts(self) -> dict:
+		"""combo -> [records] for every combo bound by more than one tool."""
+		by_combo = {}
+		for rec in self._records:
+			for combo in self._combosFromRecord(rec):
+				by_combo.setdefault(combo, []).append(rec)
+		self._conflicts = {
+			combo: recs for combo, recs in by_combo.items()
+			if len({self._toolName(r.owner) for r in recs}) > 1
+		}
+		if self._conflicts:
+			for combo, recs in self._conflicts.items():
+				owners = ', '.join(f"{self._displayPath(r.owner)}:{r.par_name}" for r in recs)
+				self.logger.log(f"CONFLICT {combo}: {owners}", textport=True)
+		return self._conflicts
+
+	def _conflictComboFor(self, rec: HotkeyRecord) -> str:
+		for combo, recs in self._conflicts.items():
+			if rec in recs:
+				return combo
+		return ""
+
+	def _comboOwners(self, combo: str) -> List[HotkeyRecord]:
+		"""Every record currently binding this exact combo."""
+		return [rec for rec in self._records if combo in self._combosFromRecord(rec)]
+
+	def ShowConflictPartners(self, display_path: str, par_name: str):
+		"""Surface who else binds this row's conflicted combo in the hint bar."""
+		rec = next((r for r in self._records
+					if self._displayPath(r.owner) == display_path and r.par_name == par_name), None)
+		if rec is None:
+			return
+		combo = self._conflictComboFor(rec)
+		if not combo:
+			self._setHint()
+			return
+		partners = [f"{self._displayPath(r.owner)}:{r.par_name}"
+					for r in self._conflicts.get(combo, []) if r is not rec]
+		self._setHint(f"'{combo}' also bound by: " + ', '.join(partners))
+
+	def JumpToConflictPartner(self, display_path: str, par_name: str):
+		"""Select and scroll to the partner row of this row's conflicted combo;
+		repeated clicks cycle through partners when there are several."""
+		rec = next((r for r in self._records
+					if self._displayPath(r.owner) == display_path and r.par_name == par_name), None)
+		if rec is None:
+			return
+		combo = self._conflictComboFor(rec)
+		if not combo:
+			self._setHint()
+			return
+		partners = [r for r in self._conflicts.get(combo, []) if r is not rec]
+		if not partners:
+			return
+		key = (display_path, par_name, combo)
+		idx = 0
+		if self._jumpState and self._jumpState.get('key') == key:
+			idx = (self._jumpState['idx'] + 1) % len(partners)
+		self._jumpState = {'key': key, 'idx': idx}
+		target = partners[idx]
+		t_path, t_par = self._displayPath(target.owner), target.par_name
+
+		table = self.ownerComp.op('HotkeyUI/table_ui_hotkeys')
+		lst = self.ownerComp.op('HotkeyUI/lister')
+		if table is None or lst is None or not lst.extensions:
+			return
+		row = None
+		for i in range(1, table.numRows):
+			if table[i, 'Path'].val == t_path and table[i, 'Par'].val == t_par:
+				row = i
+				break
+		if row is None:
+			return
+		le = lst.extensions[0]
+		try:
+			le.SelectRow(row)
+		except Exception as e:
+			self.logger.log(f"SelectRow failed: {e}")
+		try:
+			lst.scroll(row, 0)
+		except Exception:
+			pass  # selection alone still highlights the partner
+		suffix = f" ({idx + 1}/{len(partners)})" if len(partners) > 1 else ""
+		self._setHint(f"'{combo}' partner{suffix}: {t_path}:{t_par}")
+
+	# ------------------------------------------------------------------
+	# Lifecycle / parameter callbacks
+	# ------------------------------------------------------------------
+
 	def onStart(self):
-		
 		self.AllHotkeys = self.AllHotkeyPars()
 		self.logger.log("Starting hotkeys initialization...")
 		self.setAllHotkeys()
+		self.ComputeConflicts()
+		self.RefreshUI()
 		self.logger.log("Hotkey initialization complete")
 
 	def onParSavehotkeys(self):
-		self.logger.log("Saving hotkeys...")
-		self.gatherAllHotkeys()
-		pass
+		self.SaveHotkeys()
 
 	def onParLoadhotkeys(self):
 		self.logger.log("Loading hotkeys...")
-		self.supressWatch = True
-		self.setAllHotkeys()
-		run(
-			"args[0].supressWatch = False",
-			self,
-			endFrame=True,
-			delayRef=op.TDResources
-		)
-		pass
+		self._loadWithWatchSuppressed(default=False)
 
 	def onParLoaddefault(self):
 		self.logger.log("Loading default hotkeys...", textport=True)
-		self.supressWatch = True
-		self.setAllHotkeys(default=True)
-		run(
-			"args[0].supressWatch = False",
-			self,
-			endFrame=True,
-			delayRef=op.TDResources
-		)
+		self._loadWithWatchSuppressed(default=True)
 		self.hotkeyTable.clear()
-		# copy over
 		self.hotkeyTable.copy(self.defaultTable)
-		self.logger.log("Default hotkeys loaded", textport=False)
-		pass
 
 	def onParForcedefault(self, val):
 		if val:
 			self.onParLoaddefault()
 
-	def onShortcutChanged(self, _par: Par, prev = None):
+	def _loadWithWatchSuppressed(self, default: bool):
+		self.supressWatch = True
+		self.setAllHotkeys(default=default)
+		run(
+			"args[0].supressWatch = False",
+			self,
+			endFrame=True,
+			delayRef=op.TDResources
+		)
+		self._pendingChanges = {}
+		self.ComputeConflicts()
+		self.RefreshUI()
+
+	def onShortcutChanged(self, _par: 'Par', prev=None):
+		"""Non-modal change watcher: log it, mark the row unsaved in the UI.
+		Externalizing happens through Save (UI button or Savehotkeys pulse)."""
 		if self.supressWatch:
 			return
-		choice = ui.messageBox('Shortcut Changed', f'Shortcut "{_par.owner.path}:{_par.name}" changed from "{prev}" to "{_par.eval()}". Do you want to externalize this?', buttons=['No','Yes'])
-		if choice:
-			self.logger.log(f"Shortcut '{_par.owner.name}:{_par.name}' changed to '{_par.eval()}'")
-			self.gatherAllHotkeys()
-	
-	def getOPFromPath(self, _path: str) -> OP:
 		try:
-			return eval(f'parent.FNS.{_path}')
-		except Exception as e:
-			self.logger.log(f"Error evaluating path {_path}: {e}", textport=False)
-			return None
+			new_val = str(_par.eval())
+		except Exception:
+			new_val = ""
+		key = (self._displayPath(_par.owner), _par.name)
+		self._pendingChanges[key] = (str(prev), new_val)
+		self.logger.log(
+			f"Shortcut '{_par.owner.path}:{_par.name}' changed "
+			f"from '{prev}' to '{new_val}' -- unsaved (Save externalizes it)",
+			textport=True)
+		self.ComputeConflicts()
+		self.RefreshUI()
+
+	# ------------------------------------------------------------------
+	# Externalize / restore
+	# ------------------------------------------------------------------
+
+	def SaveHotkeys(self):
+		"""Externalize the current live bindings into the gathered table."""
+		self.logger.log("Saving hotkeys...")
+		self.gatherAllHotkeys()
+		self._pendingChanges = {}
+		self.RefreshUI()
+
+	def gatherAllHotkeys(self):
+		"""Write the discovery result into table_gathered_hotkeys (legacy
+		16-column schema, one row per CHOP/DAT op, one row per COMP par)."""
+		table: 'tableDAT' = self.hotkeyTable
+		table.clear()
+		table.appendRow(TABLE_HEADERS)
+
+		records = self.Discover()
+
+		# group CHOP/DAT records per owner so keys+modifiers / keys+shortcuts share a row
+		grouped = {}
+		order = []
+		for rec in records:
+			gkey = (rec.owner, rec.kind) if rec.kind in ('CHOP', 'DAT') else (rec.owner, rec.kind, rec.par_name)
+			if gkey not in grouped:
+				grouped[gkey] = []
+				order.append(gkey)
+			grouped[gkey].append(rec)
+
+		for gkey in order:
+			recs = grouped[gkey]
+			kind = recs[0].kind
+			row = {h: "" for h in TABLE_HEADERS}
+			row["path"] = self._getPathFromOP(recs[0].owner)
+			row["type"] = kind
+			if kind == 'COMP':
+				row["par"] = recs[0].par_name
+				row["custom_val"] = recs[0].val
+				row["custom_expr"] = recs[0].expr
+			elif kind == 'CHOP':
+				row["par"] = ', '.join(self.keyboardin_chop_pars)
+				for rec in recs:
+					row[f"chop_{rec.par_name}_val"] = rec.val
+					row[f"chop_{rec.par_name}_expr"] = rec.expr
+			elif kind == 'DAT':
+				row["par"] = ', '.join(self.keyboardin_dat_pars)
+				for rec in recs:
+					row[f"dat_{rec.par_name}_val"] = rec.val
+					row[f"dat_{rec.par_name}_expr"] = rec.expr
+			table.appendRow([row[h] for h in TABLE_HEADERS])
+
+		self.logger.log(f"Externalized {table.numRows - 1} hotkey rows", textport=True)
+		return table
 
 	def setAllHotkeys(self, default=False):
+		"""Restore bindings from the gathered (or default) table onto the ops."""
 		self.logger.log("Setting all hotkeys...")
 		hotkeyTable = self.hotkeyTable if not (self.evalForcedefault or default) else self.defaultTable
-		headers_row = hotkeyTable.row(0)
-		headers = [h.val for h in headers_row]
-		self.logger.log(f"Processing {hotkeyTable.numRows-1} hotkeys")
-		
+		headers = [h.val for h in hotkeyTable.row(0)]
 		success = 0
 
 		for row_idx in range(1, hotkeyTable.numRows):
-			row = hotkeyTable.row(row_idx)
-			_values = [cell.val for cell in row]
-			_data = dict(zip(headers, _values))
-			
-			_path = _data.get('path', '')
-
-			_op = self.getOPFromPath(_path)
-			
+			_data = dict(zip(headers, [c.val for c in hotkeyTable.row(row_idx)]))
+			_op = self._resolveOP(_data.get('path', ''))
 			if _op is None:
-				self.logger.log(f"No operator found for path {_path}")
 				continue
-				
-			_par_names = _data.get('par', '').split(', ')
+
 			_type = _data.get('type', '')
-			
-			self.logger.log(f"Setting {_type} hotkey for {_op.name}: {_par_names}", textport=False)
-			
-			if _type == "COMP":
-				# Handle custom parameter hotkeys
-				for _par_name in _par_names:
-					_par = getattr(_op.par, _par_name, None)
-					if _par is None:
-						self.logger.log(f"No parameter '{_par_name}' found on operator {_op}")
-						continue
-						
-					_val = _data.get('custom_val', '')
-					_expr = _data.get('custom_expr', '')
-					
-					if _expr:
-						self.logger.log(f"Setting expression for {_op}.par.{_par_name}: {_expr}", textport=False)
-						_par.expr = _expr
-						success += 1
-					else:
-						self.logger.log(f"Setting value for {_op}.par.{_par_name}: {_val}", textport=False)
-						_par.val = _val
-						success += 1
-
-			elif _type == "CHOP":
-				# Handle CHOP-specific parameters
-				chop_success = 0
-				for _par_name in _par_names:
-					if _par_name == "keys":
-						_keys_par = _op.par.keys
-						if _keys_par is not None:
-							_val = _data.get('chop_keys_val', '')
-							_expr = _data.get('chop_keys_expr', '')
-							if _expr:
-								self.logger.log(f"Setting CHOP keys expression for {_op}: {_expr}", textport=False)
-								_keys_par.expr = _expr
-								chop_success += 1
-							else:
-								self.logger.log(f"Setting CHOP keys value for {_op}: {_val}", textport=False)
-								_keys_par.val = _val
-								chop_success += 1
-
-					if _par_name == "modifiers":
-						_mod_par = _op.par.modifiers
-						if _mod_par is not None:
-							_val = _data.get('chop_modifiers_val', '')
-							_expr = _data.get('chop_modifiers_expr', '')
-							if _expr:
-								self.logger.log(f"Setting CHOP modifiers expression for {_op}: {_expr}", textport=False)
-								_mod_par.expr = _expr
-								chop_success += 1
-							else:
-								self.logger.log(f"Setting CHOP modifiers value for {_op}: {_val}", textport=False)
-								_mod_par.val = _val
-								chop_success += 1
-				if chop_success:
-					success += 1
-
-			elif _type == "DAT":
-				# Handle DAT-specific parameters
-				dat_success = 0
-				for _par_name in _par_names:
-					if _par_name == "keys":
-						_keys_par = _op.par.keys
-						if _keys_par is not None:
-							_val = _data.get('dat_keys_val', '')
-							_expr = _data.get('dat_keys_expr', '')
-							if _expr:
-								self.logger.log(f"Setting DAT keys expression for {_op}: {_expr}", textport=False)
-								_keys_par.expr = _expr
-								dat_success += 1
-							else:
-								self.logger.log(f"Setting DAT keys value for {_op}: {_val}", textport=False)
-								_keys_par.val = _val
-								dat_success += 1
-
-					if _par_name == "shortcuts":
-						_shortcuts_par = _op.par.shortcuts
-						if _shortcuts_par is not None:
-							_val = _data.get('dat_shortcuts_val', '')
-							_expr = _data.get('dat_shortcuts_expr', '')
-							if _expr:
-								self.logger.log(f"Setting DAT shortcuts expression for {_op}: {_expr}", textport=False)
-								_shortcuts_par.expr = _expr
-								dat_success += 1
-							else:
-								self.logger.log(f"Setting DAT shortcuts value for {_op}: {_val}", textport=False)
-								_shortcuts_par.val = _val
-								dat_success += 1
-				if dat_success:
-					success += 1
+			applied = 0
+			for _par_name in _data.get('par', '').split(', '):
+				_par = getattr(_op.par, _par_name, None)
+				if _par is None:
+					self.logger.log(f"No parameter '{_par_name}' found on operator {_op}")
+					continue
+				if _type == "COMP":
+					col_prefix = "custom"
+				else:
+					col_prefix = f"{_type.lower()}_{_par_name}"
+				_val = _data.get(f"{col_prefix}_val", '')
+				_expr = _data.get(f"{col_prefix}_expr", '')
+				if _expr:
+					_par.expr = _expr
+					applied += 1
+				elif _val:
+					_par.val = _val
+					applied += 1
+			if applied:
+				success += 1
 
 		self.logger.log(f"Successfully loaded {success} hotkeys", textport=True)
 
-	def gatherAllHotkeys(self):
-		self.logger.log("Starting gatherAllHotkeys collection...", textport=True)
-		gather_pars_debug = []  # Store parameter details for debugging comparison
-		
-		root: COMP = self.searchRoot
-		gathered_hotkeys_table: tableDAT = self.ownerComp.op('table_gathered_hotkeys')
-		
-		# Clear the table and set headers
-		gathered_hotkeys_table.clear()
-		headers = [
-			"path", "par", "type", "_COMP_", 
-			"custom_val", "custom_expr", 
-			"_CHOP_", 
-			"chop_keys_val", "chop_keys_expr", 
-			"chop_modifiers_val", "chop_modifiers_expr", 
-			"_DAT_", 
-			"dat_keys_val", "dat_keys_expr", 
-			"dat_shortcuts_val", "dat_shortcuts_expr"
-		]
-		gathered_hotkeys_table.appendRow(headers)
-		
-		hotkeys_data = []
-		ops_found = []  # Track found operators for comparison
-		ops_paths = []  # Track paths for easier comparison
-		
-		self.logger.log("Searching for CHOP keyboard operators...")
-		
-		# Find all keyboardinCHOP operators#
-		chops_found = 0
-		chop_pars_found = 0
-		for _keyboardinCHOP in root.findChildren(type=keyboardinCHOP):	
-			if any(_sub in _keyboardinCHOP.path for _sub in self.comp_except):
-				continue
-				
-			data = HotkeyParData(
-				path=self._getPathFromOP(_keyboardinCHOP),
-				par=', '.join(self.keyboardin_chop_pars),
-				type="CHOP"
-			)
-			has_data = False
-			chop_pars_in_op = 0
-			
-			for par_name in self.keyboardin_chop_pars:
-				_par = getattr(_keyboardinCHOP.par, par_name, None)
-				if _par is not None:
-					# Set the appropriate fields based on parameter
-					if par_name == "keys":
-						data.keys_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
-						data.keys_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
-						if data.keys_val or data.keys_expr:
-							has_data = True
-							chop_pars_in_op += 1
-							chop_pars_found += 1
-							debug_info = f"CHOP: {_keyboardinCHOP.path}.{par_name} - val: '{data.keys_val}', expr: '{data.keys_expr}'"
-							gather_pars_debug.append(debug_info)
-							self.logger.log(f"gatherAllHotkeys: CHOP {_keyboardinCHOP.path} has keys data", textport=False)
-					elif par_name == "modifiers":
-						data.modifiers_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
-						data.modifiers_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
-						if data.modifiers_val or data.modifiers_expr:
-							has_data = True
-							chop_pars_in_op += 1
-							chop_pars_found += 1
-							debug_info = f"CHOP: {_keyboardinCHOP.path}.{par_name} - val: '{data.modifiers_val}', expr: '{data.modifiers_expr}'"
-							gather_pars_debug.append(debug_info)
-							self.logger.log(f"gatherAllHotkeys: CHOP {_keyboardinCHOP.path} has modifiers data", textport=False)
-			if has_data:
-				hotkeys_data.append(data)
-				ops_found.append(_keyboardinCHOP)
-				ops_paths.append(_keyboardinCHOP.path)
-				chops_found += 1
-		
-		self.logger.log(f"gatherAllHotkeys: Found {chops_found} CHOP keyboard operators with {chop_pars_found} parameters")
-		self.logger.log("Searching for DAT keyboard operators...")
-		
-		# Find all keyboardinDAT operators with keys or shortcuts parameters
-		dats_found = 0
-		dat_pars_found = 0
-		for _keyboardinDAT in root.findChildren(type=keyboardinDAT):
-			if any(_sub in _keyboardinDAT.path for _sub in self.comp_except):
-				continue
-				
-			# Check if the DAT has any of the relevant parameters
-			has_hotkey_pars = any(hasattr(_keyboardinDAT.par, par_name) for par_name in self.keyboardin_dat_pars)
-			
-			if has_hotkey_pars:
-				data = HotkeyParData(
-					path=self._getPathFromOP(_keyboardinDAT),
-					par=', '.join(self.keyboardin_dat_pars),
-					type="DAT"
-				)
-				
-				has_data = False
-				dat_pars_in_op = 0
-				
-				for par_name in self.keyboardin_dat_pars:
-					_par = getattr(_keyboardinDAT.par, par_name, None)
-					if _par is not None:
-						# Set the appropriate fields based on parameter
-						if par_name == "keys":
-							if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND:
-								_keys_val = _par.eval()
-								if _keys_val:
-									# Define ignored keys pattern
-									ignored_keys = ['ctrl', 'alt', 'shift', 'cmd', 'esc', 'enter', 'tab']
-									# Dynamically create regex pattern from the ignored_keys list
-									# Remove space from the list for the pattern (handled separately)
-									keys_for_pattern = [k for k in ignored_keys if k != ' ']
-									# Join keys with | for alternation in regex
-									keys_pattern = '|'.join(keys_for_pattern)
-									# Create the full pattern - match whole string with only ignored keys separated by whitespace
-									pattern = r'^(?:\s*(?:' + keys_pattern + r')(?:\s+|$))*$'
-									
-									# If it matches the pattern (contains only ignored keys), skip this parameter
-									if re.match(pattern, _keys_val.lower()):
-										continue
-									
-									data.dat_keys_val = _keys_val
-									has_data = True
-									dat_pars_in_op += 1
-									dat_pars_found += 1
-									debug_info = f"DAT: {_keyboardinDAT.path}.{par_name} - val: '{_keys_val}'"
-									gather_pars_debug.append(debug_info)
-									self.logger.log(f"gatherAllHotkeys: DAT {_keyboardinDAT.path} has keys value", textport=False)
-							elif _par.mode == ParMode.EXPRESSION:
-								data.dat_keys_expr = _par.expr if 'app.osName' in _par.expr else ""
-								if data.dat_keys_expr:
-									has_data = True
-									dat_pars_in_op += 1
-									dat_pars_found += 1
-									debug_info = f"DAT: {_keyboardinDAT.path}.{par_name} - expr: '{data.dat_keys_expr}'"
-									gather_pars_debug.append(debug_info)
-									self.logger.log(f"gatherAllHotkeys: DAT {_keyboardinDAT.path} has keys expr", textport=False)
+	# ------------------------------------------------------------------
+	# Defaults
+	# ------------------------------------------------------------------
 
-						elif par_name == "shortcuts":
-							if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND:
-								data.dat_shortcuts_val = _par.eval()
-								if data.dat_shortcuts_val:
-									has_data = True
-									dat_pars_in_op += 1
-									dat_pars_found += 1
-									debug_info = f"DAT: {_keyboardinDAT.path}.{par_name} - val: '{data.dat_shortcuts_val}'"
-									gather_pars_debug.append(debug_info)
-									self.logger.log(f"gatherAllHotkeys: DAT {_keyboardinDAT.path} has shortcuts value", textport=False)
-							elif _par.mode == ParMode.EXPRESSION:
-								data.dat_shortcuts_expr = _par.expr if 'app.osName' in _par.expr else ""
-								if data.dat_shortcuts_expr:
-									has_data = True
-									dat_pars_in_op += 1
-									dat_pars_found += 1
-									debug_info = f"DAT: {_keyboardinDAT.path}.{par_name} - expr: '{data.dat_shortcuts_expr}'"
-									gather_pars_debug.append(debug_info)
-									self.logger.log(f"gatherAllHotkeys: DAT {_keyboardinDAT.path} has shortcuts expr", textport=False)
-				
-				if has_data:
-					hotkeys_data.append(data)
-					ops_found.append(_keyboardinDAT)
-					ops_paths.append(_keyboardinDAT.path)
-					dats_found += 1
+	def _defaultsMap(self) -> dict:
+		"""(display_path, par_name) -> default display value, from the default table."""
+		defaults = {}
+		if self.defaultTable is None or self.defaultTable.numRows < 2:
+			return defaults
+		headers = [h.val for h in self.defaultTable.row(0)]
+		for row_idx in range(1, self.defaultTable.numRows):
+			_data = dict(zip(headers, [c.val for c in self.defaultTable.row(row_idx)]))
+			rel = self._displayFromStored(_data.get('path', ''))
+			_type = _data.get('type', '')
+			for _par_name in _data.get('par', '').split(', '):
+				col_prefix = "custom" if _type == "COMP" else f"{_type.lower()}_{_par_name}"
+				_val = _data.get(f"{col_prefix}_val", '')
+				_expr = _data.get(f"{col_prefix}_expr", '')
+				defaults[(rel, _par_name)] = _val or _expr
+			# whole-row lookup for reset
+			defaults[(rel, '__row__')] = _data
+		return defaults
 
-		self.logger.log(f"gatherAllHotkeys: Found {dats_found} DAT keyboard operators with {dat_pars_found} parameters")
-		self.logger.log("Searching for component custom parameters...")
+	def ResetToDefault(self, display_path: str, par_name: str) -> bool:
+		"""Restore one binding to its default-table value."""
+		defaults = self._defaultsMap()
+		row = defaults.get((display_path, '__row__'))
+		if row is None:
+			self.logger.log(f"No default recorded for {display_path}", textport=True)
+			return False
+		_op = self._resolveOP(row.get('path', ''))
+		if _op is None:
+			return False
+		_par = getattr(_op.par, par_name, None)
+		if _par is None:
+			return False
+		_type = row.get('type', '')
+		col_prefix = "custom" if _type == "COMP" else f"{_type.lower()}_{par_name}"
+		_val = row.get(f"{col_prefix}_val", '')
+		_expr = row.get(f"{col_prefix}_expr", '')
+		if _expr:
+			_par.expr = _expr
+		elif _val:
+			_par.val = _val
+		else:
+			return False
+		self.logger.log(f"Reset {display_path}:{par_name} to default", textport=True)
+		return True
 
-		all_comps = root.findChildren(type=COMP)
-		self.logger.log(f"gatherAllHotkeys: Searching through {len(all_comps)} COMPs", textport=True)
-		
-		comps_found = 0
-		comp_pars_found = 0
-		for _comp in all_comps:
-			if any(_sub in _comp.path for _sub in self.comp_except):
-				continue
-				
-			# list all custompar names of the comp
-			custompar_names = [par.name for par in _comp.customPars]
-			found_hotkey = False
-			comp_pars_in_op = 0
-			
-			# check if any of the custompar names contain any of the comp_pars_substrings
-			for _par_name in custompar_names:
-				# Skip parameters that match any of our exception patterns
-				if any(_sub in _par_name.lower() for _sub in self.comp_pars_exceptions):
-					continue
-					
-				# Check if this parameter name contains any of our hotkey substrings  
-				if any(_sub in _par_name.lower() for _sub in self.comp_pars_substrings):
-					_par = getattr(_comp.par, _par_name, None)
-					if _par is not None:
-						data = HotkeyParData(
-							path=self._getPathFromOP(_comp),
-							par=_par_name,
-							type="COMP"
-						)
-						
-						data.custom_val = _par.eval() if _par.mode == ParMode.CONSTANT or _par.mode == ParMode.BIND else ""
-						data.custom_expr = _par.expr if _par.mode == ParMode.EXPRESSION and 'app.osName' in _par.expr else ""
-						
-						# Only count if we have a value or expression
-						if data.custom_val or data.custom_expr:
-							debug_info = f"COMP: {_comp.path}.{_par_name} - val: '{data.custom_val}', expr: '{data.custom_expr}'"
-							gather_pars_debug.append(debug_info)
-							self.logger.log(f"gatherAllHotkeys: COMP {_comp.path} has param {_par_name}", textport=False)
-							hotkeys_data.append(data)
-							found_hotkey = True
-							comp_pars_in_op += 1
-							comp_pars_found += 1
-			
-			# If this component has at least one valid hotkey parameter, add it to our results
-			if found_hotkey and _comp not in ops_found:
-				ops_found.append(_comp)
-				ops_paths.append(_comp.path)
-				comps_found += 1
+	# ------------------------------------------------------------------
+	# Rebind capture
+	# ------------------------------------------------------------------
 
-		self.logger.log(f"gatherAllHotkeys: Found {comps_found} COMP operators with {comp_pars_found} parameters")
-		self.logger.log(f"gatherAllHotkeys: Total ops found: {len(ops_found)} with {len(gather_pars_debug)} total parameters")
-		
-		
-		# Compare with property parameter list if it exists
-		if hasattr(self.ownerComp.storage, 'allHotkeyParsDebug'):
-			property_pars = self.ownerComp.storage.allHotkeyParsDebug
-			
-			# Find differences
-			in_property_not_gathered = [p for p in property_pars if p not in gather_pars_debug]
-			in_gathered_not_property = [p for p in gather_pars_debug if p not in property_pars]
-			
-			if in_property_not_gathered:
-				self.logger.log(f"DISCREPANCY: Parameters in AllHotkeyPars but not in gather ({len(in_property_not_gathered)}):", textport=True)
-				for i, item in enumerate(in_property_not_gathered):
-					self.logger.log(f"  {i+1}. {item}", textport=True)
-			
-			if in_gathered_not_property:
-				self.logger.log(f"DISCREPANCY: Parameters in gather but not in AllHotkeyPars ({len(in_gathered_not_property)}):", textport=True)
-				for i, item in enumerate(in_gathered_not_property):
-					self.logger.log(f"  {i+1}. {item}", textport=True)
-				
-			if not in_property_not_gathered and not in_gathered_not_property:
-				self.logger.log("MATCH: Both methods found exactly the same parameters!", textport=True)
-		
-		# Add rows to the table
-		for data in hotkeys_data:
-			gathered_hotkeys_table.appendRow(data.to_row())
-		
-		return gathered_hotkeys_table
+	def _setHint(self, msg: Optional[str] = None):
+		hint = self.ownerComp.op('HotkeyUI/txt_hint')
+		if hint is not None:
+			hint.par.text = msg or DEFAULT_HINT
 
+	def BeginCapture(self, display_path: str, par_name: str):
+		"""Arm the capture keyboardin; next non-modifier keypress becomes the binding."""
+		kb = self.ownerComp.op('HotkeyUI/keyboardin_capture')
+		if kb is None:
+			self.logger.log("No capture keyboardin found", textport=True)
+			return
+		self._capture = {'path': display_path, 'par': par_name}
+		kb.par.active = True
+		self._setHint(f"press keys for {display_path}:{par_name} (Esc cancels)")
+		self.logger.log(f"Capturing new binding for {display_path}:{par_name} "
+						"(press keys, Esc cancels)", textport=True)
+		self.RefreshUI()
 
-	def _getPathFromOP(self, _op: OP) -> str:
-		path = TDF.getShortcutPath(self.searchRoot, _op)
-		return path
+	def CancelCapture(self):
+		kb = self.ownerComp.op('HotkeyUI/keyboardin_capture')
+		if kb is not None:
+			kb.par.active = False
+		self._capture = None
+		self._setHint()
+		self.RefreshUI()
 
+	def OnCaptureKey(self, key, character, alt, ctrl, shift, state, cmd=False):
+		"""Called by the capture keyboardin's onKey callback. If the captured
+		combo is already bound elsewhere, hold the capture open and require the
+		same combo a second time to force it (Esc cancels)."""
+		if self._capture is None or not state:
+			return
+		k = str(key)
+		if k.lower() in MODIFIER_ALIASES:
+			return  # keep waiting for the trigger key
+		if k.lower() == 'esc':
+			self.CancelCapture()
+			return
+		mods = [m for m, on in (('ctrl', ctrl), ('alt', alt), ('shift', shift), ('cmd', cmd)) if on]
+		combo = '.'.join(mods + [k.lower() if len(k) == 1 else k])
+		target = self._capture
 
+		others = [r for r in self._comboOwners(combo)
+				  if not (self._displayPath(r.owner) == target['path'] and r.par_name == target['par'])]
+		if others and target.get('force_combo') != combo:
+			target['force_combo'] = combo
+			owners = ', '.join(sorted({f"{self._displayPath(r.owner)}:{r.par_name}" for r in others}))
+			self._setHint(f"'{combo}' taken by {owners} -- same keys again to force, Esc cancels")
+			self.logger.log(f"Capture: '{combo}' already bound by {owners}; awaiting confirm", textport=True)
+			self.RefreshUI()
+			return
+
+		self._capture = None
+		kb = self.ownerComp.op('HotkeyUI/keyboardin_capture')
+		if kb is not None:
+			kb.par.active = False
+		self._setHint()
+		self.ApplyBinding(target['path'], target['par'], combo)
+
+	def ApplyBinding(self, display_path: str, par_name: str, combo: str) -> bool:
+		"""Write a new combo onto a binding. Expression-driven os-switch bindings
+		keep their structure (Windows half = combo, mac half swaps ctrl->cmd);
+		everything else becomes a constant value."""
+		_op = self._resolveOP(display_path)
+		if _op is None:
+			return False
+		_par = getattr(_op.par, par_name, None)
+		if _par is None:
+			self.logger.log(f"No parameter '{par_name}' on {display_path}", textport=True)
+			return False
+		if _par.mode == ParMode.EXPRESSION and _par.expr and 'app.osName' in _par.expr:
+			win = combo
+			mac = combo.replace('ctrl', 'cmd')
+			_par.expr = f"'{win}' if app.osName == 'Windows' else '{mac}'"
+		else:
+			if _par.mode == ParMode.BIND:
+				self.logger.log(f"NOTE: {display_path}:{par_name} was bind-mode; now constant", textport=True)
+			# preserve the par's separator convention (Embody uses 'cmd+shift+o')
+			current = str(_par.eval())
+			if '+' in current and '.' not in current:
+				combo = combo.replace('.', '+')
+			if _par.style == 'Menu' and combo not in _par.menuNames:
+				self._setHint(f"{display_path}:{par_name} is a menu par -- valid: {' '.join(_par.menuNames)}")
+				self.logger.log(f"Declined: '{combo}' not a menu option of {display_path}:{par_name}", textport=True)
+				return False
+			_par.val = combo
+		self.logger.log(f"Bound {display_path}:{par_name} = {combo}", textport=True)
+		# watcher marks it pending; recompute + refresh happen there unless suppressed
+		if self.supressWatch:
+			self.ComputeConflicts()
+			self.RefreshUI()
+		return True
+
+	# ------------------------------------------------------------------
+	# UI
+	# ------------------------------------------------------------------
+
+	def OpenUI(self):
+		ui_comp = self.ownerComp.op('HotkeyUI')
+		if ui_comp is None:
+			self.logger.log("HotkeyUI not built yet", textport=True)
+			return
+		self.Discover()
+		self.ComputeConflicts()
+		self.RefreshUI()
+		ui_comp.openViewer(unique=True, borders=True)
+
+	def onParOpenui(self):
+		self.OpenUI()
+
+	def _displayValue(self, value: str) -> str:
+		"""Compact display form: os-switch expressions show their Windows branch."""
+		if 'app.osName' in value:
+			m = re.match(r"^\s*['\"](.+?)['\"]\s+if\s+app\.osName", value)
+			if m:
+				return m.group(1)
+		return value
+
+	def RefreshUI(self):
+		"""Rebuild the UI table the lister displays. Safe no-op when absent."""
+		table = self.ownerComp.op('HotkeyUI/table_ui_hotkeys')
+		if table is None:
+			return
+		defaults = self._defaultsMap()
+		table.clear()
+		table.appendRow(UI_HEADERS)
+		cap = self._capture
+		for rec in sorted(self._records, key=lambda r: (self._toolName(r.owner).lower(), r.par_name)):
+			if rec.kind == 'CHOP' and rec.par_name == 'modifiers':
+				continue  # folded into the keys row's combo display
+			path_d = self._displayPath(rec.owner)
+			default_v = self._displayValue(defaults.get((path_d, rec.par_name), ""))
+			status = ""
+			if cap and cap['path'] == path_d and cap['par'] == rec.par_name:
+				if cap.get('force_combo'):
+					status = f"'{cap['force_combo']}' taken -- again to force"
+				else:
+					status = "press keys... (Esc cancels)"
+			else:
+				combo = self._conflictComboFor(rec)
+				if combo:
+					status = f"CONFLICT ({combo})"
+				if (path_d, rec.par_name) in self._pendingChanges:
+					status = (status + " " if status else "") + "unsaved"
+			table.appendRow([
+				self._toolName(rec.owner),
+				path_d,
+				rec.par_name,
+				rec.current,
+				default_v,
+				status,
+			])
+
+	def RefreshAll(self):
+		"""Full re-scan + UI rebuild (UI Refresh button)."""
+		self.AllHotkeyPars()
+		self.ComputeConflicts()
+		self.RefreshUI()
