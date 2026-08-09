@@ -12,8 +12,11 @@ class RegistryBase:
 	HOST_PAGE_NAME = 'Registration'
 
 	def __init__(self, ownerComp):
-		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
 		self.ownerComp = ownerComp
+		# BEFORE CustomParHelper touches the pars: a dangling BIND (tool
+		# Registry page gone) raises on any access and would kill init
+		self._repairDanglingHostBinds()
+		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
 		self._preInit()
 		storedItems = [
 			{'name': 'PaneRegistry', 'default': {}, 'property': True, 'readOnly': True},
@@ -34,9 +37,156 @@ class RegistryBase:
 		if self._is_sys_global():
 			return
 		try:
+			# onDestroyTD ALSO fires on extension REINIT -- removing the tool
+			# page then would orphan the host's bound Registration pars and
+			# kill the next init. Only clean up on real COMP destruction.
+			if not self.ownerComp.valid:
+				self._removeToolRegistryPage()
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME} onDestroyTD page cleanup: {e}')
+		try:
 			self._clearHostRegistration()
 		except Exception as e:
 			debug(f'{self.REGISTRY_NAME} onDestroyTD: {e}')
+
+	# --- tool-facing 'Registry' page (bound proxy pars on the parent tool) ---
+
+	TOOL_PAGE_NAME = 'Registry'
+	TOOL_PAGE_PREFIX = None      # subclass sets a short unique prefix, e.g. 'Tb'
+	TOOL_PAGE_LABEL = None       # section header label; defaults to REGISTRY_NAME
+	TOOL_PAGE_PARS = ()          # host Registration par names to proxy
+
+	def _ensureToolRegistryPage(self):
+		"""Standardized 'Registry' page on the host's PARENT tool: key
+		Registration pars mirrored onto the tool, so registration is
+		configured on the tool itself without opening the host. The TOOL
+		pars are the bind MASTERS -- they hold and persist the values with
+		the tool -- and the host's Registration pars BIND to them, following
+		whatever the tool ships with. Prefixed par names let multiple
+		registries (toolbar + navbar) share the one page. Created
+		programmatically on every successful registration -- the whole fleet
+		standardizes itself, and drop-to-register stamps inherit it with
+		zero per-tool work."""
+		if not self.TOOL_PAGE_PREFIX or not self.TOOL_PAGE_PARS:
+			return
+		if self._is_sys_global() or self._isUnderSysOrUi():
+			return
+		tool = self.ownerComp.parent()
+		if tool is None or not tool.valid or tool.path == '/':
+			return
+		page = next((pg for pg in tool.customPages if pg.name == self.TOOL_PAGE_NAME), None)
+		if page is None:
+			page = tool.appendCustomPage(self.TOOL_PAGE_NAME)
+		head_name = self.TOOL_PAGE_PREFIX + 'section'
+		if not hasattr(tool.par, head_name):
+			page.appendHeader(head_name,
+							  label=self.TOOL_PAGE_LABEL or self.REGISTRY_NAME)
+		appenders = {'Toggle': page.appendToggle, 'Pulse': page.appendPulse,
+					 'Str': page.appendStr, 'Int': page.appendInt,
+					 'Float': page.appendFloat, 'Menu': page.appendMenu}
+		for name in self.TOOL_PAGE_PARS:
+			src = getattr(self.ownerComp.par, name, None)
+			if src is None:
+				continue
+			tname = self.TOOL_PAGE_PREFIX + name.lower()
+			# host value BEFORE any bind changes -- it seeds a fresh tool par
+			try:
+				cur = src.eval() if src.style != 'Pulse' else None
+			except Exception:
+				cur = None
+			tpar = getattr(tool.par, tname, None)
+			if tpar is None:
+				append = appenders.get(src.style)
+				if append is None:
+					continue
+				try:
+					tpar = append(tname, label=src.label)[0]
+				except Exception as e:
+					debug(f'{self.REGISTRY_NAME}: tool page par {tname}: {e}')
+					continue
+				tpar.help = src.help
+				if src.style == 'Menu':
+					tpar.menuNames = src.menuNames
+					tpar.menuLabels = src.menuLabels
+				if src.style in ('Int', 'Float'):
+					tpar.normMin, tpar.normMax = src.normMin, src.normMax
+				if src.readOnly:
+					tpar.readOnly = True
+				try:
+					tpar.default = src.default
+				except Exception:
+					pass
+				if cur is not None:
+					tpar.val = cur
+			elif tpar.mode == ParMode.BIND:
+				# migrate from the earlier (reversed) direction: the tool par
+				# becomes the master, seeded with the live value
+				try:
+					tpar.mode = ParMode.CONSTANT
+					if cur is not None:
+						tpar.val = cur
+				except Exception:
+					pass
+			# the HOST par follows the tool par
+			try:
+				expr = f"op('..').par.{tname}"
+				if src.bindExpr != expr or src.mode != ParMode.BIND:
+					src.bindExpr = expr
+					src.mode = ParMode.BIND
+			except Exception as e:
+				debug(f'{self.REGISTRY_NAME}: host bind {name}: {e}')
+
+	def _repairDanglingHostBinds(self):
+		"""Registration pars bound to a tool Registry page that no longer
+		exists (page removed, host copied somewhere without one) raise on
+		every eval and would kill extension init. Fall back to CONSTANT --
+		the par's constant slot still holds its pre-bind value."""
+		page = next((pg for pg in self.ownerComp.customPages
+					 if pg.name == self.HOST_PAGE_NAME), None)
+		if page is None:
+			return
+		for p in page.pars:
+			try:
+				if p.mode != ParMode.BIND:
+					continue
+				master = None
+				try:
+					master = p.bindMaster
+				except Exception:
+					master = None
+				if master is None:
+					p.mode = ParMode.CONSTANT
+					continue
+				if p.style != 'Pulse':
+					p.eval()
+			except Exception:
+				try:
+					p.mode = ParMode.CONSTANT
+				except Exception:
+					pass
+
+	def _removeToolRegistryPage(self):
+		"""Drop this registry's section from the tool's Registry page (and
+		the page itself once no section remains)."""
+		if not self.TOOL_PAGE_PREFIX:
+			return
+		tool = self.ownerComp.parent()
+		if tool is None or not tool.valid:
+			return
+		for page in list(tool.customPages):
+			if page.name != self.TOOL_PAGE_NAME:
+				continue
+			for p in list(page.pars):
+				if p.name.startswith(self.TOOL_PAGE_PREFIX):
+					try:
+						p.destroy()
+					except Exception:
+						pass
+			if not list(page.pars):
+				try:
+					page.destroy()
+				except Exception:
+					pass
 
 	# --- surface hooks (overridden by surface-specific subclasses) ---
 
@@ -91,6 +241,10 @@ class RegistryBase:
 				try:
 					if p.style == 'Pulse':
 						continue
+					# a promoted host copy may carry Registration pars BOUND
+					# to a tool's Registry page that does not exist up here
+					if p.mode != ParMode.CONSTANT:
+						p.mode = ParMode.CONSTANT
 					p.val = p.default
 				except Exception:
 					pass
@@ -241,6 +395,7 @@ class RegistryBase:
 		)
 		self.stored['HostCanonical'] = canonical
 		self._setRegStatus(f'Registered: {canonical} -> {host.path}')
+		self._ensureToolRegistryPage()
 
 	def _ownsGlobalMenuName(self, canonical, api=None):
 		"""True if the global menu entry for canonical was published by this registry."""

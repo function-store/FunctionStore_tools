@@ -13,6 +13,16 @@ for key in ('NavbarRegistryExtStored', 'PaneRegistry', 'HostCanonical'):
 	if key in comp.storage:
 		comp.unstore(key)
 
+# hosts ship with Registration pars BOUND to the tool's Registry page;
+# the staged copy has no tool above it -- unbind before scrubbing
+for _page in comp.customPages:
+	if _page.name == 'Registration':
+		for _p in _page.pars:
+			try:
+				_p.mode = ParMode.CONSTANT
+			except Exception:
+				pass
+
 p = comp.par
 p.Autoregister = False
 p.Canonicalname = ''

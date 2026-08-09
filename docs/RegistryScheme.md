@@ -253,6 +253,25 @@ copy/create alone is rarely the whole contract.
   cook-disabled subtree cannot compile its extension -- un-park sources,
   guard any `panelParent()` sizing exprs with `... if me.panelParent()
   else N`).
+- **Every registered tool gets a standardized `Registry` custom page,
+  created PROGRAMMATICALLY by the host** on each successful registration
+  (`RegistryBase._ensureToolRegistryPage`): key Registration pars mirrored
+  on the parent tool (Auto-Register, Register, Status, Order, Displayed +
+  per-surface extras like the navbar's Side or the toolbar's Bar Width).
+  **The TOOL pars are the bind MASTERS** -- they hold and persist the
+  values with the tool -- and the host's Registration pars BIND to them
+  (new tool pars are seeded from the host's current values before the host
+  is bound, so nothing snaps to defaults). Par names carry a per-registry
+  prefix (`Tb`/`Nb`/`Pt`) so a tool with multiple registries
+  (CustomParPromoter has toolbar + navbar) shares the one page without
+  collisions. The fleet self-standardizes -- no per-tool work, and
+  drop-to-register packages inherit the page automatically. Hardening paid
+  for once: `onDestroyTD` ALSO fires on extension REINIT, so the page is
+  only removed when the host COMP is genuinely being destroyed
+  (`not ownerComp.valid`); and `_repairDanglingHostBinds` runs BEFORE
+  CustomParHelper touches the pars at init, falling dangling BINDs back to
+  CONSTANT (detected via `bindMaster is None` -- a dangling PULSE bind does
+  not raise on eval).
 - **Management UI is a SEPARATE package -- and the system's bootstrap
   seed.** The Toolbar Configurator ships ONE ToolbarRegistry host that
   plays three roles: bootstrap (alone in a fresh project it promotes the

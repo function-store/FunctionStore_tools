@@ -82,6 +82,21 @@ AppData/Scripts/sys.py             # the sys.path injection hack (see §3)
 - `uv.lock` gives real transitive dependency resolution per tool — the
   thing RegistryScheme's storage-based semver check doesn't attempt.
 
+> **Clarifying a likely misread**: `package-data` does not mean "Python
+> files only." Wheels/sdists can carry arbitrary binary assets — the
+> `"*.tox"` glob tells the build backend to bundle the compiled `.tox`
+> **binary, byte-for-byte, as-is**. Nothing about the operator network
+> gets reconstructed via Python. The pipeline is: build the tool normally
+> in TD (Embody-tracked) → `op.Embody.ExportPortableTox(...)` compiles it
+> to a real `.tox` (same artifact already shipped via `modules/release/`
+> today) → that binary sits next to `__init__.py` and rides along in the
+> wheel unchanged → `uv sync`/`pip install` unpacks it into `site-packages`
+> verbatim → `mod.pkg.Module.ToxFile` (§2.3) resolves to that installed
+> binary's path and **TD loads it with its own native tox-loading code** —
+> the same path as opening any `.tox` from disk. `__init__.py` is just a
+> locator (`Path(__file__).parent / "X.tox"`) plus type hints, not a
+> description of the network's contents.
+
 ### 2.2 The component contract
 
 Each tox-backed unit is a small package with a fixed `__init__.py` shape:
@@ -293,7 +308,42 @@ replace the `sys.py` hack:
   cold start, or does validity checking expect TD-authored metadata inside
   the venv?
 
-## 6. Relationship to RegistryScheme — not a replacement
+## 6. Multiple packages, one repo: uv workspaces
+
+Individual tools don't need separate repos to be independently-versioned
+packages — this is what `uv` workspaces are for
+([docs](https://docs.astral.sh/uv/concepts/projects/workspaces/)).
+
+- A root `pyproject.toml` declares `[tool.uv.workspace] members = [...]`
+  as glob patterns; every matched directory needs its own `pyproject.toml`.
+  Layout is flexible — nested/scattered globs are fine, members don't need
+  to live flat under one `packages/` folder.
+- Each member is **independently versioned and independently publishable**
+  to PyPI (`tdp-OpTemplates`, `tdp-FNS_Toolbar`, `tdp-Navbar`, … as
+  separate packages, separate release cadence).
+- All members share **one `uv.lock`** and, by default, **one `.venv`**.
+  This is a good fit here, not a limitation: `TDPyEnvManagerContext.yaml`
+  (§4) points TD at exactly one venv, so a workspace naturally gives one
+  context file for the whole repo instead of juggling N environments/context
+  files per tool.
+- Cross-tool dependencies — the README's "some modules expect the presence
+  of others" — become real, resolvable dependencies via `tool.uv.sources`
+  with `workspace = true`: editable/local during dev, resolving to the
+  normal published version once each package ships independently. This
+  replaces an informal comment with an enforced, resolvable graph.
+
+**The wrinkle**: Embody's externalized live-source tree (diffable
+`.py`/`.json`/`.tdn`, the whole point of Embody) and tdp-MVP's packaging
+convention (`src/pkgname/Module/__init__.py` + `Module.tox` as opaque
+package data) are two different representations of the same tool. A
+workspace member's directory would realistically hold the **release
+artifact** — Embody's `ExportPortableTox` output plus a thin `__init__.py`
+— not the live dev tree itself. Mechanically small: point each tool's
+`pre_release` hook (already established in
+[RegistryScheme.md §6](RegistryScheme.md)) at its workspace-member folder
+instead of the flat `modules/release/` folder.
+
+## 7. Relationship to RegistryScheme — not a replacement
 
 Nothing here changes [RegistryScheme.md](RegistryScheme.md). That system
 solves a different problem: multiple tools publishing into one shared,
@@ -305,14 +355,18 @@ getting the right `.tox` and its pinned dependencies onto disk and onto
 and a RegistryScheme host once it's in the project. The two systems don't
 compete for the same responsibility.
 
-## 7. Next steps (not started)
+## 8. Next steps (not started)
 
 - [ ] Pick one small standalone tool (no registry-hosting) as a pilot.
 - [ ] Verify the three open items in §5 against a real TD 2025.33070
       install.
 - [ ] Decide package granularity: one PyPI package per tool (tdp-MVP's
       model) vs. one package with multiple tox-modules (also supported by
-      tdp-MVP's root `_ToxFiles` pattern).
+      tdp-MVP's root `_ToxFiles` pattern) vs. a uv workspace (§6) spanning
+      all tools in this repo.
+- [ ] If going the workspace route: decide where release artifacts land
+      per member and adjust `pre_release`/`ExportPortableTox` targets
+      accordingly.
 - [ ] Evaluate `monkeybrain` (§2.4) or decide to skip it.
 - [ ] Decide whether `autoSetup`/`requirements.txt` (TD's own installer) or
       pure `uv sync` (manual, outside TD) owns dependency installation —

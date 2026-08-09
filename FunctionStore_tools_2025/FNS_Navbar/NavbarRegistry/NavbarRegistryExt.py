@@ -20,6 +20,12 @@ class NavbarRegistryExt(RegistryBase):
 	SIDES = ('left', 'right')
 	KINDS = ('widget', 'overlay', 'logic')
 
+	# Standardized 'Registry' page on the parent tool (see RegistryBase).
+	TOOL_PAGE_PREFIX = 'Nb'
+	TOOL_PAGE_LABEL = 'Navbar'
+	TOOL_PAGE_PARS = ('Autoregister', 'Register', 'Regstatus',
+					  'Menuorder', 'Align', 'Displayed')
+
 	# Widgets fill the bar's inner height (the same expression the legacy
 	# installer's templates carried) -- context-correct in every pane bar.
 	ITEM_HEIGHT_EXPR = ("me.panelParent().height - me.panelParent().par.marginb"
@@ -639,6 +645,7 @@ class NavbarRegistryExt(RegistryBase):
 		)
 		self.stored['HostCanonical'] = canonical
 		self._setRegStatus(f'Registered: {canonical} -> {widget.path}')
+		self._ensureToolRegistryPage()
 
 	def _hostHelpUrl(self, widget):
 		"""The tool's self-reported wiki page: the host's Helpurl par when

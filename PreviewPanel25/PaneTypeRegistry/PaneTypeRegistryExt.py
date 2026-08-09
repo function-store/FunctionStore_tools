@@ -17,6 +17,11 @@ class PaneTypeRegistryExt(RegistryBase):
 	SHORTCUT = 'PANETYPEREGISTRY'
 	REGISTRY_NAME = 'PaneTypeRegistry'
 
+	# Standardized 'Registry' page on the parent tool (see RegistryBase).
+	TOOL_PAGE_PREFIX = 'Pt'
+	TOOL_PAGE_LABEL = 'Pane Menu'
+	TOOL_PAGE_PARS = ('Autoregister', 'Register', 'Regstatus', 'Menuorder')
+
 	PANE_TYPE_NAMES = [
 		'PANEL', 'NETWORKEDITOR', 'GEOMETRYVIEWER', 'TOPVIEWER', 'CHOPVIEWER',
 		'ANIMATIONEDITOR', 'PARAMETERS', 'TEXTPORT', 'OPBROWSER',

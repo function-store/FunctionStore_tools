@@ -11,6 +11,12 @@ class ToolbarRegistryExt(RegistryBase):
 	EXT_NAME = 'ToolbarRegistryExt'
 	REGISTRY_NAME = 'ToolbarRegistry'
 
+	# Standardized 'Registry' page on the parent tool (see RegistryBase).
+	TOOL_PAGE_PREFIX = 'Tb'
+	TOOL_PAGE_LABEL = 'Toolbar'
+	TOOL_PAGE_PARS = ('Autoregister', 'Register', 'Regstatus',
+					  'Menuorder', 'Displayed', 'Barwidth')
+
 	MIRROR_PREFIX = 'tbmirror_'
 	MIRROR_TAG = 'ToolbarRegistryMirror'
 	# The installed bar: FNS_Toolbar copies its widgets into TD's bookmark bar.
@@ -559,6 +565,7 @@ class ToolbarRegistryExt(RegistryBase):
 		)
 		self.stored['HostCanonical'] = canonical
 		self._setRegStatus(f'Registered: {canonical} -> {widget.path}')
+		self._ensureToolRegistryPage()
 
 	def _hostHelpUrl(self, widget):
 		"""The tool's self-reported wiki page: the host's Helpurl par when
