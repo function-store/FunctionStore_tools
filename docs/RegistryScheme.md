@@ -208,9 +208,19 @@ copy/create alone is rarely the whole contract.
   untouched by cloning. Two hazards paid for: cloning breaks `me.dock`
   references inside the clone (the ExtUtils `extParameter` Pages expr was
   rewritten dock-free), and a clone re-sync transiently rebuilds children.
-  The `/sys` global stays unclonled (it is disposable). `RegistryBase.py`
-  exists per-package; base fixes are applied to every master, whose `/sys`
-  copies file-sync from the SAME `.py` files.
+  The `/sys` global stays unclonled (it is disposable). **`RegistryBase.py`
+  is ONE shared file** (`scripts/shared/RegistryBase.py`): every master's
+  `RegistryBase` DAT points at it via plain TD `file`+`syncfile` (NO Embody
+  tag or tsv row -- an Embody-tracked DAT identity on a much-copied module
+  is how the tracker once adopted a stray copy and dragged files away), and
+  host copies + `/sys` copies follow automatically through clone sync /
+  promotion. A base fix edits one file and hot-propagates to every registry;
+  portable releases still embed the text, so shipped toxes stay standalone.
+  PaneTypeRegistry (v0.1.0, on the shared base) distributes via the TD
+  Palette: its live instance is file-bound for dev, but palette saves go
+  through an unbind-save-rebind step so the palette tox ships with the
+  text embedded and NO file bindings (a repo-relative binding would
+  dangle in foreign projects).
 - **Release scrubbing of clones**: shipped copies must NOT carry the clone
   par. The registry's own `pre_release` scrubs it for standalone releases;
   every HOSTING TOOL's `pre_release` carries an auto-added scrub block for
