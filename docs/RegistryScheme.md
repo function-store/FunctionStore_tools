@@ -192,13 +192,15 @@ copy/create alone is rarely the whole contract.
 - **A tool that publishes** ships: its widget/panel + a configured registry
   host copy (`Comp`, `Canonicalname`, `Autoregister=on`). See
   `VSCodeTools/ToolbarRegistry` for the canonical example.
-- **Management UI is a SEPARATE package, never inside the registry.** With
+- **Management UI is a SEPARATE package that publishes like any tool.** With
   host cloning, anything inside the registry replicates into every host and
-  every tool's tox — so the registry ships only a tiny launcher (the gear
-  `btn_config`, ~2 KB) while the heavyweight editor (`ToolbarConfigurator`,
-  its own `modules/release/ToolbarConfigurator.tox`) is discovered at
-  runtime via its `TOOLBARCONFIG` global shortcut, with a toolbar-package
-  child lookup as fallback. Missing editor = a debug note, nothing breaks.
+  every tool's tox — so the registry ships NO widgets at all. The editor
+  (`ToolbarConfigurator`, `modules/release/ToolbarConfigurator.tox`) ships
+  its own gear button + a standard registry host (`Configure`, order 0) —
+  the gear only appears where the UI actually exists, so there is never a
+  dead affordance. `op.TOOLBARREGISTRY.OpenConfigurator()` remains as a
+  convenience API, resolving the editor via its `TOOLBARCONFIG` global
+  shortcut (toolbar-package child fallback, debug note if absent).
 
 ## 7. Known hazards (paid for once — do not rediscover)
 

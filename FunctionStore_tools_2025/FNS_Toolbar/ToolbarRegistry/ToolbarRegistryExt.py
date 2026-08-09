@@ -38,7 +38,6 @@ class ToolbarRegistryExt(RegistryBase):
 		Defers until TD's bookmark bar exists."""
 		self._pane_sync_queued = False
 		if self._barReady():
-			self._ensureConfigEntry()
 			self._pruneMirrors()
 			for canonical in self._registeredNamesInOrder():
 				self._injectWidget(canonical)
@@ -106,7 +105,21 @@ class ToolbarRegistryExt(RegistryBase):
 			mirror.nodeX = 500 + (len(siblings) - 1) * 200
 			mirror.nodeY = -700
 		self._setExpr(mirror.par.selectpanel, self.SELECTPANEL_EXPR.format(canonical=canonical))
-		mirror.par.matchsize = True
+		width = info.get('width', '')
+		if width:
+			mirror.par.matchsize = False
+			try:
+				self._setConst(mirror.par.w, int(width))
+			except (TypeError, ValueError):
+				pass
+			src_h = 19
+			try:
+				src_h = int(widget.height) or 19
+			except Exception:
+				pass
+			self._setConst(mirror.par.h, src_h)
+		else:
+			mirror.par.matchsize = True
 		self._anchorMirror(mirror, bar)
 		# The registry is the manager: order and visibility come from the
 		# central entry, not from any table.
@@ -115,21 +128,6 @@ class ToolbarRegistryExt(RegistryBase):
 			order = len(bar.ops(self.MIRROR_PREFIX + '*'))
 		self._setConst(mirror.par.display, 0 if info.get('display', '1') == '0' else 1)
 		self._setConst(mirror.par.alignorder, self.MIRROR_ORDER_BASE + order)
-
-	CONFIG_CANONICAL = 'Configure'
-	# 0 sorts before every published widget (they start at 1), so the gear
-	# sits left-most, right after TD's own built-in bar items.
-	CONFIG_ORDER = 0
-
-	def _ensureConfigEntry(self):
-		"""Register the registry's own gear button (ships dormant in every
-		copy; only the sys-global publishes it, pinned at the bar's end)."""
-		if not self._is_sys_global():
-			return
-		btn = self.ownerComp.op('btn_config')
-		if btn is None or self.CONFIG_CANONICAL in self.stored['PaneRegistry']:
-			return
-		self.RegisterWidget(btn, self.CONFIG_CANONICAL, order=self.CONFIG_ORDER)
 
 	def OpenConfigurator(self):
 		"""Open the Toolbar Configurator (lives in the FNS_Toolbar package)."""
@@ -339,7 +337,31 @@ class ToolbarRegistryExt(RegistryBase):
 
 	DIVIDER_TAG = 'ToolbarRegistryDivider'
 
-	def AddDivider(self, after=None):
+	def SetWidgetWidth(self, canonical_name, width):
+		"""Manager API: override any entry's bar width (applied to the MIRROR,
+		matchsize off -- the source widget's own size is never touched).
+		width None/0/'' clears the override back to auto-match."""
+		api = self._registryApi()
+		if api is not self:
+			return api.SetWidgetWidth(canonical_name, width)
+		info = self.stored['PaneRegistry'].get(canonical_name)
+		if not info:
+			return False
+		if width in (None, '', 0, '0'):
+			info.pop('width', None)
+		else:
+			try:
+				info['width'] = str(max(1, min(int(width), 800)))
+			except (TypeError, ValueError):
+				return False
+		self._syncSurface()
+		return True
+
+	# Back-compat alias (0.3.x): dividers now use the same entry override.
+	def SetDividerWidth(self, canonical_name, width):
+		return self.SetWidgetWidth(canonical_name, width)
+
+	def AddDivider(self, after=None, width=None):
 		"""Manager API: create a registry-owned divider widget and register
 		it (after the given canonical name, or at the end). The widget is
 		copied from the toolbar package's divider template and lives in its
@@ -359,6 +381,11 @@ class ToolbarRegistryExt(RegistryBase):
 		w = shelf.copy(template, name=f'divider_x{i}')
 		w.tags.add(self.DIVIDER_TAG)
 		w.nodeY = template.nodeY - 200 * i
+		if width is not None:
+			try:
+				w.par.w = max(1, min(int(width), 400))
+			except (TypeError, ValueError):
+				pass
 		canonical = f'DividerX{i}'
 		seq = self._registeredNamesInOrder()
 		if after in seq:
