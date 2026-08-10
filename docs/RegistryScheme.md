@@ -206,11 +206,27 @@ A hook that raises is contained: debug()'d, skipped, dialog keeps working.
   are excluded from the scan, same as the pane bar's alignorder-0 cluster.
 - **No `kind`, no dividers** (v0.1.0): every entry is an aligned panel widget. Groups
   (bracket pairs) come from RegistryBase and work unchanged.
-- **Built-ins are NOT auto-adopted.** Unlike the pane bar, the stock cluster contains
-  duplicate alignorders (`gpuUsage`/`realtime` both 3.4) that can never be adopted, so
-  auto-adopting the rest would visibly reorder TD's own bar. The Configurator lists
-  built-ins read-only (Show toggles their display par, persisted in its `state`
-  table); repositioning a stock item is an explicit `AdoptBarWidget` call.
+- **Built-ins ARE auto-adopted -- seeded by pixels, not alignorder.** The whole left
+  cluster (`wiki` .. `realtime`) is adopted into the managed sequence so entries can
+  be ordered BETWEEN TD's items (user decision 2026-08-10). Two deltas from the pane
+  bar's recipe: the duplicate-alignorder pair (`gpuUsage`/`realtime` both 3.4) is
+  adoptable anyway because first adoption seeds the sequence from LIVE X positions
+  (pixels resolve the tie the way the user sees it), and the `layer == 0` adoption
+  filter is dropped (`gpuUsage` rides layer 5 yet aligns like any fixed item).
+  CRITICAL: snapshot the x positions BEFORE the first `AdoptBarWidget` call -- every
+  adoption re-flows the bar, so positions read mid-loop are churn, not truth (paid
+  for once: entries jumped ahead of `wiki`). Original alignorders persist as
+  `td_order` in the Configurator `state` table; right-click the TD topbar button
+  restores TD's original order. `menu` (ao 0), the `stringfield` pivot, and the
+  `OpFamUI`/`update` right corner stay unmanaged landmarks. Adopted order/display
+  persist in the `state` table (adopted entries have no host publisher).
+- **`Anchor` par (Registration page, `Mmanchor` on the tool)**: pins an entry into
+  the gap directly after a NAMED stock item, overriding the side band -- the escape
+  hatch for placing next to something unmanaged (e.g. the right corner,
+  `Anchor=OpFamUI`). Name-based and re-resolved live, so it heals across TD builds;
+  a vanished anchor falls back to the side band. With the left cluster adopted,
+  ordinary sequence order covers most cases (projname sits between `tutorials` and
+  `startstop` by plain order now).
 - **Manager API deltas**: `SetWidgetSide`, `SideSequences`; `SetWidgetSequence`
   reassigns 1..N per side. `MainMenuConfigurator` (gear in the bar,
   `op.MAINMENUCONFIG`) is the NavbarConfigurator adapted; tool page prefix is `Mm`.

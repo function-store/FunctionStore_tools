@@ -17,7 +17,7 @@ class MainMenuRegistryExt(RegistryBase):
 	TOOL_PAGE_PREFIX = 'Mm'
 	TOOL_PAGE_LABEL = 'Main Menu'
 	TOOL_PAGE_PARS = ('Createcallbacks', 'Autoregister', 'Register', 'Regstatus',
-					  'Menuorder', 'Align', 'Displayed', 'Barwidth')
+					  'Menuorder', 'Align', 'Anchor', 'Displayed', 'Barwidth')
 
 	MIRROR_PREFIX = 'mmitem_'
 	MIRROR_TAG = 'MainMenuRegistryItem'
@@ -155,8 +155,11 @@ class MainMenuRegistryExt(RegistryBase):
 		the open interval between the last stock-left item and the fill pivot
 		(stringfield, the stretchy spacer); right entries subdivide between
 		the pivot and the first stock-right item (OpFamUI/update today).
-		Recomputed every sync, so stock renumbering in future TD builds heals
-		on the next pass."""
+		An entry carrying an `anchor` (a stock item's name) is pinned into
+		the gap directly AFTER that item instead -- how projname keeps its
+		historical slot between tutorials and startstop. Recomputed every
+		sync, so stock renumbering in future TD builds heals on the next
+		pass, and a vanished anchor falls back to the side band."""
 		stock = []
 		adopted = self._adoptedNames()
 		for c in bar.children:
@@ -179,21 +182,46 @@ class MainMenuRegistryExt(RegistryBase):
 				continue
 			if ao <= 0:
 				continue  # the alignorder-0 cluster: the File/Edit menu strip, emptypanel
-			stock.append((ao, hm, layer))
+			stock.append((ao, hm, layer, c.name))
 		# the pivot is the in-flow stretchy element (stringfield)
-		fills = [ao for ao, hm, layer in stock if hm == 'fill' and layer == 0]
+		fills = [ao for ao, hm, layer, n in stock if hm == 'fill' and layer == 0]
 		pivot = min(fills) if fills else 4.0
-		lefts = [ao for ao, hm, layer in stock if ao < pivot]
-		rights = [ao for ao, hm, layer in stock if ao > pivot]
+		lefts = [ao for ao, hm, layer, n in stock if ao < pivot]
+		rights = [ao for ao, hm, layer, n in stock if ao > pivot]
 		left_lo = max(lefts) if lefts else pivot - 1.0
 		right_hi = min(rights) if rights else pivot + 1.0
+		stock_aos = sorted(ao for ao, hm, layer, n in stock)
+		stock_by_name = {}
+		for ao, hm, layer, n in stock:
+			stock_by_name.setdefault(n, ao)
+		entries = self.stored['PaneRegistry']
+
+		def entry_anchor(name):
+			an = (entries.get(name) or {}).get('anchor')
+			return an if an and an in stock_by_name else None
+
 		layout = {}
-		left_names = self._registeredNamesInOrder('left')
+		left_names = [n for n in self._registeredNamesInOrder('left')
+					  if entry_anchor(n) is None]
 		for i, name in enumerate(left_names):
 			layout[name] = left_lo + (pivot - left_lo) * (i + 1) / (len(left_names) + 1)
-		right_names = self._registeredNamesInOrder('right')
+		right_names = [n for n in self._registeredNamesInOrder('right')
+					   if entry_anchor(n) is None]
 		for i, name in enumerate(right_names):
 			layout[name] = pivot + (right_hi - pivot) * (i + 1) / (len(right_names) + 1)
+		# anchored entries: subdivide the gap between the anchor and the next
+		# stock item, in overall sequence order
+		anchored = {}
+		for name in self._registeredNamesInOrder():
+			an = entry_anchor(name)
+			if an is not None:
+				anchored.setdefault(an, []).append(name)
+		for an, names in anchored.items():
+			lo = stock_by_name[an]
+			higher = [x for x in stock_aos if x > lo]
+			hi = min(higher) if higher else lo + 1.0
+			for i, name in enumerate(names):
+				layout[name] = lo + (hi - lo) * (i + 1) / (len(names) + 1)
 		return layout
 
 	# --- managed mirror lifecycle ---
@@ -451,18 +479,21 @@ class MainMenuRegistryExt(RegistryBase):
 
 	def RegisterWidget(self, widget_op, canonical_name, order=None, side=None,
 					   display=True, callback=None, source_registry=None,
-					   width=None, help_url=None):
+					   width=None, help_url=None, anchor=None):
 		"""Publish a panel COMP as a main-menu item under canonical_name.
 
 		side: 'left' packs after TD's left cluster (before the stretchy
-		spacer), 'right' (default) before the OpFam/update corner."""
+		spacer), 'right' (default) before the OpFam/update corner.
+		anchor: a stock bar item's name (e.g. 'tutorials') pins the entry
+		into the gap directly after it, overriding the side band."""
 		if not self._is_sys_global():
 			api = self._registryApi()
 			if api is not self:
 				return api.RegisterWidget(
 					widget_op, canonical_name, order=order, side=side,
 					display=display, callback=callback,
-					source_registry=source_registry, width=width, help_url=help_url)
+					source_registry=source_registry, width=width,
+					help_url=help_url, anchor=anchor)
 			debug(f'{self.REGISTRY_NAME}: RegisterWidget ignored on {self.ownerComp.path}'
 				  f' -- no global /sys registry ready')
 			return
@@ -477,6 +508,8 @@ class MainMenuRegistryExt(RegistryBase):
 			'display': '1' if display else '0',
 			'side': side,
 		}
+		if anchor:
+			entry['anchor'] = str(anchor).strip()
 		norm_order = self._normalizeMenuOrder(order)
 		if norm_order is not None:
 			entry['menu_order'] = norm_order
@@ -566,6 +599,27 @@ class MainMenuRegistryExt(RegistryBase):
 		info['side'] = side
 		self._writeBackHostPar(info, 'Align', side)
 		self._invokeHook(info, 'onSideChanged', canonical_name, side)
+		self._syncSurface()
+		return True
+
+	def SetWidgetAnchor(self, canonical_name, stock_name):
+		"""Manager API: pin an entry directly after a named stock bar item
+		(e.g. 'tutorials'), overriding its side band. None/'' clears the pin
+		back to the normal left/right allocation. The name is resolved live
+		each sync -- a vanished anchor falls back to the band, and heals if
+		the item comes back."""
+		api = self._registryApi()
+		if api is not self:
+			return api.SetWidgetAnchor(canonical_name, stock_name)
+		info = self.stored['PaneRegistry'].get(canonical_name)
+		if not info:
+			return False
+		if not stock_name:
+			info.pop('anchor', None)
+			self._writeBackHostPar(info, 'Anchor', '')
+		else:
+			info['anchor'] = str(stock_name).strip()
+			self._writeBackHostPar(info, 'Anchor', info['anchor'])
 		self._syncSurface()
 		return True
 
@@ -683,6 +737,13 @@ class MainMenuRegistryExt(RegistryBase):
 				return side
 		return 'right'
 
+	def _hostAnchor(self):
+		if hasattr(self.ownerComp.par, 'Anchor'):
+			a = str(self.ownerComp.par.Anchor.eval() or '').strip()
+			if a:
+				return a
+		return None
+
 	def _applyHostRegistration(self, force=False):
 		if self._is_sys_global():
 			self._setRegStatus('Idle (global)')
@@ -734,6 +795,7 @@ class MainMenuRegistryExt(RegistryBase):
 			source_registry=self.ownerComp,
 			width=bar_width,
 			help_url=self._hostHelpUrl(widget),
+			anchor=self._hostAnchor(),
 		)
 		self.stored['HostCanonical'] = canonical
 		self._setRegStatus(f'Registered: {canonical} -> {widget.path}')
@@ -861,6 +923,11 @@ class MainMenuRegistryExt(RegistryBase):
 			ext._applyHostRegistration()
 
 	def onParAlign(self, _par, _val, _prev):
+		ext = self._hostExtFromPar(_par)
+		if ext._isAutoRegister():
+			ext._applyHostRegistration()
+
+	def onParAnchor(self, _par, _val, _prev):
 		ext = self._hostExtFromPar(_par)
 		if ext._isAutoRegister():
 			ext._applyHostRegistration()
