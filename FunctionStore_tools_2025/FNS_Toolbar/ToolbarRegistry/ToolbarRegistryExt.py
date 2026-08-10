@@ -133,6 +133,9 @@ class ToolbarRegistryExt(RegistryBase):
 		if self._isGroupEnd(info):
 			self._injectGroupEnd(canonical, info, bar, seq_index, ancestors)
 			return
+		if info.get('adopted') == '1':
+			self._applyAdopted(canonical, info, bar, seq_index, ancestors)
+			return
 		widget = self.WidgetTarget(canonical)
 		if widget is None:
 			debug(f'{self.REGISTRY_NAME}: no live widget for {canonical!r}, skipping inject')
@@ -164,6 +167,48 @@ class ToolbarRegistryExt(RegistryBase):
 		self._setConst(mirror.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
 		self._setConst(mirror.par.alignorder,
 					   self.MIRROR_ORDER_BASE + self._barOrder(info, seq_index))
+
+	def _applyAdopted(self, canonical, info, bar, seq_index=None, ancestors=()):
+		"""An ADOPTED entry is a panel that already lives in the bar -- TD's
+		own icons. It is managed IN PLACE: order and visibility are written
+		straight onto the panel, and no mirror is made, because making one
+		would show the thing twice."""
+		o = self._resolvePanelOp(info)
+		if o is None:
+			return
+		self._setConst(o.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
+		self._setConst(o.par.alignorder,
+					   self.MIRROR_ORDER_BASE + self._barOrder(info, seq_index))
+
+	def AdoptBarWidget(self, widget_op, canonical_name, order=None, display=True,
+					   source_registry=None):
+		"""Take a panel that is ALREADY in the bar under registry management
+		(TD's built-in icons), so it can be ordered, grouped and hidden like
+		any published widget. Unlike RegisterWidget this never creates a
+		mirror -- see _applyAdopted."""
+		api = self._registryApi()
+		if api is not self:
+			return api.AdoptBarWidget(widget_op, canonical_name, order=order,
+									  display=display, source_registry=source_registry)
+		err = self._validateWidget(widget_op)
+		if err:
+			debug(f'{self.REGISTRY_NAME}: AdoptBarWidget({canonical_name!r}) rejected: {err}')
+			return
+		entry = {
+			'panel_path': widget_op.path,
+			'panel_id': int(widget_op.id),
+			'display': '1' if display else '0',
+			'adopted': '1',
+		}
+		norm = self._normalizeMenuOrder(order)
+		if norm is not None:
+			entry['menu_order'] = norm
+		# deliberately NO source_registry: an adopted icon is not published by
+		# a host, and recording one couples it to whatever host did the
+		# adopting -- which publishes its own widget (see _writeBackHostPar).
+		self.stored['PaneRegistry'][canonical_name] = entry
+		self._syncSurface()
+		return canonical_name
 
 	def _injectGroupStart(self, canonical, info, bar, seq_index=None, ancestors=()):
 		"""The group's switch: a narrow chevron button that collapses or
@@ -441,7 +486,17 @@ class ToolbarRegistryExt(RegistryBase):
 
 	def _writeBackHostPar(self, info, par_name, value):
 		"""Persist a manager edit onto the entry's host publisher par
-		(compare-before-set so host callbacks do not storm)."""
+		(compare-before-set so host callbacks do not storm).
+
+		ADOPTED entries are excluded: TD's built-ins have no host publisher of
+		their own -- the Configurator persists them in its state table. Their
+		source_registry merely records which host adopted them, and that host
+		publishes its OWN widget, so writing back stomps that widget's
+		Registration pars. Hiding a TD icon switched the gear's Displayed off
+		exactly this way, and SetWidgetSequence would have done the same to
+		its Menuorder."""
+		if info.get('adopted') == '1':
+			return
 		src_reg = self._resolveSourceRegistry(info)
 		if src_reg is None:
 			return
