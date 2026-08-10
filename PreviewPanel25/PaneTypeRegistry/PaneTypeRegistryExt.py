@@ -90,11 +90,22 @@ def onPaneRecall(ctx):
 	)
 
 	def _preInit(self):
-		self._ensurePanetypeMenuSource()
+		# DEFERRED, never inline. _preInit runs DURING extension construction;
+		# touching the Panetype parameter here is what re-entered init and
+		# killed the process (see _ensurePanetypeMenu). One frame later the
+		# extension exists and the same work is ordinary.
+		run("args[0].valid and args[0].extensionsReady and "
+			"args[0].ext.PaneTypeRegistryExt._ensurePanetypeMenu()",
+			self.ownerComp, delayFrames=1, delayRef=op.TDResources)
 
 	@property
 	def PanetypeMenuSource(self):
-		"""MenuSource for the Panetype parameter."""
+		"""MenuSource for the Panetype parameter.
+
+		KEPT for back-compat only: older copies/toxes may still carry the
+		menuSource expression that reads this. Nothing assigns that
+		expression any more -- see _ensurePanetypeMenu.
+		"""
 		return tdu.ParMenu(self.PANE_TYPE_NAMES, self.PANE_TYPE_LABELS)
 
 	@property
@@ -102,15 +113,37 @@ def onPaneRecall(ctx):
 		"""Legacy MenuSource (Action parameter removed in 0.0.6)."""
 		return tdu.ParMenu(self.ACTION_NAMES, self.ACTION_LABELS)
 
-	def _ensurePanetypeMenuSource(self):
-		"""Keep Panetype.menuSource guarded — bare me.ext.* errors when ext failed to init."""
+	def _ensurePanetypeMenu(self):
+		"""Populate the Panetype menu WITHOUT a menuSource expression.
+
+		This used to assign PANETYPE_MENUSOURCE_EXPR -- a menuSource that read
+		`me.ext.PaneTypeRegistryExt.PanetypeMenuSource`, i.e. a parameter whose
+		menu was computed by this very extension -- and it was assigned from
+		_preInit, DURING that extension's construction. Evaluating it mid-init
+		re-entered extension initialization (-> _preInit -> reassign ->
+		evaluate -> ...) until the stack blew and took the whole TD process
+		down with no traceback. `me.extensionsReady` did not reliably stop it.
+		It looked intermittent only because the old setter compared before
+		writing, so it fired just when something else had changed the
+		menuSource first (clone sync, ext .py reload).
+
+		The pane-type list is static, so the menu is set directly and nothing
+		calls back into the extension. Runs deferred (see _preInit), and also
+		CLEARS any inherited menuSource, so a copy or tox still carrying the
+		old expression heals itself instead of crashing on its next reinit.
+		"""
 		par = getattr(self.ownerComp.par, 'Panetype', None)
 		if par is None:
 			return
-		desired = self.PANETYPE_MENUSOURCE_EXPR
-		current = str(getattr(par, 'menuSource', '') or '')
-		if current != desired:
-			par.menuSource = desired
+		try:
+			if str(getattr(par, 'menuSource', '') or ''):
+				par.menuSource = None
+			if list(par.menuNames) != list(self.PANE_TYPE_NAMES):
+				par.menuNames = list(self.PANE_TYPE_NAMES)
+			if list(par.menuLabels) != list(self.PANE_TYPE_LABELS):
+				par.menuLabels = list(self.PANE_TYPE_LABELS)
+		except Exception as e:
+			debug('PaneTypeRegistry: Panetype menu: ' + str(e))
 
 	# --- host auto-registration (Registration page) ---
 
