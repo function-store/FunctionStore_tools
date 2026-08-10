@@ -4,6 +4,9 @@ Research into whether individual FunctionStore tools could ship as
 installable, dependency-driven `uv`/PyPI packages instead of (or alongside)
 the current `.tox`-drop-in + [RegistryScheme](RegistryScheme.md) model.
 Nothing here has been implemented — this is groundwork to act on later.
+The pick-and-choose install/configurator design that sits on top of this
+delivery layer lives in
+[ConfiguratorDistribution.md](ConfiguratorDistribution.md).
 
 ## 1. The question
 
