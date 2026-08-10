@@ -369,11 +369,18 @@ class ExtBorderlessWindow:#
 		self.IsBorderless = False
 
 	def displayProjName(self, state):
+		# projname reaches the menu bar as a MainMenuRegistry mirror; drive
+		# its visibility through the manager API so the entry's Displayed
+		# state (and the host par) stay in sync. The direct-copy fallback
+		# below still covers projects without the registry.
+		reg = getattr(op, 'MAINMENUREGISTRY', None)
+		if reg is not None and hasattr(reg.ext, 'MainMenuRegistryExt'):
+			reg.ext.MainMenuRegistryExt.SetWidgetDisplay('ProjName', bool(state))
 		targets = [self.ownerComp.op('projname'), op('/ui/dialogs/mainmenu/projname')]
 
 		for target in targets:
 			if not target:
 				continue
-		
+
 			target.par.display = state
 

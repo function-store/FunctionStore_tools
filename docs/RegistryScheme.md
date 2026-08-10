@@ -186,6 +186,51 @@ A hook that raises is contained: debug()'d, skipped, dialog keeps working.
   parking. `_injectItem` strips the embedded host from bar copies (the
   /sys-or-/ui guard would neutralize it anyway; bars stay lean).
 
+### MainMenuRegistry surface specifics (the toolbar/navbar hybrid)
+
+- **Surface**: TD's main menu bar `/ui/dialogs/mainmenu` (File/Edit strip on the far
+  left, wiki/forum/tutorials/fps cluster left of center, OpFamUI/update in the right
+  corner). ONE bar, like the bookmark bar -- so entries render as **selectCOMP
+  mirrors** (`mmitem_<canonical>`, tag `MainMenuRegistryItem`), never stamped copies.
+  Mirror height is soft-enforced to 19 px (`BAR_ICON_HEIGHT`, the same height every
+  stock main-menu item uses); width live-follows the source unless the entry carries
+  an override.
+- **Anchoring contract**: every stock item wires its COMP input 0 to the bar's
+  `emptypanel` output -- mirrors get exactly that wire (`_anchorMirror`); an unwired
+  panel drops out of the bar's layout flow.
+- **`side` is first-class, navbar-style** (`left` | `right`), but the pivot is
+  **`stringfield`** (alignorder 4.0, the bar's only in-flow `hmode=fill` item -- the
+  stretchy status-message area). Left entries subdivide (last-stock-left ~3.4, 4.0);
+  right entries subdivide (4.0, first-stock-right ~4.9). TD stock alignorders are
+  never touched. The File/Edit `menu` strip and `emptypanel` sit at alignorder 0 and
+  are excluded from the scan, same as the pane bar's alignorder-0 cluster.
+- **No `kind`, no dividers** (v0.1.0): every entry is an aligned panel widget. Groups
+  (bracket pairs) come from RegistryBase and work unchanged.
+- **Built-ins are NOT auto-adopted.** Unlike the pane bar, the stock cluster contains
+  duplicate alignorders (`gpuUsage`/`realtime` both 3.4) that can never be adopted, so
+  auto-adopting the rest would visibly reorder TD's own bar. The Configurator lists
+  built-ins read-only (Show toggles their display par, persisted in its `state`
+  table); repositioning a stock item is an explicit `AdoptBarWidget` call.
+- **Manager API deltas**: `SetWidgetSide`, `SideSequences`; `SetWidgetSequence`
+  reassigns 1..N per side. `MainMenuConfigurator` (gear in the bar,
+  `op.MAINMENUCONFIG`) is the NavbarConfigurator adapted; tool page prefix is `Mm`.
+- **Callbacks DAT (optional): lifecycle hooks, not interaction.** The panel handles
+  its own clicks (the mirror forwards them); the callbacks DAT is for REACTING to the
+  manager -- the registry probes it for `onRegistered(canonical, info)` (fires on
+  EVERY publish incl. boot/healing re-applies; keep idempotent), `onUnregistered`,
+  `onDisplayChanged(canonical, visible)` (manager show/hide only, NOT group
+  collapse), `onSideChanged(canonical, side)`. All optional, raise-contained. The
+  host's `Create Callbacks` pulse (`Createcallbacks`, promoted as
+  `Mmcreatecallbacks`) spawns `mainmenu_callbacks` from the registry's
+  `callbacks_template` INTO THE HOST'S PARENT TOOL -- not `_hostComp()`, which on
+  this surface is the registered widget panel itself (the OpMenu recipe copied
+  verbatim spawns the DAT inside a bare textCOMP; paid for once) -- and wires the
+  `Callback` par to it. Idempotent: an existing DAT is adopted, never overwritten.
+- **First registrant**: BorderlessWindow publishes its `projname` (canonical
+  `ProjName`, side left) through an embedded host; its legacy `install.py` direct-copy
+  injection ships nothing, and `displayProjName` drives the mirror through
+  `SetWidgetDisplay` (dynamic-visibility pattern, like HydroHomie on the toolbar).
+
 ---
 
 ## 1. Core idea: one global manager, many host publishers
@@ -514,6 +559,14 @@ copy/create alone is rarely the whole contract.
 - **Widgets sized by their panel parent** (`me.panelParent(1).height - 5`)
   break when moved out of the bar into a non-panel tool COMP — constify
   `w`/`h` on migration.
+- **Copying ANY COMP whose subtree contains an enabled clone host crashes
+  TD** — not just clone copies inside drop-event stacks. Copying
+  NavbarConfigurator (which ships its clone-bound gear host) via a plain
+  MCP copy hard-crashed TD 2025.33070 (mainmenu port, 2026-08-10). Before
+  copying a configurator or any host-carrying package: set the inner
+  host's `enablecloning=False` (and the source's `initextonstart=False` so
+  the copy's extensions stay quiet), copy, then restore — wrapped in
+  try/finally.
 
 ## 8. Adding a new registry — checklist
 

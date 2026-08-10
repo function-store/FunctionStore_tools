@@ -7,7 +7,9 @@ Saveversion : 2025.33070
 Info Header End'''
 targets = [op('/ui/dialogs/mainmenu')]
 #
-containers = [op('projname')]
+# projname is published through the MainMenuRegistry host now (side left);
+# the legacy direct-copy injection ships nothing.
+containers = []
 containers = sorted(containers, key=lambda x: x.nodeX)
 for target in targets:
 	for i, cont in enumerate(containers):
