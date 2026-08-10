@@ -1258,6 +1258,24 @@ class RegistryBase:
 	# labelled button -- it reads as a divider you can press.
 	GROUP_TOGGLE_WIDTH = 8
 
+	# A default buttonCOMP drives its label's colours from button STATE, so the
+	# switch flickered between looks as it was pressed and toggled. The chevron
+	# already carries the state, so the look is pinned to one flat set of
+	# constants instead.
+	GROUP_TOGGLE_LOOK = (
+		('bgcolor', (0.2, 0.2, 0.2)),
+		('bordera', (0.43, 0.43, 0.43)),
+		('fontcolor', (0.6, 0.6, 0.6)),
+	)
+
+	def _applyGroupToggleLook(self, icon):
+		for pg_name, values in self.GROUP_TOGGLE_LOOK:
+			pg = getattr(icon.parGroup, pg_name, None)
+			if pg is None:
+				continue
+			for par, value in zip(pg, values):
+				self._setConst(par, value)
+
 	def _groupToggleWidth(self, info):
 		width = info.get('width')
 		try:
@@ -1310,6 +1328,7 @@ class RegistryBase:
 			icon.par.alignx = 'center'
 			icon.par.aligny = 'center'
 			self._setConst(icon.par.text, self._groupToggleIcon(visible))
+			self._applyGroupToggleLook(icon)
 		tip = inst.op('tip')
 		if tip is not None:
 			label = info.get('label') or gid
