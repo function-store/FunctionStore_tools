@@ -85,6 +85,14 @@ class OpMenuRegistryExt(RegistryBase):
 	# nothing here is coupled to TD's node-table schema.
 	CHAIN_ANCHOR = 'families'
 	POPMENU_HEIGHT_EXPR = '18 * op("./itemsLayout").numRows'
+	# Where a parameter-declared panel is wired when no anchor is given.
+	DEFAULT_PANEL_ANCHOR = 'searchpanel'
+	# Injected panels sit in the dialog's vertical layout flow, so their
+	# vertical sizing must yield to it. A source left on 'fixed' bloats the
+	# row and shoves the dialog out of shape -- soft-enforced on the COPY
+	# every sync, exactly like the toolbar enforces mirror height. The
+	# publisher's own COMP is never touched.
+	PANEL_VMODE = 'fill'
 
 	# Registry-owned artifacts published BY tools: filter-chain script DATs
 	# and dialog panels. Tagged and pruned so we only ever touch our own.
@@ -374,12 +382,25 @@ class OpMenuRegistryExt(RegistryBase):
 		return tail
 
 	def _syncPanels(self):
-		"""Inject every publisher's dialog panels, anchored to the panel
-		they name (the legacy installer hardcoded 'searchpanel')."""
+		"""Inject every publisher's dialog panels, anchored to the panel they
+		name (the legacy installer hardcoded 'searchpanel').
+
+		Two sources, merged: the host's `Panel` parameter (zero-code) and
+		whatever onPanels() returns (computed). A tool may use either or both.
+		"""
 		menu = op(self.MENU_PATH)
 		if menu is None:
 			return
 		wanted = {}
+		# 1. parameter-declared panels, straight off the entries
+		for canonical in self._activeNames():
+			info = self.stored['PaneRegistry'].get(canonical) or {}
+			comp = self._resolveByIdOrPath(info.get('decl_panel_id'),
+										   info.get('decl_panel_path'))
+			if comp is not None and comp.valid:
+				wanted[comp.name] = (canonical, comp,
+									 info.get('decl_panel_anchor') or self.DEFAULT_PANEL_ANCHOR)
+		# 2. callback-declared panels
 		for canonical, fn in self._contributions('onPanels'):
 			try:
 				items = fn() or []
@@ -412,6 +433,13 @@ class OpMenuRegistryExt(RegistryBase):
 			d = getattr(panel.par, 'display', None)
 			if d is not None:
 				self._setConst(d, 1)
+			# the copy yields to the dialog's layout; the source keeps its own
+			vm = getattr(panel.par, 'vmode', None)
+			if vm is not None and str(vm.eval()) != self.PANEL_VMODE:
+				try:
+					vm.val = self.PANEL_VMODE
+				except Exception as e:
+					debug(f'{self.REGISTRY_NAME}: vmode on {panel.path}: {e}')
 
 	def _syncPopMenu(self):
 		"""Rebuild the node table's right-click menu: TD's stock items first,
@@ -584,18 +612,27 @@ class OpMenuRegistryExt(RegistryBase):
 	# --- public API ---
 
 	def RegisterContributor(self, comp, canonical_name, callback=None, order=None,
-							display=True, source_registry=None, help_url=None):
-		"""Publish a COMP's op-menu contributions under canonical_name."""
+							display=True, source_registry=None, help_url=None,
+							panel=None, panel_anchor=None):
+		"""Publish a COMP's op-menu contributions under canonical_name.
+
+		`panel` (+ `panel_anchor`) is the zero-code path: a tool that only
+		wants a panel in the dialog declares it on the host's Registration
+		page and needs no callbacks DAT at all. It is ADDITIVE with
+		onPanels() -- declaring both injects both -- so a tool can pin one
+		panel by parameter and compute others in code.
+		"""
 		if not self._is_sys_global():
 			api = self._registryApi()
 			if api is not self:
 				return api.RegisterContributor(
 					comp, canonical_name, callback=callback, order=order,
-					display=display, source_registry=source_registry, help_url=help_url)
+					display=display, source_registry=source_registry, help_url=help_url,
+					panel=panel, panel_anchor=panel_anchor)
 			debug(f'{self.REGISTRY_NAME}: RegisterContributor ignored on {self.ownerComp.path}'
 				  f' -- no global /sys registry ready')
 			return
-		err = self._validateContributor(comp, callback)
+		err = self._validateContributor(comp, callback, panel)
 		if err:
 			debug(f'{self.REGISTRY_NAME}: RegisterContributor({canonical_name!r}) rejected: {err}')
 			return
@@ -612,6 +649,12 @@ class OpMenuRegistryExt(RegistryBase):
 		if callback is not None:
 			entry['callback_path'] = callback.path
 			entry['callback_id'] = int(callback.id)
+		# parameter-declared panel: stored on the entry so the global can apply
+		# it without reaching back into the host's pars
+		if panel is not None and getattr(panel, 'valid', False):
+			entry['decl_panel_path'] = panel.path
+			entry['decl_panel_id'] = int(panel.id)
+			entry['decl_panel_anchor'] = str(panel_anchor or self.DEFAULT_PANEL_ANCHOR)
 		if source_registry is not None:
 			entry['source_registry'] = source_registry.path
 			entry['source_registry_id'] = int(source_registry.id)
@@ -690,15 +733,32 @@ class OpMenuRegistryExt(RegistryBase):
 		except Exception:
 			pass
 
-	def _validateContributor(self, comp, callback):
+	def _hostPanelDeclaration(self):
+		"""The host's parameter-declared panel: (comp, anchor) or (None, None).
+
+		The zero-code contribution path -- a tool that only wants a panel in
+		the dialog sets this and needs no callbacks DAT.
+		"""
+		par = getattr(self.ownerComp.par, 'Panel', None)
+		comp = par.eval() if par is not None else None
+		if comp is None or not getattr(comp, 'valid', False):
+			return None, None
+		anchor_par = getattr(self.ownerComp.par, 'Panelanchor', None)
+		anchor = str(anchor_par.eval()).strip() if anchor_par is not None else ''
+		return comp, (anchor or self.DEFAULT_PANEL_ANCHOR)
+
+	def _validateContributor(self, comp, callback, panel=None):
 		if comp is None:
 			return 'No COMP selected'
 		if comp.family != 'COMP':
 			return f'{comp.path} is not a COMP'
-		if callback is None:
-			return 'No callbacks DAT set (nothing to contribute)'
-		if not callback.isDAT:
+		# a tool may contribute via a callbacks DAT, a declared Panel, or both
+		if callback is None and panel is None:
+			return 'Nothing to contribute (set a Callback DAT and/or a Panel)'
+		if callback is not None and not callback.isDAT:
 			return f'{callback.path} is not a DAT'
+		if panel is not None and not getattr(panel, 'isPanel', False):
+			return f'{panel.path} is not a Panel COMP (isPanel=False)'
 		return None
 
 	def OpenDocs(self, canonical_name):
@@ -731,7 +791,8 @@ class OpMenuRegistryExt(RegistryBase):
 		comp = self._hostComp()
 		canonical = self._hostCanonicalName()
 		callback = self._hostCallbackDat()
-		err = self._validateContributor(comp, callback) or (
+		panel, panel_anchor = self._hostPanelDeclaration()
+		err = self._validateContributor(comp, callback, panel) or (
 			None if canonical else 'empty canonical name')
 		if err:
 			if not force:
@@ -749,6 +810,7 @@ class OpMenuRegistryExt(RegistryBase):
 			display=self._parBool('Displayed', True),
 			source_registry=self.ownerComp,
 			help_url=self._hostHelpUrl(comp),
+			panel=panel, panel_anchor=panel_anchor,
 		)
 		self.stored['HostCanonical'] = canonical
 		self._setRegStatus(f'Registered: {canonical} -> {comp.path}')
