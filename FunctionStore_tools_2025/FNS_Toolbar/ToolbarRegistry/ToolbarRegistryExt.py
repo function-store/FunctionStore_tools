@@ -52,9 +52,12 @@ class ToolbarRegistryExt(RegistryBase):
 		Defers until TD's bookmark bar exists."""
 		self._pane_sync_queued = False
 		if self._barReady():
+			self._ensureGroupMarkers()
 			self._pruneMirrors()
-			for canonical in self._registeredNamesInOrder():
-				self._injectWidget(canonical)
+			names = self._registeredNamesInOrder()
+			ancestors, _ = self._scanGroups(names)
+			for i, canonical in enumerate(names):
+				self._injectWidget(canonical, i, ancestors.get(canonical, ()))
 			return
 		if attempts <= 0:
 			debug(f'{self.REGISTRY_NAME}: bar never became available, skipping sync ({self.ownerComp.path})')
@@ -104,13 +107,31 @@ class ToolbarRegistryExt(RegistryBase):
 	def _isDividerEntry(self, info):
 		return bool(info) and info.get('divider') == '1'
 
-	def _injectWidget(self, canonical):
+	def _barOrder(self, info, seq_index):
+		"""Bar position comes from the entry's place in the RESOLVED sequence,
+		not its stored menu_order: group switches deliberately store no order
+		of their own (theirs is derived), and two entries sharing a stored
+		order would otherwise land on the same alignorder and fight."""
+		if seq_index is not None:
+			return seq_index
+		order = self._normalizeMenuOrder(info.get('menu_order'))
+		if order is None:
+			order = len(self._bar().ops(self.MIRROR_PREFIX + '*'))
+		return order
+
+	def _injectWidget(self, canonical, seq_index=None, ancestors=()):
 		bar = self._bar()
 		if not bar:
 			return
 		info = self.stored['PaneRegistry'].get(canonical)
 		if self._isDividerEntry(info):
-			self._injectDivider(canonical, info, bar)
+			self._injectDivider(canonical, info, bar, seq_index, ancestors)
+			return
+		if self._isGroupStart(info):
+			self._injectGroupStart(canonical, info, bar, seq_index, ancestors)
+			return
+		if self._isGroupEnd(info):
+			self._injectGroupEnd(canonical, info, bar, seq_index, ancestors)
 			return
 		widget = self.WidgetTarget(canonical)
 		if widget is None:
@@ -140,13 +161,58 @@ class ToolbarRegistryExt(RegistryBase):
 		self._anchorMirror(mirror, bar)
 		# The registry is the manager: order and visibility come from the
 		# central entry, not from any table.
-		order = self._normalizeMenuOrder(info.get('menu_order'))
-		if order is None:
-			order = len(bar.ops(self.MIRROR_PREFIX + '*'))
-		self._setConst(mirror.par.display, 0 if info.get('display', '1') == '0' else 1)
-		self._setConst(mirror.par.alignorder, self.MIRROR_ORDER_BASE + order)
+		self._setConst(mirror.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
+		self._setConst(mirror.par.alignorder,
+					   self.MIRROR_ORDER_BASE + self._barOrder(info, seq_index))
 
-	def _injectDivider(self, canonical, info, bar):
+	def _injectGroupStart(self, canonical, info, bar, seq_index=None, ancestors=()):
+		"""The group's switch: a narrow chevron button that collapses or
+		expands everything up to the matching end cap."""
+		name = self._mirrorName(canonical)
+		fresh = bar.op(name) is None
+		mirror = self._buildGroupToggleWidget(bar, name, info)
+		mirror.tags.add(self.MIRROR_TAG)
+		if fresh:
+			siblings = bar.ops(self.MIRROR_PREFIX + '*')
+			mirror.nodeX = 500 + (len(siblings) - 1) * 200
+			mirror.nodeY = -700
+		self._setConst(mirror.par.w, self._groupToggleWidth(info))
+		self._setConst(mirror.par.h, self.BAR_ICON_HEIGHT)
+		self._anchorMirror(mirror, bar)
+		self._setConst(mirror.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
+		self._setConst(mirror.par.alignorder,
+					   self.MIRROR_ORDER_BASE + self._barOrder(info, seq_index))
+
+	def _injectGroupEnd(self, canonical, info, bar, seq_index=None, ancestors=()):
+		"""The closing cap: a thin tick marking where the group stops. It
+		belongs to its OWN group, so a collapsed group shows just the
+		chevron."""
+		name = self._mirrorName(canonical)
+		mirror = bar.op(name)
+		if mirror is not None and mirror.OPType != 'containerCOMP':
+			mirror.destroy()
+			mirror = None
+		if mirror is None:
+			mirror = bar.create(containerCOMP, name)
+			if mirror.name != name:
+				mirror.name = name
+			mirror.tags.add(self.MIRROR_TAG)
+			siblings = bar.ops(self.MIRROR_PREFIX + '*')
+			mirror.nodeX = 500 + (len(siblings) - 1) * 200
+			mirror.nodeY = -700
+		self._setConst(mirror.par.w, self.GROUP_END_WIDTH)
+		self._setConst(mirror.par.h, self.BAR_ICON_HEIGHT)
+		# unlike a divider (a pure gap) this one is drawn, so the eye can see
+		# where the group ends
+		self._setConst(mirror.par.bgalpha, 0.45)
+		self._anchorMirror(mirror, bar)
+		self._setConst(mirror.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
+		self._setConst(mirror.par.alignorder,
+					   self.MIRROR_ORDER_BASE + self._barOrder(info, seq_index))
+
+	GROUP_END_WIDTH = 3
+
+	def _injectDivider(self, canonical, info, bar, seq_index=None, ancestors=()):
 		"""Virtual divider: a registry-owned blank panel -- no source widget."""
 		name = self._mirrorName(canonical)
 		mirror = bar.op(name)
@@ -166,11 +232,9 @@ class ToolbarRegistryExt(RegistryBase):
 		self._setConst(mirror.par.h, self.BAR_ICON_HEIGHT)
 		self._setConst(mirror.par.bgalpha, 0)
 		self._anchorMirror(mirror, bar)
-		order = self._normalizeMenuOrder(info.get('menu_order'))
-		if order is None:
-			order = len(bar.ops(self.MIRROR_PREFIX + '*'))
-		self._setConst(mirror.par.display, 0 if info.get('display', '1') == '0' else 1)
-		self._setConst(mirror.par.alignorder, self.MIRROR_ORDER_BASE + order)
+		self._setConst(mirror.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
+		self._setConst(mirror.par.alignorder,
+					   self.MIRROR_ORDER_BASE + self._barOrder(info, seq_index))
 
 	def OpenConfigurator(self):
 		"""Open the Toolbar Configurator (lives in the FNS_Toolbar package)."""
@@ -231,8 +295,12 @@ class ToolbarRegistryExt(RegistryBase):
 		super()._healRegistryEntries()
 		if not self._is_sys_global() or not self._barReady():
 			return
-		for canonical in self._registeredNamesInOrder():
-			self._injectWidget(canonical)
+		self._ensureGroupMarkers()
+		self._pruneMirrors()
+		names = self._registeredNamesInOrder()
+		ancestors, _ = self._scanGroups(names)
+		for i, canonical in enumerate(names):
+			self._injectWidget(canonical, i, ancestors.get(canonical, ()))
 		self._healHostClones()
 
 	# Location-independent: resolves through the toolbar package's global

@@ -60,6 +60,16 @@ class NavbarRegistryExt(RegistryBase):
 		if not self._is_sys_global():
 			self.stored['PaneRegistry'].clear()
 
+	def _decorateGroupMarkers(self, start_entry, end_entry, anchor_name):
+		"""Both markers are ordinary widgets on the same side as the run they
+		wrap -- a group cannot span the pane bar's fill pivot, so the pair
+		inherits the side of the entry it is wrapping."""
+		anchor = self.stored['PaneRegistry'].get(anchor_name) or {}
+		side = anchor.get('side', 'right')
+		for entry in (start_entry, end_entry):
+			entry['kind'] = 'widget'
+			entry['side'] = side
+
 	def _sanitizeStoredRegistry(self):
 		"""Coerce legacy/foreign entry shapes: side and kind always valid."""
 		for name, info in list(self.stored['PaneRegistry'].items()):
@@ -83,11 +93,14 @@ class NavbarRegistryExt(RegistryBase):
 		central store. Defers until TD's default pane bar exists."""
 		self._pane_sync_queued = False
 		if self._barReady():
+			self._ensureGroupMarkers()
+			ancestors, _ = self._scanGroups(self._registeredNamesInOrder())
 			for bar in self._bars():
 				self._pruneItems(bar)
 				layout = self._computeAlignLayout(bar)
 				for canonical in self._registeredNamesInOrder():
-					self._injectItem(canonical, bar, layout)
+					self._injectItem(canonical, bar, layout,
+									 ancestors.get(canonical, ()))
 			return
 		if attempts <= 0:
 			debug(f'{self.REGISTRY_NAME}: pane bar never became available, skipping sync ({self.ownerComp.path})')
@@ -193,13 +206,19 @@ class NavbarRegistryExt(RegistryBase):
 			return None
 		return self._resolvePanelOp(info)
 
-	def _injectItem(self, canonical, bar, layout):
+	def _injectItem(self, canonical, bar, layout, ancestors=()):
 		"""Ensure one managed copy of the entry's source inside this bar.
 
 		Copies, not selectCOMP mirrors: every pane bar needs its OWN instance
 		(a breadcrumb must show ITS pane's path), and two entry kinds are not
 		mirrorable at all (click-through overlays, non-panel logic COMPs)."""
 		info = self.stored['PaneRegistry'].get(canonical)
+		if self._isGroupStart(info):
+			self._injectGroupStart(canonical, info, bar, layout, ancestors)
+			return
+		if self._isGroupEnd(info):
+			self._injectGroupEnd(canonical, info, bar, layout, ancestors)
+			return
 		source = self.WidgetTarget(canonical)
 		if source is None:
 			debug(f'{self.REGISTRY_NAME}: no live source for {canonical!r}, skipping inject')
@@ -229,10 +248,11 @@ class NavbarRegistryExt(RegistryBase):
 		if kind == 'logic':
 			return  # presence is the whole contract
 		self._anchorItem(inst, bar)
-		# Display: an explicit manager hide wins; otherwise a template display
-		# EXPRESSION (e.g. gating on the owning tool's shortcut) is preserved.
+		# Display: an explicit manager hide (or a group hidden via the group
+		# toggle) wins; otherwise a template display EXPRESSION (e.g. gating
+		# on the owning tool's shortcut) is preserved.
 		p = inst.par.display
-		if info.get('display', '1') == '0':
+		if not self._effectiveDisplay(info, ancestors):
 			self._setConst(p, 0)
 		elif p.mode != ParMode.EXPRESSION:
 			self._setConst(p, 1)
@@ -247,6 +267,56 @@ class NavbarRegistryExt(RegistryBase):
 					self._setConst(inst.par.w, int(width))
 				except (TypeError, ValueError):
 					pass
+
+	def _injectGroupStart(self, canonical, info, bar, layout, ancestors=()):
+		"""The group's switch, stamped into every pane bar like any other
+		widget entry so it takes part in the normal left/right alignorder
+		allocation."""
+		name = self._itemName(canonical)
+		fresh = bar.op(name) is None
+		inst = self._buildGroupToggleWidget(bar, name, info)
+		inst.tags.add(self.ITEM_TAG)
+		if fresh:
+			inst.nodeX = 500 + (len(bar.ops(self.ITEM_PREFIX + '*')) - 1) * 200
+			inst.nodeY = -700
+		self._anchorItem(inst, bar)
+		p = inst.par.display
+		if not self._effectiveDisplay(info, ancestors):
+			self._setConst(p, 0)
+		elif p.mode != ParMode.EXPRESSION:
+			self._setConst(p, 1)
+		ao = layout.get(canonical)
+		if ao is not None:
+			self._setConst(inst.par.alignorder, round(ao, 3))
+		self._setExpr(inst.par.h, self.ITEM_HEIGHT_EXPR)
+		self._setConst(inst.par.w, self._groupToggleWidth(info))
+
+	GROUP_END_WIDTH = 3
+
+	def _injectGroupEnd(self, canonical, info, bar, layout, ancestors=()):
+		"""The closing cap: a thin drawn tick marking where the group stops.
+		It belongs to its own group, so a collapsed group shows just the
+		chevron."""
+		name = self._itemName(canonical)
+		inst = bar.op(name)
+		if inst is not None and inst.OPType != 'containerCOMP':
+			inst.destroy()
+			inst = None
+		if inst is None:
+			inst = bar.create(containerCOMP, name)
+			if inst.name != name:
+				inst.name = name
+			inst.tags.add(self.ITEM_TAG)
+			inst.nodeX = 500 + (len(bar.ops(self.ITEM_PREFIX + '*')) - 1) * 200
+			inst.nodeY = -700
+		self._anchorItem(inst, bar)
+		self._setConst(inst.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
+		ao = layout.get(canonical)
+		if ao is not None:
+			self._setConst(inst.par.alignorder, round(ao, 3))
+		self._setExpr(inst.par.h, self.ITEM_HEIGHT_EXPR)
+		self._setConst(inst.par.w, self.GROUP_END_WIDTH)
+		self._setConst(inst.par.bgalpha, 0.45)
 
 	def _anchorItem(self, inst, bar):
 		"""Wire the instance's panel input to the bar's emptypanel when it is
@@ -322,11 +392,13 @@ class NavbarRegistryExt(RegistryBase):
 		super()._healRegistryEntries()
 		if not self._is_sys_global() or not self._barReady():
 			return
+		self._ensureGroupMarkers()
+		ancestors, _ = self._scanGroups(self._registeredNamesInOrder())
 		for bar in self._bars():
 			self._pruneItems(bar)
 			layout = self._computeAlignLayout(bar)
 			for canonical in self._registeredNamesInOrder():
-				self._injectItem(canonical, bar, layout)
+				self._injectItem(canonical, bar, layout, ancestors.get(canonical, ()))
 		self._healHostClones()
 
 	# Location-independent: resolves through the navbar package's global

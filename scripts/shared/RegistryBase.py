@@ -21,6 +21,7 @@ class RegistryBase:
 		storedItems = [
 			{'name': 'PaneRegistry', 'default': {}, 'property': True, 'readOnly': True},
 			{'name': 'HostCanonical', 'default': '', 'property': True, 'readOnly': True},
+			{'name': 'GroupVisibility', 'default': {}, 'property': True, 'readOnly': True},
 		]
 		self.stored = StorageManager(self, ownerComp, storedItems)
 		self._pane_sync_queued = False
@@ -962,3 +963,359 @@ class RegistryBase:
 		if order < 0:
 			return None
 		return order
+
+	# --- hideable entry groups (bracket pairs, nestable) ---
+	#
+	# A group is a PAIR of virtual entries in the sequence -- a start switch
+	# and an end cap -- the same kind of positional marker as the dividers this
+	# surface already has, except the pair delimits a RANGE. Everything between
+	# the markers belongs to the group, so membership is never stored anywhere:
+	# drag an entry between them and it joins, drag it out and it leaves. That
+	# also means a group can never have holes, and nothing needs re-applying on
+	# boot beyond the markers themselves.
+	#
+	# Groups nest by nesting their brackets. An entry shows only when its own
+	# display is on AND every group enclosing it is expanded, so collapsing an
+	# outer group takes its inner switches with it while each inner group
+	# remembers its own state for when the outer one opens again.
+	#
+	# The start switch is deliberately NOT inside its own group (collapsing must
+	# never hide the only affordance that can expand it again); the end cap IS,
+	# so a collapsed group renders as just the chevron.
+
+	GROUP_START_PREFIX = 'GroupStart_'
+	GROUP_END_PREFIX = 'GroupEnd_'
+
+	def _isGroupStart(self, info):
+		return bool(info) and info.get('group_start') == '1'
+
+	def _isGroupEnd(self, info):
+		return bool(info) and info.get('group_end') == '1'
+
+	def _isGroupMarker(self, info):
+		return self._isGroupStart(info) or self._isGroupEnd(info)
+
+	def _groupStartName(self, gid):
+		return self.GROUP_START_PREFIX + tdu.legalName(str(gid))
+
+	def _groupEndName(self, gid):
+		return self.GROUP_END_PREFIX + tdu.legalName(str(gid))
+
+	def _newGroupId(self):
+		entries = self.stored['PaneRegistry']
+		i = 1
+		while self._groupStartName('G%d' % i) in entries:
+			i += 1
+		return 'G%d' % i
+
+	def _scanGroups(self, names):
+		"""Resolve bracket nesting over a sequence.
+
+		Returns (ancestors, orphans): ancestors[name] lists the enclosing group
+		ids outermost-first, and orphans names markers whose partner is missing
+		or whose brackets cross another group's. Healing drops those, so a
+		malformed pair can never leave the surface unreadable."""
+		entries = self.stored['PaneRegistry']
+		ancestors = {}
+		orphans = []
+		stack = []
+		for n in names:
+			info = entries.get(n) or {}
+			if self._isGroupStart(info):
+				ancestors[n] = [g for g, _ in stack]
+				stack.append((info.get('group_id'), n))
+				continue
+			if self._isGroupEnd(info):
+				gid = info.get('group_id')
+				if stack and stack[-1][0] == gid:
+					ancestors[n] = [g for g, _ in stack]
+					stack.pop()
+				else:
+					orphans.append(n)
+				continue
+			ancestors[n] = [g for g, _ in stack]
+		for _gid, sname in stack:
+			orphans.append(sname)
+		return ancestors, orphans
+
+	def _groupRanges(self, names):
+		"""{group_id: (start_index, end_index)} over the given sequence."""
+		entries = self.stored['PaneRegistry']
+		starts, out = {}, {}
+		for i, n in enumerate(names):
+			info = entries.get(n) or {}
+			if self._isGroupStart(info):
+				starts[info.get('group_id')] = i
+			elif self._isGroupEnd(info):
+				gid = info.get('group_id')
+				if gid in starts:
+					out[gid] = (starts[gid], i)
+		return out
+
+	def _ensureGroupMarkers(self):
+		"""Drop half-pairs and crossing brackets, and forget visibility state
+		for groups that no longer exist. Runs at the top of every sync."""
+		if not self._is_sys_global():
+			return
+		entries = self.stored['PaneRegistry']
+		_, orphans = self._scanGroups(self._registeredNamesInOrder())
+		for n in orphans:
+			info = entries.get(n) or {}
+			gid = info.get('group_id')
+			# take the partner with it -- half a pair is not a group
+			for partner in (self._groupStartName(gid), self._groupEndName(gid)):
+				entries.pop(partner, None)
+			entries.pop(n, None)
+			debug('%s: dropped unmatched group marker %r' % (self.REGISTRY_NAME, n))
+		live = set()
+		for n in list(entries):
+			info = entries.get(n) or {}
+			if self._isGroupStart(info):
+				live.add(info.get('group_id'))
+		for gid in list(self.stored['GroupVisibility'].keys()):
+			if gid not in live:
+				self.stored['GroupVisibility'].pop(gid, None)
+
+	# --- visibility ---
+
+	def GroupVisible(self, group_id):
+		"""Manager API: is this group expanded (default yes)."""
+		api = self._registryApi()
+		if api is not self:
+			return api.GroupVisible(group_id)
+		if not group_id:
+			return True
+		return self.stored['GroupVisibility'].get(group_id, '1') != '0'
+
+	def SetGroupVisible(self, group_id, visible):
+		"""Manager API: expand/collapse a group WITHOUT touching any member's
+		own display flag, so expanding restores exactly what was showing."""
+		api = self._registryApi()
+		if api is not self:
+			return api.SetGroupVisible(group_id, visible)
+		if not group_id:
+			return
+		self.stored['GroupVisibility'][group_id] = '1' if visible else '0'
+		self._syncSurface()
+
+	def ToggleGroup(self, group_id):
+		"""Manager API: flip a group; returns the new state."""
+		api = self._registryApi()
+		if api is not self:
+			return api.ToggleGroup(group_id)
+		visible = not self.GroupVisible(group_id)
+		self.SetGroupVisible(group_id, visible)
+		return visible
+
+	def _effectiveDisplay(self, info, ancestors=()):
+		"""An entry shows only if its own display is on and every group
+		enclosing it is expanded."""
+		if info.get('display', '1') == '0':
+			return False
+		return all(self.GroupVisible(gid) for gid in ancestors)
+
+	# --- structure ---
+
+	@property
+	def Groups(self):
+		"""Manager API: {group_id: {'label', 'members', 'parent', 'visible'}}.
+		Members are the entries between the brackets, a nested group's start
+		switch included (its own members are listed under that group)."""
+		api = self._registryApi()
+		if api is not self:
+			return api.Groups
+		entries = self.stored['PaneRegistry']
+		names = self._registeredNamesInOrder()
+		ancestors, _ = self._scanGroups(names)
+		out = {}
+		for n in names:
+			info = entries.get(n) or {}
+			if not self._isGroupStart(info):
+				continue
+			gid = info.get('group_id')
+			chain = ancestors.get(n) or []
+			out[gid] = {'label': info.get('label') or gid,
+						'parent': chain[-1] if chain else None,
+						'members': [], 'visible': self.GroupVisible(gid)}
+		for n in names:
+			info = entries.get(n) or {}
+			if self._isGroupEnd(info):
+				continue
+			for gid in (ancestors.get(n) or []):
+				if gid in out:
+					out[gid]['members'].append(n)
+		return out
+
+	def GroupPath(self, canonical_name):
+		"""Manager API: 'outer / inner' label path for an entry, '' if loose."""
+		api = self._registryApi()
+		if api is not self:
+			return api.GroupPath(canonical_name)
+		ancestors, _ = self._scanGroups(self._registeredNamesInOrder())
+		chain = ancestors.get(canonical_name) or []
+		if not chain:
+			return ''
+		groups = self.Groups
+		return ' / '.join(groups.get(g, {}).get('label', g) for g in chain)
+
+	# --- create / dissolve / rename ---
+
+	def CreateGroup(self, first, last=None, label=None):
+		"""Manager API: wrap the run from `first` to `last` (inclusive, in
+		current bar order) in a new group.
+
+		Refuses a span that would cross an existing group's brackets -- groups
+		may nest or sit side by side, but never half-overlap."""
+		api = self._registryApi()
+		if api is not self:
+			return api.CreateGroup(first, last=last, label=label)
+		names = self._registeredNamesInOrder()
+		last = last if last is not None else first
+		if first not in names or last not in names:
+			debug('%s: CreateGroup got names that are not on the bar' % self.REGISTRY_NAME)
+			return None
+		a, b = sorted((names.index(first), names.index(last)))
+		for gid, (s, e) in self._groupRanges(names).items():
+			disjoint = b < s or a > e
+			inside = s < a and b < e
+			contains = a < s and e < b
+			if not (disjoint or inside or contains):
+				debug('%s: CreateGroup refused -- the span would cross group %r; '
+					  'brackets must nest, not overlap' % (self.REGISTRY_NAME, gid))
+				return None
+		gid = self._newGroupId()
+		sname, ename = self._groupStartName(gid), self._groupEndName(gid)
+		entries = self.stored['PaneRegistry']
+		entries[sname] = {'virtual': '1', 'group_start': '1', 'group_id': gid,
+						  'label': str(label).strip() if label else gid, 'display': '1'}
+		entries[ename] = {'virtual': '1', 'group_end': '1', 'group_id': gid,
+						  'display': '1'}
+		self._decorateGroupMarkers(entries[sname], entries[ename], names[a])
+		self.SetWidgetSequence(names[:a] + [sname] + names[a:b + 1] + [ename] + names[b + 1:])
+		return gid
+
+	def _decorateGroupMarkers(self, start_entry, end_entry, anchor_name):
+		"""Surface hook: stamp surface-specific keys (the navbar's side/kind)
+		onto a new pair, copied from the entry it is wrapping."""
+		pass
+
+	def RemoveGroup(self, group_id):
+		"""Manager API: dissolve a group -- both markers go, members stay
+		exactly where they are and keep their own display flags, so anything
+		the group was hiding comes back."""
+		api = self._registryApi()
+		if api is not self:
+			return api.RemoveGroup(group_id)
+		entries = self.stored['PaneRegistry']
+		found = False
+		for n in (self._groupStartName(group_id), self._groupEndName(group_id)):
+			if entries.pop(n, None) is not None:
+				found = True
+		self.stored['GroupVisibility'].pop(group_id, None)
+		self._syncSurface()
+		return found
+
+	def RenameGroup(self, group_id, label):
+		"""Manager API: relabel a group (id and markers untouched)."""
+		api = self._registryApi()
+		if api is not self:
+			return api.RenameGroup(group_id, label)
+		info = self.stored['PaneRegistry'].get(self._groupStartName(group_id))
+		if not info:
+			return False
+		info['label'] = str(label).strip() or group_id
+		self._syncSurface()
+		return True
+
+	GROUP_TOGGLE_CALLBACK_TEMPLATE = (
+		"def onOffToOn(panelValue):\n"
+		"\tif hasattr(op, {shortcut!r}):\n"
+		"\t\tgetattr(op, {shortcut!r}).ToggleGroup({group!r})\n"
+		"\treturn\n"
+	)
+
+	def _groupToggleCallbackText(self, group_id):
+		return self.GROUP_TOGGLE_CALLBACK_TEMPLATE.format(
+			shortcut=self.SHORTCUT, group=group_id)
+
+	# mdi-chevron-left / mdi-chevron-right (Material Design Icons private-use
+	# codepoints, verified against pictogrammers.com/library/mdi): the classic
+	# collapse/expand affordance -- pointing left while the group is open
+	# ("fold it away"), right while it is collapsed ("unfold it").
+	GROUP_TOGGLE_ICON_VISIBLE = 0xF0141
+	GROUP_TOGGLE_ICON_HIDDEN = 0xF0142
+	def _groupToggleIcon(self, visible):
+		"""Written as a VALUE on each sync, not as an expression. An
+		expression would have to call GroupVisible(), and TD does not dirty
+		an expression when extension storage mutates -- the glyph silently
+		kept its first value while the group toggled underneath it. Every
+		visibility change syncs the surface anyway, so a plain write is both
+		correct and cheaper."""
+		return chr(self.GROUP_TOGGLE_ICON_VISIBLE if visible
+				   else self.GROUP_TOGGLE_ICON_HIDDEN)
+
+	# Chevrons carry no text, so the switch can sit much narrower than a
+	# labelled button -- it reads as a divider you can press.
+	GROUP_TOGGLE_WIDTH = 8
+
+	def _groupToggleWidth(self, info):
+		width = info.get('width')
+		try:
+			if width and int(width) > 0:
+				return max(8, min(int(width), 400))
+		except (TypeError, ValueError):
+			pass
+		return self.GROUP_TOGGLE_WIDTH
+
+	def _buildGroupToggleWidget(self, container, name, info):
+		"""Build (or refresh) a real clickable button as a child of
+		`container` for a group_toggle entry: a narrow Material Design Icons
+		eye/eye-off glyph (reflects current visibility) with a hover tooltip
+		naming the group, wired via a panelexec to call ToggleGroup on click.
+		Identical for every surface -- only sizing/alignorder/anchoring
+		differ, so subclasses call this from their own _injectGroupStart."""
+		gid = info.get('group_id', '')
+		visible = self.GroupVisible(gid)
+		inst = container.op(name)
+		if inst is not None and inst.OPType != 'buttonCOMP':
+			inst.destroy()
+			inst = None
+		if inst is None:
+			inst = container.create(buttonCOMP, name)
+			# create() in this project intermittently phantom-suffixes the
+			# name ('..._test1'). Left alone the next sync cannot find the op
+			# it just made, so it prunes and rebuilds it every pass -- a churn
+			# loop that costs real frame time. Force the name we asked for.
+			if inst.name != name:
+				inst.name = name
+			inst.par.buttontype = 'toggledown'
+			tip = inst.create(textDAT, 'tip')
+			tip.nodeX, tip.nodeY = 0, -150
+			inst.par.helpdat = './tip'
+			panelexec = inst.create(panelexecuteDAT, 'panelexec')
+			panelexec.nodeX, panelexec.nodeY = 0, -300
+			panelexec.par.panels.expr = 'parent()'
+			panelexec.par.panelvalue = 'select'
+			panelexec.par.offtoon = True
+		# The glyph goes on the button's OWN 'text' child (a buttonCOMP is
+		# cloned from TD's default, which already carries one showing
+		# "button"). An extra child of our own would just sit alongside that
+		# default label instead of replacing it.
+		legacy = inst.op('icon')
+		if legacy is not None:
+			legacy.destroy()
+		icon = inst.op('text')
+		if icon is not None:
+			icon.par.font = 'Material Design Icons'
+			icon.par.alignx = 'center'
+			icon.par.aligny = 'center'
+			self._setConst(icon.par.text, self._groupToggleIcon(visible))
+		tip = inst.op('tip')
+		if tip is not None:
+			label = info.get('label') or gid
+			tip.text = f'Group: {label}' + ('' if visible else ' (hidden)')
+		panelexec = inst.op('panelexec')
+		if panelexec is not None:
+			panelexec.text = self._groupToggleCallbackText(gid)
+		self._setConst(inst.par.value0, 1 if visible else 0)
+		return inst
