@@ -229,33 +229,14 @@ class ToolbarRegistryExt(RegistryBase):
 					   self.MIRROR_ORDER_BASE + self._barOrder(info, seq_index))
 
 	def _injectGroupEnd(self, canonical, info, bar, seq_index=None, ancestors=()):
-		"""The closing cap: a thin tick marking where the group stops. It
-		belongs to its OWN group, so a collapsed group shows just the
-		chevron."""
-		name = self._mirrorName(canonical)
-		mirror = bar.op(name)
-		if mirror is not None and mirror.OPType != 'containerCOMP':
-			mirror.destroy()
-			mirror = None
-		if mirror is None:
-			mirror = bar.create(containerCOMP, name)
-			if mirror.name != name:
-				mirror.name = name
-			mirror.tags.add(self.MIRROR_TAG)
-			siblings = bar.ops(self.MIRROR_PREFIX + '*')
-			mirror.nodeX = 500 + (len(siblings) - 1) * 200
-			mirror.nodeY = -700
-		self._setConst(mirror.par.w, self.GROUP_END_WIDTH)
-		self._setConst(mirror.par.h, self.BAR_ICON_HEIGHT)
-		# unlike a divider (a pure gap) this one is drawn, so the eye can see
-		# where the group ends
-		self._setConst(mirror.par.bgalpha, 0.45)
-		self._anchorMirror(mirror, bar)
-		self._setConst(mirror.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
-		self._setConst(mirror.par.alignorder,
-					   self.MIRROR_ORDER_BASE + self._barOrder(info, seq_index))
-
-	GROUP_END_WIDTH = 3
+		"""The closing bracket is STRUCTURE ONLY -- it marks where the group
+		ends in the sequence and is never drawn. The group's extent already
+		reads from its collapse behaviour and from the tree, so a tick in the
+		bar is only clutter. Anything an earlier build left behind is cleaned
+		up here."""
+		stale = bar.op(self._mirrorName(canonical))
+		if stale is not None and self.MIRROR_TAG in stale.tags:
+			stale.destroy()
 
 	def _injectDivider(self, canonical, info, bar, seq_index=None, ancestors=()):
 		"""Virtual divider: a registry-owned blank panel -- no source widget."""

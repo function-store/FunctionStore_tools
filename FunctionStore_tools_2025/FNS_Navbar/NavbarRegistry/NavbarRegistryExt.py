@@ -164,10 +164,16 @@ class NavbarRegistryExt(RegistryBase):
 		pivot and the first stock-right item. Recomputed every sync, so stock
 		renumbering in future TD builds heals on the next pass."""
 		stock = []
+		adopted = self._adoptedNames()
 		for c in bar.children:
 			if not c.isPanel or c.name.startswith(self.ITEM_PREFIX):
 				continue
 			if self.ITEM_TAG in c.tags:
+				continue
+			# an adopted stock button is OURS to place now -- leaving it in the
+			# stock scan would make it both a fixed landmark and a positioned
+			# entry, and the two would fight
+			if c.name in adopted:
 				continue
 			try:
 				if c.par.alignallow.eval() == 'ignore':
@@ -218,6 +224,9 @@ class NavbarRegistryExt(RegistryBase):
 			return
 		if self._isGroupEnd(info):
 			self._injectGroupEnd(canonical, info, bar, layout, ancestors)
+			return
+		if info.get('adopted') == '1':
+			self._applyAdopted(canonical, info, bar, layout, ancestors)
 			return
 		source = self.WidgetTarget(canonical)
 		if source is None:
@@ -291,32 +300,61 @@ class NavbarRegistryExt(RegistryBase):
 		self._setExpr(inst.par.h, self.ITEM_HEIGHT_EXPR)
 		self._setConst(inst.par.w, self._groupToggleWidth(info))
 
-	GROUP_END_WIDTH = 3
-
-	def _injectGroupEnd(self, canonical, info, bar, layout, ancestors=()):
-		"""The closing cap: a thin drawn tick marking where the group stops.
-		It belongs to its own group, so a collapsed group shows just the
-		chevron."""
-		name = self._itemName(canonical)
-		inst = bar.op(name)
-		if inst is not None and inst.OPType != 'containerCOMP':
-			inst.destroy()
-			inst = None
-		if inst is None:
-			inst = bar.create(containerCOMP, name)
-			if inst.name != name:
-				inst.name = name
-			inst.tags.add(self.ITEM_TAG)
-			inst.nodeX = 500 + (len(bar.ops(self.ITEM_PREFIX + '*')) - 1) * 200
-			inst.nodeY = -700
-		self._anchorItem(inst, bar)
-		self._setConst(inst.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
+	def _applyAdopted(self, canonical, info, bar, layout, ancestors=()):
+		"""An ADOPTED entry is one of TD's own pane-bar buttons. Unlike the
+		toolbar there is no single op to manage: every pane bar carries its
+		OWN copy of the stock items, so the entry is keyed by NAME and applied
+		to whichever bar is being synced. Nothing is stamped or copied -- the
+		button is already there."""
+		o = bar.op(canonical)
+		if o is None:
+			return
+		self._setConst(o.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
 		ao = layout.get(canonical)
 		if ao is not None:
-			self._setConst(inst.par.alignorder, round(ao, 3))
-		self._setExpr(inst.par.h, self.ITEM_HEIGHT_EXPR)
-		self._setConst(inst.par.w, self.GROUP_END_WIDTH)
-		self._setConst(inst.par.bgalpha, 0.45)
+			self._setConst(o.par.alignorder, round(ao, 3))
+
+	def AdoptBarWidget(self, canonical_name, side='left', order=None, display=True):
+		"""Take one of TD's stock pane-bar buttons under management so it can
+		be ordered, grouped and hidden like a published widget. Keyed by name
+		(it exists once per pane bar); never stamped."""
+		api = self._registryApi()
+		if api is not self:
+			return api.AdoptBarWidget(canonical_name, side=side, order=order, display=display)
+		ref = self._defaultBar().op(canonical_name) if self._defaultBar() else None
+		if ref is None:
+			debug(f'{self.REGISTRY_NAME}: AdoptBarWidget({canonical_name!r}) -- not in the bar')
+			return None
+		entry = {
+			'panel_path': ref.path,
+			'panel_id': int(ref.id),
+			'display': '1' if display else '0',
+			'adopted': '1',
+			'kind': 'widget',
+			'side': side if side in self.SIDES else 'left',
+		}
+		norm = self._normalizeMenuOrder(order)
+		if norm is not None:
+			entry['menu_order'] = norm
+		# deliberately NO source_registry -- an adopted button has no host
+		# publisher, and recording one couples it to whatever host adopted it
+		# (that host publishes its own widget; see _writeBackHostPar)
+		self.stored['PaneRegistry'][canonical_name] = entry
+		self._syncSurface()
+		return canonical_name
+
+	def _adoptedNames(self):
+		return {n for n, i in self.stored['PaneRegistry'].items()
+				if i.get('adopted') == '1'}
+
+	def _injectGroupEnd(self, canonical, info, bar, layout, ancestors=()):
+		"""The closing bracket is STRUCTURE ONLY -- it marks where the group
+		ends in the sequence and is never drawn (the extent already reads from
+		the collapse behaviour and the tree). Clean up anything an earlier
+		build left in this bar."""
+		stale = bar.op(self._itemName(canonical))
+		if stale is not None and self.ITEM_TAG in stale.tags:
+			stale.destroy()
 
 	def _anchorItem(self, inst, bar):
 		"""Wire the instance's panel input to the bar's emptypanel when it is
@@ -623,7 +661,14 @@ class NavbarRegistryExt(RegistryBase):
 
 	def _writeBackHostPar(self, info, par_name, value):
 		"""Persist a manager edit onto the entry's host publisher par
-		(compare-before-set so host callbacks do not storm)."""
+		(compare-before-set so host callbacks do not storm).
+
+		ADOPTED entries are excluded: TD's stock buttons have no host of their
+		own (the Configurator's state table persists them), and writing back
+		would stomp the Registration pars of whichever host was recorded --
+		on the toolbar that made hiding one built-in switch the gear off."""
+		if info.get('adopted') == '1':
+			return
 		src_reg = self._resolveSourceRegistry(info)
 		if src_reg is None:
 			return
