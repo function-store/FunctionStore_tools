@@ -55,6 +55,7 @@ class PaneTypeRegistryExt(RegistryBase):
 	ACTION_LABELS = ['Change Owner + Type', 'None (no type change)']
 
 	CALLBACK_DAT_NAME = 'panetype_callbacks'
+	CALLBACK_TEMPLATE = 'callbacks_template'
 	CALLBACK_SKELETON = '''"""PaneTypeRegistry recall callbacks.
 
 Called when a registered panebar entry is selected.
@@ -170,8 +171,25 @@ def onPaneRecall(ctx):
 		tool = self._hostComp() or self.ownerComp
 		existing = tool.op(self.CALLBACK_DAT_NAME)
 		if existing is None:
-			cb = tool.create(textDAT, self.CALLBACK_DAT_NAME)
-			cb.text = self.CALLBACK_SKELETON
+			template = self.ownerComp.op(self.CALLBACK_TEMPLATE)
+			if template is not None:
+				cb = tool.copy(template, name=self.CALLBACK_DAT_NAME)
+				# The template is bound to this package's source file. A copy
+				# inherits that binding, so without this every tool's
+				# callbacks would read from -- and save over -- the one
+				# shared template.
+				for par_name in ('file', 'syncfile', 'loadonstart', 'write'):
+					p = getattr(cb.par, par_name, None)
+					if p is not None:
+						try:
+							p.mode = ParMode.CONSTANT
+							p.val = '' if par_name == 'file' else False
+						except Exception:
+							pass
+			else:
+				# shipped copies may have had the template scrubbed
+				cb = tool.create(textDAT, self.CALLBACK_DAT_NAME)
+				cb.text = self.CALLBACK_SKELETON
 			cb.nodeX = self.ownerComp.nodeX + self.ownerComp.nodeWidth + 200
 			cb.nodeY = self.ownerComp.nodeY
 		else:
