@@ -25,6 +25,26 @@ Current implementations:
   create nothing in `/ui` at all; the last two are injected copies, tagged
   `OpMenuRegistryChain` / `OpMenuRegistryPanel` so pruning only ever touches
   what the registry owns.
+- **Appearance is NOT a registry concern -- see `FNS_UISkin`.** Skinning
+  (panel background TOPs, and whatever customization comes next) briefly
+  lived here as host parameters, then as an `onPanelTops()` hook. Both were
+  retired: skinning contributes nothing to a surface's *behaviour*, it just
+  overwrites a parameter on a dialog TD already owns, so routing it through
+  the registry made every skinnable panel a registry concept for no gain.
+  `FNS_UISkin` is a standalone tool -- no host, no callbacks DAT -- covering
+  **every** registry surface's background panels, one page each: Op Menu
+  (`emptypanel`/`nodepanel`/`familypanel`/`searchpanel`), Toolbar
+  (`bookmark_bar/emptypanel`), Main Menu (`mainmenu/emptypanel`) and Pane Bar
+  (TD's `panebar_default` template plus every live `/ui/panes/panebar/*` --
+  one parameter, 11+ panels). `UISkinExt.SKIN_TARGETS` is the single source
+  of truth: it GENERATES the pages and parameters (`EnsurePars`) and drives
+  `Apply()`, so adding a knob is one row and nothing else. Targets resolve
+  through `ops()` patterns on every apply, and a healing tick re-asserts
+  while anything is claimed, so a pane split later still matches. Values are
+  captured once per panel and restored on blank. **The rule this settled:
+  the registry is for contributions a surface must aggregate, order, and
+  arbitrate between; a tool that only writes a parameter should just write
+  it.**
 - **Chain stages and panels are what the legacy installer hardcoded.** The
   I/O filter used to be a special case inside `install.py` (splice
   `script_IOFilter` after the injected node; inject `radioExpose` into
