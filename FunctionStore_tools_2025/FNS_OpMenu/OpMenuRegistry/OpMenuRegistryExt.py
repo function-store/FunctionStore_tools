@@ -69,6 +69,14 @@ class OpMenuRegistryExt(RegistryBase):
 
 	# TD's stock Insert-Operator dialog.
 	MENU_PATH = '/ui/dialogs/menu_op'
+	# TD puts keyboard focus in the search field when the dialog opens
+	# (launch_menu_op / set_focus both end with `controlpanel -k` on it), and
+	# typing straight away is the whole point of the dialog. Adding or
+	# removing a child panel relays out the container and drops that focus.
+	# Steady state is converged so this never fires, but during the boot
+	# window hosts register ONE AT A TIME -- each registration is a real
+	# change -- so a dialog opened early loses its focus mid-type.
+	SEARCH_FIELD = 'search/textfield'
 	NODETABLE_PATH = '/ui/dialogs/menu_op/nodetable'
 	POPMENU_PATH = '/ui/dialogs/menu_op/nodetable/popMenu'
 	POPMENU_CALLBACKS = 'popMenuCallbacks'
@@ -112,9 +120,12 @@ class OpMenuRegistryExt(RegistryBase):
 		TD's Insert-Operator dialog exists."""
 		self._pane_sync_queued = False
 		if self._menuReady():
+			had_focus = self._hasSearchFocus()
 			self._syncChain()
-			self._syncPanels()
+			changed = self._syncPanels()
 			self._syncPopMenu()
+			if changed and had_focus:
+				self._restoreSearchFocus()
 			return
 		if attempts <= 0:
 			debug(f'{self.REGISTRY_NAME}: {self.MENU_PATH} never became available, '
@@ -130,10 +141,13 @@ class OpMenuRegistryExt(RegistryBase):
 		super()._healRegistryEntries()
 		if not self._is_sys_global() or not self._menuReady():
 			return
+		had_focus = self._hasSearchFocus()
 		self._reapplyAutoregisterHosts()
 		self._syncChain()
-		self._syncPanels()
+		changed = self._syncPanels()
 		self._syncPopMenu()
+		if changed and had_focus:
+			self._restoreSearchFocus()
 		self._healHostClones()
 
 	# Boot window: how many heal ticks re-sweep for unpublished hosts.
@@ -416,12 +430,17 @@ class OpMenuRegistryExt(RegistryBase):
 				if comp is None or not comp.valid:
 					continue
 				wanted[comp.name] = (canonical, comp, anchor_name)
+		# whether the dialog's CHILD SET changed -- the layout-affecting part,
+		# and so the part that costs the search field its keyboard focus
+		changed = False
 		for o in list(menu.children):
 			if self.PANEL_TAG in o.tags and o.name not in wanted:
 				o.destroy()
+				changed = True
 		for name, (canonical, src, anchor_name) in wanted.items():
 			panel = menu.op(name)
 			if self._isStale(panel, src, self.PANEL_TAG):
+				changed = True
 				anchor = menu.op(anchor_name) if anchor_name else None
 				if anchor_name and anchor is None:
 					debug(f'{self.REGISTRY_NAME}: {canonical!r} panel anchor '
@@ -440,6 +459,36 @@ class OpMenuRegistryExt(RegistryBase):
 					vm.val = self.PANEL_VMODE
 				except Exception as e:
 					debug(f'{self.REGISTRY_NAME}: vmode on {panel.path}: {e}')
+		return changed
+
+	# --- keyboard focus (see SEARCH_FIELD) ---
+
+	def _searchField(self):
+		menu = op(self.MENU_PATH)
+		return menu.op(self.SEARCH_FIELD) if menu is not None else None
+
+	def _hasSearchFocus(self):
+		"""True when the dialog's search field currently holds keyboard focus."""
+		field = self._searchField()
+		if field is None:
+			return False
+		try:
+			return bool(field.panel.focus)
+		except Exception:
+			return False
+
+	def _restoreSearchFocus(self):
+		"""Hand keyboard focus back, once the relayout has settled.
+
+		Only ever called when the field HAD focus a moment ago, so this
+		restores what our own edit took -- it never steals focus from
+		somewhere else, and never opens or raises the dialog.
+		"""
+		field = self._searchField()
+		if field is None:
+			return
+		run('args[0].valid and args[0].setKeyboardFocus()', field,
+			delayFrames=1, delayRef=op.TDResources)
 
 	def _syncPopMenu(self):
 		"""Rebuild the node table's right-click menu: TD's stock items first,
