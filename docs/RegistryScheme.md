@@ -14,8 +14,58 @@ Current implementations:
 | `ToolbarRegistry` | `op.TOOLBARREGISTRY` | Toolbar widgets (mirrors in `/ui/dialogs/bookmark_bar`) | `FNS_Toolbar/ToolbarRegistry` |
 | `NavbarRegistry` | `op.NAVBARREGISTRY` | TD's pane bars (stamped copies in `panebar_default` + every `/ui/panes/panebar/*`) | `FNS_Navbar/NavbarRegistry` |
 | `OpMenuRegistry` | `op.OPMENUREGISTRY` | TD's Insert Operator dialog (`/ui/dialogs/menu_op`) -- search words, row decorations, right-click items | `FNS_OpMenu/OpMenuRegistry` |
+| `ConfigRegistry` | `op.CONFIGREGISTRY` | The aggregated settings file (`userPaletteFolder/FNStools_ext/config/FNStools_config.json`) -- per-tool par + state persistence | `FNS_Config/ConfigRegistry` |
 
-### OpMenuRegistry surface specifics (how it differs again)
+### ConfigRegistry surface specifics (the surface is a FILE)
+
+- **What it manages**: ONE aggregated JSON in the user palette
+  (`app.userPaletteFolder/FNStools_ext/config/FNStools_config.json`,
+  override via the master's Config-page `Configfile` par). Per-tool
+  sections keyed by `Canonicalname`: `pars` (custom-par mode/val/expr/
+  bindExpr of the TOOL COMP -- meta pages About/Version Ctrl/Info/
+  Callbacks/Common skipped, per-host `Excludepars`/`Excludepages`
+  patterns, read-only + pulse styles skipped; the tool's `Registry` page
+  IS persisted -- its pars are the bind masters holding surface
+  order/display, and restoring them is how layout survives a tool
+  replacement), plus optional `state` from a `config_callbacks` DAT
+  (`onConfigSave() -> dict`, `onConfigLoad(data)` -- probed, optional,
+  raise-contained, spawned via `Createcallbacks` like the op-menu's).
+- **Apply NEVER creates parameters.** TDJSON's loader was rejected
+  because `addParametersFromJSONOp` resurrects retired pars from stale
+  files; the hand-rolled applier skips missing pars, falls dangling
+  BINDs back to CONSTANT with the recorded eval, and contains every par
+  in its own try/except.
+- **Save triggers**: TD project pre-save (a `presave_exec` executeDAT --
+  active on the /sys global only, and NOTE: Execute DATs gate each
+  callback behind its own toggle par, `projectpresave` is OFF by
+  default); the `Saveall` pulse on any host (forwards to the global);
+  the UPDATER right before it replaces the toolkit (guarded
+  `op.CONFIGREGISTRY` call). Writes are read-merge-write: sections of
+  tools not currently installed are PRESERVED (partial installs), atomic
+  same-dir temp + `os.replace`, `schema` gate (mismatched files are
+  never merged into and never applied -- moved aside to `.bak`).
+- **Load**: per tool, once per session, ~30 frames after the host
+  registers (`_applied_this_session` set stops healing-tick republishes
+  from re-applying every 2 s; /sys rebuilds per boot so 'once per boot'
+  is automatic). `Autoload` per host (default on) -- a tool that wants
+  project-local settings turns it off. Explicit `Loadall`/`LoadTool`
+  bypass the session set.
+- **Cross-project semantics**: the file lives at user level, so settings
+  follow the user across projects; same-tool conflicts between projects
+  are last-writer-wins by design.
+- **HotkeyManager pilot -- declared-source model**: only DECLARED hotkey
+  rows persist: everything under the tools package (implicit) plus any
+  keyboardin CHOP/DAT or COMP carrying (or inside a COMP carrying) the
+  `FNS_hotkeys` tag. Project-local absolute-path bindings never persist
+  (a `/project1` keyboardin is a different thing in every project).
+  Restore MERGES into `table_gathered_hotkeys` (update/insert declared
+  rows, project-local rows untouched); rows whose declared source is
+  absent in this project are kept aside and ride along on the next save.
+- **No Menuorder/Displayed** -- order and display are meaningless for a
+  file. Tool page prefix `Cf`. The master doubles as the FNS_Config
+  package's own host (canonical `FNS_Config`); one extra host at the
+  toolkit ROOT (canonical `FNS`, `Promotepars` off) covers root-level
+  pars. Cook-disabled tools (midiMapper) cannot host -- skipped.
 
 - **Entries are BEHAVIOUR, not operators.** The other two registries publish
   a thing to place on a surface (a widget, a bar item). This one publishes
@@ -375,6 +425,15 @@ methods). Follow the forwarding guard pattern; base healing calls
 `_applyHostRegistration` in the base is pane-flavored; override it when your
 Registration page differs (ToolbarRegistry does).
 
+**Every registry COMP carries a `FNS_<RegistryName>` tag** (2026-08-12:
+`FNS_ToolbarRegistry`, `FNS_NavbarRegistry`, `FNS_OpMenuRegistry`,
+`FNS_MainMenuRegistry`, `FNS_PaneTypeRegistry`, `FNS_ConfigRegistry`) --
+masters, in-tool hosts, and /sys globals alike. Find any registry family
+with `findChildren(tags=['FNS_ConfigRegistry'])`, or every registry comp
+in the project with `findChildren(tags=['FNS_*Registry'])`. Copies inherit
+the tag, so new host stamps stay findable with zero extra work; a new
+registry adds its tag to the MASTER before the first host is stamped.
+
 Standard component anatomy (copy an existing registry as the template):
 
 ```
@@ -595,6 +654,26 @@ copy/create alone is rarely the whole contract.
 - **Widgets sized by their panel parent** (`me.panelParent(1).height - 5`)
   break when moved out of the bar into a non-panel tool COMP — constify
   `w`/`h` on migration.
+- **A copy of a suspect-bound master INHERITS its externaltox binding --
+  and boot reloads the WRONG tox into it.** Copying OpMenuRegistry to seed
+  ConfigRegistry carried `externaltox=.../OpMenuRegistry.tox` +
+  `enableexternaltox=on`; the first cold boot reloaded OpMenu content into
+  every ConfigRegistry copy (master became a hybrid, hosts became pure
+  OpMenu, the removed `pi_suspect` tag came back). EVERY stamp recipe must
+  sever it: `enableexternaltox=False`, `externaltox=''`, strip
+  `pi_suspect` -- and when the master doubles as a bound host, also fall
+  its copied Registration-par BINDs back to CONSTANT before setting values
+  (assigning through a dangling bind raises).
+- **Tools with `enableexternaltox=False` are carried by the ROOT toolkit
+  tox, not their own.** Their own `.tox` saves are dead files at boot; the
+  root `FunctionStore_tools_2025.tox` is their real persistence. Landing
+  discipline: save the ROOT tox too, not just the per-tool suspects
+  (paid for: 4 tools + the root host lost their ConfigRegistry hosts on a
+  cold boot because only per-tool toxes were saved).
+- **Execute DATs gate every callback behind its own toggle par.** A
+  `projectpresave` callback never fires until `par.projectpresave = True`
+  -- writing the function into the DAT is not enough (paid for: the
+  config pre-save hook silently did nothing on the first project save).
 - **Copying ANY COMP whose subtree contains an enabled clone host crashes
   TD** — not just clone copies inside drop-event stacks. Copying
   NavbarConfigurator (which ships its clone-bound gear host) via a plain

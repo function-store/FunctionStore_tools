@@ -46,7 +46,16 @@ class ExtUpdater:
 			self.update_button.parent().op('docsHelper').OpenDocs()
 
 	def Update(self, _):
-		op.FNS_CONFIG.SaveAllToJSON()
+		# Snapshot every registered tool's settings before the toolkit COMP is
+		# replaced. Guarded: a config problem must never block the update.
+		cfg = getattr(op, 'CONFIGREGISTRY', None)
+		if cfg and cfg.valid and cfg.extensionsReady:
+			try:
+				cfg.SaveAll()
+			except Exception as e:
+				debug(f'UPDATER: config save before update failed: {e}')
+		else:
+			debug('UPDATER: no ConfigRegistry global -- updating without a config snapshot')
 		iop.Downloader.par.Download.pulse()
 		
 
@@ -73,7 +82,11 @@ class ExtUpdater:
 			newComp.par.externaltox.expr = f"f'{{app.userPaletteFolder}}/FNStools_ext/{fp.baseName}'"
 			newComp.par.Gittag = self.newTag
 			newComp.par.savebackup = True
-			newComp.store('post_update', True)
+			# UPDATER-private flag: the fresh toolkit's UPDATER shows the
+			# changelog prompt once on its first start. Settings restore is
+			# NOT tied to this any more -- every tool's ConfigRegistry host
+			# auto-loads its own section when it registers.
+			newComp.store('updater_show_changelog', True)
 
 			TDF.replaceOp(parent.FNS, newComp)
 			newComp.destroy()
@@ -87,7 +100,27 @@ class ExtUpdater:
 					docked_op.nodeX, docked_op.nodeY = dock_info['pos']
 					# Then re-dock
 					docked_op.dock = newComp
-			#ret = ui.messageBox('FNS_tools updated', 'Would you like to see the changelog?', buttons=['No', 'Yes'])
-			#if ret:
-				#ui.viewFile('https://github.com/function-store/FunctionStore_tools/releases/latest')
 		pass
+
+	def ShowChangelogAfterUpdate(self):
+		"""Offer the changelog once after an update (moved here from the
+		legacy FNS_Config OnStart). The flag is stored on the toolkit root by
+		OnFileDownloaded and cleared the first time this runs."""
+		root = parent.FNS
+		if not root.fetch('updater_show_changelog', False, search=False):
+			return
+		root.unstore('updater_show_changelog')
+		run(
+			"args[0]._openChangelog() if args[0] else None",
+			self,
+			endFrame=True,
+			delayRef=op.TDResources
+		)
+
+	def _openChangelog(self):
+		try:
+			ret = ui.messageBox('FNS_tools updated', 'Would you like to see the changelog?', buttons=['No', 'Yes'])
+			if ret == 1:
+				ui.viewFile('https://github.com/function-store/FunctionStore_tools/releases/latest')
+		except Exception as e:
+			debug(f'UPDATER: changelog prompt failed: {e}')

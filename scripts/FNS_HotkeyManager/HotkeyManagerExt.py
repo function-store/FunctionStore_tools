@@ -28,7 +28,7 @@ TABLE_HEADERS = [
 	"dat_shortcuts_val", "dat_shortcuts_expr"
 ]
 
-UI_HEADERS = ["Tool", "Path", "Par", "Hotkey", "Default", "Status"]
+UI_HEADERS = ["Tool", "Path", "Par", "Hotkey", "Default", "Persist", "Status"]
 
 DEFAULT_HINT = "click a Hotkey cell to rebind - right-click resets to default"
 
@@ -577,6 +577,154 @@ class HotkeyManagerExt:
 		self.logger.log(f"Successfully loaded {success} hotkeys", textport=True)
 
 	# ------------------------------------------------------------------
+	# Config persistence (ConfigRegistry pilot)
+	# ------------------------------------------------------------------
+
+	# Explicit declaration tag: a keyboardin CHOP/DAT or a COMP carrying it
+	# (or living inside a COMP carrying it) opts its hotkeys into the
+	# user-level config file even when it sits outside the FNS tools package.
+	CONFIG_TAG = 'FNS_hotkeys'
+
+	def _isPackageSource(self, _op) -> bool:
+		"""Inside the FNS tools package: ALWAYS persisted, not user-toggleable
+		-- tool hotkeys surviving updates is the whole point."""
+		if _op is None:
+			return False
+		root_p = self.searchRoot.path
+		return _op.path == root_p or _op.path.startswith(root_p + '/')
+
+	def _tagCarrier(self, _op):
+		"""The op whose CONFIG_TAG declares this source (itself or the nearest
+		tagged ancestor), or None when undeclared."""
+		node = _op
+		while node is not None and node.path != '/':
+			if self.CONFIG_TAG in node.tags:
+				return node
+			node = node.parent()
+		return None
+
+	def _isDeclaredSource(self, _op) -> bool:
+		"""Rows persisted to the config file: anything under the tools root
+		(implicitly declared), or anything carrying/inside the CONFIG_TAG.
+		Project-local bindings (an untagged /project1 keyboardin) never
+		persist -- the same path means something else in every project."""
+		if _op is None:
+			return False
+		if self._isPackageSource(_op):
+			return True
+		return self._tagCarrier(_op) is not None
+
+	def TogglePersist(self, display_path: str, par_name: str) -> bool:
+		"""Persist-column click: flip the CONFIG_TAG on the row's source op.
+		FNS-package rows are refused -- tool hotkeys always persist. Returns
+		the new declared state."""
+		_op = self._resolveOP(display_path)
+		if _op is None:
+			return False
+		if self._isPackageSource(_op):
+			self._setHint(f'{display_path}: FNS tool hotkeys always persist')
+			return True
+		carrier = self._tagCarrier(_op)
+		if carrier is None:
+			_op.tags.add(self.CONFIG_TAG)
+			self._setHint(f"{display_path}: hotkeys now persist to the config file "
+						  f"('{self.CONFIG_TAG}' tag added)")
+			declared = True
+		elif carrier is _op:
+			_op.tags.remove(self.CONFIG_TAG)
+			still = self._tagCarrier(_op)
+			if still is not None:
+				self._setHint(f'{display_path}: still persisted -- {still.path} '
+							  f"carries '{self.CONFIG_TAG}'")
+				declared = True
+			else:
+				self._setHint(f'{display_path}: hotkeys are project-local again')
+				declared = False
+		else:
+			# declared through an ancestor's tag: removing it here would change
+			# every sibling under that ancestor -- make the user do that at the
+			# carrier, deliberately
+			self._setHint(f"{display_path}: persisted via '{self.CONFIG_TAG}' on "
+						  f'{carrier.path} -- remove the tag there to opt out')
+			declared = True
+		self.logger.log(f'TogglePersist {display_path}: declared={declared}', textport=True)
+		self.RefreshUI()
+		return declared
+
+	def ConfigSaveRows(self) -> dict:
+		"""Declared rows of the gathered table, for config_callbacks
+		onConfigSave. Rows that arrived from the config file but never
+		resolved in THIS project ride along unchanged, so switching projects
+		cannot silently drop another project's declared bindings."""
+		table = self.hotkeyTable
+		if table is None or table.numRows < 1:
+			return {}
+		headers = [h.val for h in table.row(0)]
+		rows = []
+		for row_idx in range(1, table.numRows):
+			vals = [c.val for c in table.row(row_idx)]
+			_data = dict(zip(headers, vals))
+			_op = self._resolveOP(_data.get('path', ''))
+			if _op is not None and self._isDeclaredSource(_op):
+				rows.append(vals)
+		try:
+			path_col, par_col = headers.index('path'), headers.index('par')
+		except ValueError:
+			return {}
+		known = {(r[path_col], r[par_col]) for r in rows}
+		for key, vals in getattr(self, '_config_orphan_rows', {}).items():
+			if key not in known and len(vals) == len(headers):
+				rows.append(list(vals))
+		if not rows:
+			return {}
+		return {'headers': headers, 'rows': rows}
+
+	def ConfigLoadRows(self, data) -> int:
+		"""Merge config rows into the gathered table -- update by path+par,
+		insert unknown, remember unresolvable rows as orphans, leave every
+		project-local row untouched -- then apply through the standard load
+		path (watch suppressed)."""
+		headers_in = list(data.get('headers') or [])
+		rows = data.get('rows') or []
+		if not rows:
+			return 0
+		if headers_in != TABLE_HEADERS:
+			self.logger.log('Config hotkey rows ignored: table schema mismatch', textport=True)
+			return 0
+		table = self.hotkeyTable
+		if table.numRows < 1:
+			table.appendRow(TABLE_HEADERS)
+		path_col, par_col = TABLE_HEADERS.index('path'), TABLE_HEADERS.index('par')
+		existing = {}
+		for row_idx in range(1, table.numRows):
+			vals = [c.val for c in table.row(row_idx)]
+			existing[(vals[path_col], vals[par_col])] = row_idx
+		self._config_orphan_rows = {}
+		merged = 0
+		for vals in rows:
+			if len(vals) != len(TABLE_HEADERS):
+				continue
+			vals = [str(v) for v in vals]
+			key = (vals[path_col], vals[par_col])
+			_op = self._resolveOP(vals[path_col])
+			if _op is None:
+				# not present in this project: keep for the next save, skip apply
+				self._config_orphan_rows[key] = vals
+				continue
+			row_idx = existing.get(key)
+			if row_idx is None:
+				table.appendRow(vals)
+			else:
+				for col, v in enumerate(vals):
+					table[row_idx, col] = v
+			merged += 1
+		if merged:
+			self.logger.log(f'Config: merged {merged} declared hotkey row(s), '
+							f'{len(self._config_orphan_rows)} kept unresolved', textport=True)
+			self._loadWithWatchSuppressed(default=False)
+		return merged
+
+	# ------------------------------------------------------------------
 	# Defaults
 	# ------------------------------------------------------------------
 
@@ -773,12 +921,17 @@ class HotkeyManagerExt:
 					status = f"CONFLICT ({combo})"
 				if (path_d, rec.par_name) in self._pendingChanges:
 					status = (status + " " if status else "") + "unsaved"
+			if self._isPackageSource(rec.owner):
+				persist_v = "always"
+			else:
+				persist_v = "yes" if self._isDeclaredSource(rec.owner) else "no"
 			table.appendRow([
 				self._toolName(rec.owner),
 				path_d,
 				rec.par_name,
 				rec.current,
 				default_v,
+				persist_v,
 				status,
 			])
 
