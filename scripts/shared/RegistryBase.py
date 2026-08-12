@@ -57,6 +57,14 @@ class RegistryBase:
 	TOOL_PAGE_LABEL = None       # section header label; defaults to REGISTRY_NAME
 	TOOL_PAGE_PARS = ()          # host Registration par names to proxy
 
+	# In-project host cloning. Subclasses set BOTH: the guarded clone
+	# expression hosts carry, and the package shortcut it resolves through --
+	#   CLONE_EXPR = "op.FNS_X.op('XRegistry') if hasattr(op, 'FNS_X') else None"
+	#   PACKAGE_SHORTCUT = 'FNS_X'
+	# With them set, the base provides _healHostClones and StampHost.
+	CLONE_EXPR = None
+	PACKAGE_SHORTCUT = None
+
 	def _ensureToolRegistryPage(self):
 		"""Standardized 'Registry' page on the host's PARENT tool: key
 		Registration pars mirrored onto the tool, so registration is
@@ -951,6 +959,186 @@ class RegistryBase:
 					changed = True
 			if changed:
 				self.stored['PaneRegistry'][name] = info
+		# fleet-wide, surface-independent repairs -- every registry gets the
+		# boot re-publish window and clone healing for free
+		self._reapplyAutoregisterHosts()
+		self._healHostClones()
+
+	# Boot window: how many heal ticks re-sweep for unpublished hosts.
+	# /sys does NOT save with the project, so on every open (and after any
+	# extension reinit wave) the global comes up empty while hosts believe
+	# they are registered -- their Autoregister ran at ext init, which can
+	# predate the global being ready. The sweep is bounded because it is a
+	# project-wide search: it fixes the boot window, then stops.
+	BOOT_SWEEPS = 6
+
+	def _reapplyAutoregisterHosts(self):
+		"""Ask live Autoregister hosts that the global has no entry for to
+		republish. Without this a cold boot leaves the surface unaugmented
+		until someone touches a Register pulse."""
+		if not self._is_sys_global():
+			return
+		if getattr(self, '_boot_sweeps_left', None) is None:
+			self._boot_sweeps_left = self.BOOT_SWEEPS
+		if self._boot_sweeps_left <= 0:
+			return
+		self._boot_sweeps_left -= 1
+		published = set()
+		for info in self.stored['PaneRegistry'].values():
+			src = self._resolveSourceRegistry(info)
+			if src is not None:
+				published.add(src.path)
+		try:
+			# NO depth argument: TD's findChildren depth is an EXACT depth,
+			# not a maximum -- passing one silently matches nothing.
+			candidates = op('/').findChildren(name=self.REGISTRY_NAME)
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: host sweep: {e}')
+			return
+		for host in candidates:
+			if host is self.ownerComp or host.path in published:
+				continue
+			path = host.path
+			if path.startswith('/sys') or path.startswith('/ui'):
+				continue
+			if not host.valid or not host.extensionsReady:
+				continue
+			ext = getattr(host.ext, self.EXT_NAME, None)
+			if ext is None or not ext._isAutoRegister():
+				continue
+			try:
+				ext._applyHostRegistration()
+			except Exception as e:
+				debug(f'{self.REGISTRY_NAME}: re-apply {path}: {e}')
+
+	def _masterComp(self):
+		"""The package master this registry's hosts clone from, resolved
+		through the package's global shortcut. None where absent."""
+		if not self.PACKAGE_SHORTCUT:
+			return None
+		package = getattr(op, self.PACKAGE_SHORTCUT, None)
+		if package is None or not package.valid:
+			return None
+		return package.op(self.REGISTRY_NAME)
+
+	def _healHostClones(self):
+		"""Re-assert in-project cloning on tool hosts. Release flows scrub the
+		clone par on shipped copies (pre_release); if a release flow scrubbed
+		the LIVE host instead of a staged copy, this restores it."""
+		if not self._is_sys_global() or not self.CLONE_EXPR:
+			return
+		master = self._masterComp()
+		if master is None:
+			return
+		for info in self.stored['PaneRegistry'].values():
+			src_reg = self._resolveSourceRegistry(info)
+			if src_reg is None or src_reg is master or src_reg is self.ownerComp:
+				continue
+			try:
+				p = src_reg.par.clone
+				if p.mode != ParMode.EXPRESSION or p.expr != self.CLONE_EXPR:
+					if not p.eval():
+						p.expr = self.CLONE_EXPR
+			except Exception:
+				pass
+
+	# --- host stamping (the ONE blessed copy recipe) ---
+
+	def StampHost(self, target_comp, canonical_name=None, autoregister=True,
+				  promote_pars=True, par_values=None):
+		"""Copy THIS master into `target_comp` as a configured host.
+
+		The single supported way to stamp a registry host into a tool --
+		configurator drops, fleet rollouts and scripts route here so the
+		paid-for copy hazards stay fixed in ONE place:
+
+		  * the source extension is kept quiet during copy() (an extension
+		    initializing mid-copy runs as a half-configured host);
+		  * the copy's inherited external identity is severed -- externaltox
+		    binding OFF and cleared (boot would reload the MASTER's tox into
+		    the copy), pi_suspect tag stripped (the tracker must not adopt
+		    stray copies);
+		  * inherited storage containers are scrubbed (a master's stored
+		    state must not ride into hosts);
+		  * Registration-par BINDs copied from a master that doubles as a
+		    bound host are felled to CONSTANT BEFORE values are written
+		    (assigning through a dangling bind raises);
+		  * in-project cloning is wired as the guarded CLONE_EXPR expression;
+		  * the extension is re-armed last, so registration runs against a
+		    fully configured host.
+
+		`par_values` is an optional {parName: value} dict applied to the
+		Registration page (e.g. {'Excludepars': 'Spoutactive'}). Returns the
+		new host COMP (or the existing one -- adopted, never overwritten);
+		None when stamping is impossible.
+		"""
+		master = self.ownerComp
+		if self._is_sys_global():
+			debug(f'{self.REGISTRY_NAME}: StampHost belongs on the package '
+				  f'master, not the /sys global')
+			return None
+		if target_comp is None or not getattr(target_comp, 'valid', False) \
+				or target_comp.family != 'COMP':
+			debug(f'{self.REGISTRY_NAME}: StampHost: no valid target COMP')
+			return None
+		existing = target_comp.op(self.REGISTRY_NAME)
+		if existing is not None:
+			debug(f'{self.REGISTRY_NAME}: StampHost: {existing.path} already '
+				  f'exists -- adopted, not overwritten')
+			return existing
+		if not target_comp.allowCooking:
+			debug(f'{self.REGISTRY_NAME}: StampHost: {target_comp.path} is '
+				  f'cook-disabled -- a host extension cannot compile there')
+			return None
+		kids = [c for c in target_comp.children if hasattr(c, 'nodeX')]
+		min_x = min((c.nodeX for c in kids), default=0)
+		min_y = min((c.nodeY for c in kids), default=0)
+		prev_initext = master.par.initextonstart.eval()
+		try:
+			master.par.initextonstart = False
+			host = target_comp.copy(master, name=self.REGISTRY_NAME)
+		finally:
+			master.par.initextonstart = prev_initext
+		host.nodeX = int(min_x // 200 * 200)
+		host.nodeY = int((min_y - host.nodeHeight - 400) // 200 * 200)
+		host.par.enableexternaltox = False
+		host.par.externaltox = ''
+		if 'pi_suspect' in host.tags:
+			host.tags.remove('pi_suspect')
+		for key in list(host.storage.keys()):
+			if key.endswith('Stored') or key in ('PaneRegistry', 'HostCanonical', 'post_update'):
+				host.unstore(key)
+		for page in host.customPages:
+			if page.name != self.HOST_PAGE_NAME:
+				continue
+			for p in page.pars:
+				try:
+					p.mode = ParMode.CONSTANT
+				except Exception:
+					pass
+		comp_par = getattr(host.par, 'Comp', None)
+		if comp_par is None:
+			comp_par = getattr(host.par, 'Panel', None)
+		if comp_par is not None:
+			comp_par.val = '..'
+		host.par.Canonicalname = canonical_name or target_comp.name
+		if not promote_pars and hasattr(host.par, 'Promotepars'):
+			host.par.Promotepars = False
+		for pname, value in (par_values or {}).items():
+			p = getattr(host.par, pname, None)
+			if p is not None:
+				p.val = value
+			else:
+				debug(f'{self.REGISTRY_NAME}: StampHost: no par {pname!r} on the host')
+		host.par.Autoregister = bool(autoregister)
+		if self.CLONE_EXPR:
+			host.par.clone.expr = self.CLONE_EXPR
+			host.par.enablecloning = True
+		host.par.initextonstart = True
+		host.par.reinitextensions.pulse()
+		debug(f'{self.REGISTRY_NAME}: stamped host {host.path} '
+			  f'(canonical {host.par.Canonicalname.eval()!r})')
+		return host
 
 	def _normalizeMenuOrder(self, menu_order):
 		"""Return int sort wish, or None for default append behavior."""
@@ -963,6 +1151,20 @@ class RegistryBase:
 		if order < 0:
 			return None
 		return order
+
+	# --- par-write helpers (compare-before-set: the healing tick re-runs
+	# every few seconds, so repeated identical writes must be free) ---
+	# Long in every subclass; now provided by the base -- the group-toggle
+	# builder below always depended on them existing.
+
+	def _setConst(self, par, value):
+		if par.mode != ParMode.CONSTANT or par.eval() != value:
+			par.val = value
+			par.mode = ParMode.CONSTANT
+
+	def _setExpr(self, par, expr):
+		if par.mode != ParMode.EXPRESSION or par.expr != expr:
+			par.expr = expr
 
 	# --- hideable entry groups (bracket pairs, nestable) ---
 	#

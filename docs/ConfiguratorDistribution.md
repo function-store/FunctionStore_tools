@@ -37,6 +37,20 @@ Remaining coupling to audit before any of this works: `/sys` globals,
   redesign is still in flight. (If cross-tool deps must exist, they
   become real pip dependencies — see §3 — and uv resolves them; but
   every such edge makes the configurator and the failure modes worse.)
+- **Corollary (decided 2026-08-12): registry MASTERS live in core; tools
+  ship scrubbed hosts.** Host cloning is not just a dev convenience — the
+  globals' healing tick re-asserts clone exprs in USER projects too, so
+  cloning is the core→fleet update rail: updating core rolls every
+  in-project host (even ones inside tool toxes the user never updated)
+  forward to the new master, while host Registration par VALUES survive.
+  The catch it papers over: clone sync is NOT version-aware — with a
+  newer master anywhere but core, an old in-project master would
+  structurally DOWNGRADE a newer tool's host (the /sys global arbitrates
+  by Version; clones don't). Masters-in-core makes "the in-project
+  master" and "the newest registry version" the same thing by
+  construction, so the downgrade case cannot arise. Revisit (version-
+  aware _healHostClones) only if mixed-age installs ship before the
+  core/tool split does.
 
 ### 2.2 Build pipeline
 

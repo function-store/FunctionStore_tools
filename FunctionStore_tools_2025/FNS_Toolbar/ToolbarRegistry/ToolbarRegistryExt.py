@@ -327,31 +327,12 @@ class ToolbarRegistryExt(RegistryBase):
 		ancestors, _ = self._scanGroups(names)
 		for i, canonical in enumerate(names):
 			self._injectWidget(canonical, i, ancestors.get(canonical, ()))
-		self._healHostClones()
 
 	# Location-independent: resolves through the toolbar package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
+	# _healHostClones and StampHost come from RegistryBase off these two.
 	CLONE_EXPR = "op.FNS_TOOLBAR.op('ToolbarRegistry') if hasattr(op, 'FNS_TOOLBAR') else None"
-
-	def _healHostClones(self):
-		"""Re-assert in-project cloning on tool hosts. Release flows scrub
-		the clone par on shipped copies (pre_release); if a release tool
-		scrubbed the LIVE host instead of a staged copy, this restores it."""
-		tb = self._toolbarComp()
-		master = tb.op('ToolbarRegistry') if tb else None
-		if master is None:
-			return
-		for info in self.stored['PaneRegistry'].values():
-			src_reg = self._resolveSourceRegistry(info)
-			if src_reg is None or src_reg is master or src_reg is self.ownerComp:
-				continue
-			try:
-				p = src_reg.par.clone
-				if p.mode != ParMode.EXPRESSION or p.expr != self.CLONE_EXPR:
-					if not p.eval():
-						p.expr = self.CLONE_EXPR
-			except Exception:
-				pass
+	PACKAGE_SHORTCUT = 'FNS_TOOLBAR'
 
 	# --- public API ---
 

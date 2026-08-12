@@ -198,13 +198,14 @@ A hook that raises is contained: debug()'d, skipped, dialog keeps working.
   `InvokeMenuItem`, `Resync`. Tool page prefix `Om`. No
   configurator yet (a natural next step: enable/disable and reorder
   contributions).
-- **The global re-asks hosts to publish during the boot window** -- and this
-  is the fix the other two registries still lack. `/sys` does NOT save with
-  the project, so on every open (and after ANY extension reinit wave,
-  including the one every `project.save()` triggers) the global comes up
-  empty while hosts believe they are registered: their `Autoregister` ran at
-  extension init, which can predate the global being ready. Symptom: hosts
-  report `Regstatus: Registered` while `Contributors` is empty.
+- **The global re-asks hosts to publish during the boot window** -- born
+  here, generalized into `RegistryBase` 2026-08-12 (every registry now gets
+  it via the base healing tick). `/sys` does NOT save with the project, so
+  on every open (and after ANY extension reinit wave, including the one
+  every `project.save()` triggers) the global comes up empty while hosts
+  believe they are registered: their `Autoregister` ran at extension init,
+  which can predate the global being ready. Symptom: hosts report
+  `Regstatus: Registered` while `Contributors` is empty.
   `_reapplyAutoregisterHosts()` runs on the first `BOOT_SWEEPS` (6) healing
   ticks, finds live `Autoregister` hosts the global has no entry for, and
   asks them to republish; then it stops, because it is a project-wide
@@ -405,7 +406,20 @@ class MyRegistryExt(RegistryBase):
     EXT_NAME      = 'MyRegistryExt'   # class AND ext-DAT name (must match)
     REGISTRY_NAME = 'MyRegistry'      # COMP family name for /sys discovery
     # HOST_PAGE_NAME = 'Registration' (inherited default)
+    CLONE_EXPR = "op.FNS_X.op('MyRegistry') if hasattr(op, 'FNS_X') else None"
+    PACKAGE_SHORTCUT = 'FNS_X'        # the package shortcut CLONE_EXPR uses
 ```
+
+With `CLONE_EXPR` + `PACKAGE_SHORTCUT` set, the base provides fleet-wide
+plumbing every registry used to duplicate (consolidated 2026-08-12):
+`_reapplyAutoregisterHosts` (the boot re-publish sweep) and
+`_healHostClones` both run from the BASE healing tick automatically;
+`_setConst`/`_setExpr` compare-before-set helpers live in the base; and
+**`StampHost(target_comp, canonical_name=..., par_values=...)`** is the ONE
+blessed way to stamp a host into a tool -- configurator drops, fleet
+rollouts and scripts all route through it so the paid-for copy hazards
+(ext-init-during-copy, inherited externaltox/pi_suspect, inherited storage
+containers, copied Registration-par binds) stay fixed in one place.
 
 Surface hooks to override (safe no-op defaults in the base):
 

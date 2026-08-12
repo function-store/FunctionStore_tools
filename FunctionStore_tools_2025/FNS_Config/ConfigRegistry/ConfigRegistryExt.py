@@ -108,80 +108,18 @@ class ConfigRegistryExt(RegistryBase):
 			ex.par.active = True
 
 	def _healRegistryEntries(self):
+		"""Base healing covers the boot re-publish sweep and clone healing;
+		the file surface only needs its pre-save hook kept armed."""
 		super()._healRegistryEntries()
 		if not self._is_sys_global():
 			return
-		self._reapplyAutoregisterHosts()
 		self._syncSurface()
-		self._healHostClones()
-
-	# Boot window: how many heal ticks re-sweep for unpublished hosts.
-	# /sys does NOT save with the project, so on every open the global comes
-	# up empty while hosts believe they are registered -- their Autoregister
-	# ran at ext init, which can predate the global being ready.
-	BOOT_SWEEPS = 6
-
-	def _reapplyAutoregisterHosts(self):
-		"""Ask live Autoregister hosts that the global has no entry for to
-		republish. Without this a cold boot leaves the config unapplied until
-		someone touches a Register pulse."""
-		if not self._is_sys_global():
-			return
-		if getattr(self, '_boot_sweeps_left', None) is None:
-			self._boot_sweeps_left = self.BOOT_SWEEPS
-		if self._boot_sweeps_left <= 0:
-			return
-		self._boot_sweeps_left -= 1
-		published = set()
-		for info in self.stored['PaneRegistry'].values():
-			src = self._resolveSourceRegistry(info)
-			if src is not None:
-				published.add(src.path)
-		try:
-			# NO depth argument: TD's findChildren depth is an EXACT depth,
-			# not a maximum -- passing one silently matches nothing.
-			candidates = op('/').findChildren(name=self.REGISTRY_NAME)
-		except Exception as e:
-			debug(f'{self.REGISTRY_NAME}: host sweep: {e}')
-			return
-		for host in candidates:
-			if host is self.ownerComp or host.path in published:
-				continue
-			path = host.path
-			if path.startswith('/sys') or path.startswith('/ui'):
-				continue
-			if not host.valid or not host.extensionsReady:
-				continue
-			ext = getattr(host.ext, self.EXT_NAME, None)
-			if ext is None or not ext._isAutoRegister():
-				continue
-			try:
-				ext._applyHostRegistration()
-			except Exception as e:
-				debug(f'{self.REGISTRY_NAME}: re-apply {path}: {e}')
 
 	# Location-independent: resolves through the config package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
+	# _healHostClones and StampHost come from RegistryBase off these two.
 	CLONE_EXPR = "op.FNS_CONFIG.op('ConfigRegistry') if hasattr(op, 'FNS_CONFIG') else None"
-
-	def _healHostClones(self):
-		"""Re-assert in-project cloning on tool hosts scrubbed by a release
-		flow that ran on the live host instead of a staged copy."""
-		package = getattr(op, 'FNS_CONFIG', None)
-		master = package.op('ConfigRegistry') if package is not None else None
-		if master is None:
-			return
-		for info in self.stored['PaneRegistry'].values():
-			src_reg = self._resolveSourceRegistry(info)
-			if src_reg is None or src_reg is master or src_reg is self.ownerComp:
-				continue
-			try:
-				p = src_reg.par.clone
-				if p.mode != ParMode.EXPRESSION or p.expr != self.CLONE_EXPR:
-					if not p.eval():
-						p.expr = self.CLONE_EXPR
-			except Exception:
-				pass
+	PACKAGE_SHORTCUT = 'FNS_CONFIG'
 
 	# --- config file ---
 

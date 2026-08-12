@@ -437,31 +437,12 @@ class NavbarRegistryExt(RegistryBase):
 			layout = self._computeAlignLayout(bar)
 			for canonical in self._registeredNamesInOrder():
 				self._injectItem(canonical, bar, layout, ancestors.get(canonical, ()))
-		self._healHostClones()
 
 	# Location-independent: resolves through the navbar package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
+	# _healHostClones and StampHost come from RegistryBase off these two.
 	CLONE_EXPR = "op.FNS_NAVBAR.op('NavbarRegistry') if hasattr(op, 'FNS_NAVBAR') else None"
-
-	def _healHostClones(self):
-		"""Re-assert in-project cloning on tool hosts. Release flows scrub
-		the clone par on shipped copies (pre_release); if a release tool
-		scrubbed the LIVE host instead of a staged copy, this restores it."""
-		nb = self._navbarComp()
-		master = nb.op('NavbarRegistry') if nb else None
-		if master is None:
-			return
-		for info in self.stored['PaneRegistry'].values():
-			src_reg = self._resolveSourceRegistry(info)
-			if src_reg is None or src_reg is master or src_reg is self.ownerComp:
-				continue
-			try:
-				p = src_reg.par.clone
-				if p.mode != ParMode.EXPRESSION or p.expr != self.CLONE_EXPR:
-					if not p.eval():
-						p.expr = self.CLONE_EXPR
-			except Exception:
-				pass
+	PACKAGE_SHORTCUT = 'FNS_NAVBAR'
 
 	# --- public API ---
 

@@ -136,66 +136,18 @@ class OpMenuRegistryExt(RegistryBase):
 			self.ownerComp, attempts - 1, delayFrames=30, delayRef=op.TDResources)
 
 	def _healRegistryEntries(self):
-		"""Base healing plus surface repair -- this is what makes a LATE
-		dialog work and what restores the chain node if TD rebuilt it."""
+		"""Base healing (incl. the boot re-publish sweep and clone healing)
+		plus surface repair -- this is what makes a LATE dialog work and what
+		restores the chain node if TD rebuilt it."""
 		super()._healRegistryEntries()
 		if not self._is_sys_global() or not self._menuReady():
 			return
 		had_focus = self._hasSearchFocus()
-		self._reapplyAutoregisterHosts()
 		self._syncChain()
 		changed = self._syncPanels()
 		self._syncPopMenu()
 		if changed and had_focus:
 			self._restoreSearchFocus()
-		self._healHostClones()
-
-	# Boot window: how many heal ticks re-sweep for unpublished hosts.
-	# /sys does NOT save with the project, so on every open (and after any
-	# extension reinit wave) the global comes up empty while hosts believe
-	# they are registered -- their Autoregister ran at ext init, which can
-	# predate the global being ready. The sweep is bounded because it is a
-	# project-wide search: it fixes the boot window, then stops.
-	BOOT_SWEEPS = 6
-
-	def _reapplyAutoregisterHosts(self):
-		"""Ask live Autoregister hosts that the global has no entry for to
-		republish. Without this a cold boot leaves the dialog unaugmented
-		until someone touches a Register pulse."""
-		if not self._is_sys_global():
-			return
-		if getattr(self, '_boot_sweeps_left', None) is None:
-			self._boot_sweeps_left = self.BOOT_SWEEPS
-		if self._boot_sweeps_left <= 0:
-			return
-		self._boot_sweeps_left -= 1
-		published = set()
-		for info in self.stored['PaneRegistry'].values():
-			src = self._resolveSourceRegistry(info)
-			if src is not None:
-				published.add(src.path)
-		try:
-			# NO depth argument: TD's findChildren depth is an EXACT depth,
-			# not a maximum -- passing one silently matches nothing.
-			candidates = op('/').findChildren(name=self.REGISTRY_NAME)
-		except Exception as e:
-			debug(f'{self.REGISTRY_NAME}: host sweep: {e}')
-			return
-		for host in candidates:
-			if host is self.ownerComp or host.path in published:
-				continue
-			path = host.path
-			if path.startswith('/sys') or path.startswith('/ui'):
-				continue
-			if not host.valid or not host.extensionsReady:
-				continue
-			ext = getattr(host.ext, self.EXT_NAME, None)
-			if ext is None or not ext._isAutoRegister():
-				continue
-			try:
-				ext._applyHostRegistration()
-			except Exception as e:
-				debug(f'{self.REGISTRY_NAME}: re-apply {path}: {e}')
 
 	def Resync(self):
 		"""Public: re-apply the whole surface now. Publishers whose
@@ -209,27 +161,9 @@ class OpMenuRegistryExt(RegistryBase):
 
 	# Location-independent: resolves through the op-menu package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
+	# _healHostClones and StampHost come from RegistryBase off these two.
 	CLONE_EXPR = "op.FNS_OPMOD.op('OpMenuRegistry') if hasattr(op, 'FNS_OPMOD') else None"
-
-	def _healHostClones(self):
-		"""Re-assert in-project cloning on tool hosts. Release flows scrub the
-		clone par on shipped copies (pre_release); if a release tool scrubbed
-		the LIVE host instead of a staged copy, this restores it."""
-		package = getattr(op, 'FNS_OPMOD', None)
-		master = package.op('OpMenuRegistry') if package is not None else None
-		if master is None:
-			return
-		for info in self.stored['PaneRegistry'].values():
-			src_reg = self._resolveSourceRegistry(info)
-			if src_reg is None or src_reg is master or src_reg is self.ownerComp:
-				continue
-			try:
-				p = src_reg.par.clone
-				if p.mode != ParMode.EXPRESSION or p.expr != self.CLONE_EXPR:
-					if not p.eval():
-						p.expr = self.CLONE_EXPR
-			except Exception:
-				pass
+	PACKAGE_SHORTCUT = 'FNS_OPMOD'
 
 	# --- surface helpers ---
 
