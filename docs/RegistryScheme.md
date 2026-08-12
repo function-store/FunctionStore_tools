@@ -61,6 +61,51 @@ Current implementations:
   Restore MERGES into `table_gathered_hotkeys` (update/insert declared
   rows, project-local rows untouched); rows whose declared source is
   absent in this project are kept aside and ride along on the next save.
+- **Configurator layouts roam through `state`** (Toolbar/Navbar/MainMenu).
+  Each configurator owns a private `state` table -- dividers, the
+  hideable-group brackets, and the adopted built-ins' order/display/width
+  plus their original `td_order`. That table is the only part of a bar
+  layout no host publisher persists, so each surface package's host ships a
+  `config_callbacks` that saves it whole and restores it whole (one coherent
+  per-user layout, never a row-wise merge). The header row travels with the
+  payload, so a table written under a different column set still migrates on
+  restore.
+  **Restore must republish, not just rewrite.** The payload lands ~30 frames
+  after registration -- long after the configurator's boot republish -- and
+  the /sys global is ephemeral, so `ConfiguratorExt.RestoreState(rows)` redoes
+  everything boot does: built-in overrides, dividers, stored order, group
+  brackets (§3: virtual entries die unless the configurator republishes
+  them). Two traps it exists to cover: `_adoptBuiltins` early-outs once every
+  built-in is adopted, so stored order needs re-asserting separately
+  (`_reapplyStoredOrders`, called from `_publishOwned` so boot and restore
+  share one path); and a wholesale replace has to retire dividers the
+  incoming layout dropped. Tool entries are NOT in scope here -- their
+  order/display live on their own host pars and roam in the `pars` section.
+- **`FNS_persist` tag -- registration without a host.** Tag any COMP
+  `FNS_persist` and the global registers it (canonical = the COMP name,
+  defaults throughout: autoload on, persist pars, no callback, no
+  `source_registry`). It is the zero-configuration path for micro-tools too
+  small to carry a host, and the precedent is `FNS_hotkeys` in
+  HotkeyManagerExt. **`_sweepPersistTags` never runs on a timer** -- finding
+  a tag means walking the whole project, and this toolkit runs inside live
+  shows, so nothing may add recurring per-frame work. It fires at the only
+  two moments the answer can change anything: the BOOT window (bounded by
+  `BOOT_SWEEPS`, like the base host sweep -- /sys is ephemeral, so this is
+  what re-registers tagged COMPs on open, in time to apply their settings)
+  and every `SaveAll` (pre-save, the `Saveall` pulse, the UPDATER). In
+  between, tagging is inert: a tag added mid-session takes effect at the
+  next save, and its settings apply on the next open. The `SaveAll` sweep
+  must run BEFORE the snapshot -- registering queues a deferred apply, so a
+  COMP tagged mid-session whose canonical name already carries another
+  project's section needs its live values written out first, or that apply
+  lands the foreign section on it. A HOSTED tool always wins its canonical name;
+  name clashes between two tagged COMPs keep the first and `debug()` the
+  rest. Untagging never deletes the saved section -- it is just an
+  uninstalled tool, and the read-merge-write preserves it. Entries carry
+  `tag_source: '1'` so the sweep can tell its own registrations from real
+  ones; they survive heal ticks because base pruning only drops entries whose
+  *recorded* source registry died (`had_source`), and a vanished COMP still
+  drops through the `panel is None` path.
 - **No Menuorder/Displayed** -- order and display are meaningless for a
   file. Tool page prefix `Cf`. The master doubles as the FNS_Config
   package's own host (canonical `FNS_Config`); one extra host at the
@@ -804,6 +849,14 @@ mirrors. The order below is the one that worked; the lessons were paid for.
   Only the `.tox` reverts — externalized `.py` files have their own file
   bindings and survive, which is what makes recovery cheap: recreate the
   operators, rebind them to the surviving files, re-register.
+- **Then save the ROOT tox, every landing.** The sweep above finds only
+  suspects whose `externaltox` is ON. Four tools (`FNS_MainMenu`,
+  `QuickMarks`, `QuickParCustom`, `paste_from_clipboard`) have
+  `enableexternaltox=False` — their own `.tox` files are dead at boot and
+  their content is CARRIED BY `modules/suspects/FunctionStore_tools_2025.tox`.
+  So a landing is: nested suspects deepest-first, then the root tox, then
+  `save_project`. `PaneTypeRegistry` lives in `/PreviewPanel25` — a separate
+  sweep root, easy to forget.
 - **Same-frame verification lies.** Connector lists and par-callback
   effects read stale in the frame that mutated them — verify a destroy or
   re-anchor only after real frames pass.

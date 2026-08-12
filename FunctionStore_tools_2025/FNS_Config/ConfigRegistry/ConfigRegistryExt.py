@@ -109,11 +109,91 @@ class ConfigRegistryExt(RegistryBase):
 
 	def _healRegistryEntries(self):
 		"""Base healing covers the boot re-publish sweep and clone healing;
-		the file surface only needs its pre-save hook kept armed."""
+		the file surface only needs its pre-save hook kept armed -- plus the
+		FNS_persist tag sweep, but ONLY inside the boot window."""
 		super()._healRegistryEntries()
 		if not self._is_sys_global():
 			return
+		# Boot-window budget for the tag sweep -- same bound and same lazy
+		# init as the base's host sweep, because a global promoted from a
+		# copy runs _preInit on the host branch, before it is the global.
+		if getattr(self, '_persist_sweeps_left', None) is None:
+			self._persist_sweeps_left = self.BOOT_SWEEPS
+		if self._persist_sweeps_left > 0:
+			self._persist_sweeps_left -= 1
+			self._sweepPersistTags()
 		self._syncSurface()
+
+	# --- FNS_persist: registration by tag, for tools with no host ---
+
+	PERSIST_TAG = 'FNS_persist'
+
+	def _sweepPersistTags(self):
+		"""Register COMPs tagged FNS_persist that ship no host of their own.
+
+		The tag IS the registration: a micro-tool too small to carry a
+		ConfigRegistry host gets its custom parameters roamed by tagging it
+		-- no host, no callback, no configuration, defaults throughout. A
+		HOSTED tool always wins its canonical name; the tag never overrides
+		a real registration.
+
+		WHEN IT RUNS -- never on a timer. Scanning the project for a tag is
+		a whole-tree walk, and this toolkit runs inside live shows: nothing
+		here may add recurring per-frame work. It runs at exactly the two
+		moments the answer can change anything:
+
+		  * the BOOT window (bounded by BOOT_SWEEPS, like the base's host
+		    re-publish sweep) -- /sys is ephemeral, so this is what
+		    re-registers tagged COMPs on open, in time for their settings to
+		    be applied;
+		  * every SaveAll -- pre-save, the Saveall pulse, the UPDATER -- so
+		    a COMP tagged mid-session is picked up by the save that would
+		    persist it, and an untagged one stops being written.
+
+		Between those, tagging is inert: a tag added after the boot window
+		takes effect at the next save, and its settings apply on the next
+		open. Untagging unregisters but does NOT delete the tool's section
+		-- the file preserves sections of tools that are not installed.
+		"""
+		if not self._is_sys_global():
+			return
+		try:
+			# NO depth argument: TD's findChildren depth is an EXACT depth,
+			# not a maximum -- passing one silently matches nothing.
+			tagged = op('/').findChildren(tags=[self.PERSIST_TAG])
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: persist-tag sweep: {e}')
+			return
+		live = {}
+		for comp in tagged:
+			if comp.family != 'COMP':
+				continue
+			path = comp.path
+			if path.startswith('/sys') or path.startswith('/ui'):
+				continue
+			claimed = live.setdefault(comp.name, comp)
+			if claimed is not comp:
+				debug(f'{self.REGISTRY_NAME}: {self.PERSIST_TAG} name clash on '
+					  f'{comp.name!r} -- keeping {claimed.path}, ignoring {path}')
+		entries = self.stored['PaneRegistry']
+		# a COMP that lost the tag gives its registration up (its saved
+		# section stays in the file, like any uninstalled tool)
+		for name, info in list(entries.items()):
+			if info.get('tag_source') == '1' and name not in live:
+				self.UnregisterTool(name)
+		for name, comp in live.items():
+			info = entries.get(name)
+			if info is not None:
+				if info.get('tag_source') != '1':
+					continue  # a real host owns this canonical name
+				if self._resolvePanelOp(info) is comp:
+					continue  # already registered off the tag
+			self.RegisterTool(comp, name, autoload=True, persist_pars=True)
+			entry = entries.get(name)
+			if entry is not None:
+				entry = dict(entry)
+				entry['tag_source'] = '1'
+				entries[name] = entry
 
 	# Location-independent: resolves through the config package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
@@ -375,6 +455,14 @@ class ConfigRegistryExt(RegistryBase):
 			debug(f'{self.REGISTRY_NAME}: SaveAll ignored on {self.ownerComp.path}'
 				  f' -- no global /sys registry ready')
 			return False
+		# A save is one of the two moments a tag can change the answer, and
+		# the only one that runs mid-session (see _sweepPersistTags). It has
+		# to happen BEFORE the snapshot below: registering also queues a
+		# deferred apply, so a COMP tagged mid-session whose canonical name
+		# already had a section written by another project must have its LIVE
+		# values written out first -- otherwise that apply lands the foreign
+		# section on it a few frames later.
+		self._sweepPersistTags()
 		data = self._readFile()
 		if data.get('schema') != self.SCHEMA:
 			# never merge into an unknown shape; keep the old file as a .bak
