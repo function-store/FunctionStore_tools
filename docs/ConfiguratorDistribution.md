@@ -424,27 +424,63 @@ and it operates on the whole toolkit, not on itself. But simply flipping
 its `kind` to `core` would paper over the real gap rather than close it,
 so it stays `tool` until the mechanism is decided.
 
-**The prerequisite nobody has: real per-package versions.** The manifest
-records `version` and `build` per package, but 38 of 39 packages have an
-empty `version`, and `build` is a SAVE COUNTER that increments on every
-`.toe` save — neither can answer "is this package newer than the one
-installed?". §2.2's "the UPDATER should consume the same manifest — one
-catalog, two consumers" cannot be built until that exists.
+### Versioning — DECIDED: hashes drive updates, not version numbers
 
-Three ways forward:
+The apparent blocker was that per-package versions do not exist: 38 of 39
+packages have an empty `version`, and `build` is a SAVE COUNTER that ticks
+on every `.toe` save. Neither can answer *"is this newer than what is
+installed?"*.
 
-1. **Per-package updates** (matches §2.1). Give packages real versions,
-   publish the manifest alongside the release, and have UPDATER diff
-   installed versions against it and `replaceOp` only what changed. Most
-   work; the only option that actually fits the packaging model.
+They do not have to. **The manifest already carries a `sha256` per
+artifact, and that answers the question exactly** — "has this package
+changed since the bytes I installed?" — with zero maintenance and no way
+to drift from reality. Version numbers are for humans; hashes are for the
+updater.
+
+So: **one release label for the whole toolkit** (`release` in the
+manifest, taken from the root's `Gittag`, e.g. `v2.11.2`) for changelogs
+and support conversations, and **per-artifact hashes** as the update
+trigger. Per-package semver stays optional, for authors who want it.
+
+That unblocks option 1 below with no versioning ceremony to invent.
+
+### Distribution — DECIDED: bucket for artifacts, GitHub for the tag
+
+39 separate `.tox` files per release is awkward as GitHub release assets
+and gives no directory semantics. The bucket carries the artifacts;
+GitHub keeps the tag and changelog. `base_url` in the manifest decides
+where installers fetch, so both can coexist and either can move.
+
+`packaging/publish.py` stages the exact bucket tree and re-hashes every
+staged file against the manifest before reporting success — publishing
+bytes that disagree with the hashes an installer will check is worse than
+not publishing:
+
+```
+<release>/manifest.json      immutable snapshot
+<release>/<Package>.tox      immutable artifacts
+<release>/FNS_Installer.tox  so a bare project can bootstrap
+manifest.json                ROLLING pointer to the newest release
+```
+
+Releases are **pinned**: every artifact URL inside a manifest carries its
+release, so a manifest always resolves to the bytes it was built from. The
+rolling root copy exists only to answer "what is current?" once. No
+mutable `latest/<Package>.tox` (§3).
+
+Three ways forward for the mechanism itself:
+
+1. **Per-package updates** (matches §2.1, now unblocked). UPDATER fetches
+   the current manifest, compares each installed package's artifact hash
+   against it, and `replaceOp`s only what changed. Reuses the vendored
+   `UPDATER/fileDownloader` (a TDFileDownloader with a Web Client DAT,
+   callbacks, progress UI, auth and a concurrency cap) rather than
+   hand-rolling HTTP.
 2. **Selection-aware whole-toolkit update.** Keep replacing the root, but
-   record the user's selection and re-apply it after the swap (install
-   everything, prune to selection). Cheap, keeps one artifact, but the
-   user briefly has tools they did not ask for and any local edits to
-   unpicked packages are lost.
-3. **Declare subsets update-only-by-reinstall.** Honest and free: the
-   configurator becomes a first-install tool, and updating means picking
-   again. Acceptable only while the audience is small.
+   record the selection and re-apply it after the swap. Cheap, but the
+   user briefly has tools they did not ask for.
+3. **Reinstall-only.** The configurator is a first-install tool; updating
+   means picking again.
 
 Unverified but suspicious: `UPDATER.par.Filename` is
 `FunctionStore_tools_2023.tox` on a 2025 toolkit. If the release asset has

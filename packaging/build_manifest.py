@@ -38,6 +38,12 @@ PKG_DIR = 'packaging'
 DIST_DIR = 'packaging/dist'
 TOOLKIT = '/FunctionStore_tools_2025'
 
+# Where published artifacts live. Releases are PINNED: every artifact URL
+# carries its release, so a manifest always resolves to the exact bytes it
+# was built from. Never point an installer at a mutable "latest/" path --
+# unreproducible installs make bug reports uncorrelatable (§3).
+BASE_URL = 'https://storage.functionstore.xyz/fnstools'
+
 # Registry host name -> the core package that owns that registry's master.
 REGISTRY_OWNER = {
     'ConfigRegistry': 'FNS_Config',
@@ -294,7 +300,21 @@ def ExportPackage(comp):
             'sha256': _sha256(dest)}
 
 
-def Build(export=False, out_path=None):
+def _release():
+    """Human-facing release label for the whole toolkit.
+
+    Per-package semver was considered and rejected: 38 of 39 packages had
+    no version at all, and `build` is a SAVE COUNTER that ticks on every
+    .toe save, so neither could answer "is this newer than what is
+    installed?". The manifest's per-artifact sha256 answers that exactly,
+    with zero maintenance -- so hashes drive updates and this label is for
+    humans and changelogs.
+    """
+    p = getattr(_root().par, 'Gittag', None)
+    return str(p.eval()).strip() if p is not None and str(p.eval()).strip() else 'untagged'
+
+
+def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
     """Write packaging/manifest.json. `export` may be False, True, or a
     list of package names to (re-)export artifacts for."""
     catalog_path = _repo(PKG_DIR, 'catalog.json')
@@ -372,8 +392,18 @@ def Build(export=False, out_path=None):
                 entry['artifact'] = previous[name]['artifact']
         packages.append(entry)
 
+    rel = release or _release()
+    for entry in packages:
+        art = entry.get('artifact')
+        if art:
+            # Pinned per release. The sha256 already in `art` is what an
+            # updater compares against; the URL is just where to get it.
+            art['url'] = '%s/%s/%s.tox' % (base_url.rstrip('/'), rel, entry['name'])
+
     doc = {
         'schema': MANIFEST_SCHEMA,
+        'release': rel,
+        'base_url': base_url.rstrip('/'),
         'toolkit': {
             'name': _root().name,
             'td_build': app.version,

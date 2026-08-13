@@ -103,3 +103,43 @@ destroy the running one:
 t = op('/sys/quiet').create(baseCOMP, 'trial'); t.allowCooking = False
 Install('packaging/example-selection.json', target=t.path)
 ```
+
+## Publishing a release
+
+Artifacts go to a bucket; GitHub keeps the tag and changelog. 39 `.tox`
+files per release is awkward as GitHub release assets and gives no
+directory semantics, so `base_url` in the manifest decides where
+installers fetch — both rails can coexist.
+
+```python
+exec(open('packaging/build_manifest.py').read()); Build(export=True)
+exec(open('packaging/publish.py').read()); result = Stage()
+```
+
+`Stage()` lays out `packaging/publish/` to mirror the bucket exactly, then
+**re-hashes every staged file against the manifest** and refuses to report
+`ok` on any mismatch — publishing bytes that disagree with the hashes an
+installer verifies is worse than not publishing. Upload is one sync:
+
+```bash
+aws s3 sync packaging/publish/ s3://<bucket>/fnstools/ --delete
+```
+
+```
+<release>/manifest.json      immutable snapshot
+<release>/<Package>.tox      immutable artifacts
+<release>/FNS_Installer.tox  so a bare project can bootstrap
+manifest.json                ROLLING pointer to the newest release
+```
+
+Releases are **pinned**: artifact URLs carry their release, so a manifest
+always resolves to the bytes it was built from. The rolling root copy only
+answers "what is current?" once. Never publish a mutable
+`latest/<Package>.tox`.
+
+## Versioning
+
+**Hashes drive updates, not version numbers.** Each artifact's `sha256`
+answers "has this changed since the bytes I installed?" exactly, with zero
+maintenance. The `release` label (from the toolkit's `Gittag`) is for
+humans and changelogs. Per-package semver is optional.

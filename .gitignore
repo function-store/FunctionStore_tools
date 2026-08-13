@@ -74,3 +74,4 @@ briefs/
 
 # packaging: exported tox artifacts are rebuildable from the manifest
 packaging/dist/
+packaging/publish/
