@@ -45,12 +45,14 @@ class PopDialogExt:
 			TDF.createProperty(self, f'CheckBox{idx+1}', value=False)
 
 		
-		# upgrade version
-		self.ownerComp.par.Version = self.ownerComp.par.clone.eval().par.Version
-		h = self.ownerComp.par.h
-		if h.mode == ParMode.EXPRESSION and h.expr == "op('./dialog').par.h":
-			h.expr = "me.DialogHeight"
-			h.readOnly = True
+		# NOTE: an "upgrade version" block used to live here, writing
+		# par.Version and rewriting the h par's expression ON EVERY INIT.
+		# Mutating a CLONE's pars from __init__ is a standing war with clone
+		# sync against the /sys/TDTox/popDialog master: each resync round
+		# re-initializes this extension, which wipes self.details and the
+		# EnteredText deps -- the dialog then opens blank and OK does nothing
+		# (details=None skips both promote branches). Init must not write to
+		# the comp.
 
 		TDF.createProperty(self, 'TextHeight', value=0)
 		run("args[0].UpdateTextHeight()", self, delayFrames=1, 
@@ -128,6 +130,9 @@ class PopDialogExt:
 		
 		# self.EnteredText1 = self.ownerComp.par.Textentrydefault.eval()
 		# self.EnteredText2 = self.ownerComp.par.Textentrydefault2.eval()
+		# keep the requested defaults for the post-open re-assert (see
+		# _applyPendingEntryTexts) -- the window's field widgets wipe them
+		self._pending_entry_texts = list(textEntries or [])
 		for idx, (entry, text) in enumerate(zip(self.entries, textEntries or [])):
 			if text is not None:
 				setattr(self, f'EnteredText{idx + 1}', text)
@@ -163,8 +168,11 @@ class PopDialogExt:
 			else:
 				self.ownerComp.par.Enterbutton = str(enterButton)
 		self.UpdateTextHeight()
-		# HACK shouldn't be necessary - problem with clones/replicating
-		self.ownerComp.op('replicator1').par.recreateall.pulse()
+		# NOTE: a replicator recreateall pulse used to live here ("HACK
+		# shouldn't be necessary"). It recreated the five entry COMPs on
+		# EVERY open: the freshly-set defaults were wiped as the new
+		# replicants initialized their bound text pars, and the entry
+		# references cached in __init__ went stale -- blank dialog, dead OK.
 		self.actualOpen()
 		# run("op('" + self.ownerComp.path + "').ext.PopDialogExt.actualOpen()",
 		# 								delayFrames=1, delayRef=op.TDResources)
@@ -172,6 +180,18 @@ class PopDialogExt:
 	def actualOpen(self):
 		# needs to be deferred so that sizes can update properly
 		self.windowComp.par.winopen.pulse()
+		# The field widgets initialize as the window opens and push their
+		# (empty) panel text through the text-par BINDs into the EnteredText
+		# dependencies -- wiping the defaults Open() just set. Re-assert them
+		# once the fields have settled. (Measured: the wipe lands within the
+		# first frames after winopen.)
+		run("args[0]._applyPendingEntryTexts()", self,
+			delayFrames=5, delayRef=op.TDResources)
+		# second pass: the min/max/default fields become visible only when
+		# Minmaxentryarea flips, so they initialize (and wipe) later than
+		# the name/label fields
+		run("args[0]._applyPendingEntryTexts()", self,
+			delayFrames=20, delayRef=op.TDResources)
 		ext.CallbacksExt.DoCallback('onOpen')
 		if self.ownerComp.op('entry1').par.display.eval():
 			self.ownerComp.setFocus()
@@ -185,6 +205,17 @@ class PopDialogExt:
 		else:
 			self.ownerComp.setFocus()
 
+	def _applyPendingEntryTexts(self):
+		"""Re-apply the defaults requested by the last Open() after the
+		window's field widgets have initialized (they wipe the bound
+		EnteredText deps with their empty panel state on open)."""
+		texts = getattr(self, '_pending_entry_texts', None) or []
+		for idx, (entry, text) in enumerate(zip(self.entries, texts)):
+			if text is None or not entry.valid:
+				continue
+			setattr(self, f'EnteredText{idx + 1}', text)
+			entry.op('inputText').par.text = getattr(self, f'EnteredText{idx + 1}')
+
 	def Close(self):
 		"""
 		Close the dialog
@@ -193,7 +224,11 @@ class PopDialogExt:
 		ext.CallbacksExt.DoCallback('onClose')
 		self.windowComp.par.winclose.pulse()
 		for idx, entry in enumerate(self.entries):
-			setattr(self, f'EnteredText{idx + 1}', entry.op('inputText').par.text)
+			# .eval() is load-bearing: storing the Par OBJECT puts it in the
+			# dependency these pars BIND to -- evaluating the par then evaluates
+			# the master which returns the par itself = recursion/loop error,
+			# and the whole dialog reads blank from then on.
+			setattr(self, f'EnteredText{idx + 1}', entry.op('inputText').par.text.eval())
 		for idx, checkBox in enumerate(self.checkBoxes):
 			setattr(self, f'CheckBox{idx}', checkBox.par.Value0.eval())
 

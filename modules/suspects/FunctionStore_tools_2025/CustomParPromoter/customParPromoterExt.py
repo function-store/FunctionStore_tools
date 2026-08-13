@@ -473,13 +473,25 @@ class customParPromoterExt:
 			textEntries.extend([dropParam.normMin, _max])
 			textEntries.append(default)
 
-		self.popDialog.Open(callback=self.OnCustomizeCallback, details=details, textEntries=textEntries)
+		# Keep the customize context HERE: this extension is stable, while
+		# PopDialogExt re-initializes (losing its self.details) -- see the
+		# fallback in OnCustomizeCallback. No callback arg: the dialog's
+		# docked callbacks DAT routes onSelect back to us, and that DAT
+		# lookup survives extension reinits where an assigned callback dies.
+		self._pendingCustomize = details
+		self.popDialog.Open(details=details, textEntries=textEntries)
 
 	def OnCustomizeCallback(self, info):
 		if info['buttonNum'] != 1:
 			return
-		
-		details = info['details']
+
+		# info['details'] is PopDialogExt instance state and reads None when
+		# that extension re-initialized between Open and OK; fall back to the
+		# context we kept on THIS (stable) extension.
+		details = info.get('details') or getattr(self, '_pendingCustomize', None)
+		if details is None:
+			debug('CustomParTools: customize context lost -- drop the parameter again')
+			return
 		parGroup = details.get('parGroup', None)
 		par = details.get('par', None)
 		if isinstance(par, ParGroupPulse) or isinstance(par, ParGroupUnit):
@@ -492,10 +504,17 @@ class customParPromoterExt:
 		if not labelEntry:
 			labelEntry = nameEntry
 		nameEntry = self.purgeParName(nameEntry)
-		minEntry = float(info['enteredText'][2]) if is_num and info['enteredText'][2] is not None else None
-		maxEntry = float(info['enteredText'][3]) if is_num and info['enteredText'][3] is not None else None
+		def _num(v):
+			# blank/invalid entry means "leave unset" -- float('') raised here
+			# and the swallowed ValueError made OK silently do nothing
+			try:
+				return float(v)
+			except (TypeError, ValueError):
+				return None
+		minEntry = _num(info['enteredText'][2]) if is_num else None
+		maxEntry = _num(info['enteredText'][3]) if is_num else None
 		chekcboxClamp = info['checkBoxes']
-		default = info['enteredText'][4] if is_num else None
+		default = info['enteredText'][4] if is_num and info['enteredText'][4] not in (None, '') else None
 		
 		if parGroup is not None:
 			self.PromoteParGroup(parGroup, None, parName=nameEntry, parLabel=labelEntry)
