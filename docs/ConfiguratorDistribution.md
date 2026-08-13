@@ -8,8 +8,9 @@ runtime** relationship between tools and registries.
 **Distribution model (decided 2026-08-13): buckets and manifests.** A
 bucket holds `manifest.json` and the per-release artifacts; native
 `.exe`/`.dmg` installers are the bootstrap. Everything downstream —
-picking, installing, updating — is manifest-driven, and update decisions
-are made on artifact **hashes**, not version numbers. See §4.2.
+picking, installing, updating — is manifest-driven. Update decisions are
+made on a **version parameter we govern** (`Pkgversion`), read live off
+the installed component; artifact hashes verify downloads only. See §4.2.
 
 [UvPackagingResearch.md](UvPackagingResearch.md) remains as research
 only: the pip/uv rail it explores is **not** the plan (§3).
@@ -417,7 +418,7 @@ Nothing hand-maintains this, so it cannot drift from reality.
   FNS_OpMenu, ResetPLS1) are per-user data files those tools recreate, so
   they are benign.
 
-## 4.2 Updates — REWORKED onto buckets + manifests + hashes (2026-08-13)
+## 4.2 Updates — REWORKED onto buckets + manifests + governed versions (2026-08-13)
 
 > **Status: built and verified.** The rework described at the end of this
 > section is implemented in `UPDATER/ExtUpdater.py`. The rest of the
@@ -446,25 +447,56 @@ landed it is now `core` (`CORE` in `build_manifest.py`), because the one
 package that can fetch updates is the one a user must not be able to
 accidentally decline.
 
-### Versioning — DECIDED: hashes drive updates, not version numbers
+### Versioning — REVERSED: a version we govern, not hashes
 
-The apparent blocker was that per-package versions do not exist: 38 of 39
-packages have an empty `version`, and `build` is a SAVE COUNTER that ticks
-on every `.toe` save. Neither can answer *"is this newer than what is
-installed?"*.
+> This section originally read *"hashes drive updates, not version
+> numbers"*. That was **wrong**, and the correction is the more useful
+> record.
 
-They do not have to. **The manifest already carries a `sha256` per
-artifact, and that answers the question exactly** — "has this package
-changed since the bytes I installed?" — with zero maintenance and no way
-to drift from reality. Version numbers are for humans; hashes are for the
-updater.
+The reasoning was: per-package versions do not exist (38 of 39 empty,
+`build` is a counter), but the manifest already carries a `sha256` per
+artifact, so let the hash answer *"has this changed since the bytes I
+installed?"* — exact, zero maintenance, no way to drift.
 
-So: **one release label for the whole toolkit** (`release` in the
-manifest, taken from the root's `Gittag`, e.g. `v2.11.2`) for changelogs
-and support conversations, and **per-artifact hashes** as the update
-trigger. Per-package semver stays optional, for authors who want it.
+**It cannot answer that, because `.tox` export is not reproducible.**
+Exporting one untouched component three times:
 
-That unblocks option 1 below with no versioning ceremony to invent.
+| Export | Bytes | sha256 |
+|---|---|---|
+| a | 66198 | `061982f7…` |
+| b | 66190 | `8c41e46b…` |
+| dist | 66150 | `116ae877…` |
+
+They diverge at **byte offset 9** — the container header, before any
+content. So a hash comparison marks *every* package updated on *every*
+release: publish a drop that touched two tools and all 39 installs
+re-download. The property the design was chosen for never existed.
+
+Two replacements were considered and rejected:
+
+- **`vc_data` / the `Vc*` pars** — the table already on 38 of 39
+  components. Rejected: it belongs to Private Investigator, is written by
+  tooling outside this repo, and nothing in packaging governs it. (Also
+  thin: one package had a real version, one had no table, and `build` did
+  not move across two project saves — so even "save counter" was wrong.)
+- **A TDN content fingerprint** — genuinely stable (two exports of one
+  component differ by a single line, `exported_at`, out of 2280).
+  Rejected: TDN is an external package, and identity cannot depend on one.
+
+**What we do instead: `Pkgversion`, a custom parameter on every package,
+governed by us** — the `FunctionStore_tools_2023.tox` `Gittag` idea made
+per-package. The manifest publishes it; the updater compares it against
+the same parameter read live off the installed component.
+
+Reading it live is what makes the embedded case work at all: a package
+loaded into a `.toe` has no file to hash and no artifact to consult, but
+it still declares what it is. It also means no side record can drift out
+of truth — the component is the truth.
+
+So: `sha256` verifies **downloads** (its real job), `Pkgversion` decides
+**updates**, and the release label names the **drop**. The cost is that
+bumping is manual and forgetting is silent, which is why `publish.py`
+refuses a new release that bumps nothing.
 
 ### Distribution — DECIDED: buckets and manifests only
 
@@ -530,11 +562,12 @@ deliberately separate motions:
    embedded packages against the store and `replaceOp` only what differs.
    Explicit, per project, never automatic.
 
-Two hash records, and they are not interchangeable: the store's own
+Two records, and they are not interchangeable: the store's own
 `manifest.json` (what the palette holds), and an `installed` table DAT
-**inside the toolkit root COMP** recording the sha256 each package was
-installed from. The latter is project state and must travel with the
-project.
+**inside the toolkit root COMP**. That table was originally the identity
+source; since the Versioning reversal above it is an **audit trail only**
+(release, when, the sha of the artifact fetched). Identity is the
+component's own `Pkgversion`, read live.
 
 Rejected: per-package palette toxes with `externaltox` bindings (updates
 land machine-wide, but shipped packages stop being self-contained and
@@ -545,10 +578,12 @@ The accepted cost is that a project can sit behind the store, so the UI
 must say so plainly rather than pretend everything is current.
 
 **Never hash the live COMP to decide staleness** — a `.tox` re-saved
-inside a project no longer hashes to what was published, so the recorded
-install-time hash is the only honest comparison.
+inside a project no longer hashes to what was published. (This instinct
+was right and the conclusion drawn from it was not: the fix is not to
+compare a *recorded* hash, it is to not compare hashes at all. See the
+Versioning reversal above.)
 
-### The mechanism — per-package, hash-driven (the other options are dead)
+### The mechanism — per-package, version-driven
 
 With buckets-and-manifests settled there is no longer a choice to make.
 Selection-aware whole-replace and reinstall-only both existed to work
@@ -560,19 +595,16 @@ around "one artifact, one version"; the bucket removes that constraint.
    `UPDATER/fileDownloader` — a TDFileDownloader wrapping a Web Client
    DAT, with callbacks, progress UI, auth and a concurrency cap. Do not
    hand-roll HTTP; `requests` blocks the frame.
-2. For each INSTALLED package, compare its artifact `sha256` against the
-   manifest's. Differing hash = update available. Nothing else is
-   consulted — not `build`, not `Gittag`.
-3. Download only the changed artifacts (pinned URLs), verify each hash
-   after download, and `replaceOp` package by package.
+2. For each package present, compare the `Pkgversion` it declares against
+   the version the manifest publishes. Newer = update available. Nothing
+   else is consulted — not hashes, not `build`, not `Gittag`.
+3. Download only those artifacts (pinned URLs), verify each **hash** after
+   download — that is what hashes are for — then apply per package.
 4. Settings survive as they do today: each tool's ConfigRegistry host
    reloads its own section after replacement.
 
-Two details worth getting right the first time: the installed hash has to
-be *recorded at install time* (the manifest an installer used), because a
-`.tox` re-saved inside a project no longer hashes to what was published;
-and a package the user never installed must stay uninstalled — an update
-pass is not an install pass.
+One detail worth getting right the first time: a package the user never
+installed must stay uninstalled — an update pass is not an install pass.
 
 `UPDATER.par.Filename` (`FunctionStore_tools_2023.tox` on a 2025 toolkit)
 was stale naming, not a broken download. Under the store model there is no
@@ -674,8 +706,9 @@ shipped artifacts.
       MISC and OUTPUT already ship as single COMPs, so they are one
       package each by construction; no further grouping needed.
 - [x] **Update mechanism vs subset installs — DONE (§4.2).** Per-package,
-      hash-driven, store + per-project pull. Versions were never needed:
-      artifact `sha256` answers "is this newer?" exactly.
+      store + per-project pull, driven by a `Pkgversion` parameter we
+      govern. Hashes were tried first and cannot work: `.tox` export is not
+      reproducible, so they verify downloads and nothing more.
 - [ ] Descriptions in `packaging/catalog.json` were seeded by inspection
       and need an owner pass.
 - [ ] **`OpTemplates` does not ship self-contained** — its `OPTemplates1`

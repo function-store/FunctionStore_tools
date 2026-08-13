@@ -12,11 +12,12 @@ copy per package -- do it in batches):
     result = Build(export=['AutoRes', 'ColorUI'])      # named subset
     result = Build(export=True)                        # everything
 
-WHAT IS DERIVED vs CURATED
-    Derived live: which packages exist, version/build, which surfaces each
-    contributes to, dependencies, optional integrations, op counts,
-    artifact hashes. Curated in catalog.json: category and description --
-    the two things the project cannot tell us.
+WHAT IS DERIVED vs CURATED vs DECLARED
+    Derived live: which packages exist, which surfaces each contributes
+    to, dependencies, optional integrations, op counts, artifact hashes.
+    Curated in catalog.json: category and description. DECLARED by the
+    author on the component itself: `Pkgversion` -- the one field a human
+    must maintain, and the one the updater actually compares.
 
 THE DEPENDENCY MODEL (ConfiguratorDistribution.md 2.1)
     Tools depend only on CORE, never on each other, so the configurator
@@ -89,11 +90,24 @@ def Packages():
     return sorted(out, key=lambda c: c.name.lower())
 
 
-def _vcData(comp):
-    t = comp.op('vc_data')
-    if not t or not t.numRows:
-        return {}
-    return {r[0].val: r[1].val for r in t.rows() if len(r) > 1}
+def _version(comp):
+    """The package's own version, from the `Pkgversion` par WE govern.
+
+    Deliberately not `vc_data` / the `Vc*` pars: that table belongs to
+    Private Investigator, is written by tooling outside this repo, and the
+    data does not support the weight -- 1 of 39 packages had a version at
+    all. Deliberately not a content fingerprint either: the only stable one
+    available came from TDN, which is an external package.
+
+    So the version is ours, stamped on the component, and it is the ONLY
+    thing that answers "is a newer build available?". Artifact hashes
+    cannot: two exports of an untouched COMP differ (verified -- 66198 /
+    66190 / 66150 bytes, diverging at byte 9 of the container header), so
+    a sha256 comparison would mark every package updated on every release.
+    Hashes verify downloads; this decides updates.
+    """
+    p = getattr(comp.par, 'Pkgversion', None)
+    return str(p.eval()).strip() if p is not None else ''
 
 
 def _hostedRegistries(comp):
@@ -312,12 +326,10 @@ def _release():
     COMP's `Gittag` par remains only as a fallback for projects that have
     not adopted release.json.
 
-    Per-package semver was considered and rejected: 38 of 39 packages had
-    no version at all, and `build` is a SAVE COUNTER that ticks on every
-    .toe save, so neither could answer "is this newer than what is
-    installed?". The manifest's per-artifact sha256 answers that exactly,
-    with zero maintenance -- so hashes drive updates and this label is for
-    humans and changelogs.
+    This label names the RELEASE; per-package `Pkgversion` decides
+    updates. Both exist because they answer different questions: "which
+    drop is this?" for changelogs and support, versus "does this package
+    have a newer build than the one installed?" for the updater.
     """
     path = _repo(PKG_DIR, 'release.json')
     if os.path.exists(path):
@@ -369,7 +381,6 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
     packages = []
     for comp in Packages():
         name = comp.name
-        vc = _vcData(comp)
         hosts = _hostedRegistries(comp)
         is_core = name in CORE
         meta = curated.get(name, {})
@@ -385,9 +396,7 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             'kind': 'core' if is_core else 'tool',
             'category': meta.get('category', 'Core' if is_core else 'Uncategorized'),
             'description': meta.get('description', ''),
-            'version': vc.get('version', '') or '0',
-            'build': vc.get('build', ''),
-            'author': vc.get('author', ''),
+            'version': _version(comp),
             'help_url': _helpUrl(comp),
             'surfaces': sorted({SURFACE_OF[h] for h in hosts if h in SURFACE_OF}),
             'shortcut': str(comp.par.opshortcut.eval()),

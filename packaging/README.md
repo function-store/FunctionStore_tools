@@ -31,15 +31,22 @@ result = Build(export=['AutoRes', 'ColorUI'])   # named subset
 Artifact hashes for packages you did not re-export are carried over from the
 previous `manifest.json`, so partial rebuilds do not lose data.
 
-## What is derived vs curated
+## What is derived vs curated vs declared
 
-**Derived live** — package list, version/build, surfaces, dependencies,
-optional integrations, op counts, help URLs, artifact hashes. Re-running the
+**Derived live** — package list, surfaces, dependencies, optional
+integrations, op counts, help URLs, artifact hashes. Re-running the
 generator picks up reality.
 
 **Curated in `catalog.json`** — `category` and `description` only: the two
 things the project genuinely cannot tell us. Descriptions were seeded by
 inspection and **need owner review**.
+
+**Declared on the component** — `Pkgversion`. The one field a human must
+maintain, and the only one the updater compares. It is deliberately not
+derived: everything derivable was either untrustworthy (artifact hashes —
+`.tox` export is not reproducible) or owned by another tool (`vc_data`
+belongs to Private Investigator; a TDN fingerprint would depend on an
+external package).
 
 ## The dependency model
 
@@ -139,10 +146,27 @@ answers "what is current?" once. Never publish a mutable
 
 ## Versioning
 
-**Hashes drive updates, not version numbers.** Each artifact's `sha256`
-answers "has this changed since the bytes I installed?" exactly, with zero
-maintenance. The `release` label (`release.json`) is for humans and
-changelogs. Per-package semver is optional.
+**`Pkgversion` drives updates.** Every package carries a `Pkgversion`
+parameter on a `Package` page — ours, stamped on the component, shipped
+inside the artifact. The manifest publishes it and the updater compares it
+against the same parameter read live off the installed component, which is
+what makes the comparison work for a package embedded in a `.toe` with no
+file to consult.
+
+**Bump it whenever you change a package.** It is hand-maintained, and
+forgetting is silent — nobody's install learns there is anything new.
+`publish.py` refuses to stage a new release that bumps nothing, which
+catches the common case.
+
+Hashes are still in the manifest and still matter, for the job hashes are
+actually good at: **verifying a download arrived intact.** They cannot
+decide updates, because `.tox` export is not reproducible — exporting one
+untouched component three times gave 66198 / 66190 / 66150 bytes and three
+different hashes, diverging at byte 9 of the container header. Comparing
+them would mark all 39 packages updated on every release.
+
+The `release` label (`release.json`) names the drop, for changelogs and
+support conversations.
 
 ## Updating an install
 

@@ -79,6 +79,41 @@ else:
 """
 
 
+def _version(comp):
+    """The version a component declares about itself."""
+    p = getattr(comp.par, 'Pkgversion', None) if comp is not None else None
+    return str(p.eval()).strip() if p is not None else ''
+
+
+def _isNewer(available, installed):
+    """Is `available` a later version than `installed`?
+
+    Dotted-numeric compares in order (1.10.0 > 1.9.0, which string
+    comparison gets wrong); anything that does not parse falls back to
+    "differs", so an unparseable scheme still surfaces rather than being
+    silently treated as current.
+    """
+    if not available or available == installed:
+        return False
+    if not installed:
+        return True
+
+    def parts(v):
+        out = []
+        for chunk in str(v).split('.'):
+            digits = ''.join(c for c in chunk if c.isdigit())
+            if digits == '' or digits != chunk.strip():
+                return None
+            out.append(int(digits))
+        return out
+
+    a, b = parts(available), parts(installed)
+    if a is None or b is None:
+        return True
+    pad = max(len(a), len(b))
+    return a + [0] * (pad - len(a)) > b + [0] * (pad - len(b))
+
+
 def _sha256(path):
 	h = hashlib.sha256()
 	with open(path, 'rb') as f:
@@ -259,16 +294,28 @@ class ExtUpdater:
 	# ------------------------------------------------------------------
 
 	def Compare(self, target=None):
-		"""Installed record vs store manifest. Reads only; no network.
+		"""What this project has vs what the store publishes. No network.
 
-		States, and what each one means:
-		  update    recorded hash differs from the store's -- offer it
-		  current   same bytes
-		  untracked package is in the project but was never recorded (a
-		            legacy install); NOT offered, because we cannot know
-		            what it was built from without guessing
-		  missing   recorded but the COMP is gone from the project
-		  gone      recorded but the store no longer publishes it
+		The comparison is between the version a component DECLARES about
+		itself -- `Pkgversion`, read live off the installed COMP -- and the
+		version the store publishes for it. Nothing is hashed to decide it:
+		a .tox re-exports to different bytes every time (verified), so an
+		artifact hash cannot tell a changed package from an unchanged one.
+		Hashes verify downloads; versions decide updates.
+
+		Reading the live parameter, rather than a record of what was
+		installed, is what makes this work for a package embedded in the
+		.toe: there is no file to consult, but the component still says
+		what it is. It also means no side table can drift out of truth.
+
+		States:
+		  update       the store publishes a newer version
+		  current      same version, or the store's is older
+		  unversioned  the component declares no version -- reported, never
+		               updated, because we cannot know what it is
+		  locked       newer, but this copy must not be touched (see
+		               _refuseReason)
+		  missing      recorded as installed, but the component is gone
 		"""
 		man = self.StoreManifest()
 		if not man:
@@ -279,42 +326,39 @@ class ExtUpdater:
 			return {'ok': False, 'why': 'no toolkit root (Target)', 'rows': [], 'updates': []}
 
 		index = {p['name']: p for p in man.get('packages', [])}
-		installed = self.Installed(target)
-		rows, updates = [], []
+		rows, updates, seen = [], [], set()
 
-		for name, rec in sorted(installed.items()):
-			pkg = index.get(name)
-			comp = root.op(name)
+		for child in sorted(root.children, key=lambda c: c.name.lower()):
+			pkg = index.get(child.name) if child.family == 'COMP' else None
 			if pkg is None:
-				rows.append({'package': name, 'state': 'gone', 'installed': rec['sha256'][:12],
-							 'available': '', 'note': 'not in the store manifest'})
+				continue          # not something the store publishes: say nothing
+			seen.add(child.name)
+			have = _version(child)
+			avail = str(pkg.get('version', '')).strip()
+			if not have:
+				rows.append({'package': child.name, 'state': 'unversioned', 'installed': '',
+							 'available': avail,
+							 'note': 'component declares no version -- reinstall to adopt'})
 				continue
-			store_sha = (pkg.get('artifact') or {}).get('sha256', '')
-			if comp is None:
-				rows.append({'package': name, 'state': 'missing', 'installed': rec['sha256'][:12],
-							 'available': store_sha[:12], 'note': 'recorded but not in this project'})
-				continue
-			if store_sha and store_sha != rec['sha256']:
-				refuse = self._refuseReason(comp)
-				rows.append({'package': name, 'state': 'locked' if refuse else 'update',
-							 'installed': rec['sha256'][:12], 'available': store_sha[:12],
+			if _isNewer(avail, have):
+				refuse = self._refuseReason(child)
+				rows.append({'package': child.name, 'state': 'locked' if refuse else 'update',
+							 'installed': have, 'available': avail,
 							 'note': refuse or man.get('release', '')})
 				if not refuse:
-					updates.append(name)
+					updates.append(child.name)
 			else:
-				rows.append({'package': name, 'state': 'current', 'installed': rec['sha256'][:12],
-							 'available': store_sha[:12], 'note': ''})
+				rows.append({'package': child.name, 'state': 'current',
+							 'installed': have, 'available': avail, 'note': ''})
 
-		# Present but never recorded. Surfaced so the user can see the gap,
-		# never auto-updated: an update pass must not become an install pass.
-		for child in root.children:
-			if child.family != 'COMP' or child.name in installed:
+		# Recorded as installed but no longer here -- the one thing the
+		# audit trail still tells us that the live network cannot.
+		for name, rec in sorted(self.Installed(target).items()):
+			if name in seen or root.op(name) is not None:
 				continue
-			if child.name in index:
-				rows.append({'package': child.name, 'state': 'untracked', 'installed': '',
-							 'available': ((index[child.name].get('artifact') or {})
-										   .get('sha256', ''))[:12],
-							 'note': 'no install record -- reinstall to adopt'})
+			rows.append({'package': name, 'state': 'missing', 'installed': rec.get('release', ''),
+						 'available': str((index.get(name) or {}).get('version', '')),
+						 'note': 'recorded as installed but not in this project'})
 
 		return {'ok': True, 'release': man.get('release', ''), 'rows': rows,
 				'updates': updates, 'why': ''}
@@ -715,14 +759,38 @@ class ExtUpdater:
 		over it destroys work, and orphaning the rows has made move
 		detection delete the master .py ~20 clones sync from.
 
-		This is the second line of defence, not the first: a package with no
-		install record is never a candidate at all (Compare -> `untracked`),
-		which is what keeps a dev checkout out of every update pass.
+		The first line of defence is coarser and more reliable: in the
+		toolkit's own SOURCE checkout nothing is updatable at all, because
+		every component there is authored rather than installed -- the
+		published artifacts are outputs of that project, so "updating" it
+		would overwrite the work with a copy of itself. That is what should
+		have stopped an artifact being written over the live AutoRes.
 		"""
+		if self._isAuthoredHere(comp):
+			return 'authored in this project, not installed into it -- the published .tox is its output'
 		rows = self._embodyRows(comp.path)
 		if rows:
 			return 'Embody authors its .tox (%d tracked row(s)) -- not an install' % len(rows)
 		return ''
+
+	def _isAuthoredHere(self, comp):
+		"""Is `comp` one of the components THIS project authors?
+
+		Two conditions, both required. The project must be the toolkit's own
+		source tree -- detected by the packaging generator sitting beside it,
+		which no install has -- AND the component must live in the container
+		that source tree exports from, which is the one holding this UPDATER.
+
+		Both halves matter: without the first, a normal user install would
+		refuse to update itself; without the second, a scratch copy staged
+		elsewhere in the source project could not be updated either, and
+		that is exactly how this path gets tested.
+		"""
+		if not os.path.exists(os.path.join(project.folder, 'packaging', 'build_manifest.py')):
+			return False
+		home = self.ownerComp.parent()
+		return home is not None and comp.parent() is not None \
+			and comp.parent().path == home.path
 
 	def _boundPath(self, comp):
 		"""Absolute path of the .tox this COMP loads from, or '' if it is

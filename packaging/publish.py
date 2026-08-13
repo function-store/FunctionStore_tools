@@ -33,6 +33,14 @@ VERIFY BEFORE UPLOAD
     Stage() re-hashes every staged file and refuses to report success if
     any file disagrees with the manifest. Publishing bytes that do not
     match the hashes an installer will check is worse than not publishing.
+
+    It also refuses a NEW release that bumps no package version. Versions
+    are hand-maintained (`Pkgversion` on each component) because nothing
+    machine-derivable was trustworthy -- a .tox re-exports to different
+    bytes every time, so hashes cannot tell a change from a re-export --
+    and the cost of hand-maintenance is forgetting. A release nobody's
+    install would ever see is exactly what that looks like, so it is worth
+    catching here rather than in a bug report.
 """
 
 import hashlib
@@ -69,6 +77,30 @@ def Stage(clean=True):
 
     out = _repo(OUT_DIR)
     rel_dir = os.path.join(out, release)
+
+    # What the last staged release published, read BEFORE the tree is wiped.
+    # Versions are hand-maintained, so the one failure mode worth catching
+    # mechanically is shipping a new release that bumps nothing: every
+    # install would compare equal and no user would ever see it.
+    previous, prev_release = {}, None
+    prev_path = os.path.join(out, 'manifest.json')
+    if os.path.exists(prev_path):
+        try:
+            with open(prev_path, 'r', encoding='utf-8') as f:
+                prev = json.load(f)
+            prev_release = prev.get('release')
+            previous = {p['name']: p.get('version', '') for p in prev.get('packages', [])}
+        except Exception as e:
+            print('publish: previous manifest unreadable (%s)' % e)
+    current = {p['name']: p.get('version', '') for p in manifest['packages']}
+    bumped = sorted(n for n, v in current.items() if previous.get(n, v) != v)
+    added = sorted(n for n in current if n not in previous)
+    if previous and prev_release != release and not bumped and not added:
+        return {'error': 'release %s changes no package version (previous: %s) -- '
+                         'nothing would reach any install. Bump Pkgversion on what '
+                         'changed, rebuild the manifest, then stage.'
+                         % (release, prev_release)}
+
     if clean and os.path.isdir(out):
         shutil.rmtree(out)
     os.makedirs(rel_dir, exist_ok=True)
@@ -107,6 +139,7 @@ def Stage(clean=True):
     total = sum(os.path.getsize(os.path.join(rel_dir, f))
                 for f in os.listdir(rel_dir))
     return {'release': release, 'out': out, 'staged': len(staged),
+            'bumped': bumped, 'added': added,
             'missing': missing, 'hash_mismatch': mismatched,
             'total_mb': round(total / 1048576.0, 2),
             'ok': not missing and not mismatched,
