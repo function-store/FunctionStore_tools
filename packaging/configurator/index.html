@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FunctionStore tools — pick your install</title>
+<style>
+  :root {
+    --bg: #f7f7f8;      --panel: #ffffff;   --ink: #16171a;
+    --muted: #6a6d75;   --line: #e2e3e7;    --accent: #3b6ef5;
+    --accent-ink: #ffffff;
+    --core: #7a5af8;    --warn: #b45309;    --chip: #f0f1f4;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1012;    --panel: #17181c;   --ink: #e8e9ec;
+      --muted: #9b9fa8; --line: #2a2c33;    --accent: #6b91ff;
+      --accent-ink: #0f1012;
+      --core: #a48cff;  --warn: #f0b429;    --chip: #23252b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1012;      --panel: #17181c;   --ink: #e8e9ec;
+    --muted: #9b9fa8;   --line: #2a2c33;    --accent: #6b91ff;
+    --accent-ink: #0f1012;
+    --core: #a48cff;    --warn: #f0b429;    --chip: #23252b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10; background: var(--panel);
+    border-bottom: 1px solid var(--line); padding: 14px 20px;
+  }
+  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 16px; margin: 0; letter-spacing: -0.01em; }
+  h1 small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+  input[type=search] {
+    flex: 1 1 220px; min-width: 160px; padding: 8px 12px; border-radius: var(--radius);
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit;
+  }
+  button {
+    padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--line);
+    background: var(--panel); color: var(--ink); font: inherit; cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  button.primary:disabled { opacity: .5; cursor: not-allowed; }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px 20px 140px; }
+  .note {
+    background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--core);
+    border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px; color: var(--muted); font-size: 14px;
+  }
+  .note b { color: var(--ink); }
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
+    margin: 26px 0 10px; display: flex; align-items: baseline; gap: 10px;
+  }
+  h2 .count { font-size: 12px; letter-spacing: 0; text-transform: none; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 10px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 12px 14px; display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
+  }
+  .card:hover { border-color: var(--accent); }
+  .card.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+  .card.core { cursor: default; box-shadow: inset 3px 0 0 var(--core); }
+  .card.core:hover { border-color: var(--line); }
+  .card input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
+  .body { min-width: 0; }
+  .name { font-weight: 600; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+  .desc { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+  .chips { margin-top: 7px; display: flex; gap: 5px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px; padding: 2px 7px; border-radius: 99px; background: var(--chip);
+    color: var(--muted); white-space: nowrap;
+  }
+  .chip.core { background: var(--core); color: #fff; }
+  .chip.hint { background: transparent; border: 1px dashed var(--warn); color: var(--warn); }
+  a.help { color: var(--muted); text-decoration: none; font-size: 12px; }
+  a.help:hover { color: var(--accent); text-decoration: underline; }
+  footer {
+    position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel);
+    border-top: 1px solid var(--line); padding: 12px 20px;
+  }
+  .sum { max-width: 1100px; margin: 0 auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .sum .n { font-weight: 600; }
+  .sum .muted { color: var(--muted); font-size: 13px; }
+  .spacer { flex: 1; }
+  dialog {
+    border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
+    color: var(--ink); max-width: 640px; width: 92vw; padding: 0;
+  }
+  dialog::backdrop { background: rgba(0,0,0,.5); }
+  .dlg { padding: 18px 20px; }
+  pre {
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+    padding: 12px; overflow-x: auto; font-size: 12.5px; max-height: 46vh;
+  }
+  .empty { color: var(--muted); padding: 30px 0; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>FunctionStore tools <small id="sub">loading…</small></h1>
+    <input type="search" id="q" placeholder="Filter by name, description or category…" autocomplete="off">
+    <button id="all">All</button>
+    <button id="none">None</button>
+    <button id="theme" title="Toggle theme">◐</button>
+  </div>
+</header>
+
+<main>
+  <div class="note" id="corenote"></div>
+  <div id="list"></div>
+  <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
+</main>
+
+<footer>
+  <div class="sum">
+    <span><span class="n" id="cnt">0</span> tools selected</span>
+    <span class="muted" id="deps"></span>
+    <span class="spacer"></span>
+    <button id="copy">Copy list</button>
+    <button class="primary" id="save">Download selection.json</button>
+  </div>
+</footer>
+
+<dialog id="dlg"><div class="dlg">
+  <h3 style="margin:0 0 10px">Your selection</h3>
+  <p class="muted" style="color:var(--muted);margin:0 0 12px;font-size:13.5px">
+    Save this as <code>selection.json</code> next to the installer COMP, or paste the
+    list into the toolkit's installer.
+  </p>
+  <pre id="out"></pre>
+  <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end">
+    <button id="close">Close</button>
+  </div>
+</div></dialog>
+
+<script src="manifest.js"></script>
+<script>
+(function () {
+  var M = window.FNS_MANIFEST;
+  var listEl = document.getElementById('list');
+  if (!M) {
+    listEl.innerHTML = '<div class="empty">No <code>manifest.js</code> found.<br>' +
+      'Regenerate it from TouchDesigner:<br><br>' +
+      '<code>exec(open(\'packaging/build_manifest.py\').read()); Build()</code></div>';
+    document.getElementById('sub').textContent = '';
+    return;
+  }
+
+  var tools = M.packages.filter(function (p) { return p.kind === 'tool'; });
+  var core = M.packages.filter(function (p) { return p.kind === 'core'; });
+  var byName = {};
+  M.packages.forEach(function (p) { byName[p.name] = p; });
+  // localStorage THROWS in sandboxed contexts (data: URLs, some private
+  // modes). Remembering the selection is a nicety; blanking the page
+  // because storage is unavailable is not.
+  function stored(key, fallback) {
+    try { return localStorage.getItem(key); } catch (e) { return fallback; }
+  }
+  var picked = new Set(JSON.parse(stored('fns.pick', null) || '[]')
+                        .filter(function (n) { return byName[n]; }));
+
+  document.getElementById('sub').textContent =
+    M.packages.length + ' packages · TD ' + (M.toolkit.td_build || '');
+  document.getElementById('corenote').innerHTML =
+    '<b>' + core.length + ' core packages are always installed</b> — ' +
+    core.map(function (c) { return c.name; }).join(', ') +
+    '. They carry the registries, settings persistence and shared surfaces that ' +
+    'every tool plugs into, so tools never depend on each other and you can pick ' +
+    'any subset below without breaking anything.';
+
+  // who lights up when this package is present (reverse integrations)
+  var enhances = {};
+  M.packages.forEach(function (p) {
+    (p.integrates_with || []).forEach(function (t) {
+      (enhances[t] = enhances[t] || []).push(p.name);
+    });
+  });
+
+  function card(p) {
+    var on = picked.has(p.name);
+    var el = document.createElement('label');
+    el.className = 'card' + (on ? ' on' : '');
+    el.setAttribute('data-name', p.name);
+
+    var cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = on;
+    cb.addEventListener('change', function () {
+      if (cb.checked) picked.add(p.name); else picked.delete(p.name);
+      save(); render();
+    });
+
+    var body = document.createElement('div');
+    body.className = 'body';
+
+    var name = document.createElement('div');
+    name.className = 'name';
+    name.appendChild(document.createTextNode(p.name));
+    if (p.help_url) {
+      var a = document.createElement('a');
+      a.className = 'help'; a.href = p.help_url; a.target = '_blank';
+      a.rel = 'noopener'; a.textContent = 'docs ↗';
+      a.addEventListener('click', function (e) { e.stopPropagation(); });
+      name.appendChild(a);
+    }
+    body.appendChild(name);
+
+    if (p.description) {
+      var d = document.createElement('div');
+      d.className = 'desc'; d.textContent = p.description;
+      body.appendChild(d);
+    }
+
+    var chips = document.createElement('div');
+    chips.className = 'chips';
+    (p.surfaces || []).forEach(function (s) { chips.appendChild(chip(s)); });
+    // an integration whose partner is not selected: say so plainly rather
+    // than blocking the choice -- these degrade by design
+    (p.integrates_with || []).forEach(function (t) {
+      if (byName[t] && byName[t].kind === 'tool' && !picked.has(t)) {
+        chips.appendChild(chip('extra features with ' + t, 'hint'));
+      }
+    });
+    (enhances[p.name] || []).forEach(function (src) {
+      if (picked.has(src) && !picked.has(p.name)) {
+        chips.appendChild(chip(src + ' can use this', 'hint'));
+      }
+    });
+    if (chips.children.length) body.appendChild(chips);
+
+    el.appendChild(cb); el.appendChild(body);
+    return el;
+  }
+
+  function chip(text, cls) {
+    var c = document.createElement('span');
+    c.className = 'chip' + (cls ? ' ' + cls : '');
+    c.textContent = text;
+    return c;
+  }
+
+  function coreCard(p) {
+    var el = document.createElement('div');
+    el.className = 'card core';
+    var body = document.createElement('div');
+    body.className = 'body';
+    var n = document.createElement('div');
+    n.className = 'name';
+    n.appendChild(document.createTextNode(p.name));
+    n.appendChild(chip('always installed', 'core'));
+    body.appendChild(n);
+    if (p.description) {
+      var d = document.createElement('div');
+      d.className = 'desc'; d.textContent = p.description;
+      body.appendChild(d);
+    }
+    el.appendChild(body);
+    return el;
+  }
+
+  function render() {
+    var q = document.getElementById('q').value.trim().toLowerCase();
+    function match(p) {
+      if (!q) return true;
+      return (p.name + ' ' + (p.description || '') + ' ' + (p.category || ''))
+             .toLowerCase().indexOf(q) !== -1;
+    }
+    listEl.textContent = '';
+    var shown = 0;
+    var cats = (M.categories || []).slice();
+    tools.forEach(function (p) {
+      if (cats.indexOf(p.category) === -1) cats.push(p.category);
+    });
+
+    if (!q) {
+      var h = document.createElement('h2');
+      h.textContent = 'Core';
+      var cc = document.createElement('span');
+      cc.className = 'count'; cc.textContent = core.length + ' packages';
+      h.appendChild(cc);
+      listEl.appendChild(h);
+      var g0 = document.createElement('div');
+      g0.className = 'grid';
+      core.forEach(function (p) { g0.appendChild(coreCard(p)); });
+      listEl.appendChild(g0);
+    }
+
+    cats.forEach(function (cat) {
+      if (cat === 'Core') return;
+      var items = tools.filter(function (p) { return p.category === cat && match(p); });
+      if (!items.length) return;
+      shown += items.length;
+      var sel = items.filter(function (p) { return picked.has(p.name); }).length;
+      var h = document.createElement('h2');
+      h.textContent = cat;
+      var c = document.createElement('span');
+      c.className = 'count';
+      c.textContent = sel + ' of ' + items.length + ' selected';
+      h.appendChild(c);
+      listEl.appendChild(h);
+      var g = document.createElement('div');
+      g.className = 'grid';
+      items.forEach(function (p) { g.appendChild(card(p)); });
+      listEl.appendChild(g);
+    });
+
+    document.getElementById('empty').hidden = shown > 0 || !q;
+    document.getElementById('cnt').textContent = picked.size;
+    var need = new Set();
+    picked.forEach(function (n) {
+      (byName[n].requires || []).forEach(function (r) { need.add(r); });
+    });
+    document.getElementById('deps').textContent = need.size
+      ? '+ ' + need.size + ' core package' + (need.size === 1 ? '' : 's') +
+        ' they need (already included)'
+      : '';
+    document.getElementById('save').disabled = picked.size === 0;
+  }
+
+  function save() {
+    try {
+      localStorage.setItem('fns.pick', JSON.stringify(Array.from(picked)));
+    } catch (e) { /* unavailable: selection simply is not remembered */ }
+  }
+
+  function selection() {
+    var chosen = Array.from(picked).sort();
+    var need = new Set(M.core);
+    chosen.forEach(function (n) {
+      (byName[n].requires || []).forEach(function (r) { need.add(r); });
+    });
+    return {
+      schema: 1,
+      toolkit: M.toolkit.name,
+      core: Array.from(need).sort(),
+      tools: chosen,
+      install: Array.from(need).sort().concat(chosen)
+    };
+  }
+
+  document.getElementById('q').addEventListener('input', render);
+  document.getElementById('all').addEventListener('click', function () {
+    tools.forEach(function (p) { picked.add(p.name); }); save(); render();
+  });
+  document.getElementById('none').addEventListener('click', function () {
+    picked.clear(); save(); render();
+  });
+  document.getElementById('theme').addEventListener('click', function () {
+    var cur = document.documentElement.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : cur === 'light' ? null : 'dark';
+    if (next) document.documentElement.setAttribute('data-theme', next);
+    else document.documentElement.removeAttribute('data-theme');
+  });
+  document.getElementById('save').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(selection(), null, 1) + '\n'],
+                        {type: 'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'selection.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  document.getElementById('copy').addEventListener('click', function () {
+    var dlg = document.getElementById('dlg');
+    document.getElementById('out').textContent =
+      JSON.stringify(selection(), null, 1);
+    dlg.showModal();
+    var pre = document.getElementById('out');
+    var r = document.createRange(); r.selectNodeContents(pre);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    try { document.execCommand('copy'); } catch (e) { /* selection is still there */ }
+  });
+  document.getElementById('close').addEventListener('click', function () {
+    document.getElementById('dlg').close();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
