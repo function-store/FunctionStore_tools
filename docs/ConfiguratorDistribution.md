@@ -336,16 +336,55 @@ is our own bootstrap's job, whichever rail delivers the bytes.
 
 ## 4. Recommended order
 
-1. **Dependency audit + core/tool boundary definition** — the gate;
-   everything else is mechanical. Decide the "tools depend only on
-   core" rule here.
-2. Manifest + per-tool tox export automation (Envoy can drive it).
-3. Installer COMP consuming manifest + selection JSON — "pick and
-   choose" works with zero web presence at this point.
-4. TDXGL store panel over the `load_tox` bus.
-5. Static configurator site as the public face (selections/deep links).
+1. ~~**Dependency audit + core/tool boundary definition**~~ — **DONE**, §1.1.
+2. ~~Manifest + per-tool tox export automation~~ — **DONE**, `packaging/`.
+3. ~~Installer consuming manifest + selection JSON~~ — **DONE as a script**
+   (`packaging/install.py`). The droppable *COMP* wrapper is still open.
+4. TDXGL store panel over the `load_tox` bus. **Open.**
+5. ~~Static configurator~~ — **DONE**, `packaging/configurator/`.
 6. Optional: pip marker-package rail on top (§3), sharing the same
-   artifacts and manifest.
+   artifacts and manifest. **Open.**
+
+### 4.1 What exists now (2026-08-13)
+
+```
+packaging/build_manifest.py   derives manifest.json from the live project
+packaging/catalog.json        the only hand-written data: category + description
+packaging/manifest.json       41 packages, 6 core, artifacts + hashes
+packaging/install.py          Plan() / Install() over a selection.json
+packaging/configurator/       the picker; also emits a single-file build
+packaging/dist/               41 exported .tox (6.5 MB, gitignored)
+```
+
+**Pick-and-choose works end to end today, with no web presence**: open
+`configurator/configurator-standalone.html`, pick, download
+`selection.json`, then `exec(open('packaging/install.py').read())` and
+`Install('path/to/selection.json')`.
+
+Verified: all 41 artifacts export, and all 41 install into a scratch
+container (11,066 ops) with zero failures and op counts matching their live
+originals. Install tests MUST use a cooking-disabled container — a live copy
+of a registry master will otherwise try to promote itself to the `/sys`
+global and destroy the running one.
+
+**Dependencies are derived, not declared.** A package's `requires` is
+exactly the core packages owning the registries it hosts, because masters
+live in core and tools ship stamped hosts (§2.1). Every tool requires
+`FNS_Config`; a tool with a toolbar button also requires `FNS_Toolbar`.
+Nothing hand-maintains this, so it cannot drift from reality.
+
+**Two findings the packaging work surfaced**, both pre-existing:
+
+- `ExternalTables` could not be exported at all — its own `pre_release`
+  hook resolved `par.Root` (a *sibling* reference) against the staged copy
+  in `/sys/quiet`, where siblings do not exist. Fixed.
+- The manifest now carries a `portability` field, because Embody's
+  absolute-path warnings scroll past during export and a package whose
+  files point at THIS machine arrives subtly broken. Worst first:
+  `FNS_MainMenu` ships an absolute path into this repo's suspects tree
+  (inert, but a dev path inside an artifact); `OpTemplates` pins TD's own
+  `Samples/Geo` by version; five packages reference the user palette
+  (benign — per-user data they recreate).
 
 ## 5. Open questions
 
@@ -356,7 +395,13 @@ is our own bootstrap's job, whichever rail delivers the bytes.
 - [ ] Ephemeral vs persisted installs as the default: `load_tox
       persist=True` semantics vs load-fresh-every-start (affects update
       story and §3 objection 3).
-- [ ] Package granularity for groups (MISC, OUTPUT, SwapOps): per-tool
-      or per-group artifacts?
+- [x] Package granularity — **per-tool, one deliberate bundle** (§1.2).
+      MISC and OUTPUT already ship as single COMPs, so they are one
+      package each by construction; no further grouping needed.
+- [ ] Descriptions in `packaging/catalog.json` were seeded by inspection
+      and need an owner pass.
+- [ ] `FNS_MainMenu`'s absolute `externaltox` (manifest `portability`,
+      kind `project`) — scrub it in a release hook so no artifact ships a
+      path from this repo.
 - [ ] Where does the manifest live — GitHub Releases per-version, plus
       a rolling `manifest.json` index?
