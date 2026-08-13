@@ -62,3 +62,44 @@ the correctly-written integrations.
 A shippable package is a depth-1 COMP that is a tracked `pi_suspect` with its
 own `.tox`. That is already the project's unit of distribution, so no second
 list has to be maintained by hand — add a tool the normal way and it appears.
+
+## The installer COMP
+
+`packaging/dist/FNS_Installer.tox` (~4 KB) is the droppable rail: put it in
+a project that has nothing else installed, point **Selection** at a
+`selection.json` from the configurator, pulse **Plan** to see what would
+happen, then **Install**.
+
+It is a BUILD ARTIFACT, not a hand-made component — it embeds a snapshot of
+`InstallerExt.py`, so editing that file means rebuilding:
+
+```python
+exec(open('packaging/build_installer.py').read()); result = BuildInstaller()
+```
+
+`InstallerExt.py` is the single implementation; `install.py` is a thin
+script wrapper over the same code, so the droppable rail and the headless
+rail cannot drift apart.
+
+## End to end
+
+1. Open `configurator/configurator-standalone.html`, pick tools, download
+   `selection.json`.
+2. Drop `dist/FNS_Installer.tox` into the target project.
+3. Point **Selection** at the downloaded file, pulse **Plan**, then **Install**.
+
+Or headless, no COMP:
+
+```python
+exec(open('packaging/install.py').read())
+Install('packaging/example-selection.json')
+```
+
+**Install tests must target a cooking-disabled container.** A live copy of a
+registry master will otherwise try to promote itself to the `/sys` global and
+destroy the running one:
+
+```python
+t = op('/sys/quiet').create(baseCOMP, 'trial'); t.allowCooking = False
+Install('packaging/example-selection.json', target=t.path)
+```
