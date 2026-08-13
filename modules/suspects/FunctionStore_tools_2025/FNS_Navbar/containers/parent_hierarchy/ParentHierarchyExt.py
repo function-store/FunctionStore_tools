@@ -52,6 +52,24 @@ class ParentHierarchyExt:
 		if self.ownerComp.op('../panenav/out1'):
 			return self.ownerComp.op('../panenav/out1').text.strip()
 		return None
+
+	@property
+	def PanePath(self):
+		"""Path of the network this widget navigates -- ALWAYS a string.
+
+		Installed in a pane bar (legacy placement), TD's sibling panenav is
+		authoritative. Under the registry-mirror scheme the widget executes
+		at its SOURCE inside FNS_Navbar/containers, where ../panenav does
+		not exist -- every unguarded op('../panenav/...') access raised on
+		each interaction there. Fall back to the current pane.
+		"""
+		p = self.NavbarContent
+		if p:
+			return p
+		try:
+			return ui.panes.current.owner.path
+		except Exception:
+			return '/'
 		
 	# def updateNuggetList(self, state):
 	# 	# check if we have parameters in the nugget list by checking if there is an item after (!!!) the divider
@@ -261,9 +279,9 @@ class ParentHierarchyExt:
 	
 	def onNuggetItemClicked(self, info, openEditor = False):
 		nugget_comp = self.curr_comp_save
-		target_comp = op(op('../panenav/out1').text.strip()).ops('*')
+		target_comp = op(self.PanePath).ops('*')
 		if not target_comp:
-			target_comp = op(op('../panenav/out1').text.strip())
+			target_comp = op(self.PanePath)
 		else:
 			target_comp = target_comp[0]
 			
@@ -337,5 +355,8 @@ class ParentHierarchyExt:
 		if clipboard_text:
 			ui.clipboard = clipboard_text
 			ui.status = f'Copied to clipboard: {clipboard_text}'
-		self.ownerComp.op('../panenav/path').panel.celloverid = -1
+		# legacy in-bar placement only -- absent at the mirror-scheme source
+		pn = self.ownerComp.op('../panenav/path')
+		if pn is not None:
+			pn.panel.celloverid = -1
 
