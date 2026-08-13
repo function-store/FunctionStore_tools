@@ -71,3 +71,6 @@ externalizations.tsv
 briefs/
 .tdn_backup/
 .embody/
+
+# packaging: exported tox artifacts are rebuildable from the manifest
+packaging/dist/
