@@ -400,6 +400,57 @@ Nothing hand-maintains this, so it cannot drift from reality.
   FNS_OpMenu, ResetPLS1) are per-user data files those tools recreate, so
   they are benign.
 
+## 4.2 Updates do not match the packaging model yet (2026-08-13)
+
+**How updates work today** (`UPDATER/ExtUpdater.py`): one version for the
+whole toolkit — `Gittag` on the root COMP, currently `v2.11.2` — polled
+against the latest GitHub tag. `Update()` snapshots every tool's settings
+through `op.CONFIGREGISTRY.SaveAll()`, downloads ONE tox, and calls
+`TDF.replaceOp(parent.FNS, newComp)`: the entire
+`FunctionStore_tools_2025` COMP is swapped wholesale. Settings survive
+because each tool's ConfigRegistry host re-loads its own section after the
+replacement. Docked ops are undocked and restored around the swap.
+
+**So there is no per-tool update mechanism at all** — one artifact, one
+version, all or nothing.
+
+**This is incompatible with subset installs.** A user who picks five tools
+and later updates gets `replaceOp`'d with whatever the release tox
+contains — the whole toolkit back, their selection erased. Per-package
+installs without per-package updates is half a system.
+
+**Is UPDATER therefore core?** In effect yes: it is the only update path
+and it operates on the whole toolkit, not on itself. But simply flipping
+its `kind` to `core` would paper over the real gap rather than close it,
+so it stays `tool` until the mechanism is decided.
+
+**The prerequisite nobody has: real per-package versions.** The manifest
+records `version` and `build` per package, but 38 of 39 packages have an
+empty `version`, and `build` is a SAVE COUNTER that increments on every
+`.toe` save — neither can answer "is this package newer than the one
+installed?". §2.2's "the UPDATER should consume the same manifest — one
+catalog, two consumers" cannot be built until that exists.
+
+Three ways forward:
+
+1. **Per-package updates** (matches §2.1). Give packages real versions,
+   publish the manifest alongside the release, and have UPDATER diff
+   installed versions against it and `replaceOp` only what changed. Most
+   work; the only option that actually fits the packaging model.
+2. **Selection-aware whole-toolkit update.** Keep replacing the root, but
+   record the user's selection and re-apply it after the swap (install
+   everything, prune to selection). Cheap, keeps one artifact, but the
+   user briefly has tools they did not ask for and any local edits to
+   unpicked packages are lost.
+3. **Declare subsets update-only-by-reinstall.** Honest and free: the
+   configurator becomes a first-install tool, and updating means picking
+   again. Acceptable only while the audience is small.
+
+Unverified but suspicious: `UPDATER.par.Filename` is
+`FunctionStore_tools_2023.tox` on a 2025 toolkit. If the release asset has
+been renamed, downloads are already broken — worth checking against the
+actual GitHub release.
+
 ## 5. Open questions
 
 - [ ] Does TDPyEnvManager offer any shared/global (non-per-project)
@@ -412,6 +463,9 @@ Nothing hand-maintains this, so it cannot drift from reality.
 - [x] Package granularity — **per-tool, one deliberate bundle** (§1.2).
       MISC and OUTPUT already ship as single COMPs, so they are one
       package each by construction; no further grouping needed.
+- [ ] **Update mechanism vs subset installs — see §4.2.** Pick option 1, 2
+      or 3. Option 1 needs real per-package versions first (38 of 39
+      packages currently have none).
 - [ ] Descriptions in `packaging/catalog.json` were seeded by inspection
       and need an owner pass.
 - [ ] **`OpTemplates` does not ship self-contained** — its `OPTemplates1`
