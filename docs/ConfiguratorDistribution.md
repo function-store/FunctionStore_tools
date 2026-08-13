@@ -96,14 +96,34 @@ ResetPLS1's apparent fan-in from 1 to 4.
 goes stale on reinit (see `.claude/rules/td-python.md`). Fix independently of
 packaging.
 
-### 1.2 Package granularity — DECIDED (2026-08-13)
+### 1.2 Package granularity — DECIDED and MERGED (2026-08-13)
 
 **Per-tool packages, with exactly one deliberate bundle.** This closes the
 granularity open question in §5 for the custom-par family; groups like MISC
 and OUTPUT are still open.
 
-**Merge into one `CustomParTools` package** (~934 ops): CustomParPromoter +
-QuickExt + QuickParent + ClearPars + iopPromoter.
+**Merged: the `CustomParTools` package** (~934 ops): CustomParPromoter
+(renamed to CustomParTools, keeps shortcut `FNS_CPP` and the
+Toolbar/Navbar hosts, which already published canonical `CustomParTools`)
+now contains QuickExt + QuickParent + ClearPars + iopPromoter as children.
+Hub-button callbacks call them sibling-relative (`op('../QuickExt')`);
+`FNS_QUICKEXT` / `FNS_QUICKPARENT` / `FNS_ClearPars` / `FNS_IOP` retired.
+Each child keeps its own ConfigRegistry host (canonical unchanged, so
+saved config sections carried over); nested suspect toxes live under
+`modules/suspects/FunctionStore_tools_2025/CustomParTools/`.
+
+**Hazard paid for during the merge — Embody move-detection vs shared
+clone files.** The tsv carried rows for the OLD CustomParPromoter host's
+DATs whose `file_path` was the MASTER's shared
+`FNS_Toolbar/ToolbarRegistry/*.py` (many host clones share that file).
+Renaming the package orphaned those op paths; Embody's move-detection
+re-matched them to a DIFFERENT clone (`MISC/button_hog`), "moved" the
+shared file to a per-clone path — deleting the master file that ~20
+clones sync from. Repair: restore master files from git, remove the
+retargeted rows + stray files (`remove_externalization_tag`), re-bind the
+hijacked clone's `file` par to the master. **Before renaming/destroying
+any COMP that contains stamped registry hosts, grep `externalizations.tsv`
+for rows under its path first.**
 
 The evidence is entry points, not vibes. Only CustomParPromoter carries
 Toolbar and Navbar hosts; the other four have a ConfigRegistry host and
@@ -141,11 +161,17 @@ Assessed all three before touching them; they do not resolve the same way.
   instead of guarding it. GlobalOutSelect is the only one of the seven app
   tabs with a Refresh par, so it is equivalent today, and a future tab opts
   in by adding the par.
-- **`FNS_Navbar → CustomParPromoter` + `→ iopPromoter` (8 lines): do it AS
-  PART OF the merge, not before.** CustomParPromoter already carries a
-  NavbarRegistry host, so it can host `containers/hijack_dragdrop` (55 ops)
-  directly; iopPromoter is merging into CustomParTools anyway. One move
-  after the merge clears both edges; doing it first means doing it twice.
+- **`FNS_Navbar → CustomParPromoter` + `→ iopPromoter`: RESOLVED by
+  guarding, not moving (revised during the merge).** `hijack_dragdrop`
+  stays a navbar citizen: it is a navbar-surface behavior (hijacks navbar
+  drag-drop, probes a `../panenav` pane-context service — a constant-mode
+  par reference the text/expression audit missed), and its CustomParTools
+  calls are optional-feature delegation. Its `dragdrop` now resolves the
+  package once via `getattr(op, 'FNS_CPP', None)`, bails with a `debug()`
+  when absent, and reaches iopPromoter THROUGH the package
+  (`cpt.op('iopPromoter')`) so `FNS_IOP` could still be retired. Note the
+  audit lesson: constant-mode par VALUES can carry op references too —
+  sweep those, not just DAT text and expressions.
 - **`FNS_Toolbar → midiMapper` (7 lines): BLOCKED — midiMapper has
   `allowCooking = False`.** Moving `widgets/button_midi_learn` (54 ops, a
   live panel widget with four panelexecs) into a non-cooking COMP would
