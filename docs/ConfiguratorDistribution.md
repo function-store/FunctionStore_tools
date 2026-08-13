@@ -22,6 +22,134 @@ Remaining coupling to audit before any of this works: `/sys` globals,
 `RegistryBase.py`, the registry hosts themselves, `tools_ui`, and any
 `op.X` global-shortcut references *between tools*.
 
+### 1.1 Dependency audit — RESULTS (2026-08-13)
+
+Swept all 59 depth-1 tool COMPs: every descendant DAT's text plus every
+custom/expression parameter, for `op.<SHORTCUT>` references resolving to a
+DIFFERENT tool. Stamped registry hosts (`*/ToolbarRegistry/*`,
+`*/ConfigRegistry/*`, …) were excluded — those reference core by design and
+are what the clone rail updates.
+
+**Verdict: the "tools depend only on core" rule is already ~true.** Fourteen
+cross-tool edges across 59 tools — **35 live reference lines** — plus three
+dead ones. Nothing here is deep logic entanglement; it is almost entirely *a
+widget living in the wrong package*. No blocker to the core/tool split.
+
+| Source → Target | Lines | Site(s) | Shape |
+|---|---|---|---|
+| CustomParPromoter → QuickExt, QuickParent, ClearPars, QuickCollapse, iopPromoter | 7 | `button_custompar_tools/panelexec_lcick`, `panelexec_mclick`, `dragdrop` | **hub button** — one widget dispatching to 5 optional tools |
+| **FNS_Navbar** (core) → CustomParPromoter, iopPromoter | 8 | `containers/hijack_dragdrop/dragdrop` | core → optional (backwards) |
+| **FNS_Toolbar** (core) → midiMapper | 7 | `widgets/button_midi_learn/dragdrop`, `panelexec2`, `panelexec3`, `panelexec4` | core → optional (backwards) |
+| **tools_ui** (core) → GlobalOutSelect | 1 | `valueParExec` | core → optional (backwards) |
+| OpTemplates → AutoRes | 8 | `OPTemplates1/{noiseTOP/noise1, noiseTOP/noise2_highp, circleTOP/circle1, displaceTOP/base1/noise1}` `.resolutionw/h` | par expressions inside template assets |
+| ExprHotStrings → CustomParPromoter | 1 | `extExprHotString` | real logic dep |
+| MY_HOTKEYS → ResetPLS1 | 1 | `keyboardin14_callbacks` | the only guarded one |
+| SearchWords → FNS_OpMenu | 1 | `.opviewer` (expr) | target is core — fine |
+| openOp1 → ColorUI | 1 | `.Op` (expr) | helper COMP, not a packaged tool |
+
+**Two findings that shape the work:**
+
+1. **34 of the 35 lines are unguarded** — bare
+   `op.FNS_QUICKEXT.CreateExtension(...)`, `op.FNS_CPP.Reference = ...`. With
+   the target uninstalled these raise `AttributeError` inside a panel/drag
+   callback: a partial install fails at click time, not at load time. The one
+   exception is `MY_HOTKEYS/keyboardin14_callbacks`, and it is a bare
+   `try: … except: pass` — it survives a missing tool but swallows every
+   other error too, so it is a pattern to replace, not to copy.
+
+   **Watch the OpTemplates block — it only looks guarded.**
+   `tdu.tryExcept(lambda: parent.Project.width, op.AUTO_RES.par.Resolutionw)`
+   protects the *first* argument, but the fallback is an ordinary argument
+   evaluated eagerly, so a missing `op.AUTO_RES` raises before `tryExcept`
+   ever runs. Eight parameter expressions, and being parameters they would
+   error on every cook rather than only on interaction — the most visible
+   failure of the set, and the least obvious in a code read.
+2. **Three edges point the wrong way** — core surfaces (Toolbar, Navbar,
+   `tools_ui`) reaching into optional tools. Core must never depend on a
+   feature package, and the registry scheme already removes the need: a tool
+   ships its own button as a contribution. `button_midi_learn` belongs in
+   midiMapper; `hijack_dragdrop`'s CPP/iop branches belong in those tools.
+
+**Dead edges (delete, don't port):** three commented-out
+`#op.FNS_RPLS.par.Reset.pulse()` lines in `CustomParPromoter/.../parexec1`,
+`FNS_Toolbar/widgets/button_midi_learn/parexec1` and
+`ParOPDrop/button_ParOpPlace/parexec1` — copy-paste residue inflating
+ResetPLS1's apparent fan-in from 1 to 4.
+
+**Recommended resolution** (in order, each independently landable):
+
+1. Delete the three dead references — free, and removes ResetPLS1's only
+   apparent fan-in beyond MY_HOTKEYS.
+2. Relocate the three backwards widgets into the tools they drive, as
+   registry contributions. This is the only structural work, and it is
+   exactly the packaging move anyway.
+3. Give the rest one guarded-optional idiom instead of eleven bare
+   attribute accesses. The global shortcut IS the feature-detect —
+   `getattr(op, 'FNS_CPP', None)`, return quietly (or log once) when absent.
+   Worth one core helper so all sites read the same and the "not installed"
+   message is uniform. No dependency solver, no manifest edges — keeps
+   §2.1's rule intact.
+4. Merge the custom-par family — **decided 2026-08-13, see §1.2**.
+
+**Unrelated bug found in passing:** `ExprHotStrings/extExprHotString` does
+`self.customParPromoter = op.FNS_CPP` — a cached extension reference, which
+goes stale on reinit (see `.claude/rules/td-python.md`). Fix independently of
+packaging.
+
+### 1.2 Package granularity — DECIDED (2026-08-13)
+
+**Per-tool packages, with exactly one deliberate bundle.** This closes the
+granularity open question in §5 for the custom-par family; groups like MISC
+and OUTPUT are still open.
+
+**Merge into one `CustomParTools` package** (~934 ops): CustomParPromoter +
+QuickExt + QuickParent + ClearPars + iopPromoter.
+
+The evidence is entry points, not vibes. Only CustomParPromoter carries
+Toolbar and Navbar hosts; the other four have a ConfigRegistry host and
+nothing else — no toolbar button, no navbar item, no op-menu contribution,
+and their keyboardins hold only `esc`/`enter` (dialog dismiss inside their
+own popups, not invocation shortcuts). **They have no independent entry
+point**: `CustomParPromoter/button_custompar_tools` is their entire
+user-facing surface. They are method libraries that were packaged as tools.
+
+**Stay separate** — both have real global invocation hotkeys, so they stand
+alone:
+- **QuickCollapse** (`ctrl+w`, `ctrl+shift+w`) — also on the hub's
+  middle-click, so that one branch becomes an optional feature-detect.
+- **QuickParCustom** (`alt+x`, `shift+alt+x`, `alt+\`, `ctrl+alt+\`) — no
+  cross-tool edges at all; already clean.
+
+Effect on §1.1's graph: **14 edges → 8.** Four CustomParPromoter edges become
+internal calls, and `FNS_Navbar → CustomParPromoter` + `→ iopPromoter`
+collapse into one. Remaining after this plus the MY_HOTKEYS move and the dead
+-line deletion: the three backwards core→tool widgets, `OpTemplates →
+AutoRes`, `ExprHotStrings → CustomParTools`, `CustomParTools →
+QuickCollapse`.
+
+Merging retires the `FNS_QUICKEXT` / `FNS_QUICKPARENT` / `FNS_ClearPars` /
+`FNS_IOP` global shortcuts. No alias shim: redesign25 is a major version with
+no back-compat obligation (same call as the FNS_Config v2 rewrite).
+
+### 1.3 MY_HOTKEYS → zero dependencies (2026-08-13)
+
+Six active hotkeys, and only ONE touches a tool:
+
+| Shortcut | Action |
+|---|---|
+| `ctrl+0` / `cmd+0` | `op.FNS_RPLS.par.Reset.pulse()` — **the only tool reference** |
+| `shift+alt+q` | `…selectedChildren[0].openParameters()` |
+| `ctrl+alt+q` | `ui.panes.current.owner.openParameters()` |
+| `shift+alt+w` | `ui.openCOMPEditor(selectedChildren[0])` |
+| `ctrl+alt+w` | `ui.openCOMPEditor(owner)` |
+| `ctrl+shift+f` | focus TD's palette search field |
+
+Move `keyboardin_resetpls` + its callback into ResetPLS1 (where the call
+becomes local — `parent().par.Reset.pulse()`, no global shortcut at all) and
+MY_HOTKEYS becomes a dependency-free "TD conveniences" package. HotkeyManager
+already discovers per-tool hotkeys, so no new mechanism is needed. This also
+deletes the audit's only `try: … except: pass`.
+
 ## 2. The layers
 
 ### 2.1 Core + feature split
