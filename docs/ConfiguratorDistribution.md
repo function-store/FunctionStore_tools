@@ -131,6 +131,32 @@ Merging retires the `FNS_QUICKEXT` / `FNS_QUICKPARENT` / `FNS_ClearPars` /
 `FNS_IOP` global shortcuts. No alias shim: redesign25 is a major version with
 no back-compat obligation (same call as the FNS_Config v2 rewrite).
 
+### 1.2b The three core→tool widgets — one is BLOCKED (2026-08-13)
+
+Assessed all three before touching them; they do not resolve the same way.
+
+- **`tools_ui → GlobalOutSelect`: done.** Never a widget relocation at all --
+  just `if tab == op.GLOBAL_OUT_SEL` inside the tab switcher. Replaced with
+  a capability test (`hasattr(tab.par, 'Refresh')`), which REMOVES the edge
+  instead of guarding it. GlobalOutSelect is the only one of the seven app
+  tabs with a Refresh par, so it is equivalent today, and a future tab opts
+  in by adding the par.
+- **`FNS_Navbar → CustomParPromoter` + `→ iopPromoter` (8 lines): do it AS
+  PART OF the merge, not before.** CustomParPromoter already carries a
+  NavbarRegistry host, so it can host `containers/hijack_dragdrop` (55 ops)
+  directly; iopPromoter is merging into CustomParTools anyway. One move
+  after the merge clears both edges; doing it first means doing it twice.
+- **`FNS_Toolbar → midiMapper` (7 lines): BLOCKED — midiMapper has
+  `allowCooking = False`.** Moving `widgets/button_midi_learn` (54 ops, a
+  live panel widget with four panelexecs) into a non-cooking COMP would
+  stop it cooking, rendering, and firing its callbacks. The relocation
+  cannot be done as specified. Three ways out, needs a decision:
+  1. give midiMapper a cooking wrapper COMP that hosts the widget (the
+     brief's own suggestion for reaching its state at all);
+  2. leave the button in core and feature-detect midiMapper -- accepts a
+     permanent core→optional edge, contradicting §1.1;
+  3. revisit WHY midiMapper is cook-disabled and undo it.
+
 ### 1.3 MY_HOTKEYS → zero dependencies (2026-08-13)
 
 Six active hotkeys, and only ONE touches a tool:
