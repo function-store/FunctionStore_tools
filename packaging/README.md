@@ -173,6 +173,33 @@ Artifacts are fetched *relative to the configured Base URL*, not to the
 manifest's own `base_url` — identical against the real bucket, and the only
 reason a mirror or a local tree can serve the whole flow.
 
-A package whose COMP is bound to an `externaltox` is never replaced: it
-reports as `locked`, because that file is its source of truth. This is what
-stops an update from stripping the Embody bindings off a dev checkout.
+### Where the package files live
+
+The installer's **Package Files** menu decides, and the updater follows
+whatever binding each package actually has — there is no mode to keep in
+sync:
+
+| Mode | Files | Update path |
+|---|---|---|
+| `embedded` (default) | inside the `.toe` | replace the COMP from the store artifact |
+| `shared` | bound to the palette store | rewrite + reload (often just a reload) |
+| `project` | copied to `<project>/FNStools/` (or **Package Folder**) | rewrite + reload |
+
+**A bound package updates by rewriting its file and reloading** — no
+copy/destroy of an extension-bearing COMP, and the change is a file you can
+see and version-control. `shared` means one copy per machine, so refreshing
+the store reaches every project that shares it; `project` keeps each
+project's copies its own, which is what lets one project hold a modified
+package without affecting the others.
+
+Settings are not in the `.tox` — they live in
+`<palette>/FNStools_ext/config/FNStools_config.json`, and each tool's
+ConfigRegistry host re-applies its section when it re-registers after the
+reload. Rewriting a package cannot lose them.
+
+A package whose `.tox` **Embody authors** (tracked in
+`externalizations.tsv`) is never touched: it reports as `locked`, because
+there the file is generated FROM the live COMP. That is the second line of
+defence — the first is that a package with no install record is never a
+candidate at all, which is what keeps this dev checkout out of update
+passes entirely.

@@ -618,13 +618,48 @@ whole flow. Both rails were verified end to end before the bucket exists.
   stall watchdog: 45 s without progress fails the pass with a message
   naming the stuck files.
 
-**The replace guard.** `externaltox` — not the `pi_suspect` tag, which
-survives into the artifacts — is what separates a dev master from a shipped
-package: the portable export clears the root's `externaltox`, so a shipped
-package never has one and a dev master always does. Any COMP bound to a
-file on disk is refused (state `locked`) with the reason shown, because
-that file is its source of truth. Learned by replacing the live `AutoRes`
-with an artifact and losing its Embody bindings.
+### Where package files live — and the two update paths (2026-08-13)
+
+An install can put its package `.tox` files in one of three places, chosen
+on the installer (`Package Files`), and **the updater does not track the
+choice — it follows whatever binding each package actually has**, so there
+is no mode flag to drift out of sync:
+
+| Mode | Files | Update path | Trade |
+|---|---|---|---|
+| `embedded` (default) | inside the `.toe` | `replaceOp` from the store | one file to move; nothing to lose track of |
+| `shared` | bound to the palette store | rewrite + reload (usually just reload) | one copy per machine — a store refresh reaches every project sharing it |
+| `project` | copied to the project's own folder | rewrite + reload | each project owns its files, so one can hold a modified package without touching any other |
+
+**Updating a bound package is a file write plus a reload, not COMP
+surgery** — no copy/destroy of an extension-bearing COMP, no docked-op
+juggling, and the change is a file the user can see and version-control.
+Verified by rewriting a bound `.tox` with different bytes and confirming
+the live COMP reloaded to match. A COMP reloaded this way does not report
+its new state in the call that fired the pulse, so the pass records what to
+check and settles it on the next tick.
+
+Settings are safe by construction, not by care: they live in
+`<palette>/FNStools_ext/config/FNStools_config.json`, never in the `.tox`,
+and each tool's ConfigRegistry host re-registers on reload with
+`autoload`, which re-applies its section. `SaveAll()` still runs before any
+pass.
+
+`shared` deliberately reintroduces the machine-wide coupling §4a rejected
+as a default — a store refresh changes bytes every sharing project will
+pick up on its next reload. It is offered because some users want exactly
+that; `project` is the isolation-preserving choice, and `embedded` is the
+default.
+
+**What is still refused** (state `locked`): a COMP whose `.tox` Embody
+*authors* — tracked rows in `externalizations.tsv` — because there the file
+is generated FROM the live COMP, so writing over it destroys work. Note
+this is the second line of defence: the first is that a package with no
+install record is never a candidate at all, which is what actually keeps a
+dev checkout out of every update pass. Learned the hard way by replacing
+the live `AutoRes` with an artifact and losing its Embody bindings — and
+note that `pi_suspect` is no help as a marker, since it survives into the
+shipped artifacts.
 
 ## 5. Open questions
 

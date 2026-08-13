@@ -18,6 +18,7 @@ topological walk of it rather than a hardcoded list.
 
 import json
 import os
+import shutil
 import time
 
 DEFAULT_MANIFEST = 'packaging/manifest.json'
@@ -145,6 +146,38 @@ def _verify(comp):
             'extensions_ready': bool(comp.extensionsReady)}
 
 
+def _bindPackage(comp, step, bind):
+    """Point an installed package at a .tox on disk, per `bind`:
+
+        None        embedded -- the package lives inside the .toe. One file
+                    to move and nothing to lose track of.
+        'shared'    bind to the artifact where it already sits (the palette
+                    store). One copy per machine: refreshing the store
+                    updates every project that shares it.
+        <folder>    copy the artifact into <folder> and bind there. Each
+                    project owns its files, so a project can hold a
+                    modified package without touching any other.
+
+    Binding is what gives the updater its clean path: updating a bound
+    package is a file write plus a reload, not COMP surgery.
+    """
+    if not bind:
+        return ''
+    src = step['path']
+    if bind == 'shared':
+        dest = src
+    else:
+        folder = bind if os.path.isabs(bind) else RepoPath(bind)
+        os.makedirs(folder, exist_ok=True)
+        dest = os.path.join(folder, step['name'] + '.tox').replace('\\', '/')
+        if os.path.normcase(os.path.abspath(dest)) != \
+                os.path.normcase(os.path.abspath(src)):
+            shutil.copyfile(src, dest)
+    comp.par.externaltox = dest
+    comp.par.enableexternaltox = True
+    return dest
+
+
 def RecordInstalled(parent_comp, name, sha256, release=''):
     """Upsert the install record. Written per package as it lands, so an
     interrupted install still leaves a truthful record of what is in the
@@ -168,9 +201,10 @@ def RecordInstalled(parent_comp, name, sha256, release=''):
     t.appendRow(row)
 
 
-def InstallPlan(plan, replace=False, only=None):
+def InstallPlan(plan, replace=False, only=None, bind=None):
     """Execute a plan from ResolvePlan. `only` limits to named packages,
-    which is how a large install is batched under the MCP timeout."""
+    which is how a large install is batched under the MCP timeout. `bind`
+    decides where the package files live -- see _bindPackage."""
     tgt = plan['target']
     parent_comp = op(tgt)
     if parent_comp is None:
@@ -204,8 +238,17 @@ def InstallPlan(plan, replace=False, only=None):
         comp = fresh[0] if fresh else parent_comp.op(name)
         if comp is not None and comp.name != name:
             comp.name = name  # TD numbers on collision; the manifest name wins
+        bound = ''
+        if comp is not None:
+            try:
+                bound = _bindPackage(comp, step, bind)
+            except Exception as e:
+                results.append({'name': name, 'action': 'installed', 'ok': False,
+                                'why': 'bind failed: %s' % str(e)[:120]})
+                continue
         RecordInstalled(parent_comp, name, step.get('sha256', ''), step.get('release', ''))
-        results.append({'name': name, 'action': 'installed', **_verify(comp)})
+        results.append({'name': name, 'action': 'installed', 'bound': bound,
+                        **_verify(comp)})
     return {'target': tgt,
             'installed': [r['name'] for r in results if r.get('action') == 'installed'],
             'failed': [r['name'] for r in results if not r.get('ok', True)],
@@ -261,6 +304,23 @@ class InstallerExt:
                         if plan['missing_artifact'] else ''))
         return plan
 
+    def _bindChoice(self):
+        """Where package files go, from the Package Files menu.
+
+        Embedded is the default: one .toe to move, nothing to lose. The two
+        bound modes exist because a package that lives in a file can be
+        updated by rewriting that file -- no COMP surgery -- and 'project'
+        additionally lets one project hold a modified package without
+        touching any other install on the machine.
+        """
+        mode = self._par('Packagefiles', 'embedded') or 'embedded'
+        if mode == 'embedded':
+            return None
+        if mode == 'shared':
+            return 'shared'
+        folder = self._par('Packagefolder')
+        return folder or (project.folder + '/FNStools').replace('\\', '/')
+
     def Install(self):
         """Install everything the plan resolves to."""
         plan = self.Plan()
@@ -268,7 +328,7 @@ class InstallerExt:
             return None
         replace = bool(getattr(self.ownerComp.par, 'Replace', None)
                        and self.ownerComp.par.Replace.eval())
-        res = InstallPlan(plan, replace=replace)
+        res = InstallPlan(plan, replace=replace, bind=self._bindChoice())
         self._status('installed %d, failed %d%s'
                      % (len(res['installed']), len(res['failed']),
                         ': ' + ', '.join(res['failed']) if res['failed'] else ''))

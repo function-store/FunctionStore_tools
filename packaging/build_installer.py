@@ -44,6 +44,23 @@ def BuildInstaller(out_path=OUT):
     pg.appendPulse('Install', label='Install')
     p = pg.appendToggle('Replace', label='Replace Existing')[0]
     p.help = 'Re-load packages that are already installed.'
+    p = pg.appendMenu('Packagefiles', label='Package Files')[0]
+    p.menuNames = ['embedded', 'shared', 'project']
+    p.menuLabels = ['Embedded in this project',
+                    'Shared (palette store)',
+                    'This project\'s own folder']
+    p.default = p.val = 'embedded'
+    p.startSection = True
+    p.help = ("Where the installed package .tox files live. Embedded: inside "
+              "the .toe -- one file to move. Shared: bound to the palette "
+              "store, so refreshing the store updates every project that "
+              "shares it. Project: each project owns its copies, so one can "
+              "hold a modified package without affecting the others. Bound "
+              "packages update by rewriting the file, not by replacing the "
+              "component.")
+    p = pg.appendFolder('Packagefolder', label='Package Folder')[0]
+    p.help = ("Only used by 'This project's own folder'. Blank means "
+              "<project folder>/FNStools.")
     p = pg.appendStr('Status')[0]
     p.readOnly = True
 

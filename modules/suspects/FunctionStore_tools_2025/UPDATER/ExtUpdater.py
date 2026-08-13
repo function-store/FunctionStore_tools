@@ -634,11 +634,12 @@ class ExtUpdater:
 		# Snapshot every registered tool's settings before anything is
 		# replaced. Guarded: a config problem must never block an update.
 		self._saveConfig()
+		planned = len(steps)          # _drain pops from this very list
 		job['apply'] = steps
 		job['stage'] = 'apply'
-		self._status('updating %d package(s)...' % len(steps))
+		self._status('updating %d package(s)...' % planned)
 		self._drain()
-		return {'ok': True, 'why': 'applying %d package(s)' % len(steps)}
+		return {'ok': True, 'why': 'applying %d package(s)' % planned}
 
 	def _saveConfig(self):
 		cfg = getattr(op, 'CONFIGREGISTRY', None)
@@ -657,6 +658,7 @@ class ExtUpdater:
 		job = self._job
 		if job is None or job.get('stage') != 'apply':
 			return
+		self._settleVerifications(job)
 		queue = job.get('apply') or []
 		if not queue:
 			job['stage'] = 'done'
@@ -681,28 +683,60 @@ class ExtUpdater:
 		"""Public entry so a stalled pass can be nudged from the textport."""
 		self._drain()
 
-	def _refuseReason(self, comp):
-		"""Why this COMP must not be replaced, or '' if it may be.
+	def _settleVerifications(self, job):
+		"""Finish judging reloads from the previous tick.
 
-		The load-bearing test is `externaltox`: a package bound to a file on
-		disk has that file as its source of truth, and the portable export
-		clears the root's externaltox, so a SHIPPED package never has one
-		while a dev master always does. (The `pi_suspect` tag is no help --
-		it survives into the artifacts.) Replacing a dev master silently
-		drops its Embody bindings, which is exactly how this cost an hour.
-
-		Embody's tracked rows are checked too: replacing a COMP that owns
-		them orphans them, and move detection has re-matched orphans to a
-		different clone and deleted the master .py ~20 clones sync from.
+		A COMP reloaded by pulsing its external-tox reload does not report
+		its new state within the call that fired the pulse, so a rewrite
+		records what it wants checked and the next frame checks it.
 		"""
-		p = getattr(comp.par, 'externaltox', None)
-		bound = str(p.eval()).strip() if p is not None else ''
-		if bound:
-			return 'bound to %s -- that file is its source of truth' % bound
+		for res in job.get('results', []):
+			path = res.pop('verify', None)
+			if not path:
+				continue
+			comp = op(path)
+			if comp is None:
+				res['ok'], res['why'] = False, 'gone after reload'
+				continue
+			res['ops'] = len(comp.findChildren())
+			errs = comp.errors(recurse=True)
+			if errs:
+				res['ok'], res['why'] = False, errs.splitlines()[0][:140]
+
+	def _refuseReason(self, comp):
+		"""Why this COMP must not be touched, or '' if it may be.
+
+		A plain `externaltox` binding is NOT a refusal -- it is the BETTER
+		update path (see _rewriteBound): the file takes the new bytes and
+		the COMP reloads, with no copy/destroy of an extension-bearing COMP.
+
+		Embody's tracked rows ARE a refusal, because there the .tox is
+		AUTHORED FROM the live COMP rather than installed into it -- writing
+		over it destroys work, and orphaning the rows has made move
+		detection delete the master .py ~20 clones sync from.
+
+		This is the second line of defence, not the first: a package with no
+		install record is never a candidate at all (Compare -> `untracked`),
+		which is what keeps a dev checkout out of every update pass.
+		"""
 		rows = self._embodyRows(comp.path)
 		if rows:
-			return 'Embody tracks %d externalization row(s) under it' % len(rows)
+			return 'Embody authors its .tox (%d tracked row(s)) -- not an install' % len(rows)
 		return ''
+
+	def _boundPath(self, comp):
+		"""Absolute path of the .tox this COMP loads from, or '' if it is
+		embedded in the .toe."""
+		p = getattr(comp.par, 'externaltox', None)
+		en = getattr(comp.par, 'enableexternaltox', None)
+		if p is None or (en is not None and not en.eval()):
+			return ''
+		v = str(p.eval()).strip().replace('\\', '/')
+		if not v:
+			return ''
+		if os.path.isabs(v):
+			return v
+		return os.path.join(project.folder, v).replace('\\', '/')
 
 	def _embodyRows(self, comp_path):
 		"""Externalization rows Embody tracks under this COMP."""
@@ -778,6 +812,39 @@ class ExtUpdater:
 		run(script, delayFrames=5, delayRef=op.TDResources)
 		return {'package': step['name'], 'ok': True, 'why': 'self-replacement scheduled'}
 
+	def _rewriteBound(self, comp, bound, step, digest, target=None):
+		"""Update a package that lives in a file: write the file, reload it.
+
+		The clean path. No copy/destroy of an extension-bearing COMP (the
+		crash-prone case), no docked-op juggling, and the change is a file
+		the user can see and version-control. When the binding already
+		points AT the store artifact -- palette-shared installs -- the
+		refresh has written those bytes already and this is only a reload.
+
+		Settings ride through exactly as they do for a replacement: saved
+		before the pass by ConfigRegistry.SaveAll(), and reloaded by each
+		tool's own host when it re-registers after the reload. User data
+		lives in the palette JSON, not in the .tox, so it is never in the
+		bytes being overwritten.
+		"""
+		name = step['name']
+		try:
+			if os.path.normcase(os.path.abspath(bound)) != \
+					os.path.normcase(os.path.abspath(step['path'])):
+				folder = os.path.dirname(bound)
+				if folder:
+					os.makedirs(folder, exist_ok=True)
+				shutil.copyfile(step['path'], bound)
+		except Exception as e:
+			return {'package': name, 'ok': False,
+					'why': 'could not write %s (%s)' % (bound, str(e)[:80])}
+		comp.par.enableexternaltoxpulse.pulse()
+		self.RecordInstalled(name, digest, step.get('release', ''), target)
+		# The pulse's effect is not visible in this same call, so the count
+		# and error check happen on the next drain tick rather than here.
+		return {'package': name, 'ok': True, 'how': 'rewrote %s' % bound,
+				'verify': comp.path}
+
 	def _replacePackage(self, step, target=None):
 		name = step['name']
 		root = self._root(target)
@@ -793,6 +860,10 @@ class ExtUpdater:
 		digest = _sha256(path)
 		if step.get('sha256') and digest != step['sha256']:
 			return {'package': name, 'ok': False, 'why': 'store copy fails its hash'}
+
+		bound = self._boundPath(dest)
+		if bound:
+			return self._rewriteBound(dest, bound, step, digest, target)
 
 		stage = self._staging()
 		before = {c.id for c in stage.children}
