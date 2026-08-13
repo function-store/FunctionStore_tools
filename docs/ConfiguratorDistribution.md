@@ -378,13 +378,21 @@ Nothing hand-maintains this, so it cannot drift from reality.
 - `ExternalTables` could not be exported at all — its own `pre_release`
   hook resolved `par.Root` (a *sibling* reference) against the staged copy
   in `/sys/quiet`, where siblings do not exist. Fixed.
-- The manifest now carries a `portability` field, because Embody's
+- The manifest carries a `portability` field, because Embody's
   absolute-path warnings scroll past during export and a package whose
-  files point at THIS machine arrives subtly broken. Worst first:
-  `FNS_MainMenu` ships an absolute path into this repo's suspects tree
-  (inert, but a dev path inside an artifact); `OpTemplates` pins TD's own
-  `Samples/Geo` by version; five packages reference the user palette
-  (benign — per-user data they recreate).
+  files point at THIS machine arrives subtly broken. Checked against the
+  artifacts rather than assumed: the export strips the ROOT comp's
+  `externaltox`, but **`file` pars and NESTED `externaltox` survive**, so
+  the scan skips the former and reports the latter.
+
+  The one that matters: **`OpTemplates` ships expecting
+  `OPTemplates1.tox` to already exist in the installing user's palette**
+  (`<palette>/FNStools_ext/OpTemplates/OPTemplates1.tox`). On a fresh
+  machine that file is absent and the template library comes up empty.
+  Six of its render templates also pin TD's own `Samples/Geo` by version.
+  The other palette references (ExprHotStrings, FNS_HotkeyManager,
+  FNS_OpMenu, ResetPLS1) are per-user data files those tools recreate, so
+  they are benign.
 
 ## 5. Open questions
 
@@ -400,8 +408,9 @@ Nothing hand-maintains this, so it cannot drift from reality.
       package each by construction; no further grouping needed.
 - [ ] Descriptions in `packaging/catalog.json` were seeded by inspection
       and need an owner pass.
-- [ ] `FNS_MainMenu`'s absolute `externaltox` (manifest `portability`,
-      kind `project`) — scrub it in a release hook so no artifact ships a
-      path from this repo.
+- [ ] **`OpTemplates` does not ship self-contained** — its `OPTemplates1`
+      child is an external tox in the user palette, so a fresh install
+      gets an empty template library. Either embed the child in the
+      artifact or have the installer fetch it alongside.
 - [ ] Where does the manifest live — GitHub Releases per-version, plus
       a rolling `manifest.json` index?

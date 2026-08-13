@@ -229,6 +229,13 @@ def PortabilityWarnings(comp):
     hits = []
     for o in [comp] + comp.findChildren():
         for pname in ('file', 'externaltox'):
+            # The ROOT comp's externaltox is stripped by the portable export
+            # (verified by loading the artifacts back); reporting it would be
+            # a false positive. NESTED externaltox survives and is real -- an
+            # OPTemplates artifact still expects OPTemplates1.tox to exist in
+            # the installing user's palette.
+            if pname == 'externaltox' and o is comp:
+                continue
             p = getattr(o.par, pname, None)
             if p is None:
                 continue
