@@ -1,0 +1,20 @@
+{
+ "schema": 1,
+ "toolkit": "FunctionStore_tools_2025",
+ "core": [
+  "FNS_Config",
+  "FNS_Toolbar"
+ ],
+ "tools": [
+  "AutoRes",
+  "ExprHotStrings",
+  "CustomParTools"
+ ],
+ "install": [
+  "FNS_Config",
+  "FNS_Toolbar",
+  "AutoRes",
+  "ExprHotStrings",
+  "CustomParTools"
+ ]
+}
