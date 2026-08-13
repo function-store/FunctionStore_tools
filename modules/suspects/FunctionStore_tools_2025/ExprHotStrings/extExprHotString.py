@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : extExprHotString
 Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2025_DEV.toe
+Saveorigin : FunctionStore_tools_2025_DEV.1.toe
 Saveversion : 2025.33070
 Info Header End'''
 import re
@@ -20,8 +20,17 @@ class extExprHotString:
 		self.parentPromoteShortStrBind = '#@!'
 		self.parentPromoteShortStrExpr = '#@~'
 		self.hotstrings = self.ownerComp.op('ExprHotStrings_tab')
-		self.customParPromoter = op.FNS_CPP
-	
+
+	def _customParPromoter(self):
+		"""Resolve CustomParTools inline -- never cached.
+
+		Two reasons. A cached extension reference goes stale the moment that
+		tool reinitializes. And the tool is OPTIONAL: it can simply be absent
+		from a partial install, so this returns None and the caller degrades
+		rather than raising inside a keystroke handler.
+		"""
+		return getattr(op, 'FNS_CPP', None)
+
 	def opWrap(self, text):
 		# Handling the #@something@ case
 		# Examples:
@@ -103,19 +112,24 @@ class extExprHotString:
 		_pg = _par.parGroup
 
 		if _pg is not None:
+			promoter = self._customParPromoter()
+			if promoter is None:
+				debug('ExprHotStrings: promotion needs CustomParTools, which is '
+					  'not installed -- leaving the text as typed')
+				return text
 			# Set reference for the custom parameter promoter
-			self.customParPromoter.Reference = current_op.path
-			self.customParPromoter.Target = _parent.path
+			promoter.Reference = current_op.path
+			promoter.Target = _parent.path
 			# if _par.mode in [ParMode.EXPRESSION, ParMode.CONSTANT]:
 			# 	_par.expr = ''
 			# elif _par.mode in [ParMode.BIND]:
 			# 	_par.bindExpr = ''
 			# Do the actual promotion
 			if len(_pg) > 1:
-				created_par = self.customParPromoter.PromoteParGroup(_pg, None, target=_parent, parName=param_name, refBind=refBind)
+				created_par = promoter.PromoteParGroup(_pg, None, target=_parent, parName=param_name, refBind=refBind)
 			else:
 				# had to do this otherwise we got weird bugs
-				created_par = self.customParPromoter.PromotePar(_pg[0], None, target=_parent, parName=param_name, refBind=refBind)
+				created_par = promoter.PromotePar(_pg[0], None, target=_parent, parName=param_name, refBind=refBind)
 			
 			# Generate shortcut path to the created parameter
 			shortcut_path = TDF.getShortcutPath(current_op, _parent, toParName=created_par.name)
