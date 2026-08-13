@@ -18,8 +18,16 @@ topological walk of it rather than a hardcoded list.
 
 import json
 import os
+import time
 
 DEFAULT_MANIFEST = 'packaging/manifest.json'
+
+# What each package was installed FROM. UPDATER/ExtUpdater.py reads exactly
+# these four columns to decide what is stale, so the two must stay in step.
+# It lives in the project because it is project state: it travels with the
+# .toe, and it is what makes an interrupted pass safe to simply re-run.
+INSTALLED_DAT = 'installed'
+INSTALLED_COLS = ['package', 'sha256', 'release', 'when']
 
 
 # --- pure helpers (no COMP required) ----------------------------------
@@ -72,6 +80,22 @@ def DefaultTarget():
     return op.Embody.parent().path + '/FunctionStore_tools_2025'
 
 
+def _artifactPath(art, name, manifest_path):
+    """Where this artifact actually is.
+
+    Artifacts sit NEXT TO the manifest that describes them -- that is true
+    of the published bucket and of the palette store, so installing from
+    either needs no extra configuration. The repo-relative `path` is the
+    fallback, which is what a dev checkout (packaging/dist/) uses.
+    """
+    full_manifest = (manifest_path if os.path.isabs(manifest_path)
+                     else RepoPath(manifest_path))
+    beside = os.path.join(os.path.dirname(full_manifest), name + '.tox')
+    if os.path.exists(beside):
+        return beside.replace('\\', '/')
+    return RepoPath(art['path']) if art.get('path') else beside.replace('\\', '/')
+
+
 def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
     """Resolve a selection into an ordered install plan. Never mutates."""
     manifest = LoadJson(manifest_path, 'manifest')
@@ -96,13 +120,14 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
         if not art:
             missing.append(name)
             continue
-        path = RepoPath(art['path'])
+        path = _artifactPath(art, name, manifest_path)
         if not os.path.exists(path):
             missing.append(name + ' (artifact file absent)')
             continue
         steps.append({'name': name, 'kind': pkg['kind'], 'path': path,
                       'sha256': art.get('sha256', ''),
                       'bytes': art.get('bytes', 0),
+                      'release': manifest.get('release', ''),
                       'present': op(tgt + '/' + name) is not None})
     return {'target': tgt, 'steps': steps, 'order': [s['name'] for s in steps],
             'already_present': [s['name'] for s in steps if s['present']],
@@ -118,6 +143,29 @@ def _verify(comp):
     return {'ok': not errs, 'why': (errs.splitlines()[0][:120] if errs else ''),
             'ops': len(comp.findChildren()),
             'extensions_ready': bool(comp.extensionsReady)}
+
+
+def RecordInstalled(parent_comp, name, sha256, release=''):
+    """Upsert the install record. Written per package as it lands, so an
+    interrupted install still leaves a truthful record of what is in the
+    project -- which is the whole basis of the update comparison."""
+    t = parent_comp.op(INSTALLED_DAT)
+    if t is None:
+        t = parent_comp.create(tableDAT, INSTALLED_DAT)
+        t.nodeX, t.nodeY = -800, -400
+        t.color = (0.35, 0.45, 0.55)
+    # a fresh tableDAT already holds one empty row, so "no rows" is the
+    # wrong test for "needs a header"
+    if t.numRows == 0 or t[0, 0].val != INSTALLED_COLS[0]:
+        t.clear()
+        t.appendRow(INSTALLED_COLS)
+    row = [name, sha256, release, time.strftime('%Y-%m-%d %H:%M:%S')]
+    for i in range(1, t.numRows):
+        if t[i, 0].val == name:
+            for c, v in enumerate(row):
+                t[i, c] = v
+            return
+    t.appendRow(row)
 
 
 def InstallPlan(plan, replace=False, only=None):
@@ -156,6 +204,7 @@ def InstallPlan(plan, replace=False, only=None):
         comp = fresh[0] if fresh else parent_comp.op(name)
         if comp is not None and comp.name != name:
             comp.name = name  # TD numbers on collision; the manifest name wins
+        RecordInstalled(parent_comp, name, step.get('sha256', ''), step.get('release', ''))
         results.append({'name': name, 'action': 'installed', **_verify(comp)})
     return {'target': tgt,
             'installed': [r['name'] for r in results if r.get('action') == 'installed'],

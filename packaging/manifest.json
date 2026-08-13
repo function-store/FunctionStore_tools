@@ -14,7 +14,8 @@
   "FNS_MainMenu",
   "FNS_Navbar",
   "FNS_OpMenu",
-  "FNS_Toolbar"
+  "FNS_Toolbar",
+  "UPDATER"
  ],
  "categories": [
   "Core",
@@ -1099,7 +1100,7 @@
   },
   {
    "name": "UPDATER",
-   "kind": "tool",
+   "kind": "core",
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
    "version": "0",
@@ -1110,18 +1111,15 @@
     "toolbar"
    ],
    "shortcut": "FNS_UPDATER",
-   "ops": 204,
-   "requires": [
-    "FNS_Config",
-    "FNS_Toolbar"
-   ],
+   "ops": 183,
+   "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/UPDATER.tox",
-    "bytes": 127166,
-    "sha256": "51067e6c2989560835801927919fbbcbbb113445b3c1ff59ffb297a761aba15b",
+    "bytes": 131774,
+    "sha256": "319c230697eca79c58a8c2c80b3ee3b0a0a17e79c3bffa36be456594cf6199f1",
     "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/UPDATER.tox"
    }
   },

@@ -59,8 +59,11 @@ SURFACE_OF = {
     'OpMenuRegistry': 'opmenu',
 }
 # Packages that ARE the infrastructure; always installed, never optional.
+# UPDATER is core because it is how an install ever becomes a newer install:
+# leaving it optional means the one package that can fetch updates is the one
+# a user can accidentally decline.
 CORE = ('FNS_Config', 'FNS_Toolbar', 'FNS_Navbar', 'FNS_MainMenu',
-        'FNS_OpMenu', 'FNS_HotkeyManager')
+        'FNS_OpMenu', 'FNS_HotkeyManager', 'UPDATER')
 
 
 def _root():

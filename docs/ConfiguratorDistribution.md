@@ -417,9 +417,13 @@ Nothing hand-maintains this, so it cannot drift from reality.
   FNS_OpMenu, ResetPLS1) are per-user data files those tools recreate, so
   they are benign.
 
-## 4.2 Updates do not match the packaging model yet (2026-08-13)
+## 4.2 Updates — REWORKED onto buckets + manifests + hashes (2026-08-13)
 
-**How updates work today** (`UPDATER/ExtUpdater.py`): one version for the
+> **Status: built and verified.** The rework described at the end of this
+> section is implemented in `UPDATER/ExtUpdater.py`. The rest of the
+> section is kept as the record of what was replaced and why.
+
+**How updates worked before** (`UPDATER/ExtUpdater.py`): one version for the
 whole toolkit — `Gittag` on the root COMP, currently `v2.11.2` — polled
 against the latest GitHub tag. `Update()` snapshots every tool's settings
 through `op.CONFIGREGISTRY.SaveAll()`, downloads ONE tox, and calls
@@ -436,10 +440,11 @@ and later updates gets `replaceOp`'d with whatever the release tox
 contains — the whole toolkit back, their selection erased. Per-package
 installs without per-package updates is half a system.
 
-**Is UPDATER therefore core?** In effect yes: it is the only update path
-and it operates on the whole toolkit, not on itself. But simply flipping
-its `kind` to `core` would paper over the real gap rather than close it,
-so it stays `tool` until the mechanism is decided.
+**Is UPDATER therefore core?** In effect yes: it is the only update path.
+It stayed `tool` only until the mechanism was decided — with the rework
+landed it is now `core` (`CORE` in `build_manifest.py`), because the one
+package that can fetch updates is the one a user must not be able to
+accidentally decline.
 
 ### Versioning — DECIDED: hashes drive updates, not version numbers
 
@@ -569,10 +574,57 @@ be *recorded at install time* (the manifest an installer used), because a
 and a package the user never installed must stay uninstalled — an update
 pass is not an install pass.
 
-Unverified but suspicious: `UPDATER.par.Filename` is
-`FunctionStore_tools_2023.tox` on a 2025 toolkit. If the release asset has
-been renamed, downloads are already broken — worth checking against the
-actual GitHub release.
+`UPDATER.par.Filename` (`FunctionStore_tools_2023.tox` on a 2025 toolkit)
+was stale naming, not a broken download. Under the store model there is no
+monolith artifact at all, so the parameter is gone.
+
+### What was actually built (2026-08-13)
+
+Three pulses on UPDATER, one for each motion, plus `Baseurl` /
+`Storefolder` / `Showprogress` / `Status`:
+
+| Pulse | Cost | What it does |
+|---|---|---|
+| **Refresh Store** | whole store | manifest + every artifact whose bytes differ → `<palette>/FNStools_ext/store/` |
+| **Check for Updates** | one small JSON | manifest only, then compare — answering "anything new?" must not cost 6 MB |
+| **Update This Project** | only what differs | fetches just the packages this project needs, then replaces them |
+
+`Compare()` is the whole decision in one place, and reports five states:
+`update`, `current`, `untracked` (in the project with no install record —
+shown, never auto-updated), `missing`, `gone`. The project's side of the
+comparison is an `installed` table DAT in the toolkit root, written per
+package as it lands by BOTH rails (`InstallerExt.RecordInstalled` and the
+updater), which is also what makes an interrupted pass safe to re-run.
+
+`Baseurl` accepts a bucket URL, a `file://` URL, or a plain directory, and
+artifacts resolve *relative to it* rather than to the manifest's own
+`base_url` — same string against the real bucket, but it is what lets a
+mirror, a local `packaging/publish/` tree or a localhost server serve the
+whole flow. Both rails were verified end to end before the bucket exists.
+
+**Three traps paid for, all in the vendored TDFileDownloader:**
+
+- **A request issued from inside the Web Client DAT's own callback is
+  silently dropped.** The file lands, the next GET never goes out — and the
+  downloader's own `queueNext()` re-issues from exactly there, so its
+  internal queue cannot be relied on either. Every stage after a download
+  is deferred one frame (`_later`) and the queue is driven here.
+- **A stale `stateDict` entry poisons every later request for that file.**
+  It keys on url+location; an entry left in `GET`/`WAIT` makes `Download()`
+  return the stale state instead of fetching. Each job starts with
+  `AbortAll()`.
+- **A connection that never opens produces no callback at all** — no
+  success, no abort, just a request sitting in `GET` forever. Hence the
+  stall watchdog: 45 s without progress fails the pass with a message
+  naming the stuck files.
+
+**The replace guard.** `externaltox` — not the `pi_suspect` tag, which
+survives into the artifacts — is what separates a dev master from a shipped
+package: the portable export clears the root's `externaltox`, so a shipped
+package never has one and a dev master always does. Any COMP bound to a
+file on disk is refused (state `locked`) with the reason shown, because
+that file is its source of truth. Learned by replacing the live `AutoRes`
+with an artifact and losing its Embody bindings.
 
 ## 5. Open questions
 
@@ -586,9 +638,9 @@ actual GitHub release.
 - [x] Package granularity — **per-tool, one deliberate bundle** (§1.2).
       MISC and OUTPUT already ship as single COMPs, so they are one
       package each by construction; no further grouping needed.
-- [ ] **Update mechanism vs subset installs — see §4.2.** Pick option 1, 2
-      or 3. Option 1 needs real per-package versions first (38 of 39
-      packages currently have none).
+- [x] **Update mechanism vs subset installs — DONE (§4.2).** Per-package,
+      hash-driven, store + per-project pull. Versions were never needed:
+      artifact `sha256` answers "is this newer?" exactly.
 - [ ] Descriptions in `packaging/catalog.json` were seeded by inspection
       and need an owner pass.
 - [ ] **`OpTemplates` does not ship self-contained** — its `OPTemplates1`

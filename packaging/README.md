@@ -141,5 +141,38 @@ answers "what is current?" once. Never publish a mutable
 
 **Hashes drive updates, not version numbers.** Each artifact's `sha256`
 answers "has this changed since the bytes I installed?" exactly, with zero
-maintenance. The `release` label (from the toolkit's `Gittag`) is for
-humans and changelogs. Per-package semver is optional.
+maintenance. The `release` label (`release.json`) is for humans and
+changelogs. Per-package semver is optional.
+
+## Updating an install
+
+The UPDATER package consumes what this directory publishes. Two motions,
+deliberately separate (design record: `ConfiguratorDistribution.md` §4.2):
+
+- **Refresh Store** — fetch `<Base URL>/manifest.json` and every artifact
+  whose bytes differ into `<user palette>/FNStools_ext/store/`.
+  Machine-wide; touches no project.
+- **Check for Updates** / **Update This Project** — compare the open
+  project's `installed` table (package → the sha256 it was installed from)
+  against the store, and replace only what differs. Per project, explicit.
+
+`installed` is written by both rails — `InstallerExt.RecordInstalled` on
+install and the updater on every replacement — so the two must keep the
+same four columns. It lives in the project because it is project state.
+
+**Point `Base URL` at a local directory to test without a bucket.** The
+staged `publish/` tree is laid out exactly like the bucket, so
+`Base URL = <repo>/packaging/publish` (or a `file://` URL, or a localhost
+static server over that folder) exercises the real code path:
+
+```bash
+python -m http.server 8899 --bind 127.0.0.1 --directory packaging/publish
+```
+
+Artifacts are fetched *relative to the configured Base URL*, not to the
+manifest's own `base_url` — identical against the real bucket, and the only
+reason a mirror or a local tree can serve the whole flow.
+
+A package whose COMP is bound to an `externaltox` is never replaced: it
+reports as `locked`, because that file is its source of truth. This is what
+stops an update from stripping the Embody bindings off a dev checkout.

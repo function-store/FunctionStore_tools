@@ -64,7 +64,8 @@ def Stage(clean=True):
 
     release = manifest.get('release', 'untagged')
     if release == 'untagged':
-        return {'error': 'toolkit has no Gittag -- tag the release before publishing'}
+        return {'error': 'manifest has no release -- set one in packaging/release.json '
+                         'and rebuild the manifest before publishing'}
 
     out = _repo(OUT_DIR)
     rel_dir = os.path.join(out, release)
