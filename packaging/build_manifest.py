@@ -88,7 +88,18 @@ def _vcData(comp):
 
 
 def _hostedRegistries(comp):
-    return sorted(h.name for h in comp.children if h.name in REGISTRY_OWNER)
+    """Registry hosts at ANY depth inside the package.
+
+    Most tools keep the host at depth 1 with its Comp par pointing at the
+    widget, but that is convention, not law: a widget that travels with its
+    own host carries it nested (midiMapper's button_midi_learn), and
+    drop-to-register stamps hosts INTO dropped COMPs. Only looking at direct
+    children silently under-reports the surfaces a package contributes to --
+    and `requires` is derived from this, so it would under-report
+    dependencies too.
+    """
+    found = {h.name for h in comp.findChildren() if h.name in REGISTRY_OWNER}
+    return sorted(found)
 
 
 def _helpUrl(comp):

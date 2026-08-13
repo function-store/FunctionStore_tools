@@ -172,16 +172,22 @@ Assessed all three before touching them; they do not resolve the same way.
   (`cpt.op('iopPromoter')`) so `FNS_IOP` could still be retired. Note the
   audit lesson: constant-mode par VALUES can carry op references too —
   sweep those, not just DAT text and expressions.
-- **`FNS_Toolbar → midiMapper` (7 lines): BLOCKED — midiMapper has
-  `allowCooking = False`.** Moving `widgets/button_midi_learn` (54 ops, a
-  live panel widget with four panelexecs) into a non-cooking COMP would
-  stop it cooking, rendering, and firing its callbacks. The relocation
-  cannot be done as specified. Three ways out, needs a decision:
-  1. give midiMapper a cooking wrapper COMP that hosts the widget (the
-     brief's own suggestion for reaching its state at all);
-  2. leave the button in core and feature-detect midiMapper -- accepts a
-     permanent core→optional edge, contradicting §1.1;
-  3. revisit WHY midiMapper is cook-disabled and undo it.
+- **`FNS_Toolbar → midiMapper`: RESOLVED (2026-08-13).** The blocker was
+  `allowCooking = False` on midiMapper — a live panel widget cannot move
+  into a COMP that does not cook. The owner re-enabled cooking, which took
+  option 3, and `widgets/button_midi_learn` moved into midiMapper carrying
+  its own ToolbarRegistry host. Its calls are now local (`parent().`), the
+  entry re-registered from the new path keeping order 28, and the toolbar
+  still reports 37 widgets. **No core→tool edges remain.**
+
+  midiMapper also joined the fleet properly: it was the only tool with no
+  ConfigRegistry host (it could not have one while cook-disabled), so its
+  settings never roamed. Stamped via `StampHost`, canonical `midiMapper`.
+
+  Fixed in passing: `panelexec4` called `op.FNS_MULTIMIDI.Resetall()`, but
+  `Resetall` is a pulse PAR, not a method — it raised `tdAttributeError`.
+  Now `.par.Resetall.pulse()`. Invisible until now because the button
+  could not reach a non-cooking tool at all.
 
 ### 1.3 MY_HOTKEYS → zero dependencies (2026-08-13)
 

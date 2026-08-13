@@ -98,10 +98,6 @@
       "category": "Network",
       "description": "Paste images and data from the system clipboard into TouchDesigner."
     },
-    "op_store_mod": {
-      "category": "Network",
-      "description": "Store and recall operator state."
-    },
     "QuickMarks": {
       "category": "Network",
       "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design."
@@ -125,10 +121,6 @@
     "VSCodeTools": {
       "category": "Developer",
       "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs."
-    },
-    "ExternalTables": {
-      "category": "Developer",
-      "description": "Sync table DATs to files on disk for versioning and sharing."
     },
     "UPDATER": {
       "category": "Developer",
@@ -180,7 +172,7 @@
     },
     "midiMapper": {
       "category": "Control",
-      "description": "Map MIDI controls to parameters. Mappings are saved into the project folder by design."
+      "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config."
     },
     "oscMapper": {
       "category": "Control",

@@ -250,11 +250,14 @@ window.FNS_MANIFEST = {
    "build": "49",
    "author": "Dan@DAN-4090",
    "help_url": "",
-   "surfaces": [],
+   "surfaces": [
+    "mainmenu"
+   ],
    "shortcut": "FNS_BORDERLESS_TD",
    "ops": 369,
    "requires": [
-    "FNS_Config"
+    "FNS_Config",
+    "FNS_MainMenu"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -352,30 +355,6 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ExprHotStrings.tox",
     "bytes": 75526,
     "sha256": "ad257e24b4522d265c1cb11dc64b11eb9f878626c5314f50f26e6d7901c6394b"
-   }
-  },
-  {
-   "name": "ExternalTables",
-   "kind": "tool",
-   "category": "Developer",
-   "description": "Sync table DATs to files on disk for versioning and sharing.",
-   "version": "0",
-   "build": "22",
-   "author": "Dan@DAN-4090",
-   "help_url": "",
-   "surfaces": [],
-   "shortcut": "",
-   "ops": 87,
-   "requires": [
-    "FNS_Config"
-   ],
-   "integrates_with": [],
-   "tox_carrier": "own",
-   "cooking": true,
-   "artifact": {
-    "path": "packaging/dist/ExternalTables.tox",
-    "bytes": 63926,
-    "sha256": "778b772523122aa5f0cd9bf4c48af695a75333fddb1926713ed7d237f649f6f8"
    }
   },
   {
@@ -531,18 +510,17 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_TOOLBAR",
-   "ops": 651,
+   "ops": 596,
    "requires": [],
    "integrates_with": [
-    "BorderlessTD",
-    "midiMapper"
+    "BorderlessTD"
    ],
    "tox_carrier": "own",
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/FNS_Toolbar.tox",
-    "bytes": 405902,
-    "sha256": "2dbae25644af2d9437be64fa07f60a612ac923b392398f79eb578469bfcb4c1b"
+    "bytes": 365470,
+    "sha256": "16beb8f15dc1ec37e94b57f744732a06c01bbb70347115cae2e655f0ef0d2a3e"
    }
   },
   {
@@ -578,11 +556,14 @@ window.FNS_MANIFEST = {
    "build": "22",
    "author": "Dan@DAN-4090",
    "help_url": "",
-   "surfaces": [],
+   "surfaces": [
+    "toolbar"
+   ],
    "shortcut": "FNS_VolControl",
    "ops": 229,
    "requires": [
-    "FNS_Config"
+    "FNS_Config",
+    "FNS_Toolbar"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -624,22 +605,27 @@ window.FNS_MANIFEST = {
    "name": "midiMapper",
    "kind": "tool",
    "category": "Control",
-   "description": "Map MIDI controls to parameters. Mappings are saved into the project folder by design.",
+   "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config.",
    "version": "1",
    "build": "27",
    "author": "Dan@DAN-4090",
    "help_url": "",
-   "surfaces": [],
+   "surfaces": [
+    "toolbar"
+   ],
    "shortcut": "FNS_MULTIMIDI",
-   "ops": 299,
-   "requires": [],
+   "ops": 389,
+   "requires": [
+    "FNS_Config",
+    "FNS_Toolbar"
+   ],
    "integrates_with": [],
    "tox_carrier": "root",
-   "cooking": false,
+   "cooking": true,
    "artifact": {
     "path": "packaging/dist/midiMapper.tox",
-    "bytes": 115750,
-    "sha256": "ff3fc95f3ef3131ede58e678b6be61df4248360ef39e8099c45f01f786b30d6e"
+    "bytes": 198326,
+    "sha256": "b3be037bfc207f852ef32fc99cea84d720468e6e5e257d3d892fc175def327bb"
    }
   },
   {
@@ -651,11 +637,14 @@ window.FNS_MANIFEST = {
    "build": "11",
    "author": "Dan@DAN-4090",
    "help_url": "",
-   "surfaces": [],
+   "surfaces": [
+    "toolbar"
+   ],
    "shortcut": "FNS_MISC",
    "ops": 153,
    "requires": [
-    "FNS_Config"
+    "FNS_Config",
+    "FNS_Toolbar"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -688,30 +677,6 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/MY_HOTKEYS.tox",
     "bytes": 65118,
     "sha256": "5e6436525f08776963b7c26ec503d57d8d49166c34801b1ddd9c3744aac65d42"
-   }
-  },
-  {
-   "name": "op_store_mod",
-   "kind": "tool",
-   "category": "Network",
-   "description": "Store and recall operator state.",
-   "version": "0",
-   "build": "10",
-   "author": "Dan@DAN-4090",
-   "help_url": "",
-   "surfaces": [],
-   "shortcut": "FNS_STORE",
-   "ops": 144,
-   "requires": [
-    "FNS_Config"
-   ],
-   "integrates_with": [],
-   "tox_carrier": "own",
-   "cooking": true,
-   "artifact": {
-    "path": "packaging/dist/op_store_mod.tox",
-    "bytes": 102286,
-    "sha256": "da03ffa260a6f986885e0b2c989fc9ccf8d510065c5614ff37e6ca237c80dea6"
    }
   },
   {
@@ -1223,7 +1188,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "MY_UI",
-   "ops": 326,
+   "ops": 310,
    "requires": [
     "FNS_Config",
     "FNS_Toolbar"
