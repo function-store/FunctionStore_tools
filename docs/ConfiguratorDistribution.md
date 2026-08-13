@@ -1,12 +1,21 @@
 # Configurator Distribution — Design Notes
 
-How a user could pick and choose which FunctionStore tools to install —
-via a configurator website/app — instead of taking the whole toolkit.
-Companion to [UvPackagingResearch.md](UvPackagingResearch.md) (which owns
-the pip/uv **delivery-mechanism** research) and
-[RegistryScheme.md](RegistryScheme.md) (which owns the **in-project
-runtime** relationship between tools and registries). Nothing here is
-implemented — captured from a design discussion 2026-08-10.
+How a user picks and chooses which FunctionStore tools to install, instead
+of taking the whole toolkit. Companion to
+[RegistryScheme.md](RegistryScheme.md), which owns the **in-project
+runtime** relationship between tools and registries.
+
+**Distribution model (decided 2026-08-13): buckets and manifests.** A
+bucket holds `manifest.json` and the per-release artifacts; native
+`.exe`/`.dmg` installers are the bootstrap. Everything downstream —
+picking, installing, updating — is manifest-driven, and update decisions
+are made on artifact **hashes**, not version numbers. See §4.2.
+
+[UvPackagingResearch.md](UvPackagingResearch.md) remains as research
+only: the pip/uv rail it explores is **not** the plan (§3).
+
+Started as design notes 2026-08-10; §1.1–1.3 and §4.1 record what has
+since been built and verified.
 
 ## 1. Why this is feasible now
 
@@ -248,12 +257,18 @@ category, icon, version, sha256, deps, artifact URL. The existing UPDATER
 tool should consume the *same* manifest for updates — one catalog, two
 consumers.
 
-### 2.3 Install rails (they compose, not compete)
+### 2.3 Install rails
+
+> **Revised 2026-08-13** — see §4.2. Rail 3 (pip/uv) is dead; delivery is
+> a bucket plus native `.exe`/`.dmg` installers. Rails 1 and 2 stand,
+> and both consume the same manifest.
 
 1. **Installer COMP** — a single small `.tox`, no launcher required.
-   Reads a selection (JSON) + manifest, fetches artifacts over HTTPS
-   (Web Client DAT, non-blocking), loads core then tools. Works for
-   users who have nothing else installed.
+   Reads a selection (JSON) + manifest and loads core then tools. **Built**
+   (`packaging/dist/FNS_Installer.tox`, ~4 KB), currently installing from
+   local artifacts; the bucket fetch is the remaining piece and should
+   reuse the vendored `UPDATER/fileDownloader` rather than hand-rolled
+   HTTP.
 2. **TDXGL sidecar** — the launcher utility bus already exposes
    `load_tox` with `persist`, `parent`, `externaltox`, `toxfile_module`
    (see `TDXGLUtilityExt._handleCmdLine`, action `load_tox`). A
@@ -261,11 +276,8 @@ consumers.
    pushes `load_tox` commands into live sessions; `persist` survives
    restarts. Best UX: already installed, already knows which TD
    sessions are alive, and browsers can't speak raw TCP to the bus
-   anyway.
-3. **pip/uv skeleton** — see §3. Delivery via package manager; still
-   needs a bootstrap COMP in-project to materialize toxes into the
-   network (UvPackagingResearch §1: uv can never materialize an
-   operator network).
+   anyway. Still open.
+3. ~~pip/uv skeleton~~ — **dead**, see §3.
 
 ### 2.4 Configurator front-end
 
@@ -283,7 +295,12 @@ A browser POSTing directly to a Web Server DAT on `127.0.0.1` is
 possible but the fiddliest option (CORS, port discovery) — noted, not
 recommended.
 
-## 3. The pip-skeleton pattern (marker packages)
+## 3. The pip-skeleton pattern (marker packages) — SUPERSEDED
+
+> **Dead as of 2026-08-13.** Distribution is buckets + manifests, with
+> native `.exe`/`.dmg` installers as the bootstrap (see §4.2). pip was
+> only ever a delivery rail, and it argued mostly against itself even
+> then. Kept for the reasoning, not as a plan.
 
 Refines UvPackagingResearch with the *selection* mechanism. If pip is
 the rail, feature selection must live in pip's world or the resolver
@@ -444,12 +461,40 @@ trigger. Per-package semver stays optional, for authors who want it.
 
 That unblocks option 1 below with no versioning ceremony to invent.
 
-### Distribution — DECIDED: bucket for artifacts, GitHub for the tag
+### Distribution — DECIDED: buckets and manifests only
 
-39 separate `.tox` files per release is awkward as GitHub release assets
-and gives no directory semantics. The bucket carries the artifacts;
-GitHub keeps the tag and changelog. `base_url` in the manifest decides
-where installers fetch, so both can coexist and either can move.
+**Supersedes every GitHub-based flow in this document** (§2.3 rail 3, §3's
+pip rail, and the old "GitHub keeps the tag" wording). The owner's
+direction, 2026-08-13:
+
+> in the future we will only serve an .exe and .dmg installer so don't
+> worry about github-based update workflows. simply think in buckets and
+> manifests from now on
+
+So there are exactly two moving parts:
+
+- **A bucket** holding `manifest.json` and the per-release artifacts. It
+  is the single source of truth for what exists and what the bytes are.
+- **Native installers** (`.exe` / `.dmg`) as the bootstrap that gets a
+  first copy onto a machine. Everything after that — picking, installing
+  into a project, updating — is manifest-driven.
+
+Consequences, all of them simplifications:
+
+- **The release label is ours, not git's.** It lives in
+  `packaging/release.json` (with a `channel`, so `beta` is just another
+  bucket prefix) and is stamped into the manifest and every artifact URL.
+  The root COMP's `Gittag` par survives only as a fallback.
+- **`UPDATER/github_remote` and `PollLatestTag()` become legacy.** Update
+  checks stop being "poll the newest git tag and compare strings" and
+  become "fetch `<base_url>/manifest.json`, compare artifact hashes". The
+  `Gittag` string comparison in `OnPolledLatestTag` — including its
+  major-version gate — has no role in that.
+- **`UPDATER` becomes core** once reworked: reading the manifest and
+  replacing changed packages is infrastructure, not an optional tool.
+  (It stays `tool` in the manifest only until that rework lands.)
+- **Distribution size stops mattering.** 39 artifacts is a directory
+  listing in a bucket, not 39 release assets.
 
 `packaging/publish.py` stages the exact bucket tree and re-hashes every
 staged file against the manifest before reporting success — publishing
@@ -468,19 +513,31 @@ release, so a manifest always resolves to the bytes it was built from. The
 rolling root copy exists only to answer "what is current?" once. No
 mutable `latest/<Package>.tox` (§3).
 
-Three ways forward for the mechanism itself:
+### The mechanism — per-package, hash-driven (the other options are dead)
 
-1. **Per-package updates** (matches §2.1, now unblocked). UPDATER fetches
-   the current manifest, compares each installed package's artifact hash
-   against it, and `replaceOp`s only what changed. Reuses the vendored
-   `UPDATER/fileDownloader` (a TDFileDownloader with a Web Client DAT,
-   callbacks, progress UI, auth and a concurrency cap) rather than
-   hand-rolling HTTP.
-2. **Selection-aware whole-toolkit update.** Keep replacing the root, but
-   record the selection and re-apply it after the swap. Cheap, but the
-   user briefly has tools they did not ask for.
-3. **Reinstall-only.** The configurator is a first-install tool; updating
-   means picking again.
+With buckets-and-manifests settled there is no longer a choice to make.
+Selection-aware whole-replace and reinstall-only both existed to work
+around "one artifact, one version"; the bucket removes that constraint.
+
+**UPDATER, reworked:**
+
+1. Fetch `<base_url>/manifest.json` (rolling) via the vendored
+   `UPDATER/fileDownloader` — a TDFileDownloader wrapping a Web Client
+   DAT, with callbacks, progress UI, auth and a concurrency cap. Do not
+   hand-roll HTTP; `requests` blocks the frame.
+2. For each INSTALLED package, compare its artifact `sha256` against the
+   manifest's. Differing hash = update available. Nothing else is
+   consulted — not `build`, not `Gittag`.
+3. Download only the changed artifacts (pinned URLs), verify each hash
+   after download, and `replaceOp` package by package.
+4. Settings survive as they do today: each tool's ConfigRegistry host
+   reloads its own section after replacement.
+
+Two details worth getting right the first time: the installed hash has to
+be *recorded at install time* (the manifest an installer used), because a
+`.tox` re-saved inside a project no longer hashes to what was published;
+and a package the user never installed must stay uninstalled — an update
+pass is not an install pass.
 
 Unverified but suspicious: `UPDATER.par.Filename` is
 `FunctionStore_tools_2023.tox` on a 2025 toolkit. If the release asset has

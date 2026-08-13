@@ -301,7 +301,13 @@ def ExportPackage(comp):
 
 
 def _release():
-    """Human-facing release label for the whole toolkit.
+    """Human-facing release label for the whole toolkit, from
+    packaging/release.json.
+
+    Deliberately NOT a git tag: distribution is bucket + manifest (and
+    native .exe/.dmg installers), so the label is ours to set. The root
+    COMP's `Gittag` par remains only as a fallback for projects that have
+    not adopted release.json.
 
     Per-package semver was considered and rejected: 38 of 39 packages had
     no version at all, and `build` is a SAVE COUNTER that ticks on every
@@ -310,8 +316,28 @@ def _release():
     with zero maintenance -- so hashes drive updates and this label is for
     humans and changelogs.
     """
+    path = _repo(PKG_DIR, 'release.json')
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                rel = str(json.load(f).get('release', '')).strip()
+            if rel:
+                return rel
+        except Exception as e:
+            debug('packaging: release.json unreadable (%s)' % e)
     p = getattr(_root().par, 'Gittag', None)
     return str(p.eval()).strip() if p is not None and str(p.eval()).strip() else 'untagged'
+
+
+def _channel():
+    path = _repo(PKG_DIR, 'release.json')
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return str(json.load(f).get('channel', 'stable')).strip() or 'stable'
+        except Exception:
+            pass
+    return 'stable'
 
 
 def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
@@ -403,6 +429,7 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
     doc = {
         'schema': MANIFEST_SCHEMA,
         'release': rel,
+        'channel': _channel(),
         'base_url': base_url.rstrip('/'),
         'toolkit': {
             'name': _root().name,

@@ -106,10 +106,10 @@ Install('packaging/example-selection.json', target=t.path)
 
 ## Publishing a release
 
-Artifacts go to a bucket; GitHub keeps the tag and changelog. 39 `.tox`
-files per release is awkward as GitHub release assets and gives no
-directory semantics, so `base_url` in the manifest decides where
-installers fetch — both rails can coexist.
+Distribution is **buckets and manifests only** — native `.exe`/`.dmg`
+installers are the bootstrap, and there is no GitHub-based update flow.
+The bucket is the single source of truth for what exists and what the
+bytes are; `base_url` in the manifest says where to fetch.
 
 ```python
 exec(open('packaging/build_manifest.py').read()); Build(export=True)
