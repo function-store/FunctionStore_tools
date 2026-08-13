@@ -513,6 +513,36 @@ release, so a manifest always resolves to the bytes it was built from. The
 rolling root copy exists only to answer "what is current?" once. No
 mutable `latest/<Package>.tox` (§3).
 
+### Where installed packages live — DECIDED: hybrid store + per-project pull
+
+The palette is a **store**; projects embed self-contained copies. Two
+deliberately separate motions:
+
+1. **Refresh the store** — fetch the bucket manifest, download changed
+   artifacts into `<palette>/FNStools_ext/store/`. Machine-wide,
+   project-independent.
+2. **Update this project from the store** — compare the open project's
+   embedded packages against the store and `replaceOp` only what differs.
+   Explicit, per project, never automatic.
+
+Two hash records, and they are not interchangeable: the store's own
+`manifest.json` (what the palette holds), and an `installed` table DAT
+**inside the toolkit root COMP** recording the sha256 each package was
+installed from. The latter is project state and must travel with the
+project.
+
+Rejected: per-package palette toxes with `externaltox` bindings (updates
+land machine-wide, but shipped packages stop being self-contained and
+every project mutates under the user), and in-project `replaceOp` alone
+(clean artifacts, but every project becomes its own frozen fork).
+
+The accepted cost is that a project can sit behind the store, so the UI
+must say so plainly rather than pretend everything is current.
+
+**Never hash the live COMP to decide staleness** — a `.tox` re-saved
+inside a project no longer hashes to what was published, so the recorded
+install-time hash is the only honest comparison.
+
 ### The mechanism — per-package, hash-driven (the other options are dead)
 
 With buckets-and-manifests settled there is no longer a choice to make.
