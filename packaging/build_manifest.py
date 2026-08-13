@@ -198,6 +198,59 @@ def Integrations():
     return edges
 
 
+def PortabilityWarnings(comp):
+    """Absolute paths that would not survive a trip to another machine.
+
+    Embody logs these during export and they scroll away. A package whose
+    tables point at THIS machine's palette (or worse, at this repo's
+    suspects tree) is a package that arrives subtly broken, so the finding
+    belongs in the manifest where the installer and the picker can see it.
+
+    Severity, worst first:
+      project   -- points into THIS repo. A genuine packaging defect: the
+                   path cannot exist on anyone else's machine.
+      absolute  -- some other absolute path; needs a human look.
+      tdinstall -- TD's own Samples/ (defcam.geo and friends). Present on
+                   any install, but pinned to THIS TD version.
+      palette   -- the user palette. Usually benign: these are per-user
+                   data files the tool recreates.
+    """
+    palette = ''
+    try:
+        palette = app.userPaletteFolder.replace('\\', '/').rstrip('/')
+    except Exception:
+        pass
+    tdroot = ''
+    try:
+        tdroot = app.installFolder.replace('\\', '/').rstrip('/')
+    except Exception:
+        pass
+    here = project.folder.replace('\\', '/').rstrip('/')
+    hits = []
+    for o in [comp] + comp.findChildren():
+        for pname in ('file', 'externaltox'):
+            p = getattr(o.par, pname, None)
+            if p is None:
+                continue
+            try:
+                v = str(p.eval() or '').replace('\\', '/')
+            except Exception:
+                continue
+            if not v or not (':' in v[:3] or v.startswith('/')):
+                continue  # relative == portable
+            if palette and v.startswith(palette):
+                kind = 'palette'
+            elif v.startswith(here):
+                kind = 'project'
+            elif tdroot and v.startswith(tdroot):
+                kind = 'tdinstall'
+            else:
+                kind = 'absolute'
+            hits.append({'op': o.path[len(comp.path) + 1:] or o.name,
+                         'par': pname, 'kind': kind, 'path': v})
+    return hits
+
+
 def _sha256(path):
     h = hashlib.sha256()
     with open(path, 'rb') as f:
@@ -277,14 +330,28 @@ def Build(export=False, out_path=None):
             'tox_carrier': 'root' if not comp.par.enableexternaltox.eval() else 'own',
             'cooking': bool(comp.allowCooking),
         }
+        warn = PortabilityWarnings(comp)
+        if warn:
+            entry['portability'] = warn
 
         do_export = export is True or (want is not None and name in want)
         if do_export:
             art = ExportPackage(comp)
             if art:
                 entry['artifact'] = art
-        elif previous.get(name, {}).get('artifact'):
-            entry['artifact'] = previous[name]['artifact']  # keep prior hash
+        else:
+            # Not re-exporting: hash whatever is already in dist/ so the
+            # manifest describes the artifacts that actually exist on disk,
+            # rather than only those built in this very run.
+            built = _repo(DIST_DIR, name + '.tox')
+            if os.path.exists(built):
+                entry['artifact'] = {
+                    'path': DIST_DIR + '/' + name + '.tox',
+                    'bytes': os.path.getsize(built),
+                    'sha256': _sha256(built),
+                }
+            elif previous.get(name, {}).get('artifact'):
+                entry['artifact'] = previous[name]['artifact']
         packages.append(entry)
 
     doc = {

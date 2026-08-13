@@ -186,7 +186,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/AltSelect.tox",
+    "bytes": 66150,
+    "sha256": "116ae877ed488cb0b4088fcf17234e20faa728b362a949432994dffc94745602"
+   }
   },
   {
    "name": "AutoCombine",
@@ -205,7 +210,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/AutoCombine.tox",
+    "bytes": 79918,
+    "sha256": "561e298d1970c6674308c77477bb38ae16381bddd2ba3eda56a4af0946cd32e8"
+   }
   },
   {
    "name": "AutoRes",
@@ -224,7 +234,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/AutoRes.tox",
+    "bytes": 79702,
+    "sha256": "8a6b1fca2d99897341d985fdb70a8e1a27549097c6da27b17c8d9aeb048c3b1c"
+   }
   },
   {
    "name": "BorderlessTD",
@@ -243,7 +258,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/BorderlessTD.tox",
+    "bytes": 228446,
+    "sha256": "21bcf0e415c51ebe330b74ba54a620293f2af75fb6d500f9b0ae7b7ace98da44"
+   }
   },
   {
    "name": "ColorUI",
@@ -262,7 +282,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/ColorUI.tox",
+    "bytes": 100830,
+    "sha256": "50a4e0c0ab43e17cb9f5e003c2fe5f5f1f402ed7f495b4c8d4a66609120dd752"
+   }
   },
   {
    "name": "CustomParTools",
@@ -288,7 +313,12 @@ window.FNS_MANIFEST = {
     "QuickCollapse"
    ],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/CustomParTools.tox",
+    "bytes": 540368,
+    "sha256": "a31daf2309c397be2ad67cad37c62c9aba57036833f1736dc93214e17359d250"
+   }
   },
   {
    "name": "ExprHotStrings",
@@ -309,7 +339,20 @@ window.FNS_MANIFEST = {
     "CustomParTools"
    ],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "portability": [
+    {
+     "op": "ExprHotStrings_tab",
+     "par": "file",
+     "kind": "palette",
+     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/ExprHotStrings_tab.tsv"
+    }
+   ],
+   "artifact": {
+    "path": "packaging/dist/ExprHotStrings.tox",
+    "bytes": 75526,
+    "sha256": "ad257e24b4522d265c1cb11dc64b11eb9f878626c5314f50f26e6d7901c6394b"
+   }
   },
   {
    "name": "ExternalTables",
@@ -328,7 +371,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/ExternalTables.tox",
+    "bytes": 63926,
+    "sha256": "778b772523122aa5f0cd9bf4c48af695a75333fddb1926713ed7d237f649f6f8"
+   }
   },
   {
    "name": "FNS_Config",
@@ -345,7 +393,12 @@ window.FNS_MANIFEST = {
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/FNS_Config.tox",
+    "bytes": 63630,
+    "sha256": "a7c3d4d39a32369193e8d2ead5111102ec1fefcf8d3259898750d8871670ea9a"
+   }
   },
   {
    "name": "FNS_HotkeyManager",
@@ -362,7 +415,26 @@ window.FNS_MANIFEST = {
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "portability": [
+    {
+     "op": "table_gathered_hotkeys",
+     "par": "file",
+     "kind": "palette",
+     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/Hotkeys.tsv"
+    },
+    {
+     "op": "table_gathered_hotkeys1",
+     "par": "file",
+     "kind": "palette",
+     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/Hotkeys.tsv"
+    }
+   ],
+   "artifact": {
+    "path": "packaging/dist/FNS_HotkeyManager.tox",
+    "bytes": 141246,
+    "sha256": "17af4eaaa28d95b6c25f842461c86f2972722fd39fd38691c04d04875e13a4ad"
+   }
   },
   {
    "name": "FNS_MainMenu",
@@ -381,7 +453,20 @@ window.FNS_MANIFEST = {
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "root",
-   "cooking": true
+   "cooking": true,
+   "portability": [
+    {
+     "op": "FNS_MainMenu",
+     "par": "externaltox",
+     "kind": "project",
+     "path": "C:/VJ/TD/Projects/FunctionStore_tools_PUB/modules/suspects/FunctionStore_tools_2025/FNS_MainMenu.tox"
+    }
+   ],
+   "artifact": {
+    "path": "packaging/dist/FNS_MainMenu.tox",
+    "bytes": 259798,
+    "sha256": "a937bc7b94f060d28bb10c3c8da02e6c4c5334b486ee3154a540fa8de6454111"
+   }
   },
   {
    "name": "FNS_Navbar",
@@ -402,7 +487,12 @@ window.FNS_MANIFEST = {
     "CustomParTools"
    ],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/FNS_Navbar.tox",
+    "bytes": 633048,
+    "sha256": "729f1134d6d5193251914e26362316a6a1b44d55cbcdd253197cff8f598f1914"
+   }
   },
   {
    "name": "FNS_OpMenu",
@@ -421,7 +511,20 @@ window.FNS_MANIFEST = {
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "portability": [
+    {
+     "op": "OpSearchWords",
+     "par": "file",
+     "kind": "palette",
+     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/OpSearchWords.tsv"
+    }
+   ],
+   "artifact": {
+    "path": "packaging/dist/FNS_OpMenu.tox",
+    "bytes": 178038,
+    "sha256": "777dea7589d5d0af8bc23dd7bfe7d683da877d4025db016e341fef573fe3d17e"
+   }
   },
   {
    "name": "FNS_Toolbar",
@@ -443,7 +546,12 @@ window.FNS_MANIFEST = {
     "midiMapper"
    ],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/FNS_Toolbar.tox",
+    "bytes": 405902,
+    "sha256": "2dbae25644af2d9437be64fa07f60a612ac923b392398f79eb578469bfcb4c1b"
+   }
   },
   {
    "name": "GlobalOutSelect",
@@ -462,7 +570,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/GlobalOutSelect.tox",
+    "bytes": 182014,
+    "sha256": "f8fa80c08f632cc92fdee65fbe7ca68fe2280506f3caa6d6f0dc8a66b06c9caa"
+   }
   },
   {
    "name": "GlobalVolControl",
@@ -481,7 +594,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/GlobalVolControl.tox",
+    "bytes": 161710,
+    "sha256": "a69b1bf02ad4742a20cd13df58f29e7d70163aa12027606dacfabc52352f2a15"
+   }
   },
   {
    "name": "HydroHomie",
@@ -503,7 +621,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/HydroHomie.tox",
+    "bytes": 120094,
+    "sha256": "5a2a0bead21c0c7105968b9dde9a842a5f69e115aff112e4a76448a3d0c93444"
+   }
   },
   {
    "name": "midiMapper",
@@ -520,7 +643,12 @@ window.FNS_MANIFEST = {
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "root",
-   "cooking": false
+   "cooking": false,
+   "artifact": {
+    "path": "packaging/dist/midiMapper.tox",
+    "bytes": 115750,
+    "sha256": "ff3fc95f3ef3131ede58e678b6be61df4248360ef39e8099c45f01f786b30d6e"
+   }
   },
   {
    "name": "MISC",
@@ -539,7 +667,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/MISC.tox",
+    "bytes": 122430,
+    "sha256": "48ad03c4618469ac0cb4272947dee4c3f14bac912ab60aefa9be441720626620"
+   }
   },
   {
    "name": "MY_HOTKEYS",
@@ -558,7 +691,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/MY_HOTKEYS.tox",
+    "bytes": 65118,
+    "sha256": "5e6436525f08776963b7c26ec503d57d8d49166c34801b1ddd9c3744aac65d42"
+   }
   },
   {
    "name": "op_store_mod",
@@ -577,7 +715,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/op_store_mod.tox",
+    "bytes": 102286,
+    "sha256": "da03ffa260a6f986885e0b2c989fc9ccf8d510065c5614ff37e6ca237c80dea6"
+   }
   },
   {
    "name": "OpenExt",
@@ -596,7 +739,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/OpenExt.tox",
+    "bytes": 65334,
+    "sha256": "ca0596e79017f44b1fc4670d3680be75633c14ed70bab28b7ed0b16a14a3dd9c"
+   }
   },
   {
    "name": "OpTemplates",
@@ -622,7 +770,56 @@ window.FNS_MANIFEST = {
     "AutoRes"
    ],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "portability": [
+    {
+     "op": "OPTemplates1",
+     "par": "externaltox",
+     "kind": "palette",
+     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/OpTemplates/OPTemplates1.tox"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP/cam1/file1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defcam.geo"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP/null1/cross1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defnull.geo"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP/light1/cross1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defnull.geo"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP_ortho/cam1/file1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defcam.geo"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP_ortho/null1/cross1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defnull.geo"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP_ortho/light1/cross1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defnull.geo"
+    }
+   ],
+   "artifact": {
+    "path": "packaging/dist/OpTemplates.tox",
+    "bytes": 272576,
+    "sha256": "c8f5b5ffc0c37fb8a42b3b38b2d9a69a7333d0ea0b5ec213813d2089a7fb99b2"
+   }
   },
   {
    "name": "OpToClipboard",
@@ -641,7 +838,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/OpToClipboard.tox",
+    "bytes": 67126,
+    "sha256": "cbaea73f49664b57e160a58448b00ca87b6faacac3f700df16c68e981e0d8506"
+   }
   },
   {
    "name": "oscMapper",
@@ -660,7 +862,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/oscMapper.tox",
+    "bytes": 124638,
+    "sha256": "bcfd304f099c70e32a6e14ae2df99619cef5827ba67253d3f25f71f122ebeeab"
+   }
   },
   {
    "name": "OUTPUT",
@@ -682,7 +889,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/OUTPUT.tox",
+    "bytes": 95534,
+    "sha256": "fe098d2a2222e79720b542c418def9d8d9daedcc522788f7186acc95924046e0"
+   }
   },
   {
    "name": "ParOPDrop",
@@ -704,7 +916,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/ParOPDrop.tox",
+    "bytes": 108382,
+    "sha256": "dafe39c7e7cf7560ee48b1cc69c74965f9fe4ecbc8d65c9362a2bf611cc97683"
+   }
   },
   {
    "name": "ParRandomizer",
@@ -726,7 +943,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/ParRandomizer.tox",
+    "bytes": 109014,
+    "sha256": "edb0134cd8f207687bc680064d54c21b2734c8c74c0c878d132c1c947a8782b7"
+   }
   },
   {
    "name": "paste_from_clipboard",
@@ -745,7 +967,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "root",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/paste_from_clipboard.tox",
+    "bytes": 127550,
+    "sha256": "e7b5fb975f3fdc137d900da12de179c4f2549df689e9cb93b38c5d944af134d8"
+   }
   },
   {
    "name": "QuickCollapse",
@@ -764,7 +991,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/QuickCollapse.tox",
+    "bytes": 100014,
+    "sha256": "8d30e7364c0d86e62a2efced0d1cde4ab42392ed49a671be2b36a78d606ba10b"
+   }
   },
   {
    "name": "QuickMarks",
@@ -783,7 +1015,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "root",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/QuickMarks.tox",
+    "bytes": 44342,
+    "sha256": "d83de7e33ea9f9172831f9f23d8df19e4dd5ad9f0fb76130c6ab610acde449af"
+   }
   },
   {
    "name": "QuickPane",
@@ -802,7 +1039,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/QuickPane.tox",
+    "bytes": 68134,
+    "sha256": "449af6b3482e41001c7c84e6aa4eafc7f087a9b834b85327d1fcbc96a8d6b28b"
+   }
   },
   {
    "name": "QuickParCustom",
@@ -823,7 +1065,12 @@ window.FNS_MANIFEST = {
     "CustomParTools"
    ],
    "tox_carrier": "root",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/QuickParCustom.tox",
+    "bytes": 85894,
+    "sha256": "c34bace07a9139541c0fffc7e89db38ab065a140935d50f2dad87e00cb4151bc"
+   }
   },
   {
    "name": "QuickTime",
@@ -845,7 +1092,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/QuickTime.tox",
+    "bytes": 105550,
+    "sha256": "8b3295e37bf897289c809bac386e70b8c501c904d8140c468d412d7a4cacfdc9"
+   }
   },
   {
    "name": "ResetPLS1",
@@ -867,7 +1119,26 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "portability": [
+    {
+     "op": "table_except_static",
+     "par": "file",
+     "kind": "palette",
+     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/table_except_static.tsv"
+    },
+    {
+     "op": "table_custom_resetpars",
+     "par": "file",
+     "kind": "palette",
+     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/table_custom_resetpars.tsv"
+    }
+   ],
+   "artifact": {
+    "path": "packaging/dist/ResetPLS1.tox",
+    "bytes": 125142,
+    "sha256": "3fc93b5ebba7b683e248fe659966a6cb106d2e1a443c281b053bd75dfc389f7a"
+   }
   },
   {
    "name": "SetSmoothness",
@@ -889,7 +1160,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/SetSmoothness.tox",
+    "bytes": 162726,
+    "sha256": "5e4dd686ce223594c857505a119f80abdbd7a7cc3453c7be9bfa8182ab372050"
+   }
   },
   {
    "name": "SwapOps",
@@ -911,7 +1187,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/SwapOps.tox",
+    "bytes": 105910,
+    "sha256": "7ae2cda04a0b147fe7a584069cc0ff21f0b15ca539431388da4e48a87e48dddf"
+   }
   },
   {
    "name": "SwitchOPs",
@@ -930,7 +1211,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/SwitchOPs.tox",
+    "bytes": 65918,
+    "sha256": "0cdb849e48f9d315f9a0e114ccfa1bc87ee33f8411fe48ce18533ec3a8374f41"
+   }
   },
   {
    "name": "tools_ui",
@@ -952,7 +1238,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/tools_ui.tox",
+    "bytes": 119726,
+    "sha256": "bd226b88c03900e968f99656ef3775ce646f68c79a810653b9f547105c241b67"
+   }
   },
   {
    "name": "UPDATER",
@@ -974,7 +1265,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/UPDATER.tox",
+    "bytes": 127166,
+    "sha256": "51067e6c2989560835801927919fbbcbbb113445b3c1ff59ffb297a761aba15b"
+   }
   },
   {
    "name": "VSCodeTools",
@@ -996,7 +1292,12 @@ window.FNS_MANIFEST = {
    ],
    "integrates_with": [],
    "tox_carrier": "own",
-   "cooking": true
+   "cooking": true,
+   "artifact": {
+    "path": "packaging/dist/VSCodeTools.tox",
+    "bytes": 631240,
+    "sha256": "0aafdc93a95ce8cf7332ae7a69712c4ed919018ca563b3a6d7d81dbb14510c1c"
+   }
   }
  ]
 };
