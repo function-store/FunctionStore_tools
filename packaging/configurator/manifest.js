@@ -7,7 +7,7 @@ window.FNS_MANIFEST = {
  "toolkit": {
   "name": "FunctionStore_tools_2025",
   "td_build": "099",
-  "project": "FunctionStore_tools_2025_DEV.toe"
+  "project": "FunctionStore_tools_2025_DEV.1.toe"
  },
  "core": [
   "FNS_Config",
@@ -38,7 +38,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "ALT_SELECT",
-   "ops": 96,
+   "ops": 97,
    "requires": [
     "FNS_Config"
    ],
@@ -47,8 +47,8 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/AltSelect.tox",
-    "bytes": 66414,
-    "sha256": "a0c3c0f071efc0c258d13dded6e9338760c577417e839ed9dfd3717efaceefeb",
+    "bytes": 64750,
+    "sha256": "3d4795d1fdaef432640403d5acce669496a1b15bd4003fbe50248d8df2416c80",
     "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/AltSelect.tox"
    }
   },
@@ -61,7 +61,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "AUTO_COMBINE",
-   "ops": 123,
+   "ops": 124,
    "requires": [
     "FNS_Config"
    ],
@@ -84,7 +84,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "AUTO_RES",
-   "ops": 123,
+   "ops": 124,
    "requires": [
     "FNS_Config"
    ],
@@ -133,7 +133,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_COLOR_UI",
-   "ops": 164,
+   "ops": 165,
    "requires": [
     "FNS_Config"
    ],
@@ -186,7 +186,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "HOTSTRINGS",
-   "ops": 113,
+   "ops": 114,
    "requires": [
     "FNS_Config"
    ],
@@ -200,7 +200,7 @@ window.FNS_MANIFEST = {
      "op": "ExprHotStrings_tab",
      "par": "file",
      "kind": "palette",
-     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/ExprHotStrings_tab.tsv"
+     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/ExprHotStrings_tab.tsv"
     }
    ],
    "artifact": {
@@ -250,13 +250,13 @@ window.FNS_MANIFEST = {
      "op": "table_gathered_hotkeys",
      "par": "file",
      "kind": "palette",
-     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/Hotkeys.tsv"
+     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/Hotkeys.tsv"
     },
     {
      "op": "table_gathered_hotkeys1",
      "par": "file",
      "kind": "palette",
-     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/Hotkeys.tsv"
+     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/Hotkeys.tsv"
     }
    ],
    "artifact": {
@@ -277,10 +277,10 @@ window.FNS_MANIFEST = {
     "mainmenu"
    ],
    "shortcut": "FNS_MAINMENU",
-   "ops": 371,
+   "ops": 373,
    "requires": [],
    "integrates_with": [],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/FNS_MainMenu.tox",
@@ -300,7 +300,7 @@ window.FNS_MANIFEST = {
     "navbar"
    ],
    "shortcut": "FNS_NAVBAR",
-   "ops": 1549,
+   "ops": 1550,
    "requires": [],
    "integrates_with": [
     "CustomParTools"
@@ -325,7 +325,7 @@ window.FNS_MANIFEST = {
     "opmenu"
    ],
    "shortcut": "FNS_OPMOD",
-   "ops": 290,
+   "ops": 291,
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -335,7 +335,7 @@ window.FNS_MANIFEST = {
      "op": "OpSearchWords",
      "par": "file",
      "kind": "palette",
-     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/OpSearchWords.tsv"
+     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/OpSearchWords.tsv"
     }
    ],
    "artifact": {
@@ -356,7 +356,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_TOOLBAR",
-   "ops": 596,
+   "ops": 597,
    "requires": [],
    "integrates_with": [
     "BorderlessTD"
@@ -379,7 +379,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "GLOBAL_OUT_SEL",
-   "ops": 764,
+   "ops": 765,
    "requires": [
     "FNS_Config"
    ],
@@ -462,7 +462,7 @@ window.FNS_MANIFEST = {
     "FNS_Toolbar"
    ],
    "integrates_with": [],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/midiMapper.tox",
@@ -492,8 +492,8 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/MISC.tox",
-    "bytes": 122710,
-    "sha256": "d197636b7077018b2873c8ef53d664d1f693a81e27f1f05cea2e952fb4d0e3fb",
+    "bytes": 120438,
+    "sha256": "2c08669737f79d15ebd81635eec94954d058bf7a22cabd81c061ab918b0c3739",
     "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/MISC.tox"
    }
   },
@@ -506,7 +506,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_HOTKEYS",
-   "ops": 94,
+   "ops": 95,
    "requires": [
     "FNS_Config"
    ],
@@ -529,7 +529,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "",
-   "ops": 88,
+   "ops": 89,
    "requires": [
     "FNS_Config"
    ],
@@ -571,43 +571,43 @@ window.FNS_MANIFEST = {
      "op": "OPTemplates1",
      "par": "externaltox",
      "kind": "palette",
-     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/OpTemplates/OPTemplates1.tox"
+     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/OpTemplates/OPTemplates1.tox"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP/cam1/file1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defcam.geo"
+     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defcam.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP/null1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defnull.geo"
+     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP/light1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defnull.geo"
+     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/cam1/file1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defcam.geo"
+     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defcam.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/null1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defnull.geo"
+     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/light1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "C:/Program Files/Derivative/TouchDesigner.2025.33070/Samples/Geo/defnull.geo"
+     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defnull.geo"
     }
    ],
    "artifact": {
@@ -626,7 +626,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "",
-   "ops": 101,
+   "ops": 102,
    "requires": [
     "FNS_Config"
    ],
@@ -750,12 +750,12 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "",
-   "ops": 204,
+   "ops": 205,
    "requires": [
     "FNS_Config"
    ],
    "integrates_with": [],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/paste_from_clipboard.tox",
@@ -773,7 +773,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_QUICKCOLLAPSE",
-   "ops": 188,
+   "ops": 189,
    "requires": [
     "FNS_Config"
    ],
@@ -796,12 +796,12 @@ window.FNS_MANIFEST = {
    "help_url": "https://alex-guevara.com",
    "surfaces": [],
    "shortcut": "",
-   "ops": 44,
+   "ops": 45,
    "requires": [
     "FNS_Config"
    ],
    "integrates_with": [],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/QuickMarks.tox",
@@ -819,7 +819,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "",
-   "ops": 119,
+   "ops": 120,
    "requires": [
     "FNS_Config"
    ],
@@ -842,14 +842,14 @@ window.FNS_MANIFEST = {
    "help_url": "https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickparcustom",
    "surfaces": [],
    "shortcut": "",
-   "ops": 138,
+   "ops": 139,
    "requires": [
     "FNS_Config"
    ],
    "integrates_with": [
     "CustomParTools"
    ],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/QuickParCustom.tox",
@@ -908,13 +908,13 @@ window.FNS_MANIFEST = {
      "op": "table_except_static",
      "par": "file",
      "kind": "palette",
-     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/table_except_static.tsv"
+     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/table_except_static.tsv"
     },
     {
      "op": "table_custom_resetpars",
      "par": "file",
      "kind": "palette",
-     "path": "C:/Users/Dan/Documents/Derivative/Palette/FNStools_ext/tables/table_custom_resetpars.tsv"
+     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/table_custom_resetpars.tsv"
     }
    ],
    "artifact": {
@@ -985,7 +985,7 @@ window.FNS_MANIFEST = {
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_SWITCHOP",
-   "ops": 94,
+   "ops": 95,
    "requires": [
     "FNS_Config"
    ],

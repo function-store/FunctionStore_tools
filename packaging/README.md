@@ -147,7 +147,7 @@ answers "what is current?" once. Never publish a mutable
 ## Versioning
 
 **`Pkgversion` drives updates.** Every package carries a `Pkgversion`
-parameter on a `Package` page — ours, stamped on the component, shipped
+parameter on its `About` page — ours, stamped on the component, shipped
 inside the artifact. The manifest publishes it and the updater compares it
 against the same parameter read live off the installed component, which is
 what makes the comparison work for a package embedded in a `.toe` with no
