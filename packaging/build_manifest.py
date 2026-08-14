@@ -43,7 +43,10 @@ TOOLKIT = '/FunctionStore_tools_2025'
 # carries its release, so a manifest always resolves to the exact bytes it
 # was built from. Never point an installer at a mutable "latest/" path --
 # unreproducible installs make bug reports uncorrelatable (§3).
-BASE_URL = 'https://storage.functionstore.xyz/fnstools'
+# R2 public dev URL (bucket `fnstools`, objects under the fnstools/ prefix).
+# Moving to storage.functionstore.xyz later is this constant plus the
+# UPDATER comp's Baseurl default, then one Build + Stage + upload.
+BASE_URL = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools'
 
 # Registry host name -> the core package that owns that registry's master.
 REGISTRY_OWNER = {

@@ -1,12 +1,12 @@
 {
  "schema": 1,
- "release": "v2.11.2",
+ "release": "v2.11.4",
  "channel": "stable",
- "base_url": "https://storage.functionstore.xyz/fnstools",
+ "base_url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools",
  "toolkit": {
   "name": "FunctionStore_tools_2025",
   "td_build": "099",
-  "project": "FunctionStore_tools_2025_DEV.1.toe"
+  "project": "FunctionStore_tools_2025_DEV.2.toe"
  },
  "core": [
   "FNS_Config",
@@ -47,8 +47,8 @@
    "artifact": {
     "path": "packaging/dist/AltSelect.tox",
     "bytes": 64750,
-    "sha256": "3d4795d1fdaef432640403d5acce669496a1b15bd4003fbe50248d8df2416c80",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/AltSelect.tox"
+    "sha256": "8057679761ffe04d4858c0723d7b81cebef8afdbadc0a56c2e4a6afa1ff21f40",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/AltSelect.tox"
    }
   },
   {
@@ -69,9 +69,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/AutoCombine.tox",
-    "bytes": 80198,
-    "sha256": "d2e76a3763af164e8b841fe4cc98c813679f567dbb8387e310bd7b378963fadb",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/AutoCombine.tox"
+    "bytes": 77430,
+    "sha256": "33ed80f761a4ea19fbb6e0650e90683a0ebeb1a37538b30271f0c0402b7f0073",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/AutoCombine.tox"
    }
   },
   {
@@ -92,9 +92,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/AutoRes.tox",
-    "bytes": 79870,
-    "sha256": "734f62f541e07be59ebc4e4c1d370efb09dd760dbf4ef6ae2bc5b08a23730add",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/AutoRes.tox"
+    "bytes": 77198,
+    "sha256": "dadd05759671204f9ea1c0498c4fe664a570e687451946b8401ae6a59920da10",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/AutoRes.tox"
    }
   },
   {
@@ -118,9 +118,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/BorderlessTD.tox",
-    "bytes": 228710,
-    "sha256": "3aad72550c01a52767b360c2bd2a40394a2e6ed69dcfb390db7f6bdfeefb7596",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/BorderlessTD.tox"
+    "bytes": 223566,
+    "sha256": "a7190cbc4c95a90745bfbdf874f19fa8719a8127b5bd468233171a7ac416c666",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/BorderlessTD.tox"
    }
   },
   {
@@ -141,9 +141,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/ColorUI.tox",
-    "bytes": 101102,
-    "sha256": "150b5e3e8a18e2f8c8a55016b0b38a194ee196e9dfc49fa475a3ce6927a0e412",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/ColorUI.tox"
+    "bytes": 98854,
+    "sha256": "87aabe69fda9e3a2666bc020a894488fa6941b52ec8057b69194455189625e36",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/ColorUI.tox"
    }
   },
   {
@@ -171,9 +171,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/CustomParTools.tox",
-    "bytes": 541944,
-    "sha256": "7a13b6eeb1961bbb4e6bb33742d2966dc82537c17bebbd8d1d11f6cd7c87647f",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/CustomParTools.tox"
+    "bytes": 527800,
+    "sha256": "6240c366598ef8938b15925906419320ed55a84983eea46123a7796bb28e64e9",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/CustomParTools.tox"
    }
   },
   {
@@ -204,9 +204,9 @@
    ],
    "artifact": {
     "path": "packaging/dist/ExprHotStrings.tox",
-    "bytes": 75806,
-    "sha256": "7b0e5b634f7e1df6e25af678e5875defbbc89c088019a3b84d2b4a02afa531de",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/ExprHotStrings.tox"
+    "bytes": 73902,
+    "sha256": "0b0c2de50e5210f7e0e93f7c7d023fc2125d605636d183cfb4a558ff517d8ec0",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/ExprHotStrings.tox"
    }
   },
   {
@@ -225,9 +225,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/FNS_Config.tox",
-    "bytes": 63902,
-    "sha256": "5e6ed39f4502e5f516591633e4e658bc300b87b8b85bf60c44bc383268e919ea",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/FNS_Config.tox"
+    "bytes": 62182,
+    "sha256": "ce0b518f1ebb727034776c3f54346b6c56bdbf4d223d5c55e3bd8566917eecca",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/FNS_Config.tox"
    }
   },
   {
@@ -260,9 +260,9 @@
    ],
    "artifact": {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
-    "bytes": 141470,
-    "sha256": "6c0dfd5d13e5a1cab44cdb2477ea910f84688658aa6ef48de1641d4c76a94a91",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/FNS_HotkeyManager.tox"
+    "bytes": 139886,
+    "sha256": "ecd3afa588864b3e534908b3898651781a5de4e780efea057cabe6ac641d1243",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -283,9 +283,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/FNS_MainMenu.tox",
-    "bytes": 259990,
-    "sha256": "b5d8fc22350611b38e14d6da49d751383528ed9311220a71d8a00b3c2bd1504e",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/FNS_MainMenu.tox"
+    "bytes": 257190,
+    "sha256": "1bdc2f6d9bd79131f780aaab7f2ff26862a311bd5639d4144736ac0496a54634",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/FNS_MainMenu.tox"
    }
   },
   {
@@ -308,9 +308,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/FNS_Navbar.tox",
-    "bytes": 633336,
-    "sha256": "a70480cf295e6b9dea52678f2822c132ff0797a72c4280d192c7e215ef18d02d",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/FNS_Navbar.tox"
+    "bytes": 627264,
+    "sha256": "27fdafa7a496b75c9aea6df20f2bc0e108f21f7563d6de6faf20c9abb03ad60c",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/FNS_Navbar.tox"
    }
   },
   {
@@ -339,9 +339,9 @@
    ],
    "artifact": {
     "path": "packaging/dist/FNS_OpMenu.tox",
-    "bytes": 178334,
-    "sha256": "55b9cc9d39468c150b9dd1ccecc93b4a38fec8887d9ad8bac4ee4559a014ec21",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/FNS_OpMenu.tox"
+    "bytes": 174814,
+    "sha256": "b2cf89496481dfb2be6283c0f42ef432f7214980700e6a57776842b4c8f0ed4a",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/FNS_OpMenu.tox"
    }
   },
   {
@@ -364,9 +364,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/FNS_Toolbar.tox",
-    "bytes": 365726,
-    "sha256": "62e67944986ba8485412244317a0986c4c343fe66b038a6f576983233f11d5d1",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/FNS_Toolbar.tox"
+    "bytes": 360822,
+    "sha256": "859eb40986197cdebcbe4a1d5b25e77507ca00b0a18898bcee18dda8c6fc3549",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/FNS_Toolbar.tox"
    }
   },
   {
@@ -387,9 +387,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/GlobalOutSelect.tox",
-    "bytes": 182278,
-    "sha256": "8655c349617183290010bf73c09c87757d4feaf0fdfb732a62fbc11a29877fd5",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/GlobalOutSelect.tox"
+    "bytes": 180526,
+    "sha256": "1114918c3928298efdaba1e84cea587e8690498ff489d74b830b8c24a3b878c6",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/GlobalOutSelect.tox"
    }
   },
   {
@@ -413,9 +413,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/GlobalVolControl.tox",
-    "bytes": 161982,
-    "sha256": "bf4306055a7c1da07d384ac55ad383a71253f14afcd8bc9665256ccb19e28214",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/GlobalVolControl.tox"
+    "bytes": 158910,
+    "sha256": "c62aba93aff3a720ffecb5233c6a6472713c1a28a8397c46d8281ca9ba8246cd",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/GlobalVolControl.tox"
    }
   },
   {
@@ -439,9 +439,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/HydroHomie.tox",
-    "bytes": 120358,
-    "sha256": "60339e5d88d1f5ba1d33a4880013f9367109d5b4daaef31eeb04fbcb681cf736",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/HydroHomie.tox"
+    "bytes": 118046,
+    "sha256": "b387eb18e2d81916f5515fb355a1f3be1dc62e0dbf41a8713a6fee42841ef696",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/HydroHomie.tox"
    }
   },
   {
@@ -465,9 +465,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/midiMapper.tox",
-    "bytes": 198526,
-    "sha256": "f39459456fdb736b439ebb9d60c3be92b8a8ecb1264a9964fb0576c26ebd1539",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/midiMapper.tox"
+    "bytes": 194862,
+    "sha256": "2a8c36df620d46fd28336a04c113e11775f895696454f90046984c9d44c08785",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/midiMapper.tox"
    }
   },
   {
@@ -492,8 +492,8 @@
    "artifact": {
     "path": "packaging/dist/MISC.tox",
     "bytes": 120438,
-    "sha256": "2c08669737f79d15ebd81635eec94954d058bf7a22cabd81c061ab918b0c3739",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/MISC.tox"
+    "sha256": "920567f073c0f4b66378b301b985febb21e8a7b35cd472eb2948fabf1c08883c",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/MISC.tox"
    }
   },
   {
@@ -514,9 +514,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/MY_HOTKEYS.tox",
-    "bytes": 65334,
-    "sha256": "95fbb5fd3cbf0916779847d4fe334ce343b7451ed61f798538d5cc5574b23a18",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/MY_HOTKEYS.tox"
+    "bytes": 63614,
+    "sha256": "f97cd026ff17cd9fdac4c76ede87049f941355e08819c313e346f6c585c74c58",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/MY_HOTKEYS.tox"
    }
   },
   {
@@ -537,9 +537,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/OpenExt.tox",
-    "bytes": 65590,
-    "sha256": "7dff3bcddd8c3a69022c861c75e857e0a732b07141cadfa2cf1148ac180ad526",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/OpenExt.tox"
+    "bytes": 63926,
+    "sha256": "38b35bf15e73c477cd936b567d2c8df7459e1875bf14f4c2d58ba163dc78b9c9",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/OpenExt.tox"
    }
   },
   {
@@ -611,9 +611,9 @@
    ],
    "artifact": {
     "path": "packaging/dist/OpTemplates.tox",
-    "bytes": 272840,
-    "sha256": "3094d7e44c9437a784de608eb6da82ee6e906d79591b682eaf3d08023a73047b",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/OpTemplates.tox"
+    "bytes": 267120,
+    "sha256": "91a4ef9ff46c53585a7ffbaf6d9fbad76cc530bf0713383a426bb5ba1b0d710b",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/OpTemplates.tox"
    }
   },
   {
@@ -634,9 +634,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/OpToClipboard.tox",
-    "bytes": 67390,
-    "sha256": "68d747182e56d2f62c1ecd2d44e4383e016818cceb3d98e70d4f4281010bb937",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/OpToClipboard.tox"
+    "bytes": 65702,
+    "sha256": "1de2f49eb0a27bf2861d3909aaa1f1e6b45ecf0bb8cae76389e04b4b3f6ebe4d",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/OpToClipboard.tox"
    }
   },
   {
@@ -657,9 +657,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/oscMapper.tox",
-    "bytes": 124894,
-    "sha256": "b3d0f64a452b481317366c362700040848be378be4c230490e2765143fc8096e",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/oscMapper.tox"
+    "bytes": 123390,
+    "sha256": "ac99079fbba320abc6a3b2fa10b5ef306b93cca51332f8c8b3bdc21e046f7cac",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/oscMapper.tox"
    }
   },
   {
@@ -683,9 +683,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/OUTPUT.tox",
-    "bytes": 95814,
-    "sha256": "dd9863776048d9227c5697045445805818d80fa065e0da100809b1ed38f4c5b9",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/OUTPUT.tox"
+    "bytes": 93574,
+    "sha256": "e282289d8f4f324e46cd08a87f09eac85e7ab972e4d2918d1987e35e26c1215d",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/OUTPUT.tox"
    }
   },
   {
@@ -709,9 +709,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/ParOPDrop.tox",
-    "bytes": 108654,
-    "sha256": "a84b1083ef65d1dc9752ab32a41a4d1cfb7f309eaff1354c90ea940257bc773f",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/ParOPDrop.tox"
+    "bytes": 106230,
+    "sha256": "cc4a40644a0724672db3fa7e26e97d8a81258338906feb5e4db432a4d95a3cd3",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/ParOPDrop.tox"
    }
   },
   {
@@ -735,9 +735,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/ParRandomizer.tox",
-    "bytes": 109286,
-    "sha256": "cd166239767f1788e983dac912a1d5a8e3861a275b04fcb3edfabc8271ee0f5c",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/ParRandomizer.tox"
+    "bytes": 106958,
+    "sha256": "c3db8aec45107b4f89bb21f3cf7f9df9c5b6c8ff7addbf29b279df78e4367a9e",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/ParRandomizer.tox"
    }
   },
   {
@@ -758,9 +758,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/paste_from_clipboard.tox",
-    "bytes": 127758,
-    "sha256": "c11e609dbe657756cf9c45dabe4e556cd91db1d2ca855ba5974e39e344344901",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/paste_from_clipboard.tox"
+    "bytes": 126374,
+    "sha256": "f81325f828cc7890afdea5b3a96636e7f9dfed40b9c39d3cea5978d1c7e99fc7",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/paste_from_clipboard.tox"
    }
   },
   {
@@ -781,9 +781,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/QuickCollapse.tox",
-    "bytes": 100278,
-    "sha256": "7aeebf50d24bb19936a00dbbf2561a6ad74e84d4043b122494a68e93cb6e02ff",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/QuickCollapse.tox"
+    "bytes": 97590,
+    "sha256": "c755526b545e4a55cf58567f205247dc8d44733de4d0c80c971bec39e82b69f2",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/QuickCollapse.tox"
    }
   },
   {
@@ -804,9 +804,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/QuickMarks.tox",
-    "bytes": 44550,
-    "sha256": "91fdf2ee0c9f11c9884a0f78f7791f33b4878dc53d861078574e2daa708d49a9",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/QuickMarks.tox"
+    "bytes": 43510,
+    "sha256": "0ecde52a40999dd1db1d17cebe7322fdeee0fd7407055056923be0443410a68c",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/QuickMarks.tox"
    }
   },
   {
@@ -827,9 +827,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/QuickPane.tox",
-    "bytes": 68406,
-    "sha256": "b79e7b20624b4a21534f773d4433321397da4290c2a1e37cecb284ba16c8292f",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/QuickPane.tox"
+    "bytes": 66758,
+    "sha256": "ac964c6681a801189303c6fb6ce2de923dafdbc7478267140ce0ac7a536fd6b3",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/QuickPane.tox"
    }
   },
   {
@@ -852,9 +852,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/QuickParCustom.tox",
-    "bytes": 86126,
-    "sha256": "3d85ba7e215b37f0f8346bb0cec20d2abf4c579f40b906ef8bf125bdfcfd9009",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/QuickParCustom.tox"
+    "bytes": 83278,
+    "sha256": "4e60381a67ed84f7c0f4252398dd6ced5a5dfe062cf442b3566c1b988aa16d7b",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/QuickParCustom.tox"
    }
   },
   {
@@ -878,9 +878,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/QuickTime.tox",
-    "bytes": 105814,
-    "sha256": "331618d1cb06a88b61bc844e9e801165ec3a43de1b2cb007639b02d69a4c4351",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/QuickTime.tox"
+    "bytes": 103438,
+    "sha256": "4f19c4116cbb87458b6e66e19f501468f58930074c8788c8ccaa6dad6f56172b",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/QuickTime.tox"
    }
   },
   {
@@ -918,9 +918,9 @@
    ],
    "artifact": {
     "path": "packaging/dist/ResetPLS1.tox",
-    "bytes": 125366,
-    "sha256": "ffa40344a1f3bdba83e74a6c492d5abdf6f67ba47f34ac21694598a2f1739bc6",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/ResetPLS1.tox"
+    "bytes": 122086,
+    "sha256": "4744b97b35678b15624d6c832412477d8aa3c7a4ca292a9dc32d62be63654378",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/ResetPLS1.tox"
    }
   },
   {
@@ -944,9 +944,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/SetSmoothness.tox",
-    "bytes": 162982,
-    "sha256": "5c59a46e32d6a651b3676bac4ed311d9226bace64d5cf64d43bf7e47b060105d",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/SetSmoothness.tox"
+    "bytes": 160622,
+    "sha256": "c166b61d29159447357a5606e100abd06e3ad1e8919bfe6898dde9596a61e78b",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/SetSmoothness.tox"
    }
   },
   {
@@ -970,9 +970,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/SwapOps.tox",
-    "bytes": 106174,
-    "sha256": "7b1ff02431e2f9a8a3520afb7795657870909c7724889775c0b21705f3e34a3b",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/SwapOps.tox"
+    "bytes": 103686,
+    "sha256": "6f4b3783f8b23b492c438cdfd08ad3d8fcb4878d4205957a0e20891c6b690a06",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/SwapOps.tox"
    }
   },
   {
@@ -993,9 +993,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/SwitchOPs.tox",
-    "bytes": 66190,
-    "sha256": "b9bf8f245c5fc194d96ac3ab31d8e681682455ba987afb2e869530864d039b56",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/SwitchOPs.tox"
+    "bytes": 64526,
+    "sha256": "625621c839b3e0673044c9d20ef859db73488f8756b640088a4780bcb0ad1f40",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/SwitchOPs.tox"
    }
   },
   {
@@ -1019,9 +1019,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/tools_ui.tox",
-    "bytes": 119694,
-    "sha256": "06ca341da1ce3c462b8d59d8dc8843d4da58f77eb307518c7a8a194a99e3c44d",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/tools_ui.tox"
+    "bytes": 117982,
+    "sha256": "c8b7a343d02bd480512a86d9a0d555d4c60b61795a564e6451fa93a74f770037",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/tools_ui.tox"
    }
   },
   {
@@ -1029,7 +1029,7 @@
    "kind": "core",
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
-   "version": "1.0.0",
+   "version": "1.0.2",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -1042,9 +1042,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/UPDATER.tox",
-    "bytes": 133902,
-    "sha256": "350383b19ca8e421653e97b6c5e0aa0d2452a74afdc1a9500cf035f429d208d9",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/UPDATER.tox"
+    "bytes": 131814,
+    "sha256": "620316a2e0a86143f1be7939dfc6ca47e34a09d478c8654b6474d7e7793170e0",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/UPDATER.tox"
    }
   },
   {
@@ -1068,9 +1068,9 @@
    "cooking": true,
    "artifact": {
     "path": "packaging/dist/VSCodeTools.tox",
-    "bytes": 631488,
-    "sha256": "dddd9deb6bc96754725139f12c11c060e90a86b8a632634d90b1b0a557aabf70",
-    "url": "https://storage.functionstore.xyz/fnstools/v2.11.2/VSCodeTools.tox"
+    "bytes": 625384,
+    "sha256": "b1a98f9b5f4b1ecbb4750b9cdbc9d1adde3cf385ebd8e230c0a41f1d1dfd1876",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.11.4/VSCodeTools.tox"
    }
   }
  ]

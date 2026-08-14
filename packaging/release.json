@@ -1,16 +1,17 @@
 {
-  "_comment": [
-    "The release label for the whole toolkit. Bump it deliberately when you",
-    "publish; build_manifest.py stamps it into manifest.json and every",
-    "artifact URL, and publish.py uses it as the bucket directory.",
-    "",
-    "Deliberately NOT derived from a git tag: distribution is bucket +",
-    "manifest (and native .exe/.dmg installers), not GitHub releases, so the",
-    "release label is ours to set rather than something git hands us.",
-    "",
-    "Remember: this label is for humans and changelogs. Whether a package",
-    "needs updating is decided by its artifact sha256, not by this."
-  ],
-  "release": "v2.11.2",
-  "channel": "stable"
+ "_comment": [
+  "The release label for the whole toolkit. Bump it deliberately when you",
+  "publish; build_manifest.py stamps it into manifest.json and every",
+  "artifact URL, and publish.py uses it as the bucket directory.",
+  "",
+  "Deliberately NOT derived from a git tag: distribution is bucket +",
+  "manifest (and native .exe/.dmg installers), not GitHub releases, so the",
+  "release label is ours to set rather than something git hands us.",
+  "",
+  "Remember: this label is for humans and changelogs. Whether a package",
+  "Remember: this label is for humans and changelogs. Whether a package",
+  "needs updating is decided by its Pkgversion, not by this."
+ ],
+ "release": "v2.11.4",
+ "channel": "stable"
 }

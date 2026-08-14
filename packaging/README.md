@@ -129,7 +129,7 @@ exec(open('packaging/publish.py').read()); result = Stage()
 installer verifies is worse than not publishing. Upload is one sync:
 
 ```bash
-aws s3 sync packaging/publish/ s3://<bucket>/fnstools/ --delete
+python3 packaging/upload.py
 ```
 
 ```

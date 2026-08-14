@@ -7,8 +7,8 @@ Runs INSIDE TouchDesigner (it reads the manifest the live project built):
 Produces `packaging/publish/` — a tree that mirrors the bucket exactly, so
 uploading is one sync with whatever CLI you already use:
 
-    aws s3 sync  packaging/publish/ s3://<bucket>/fnstools/ --delete
-    rclone sync  packaging/publish/ remote:fnstools/
+    python3 packaging/upload.py        # R2, sets Cache-Control per file
+    python3 packaging/upload.py --dry  # print the plan first
 
 LAYOUT
 
@@ -143,4 +143,4 @@ def Stage(clean=True):
             'missing': missing, 'hash_mismatch': mismatched,
             'total_mb': round(total / 1048576.0, 2),
             'ok': not missing and not mismatched,
-            'upload': 'aws s3 sync %s/ s3://<bucket>/fnstools/ --delete' % OUT_DIR}
+            'upload': 'python3 packaging/upload.py'}

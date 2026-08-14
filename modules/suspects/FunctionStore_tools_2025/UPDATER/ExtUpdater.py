@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : ExtUpdater
-Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2025_DEV.toe
+Author : root
+Saveorigin : FunctionStore_tools_2025_DEV.2.toe
 Saveversion : 2025.33070
 Info Header End'''
 """Bucket + manifest updates for the toolkit.
@@ -785,12 +785,30 @@ class ExtUpdater:
 		refuse to update itself; without the second, a scratch copy staged
 		elsewhere in the source project could not be updated either, and
 		that is exactly how this path gets tested.
+
+		The export container is read from the generator's own TOOLKIT
+		constant, NOT taken as this UPDATER's parent: the updater running
+		the check may itself be a scratch install (that is the self-update
+		rehearsal), and anchoring home to its parent made such a copy lock
+		its own siblings as "authored".
 		"""
-		if not os.path.exists(os.path.join(project.folder, 'packaging', 'build_manifest.py')):
+		gen = os.path.join(project.folder, 'packaging', 'build_manifest.py')
+		if not os.path.exists(gen):
 			return False
-		home = self.ownerComp.parent()
-		return home is not None and comp.parent() is not None \
-			and comp.parent().path == home.path
+		home = ''
+		try:
+			with open(gen) as f:
+				for line in f:
+					if line.startswith('TOOLKIT'):
+						home = line.split('=', 1)[1].strip().strip('\'"')
+						break
+		except Exception:
+			pass
+		if not home:
+			parent = self.ownerComp.parent()
+			home = parent.path if parent is not None else ''
+		return bool(home) and comp.parent() is not None \
+			and comp.parent().path == home
 
 	def _boundPath(self, comp):
 		"""Absolute path of the .tox this COMP loads from, or '' if it is
