@@ -79,7 +79,9 @@ class HotkeyManagerExt:
 		# DAT `keys` values consisting only of these are modifier-listen setups, not hotkeys
 		self.ignored_keys = ['ctrl', 'alt', 'shift', 'cmd', 'esc', 'enter', 'tab']
 
-		self.searchRoot = parent.FNS
+		# the toolkit container this package is installed in -- never the
+		# dev root by name/shortcut, so a bare install resolves too
+		self.searchRoot = self.ownerComp.parent()
 		self.hotkeyTable: 'tableDAT' = self.ownerComp.op('table_gathered_hotkeys')
 		self.defaultTable: 'tableDAT' = self.ownerComp.op('table_gathered_hotkeys1')
 		self.supressWatch = False

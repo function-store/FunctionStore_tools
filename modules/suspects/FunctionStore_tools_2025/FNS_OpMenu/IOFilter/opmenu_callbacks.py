@@ -12,11 +12,12 @@ calls the registry back when the toggle flips.
 
 
 def _enabled():
-	"""The user-facing switch on the FNS root (Activeopmenuiofilter)."""
+	"""The user-facing switch: Iofilteractive on FNS_OpMenu itself --
+	the tool owns its toggle, no root parameter involved."""
 	try:
-		return bool(parent.FNS.par.Activeopmenuiofilter.eval())
+		return bool(me.parent(2).par.Iofilteractive.eval())
 	except Exception as e:
-		debug('IOFilter: Activeopmenuiofilter unreadable, defaulting on:', e)
+		debug('IOFilter: Iofilteractive unreadable, defaulting on:', e)
 		return True
 
 

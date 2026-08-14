@@ -47,7 +47,7 @@ inject_op = op('script_inject')
 injected_op = inject(target_comp, target_op, inject_op)
 
 # iofilter hack
-if parent.FNS.par.Activeopmenuiofilter.eval():
+if op('/FunctionStore_tools_2025/FNS_OpMenu').par.Iofilteractive.eval():
 	target_op = injected_op
 	inject_op = op('IOFilter/script_IOFilter')
 	inject(target_comp, target_op, inject_op)
