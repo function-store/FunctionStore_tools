@@ -1,5 +1,15 @@
 # FNS tools changelog
 
+## v2.12.18 -- 2026-08-15
+
+- UPDATER 1.0.7 -> 1.0.8 -- dropped the dangling internal-op shortcuts to TDAsyncIO and github_remote (legacy of the pre-bucket update flow) that flagged every fresh drop with invalid-path warnings.
+
+The bootstrap installer now targets whatever container it ships in --
+TD numbers a second drop into an occupied project, and matching the
+parent by literal name sent that installer at the other copy's root.
+The plan status also names an existing toolkit root when installing
+somewhere else.
+
 ## v2.12.17 -- 2026-08-15
 
 - FNS_Config 1.1.2

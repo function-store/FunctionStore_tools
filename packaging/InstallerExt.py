@@ -78,15 +78,17 @@ ROOT_NAME = 'FunctionStore_tools_2025'
 def DefaultTarget(owner=None):
     """Where packages land.
 
-    An installer that ships INSIDE the toolkit root (the bootstrap .tox)
-    installs into its own parent -- that is the whole point of the
-    bootstrap: the container you dropped IS the install target, wherever
-    you dropped it. Otherwise: the project's toolkit container if it has
-    one, else a new one next to Embody (dev) or at / (a bare project).
+    An installer that ships INSIDE a container (the bootstrap .tox)
+    installs into that container, WHATEVER it is called -- TD numbers a
+    second drop to FunctionStore_tools_20261, and matching the parent by
+    its literal name sent that installer at the OTHER copy's root.
+    Otherwise: the project's toolkit container if it has one, else a new
+    one next to Embody (dev) or at / (a bare project).
     """
-    if owner is not None and owner.parent() is not None \
-            and owner.parent().name == ROOT_NAME:
-        return owner.parent().path
+    if owner is not None:
+        parent = owner.parent()
+        if parent is not None and parent.path != '/':
+            return parent.path
     existing = op('/' + ROOT_NAME)
     if existing is not None:
         return existing.path
@@ -349,10 +351,15 @@ class InstallerExt:
             self._status('Plan failed: %s' % e)
             return None
         self._writePlan(plan)
-        self._status('%d package(s) to install into %s%s'
+        note = ''
+        other = op('/' + ROOT_NAME)
+        if other is not None and other.path != plan['target'] \
+                and not plan['target'].startswith(other.path + '/'):
+            note = ' (NOTE: this project already has a toolkit at %s)' % other.path
+        self._status('%d package(s) to install into %s%s%s'
                      % (len(plan['steps']), plan['target'],
                         '; MISSING: ' + ', '.join(plan['missing_artifact'])
-                        if plan['missing_artifact'] else ''))
+                        if plan['missing_artifact'] else '', note))
         return plan
 
     def _bindChoice(self):
