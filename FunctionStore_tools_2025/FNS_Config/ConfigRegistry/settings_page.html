@@ -1,0 +1,254 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FNS tools — Settings</title>
+<style>
+  :root {
+    --bg: #191b1e; --panel: #212429; --panel2: #26292f;
+    --text: #d6d9de; --muted: #8a8f98; --line: #33373e;
+    --accent: #e8a33d; --ok: #6fbf73; --err: #d66;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font: 13px/1.5 -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text);
+    display: grid; grid-template-columns: 220px 1fr; height: 100vh;
+  }
+  nav {
+    background: var(--panel); border-right: 1px solid var(--line);
+    overflow-y: auto; padding: 10px 0;
+  }
+  nav h1 { font-size: 13px; margin: 4px 14px 10px; color: var(--accent); }
+  nav #search {
+    display: block; width: calc(100% - 20px); margin: 0 10px 10px;
+    background: var(--panel2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 4px;
+    padding: 5px 8px; font: inherit;
+  }
+  nav button {
+    display: block; width: 100%; text-align: left; padding: 6px 14px;
+    background: none; border: 0; color: var(--text); cursor: pointer;
+    font: inherit;
+  }
+  nav button:hover { background: var(--panel2); }
+  nav button.sel { background: var(--panel2); color: var(--accent); }
+  nav .ver { color: var(--muted); font-size: 11px; float: right; }
+  main { overflow-y: auto; padding: 18px 26px 60px; }
+  main h2 { font-size: 16px; margin: 0 0 2px; }
+  main .path { color: var(--muted); font-size: 11px; margin-bottom: 14px; }
+  .page { margin-bottom: 18px; }
+  .page h3 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--muted); border-bottom: 1px solid var(--line);
+    padding-bottom: 4px; margin: 0 0 8px;
+  }
+  .row {
+    display: grid; grid-template-columns: 240px 1fr; gap: 10px;
+    align-items: center; padding: 3px 0; max-width: 620px;
+  }
+  .row label { color: var(--text); }
+  .row .ro { color: var(--muted); font-style: italic; }
+  input[type=text], input[type=number], select {
+    background: var(--panel2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 4px;
+    padding: 4px 8px; font: inherit; width: 100%; max-width: 320px;
+  }
+  input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); }
+  input:focus, select:focus { outline: 1px solid var(--accent); }
+  .group { display: flex; gap: 6px; align-items: center; }
+  .group input[type=number]:not(:only-child) { width: 92px; }
+  .swatch {
+    width: 22px; height: 22px; border-radius: 4px; flex: none;
+    border: 1px solid var(--line);
+  }
+  #toast {
+    position: fixed; bottom: 14px; right: 18px; padding: 7px 14px;
+    border-radius: 5px; background: var(--panel2); border: 1px solid var(--line);
+    opacity: 0; transition: opacity .25s; pointer-events: none;
+  }
+  #toast.show { opacity: 1; }
+  #toast.ok { border-color: var(--ok); }
+  #toast.err { border-color: var(--err); }
+  .empty { color: var(--muted); margin-top: 40px; }
+</style>
+</head>
+<body>
+<nav><h1>FNS tools</h1>
+<input id="search" type="text" placeholder="Search settings…">
+<div id="nav"></div></nav>
+<main id="main"><div class="empty">Loading…</div></main>
+<div id="toast"></div>
+<script>
+'use strict';
+let STATE = null, SELECTED = null;
+
+const $ = (t, attrs, ...kids) => {
+  const el = document.createElement(t);
+  Object.assign(el, attrs || {});
+  for (const k of kids) el.append(k);
+  return el;
+};
+
+let toastTimer = 0;
+function toast(msg, ok) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + (ok ? 'ok' : 'err');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = '', 1400);
+}
+
+async function setPar(tool, par, value, label) {
+  try {
+    const r = await fetch('/api/set', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({tool, par, value}),
+    });
+    const d = await r.json();
+    if (d.ok) toast(label + ' saved', true);
+    else toast(d.why || 'rejected', false);
+    return d;
+  } catch (e) { toast(String(e), false); return {ok: false}; }
+}
+
+const NUMERIC = s => !['Toggle', 'Menu', 'StrMenu', 'Str', 'File',
+                       'Folder', 'Python'].includes(s);
+const COLOR = s => s === 'RGB' || s === 'RGBA';
+
+function componentInput(tool, g, c, onSet) {
+  if (c.readonly)
+    return $('span', {className: 'ro', title: c.mode}, String(c.val));
+  if (g.style === 'Toggle') {
+    const el = $('input', {type: 'checkbox', checked: !!c.val});
+    el.onchange = () => setPar(tool, c.name, el.checked, g.label);
+    return el;
+  }
+  if (g.menuNames) {
+    const el = $('select', {},
+      ...g.menuNames.map((n, i) =>
+        $('option', {value: n, selected: n === c.val},
+          g.menuLabels[i] || n)));
+    el.onchange = () => setPar(tool, c.name, el.value, g.label);
+    return el;
+  }
+  const numeric = NUMERIC(g.style);
+  const el = $('input', {
+    type: numeric ? 'number' : 'text',
+    value: c.val == null ? '' : c.val,
+    title: c.name,
+  });
+  if (numeric) {
+    if (g.style !== 'Int') el.step = 'any';
+    if (g.min !== undefined) el.min = g.min;
+    if (g.max !== undefined) el.max = g.max;
+  }
+  let deb = 0;
+  const fire = () => setPar(tool, c.name, el.value, g.label)
+                       .then(() => onSet && onSet(c.name, el.value));
+  el.oninput = () => { clearTimeout(deb); deb = setTimeout(fire, 500); };
+  el.onchange = () => { clearTimeout(deb); fire(); };
+  return el;
+}
+
+function control(tool, g) {
+  // one row per parGroup: every component gets its own input, side by side
+  const wrap = $('div', {className: 'group'});
+  let swatch = null, vals = g.pars.map(c => c.val);
+  const paint = () => {
+    if (!swatch) return;
+    const [r, gg, b] = vals.map(v => Math.round(255 * Math.max(0, Math.min(1, +v || 0))));
+    swatch.style.background = `rgb(${r},${gg},${b})`;
+  };
+  if (COLOR(g.style) && g.pars.length >= 3) {
+    swatch = $('span', {className: 'swatch'});
+    wrap.append(swatch);
+  }
+  g.pars.forEach((c, i) => {
+    wrap.append(componentInput(tool, g, c, (name, v) => {
+      vals[i] = v; paint();
+    }));
+  });
+  paint();
+  return wrap;
+}
+
+let QUERY = '';
+const parMatch = (g, q) =>
+  (g.label || '').toLowerCase().includes(q) ||
+  g.name.toLowerCase().includes(q) ||
+  (g.help || '').toLowerCase().includes(q);
+const toolMatch = (t, q) =>
+  !q || t.name.toLowerCase().includes(q) || t.pars.some(g => parMatch(g, q));
+
+function renderTool(name) {
+  SELECTED = name;
+  for (const b of document.querySelectorAll('nav button'))
+    b.classList.toggle('sel', b.dataset.name === name);
+  const tool = STATE.tools.find(t => t.name === name);
+  const main = document.getElementById('main');
+  main.replaceChildren();
+  if (!tool) { main.append($('div', {className: 'empty'}, 'No tool selected')); return; }
+  main.append($('h2', {}, tool.name),
+              $('div', {className: 'path'},
+                tool.path + (tool.version ? '  ·  v' + tool.version : '')));
+  // a par-level query narrows the rows, unless it only hit the tool name
+  const q = QUERY && !tool.name.toLowerCase().includes(QUERY) ? QUERY : '';
+  const pages = new Map();
+  for (const p of tool.pars) {
+    if (q && !parMatch(p, q)) continue;
+    if (!pages.has(p.page)) pages.set(p.page, []);
+    pages.get(p.page).push(p);
+  }
+  for (const [page, pars] of pages) {
+    const sec = $('div', {className: 'page'}, $('h3', {}, page));
+    pars.sort((a, b) => a.order - b.order);
+    for (const p of pars)
+      sec.append($('div', {className: 'row'},
+                   $('label', {title: p.help ? p.name + ' — ' + p.help
+                                             : p.name},
+                     p.label || p.name),
+                   control(tool.name, p)));
+    main.append(sec);
+  }
+  if (!pages.size)
+    main.append($('div', {className: 'empty'}, 'No matching settings.'));
+}
+
+function renderNav() {
+  const nav = document.getElementById('nav');
+  nav.replaceChildren();
+  const visible = STATE.tools.filter(t => toolMatch(t, QUERY));
+  for (const t of visible) {
+    const b = $('button', {}, t.name,
+                $('span', {className: 'ver'}, t.version || ''));
+    b.dataset.name = t.name;
+    b.onclick = () => renderTool(t.name);
+    nav.append(b);
+  }
+  if (!visible.length) {
+    document.getElementById('main').replaceChildren(
+      $('div', {className: 'empty'}, QUERY ? 'No matches.' :
+        'No registered tools expose settings.'));
+    return;
+  }
+  renderTool(visible.some(t => t.name === SELECTED)
+             ? SELECTED : visible[0].name);
+}
+
+document.getElementById('search').oninput = e => {
+  QUERY = e.target.value.trim().toLowerCase();
+  renderNav();
+};
+
+async function load() {
+  const r = await fetch('/api/state');
+  STATE = await r.json();
+  renderNav();
+}
+load();
+</script>
+</body>
+</html>

@@ -312,8 +312,15 @@ def ExportPackage(comp):
     """
     os.makedirs(_repo(DIST_DIR), exist_ok=True)
     dest = _repo(DIST_DIR, comp.name + '.tox')
-    op.Embody.ExportPortableTox(target=comp, save_path=dest)
-    if not os.path.exists(dest):
+    before = os.path.getmtime(dest) if os.path.exists(dest) else None
+    ok = op.Embody.ExportPortableTox(target=comp, save_path=dest)
+    # A failed export (aborted pre_release hook) leaves the OLD file on
+    # disk. Hashing it would publish a stale artifact under a fresh version
+    # -- the silent mismatch that bit v2.12.1 -- so a requested export that
+    # did not rewrite the file returns None and Build reports it loudly.
+    if not ok or not os.path.exists(dest):
+        return None
+    if before is not None and os.path.getmtime(dest) == before:
         return None
     return {'path': DIST_DIR + '/' + comp.name + '.tox',
             'bytes': os.path.getsize(dest),
@@ -380,6 +387,7 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
 
     integrations = Integrations()
     want = set(export) if isinstance(export, (list, tuple, set)) else None
+    export_failed = []
 
     packages = []
     for comp in Packages():
@@ -418,6 +426,10 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             art = ExportPackage(comp)
             if art:
                 entry['artifact'] = art
+            else:
+                # no artifact key at all: Stage() then reports it missing
+                # and refuses, instead of shipping yesterday's bytes
+                export_failed.append(name)
         else:
             # Not re-exporting: hash whatever is already in dist/ so the
             # manifest describes the artifacts that actually exist on disk,
@@ -488,5 +500,6 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             'packages': len(packages),
             'core': len(doc['core']),
             'with_artifact': sum(1 for p in packages if 'artifact' in p),
+            'export_failed': export_failed,
             'uncategorized': [p['name'] for p in packages
                               if p['category'] == 'Uncategorized']}

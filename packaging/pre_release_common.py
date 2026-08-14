@@ -18,6 +18,33 @@
 
 _c0 = me.parent()
 
+# --- retire root-panel bindings from the artifact ------------------------
+# Authored tools bind pars to hand-made control pars on the toolkit ROOT
+# (parent.FNS.par.*). No install target has those pars, so shipped binds
+# dangle and every install cooks with errors. Freeze them to their stored
+# constant: the ConfigRegistry settings UI is the control surface installs
+# get instead.
+#
+# DELIBERATELY `.val`, never `.eval()`: evaluating a dangling reference on
+# the same-frame staged copy aborts the whole hook run at a level no
+# `except` in this file can catch (cost a day -- v2.12.1 shipped three
+# stale artifacts because of it). The stored constant is also the better
+# value: it is the authored default, not whatever the author's live root
+# panel happened to be set to at export time.
+for _c in [_c0] + _c0.findChildren(type=COMP):
+    for _p in _c.customPars:
+        try:
+            _bound = _p.bindExpr and 'parent.FNS' in _p.bindExpr
+            _exprd = (_p.mode == ParMode.EXPRESSION and _p.expr
+                      and 'parent.FNS' in _p.expr)
+            if not (_bound or _exprd):
+                continue
+            _v = _p.val
+            _p.mode = ParMode.CONSTANT
+            _p.val = _v
+        except Exception:
+            pass
+
 for _t in _c0.findChildren(name='vc_data', type=tableDAT):
     try:
         _t.destroy()
