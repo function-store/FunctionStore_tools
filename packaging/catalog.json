@@ -1,182 +1,186 @@
 {
-  "_comment": [
-    "CURATED package metadata, merged into manifest.json by build_manifest.py.",
-    "Everything else in the manifest is derived live from the project -- this file",
-    "holds only what a machine cannot know: category and human description.",
-    "Descriptions were seeded by inspection and NEED OWNER REVIEW; correct them here",
-    "and re-run the generator. A package missing from this file still ships, with",
-    "category 'Uncategorized' and an empty description."
-  ],
-  "categories": [
-    "Core",
-    "Surfaces",
-    "Parameters",
-    "Network",
-    "Media & Output",
-    "Control",
-    "Workflow",
-    "Developer"
-  ],
-  "packages": {
-    "FNS_Config": {
-      "category": "Core",
-      "description": "Settings persistence for every tool: one aggregated JSON in the user palette, so preferences follow you across projects and survive toolkit updates."
-    },
-    "FNS_Toolbar": {
-      "category": "Core",
-      "description": "The toolbar surface: registry, mirror rail and the Configurator UI for ordering, grouping and hiding bar widgets."
-    },
-    "FNS_Navbar": {
-      "category": "Core",
-      "description": "The pane-bar surface: registry plus parent-hierarchy navigation, path injection and drag-drop hijack."
-    },
-    "FNS_MainMenu": {
-      "category": "Core",
-      "description": "The main-menu surface: registry and Configurator for TD's top bar, including project-name display."
-    },
-    "FNS_OpMenu": {
-      "category": "Core",
-      "description": "The operator-menu surface: contributes search words, row decorations, right-click items and filter stages to TD's OP Create dialog."
-    },
-    "FNS_HotkeyManager": {
-      "category": "Core",
-      "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit."
-    },
-    "CustomParTools": {
-      "category": "Parameters",
-      "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion."
-    },
-    "QuickParCustom": {
-      "category": "Parameters",
-      "description": "Fast custom-parameter editing on the focused operator."
-    },
-    "ParRandomizer": {
-      "category": "Parameters",
-      "description": "Randomize parameter values within range, for quick exploration."
-    },
-    "ClearPars": {
-      "category": "Parameters",
-      "description": "Reset custom parameters back to their defaults."
-    },
-    "ParOPDrop": {
-      "category": "Parameters",
-      "description": "Drop an operator onto a parameter to wire the reference for you."
-    },
-    "ExprHotStrings": {
-      "category": "Parameters",
-      "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field."
-    },
-    "AltSelect": {
-      "category": "Network",
-      "description": "Alternative selection helpers for operators in the network editor."
-    },
-    "AutoCombine": {
-      "category": "Network",
-      "description": "Combine selected operators into a sensible composite automatically."
-    },
-    "QuickCollapse": {
-      "category": "Network",
-      "description": "Collapse a selection into a component, with an optional customize dialog."
-    },
-    "SwapOps": {
-      "category": "Network",
-      "description": "Swap one operator for another while keeping connections intact."
-    },
-    "SwitchOPs": {
-      "category": "Network",
-      "description": "Switch between operators in place."
-    },
-    "OpTemplates": {
-      "category": "Network",
-      "description": "A library of preconfigured operator templates to drop into a network."
-    },
-    "OpToClipboard": {
-      "category": "Network",
-      "description": "Copy operators to the system clipboard."
-    },
-    "paste_from_clipboard": {
-      "category": "Network",
-      "description": "Paste images and data from the system clipboard into TouchDesigner."
-    },
-    "QuickMarks": {
-      "category": "Network",
-      "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design."
-    },
-    "QuickPane": {
-      "category": "Workflow",
-      "description": "Pane layout shortcuts."
-    },
-    "QuickTime": {
-      "category": "Workflow",
-      "description": "Timeline and time-related shortcuts."
-    },
-    "ResetPLS1": {
-      "category": "Workflow",
-      "description": "Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0."
-    },
-    "OpenExt": {
-      "category": "Developer",
-      "description": "Open an operator's extension source quickly."
-    },
-    "VSCodeTools": {
-      "category": "Developer",
-      "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs."
-    },
-    "UPDATER": {
-      "category": "Developer",
-      "description": "In-place toolkit updates, with settings preserved across the replacement."
-    },
-    "BorderlessTD": {
-      "category": "Surfaces",
-      "description": "Borderless TouchDesigner window, plus timeline hiding."
-    },
-    "tools_ui": {
-      "category": "Surfaces",
-      "description": "The tabbed panel that hosts the toolkit's larger tool UIs."
-    },
-    "ColorUI": {
-      "category": "Surfaces",
-      "description": "Operator and family colour palettes, with the active palette roaming through config."
-    },
-    "MISC": {
-      "category": "Workflow",
-      "description": "Assorted small utilities that ship together (hog CHOP, mouse input and friends)."
-    },
-    "MY_HOTKEYS": {
-      "category": "Workflow",
-      "description": "Convenience hotkeys over stock TouchDesigner actions: open parameters, open the COMP editor, focus the palette search."
-    },
-    "OUTPUT": {
-      "category": "Media & Output",
-      "description": "Output window and display routing helpers."
-    },
-    "GlobalOutSelect": {
-      "category": "Media & Output",
-      "description": "Pick which operator feeds the global output, from anywhere in the project."
-    },
-    "GlobalVolControl": {
-      "category": "Media & Output",
-      "description": "Global audio volume control."
-    },
-    "HydroHomie": {
-      "category": "Media & Output",
-      "description": "Hydra-style live coding surface inside TouchDesigner."
-    },
-    "AutoRes": {
-      "category": "Media & Output",
-      "description": "Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes."
-    },
-    "SetSmoothness": {
-      "category": "Control",
-      "description": "Set input smoothing/filtering on parameters."
-    },
-    "midiMapper": {
-      "category": "Control",
-      "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config."
-    },
-    "oscMapper": {
-      "category": "Control",
-      "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design."
-    }
+ "_comment": [
+  "CURATED package metadata, merged into manifest.json by build_manifest.py.",
+  "Everything else in the manifest is derived live from the project -- this file",
+  "holds only what a machine cannot know: category and human description.",
+  "Descriptions were seeded by inspection and NEED OWNER REVIEW; correct them here",
+  "and re-run the generator. A package missing from this file still ships, with",
+  "category 'Uncategorized' and an empty description."
+ ],
+ "categories": [
+  "Core",
+  "Surfaces",
+  "Parameters",
+  "Network",
+  "Media & Output",
+  "Control",
+  "Workflow",
+  "Developer"
+ ],
+ "packages": {
+  "AltSelect": {
+   "category": "Network",
+   "description": "Alternative selection helpers for operators in the network editor."
+  },
+  "AutoCombine": {
+   "category": "Network",
+   "description": "Combine selected operators into a sensible composite automatically."
+  },
+  "AutoRes": {
+   "category": "Media & Output",
+   "description": "Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes."
+  },
+  "BorderlessTD": {
+   "category": "Surfaces",
+   "description": "Borderless TouchDesigner window, plus timeline hiding."
+  },
+  "ClearPars": {
+   "category": "Parameters",
+   "description": "Reset custom parameters back to their defaults."
+  },
+  "ColorUI": {
+   "category": "Surfaces",
+   "description": "Operator and family colour palettes, with the active palette roaming through config."
+  },
+  "CustomParTools": {
+   "category": "Parameters",
+   "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion."
+  },
+  "ExprHotStrings": {
+   "category": "Parameters",
+   "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field."
+  },
+  "FNS_Config": {
+   "category": "Core",
+   "description": "Settings persistence for every tool: one aggregated JSON in the user palette, so preferences follow you across projects and survive toolkit updates."
+  },
+  "FNS_HotkeyManager": {
+   "category": "Core",
+   "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit."
+  },
+  "FNS_MainMenu": {
+   "category": "Core",
+   "description": "The main-menu surface: registry and Configurator for TD's top bar, including project-name display."
+  },
+  "FNS_Navbar": {
+   "category": "Core",
+   "description": "The pane-bar surface: registry plus parent-hierarchy navigation, path injection and drag-drop hijack."
+  },
+  "FNS_OpMenu": {
+   "category": "Core",
+   "description": "The operator-menu surface: contributes search words, row decorations, right-click items and filter stages to TD's OP Create dialog."
+  },
+  "FNS_Toolbar": {
+   "category": "Core",
+   "description": "The toolbar surface: registry, mirror rail and the Configurator UI for ordering, grouping and hiding bar widgets."
+  },
+  "GlobalOutSelect": {
+   "category": "Media & Output",
+   "description": "Pick which operator feeds the global output, from anywhere in the project."
+  },
+  "GlobalVolControl": {
+   "category": "Media & Output",
+   "description": "Global audio volume control."
+  },
+  "HydroHomie": {
+   "category": "Media & Output",
+   "description": "Hydra-style live coding surface inside TouchDesigner."
+  },
+  "midiMapper": {
+   "category": "Control",
+   "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config."
+  },
+  "MISC": {
+   "category": "Workflow",
+   "description": "Assorted small utilities that ship together (hog CHOP, mouse input and friends)."
+  },
+  "MY_HOTKEYS": {
+   "category": "Workflow",
+   "description": "Convenience hotkeys over stock TouchDesigner actions: open parameters, open the COMP editor, focus the palette search."
+  },
+  "OpenExt": {
+   "category": "Developer",
+   "description": "Open an operator's extension source quickly."
+  },
+  "OpTemplates": {
+   "category": "Network",
+   "description": "A library of preconfigured operator templates to drop into a network."
+  },
+  "OpToClipboard": {
+   "category": "Network",
+   "description": "Copy operators to the system clipboard."
+  },
+  "oscMapper": {
+   "category": "Control",
+   "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design."
+  },
+  "OUTPUT": {
+   "category": "Media & Output",
+   "description": "Output window and display routing helpers."
+  },
+  "PaneTypeRegistry": {
+   "category": "Core",
+   "description": "Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks."
+  },
+  "ParOPDrop": {
+   "category": "Parameters",
+   "description": "Drop an operator onto a parameter to wire the reference for you."
+  },
+  "ParRandomizer": {
+   "category": "Parameters",
+   "description": "Randomize parameter values within range, for quick exploration."
+  },
+  "paste_from_clipboard": {
+   "category": "Network",
+   "description": "Paste images and data from the system clipboard into TouchDesigner."
+  },
+  "QuickCollapse": {
+   "category": "Network",
+   "description": "Collapse a selection into a component, with an optional customize dialog."
+  },
+  "QuickMarks": {
+   "category": "Network",
+   "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design."
+  },
+  "QuickPane": {
+   "category": "Workflow",
+   "description": "Pane layout shortcuts."
+  },
+  "QuickParCustom": {
+   "category": "Parameters",
+   "description": "Fast custom-parameter editing on the focused operator."
+  },
+  "QuickTime": {
+   "category": "Workflow",
+   "description": "Timeline and time-related shortcuts."
+  },
+  "ResetPLS1": {
+   "category": "Workflow",
+   "description": "Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0."
+  },
+  "SetSmoothness": {
+   "category": "Control",
+   "description": "Set input smoothing/filtering on parameters."
+  },
+  "SwapOps": {
+   "category": "Network",
+   "description": "Swap one operator for another while keeping connections intact."
+  },
+  "SwitchOPs": {
+   "category": "Network",
+   "description": "Switch between operators in place."
+  },
+  "tools_ui": {
+   "category": "Surfaces",
+   "description": "The tabbed panel that hosts the toolkit's larger tool UIs."
+  },
+  "UPDATER": {
+   "category": "Developer",
+   "description": "In-place toolkit updates, with settings preserved across the replacement."
+  },
+  "VSCodeTools": {
+   "category": "Developer",
+   "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs."
   }
+ }
 }

@@ -49,25 +49,30 @@ TOOLKIT = '/FunctionStore_tools_2025'
 BASE_URL = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools'
 
 # Registry host name -> the core package that owns that registry's master.
+# PaneTypeRegistry's package IS the master (no FNS_ wrapper): it already
+# lives as its own tracked tox with its own identity (RegistryScheme.md),
+# so the toolkit ships an instance of it rather than re-homing it.
 REGISTRY_OWNER = {
     'ConfigRegistry': 'FNS_Config',
     'ToolbarRegistry': 'FNS_Toolbar',
     'NavbarRegistry': 'FNS_Navbar',
     'MainMenuRegistry': 'FNS_MainMenu',
     'OpMenuRegistry': 'FNS_OpMenu',
+    'PaneTypeRegistry': 'PaneTypeRegistry',
 }
 SURFACE_OF = {
     'ToolbarRegistry': 'toolbar',
     'NavbarRegistry': 'navbar',
     'MainMenuRegistry': 'mainmenu',
     'OpMenuRegistry': 'opmenu',
+    'PaneTypeRegistry': 'panebar',
 }
 # Packages that ARE the infrastructure; always installed, never optional.
 # UPDATER is core because it is how an install ever becomes a newer install:
 # leaving it optional means the one package that can fetch updates is the one
 # a user can accidentally decline.
 CORE = ('FNS_Config', 'FNS_Toolbar', 'FNS_Navbar', 'FNS_MainMenu',
-        'FNS_OpMenu', 'FNS_HotkeyManager', 'UPDATER')
+        'FNS_OpMenu', 'FNS_HotkeyManager', 'UPDATER', 'PaneTypeRegistry')
 
 
 def _root():
