@@ -132,13 +132,14 @@
 
 <dialog id="dlg"><div class="dlg">
   <h3 style="margin:0 0 10px">Your selection</h3>
-  <p class="muted" style="color:var(--muted);margin:0 0 12px;font-size:13.5px">
+  <p class="muted" id="dlghint" style="color:var(--muted);margin:0 0 12px;font-size:13.5px">
     Save this as <code>selection.json</code> next to the installer COMP, or paste the
     list into the toolkit's installer.
   </p>
   <pre id="out"></pre>
   <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end">
     <button id="close">Close</button>
+    <button class="primary" id="doinstall" hidden>Install</button>
   </div>
 </div></dialog>
 
@@ -147,6 +148,17 @@
 (function () {
   var M = window.FNS_MANIFEST;
   var listEl = document.getElementById('list');
+  // Served by the bootstrap's Web Server DAT and the store is still being
+  // fetched: say so and poll. /manifest.js flips to the real catalog (and
+  // FNS_SERVED) once the refresh lands.
+  if (window.FNS_REFRESHING) {
+    listEl.innerHTML = '<div class="empty">Downloading the package catalog ' +
+      'from the bucket…<br>this page refreshes itself.</div>';
+    document.getElementById('sub').textContent = 'refreshing store…';
+    setTimeout(function () { location.reload(); }, 2500);
+    return;
+  }
+  var served = !!window.FNS_SERVED;
   if (!M) {
     listEl.innerHTML = '<div class="empty">No <code>manifest.js</code> found.<br>' +
       'Regenerate it from TouchDesigner:<br><br>' +
@@ -359,7 +371,34 @@
     if (next) document.documentElement.setAttribute('data-theme', next);
     else document.documentElement.removeAttribute('data-theme');
   });
+  // Served mode talks straight to the installer COMP; static mode
+  // downloads a selection.json to feed it by hand.
+  if (served) {
+    document.getElementById('save').textContent = 'Review install…';
+    document.getElementById('dlghint').textContent =
+      'This goes straight to the installer in your project.';
+  }
+  function showDialog(text, installable) {
+    var dlg = document.getElementById('dlg');
+    document.getElementById('out').textContent = text;
+    document.getElementById('doinstall').hidden = !installable;
+    if (!dlg.open) dlg.showModal();
+  }
+  function post(uri, body, onDone) {
+    fetch(uri, {method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: body})
+      .then(function (r) { return r.json(); })
+      .then(onDone)
+      .catch(function (e) { showDialog('Request failed: ' + e, false); });
+  }
   document.getElementById('save').addEventListener('click', function () {
+    if (served) {
+      showDialog('Planning…', false);
+      post('/selection', JSON.stringify(selection(), null, 1) + '\n',
+           function (res) { showDialog(res.text, !!res.ok); });
+      return;
+    }
     var blob = new Blob([JSON.stringify(selection(), null, 1) + '\n'],
                         {type: 'application/json'});
     var a = document.createElement('a');
@@ -367,6 +406,10 @@
     a.download = 'selection.json';
     a.click();
     URL.revokeObjectURL(a.href);
+  });
+  document.getElementById('doinstall').addEventListener('click', function () {
+    showDialog('Installing…', false);
+    post('/install', '{}', function (res) { showDialog(res.text, false); });
   });
   document.getElementById('copy').addEventListener('click', function () {
     var dlg = document.getElementById('dlg');

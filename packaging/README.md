@@ -70,30 +70,63 @@ A shippable package is a depth-1 COMP that is a tracked `pi_suspect` with its
 own `.tox`. That is already the project's unit of distribution, so no second
 list has to be maintained by hand — add a tool the normal way and it appears.
 
-## The installer COMP
+## The droppable rails
 
-`packaging/dist/FNS_Installer.tox` (~4 KB) is the droppable rail: put it in
-a project that has nothing else installed, point **Selection** at a
-`selection.json` from the configurator, pulse **Plan** to see what would
-happen, then **Install**.
+`packaging/dist/FunctionStore_tools_2025.tox` (~150 KB) is the **one-drop
+bootstrap**: the (empty) toolkit root itself, carrying the installer COMP,
+a copy of the UPDATER package, and the vendored palette webBrowser
+(`packaging/webBrowser.tox`). The container you drop IS the install
+target, so a bare project goes from nothing to installed without leaving
+TD. Its UPDATER copy needs no special adoption: updates compare
+`Pkgversion` read live off the component, so the first update pass treats
+it like any installed package (self-update path included). Deliberately a
+plain container — the dev root's Active/UI parameter surface belongs to a
+populated toolkit, not to the shell the installer fills.
 
-It is a BUILD ARTIFACT, not a hand-made component — it embeds a snapshot of
-`InstallerExt.py`, so editing that file means rebuilding:
+**The configurator is served, not downloaded.** The installer carries the
+picker page (embedded at build time) and a Web Server DAT, dormant until
+the **Pick Tools** pulse: it serves `http://127.0.0.1:<Port>/` and opens
+it in the sibling webBrowser panel (system browser as fallback). The page
+gets its catalog from `/manifest.js` — the store's manifest, and when the
+store is empty the server kicks the sibling UPDATER's **Refresh Store**
+while the page shows "downloading" and polls. The selection comes back as
+a POST: plan shown in the page, **Install** run from it. No file leaves
+the browser; the same page still works as a plain double-clicked HTML
+(static mode = download `selection.json`).
+
+`packaging/dist/FNS_Installer.tox` (~14 KB) is the bare installer, for a
+project that already has a toolkit container. Same served picker, minus
+the webBrowser panel — Pick Tools opens the system browser.
+
+Both are BUILD ARTIFACTS, not hand-made components — they embed snapshots
+of `InstallerExt.py` and `configurator/index.html`, so editing either
+means rebuilding. The bootstrap also embeds `dist/UPDATER.tox`, so
+re-export UPDATER first when it changed (`Build(export=['UPDATER'])`):
 
 ```python
-exec(open('packaging/build_installer.py').read()); result = BuildInstaller()
+exec(open('packaging/build_installer.py').read())
+result = BuildInstaller()
+result = BuildBootstrap()
 ```
 
 `InstallerExt.py` is the single implementation; `install.py` is a thin
-script wrapper over the same code, so the droppable rail and the headless
+script wrapper over the same code, so the droppable rails and the headless
 rail cannot drift apart.
 
 ## End to end
 
-1. Open `configurator/configurator-standalone.html`, pick tools, download
-   `selection.json`.
-2. Drop `dist/FNS_Installer.tox` into the target project.
-3. Point **Selection** at the downloaded file, pulse **Plan**, then **Install**.
+1. Drop `dist/FunctionStore_tools_2025.tox` (from the bucket) into the
+   project.
+2. On its `FNS_Installer`, pulse **Pick Tools**. First run: the page says
+   it is downloading the catalog while the store refreshes.
+3. Pick tools in the panel, hit **Review install…**, read the plan, hit
+   **Install**. Packages land in the dropped container.
+
+The manual rail still exists: **Selection** takes a `selection.json`
+(from `configurator/configurator-standalone.html` or the served page's
+static mode), **Plan**, **Install**. **Manifest** may stay blank — it
+defaults to the palette store's manifest, and artifacts are found beside
+whichever manifest is read.
 
 Or headless, no COMP:
 
@@ -135,7 +168,8 @@ python3 packaging/upload.py
 ```
 <release>/manifest.json      immutable snapshot
 <release>/<Package>.tox      immutable artifacts
-<release>/FNS_Installer.tox  so a bare project can bootstrap
+<release>/FNS_Installer.tox               bare installer (root already exists)
+<release>/FunctionStore_tools_2025.tox    one-drop bootstrap root
 manifest.json                ROLLING pointer to the newest release
 ```
 

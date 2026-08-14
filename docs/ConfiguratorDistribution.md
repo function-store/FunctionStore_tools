@@ -539,9 +539,11 @@ bytes that disagree with the hashes an installer will check is worse than
 not publishing:
 
 ```
-<release>/manifest.json      immutable snapshot
-<release>/<Package>.tox      immutable artifacts
-<release>/FNS_Installer.tox  so a bare project can bootstrap
+<release>/manifest.json                   immutable snapshot
+<release>/<Package>.tox                   immutable artifacts
+<release>/FNS_Installer.tox               bare installer (root already exists)
+<release>/FunctionStore_tools_2025.tox    one-drop bootstrap: the toolkit
+                                          root carrying installer + UPDATER
 manifest.json                ROLLING pointer to the newest release
 ```
 

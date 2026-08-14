@@ -72,13 +72,38 @@ def _order(names, index):
     return out
 
 
-def DefaultTarget():
-    """Where packages land: the toolkit container if this project has one,
-    else a new sibling of Embody -- the project's stable home."""
-    existing = op('/FunctionStore_tools_2025')
+ROOT_NAME = 'FunctionStore_tools_2025'
+
+
+def DefaultTarget(owner=None):
+    """Where packages land.
+
+    An installer that ships INSIDE the toolkit root (the bootstrap .tox)
+    installs into its own parent -- that is the whole point of the
+    bootstrap: the container you dropped IS the install target, wherever
+    you dropped it. Otherwise: the project's toolkit container if it has
+    one, else a new one next to Embody (dev) or at / (a bare project).
+    """
+    if owner is not None and owner.parent() is not None \
+            and owner.parent().name == ROOT_NAME:
+        return owner.parent().path
+    existing = op('/' + ROOT_NAME)
     if existing is not None:
         return existing.path
-    return op.Embody.parent().path + '/FunctionStore_tools_2025'
+    embody = getattr(op, 'Embody', None)
+    home = embody.parent().path if embody is not None else '/'
+    return home.rstrip('/') + '/' + ROOT_NAME
+
+
+def DefaultManifest():
+    """The manifest to read when none is given: the palette store's, if the
+    store has ever been refreshed -- artifacts sit beside it, so a user
+    project needs no further configuration -- else the repo's (dev)."""
+    store = ('%s/FNStools_ext/store/manifest.json'
+             % app.userPaletteFolder).replace('\\', '/')
+    if os.path.exists(store):
+        return store
+    return DEFAULT_MANIFEST
 
 
 def _artifactPath(art, name, manifest_path):
@@ -113,6 +138,8 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
 
     ordered = _order([n for n in wanted if n in index], index)
     tgt = target or DefaultTarget()
+    if isinstance(tgt, OP):
+        tgt = tgt.path
 
     steps, missing = [], []
     for name in ordered:
@@ -137,10 +164,23 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
 
 def _verify(comp):
     """Installed means the COMP exists, its extensions are up and it
-    reports no errors -- not merely that loadTox returned."""
+    reports no errors -- not merely that loadTox returned.
+
+    An error is given ONE forced recook before it counts: expressions
+    that reference the package's own extension (`ext.X...`) evaluate
+    during loadTox BEFORE the extension exists, and the resulting error
+    sticks on nodes that nothing recooks (seen on FNS_HotkeyManager's
+    parexec). Recooking with the extension up separates that init-order
+    noise from real breakage."""
     if comp is None or not comp.valid:
         return {'ok': False, 'why': 'comp missing after load'}
     errs = comp.errors(recurse=True)
+    if errs:
+        try:
+            comp.cook(force=True, recurse=True)
+        except Exception:
+            pass
+        errs = comp.errors(recurse=True)
     return {'ok': not errs, 'why': (errs.splitlines()[0][:120] if errs else ''),
             'ops': len(comp.findChildren()),
             'extensions_ready': bool(comp.extensionsReady)}
@@ -208,7 +248,7 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
     tgt = plan['target']
     parent_comp = op(tgt)
     if parent_comp is None:
-        home = op(tgt.rsplit('/', 1)[0])
+        home = op(tgt.rsplit('/', 1)[0] or '/')
         parent_comp = home.create(baseCOMP, tgt.rsplit('/', 1)[1])
 
     results = []
@@ -290,10 +330,16 @@ class InstallerExt:
 
     def Plan(self):
         """Dry run: fill the plan table, change nothing."""
+        selection = self._par('Selectionfile')
+        if not selection:
+            self._status('Set Selection to a selection.json from the '
+                         'configurator first.')
+            return None
         try:
-            plan = ResolvePlan(self._par('Selectionfile'),
-                               self._par('Manifestfile') or DEFAULT_MANIFEST,
-                               self._par('Target') or None)
+            plan = ResolvePlan(selection,
+                               self._par('Manifestfile') or DefaultManifest(),
+                               self._par('Target')
+                               or DefaultTarget(self.ownerComp))
         except Exception as e:
             self._status('Plan failed: %s' % e)
             return None
@@ -339,3 +385,139 @@ class InstallerExt:
 
     def onParInstall(self, _par):
         self.Install()
+
+    # --- the served configurator (bootstrap rail) ---------------------
+    #
+    # A Web Server DAT inside this COMP serves the picker page and takes
+    # the selection back as a POST -- no file leaves the browser, no par
+    # has to be pointed anywhere. The page lives in ./configurator_html
+    # (embedded at build time); the manifest it shows is whatever
+    # DefaultManifest() resolves to, and when neither store nor repo has
+    # one yet the sibling UPDATER is asked to refresh the store while the
+    # page shows "downloading" and polls.
+
+    def _port(self):
+        try:
+            return int(self._par('Port') or 9877)
+        except ValueError:
+            return 9877
+
+    def Configure(self):
+        """Serve the picker and show it: the sibling webBrowser COMP if
+        this installer ships inside the bootstrap root, else the system
+        browser."""
+        ws = self.ownerComp.op('webserver')
+        if ws is None:
+            self._status('no webserver DAT -- rebuild the installer')
+            return
+        ws.par.port = self._port()
+        ws.par.active = True
+        url = 'http://127.0.0.1:%d/' % self._port()
+        parent = self.ownerComp.parent()
+        browser = parent.op('webBrowser') if parent is not None else None
+        if browser is not None:
+            browser.par.Address = url
+            browser.openViewer()
+        else:
+            import webbrowser
+            webbrowser.open(url)
+        self._status('configurator at %s' % url)
+
+    def onParConfigure(self, _par):
+        self.Configure()
+
+    def _refreshStore(self):
+        """Kick the sibling UPDATER's store refresh; harmless if one is
+        already running (it refuses)."""
+        parent = self.ownerComp.parent()
+        upd = parent.op('UPDATER') if parent is not None else None
+        refresh = getattr(upd, 'RefreshStore', None) if upd is not None else None
+        if refresh is None:
+            return 'no UPDATER next to the installer -- refresh the store yourself'
+        try:
+            refresh()
+        except Exception as e:
+            return 'store refresh failed to start: %s' % e
+        return ''
+
+    def _planText(self, plan):
+        lines = ['install into %s' % plan['target'], '']
+        for s in plan['steps']:
+            lines.append('%-26s %-5s %s' % (s['name'], s['kind'],
+                         'present, kept' if s['present'] else 'install'))
+        for n in plan['missing_artifact']:
+            lines.append('%-26s %s' % (n, 'NO ARTIFACT'))
+        for n in plan['unknown_packages']:
+            lines.append('%-26s %s' % (n, 'NOT IN MANIFEST'))
+        return '\n'.join(lines)
+
+    def ServeRequest(self, request, response):
+        """onHTTPRequest for the embedded Web Server DAT."""
+        uri = request.get('uri', '/')
+        method = request.get('method', 'GET')
+        response['statusCode'], response['statusReason'] = 200, 'OK'
+        try:
+            if method == 'GET' and uri in ('/', '/index.html'):
+                page = self.ownerComp.op('configurator_html')
+                response['Content-Type'] = 'text/html; charset=utf-8'
+                response['data'] = page.text if page else 'configurator_html missing'
+            elif method == 'GET' and uri == '/manifest.js':
+                response['Content-Type'] = 'text/javascript; charset=utf-8'
+                path = self._par('Manifestfile') or DefaultManifest()
+                full = path if os.path.isabs(path) else RepoPath(path)
+                if os.path.exists(full):
+                    with open(full, 'r', encoding='utf-8') as f:
+                        response['data'] = ('window.FNS_SERVED = true;\n'
+                                            'window.FNS_MANIFEST = %s;\n' % f.read())
+                else:
+                    why = self._refreshStore()
+                    response['data'] = ('window.FNS_REFRESHING = true;%s\n'
+                                        % (' // ' + why if why else ''))
+            elif method == 'POST' and uri == '/selection':
+                sel_dir = ('%s/FNStools_ext' % app.userPaletteFolder).replace('\\', '/')
+                os.makedirs(sel_dir, exist_ok=True)
+                sel_path = sel_dir + '/selection.json'
+                data = request.get('data', '')
+                if isinstance(data, bytes):
+                    data = data.decode('utf-8')
+                json.loads(data)          # refuse to write junk
+                with open(sel_path, 'w', encoding='utf-8') as f:
+                    f.write(data)
+                self.ownerComp.par.Selectionfile = sel_path
+                plan = self.Plan()
+                response['Content-Type'] = 'application/json'
+                if plan is None or plan['missing_artifact'] or not plan['steps']:
+                    text = (self._planText(plan) if plan
+                            else self._par('Status') or 'plan failed')
+                    response['data'] = json.dumps({'ok': False, 'text': text})
+                else:
+                    response['data'] = json.dumps({'ok': True,
+                                                   'text': self._planText(plan)})
+            elif method == 'POST' and uri == '/install':
+                res = self.Install()
+                response['Content-Type'] = 'application/json'
+                if res is None:
+                    response['data'] = json.dumps(
+                        {'ok': False, 'text': self._par('Status') or 'install failed'})
+                else:
+                    lines = ['installed %d, failed %d'
+                             % (len(res['installed']), len(res['failed']))]
+                    lines += ['  %s' % n for n in res['installed']]
+                    lines += ['  FAILED %s' % n for n in res['failed']]
+                    response['data'] = json.dumps(
+                        {'ok': not res['failed'], 'text': '\n'.join(lines)})
+                    if not res['failed']:
+                        # Done: stop serving, AFTER this response has gone
+                        # out. Otherwise the server stays on forever and
+                        # gets saved into the .toe still listening.
+                        ws = self.ownerComp.op('webserver')
+                        if ws is not None:
+                            run("op(%r).par.active = False" % ws.path,
+                                delayMilliSeconds=3000)
+            else:
+                response['statusCode'], response['statusReason'] = 404, 'Not Found'
+                response['data'] = 'not found'
+        except Exception as e:
+            response['statusCode'], response['statusReason'] = 500, 'Error'
+            response['data'] = 'server error: %s' % e
+        return response
