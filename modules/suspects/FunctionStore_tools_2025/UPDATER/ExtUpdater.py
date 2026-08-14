@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtUpdater
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.10.toe
+Saveorigin : FunctionStore_tools_2025_DEV.13.toe
 Saveversion : 2025.33070
 Info Header End'''
 """Bucket + manifest updates for the toolkit.
@@ -708,6 +708,11 @@ class ExtUpdater:
 		queue = job.get('apply') or []
 		if not queue:
 			self._settleStaleErrors(job)
+			if job.get('results') and not job.get('failed'):
+				# next project open offers this release's notes, once
+				root = self._root(job.get('target'))
+				if root is not None:
+					root.store('updater_show_changelog', True)
 			job['stage'] = 'done'
 			self._report()
 			return
@@ -729,6 +734,30 @@ class ExtUpdater:
 	def Drain(self):
 		"""Public entry so a stalled pass can be nudged from the textport."""
 		self._drain()
+
+	# ------------------------------------------------------------------
+	# post-update changelog prompt (execute1 calls this on project start)
+	# ------------------------------------------------------------------
+
+	def ShowChangelogAfterUpdate(self):
+		"""Offer this release's notes once, on the first open after an
+		update. The flag is stored on the toolkit root by a successful
+		update pass and cleared here; the notes come from the store
+		manifest -- they ride the release, no web anything."""
+		root = self.ownerComp.parent()
+		if root is None or not root.fetch('updater_show_changelog', False, search=False):
+			return
+		root.unstore('updater_show_changelog')
+		man = self.StoreManifest() or {}
+		label = man.get('release', '')
+		notes = str(man.get('notes', '')).strip()
+		text = 'FunctionStore tools updated%s.' % (' to %s' % label if label else '')
+		if notes:
+			text += '\n\n' + notes[:900]
+		try:
+			ui.messageBox('FNS tools updated', text, buttons=['OK'])
+		except Exception as e:
+			debug('UPDATER: changelog prompt failed: %s' % e)
 
 	def _settleStaleErrors(self, job):
 		"""After the whole pass: recook packages that still flag errors.

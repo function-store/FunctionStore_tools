@@ -762,6 +762,16 @@ class RegistryBase:
 
 		new_registry = sys_comp.copy(self.ownerComp, name=self.REGISTRY_NAME)
 		new_registry.allowCooking = True
+		# The /sys global is STANDALONE: the copy inherits whatever clone
+		# binding the master carries (dev masters are clone-bound for
+		# hot-propagation), but a global cloned to an in-project master
+		# dangles the moment an update destroys and reloads that master.
+		# Promotion is the handover; from here the global owns itself.
+		try:
+			new_registry.par.clone = ''
+			new_registry.par.enablecloning = False
+		except Exception:
+			pass
 
 		anchor_comp = sys_comp.op('OpFamRegistry') or sys_comp.op('TDDialogs')
 		if anchor_comp:
