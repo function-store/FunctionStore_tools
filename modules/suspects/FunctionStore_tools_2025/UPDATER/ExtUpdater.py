@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtUpdater
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.2.toe
+Saveorigin : FunctionStore_tools_2025_DEV.10.toe
 Saveversion : 2025.33070
 Info Header End'''
 """Bucket + manifest updates for the toolkit.
@@ -39,8 +39,6 @@ import shutil
 import time
 from urllib.parse import unquote, urlparse
 
-import TDFunctions as TDF
-
 MANIFEST_NAME = 'manifest.json'
 # package -> the bytes it was installed from. Written by the installer and
 # by every update; read to decide what is stale. packaging/InstallerExt.py
@@ -50,7 +48,6 @@ INSTALLED_COLS = ['package', 'sha256', 'release', 'when']
 UPDATES_DAT = 'updates'
 UPDATES_COLS = ['package', 'state', 'installed', 'available', 'note']
 
-STAGE_COMP = 'fns_update_stage'
 # Seconds of zero progress before a fetch is called dead.
 STALL_SECONDS = 45
 
@@ -58,24 +55,22 @@ STALL_SECONDS = 45
 # Runs AFTER the DAT holding this file is destroyed, so it may reference
 # nothing inside the package -- only literals and ops that outlive it.
 _SELF_UPDATE = """
-import TDFunctions as TDF
-_q = op('/sys/quiet')
-_stage = _q.op(%(stage)r) or _q.create(baseCOMP, %(stage)r)
-_stage.allowCooking = False
-_before = {c.id for c in _stage.children}
-_stage.loadTox(%(tox)r)
-_fresh = [c for c in _stage.children if c.id not in _before]
 _dest = op(%(dest)r)
-if _fresh and _dest is not None:
-	_new = TDF.replaceOp(_dest, _fresh[0])
-	_fresh[0].destroy()
-	_new.name = %(name)r
-	debug('UPDATER: replaced itself from %(tox)s')
-elif _fresh:
-	_fresh[0].destroy()
+if _dest is None:
 	debug('UPDATER: self-update aborted, target vanished')
 else:
-	debug('UPDATER: self-update aborted, artifact loaded nothing')
+	_root = _dest.parent()
+	_nx, _ny = _dest.nodeX, _dest.nodeY
+	_dest.destroy()
+	_before = {c.id for c in _root.children}
+	_root.loadTox(%(tox)r)
+	_fresh = [c for c in _root.children if c.id not in _before]
+	if _fresh:
+		_fresh[0].name = %(name)r
+		_fresh[0].nodeX, _fresh[0].nodeY = _nx, _ny
+		debug('UPDATER: replaced itself from %(tox)s')
+	else:
+		debug('UPDATER: self-update aborted, artifact loaded nothing')
 """
 
 
@@ -682,7 +677,14 @@ class ExtUpdater:
 		job['apply'] = steps
 		job['stage'] = 'apply'
 		self._status('updating %d package(s)...' % planned)
-		self._drain()
+		# NEVER drain inline. The manifest/artifact callbacks can arrive on
+		# a worker thread (threaded downloader, headless drivers), and
+		# replaceOp re-inits extensions whose registry hosts copy widgets
+		# into UI surfaces -- op mutation off the main thread wedges TD
+		# inside the copy with unbounded memory growth (seen live: navbar
+		# RegisterWidget spinning in bar.copy). run() marshals to the main
+		# thread; later steps already chain the same way.
+		run('args[0]._drain()', self, delayFrames=1, delayRef=op.TDResources)
 		return {'ok': True, 'why': 'applying %d package(s)' % planned}
 
 	def _saveConfig(self):
@@ -705,6 +707,7 @@ class ExtUpdater:
 		self._settleVerifications(job)
 		queue = job.get('apply') or []
 		if not queue:
+			self._settleStaleErrors(job)
 			job['stage'] = 'done'
 			self._report()
 			return
@@ -726,6 +729,30 @@ class ExtUpdater:
 	def Drain(self):
 		"""Public entry so a stalled pass can be nudged from the textport."""
 		self._drain()
+
+	def _settleStaleErrors(self, job):
+		"""After the whole pass: recook packages that still flag errors.
+
+		A package replaced EARLY in the pass errors when a registry master
+		it clones from is replaced LATER -- its clone par momentarily
+		pointed at a deleted comp, and nothing recooks an idle package, so
+		the flag just sits there looking like breakage. One recook against
+		the settled network clears exactly those. Deliberately a CLEANER,
+		not a judge: each replacement was already verified when it landed,
+		and a pre-existing quirk inside a package must not turn a clean
+		pass into a reported failure.
+		"""
+		root = self._root(job.get('target'))
+		if root is None:
+			return
+		for res in job.get('results', []):
+			comp = root.op(res.get('package', ''))
+			if comp is None or not comp.errors(recurse=True):
+				continue
+			try:
+				comp.cook(force=True, recurse=True)
+			except Exception:
+				pass
 
 	def _settleVerifications(self, job):
 		"""Finish judging reloads from the previous tick.
@@ -841,19 +868,6 @@ class ExtUpdater:
 			debug('UPDATER: could not read externalizations.tsv (%s)' % e)
 		return hits
 
-	def _staging(self):
-		"""Cooking-disabled staging home. A live copy of a registry master
-		otherwise promotes itself to the /sys global and destroys the
-		running one -- cooking must be off BEFORE the tox loads."""
-		quiet = op('/sys/quiet')
-		if quiet is None:
-			raise RuntimeError('/sys/quiet is missing -- nowhere safe to stage')
-		stage = quiet.op(STAGE_COMP)
-		if stage is None:
-			stage = quiet.create(baseCOMP, STAGE_COMP)
-		stage.allowCooking = False
-		return stage
-
 	def _isSelf(self, name, target=None):
 		"""Is `name` the package this extension is running inside?"""
 		root = self._root(target)
@@ -893,8 +907,8 @@ class ExtUpdater:
 			return {'package': step['name'], 'ok': False, 'why': 'store copy fails its hash'}
 		# record BEFORE the swap: afterwards there is no `self` left to do it
 		self.RecordInstalled(step['name'], digest, step.get('release', ''), target)
-		script = _SELF_UPDATE % {'tox': path, 'dest': dest.path, 'name': step['name'],
-								 'stage': STAGE_COMP}
+		script = _SELF_UPDATE % {'tox': path, 'dest': dest.path,
+								 'name': step['name']}
 		run(script, delayFrames=5, delayRef=op.TDResources)
 		return {'package': step['name'], 'ok': True, 'why': 'self-replacement scheduled'}
 
@@ -951,21 +965,40 @@ class ExtUpdater:
 		if bound:
 			return self._rewriteBound(dest, bound, step, digest, target)
 
-		stage = self._staging()
-		before = {c.id for c in stage.children}
-		stage.loadTox(path)
-		fresh = [c for c in stage.children if c.id not in before]
-		if not fresh:
-			return {'package': name, 'ok': False, 'why': 'artifact loaded nothing'}
-		src = fresh[0]
+		# Embedded: the SAME rail the installer uses -- destroy the old COMP,
+		# loadTox the artifact live into the root. The previous mechanism
+		# (stage cooking-disabled, TDF.replaceOp graft) copy/destroys an
+		# extension-bearing COMP, which is TD's most fragile operation and
+		# took the process down twice (off-main wedge, on-main hard crash).
+		# destroy+loadTox has installed every package cleanly since the
+		# bootstrap existed, and nothing is lost by it: packages are
+		# self-contained root children with no wires, and settings live in
+		# the palette config JSON, re-applied when the host re-registers.
+		nx, ny, color = dest.nodeX, dest.nodeY, dest.color
+		dest.destroy()
+		before = {c.id for c in root.children}
 		try:
-			new = TDF.replaceOp(dest, src)
-		finally:
-			src.destroy()
+			root.loadTox(path)
+		except Exception as e:
+			return {'package': name, 'ok': False,
+					'why': 'loadTox failed: %s' % str(e)[:120]}
+		fresh = [c for c in root.children if c.id not in before]
+		new = fresh[0] if fresh else root.op(name)
+		if new is None:
+			return {'package': name, 'ok': False, 'why': 'artifact loaded nothing'}
 		if new.name != name:
 			new.name = name  # TD numbers on collision; the manifest name wins
+		new.nodeX, new.nodeY, new.color = nx, ny, color
 		self.RecordInstalled(name, digest, step.get('release', ''), target)
 		errs = new.errors(recurse=True)
+		if errs:
+			# one recook with extensions up separates init-order noise
+			# (ext.X read before the ext existed) from real breakage
+			try:
+				new.cook(force=True, recurse=True)
+			except Exception:
+				pass
+			errs = new.errors(recurse=True)
 		return {'package': name, 'ok': not errs, 'ops': len(new.findChildren()),
 				'why': errs.splitlines()[0][:140] if errs else ''}
 
