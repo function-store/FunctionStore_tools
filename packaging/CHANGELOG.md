@@ -1,5 +1,18 @@
 # FNS tools changelog
 
+## v2.12.17 -- 2026-08-15
+
+- FNS_Config 1.1.2
+- FNS_MainMenu 1.0.1
+- FNS_Navbar 1.0.0 -> 1.0.3 -- the drag-drop hijack guards against panenav not existing yet on first load into a bare project, retrying briefly instead of erroring the install.
+- FNS_OpMenu 1.0.0 -> 1.0.2
+- FNS_Toolbar 1.0.3 -> 1.0.5
+- UPDATER 1.0.3 -> 1.0.7 -- restored ShowChangelogAfterUpdate (execute1 still called it; it was dropped in the bucket rework) -- the flag is set by a successful update pass and the notes come from the store manifest, shown once on the next open.
+
+Registry cores: the /sys global no longer inherits the master's clone
+binding at promotion -- the global owns itself, so an update destroying
+and reloading the in-project master cannot dangle it.
+
 ## v2.12.16 -- 2026-08-14
 
 - PaneTypeRegistry 1.0.0 -- now ships as a core package -- the panebar pane-type registry master, previously only distributed with PreviewPanel, joins the toolkit so tools can host into it and `requires` can point at it. The package IS the master (no FNS_ wrapper), keeping the standalone identity it already has.

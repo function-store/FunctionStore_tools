@@ -1,13 +1,13 @@
 {
  "schema": 1,
- "release": "v2.12.16",
- "notes": "- PaneTypeRegistry: now ships as a core package -- the panebar pane-type registry master, previously only distributed with PreviewPanel, joins the toolkit so tools can host into it and `requires` can point at it. The package IS the master (no FNS_ wrapper), keeping the standalone identity it already has.",
+ "release": "v2.12.17",
+ "notes": "",
  "channel": "stable",
  "base_url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools",
  "toolkit": {
   "name": "FunctionStore_tools_2025",
   "td_build": "099",
-  "project": "FunctionStore_tools_2025_DEV.11.toe"
+  "project": "FunctionStore_tools_2025_DEV.14.toe"
  },
  "core": [
   "FNS_Config",
@@ -35,7 +35,7 @@
    "kind": "tool",
    "category": "Network",
    "description": "Alternative selection helpers for operators in the network editor.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [],
    "shortcut": "ALT_SELECT",
@@ -51,7 +51,7 @@
     "path": "packaging/dist/AltSelect.tox",
     "bytes": 66902,
     "sha256": "0533509c1e211de9892824820e7d0ca662f7671482fba867824f7c30bac3df6c",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/AltSelect.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/AltSelect.tox"
    }
   },
   {
@@ -59,7 +59,7 @@
    "kind": "tool",
    "category": "Network",
    "description": "Combine selected operators into a sensible composite automatically.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [],
    "shortcut": "AUTO_COMBINE",
@@ -75,7 +75,7 @@
     "path": "packaging/dist/AutoCombine.tox",
     "bytes": 79686,
     "sha256": "14a05c0a86ef9a1bbb135fd00bc6319b3eb9e1af736615faed535d91a2d9c164",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/AutoCombine.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/AutoCombine.tox"
    }
   },
   {
@@ -83,7 +83,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes.",
-   "version": "1.0.5",
+   "version": "1.0.4",
    "help_url": "",
    "surfaces": [],
    "shortcut": "AUTO_RES",
@@ -99,7 +99,7 @@
     "path": "packaging/dist/AutoRes.tox",
     "bytes": 79446,
     "sha256": "90998852e77533bf58d58f30a55d00b64160bc92f4672bdcadedb38a392d6f5f",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/AutoRes.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/AutoRes.tox"
    }
   },
   {
@@ -107,7 +107,7 @@
    "kind": "tool",
    "category": "Surfaces",
    "description": "Borderless TouchDesigner window, plus timeline hiding.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [
     "mainmenu"
@@ -126,7 +126,7 @@
     "path": "packaging/dist/BorderlessTD.tox",
     "bytes": 225750,
     "sha256": "496547ce2e40afc3aee038b3e825d3d3999053cbfcdd3b82cd22f52c61df3b43",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/BorderlessTD.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/BorderlessTD.tox"
    }
   },
   {
@@ -134,7 +134,7 @@
    "kind": "tool",
    "category": "Surfaces",
    "description": "Operator and family colour palettes, with the active palette roaming through config.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_COLOR_UI",
@@ -150,7 +150,7 @@
     "path": "packaging/dist/ColorUI.tox",
     "bytes": 100998,
     "sha256": "c7c194581c6c13d5fb5ff5df8acd025f50e56ba951a39b2e52baa5dfc9932870",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/ColorUI.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/ColorUI.tox"
    }
   },
   {
@@ -158,7 +158,7 @@
    "kind": "tool",
    "category": "Parameters",
    "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [
     "navbar",
@@ -181,7 +181,7 @@
     "path": "packaging/dist/CustomParTools.tox",
     "bytes": 538800,
     "sha256": "3947808707a08972165c69a9e7aa0e672155f31dad9753774b58ffe86e714ee7",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/CustomParTools.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/CustomParTools.tox"
    }
   },
   {
@@ -189,7 +189,7 @@
    "kind": "tool",
    "category": "Parameters",
    "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field.",
-   "version": "1.1.1",
+   "version": "1.1.0",
    "help_url": "",
    "surfaces": [],
    "shortcut": "HOTSTRINGS",
@@ -215,7 +215,7 @@
     "path": "packaging/dist/ExprHotStrings.tox",
     "bytes": 76062,
     "sha256": "1c418dfbd840d48025ba170023f94eb517b61554b8545f82fd1007f6ddb4b909",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/ExprHotStrings.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/ExprHotStrings.tox"
    }
   },
   {
@@ -223,11 +223,11 @@
    "kind": "core",
    "category": "Core",
    "description": "Settings persistence for every tool: one aggregated JSON in the user palette, so preferences follow you across projects and survive toolkit updates.",
-   "version": "1.1.1",
+   "version": "1.1.2",
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_CONFIG",
-   "ops": 88,
+   "ops": 87,
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -235,9 +235,9 @@
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Config.tox",
-    "bytes": 68590,
-    "sha256": "adada9541515a789df0c33ef1706f842ba8f14eec4e4028f38bc31ca6b53bab0",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/FNS_Config.tox"
+    "bytes": 68686,
+    "sha256": "6f27f4e993c1324023f412a59e07c25d7277a673dfec46c1ad847ebb564d0041",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/FNS_Config.tox"
    }
   },
   {
@@ -245,7 +245,7 @@
    "kind": "core",
    "category": "Core",
    "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_HOTKEY_MANAGER",
@@ -268,12 +268,12 @@
      "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/Hotkeys.tsv"
     }
    ],
-   "whatsnew": "extension init no longer requires the FNS shortcut; searchRoot is the containing toolkit root.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
     "bytes": 140910,
     "sha256": "4c9fb5d3a39e31960d150c781f9a4937d97c91a5060c76fbd13e8b78df361e4b",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/FNS_HotkeyManager.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -281,23 +281,23 @@
    "kind": "core",
    "category": "Core",
    "description": "The main-menu surface: registry and Configurator for TD's top bar, including project-name display.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [
     "mainmenu"
    ],
    "shortcut": "FNS_MAINMENU",
-   "ops": 373,
+   "ops": 371,
    "requires": [],
    "integrates_with": [],
-   "tox_carrier": "own",
+   "tox_carrier": "root",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_MainMenu.tox",
-    "bytes": 259310,
-    "sha256": "8731e42c5deb17bcacfb3074aae4f45e37095b223383eaa84445c5603bf40320",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/FNS_MainMenu.tox"
+    "bytes": 262438,
+    "sha256": "61b62a253b9e43068b60db94c7a0cf598a433bdf448501247a37f6f1d0143ae3",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/FNS_MainMenu.tox"
    }
   },
   {
@@ -305,7 +305,7 @@
    "kind": "core",
    "category": "Core",
    "description": "The pane-bar surface: registry plus parent-hierarchy navigation, path injection and drag-drop hijack.",
-   "version": "1.0.2",
+   "version": "1.0.3",
    "help_url": "",
    "surfaces": [
     "navbar"
@@ -318,12 +318,12 @@
    ],
    "tox_carrier": "own",
    "cooking": true,
-   "whatsnew": "",
+   "whatsnew": "the drag-drop hijack guards against panenav not existing yet on first load into a bare project, retrying briefly instead of erroring the install.",
    "artifact": {
     "path": "packaging/dist/FNS_Navbar.tox",
-    "bytes": 629408,
-    "sha256": "4fc083af314a966ae8909c4540b5926ab02b51adaac660bd01d214d13b3b1f66",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/FNS_Navbar.tox"
+    "bytes": 630496,
+    "sha256": "37823c2db97ee86d741caf6c1457d0839ed70281cb7e9c64f6552ec8d8e244b9",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/FNS_Navbar.tox"
    }
   },
   {
@@ -331,7 +331,7 @@
    "kind": "core",
    "category": "Core",
    "description": "The operator-menu surface: contributes search words, row decorations, right-click items and filter stages to TD's OP Create dialog.",
-   "version": "1.0.1",
+   "version": "1.0.2",
    "help_url": "",
    "surfaces": [
     "opmenu"
@@ -350,12 +350,12 @@
      "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/OpSearchWords.tsv"
     }
    ],
-   "whatsnew": "IOFilter's switch is the new Iofilteractive toggle on the package, not a root parameter.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_OpMenu.tox",
-    "bytes": 177086,
-    "sha256": "da8b6891578eba5b31e80d015968ea79b44609d5681fc0e19cb969825d51c7af",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/FNS_OpMenu.tox"
+    "bytes": 177478,
+    "sha256": "b76de17a50e73377cf36d5be9eda026c1731ce4be27a2429ad7d406c22b3bdde",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/FNS_OpMenu.tox"
    }
   },
   {
@@ -363,7 +363,7 @@
    "kind": "core",
    "category": "Core",
    "description": "The toolbar surface: registry, mirror rail and the Configurator UI for ordering, grouping and hiding bar widgets.",
-   "version": "1.0.4",
+   "version": "1.0.5",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -379,9 +379,9 @@
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Toolbar.tox",
-    "bytes": 362966,
-    "sha256": "35b4700b2408e49a246d17af47219cd1e1b186f4218d431b72b0c9b15711c914",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/FNS_Toolbar.tox"
+    "bytes": 363734,
+    "sha256": "2fa7c25c3417c9d80a994e06342f923b71940dd41361d3ba8c0ab30539980676",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/FNS_Toolbar.tox"
    }
   },
   {
@@ -405,7 +405,7 @@
     "path": "packaging/dist/GlobalOutSelect.tox",
     "bytes": 182654,
     "sha256": "7c8f7487aaa2608e4a4a119e17f5ea2fb41af140f5fd3884283d5d246f80519e",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/GlobalOutSelect.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/GlobalOutSelect.tox"
    }
   },
   {
@@ -432,7 +432,7 @@
     "path": "packaging/dist/GlobalVolControl.tox",
     "bytes": 161054,
     "sha256": "2f4205cf907eddc68b80e21d3bc628269a26ec85437266f5c2d894466819b921",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/GlobalVolControl.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/GlobalVolControl.tox"
    }
   },
   {
@@ -440,7 +440,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "Hydra-style live coding surface inside TouchDesigner.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -459,7 +459,7 @@
     "path": "packaging/dist/HydroHomie.tox",
     "bytes": 120182,
     "sha256": "dfd8803c563d80c3c5700d358f83f3a6bd68591ac555a7ee1fd5f7e954635e5a",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/HydroHomie.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/HydroHomie.tox"
    }
   },
   {
@@ -479,14 +479,14 @@
     "FNS_Toolbar"
    ],
    "integrates_with": [],
-   "tox_carrier": "own",
+   "tox_carrier": "root",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/midiMapper.tox",
     "bytes": 197006,
     "sha256": "f8594d370f4ded6606f68e94f96da8c9e614f95f1aa54ccb1360ac1505aad512",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/midiMapper.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/midiMapper.tox"
    }
   },
   {
@@ -513,7 +513,7 @@
     "path": "packaging/dist/MISC.tox",
     "bytes": 122590,
     "sha256": "194968691e3e494f031d7bcfb04998250455607613f7143671736bf58dd8420d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/MISC.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/MISC.tox"
    }
   },
   {
@@ -537,7 +537,7 @@
     "path": "packaging/dist/MY_HOTKEYS.tox",
     "bytes": 65758,
     "sha256": "513d5f1086f1a162ffd4fbde0a0881290e91f96a79ecd7d7a73bb26a46c3fad5",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/MY_HOTKEYS.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/MY_HOTKEYS.tox"
    }
   },
   {
@@ -561,7 +561,7 @@
     "path": "packaging/dist/OpenExt.tox",
     "bytes": 66078,
     "sha256": "12efbeb7b4c8ef2ac8e0250f4a0d379701db90d850bb1117c43b53851c5c2f7e",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/OpenExt.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/OpenExt.tox"
    }
   },
   {
@@ -636,7 +636,7 @@
     "path": "packaging/dist/OpTemplates.tox",
     "bytes": 269216,
     "sha256": "b0f7d0eaa1b543e23804c103beb27418eb459fcb3e1311626ddc197bc8cd611b",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/OpTemplates.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/OpTemplates.tox"
    }
   },
   {
@@ -660,7 +660,7 @@
     "path": "packaging/dist/OpToClipboard.tox",
     "bytes": 67870,
     "sha256": "30c511ea9ee960eeb063dc9b68bbceb0c9219fd09457c23999a8d002063e3a59",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/OpToClipboard.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/OpToClipboard.tox"
    }
   },
   {
@@ -684,7 +684,7 @@
     "path": "packaging/dist/oscMapper.tox",
     "bytes": 125526,
     "sha256": "548cf244a8103ae35a449bf8d137332518f72fcecd3097a4f77c36b8a44f274d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/oscMapper.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/oscMapper.tox"
    }
   },
   {
@@ -711,7 +711,7 @@
     "path": "packaging/dist/OUTPUT.tox",
     "bytes": 95958,
     "sha256": "7ebc007dc3cf47b50eef021c3f0846343556f5c204458e01a3469a9be6e8b51d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/OUTPUT.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/OUTPUT.tox"
    }
   },
   {
@@ -726,22 +726,22 @@
    "ops": 227,
    "requires": [],
    "integrates_with": [],
-   "tox_carrier": "own",
+   "tox_carrier": "root",
    "cooking": true,
    "portability": [
     {
      "op": "md",
      "par": "externaltox",
      "kind": "project",
-     "path": "/Users/dan/Documents/Projects/FunctionStore_tools/modules/suspects/FunctionStore_tools_2025/../../../../../VJ/TD/Downloaded/dotsimulate/md_0.0.3.tox"
+     "path": "/Users/dan/Documents/Projects/FunctionStore_tools/modules/suspects/../../../../../VJ/TD/Downloaded/dotsimulate/md_0.0.3.tox"
     }
    ],
-   "whatsnew": "now ships as a core package -- the panebar pane-type registry master, previously only distributed with PreviewPanel, joins the toolkit so tools can host into it and `requires` can point at it. The package IS the master (no FNS_ wrapper), keeping the standalone identity it already has.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/PaneTypeRegistry.tox",
-    "bytes": 149126,
-    "sha256": "6121cc799587dc4281c6df14c7ccb829703a803e5e8d92f2c561be40895ad7fd",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/PaneTypeRegistry.tox"
+    "bytes": 149294,
+    "sha256": "c00dd3320736cf5710e579bae09f2f249378ad10d7f62ba385a0925ca02bc08d",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/PaneTypeRegistry.tox"
    }
   },
   {
@@ -749,7 +749,7 @@
    "kind": "tool",
    "category": "Parameters",
    "description": "Drop an operator onto a parameter to wire the reference for you.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -768,7 +768,7 @@
     "path": "packaging/dist/ParOPDrop.tox",
     "bytes": 108382,
     "sha256": "73834c579fafa57e13c858c480e006770aadb2ff453a41a85408f3daae3dc4e0",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/ParOPDrop.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/ParOPDrop.tox"
    }
   },
   {
@@ -776,7 +776,7 @@
    "kind": "tool",
    "category": "Parameters",
    "description": "Randomize parameter values within range, for quick exploration.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -795,7 +795,7 @@
     "path": "packaging/dist/ParRandomizer.tox",
     "bytes": 109094,
     "sha256": "81ea03debfc4f6cf63232306fe62b5697a2116ce14bb188089afcbafa67147ad",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/ParRandomizer.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/ParRandomizer.tox"
    }
   },
   {
@@ -807,19 +807,19 @@
    "help_url": "",
    "surfaces": [],
    "shortcut": "",
-   "ops": 205,
+   "ops": 204,
    "requires": [
     "FNS_Config"
    ],
    "integrates_with": [],
-   "tox_carrier": "own",
+   "tox_carrier": "root",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/paste_from_clipboard.tox",
     "bytes": 128566,
     "sha256": "9457cd230cc90be938f996cbede6447e9e79929d98dab2de6386e2ad7971f9d9",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/paste_from_clipboard.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/paste_from_clipboard.tox"
    }
   },
   {
@@ -827,7 +827,7 @@
    "kind": "tool",
    "category": "Network",
    "description": "Collapse a selection into a component, with an optional customize dialog.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_QUICKCOLLAPSE",
@@ -843,7 +843,7 @@
     "path": "packaging/dist/QuickCollapse.tox",
     "bytes": 99790,
     "sha256": "390dba6abb1d914faf7cde7410d94e4d4a3ddb834e09f66bcae909e5e1b323c4",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/QuickCollapse.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/QuickCollapse.tox"
    }
   },
   {
@@ -851,23 +851,23 @@
    "kind": "tool",
    "category": "Network",
    "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design.",
-   "version": "1.0.3",
+   "version": "1.0.0",
    "help_url": "https://alex-guevara.com",
    "surfaces": [],
    "shortcut": "",
-   "ops": 45,
+   "ops": 44,
    "requires": [
     "FNS_Config"
    ],
    "integrates_with": [],
-   "tox_carrier": "own",
+   "tox_carrier": "root",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickMarks.tox",
     "bytes": 45662,
     "sha256": "7afb38e5213b40fea13c376805f790ad509826b02c5b2437e594dea0df93be5a",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/QuickMarks.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/QuickMarks.tox"
    }
   },
   {
@@ -891,7 +891,7 @@
     "path": "packaging/dist/QuickPane.tox",
     "bytes": 68918,
     "sha256": "4f139a1d05bf042bda5983bbb9fa5bdb0a287ee920df5b97804fc1c9438b1e6c",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/QuickPane.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/QuickPane.tox"
    }
   },
   {
@@ -899,25 +899,25 @@
    "kind": "tool",
    "category": "Parameters",
    "description": "Fast custom-parameter editing on the focused operator.",
-   "version": "1.0.2",
+   "version": "1.0.0",
    "help_url": "https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickparcustom",
    "surfaces": [],
    "shortcut": "",
-   "ops": 139,
+   "ops": 138,
    "requires": [
     "FNS_Config"
    ],
    "integrates_with": [
     "CustomParTools"
    ],
-   "tox_carrier": "own",
+   "tox_carrier": "root",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickParCustom.tox",
     "bytes": 85470,
     "sha256": "235d12c8f4e90484a46aa55bde34bbcbcaafaa0b19f2ff467f5611cfd8d5bd7d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/QuickParCustom.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/QuickParCustom.tox"
    }
   },
   {
@@ -944,7 +944,7 @@
     "path": "packaging/dist/QuickTime.tox",
     "bytes": 105574,
     "sha256": "5ff5efd7a375f5e136d9e357e68e1fdc512c0f656120e0e50c3ab6c3763dada8",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/QuickTime.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/QuickTime.tox"
    }
   },
   {
@@ -952,7 +952,7 @@
    "kind": "tool",
    "category": "Workflow",
    "description": "Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -985,7 +985,7 @@
     "path": "packaging/dist/ResetPLS1.tox",
     "bytes": 124302,
     "sha256": "dfed4e988c0891ef1077676da66a805fa852bc7279edea2c0e24b00688be3756",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/ResetPLS1.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/ResetPLS1.tox"
    }
   },
   {
@@ -1012,7 +1012,7 @@
     "path": "packaging/dist/SetSmoothness.tox",
     "bytes": 162742,
     "sha256": "07743bd43123b18c9e1c4113d9a6436ef9cd761632611169a3dfb617a5eb467c",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/SetSmoothness.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/SetSmoothness.tox"
    }
   },
   {
@@ -1020,7 +1020,7 @@
    "kind": "tool",
    "category": "Network",
    "description": "Swap one operator for another while keeping connections intact.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -1039,7 +1039,7 @@
     "path": "packaging/dist/SwapOps.tox",
     "bytes": 105814,
     "sha256": "8512de678306c9a13b02cb74982fab5c7ba30e87a923d80fc6c7ec2c2b0d83d8",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/SwapOps.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/SwapOps.tox"
    }
   },
   {
@@ -1047,7 +1047,7 @@
    "kind": "tool",
    "category": "Network",
    "description": "Switch between operators in place.",
-   "version": "1.0.2",
+   "version": "1.0.1",
    "help_url": "",
    "surfaces": [],
    "shortcut": "FNS_SWITCHOP",
@@ -1063,7 +1063,7 @@
     "path": "packaging/dist/SwitchOPs.tox",
     "bytes": 66678,
     "sha256": "a5e746766f7d470033d82fd73aa46ee5a93e86d08c4a4ae722f7200f4494a8dd",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/SwitchOPs.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/SwitchOPs.tox"
    }
   },
   {
@@ -1090,7 +1090,7 @@
     "path": "packaging/dist/tools_ui.tox",
     "bytes": 120158,
     "sha256": "7c096a7a5d93032447750d02654f9bbbf32062c909a6ca4f88ed6f91f544d753",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/tools_ui.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/tools_ui.tox"
    }
   },
   {
@@ -1098,7 +1098,7 @@
    "kind": "core",
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
-   "version": "1.0.6",
+   "version": "1.0.7",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -1109,12 +1109,12 @@
    "integrates_with": [],
    "tox_carrier": "own",
    "cooking": true,
-   "whatsnew": "after an update pass, packages still flagging errors get one recook against the settled network. Clears the stale \"operator has been deleted\" flags left on early-updated packages whose registry master was replaced later in the same pass.",
+   "whatsnew": "restored ShowChangelogAfterUpdate (execute1 still called it; it was dropped in the bucket rework) -- the flag is set by a successful update pass and the notes come from the store manifest, shown once on the next open.",
    "artifact": {
     "path": "packaging/dist/UPDATER.tox",
-    "bytes": 134550,
-    "sha256": "292d472e45fed606c7eafde833e38137ce7bf43e6337dce213b40091dba31188",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/UPDATER.tox"
+    "bytes": 135806,
+    "sha256": "4cb8e65a82eec19a27ad4b006fbc678c89b3dc1d5cb105abfde3a6c3541edaf9",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/UPDATER.tox"
    }
   },
   {
@@ -1141,7 +1141,7 @@
     "path": "packaging/dist/VSCodeTools.tox",
     "bytes": 627448,
     "sha256": "06d7a1e0809665d3360e1f2f1fbdd972e4439077dae0728585e4f143b5e5b398",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.16/VSCodeTools.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.17/VSCodeTools.tox"
    }
   }
  ]
