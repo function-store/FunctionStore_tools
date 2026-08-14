@@ -32,8 +32,17 @@ import json
 import subprocess
 from datetime import date
 
-exec(open('packaging/build_manifest.py').read())
-exec(open('packaging/publish.py').read())
+# explicit encoding: a TD session launched without a UTF-8 locale
+# defaults open() to ascii, and these files contain section marks/dashes
+exec(open('packaging/build_manifest.py', encoding='utf-8').read())
+exec(open('packaging/publish.py', encoding='utf-8').read())
+
+
+def _verTuple(v):
+    try:
+        return tuple(int(x) for x in str(v).lstrip('vV').split('.')[:3])
+    except Exception:
+        return (0, 0, 0)
 
 
 def _bumpedVersion(ver, kind):
@@ -142,11 +151,21 @@ def ReleaseMany(names, bump='auto', label=None, upload=True):
     for n in todo:
         p = by_name[n].par.Pkgversion
         old_v = str(p.eval()).strip()
+        pub = published.get(n, '')
         if bump == 'auto':
-            new_v = _bumpedVersion(old_v, 'patch') \
-                if old_v == published.get(n, '') else old_v
+            if pub and _verTuple(old_v) <= _verTuple(pub):
+                # equal = unchanged since publish -> patch bump. BELOW =
+                # a REVERTED par (a tox reload restores old page state,
+                # observed live), never an intent: publishing a version
+                # the world already has reads as "current" everywhere
+                # and the release updates nobody.
+                new_v = _bumpedVersion(pub, 'patch')
+            else:
+                new_v = old_v
         elif bump:
             new_v = _bumpedVersion(old_v, bump)
+            if pub and _verTuple(new_v) <= _verTuple(pub):
+                new_v = _bumpedVersion(pub, 'patch')
         else:
             new_v = old_v
         if new_v != old_v:

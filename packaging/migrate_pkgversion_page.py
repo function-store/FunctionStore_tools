@@ -43,7 +43,7 @@ LABEL = 'Package Version'      # matches the surviving stamped pars
 
 # Same roster the manifest is built from -- one discovery, no second list
 # to drift.
-exec(open('packaging/build_manifest.py').read())
+exec(open('packaging/build_manifest.py', encoding='utf-8').read())
 
 
 def _page(comp, name):
