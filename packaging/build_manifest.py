@@ -162,6 +162,43 @@ def _helpUrl(comp):
     return ''
 
 
+def ReleaseNotes():
+    """Curated prose for the CURRENT publish, from release_notes.md.
+
+    Comments (<!-- -->) are instructions to the author, not notes --
+    stripped here. Empty is fine: the changelog entry then carries just
+    the auto-generated package list. release_one.py clears the file
+    after a successful publish (the text moves to CHANGELOG.md and into
+    the release's own manifest)."""
+    path = _repo(PKG_DIR, 'release_notes.md')
+    if not os.path.exists(path):
+        return ''
+    with open(path, 'r', encoding='utf-8') as f:
+        text = f.read()
+    text = re.sub(r'<!--.*?-->', '', text, flags=re.S)
+    return text.strip()
+
+
+def AttributedNotes():
+    """Split release_notes.md into per-tool notes and general prose.
+
+    The convention: a line starting with a package name and a colon
+    ("AutoRes: fixed X", optionally bulleted) belongs to that tool;
+    everything else is release-level prose. Attribution is by exact
+    package name, so a typo silently demotes a line to general prose --
+    the changelog still keeps it, nothing is lost."""
+    names = {c.name for c in Packages()}
+    per_tool, general = {}, []
+    for line in ReleaseNotes().splitlines():
+        m = re.match(r'^\s*[-*]?\s*([A-Za-z_][\w]*)\s*:\s*(.+)$', line)
+        if m and m.group(1) in names:
+            per_tool.setdefault(m.group(1), []).append(m.group(2).strip())
+        else:
+            general.append(line)
+    per_tool = {k: ' '.join(v) for k, v in per_tool.items()}
+    return per_tool, '\n'.join(general).strip()
+
+
 def _shortcutOwners():
     """global shortcut -> owning package name (depth-1 only)."""
     owners = {}
@@ -388,6 +425,7 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
     integrations = Integrations()
     want = set(export) if isinstance(export, (list, tuple, set)) else None
     export_failed = []
+    attributed, _general_notes = AttributedNotes()
 
     packages = []
     for comp in Packages():
@@ -420,6 +458,14 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
         warn = PortabilityWarnings(comp)
         if warn:
             entry['portability'] = warn
+
+        # per-tool release note for the CURRENT version: freshly attributed
+        # prose when this release moves the version, otherwise carried from
+        # the previous manifest (it still describes the shipped version)
+        if entry['version'] != previous.get(name, {}).get('version'):
+            entry['whatsnew'] = attributed.get(name, '')
+        else:
+            entry['whatsnew'] = previous.get(name, {}).get('whatsnew', '')
 
         do_export = export is True or (want is not None and name in want)
         if do_export:
@@ -456,6 +502,7 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
     doc = {
         'schema': MANIFEST_SCHEMA,
         'release': rel,
+        'notes': ReleaseNotes(),
         'channel': _channel(),
         'base_url': base_url.rstrip('/'),
         'toolkit': {
