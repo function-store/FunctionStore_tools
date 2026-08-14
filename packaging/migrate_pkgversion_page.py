@@ -78,6 +78,9 @@ def Migrate(dry=False):
                     p = c.par.Pkgversion
                     p.default = STAMP
                     p.val = STAMP
+                    # cosmetic: hand-edits go through the PI lister / the
+                    # release flow, not the par dialog (scripts still write)
+                    p.readOnly = True
                 stamped.append(c.name)
             elif p.page.name == NEW_PAGE:
                 already.append(c.name)
