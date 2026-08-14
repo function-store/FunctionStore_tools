@@ -258,8 +258,13 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
             continue
         existing = parent_comp.op(name)
         if existing is not None and not replace:
+            state = _verify(existing)
+            # a skipped package is NOT a failure of this install -- its
+            # pre-existing errors are reported, not counted (oscMapper's
+            # busy OSC port kept reading as "failed 1" on every re-run)
+            state['ok'] = True
             results.append({'name': name, 'action': 'skipped (present)',
-                            **_verify(existing)})
+                            **state})
             continue
         if existing is not None:
             existing.destroy()
@@ -426,19 +431,54 @@ class InstallerExt:
     def onParConfigure(self, _par):
         self.Configure()
 
+    def _updaterComp(self):
+        parent = self.ownerComp.parent()
+        return parent.op('UPDATER') if parent is not None else None
+
     def _refreshStore(self):
         """Kick the sibling UPDATER's store refresh; harmless if one is
-        already running (it refuses)."""
-        parent = self.ownerComp.parent()
-        upd = parent.op('UPDATER') if parent is not None else None
-        refresh = getattr(upd, 'RefreshStore', None) if upd is not None else None
-        if refresh is None:
+        already running (it refuses).
+
+        Scheduled via run(), never called inline: this fires from the web
+        server's request callback, and the one observed refresh that
+        started inside that callback finished 'done' having fetched
+        nothing, while the identical call from the textport fetched the
+        whole store. Marshaling out of the callback context is the same
+        cure the updater itself applies everywhere else."""
+        upd = self._updaterComp()
+        if upd is None or getattr(upd, 'RefreshStore', None) is None:
             return 'no UPDATER next to the installer -- refresh the store yourself'
-        try:
-            refresh()
-        except Exception as e:
-            return 'store refresh failed to start: %s' % e
+        run("op(%r).RefreshStore()" % upd.path, delayFrames=1)
         return ''
+
+    def _refreshActive(self):
+        """Is the sibling UPDATER mid-job right now?"""
+        upd = self._updaterComp()
+        try:
+            job = getattr(upd.ext.ExtUpdater, '_job', None) if upd else None
+        except Exception:
+            job = None
+        return bool(job) and job.get('stage') not in ('done', 'failed')
+
+    def _storeComplete(self, manifest_path):
+        """Manifest present AND every artifact it names sits beside it.
+
+        The picker must not open on a half-fetched store: the manifest is
+        the FIRST file a refresh writes, so its presence alone proves
+        nothing about the artifacts (the first user test planned 26
+        packages against a store holding zero of them)."""
+        try:
+            with open(manifest_path, 'r', encoding='utf-8') as f:
+                man = json.load(f)
+        except Exception:
+            return False
+        for pkg in man.get('packages', []):
+            if not pkg.get('artifact'):
+                continue
+            if not os.path.exists(_artifactPath(pkg['artifact'], pkg['name'],
+                                                manifest_path)):
+                return False
+        return True
 
     def _planText(self, plan):
         lines = ['install into %s' % plan['target'], '']
@@ -465,12 +505,15 @@ class InstallerExt:
                 response['Content-Type'] = 'text/javascript; charset=utf-8'
                 path = self._par('Manifestfile') or DefaultManifest()
                 full = path if os.path.isabs(path) else RepoPath(path)
-                if os.path.exists(full):
+                # ready = the whole store, not merely its manifest; and
+                # never mid-refresh, when files are still landing
+                if (os.path.exists(full) and not self._refreshActive()
+                        and self._storeComplete(full)):
                     with open(full, 'r', encoding='utf-8') as f:
                         response['data'] = ('window.FNS_SERVED = true;\n'
                                             'window.FNS_MANIFEST = %s;\n' % f.read())
                 else:
-                    why = self._refreshStore()
+                    why = '' if self._refreshActive() else self._refreshStore()
                     response['data'] = ('window.FNS_REFRESHING = true;%s\n'
                                         % (' // ' + why if why else ''))
             elif method == 'POST' and uri == '/selection':
