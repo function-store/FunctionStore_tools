@@ -441,8 +441,7 @@ class NavbarRegistryExt(RegistryBase):
 	# Location-independent: resolves through the navbar package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
 	# _healHostClones and StampHost come from RegistryBase off these two.
-	CLONE_EXPR = "op.FNS_NAVBAR.op('NavbarRegistry') if hasattr(op, 'FNS_NAVBAR') else None"
-	PACKAGE_SHORTCUT = 'FNS_NAVBAR'
+	CLONE_EXPR = "op.FNS.op('NavbarRegistry') if hasattr(op, 'FNS') else None"
 
 	# --- public API ---
 

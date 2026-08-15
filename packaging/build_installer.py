@@ -14,14 +14,14 @@ be recreated on any machine.
 FNS_Installer.tox is the bare installer for a project that already has a
 toolkit container. FunctionStore_tools_2025.tox is the ONE-DROP BOOTSTRAP:
 the (empty) toolkit root itself, carrying the installer, a copy of the
-UPDATER package, and the vendored palette webBrowser, so a bare project
+FNS_Updater package, and the vendored palette webBrowser, so a bare project
 goes from nothing to installed without ever leaving TD --
 
     drop it in  ->  installer: "Pick Tools"  ->  the configurator opens
     in the webBrowser panel, first run auto-refreshes the store  ->
     pick, "Review install...", Install (into the root it lives in)
 
-The bootstrap embeds the UPDATER artifact, so `Build(export=['UPDATER'])`
+The bootstrap embeds the FNS_Updater artifact, so `Build(export=['FNS_Updater'])`
 must have run first; a stale copy is self-healing (its live Pkgversion is
 what the updater compares, so the first update pass replaces it).
 """
@@ -33,7 +33,7 @@ COMP_NAME = 'FNS_Installer'
 ROOT_NAME = 'FunctionStore_tools_2025'
 OUT = 'packaging/dist/FNS_Installer.tox'
 OUT_BOOTSTRAP = 'packaging/dist/%s.tox' % ROOT_NAME
-UPDATER_TOX = 'packaging/dist/UPDATER.tox'
+UPDATER_TOX = 'packaging/dist/FNS_Updater.tox'
 
 WEBBROWSER_TOX = 'packaging/webBrowser.tox'
 
@@ -50,7 +50,7 @@ This container IS the toolkit root. To fill it:
 No browser? Set "Selection" to a selection.json from the configurator
 by hand, pulse "Plan", then "Install".
 
-Later updates: UPDATER -> Refresh Store, Check for Updates,
+Later updates: FNS_Updater -> Refresh Store, Check for Updates,
 Update This Project.
 """
 
@@ -74,7 +74,7 @@ def _installerComp(parent):
     p.help = 'A selection.json produced by the configurator.'
     p = pg.appendFile('Manifestfile', label='Manifest')[0]
     p.help = ("Leave blank to use the palette store's manifest (refresh the "
-              "store with UPDATER first); artifacts are found beside the "
+              "store with FNS_Updater first); artifacts are found beside the "
               "manifest. Dev fallback: packaging/manifest.json.")
     p = pg.appendStr('Target', label='Install Into')[0]
     p.help = ("Leave blank to install into the toolkit container this "
@@ -190,7 +190,7 @@ def BuildInstaller(out_path=OUT):
 
 
 def BuildBootstrap(out_path=OUT_BOOTSTRAP):
-    """The one-drop bootstrap: the toolkit root with installer + UPDATER.
+    """The one-drop bootstrap: the toolkit root with installer + FNS_Updater.
 
     The root ships with the dev root's identity -- global and parent
     shortcut `FNS` -- because shipped tools reach for `parent.FNS` (only
@@ -202,7 +202,7 @@ def BuildBootstrap(out_path=OUT_BOOTSTRAP):
     updater = _repo(UPDATER_TOX)
     if not os.path.exists(updater):
         return {'exported': False,
-                'error': "%s missing -- run Build(export=['UPDATER']) first"
+                'error': "%s missing -- run Build(export=['FNS_Updater']) first"
                          % UPDATER_TOX}
     stage = _stage('bootstrap_build')
     root = stage.create(baseCOMP, ROOT_NAME)
@@ -215,12 +215,12 @@ def BuildBootstrap(out_path=OUT_BOOTSTRAP):
     before = {c.id for c in root.children}
     root.loadTox(updater)
     fresh = [c for c in root.children if c.id not in before]
-    upd = fresh[0] if fresh else root.op('UPDATER')
+    upd = fresh[0] if fresh else root.op('FNS_Updater')
     if upd is None:
         stage.destroy()
-        return {'exported': False, 'error': 'UPDATER failed to load from %s' % updater}
-    if upd.name != 'UPDATER':
-        upd.name = 'UPDATER'
+        return {'exported': False, 'error': 'FNS_Updater failed to load from %s' % updater}
+    if upd.name != 'FNS_Updater':
+        upd.name = 'FNS_Updater'
     upd.nodeX, upd.nodeY = 350, 0
 
     readme = root.create(textDAT, 'README')

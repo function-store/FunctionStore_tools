@@ -57,13 +57,12 @@ class RegistryBase:
 	TOOL_PAGE_LABEL = None       # section header label; defaults to REGISTRY_NAME
 	TOOL_PAGE_PARS = ()          # host Registration par names to proxy
 
-	# In-project host cloning. Subclasses set BOTH: the guarded clone
-	# expression hosts carry, and the package shortcut it resolves through --
-	#   CLONE_EXPR = "op.FNS_X.op('XRegistry') if hasattr(op, 'FNS_X') else None"
-	#   PACKAGE_SHORTCUT = 'FNS_X'
-	# With them set, the base provides _healHostClones and StampHost.
+	# In-project host cloning. Subclasses set the guarded clone expression
+	# hosts carry; masters are depth-1 packages of the toolkit root, so it
+	# resolves through the root's FNS shortcut --
+	#   CLONE_EXPR = "op.FNS.op('XRegistry') if hasattr(op, 'FNS') else None"
+	# With it set, the base provides _healHostClones and StampHost.
 	CLONE_EXPR = None
-	PACKAGE_SHORTCUT = None
 
 	def _ensureToolRegistryPage(self):
 		"""Standardized 'Registry' page on the host's PARENT tool: key
@@ -1022,14 +1021,17 @@ class RegistryBase:
 				debug(f'{self.REGISTRY_NAME}: re-apply {path}: {e}')
 
 	def _masterComp(self):
-		"""The package master this registry's hosts clone from, resolved
-		through the package's global shortcut. None where absent."""
-		if not self.PACKAGE_SHORTCUT:
+		"""The in-project master this registry's hosts clone from.
+
+		Masters are depth-1 packages of the toolkit root (the raw
+		registry IS the package -- required, promoted to /sys, cloneable
+		by anyone extending the toolkit), so resolution rides the root's
+		`FNS` global shortcut, which every install ships. None where
+		absent."""
+		root = getattr(op, 'FNS', None)
+		if root is None or not root.valid:
 			return None
-		package = getattr(op, self.PACKAGE_SHORTCUT, None)
-		if package is None or not package.valid:
-			return None
-		return package.op(self.REGISTRY_NAME)
+		return root.op(self.REGISTRY_NAME)
 
 	def _healHostClones(self):
 		"""Re-assert in-project cloning on tool hosts. Release flows scrub the

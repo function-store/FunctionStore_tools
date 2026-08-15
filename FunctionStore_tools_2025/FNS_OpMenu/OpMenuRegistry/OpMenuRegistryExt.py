@@ -1,4 +1,4 @@
-﻿
+
 
 CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or me.parent().op('ExtUtils')).mod('CustomParHelper').CustomParHelper # import
 ###
@@ -162,8 +162,7 @@ class OpMenuRegistryExt(RegistryBase):
 	# Location-independent: resolves through the op-menu package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
 	# _healHostClones and StampHost come from RegistryBase off these two.
-	CLONE_EXPR = "op.FNS_OPMOD.op('OpMenuRegistry') if hasattr(op, 'FNS_OPMOD') else None"
-	PACKAGE_SHORTCUT = 'FNS_OPMOD'
+	CLONE_EXPR = "op.FNS.op('OpMenuRegistry') if hasattr(op, 'FNS') else None"
 
 	# --- surface helpers ---
 

@@ -198,8 +198,7 @@ class ConfigRegistryExt(RegistryBase):
 	# Location-independent: resolves through the config package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
 	# _healHostClones and StampHost come from RegistryBase off these two.
-	CLONE_EXPR = "op.FNS_CONFIG.op('ConfigRegistry') if hasattr(op, 'FNS_CONFIG') else None"
-	PACKAGE_SHORTCUT = 'FNS_CONFIG'
+	CLONE_EXPR = "op.FNS.op('ConfigRegistry') if hasattr(op, 'FNS') else None"
 
 	# --- config file ---
 

@@ -498,7 +498,7 @@ class InstallerExt:
     # has to be pointed anywhere. The page lives in ./configurator_html
     # (embedded at build time); the manifest it shows is whatever
     # DefaultManifest() resolves to, and when neither store nor repo has
-    # one yet the sibling UPDATER is asked to refresh the store while the
+    # one yet the sibling FNS_Updater is asked to refresh the store while the
     # page shows "downloading" and polls.
 
     def _port(self):
@@ -533,10 +533,10 @@ class InstallerExt:
 
     def _updaterComp(self):
         parent = self.ownerComp.parent()
-        return parent.op('UPDATER') if parent is not None else None
+        return parent.op('FNS_Updater') if parent is not None else None
 
     def _refreshStore(self, names=None):
-        """Kick the sibling UPDATER's store refresh; harmless if one is
+        """Kick the sibling FNS_Updater's store refresh; harmless if one is
         already running (it refuses). `names` scopes the fetch ([] is
         manifest-only -- the picker; a list is the selection at install).
 
@@ -548,12 +548,12 @@ class InstallerExt:
         cure the updater itself applies everywhere else."""
         upd = self._updaterComp()
         if upd is None or getattr(upd, 'RefreshStore', None) is None:
-            return 'no UPDATER next to the installer -- refresh the store yourself'
+            return 'no FNS_Updater next to the installer -- refresh the store yourself'
         run("op(%r).RefreshStore(names=%r)" % (upd.path, names), delayFrames=1)
         return ''
 
     def _refreshJob(self):
-        """The sibling UPDATER's current job dict, or None."""
+        """The sibling FNS_Updater's current job dict, or None."""
         upd = self._updaterComp()
         try:
             return getattr(upd.ext.ExtUpdater, '_job', None) if upd else None

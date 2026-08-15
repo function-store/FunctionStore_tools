@@ -42,6 +42,10 @@
    "category": "Surfaces",
    "description": "Operator and family colour palettes, with the active palette roaming through config."
   },
+  "ConfigRegistry": {
+   "category": "Core",
+   "description": "Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys."
+  },
   "CustomParTools": {
    "category": "Parameters",
    "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion."
@@ -50,29 +54,29 @@
    "category": "Parameters",
    "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field."
   },
-  "FNS_Config": {
-   "category": "Core",
-   "description": "Settings persistence for every tool: one aggregated JSON in the user palette, so preferences follow you across projects and survive toolkit updates."
-  },
   "FNS_HotkeyManager": {
-   "category": "Core",
+   "category": "Workflow",
    "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit."
   },
   "FNS_MainMenu": {
-   "category": "Core",
-   "description": "The main-menu surface: registry and Configurator for TD's top bar, including project-name display."
+   "category": "Surfaces",
+   "description": "Main-menu extras: the menu Configurator UI."
   },
   "FNS_Navbar": {
-   "category": "Core",
-   "description": "The pane-bar surface: registry plus parent-hierarchy navigation, path injection and drag-drop hijack."
+   "category": "Surfaces",
+   "description": "Pane-bar extras: parent-hierarchy navigation, path injection and drag-drop hijack, plus the navbar Configurator."
   },
   "FNS_OpMenu": {
-   "category": "Core",
-   "description": "The operator-menu surface: contributes search words, row decorations, right-click items and filter stages to TD's OP Create dialog."
+   "category": "Surfaces",
+   "description": "OP Create dialog extras: the IO filter, operator search words and script injection."
   },
   "FNS_Toolbar": {
-   "category": "Core",
-   "description": "The toolbar surface: registry, mirror rail and the Configurator UI for ordering, grouping and hiding bar widgets."
+   "category": "Surfaces",
+   "description": "Toolbar extras: the Configurator UI for ordering, grouping and hiding bar widgets, plus stock widgets."
+  },
+  "FNS_Updater": {
+   "category": "Developer",
+   "description": "In-place toolkit updates, with settings preserved across the replacement."
   },
   "GlobalOutSelect": {
    "category": "Media & Output",
@@ -86,6 +90,10 @@
    "category": "Media & Output",
    "description": "Hydra-style live coding surface inside TouchDesigner."
   },
+  "MainMenuRegistry": {
+   "category": "Core",
+   "description": "TD main-menu surface registry, including project-name display. The raw master, promoted to /sys."
+  },
   "midiMapper": {
    "category": "Control",
    "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config."
@@ -98,9 +106,17 @@
    "category": "Workflow",
    "description": "Convenience hotkeys over stock TouchDesigner actions: open parameters, open the COMP editor, focus the palette search."
   },
+  "NavbarRegistry": {
+   "category": "Core",
+   "description": "The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets."
+  },
   "OpenExt": {
    "category": "Developer",
    "description": "Open an operator's extension source quickly."
+  },
+  "OpMenuRegistry": {
+   "category": "Core",
+   "description": "OP Create dialog surface registry: search words, row decorations, right-click items, filter stages. The raw master, promoted to /sys."
   },
   "OpTemplates": {
    "category": "Network",
@@ -170,13 +186,13 @@
    "category": "Network",
    "description": "Switch between operators in place."
   },
+  "ToolbarRegistry": {
+   "category": "Core",
+   "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys -- clone it to put your own tools on the bar."
+  },
   "tools_ui": {
    "category": "Surfaces",
    "description": "The tabbed panel that hosts the toolkit's larger tool UIs."
-  },
-  "UPDATER": {
-   "category": "Developer",
-   "description": "In-place toolkit updates, with settings preserved across the replacement."
   },
   "VSCodeTools": {
    "category": "Developer",

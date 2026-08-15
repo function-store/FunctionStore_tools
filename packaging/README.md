@@ -51,11 +51,14 @@ external package).
 ## The dependency model
 
 Tools depend only on **core**, never on each other, so the configurator needs
-no solver. That is enforceable rather than merely asserted: registry masters
-live in core and tools ship stamped *hosts*, so a package's `requires` is
-exactly the core packages owning the registries it hosts. Every tool requires
-`FNS_Config` (settings persistence); a tool with a toolbar button also
-requires `FNS_Toolbar`, and so on.
+no solver. That is enforceable rather than merely asserted: core is the RAW
+REGISTRIES (each package IS its master -- promoted to `/sys`, cloneable by
+anyone extending the toolkit) plus `FNS_Updater`, and tools ship stamped
+*hosts*, so a package's `requires` is exactly the registries it hosts. Every
+tool requires `ConfigRegistry` (settings persistence); a tool with a toolbar
+button also requires `ToolbarRegistry`, and so on. The FNS_* surface shells
+(Toolbar/Navbar/MainMenu/OpMenu extras) are ordinary optional tools that
+require their own registries like everything else.
 
 Anything a package reaches for beyond that is an **optional integration**
 (`integrates_with`) and must degrade when the other package is absent — the

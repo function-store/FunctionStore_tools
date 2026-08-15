@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : ExtQuickCollapse
-Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2025_DEV.toe
+Author : root
+Saveorigin : FunctionStore_tools_2025_DEV.16.toe
 Saveversion : 2025.33070
 Info Header End'''
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
