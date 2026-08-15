@@ -584,6 +584,19 @@ class RegistryBase:
 	def _installGlobalRegistry(self):
 		if self._is_sys_global(self.ownerComp):
 			self.ownerComp.par.opshortcut = self.SHORTCUT
+			# A freshly promoted global REPLACED its predecessor, killing
+			# any sync chains scheduled against the old copy -- without a
+			# settle sync of its own, registrations merged into this copy
+			# never reach the surface (observed: two toolbar buttons on
+			# open, all nineteen after one manual sync).
+			if hasattr(self, '_syncSurface'):
+				run('args[0].valid and args[0].ext.%s._syncSurface()'
+					% self.EXT_NAME,
+					self.ownerComp, delayFrames=90, delayRef=op.TDResources)
+			try:
+				self._armRegistryWatch()
+			except Exception:
+				pass
 			return
 
 		global_registry = self._global_registry()

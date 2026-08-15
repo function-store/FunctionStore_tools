@@ -7,9 +7,9 @@ RegistryBase = mod('RegistryBase').RegistryBase
 
 
 class ToolbarRegistryExt(RegistryBase):
-	SHORTCUT = 'TOOLBARREGISTRY'
+	SHORTCUT = 'FNS_TOOLBARREGISTRY'
 	EXT_NAME = 'ToolbarRegistryExt'
-	REGISTRY_NAME = 'ToolbarRegistry'
+	REGISTRY_NAME = 'FNS_ToolbarRegistry'
 
 	# Standardized 'Registry' page on the parent tool (see RegistryBase).
 	TOOL_PAGE_PREFIX = 'Tb'
@@ -331,7 +331,7 @@ class ToolbarRegistryExt(RegistryBase):
 	# Location-independent: resolves through the toolbar package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
 	# _healHostClones and StampHost come from RegistryBase off these two.
-	CLONE_EXPR = "op.FNS.op('ToolbarRegistry') if hasattr(op, 'FNS') else None"
+	CLONE_EXPR = "op.FNS.op('FNS_ToolbarRegistry') if hasattr(op, 'FNS') else None"
 
 	# --- public API ---
 
