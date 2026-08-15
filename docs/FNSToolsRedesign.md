@@ -1,7 +1,9 @@
 # FNSTools redesign — the pre-release scorched earth (2026-08-15)
 
 Decision record for the restructure and rename executed before first
-public release. Supersedes naming and core-membership statements in
+public release. This redesign ships as **v3.0.0** -- the first release
+of the toolkit's public shape, with no migration path from pre-3.0
+installs (there were none). Supersedes naming and core-membership statements in
 `ConfiguratorDistribution.md` and `RegistryScheme.md` where they
 conflict; the mechanics recorded there still stand.
 
