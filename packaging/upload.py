@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Upload packaging/publish/ to the R2 bucket. Runs on the SHELL, not in TD:
 
-    python3 packaging/upload.py            # sync: upload what the bucket lacks
+    python3 packaging/upload.py            # sync + refresh latest/ aliases
     python3 packaging/upload.py --dry      # print the plan, upload nothing
     python3 packaging/upload.py --force    # re-upload even existing objects
+    python3 packaging/upload.py --prune 3  # also delete all but newest N releases
 
 Immutable (release-pinned) objects already in the bucket are skipped -- a
 public HEAD says whether the key exists, and existing means done. Only the
@@ -21,6 +22,18 @@ CACHE POLICY (the reason this script exists instead of a bare sync):
     would silently pin users to an old release, so it ships `no-cache`
     (revalidate every time). Set at upload time by design -- the client
     deliberately does not work around a stale manifest.
+  * latest/<file> are HUMAN ALIASES of the current release's files --
+    static links for the website and README (short max-age). The
+    machinery never reads them: installers and updaters follow the
+    manifest's PINNED urls, which is what keeps installs reproducible.
+    A stale-cached latest/FNSTools.tox is harmless by construction --
+    the bootstrap fetches the rolling manifest at runtime.
+
+RETENTION (--prune N): storage is not the concern (~7 MB per release);
+hygiene is. Release labels come from packaging/CHANGELOG.md; all but the
+newest N release directories are deleted, enumerating each doomed
+release's own pinned manifest for its keys. Never prune a release you
+still want a support conversation to be able to reproduce.
 
 Auth is wrangler's login (interactive OAuth); nothing secret lives here or
 in any shipped artifact.
@@ -133,21 +146,107 @@ def upload(jobs, force=False):
     return failed
 
 
+LATEST = 'public, max-age=300'
+
+
+def _currentRelease():
+    with open(os.path.join(ROOT, 'manifest.json'), encoding='utf-8') as f:
+        return json.load(f)['release']
+
+
+def latestJobs():
+    """Mutable latest/<file> aliases of the CURRENT release's files --
+    always re-uploaded (they must overwrite on every release)."""
+    rel = _currentRelease()
+    rel_dir = os.path.join(ROOT, rel)
+    jobs = []
+    for fn in sorted(os.listdir(rel_dir)):
+        if fn.startswith('.'):
+            continue
+        ctype = CONTENT_TYPES.get(os.path.splitext(fn)[1].lower(),
+                                  'application/octet-stream')
+        jobs.append((os.path.join(rel_dir, fn),
+                     f'{PREFIX}/latest/{fn}', LATEST, ctype))
+    return jobs
+
+
+def _changelogReleases():
+    """Release labels, newest first, from packaging/CHANGELOG.md."""
+    import re as _re
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'CHANGELOG.md')
+    if not os.path.exists(path):
+        return []
+    return _re.findall(r'^## (v[\d.]+) --', open(path, encoding='utf-8').read(),
+                       _re.M)
+
+
+def _deleteOne(key):
+    cmd = ['npx', '--yes', 'wrangler', 'r2', 'object', 'delete',
+           f'{BUCKET}/{key}', '--remote']
+    r = subprocess.run(cmd, capture_output=True, text=True)
+    return ('ok ' if r.returncode == 0 else 'gone'), key
+
+
+def prune(keep, base):
+    """Delete all but the newest `keep` release directories. Keys come
+    from each doomed release's OWN pinned manifest (package names differ
+    across eras), plus the rails and the manifest itself."""
+    labels = _changelogReleases()
+    current = _currentRelease()
+    if current in labels:
+        labels.remove(current)
+    labels.insert(0, current)
+    doomed = labels[keep:]
+    if not doomed:
+        print('prune: nothing to prune')
+        return
+    keys = []
+    for rel in doomed:
+        names = []
+        try:
+            url = f'{base}/{rel}/manifest.json?prune={int(time.time())}'
+            req = urllib.request.Request(url, headers={'User-Agent': 'fnstools-upload/1.0'})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                names = [p['name'] for p in json.load(r).get('packages', [])]
+        except Exception:
+            pass          # manifest already gone; still try the rails
+        for n in names:
+            keys.append(f'{PREFIX}/{rel}/{n}.tox')
+        for rail in ('FNS_Installer.tox', 'FNSTools.tox',
+                     'FunctionStore_tools_2025.tox', 'manifest.json'):
+            keys.append(f'{PREFIX}/{rel}/{rail}')
+    print(f'prune: {len(doomed)} release(s), {len(keys)} object(s): {", ".join(doomed)}')
+    done = 0
+    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
+        for state, key in pool.map(_deleteOne, keys):
+            done += 1
+            if done % 20 == 0 or state != 'ok ':
+                print(f'  [{done}/{len(keys)}] {state} {key}', flush=True)
+    print('prune: done')
+
+
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--dry', action='store_true')
     ap.add_argument('--force', action='store_true',
                     help='upload even what the bucket already has')
+    ap.add_argument('--prune', type=int, metavar='N', default=0,
+                    help='after syncing, delete all but the newest N releases')
     args = ap.parse_args()
     jobs = plan()
+    alias = latestJobs()
     if args.dry:
-        for full, key, cache, ctype in jobs:
+        for full, key, cache, ctype in jobs + alias:
             print(f'{key}  [{cache}]  ({ctype})')
-        print(f'{len(jobs)} objects')
+        print(f'{len(jobs)} objects + {len(alias)} latest aliases')
         sys.exit(0)
     failed = upload(jobs, force=args.force)
+    # aliases are mutable: force past the skip-existing check
+    failed += upload(alias, force=True)
+    if args.prune:
+        prune(args.prune, _publicBase())
     if failed:
         for key, err in failed:
             print(f'\nFAILED {key}\n{err}', file=sys.stderr)
         sys.exit(1)
-    print(f'\n{len(jobs)} objects synced to {BUCKET}/{PREFIX}/')
+    print(f'\n{len(jobs)} objects + {len(alias)} aliases synced to {BUCKET}/{PREFIX}/')
