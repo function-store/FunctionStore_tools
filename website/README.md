@@ -141,6 +141,43 @@ video: "https://youtu.be/j43gZ0MB2xo"
 ---
 ```
 
+## Deploying
+
+Vercel project, **root directory `website`**. `vercel.json` declares
+`buildCommand` and `installCommand` as empty on purpose: `website/docs/` is
+generated and committed, so a deploy is a pure static upload. Without those,
+Vercel auto-detects the `build` script in `package.json` and runs pagefind at
+deploy time for nothing.
+
+To stand it up before this branch is merged, point the project at this branch
+as its production branch, then switch it to the real one after the merge.
+Every other branch gets a preview URL automatically.
+
+Also turn on **Web Analytics** in the project — the page already ships the
+stub and the `/_vercel/insights/script.js` tag the platform serves once it is
+enabled. It is cookieless, which is why there is no consent banner.
+
+## CI
+
+`.github/workflows/website.yml` runs on any change to `website/`,
+`packaging/docs/` or `packaging/catalog.json`.
+
+It builds, and then asserts that the committed `website/docs/` and
+`index.html` match what the build produces. That check is the point of the
+job: the generated output is committed so Vercel needs no build step, which
+means it can go stale silently — edit a `.md`, forget to rebuild, and the
+site would show something other than the source. CI makes that a failed
+build instead.
+
+The build is reproducible, so the comparison is exact. CI sets
+`FNSTOOLS_NO_RELEASE_FETCH=1`; otherwise a release published between the
+commit and the run would restamp `index.html` and fail the check for reasons
+nobody changed.
+
+Two non-blocking reports land in the job summary: which packages are still
+documented only by their catalog line, and whether a newer release has been
+published than the one the download links point at.
+
 ## Release links
 
 Download buttons are stamped with the published release at build time,

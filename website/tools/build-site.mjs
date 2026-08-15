@@ -423,6 +423,11 @@ ${items}
 // is what actually keeps the download links current — the runtime fetch only
 // helps if CORS is enabled on the bucket later.
 async function publishedRelease() {
+  // CI sets this. Without it the stamped release depends on what is published
+  // at the moment the build runs, so a release cut between commit and CI would
+  // make index.html differ from the committed copy and fail the drift check
+  // for reasons nobody changed.
+  if (process.env.FNSTOOLS_NO_RELEASE_FETCH) return null;
   const url = `${BUCKET}/manifest.json`;
   try {
     const res = await fetch(url, {
@@ -464,6 +469,8 @@ if (fs.existsSync(landing)) {
       console.log(`note: catalog has ${pages.length} packages but ${live.release} publishes ` +
         `${live.packages.length} — the site lists the catalog, so these align at the next publish`);
     }
+  } else if (process.env.FNSTOOLS_NO_RELEASE_FETCH) {
+    console.log('release fetch skipped — download links keep the release already in index.html');
   } else {
     console.log('note: could not reach the release manifest — download links keep the release already in index.html');
   }
