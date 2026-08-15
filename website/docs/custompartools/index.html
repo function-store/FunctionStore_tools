@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<link rel="icon" href="/favicon.png" type="image/png" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+<title>CustomParTools — FNSTools docs</title>
+<meta name="description" content="Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion." />
+<meta property="og:title" content="CustomParTools — FNSTools docs" />
+<meta property="og:description" content="Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://tools.functionstore.xyz/og-image.png" />
+<link rel="canonical" href="https://tools.functionstore.xyz/docs/custompartools/" />
+<meta name="robots" content="index, follow" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site-nav.css">
+<link rel="stylesheet" href="/docs.css">
+<link rel="stylesheet" href="/docs/pagefind/pagefind-ui.css" onerror="this.remove()">
+</head>
+<body>
+<header class="site">
+  <div class="site-inner">
+    <div class="brand">
+      <img class="brand-logo" src="/favicon.png" alt="" width="28" height="28" decoding="async" />
+      <div class="brand-lockup">
+        <a href="/" class="brand-name">FNSTools</a>
+        <span class="brand-credit">by <a href="https://functionstore.xyz/link-in-bio" target="_blank" rel="noopener noreferrer">Function Store</a></span>
+      </div>
+    </div>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+    </button>
+    <nav id="site-nav" class="site-nav">
+      <a href="/#get">Install</a>
+      <a href="/#tools">Tools</a>
+      <a href="/docs/" aria-current="page">Docs</a>
+      <a href="/#credits">Credits</a>
+      <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+      <a class="btn btn-secondary" href="https://github.com/function-store/FunctionStore_tools" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-primary" href="/#get">Get FNSTools →</a>
+    </nav>
+  </div>
+</header>
+<div class="docs-layout wrap">
+<aside class="docs-side" id="docs-side">
+  <div class="docs-search"><div id="search"></div></div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">◈</span>Core</h3>
+    <ul>
+      <li><a href="/docs/configregistry/">ConfigRegistry</a></li>
+      <li><a href="/docs/mainmenuregistry/">MainMenuRegistry</a></li>
+      <li><a href="/docs/navbarregistry/">NavbarRegistry</a></li>
+      <li><a href="/docs/opmenuregistry/">OpMenuRegistry</a></li>
+      <li><a href="/docs/panetyperegistry/">PaneTypeRegistry</a></li>
+      <li><a href="/docs/toolbarregistry/">ToolbarRegistry</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">▦</span>Surfaces</h3>
+    <ul>
+      <li><a href="/docs/borderlesstd/">BorderlessTD</a></li>
+      <li><a href="/docs/colorui/">ColorUI</a></li>
+      <li><a href="/docs/fns-mainmenu/">FNS_MainMenu</a></li>
+      <li><a href="/docs/fns-navbar/">FNS_Navbar</a></li>
+      <li><a href="/docs/fns-opmenu/">FNS_OpMenu</a></li>
+      <li><a href="/docs/fns-toolbar/">FNS_Toolbar</a></li>
+      <li><a href="/docs/tools-ui/">tools_ui</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">◎</span>Parameters</h3>
+    <ul>
+      <li><a href="/docs/clearpars/">ClearPars</a></li>
+      <li><a href="/docs/custompartools/" aria-current="page">CustomParTools</a></li>
+      <li><a href="/docs/exprhotstrings/">ExprHotStrings</a></li>
+      <li><a href="/docs/paropdrop/">ParOPDrop</a></li>
+      <li><a href="/docs/parrandomizer/">ParRandomizer</a></li>
+      <li><a href="/docs/quickparcustom/">QuickParCustom</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">⇄</span>Network</h3>
+    <ul>
+      <li><a href="/docs/altselect/">AltSelect</a></li>
+      <li><a href="/docs/autocombine/">AutoCombine</a></li>
+      <li><a href="/docs/optemplates/">OpTemplates</a></li>
+      <li><a href="/docs/optoclipboard/">OpToClipboard</a></li>
+      <li><a href="/docs/paste-from-clipboard/">paste_from_clipboard</a></li>
+      <li><a href="/docs/quickcollapse/">QuickCollapse</a></li>
+      <li><a href="/docs/quickmarks/">QuickMarks</a></li>
+      <li><a href="/docs/swapops/">SwapOps</a></li>
+      <li><a href="/docs/switchops/">SwitchOPs</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">▶</span>Media &amp; Output</h3>
+    <ul>
+      <li><a href="/docs/autores/">AutoRes</a></li>
+      <li><a href="/docs/globaloutselect/">GlobalOutSelect</a></li>
+      <li><a href="/docs/globalvolcontrol/">GlobalVolControl</a></li>
+      <li><a href="/docs/hydrohomie/">HydroHomie</a></li>
+      <li><a href="/docs/output/">OUTPUT</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">⊙</span>Control</h3>
+    <ul>
+      <li><a href="/docs/midimapper/">midiMapper</a></li>
+      <li><a href="/docs/oscmapper/">oscMapper</a></li>
+      <li><a href="/docs/setsmoothness/">SetSmoothness</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">⚡</span>Workflow</h3>
+    <ul>
+      <li><a href="/docs/fns-hotkeymanager/">FNS_HotkeyManager</a></li>
+      <li><a href="/docs/misc/">MISC</a></li>
+      <li><a href="/docs/my-hotkeys/">MY_HOTKEYS</a></li>
+      <li><a href="/docs/quickpane/">QuickPane</a></li>
+      <li><a href="/docs/quicktime/">QuickTime</a></li>
+      <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">⌨</span>Developer</h3>
+    <ul>
+      <li><a href="/docs/fns-updater/">FNS_Updater</a></li>
+      <li><a href="/docs/openext/">OpenExt</a></li>
+      <li><a href="/docs/vscodetools/">VSCodeTools</a></li>
+    </ul>
+  </div>
+</aside>
+<main class="docs-main" data-pagefind-body>
+  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> Parameters</p>
+  <h1>CustomParTools</h1>
+  <p class="lede">Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion.</p>
+  <p class="badges"><span class="badge badge-cat">◎ Parameters</span></p>
+  
+  <nav class="toc"><span>On this page</span><ul><li><a href="#custompar-tools">CustomPar Tools</a></li><li><a href="#quickext">QuickExt</a></li><li><a href="#customparcustomize">CustomParCustomize</a></li><li><a href="#customparhelper">CustomParHelper</a></li><li><a href="#nonode">NoNode</a></li></ul></nav>
+  <div class="docs-body">
+<h2 id="custompar-tools" tabindex="-1">CustomPar Tools <a class="heading-anchor" href="#custompar-tools" aria-hidden="true">#</a></h2>
+<p>This button is a quick way to manipulate <strong>Custom Parameters</strong> of a parent component. It is also added for each pane!</p>
+<ul>
+<li><strong>Drag-and-Drop onto the icon:</strong>
+<ul>
+<li><strong>A Parameter:</strong> Promote that <strong>Parameter</strong> to the <strong>Parent Custom Params</strong> and Bind/Reference automatically (always to the currently active/selected page).
+<ul>
+<li>Hold <code>Alt/Opt</code> or <code>Ctrl</code> to customize parameter promotion—name it, set min/max values, and tweak clamping.
+<ul>
+<li><code>Label</code> and <code>ParName</code> for <strong>all</strong> params, and for slider-type params: <code>min</code>, <code>max</code> values, <code>clamping</code> tickboxes, and <code>default</code> value</li>
+<li><strong>Quickly jump</strong> between text fields by pressing <code>Tab</code> and <code>Shift+Tab</code></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>A Table DAT</strong>: adds a new ParMenu and sets the table as a menu source</li>
+<li><strong>A COMP:</strong> Promote all <strong>Custom Parameters</strong> of the dragged <strong>COMP</strong> to the <strong>Parent Custom Params</strong> and Bind/Reference automatically.</li>
+</ul>
+</li>
+<li><strong>LeftClick:</strong> Opens <strong>Parent Parameters</strong>.</li>
+<li><strong>Shift-LeftClick:</strong> Opens <strong>Selected OP Parameters</strong>.</li>
+<li><strong>RightClick:</strong> Opens <strong>Parent Component Editor</strong>.</li>
+<li><strong>Shift-RightClick:</strong> Opens <strong>Selected OP Component Editor</strong>.</li>
+<li><strong>Alt-LeftClick (Cmd+LeftClick for Mac):</strong> Clears broken parameter expressions/binds of a selected COMP recursively (usually useful after copying a COMP from another project)</li>
+<li><strong>Ctrl+Alt+Drag</strong> an <strong>OP</strong> (Ctrl+Cmd+Drag on Mac): Promote as <code>iop</code> to parent</li>
+<li><strong>Ctrl+Shift+Click</strong>: Add Parent shortcut</li>
+<li><strong>Shift+Alt+LeftClick</strong> (Shift+Cmd+LeftClick for Mac): Add <a href="/docs/custompartools/#quickext">QuickExt</a> to parent for a streamlined python Extension workflow - see <a href="/docs/custompartools/">QuickExt</a></li>
+<li><strong>MiddleClick:</strong> Promotes <strong>Parent Parameters</strong> further to <strong><em>its</em></strong> <strong>Parent</strong>.</li>
+</ul>
+<h2 id="quickext" tabindex="-1">QuickExt <a class="heading-anchor" href="#quickext" aria-hidden="true">#</a></h2>
+<p>See the extensive description of <a href="/docs/custompartools/">QuickExt</a>.</p>
+<hr>
+<h2 id="customparcustomize" tabindex="-1">CustomParCustomize <a class="heading-anchor" href="#customparcustomize" aria-hidden="true">#</a></h2>
+<p>A fast way to customize parameter promotion—name it, set min/max values, and tweak clamping. Related to <a href="/docs/quicktime/#quicktime">CustomParTools</a></p>
+<ul>
+<li><code>Label</code> and <code>ParName</code> for <strong>all</strong> params, and for slider-type params: <code>min</code>, <code>max</code> values, <code>clamping</code> tickboxes, and <code>default</code> value</li>
+<li><strong>Invoked</strong> by holding <code>Ctrl</code> or <code>Alt</code>(<code>Opt</code>) while drag-and-dropping a parameter onto the <code>diamond</code> button or a parent in the path bar</li>
+<li><strong>Quickly jump</strong> between text fields by pressing <code>Tab</code> and <code>Shift+Tab</code></li>
+</ul>
+<p>When adding an extension using <a href="/docs/custompartools/#quickext">CustomParTools</a><img src="/docs/assets/icons/CustomParTools.png" alt=""> <strong>Shift+Alt+LeftClick</strong>, the created default Extension will have the following available:</p>
+<ul>
+<li>Simplified default extension code</li>
+<li>Includes <code>ExtUtils</code> which contains <a href="/docs/custompartools/#customparhelper">CustomParHelper</a> and <a href="/docs/custompartools/#nonode">NoNode</a>, which are also initialized in the default extension code</li>
+</ul>
+<blockquote>
+<p>You can also add QuickExt to your Base COMP via the <code>Component Editor-&gt;Extension</code> section by long-clicking on <code>Add</code> and selecting <code>QuickExt</code></p>
+</blockquote>
+<blockquote>
+<p>It is important that <code>ExtUtils</code> stays docked to your extension code!</p>
+</blockquote>
+<p>By leveraging [NoNode] and [CustomParHelper], TouchDesigner developers can create more efficient, organized, and maintainable extensions, ultimately leading to smoother workflow and improved project scalability.</p>
+<blockquote>
+<p>Pro Tip: Set your IDE's Python interpreter to that of TouchDesigner's to utilize stubs/code suggestion - ExtUtils will deploy its definition automatically!</p>
+</blockquote>
+<h5 id="importing" tabindex="-1">Importing <a class="heading-anchor" href="#importing" aria-hidden="true">#</a></h5>
+<p>The default extension code will contain the following - at first sight complicated looking - import statements for the utility packages. You can just ignore them, but don't remove them!</p>
+<blockquote>
+<p>This might look complicated at first but it's just a fancy import statement to avoid any conflicts when
+having multiple extension classes with ExtUtils attached.</p>
+</blockquote>
+<pre><code class="language-python">  CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+  NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+</code></pre>
+<h2 id="customparhelper" tabindex="-1">CustomParHelper <a class="heading-anchor" href="#customparhelper" aria-hidden="true">#</a></h2>
+<p>CustomParHelper simplifies the management of custom parameters in TouchDesigner extensions, providing an intuitive interface for accessing and manipulating parameters, implementing callbacks, and handling parameter groups.</p>
+<h3 id="key-features" tabindex="-1">Key Features: <a class="heading-anchor" href="#key-features" aria-hidden="true">#</a></h3>
+<ul>
+<li>Easy parameter access as properties</li>
+<li>Simplified custom parameter callbacks</li>
+<li>Support for sequence parameters and blocks</li>
+<li>Parameter group (parGroups) management</li>
+<li>Flexible configuration for inclusion/exclusion of properties and callbacks</li>
+<li>Optional public/private naming conventions</li>
+<li>Automatic stub generation for improved IDE support</li>
+</ul>
+<h3 id="usage-examples-in-your-extension-class" tabindex="-1">Usage examples in your extension class: <a class="heading-anchor" href="#usage-examples-in-your-extension-class" aria-hidden="true">#</a></h3>
+<ol start="0">
+<li>
+<p>Make sure ExtUtils is docked to your extension</p>
+</li>
+<li>
+<p>Import the CustomParHelper class:</p>
+<pre><code class="language-python">CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+</code></pre>
+</li>
+<li>
+<p>Initialize in your extension's <strong>init</strong> method as follows:</p>
+<pre><code class="language-python">CustomParHelper.Init(self, ownerComp)
+</code></pre>
+<p>Full signature and optional parameters:</p>
+<pre><code class="language-python">CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
+      par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
+      except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
+      enable_stubs: bool = False, general_callback_enable: bool = True)
+</code></pre>
+<p>Additional options:</p>
+<ul>
+<li><code>enable_properties</code>: If True, creates properties for custom parameters (default: True)</li>
+<li><code>enable_callbacks</code>: If True, creates callbacks for custom parameters (default: True)</li>
+<li><code>enable_parGroups</code>: If True, creates properties and methods for parGroups (default: True)</li>
+<li><code>enable_seq</code>: If True, creates properties and methods for sequence parameters (default: True)</li>
+<li><code>expose_public</code>: If True, uses capitalized property and method names (e.g., Par, Eval instead of par, eval)</li>
+<li><code>par_properties</code>: List of parameter names to include in property creation, by default all parameters are included</li>
+<li><code>par_callbacks</code>: List of parameter names to include in callback handling, by default all parameters are included</li>
+<li><code>except_properties</code>: List of parameter names to exclude from property creation</li>
+<li><code>except_callbacks</code>: List of parameter names to exclude from callback handling</li>
+<li><code>except_pages</code>: List of parameter pages to exclude from property and callback handling</li>
+<li><code>except_sequences</code>: List of sequence names to exclude from property and callback handling</li>
+<li><code>enable_stubs</code>: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)</li>
+<li><code>general_callback_enable</code>: If True, enables general callbacks that catch all parameter changes (default: True)</li>
+</ul>
+</li>
+<li>
+<p>Access and set custom parameters as properties (if enable_properties=True (default)):</p>
+<p>There are two ways to access and set parameter values:</p>
+<p>a) Using Eval properties (recommended for simple value setting):</p>
+<ul>
+<li><code>self.eval&lt;ParamName&gt;</code>: Get/set the evaluated value of the parameter<pre><code class="language-python"># Get value
+value = self.evalMyparam
+# Set value (always sets .val regardless of parameter mode)
+self.evalMyparam = 5
+</code></pre>
+</li>
+<li><code>self.evalGroup&lt;GroupName&gt;</code>: Get/set the evaluated value of the parameter group<pre><code class="language-python"># Get values
+values = self.evalGroupXyz
+# Set values (always sets .val for each parameter)
+self.evalGroupXyz = [1, 2, 3]
+</code></pre>
+</li>
+</ul>
+<p>b) Using Par properties (for advanced parameter control):</p>
+<ul>
+<li><code>self.par&lt;ParamName&gt;</code>: Access/set the parameter object<pre><code class="language-python"># Get parameter object for advanced operations
+self.parMyparam.expr = &quot;op('something').par.value&quot;
+self.parMyparam.bindExpr = &quot;op('other').par.value&quot;
+# Set value (only works in CONSTANT or BIND modes)
+self.parMyparam = 5  # Ignored if parameter is in EXPRESSION mode
+</code></pre>
+</li>
+<li><code>self.parGroup&lt;GroupName&gt;</code>: Access/set the parameter group object<pre><code class="language-python"># Get parameter group for advanced operations
+myGroup = self.parGroupXyz
+# Set values (only works for parameters in CONSTANT or BIND modes)
+self.parGroupXyz = [1, 2, 3]  # Only affects non-expression parameters
+</code></pre>
+</li>
+</ul>
+<blockquote>
+<p>NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function</p>
+</blockquote>
+</li>
+<li>
+<p>Implement callbacks (if enable_callbacks=True (default)):
+a) Parameter-specific callbacks:</p>
+<ul>
+<li>
+<p>For regular parameters:</p>
+<pre><code class="language-python">def onPar&lt;Parname&gt;(self, _par, _val, _prev):
+  # _par and _prev can be omitted if not needed
+</code></pre>
+</li>
+<li>
+<p>For pulse parameters:</p>
+<pre><code class="language-python">def onPar&lt;PulseParname&gt;(self, _par):
+  # _par can be omitted if not needed
+</code></pre>
+</li>
+<li>
+<p>For sequence blocks:</p>
+<pre><code class="language-python">def onSeq&lt;SeqName&gt;N(self, idx):
+</code></pre>
+</li>
+<li>
+<p>For sequence parameters:</p>
+<pre><code class="language-python">def onSeq&lt;SeqName&gt;N&lt;Parname&gt;(self, _par, idx, _val, _prev):
+  # _par and _prev can be omitted if not needed
+</code></pre>
+</li>
+<li>
+<p>For parameter groups if enable_parGroups=True (default):</p>
+<pre><code class="language-python">def onParGroup&lt;Groupname&gt;(self, _parGroup, _val):
+  # _parGroup can be omitted if not needed
+</code></pre>
+</li>
+</ul>
+<p>b) General callbacks (if general_callback_enable=True (default)):
+These catch all parameter changes that aren't handled by specific callbacks:</p>
+<ul>
+<li>
+<p>For value changes:</p>
+<pre><code class="language-python">def onValueChange(self, _par, _val, _prev):
+  # Called when any parameter value changes that doesn't have a specific callback
+  # _val and _prev can be omitted if not needed
+</code></pre>
+</li>
+<li>
+<p>For pulse parameters:</p>
+<pre><code class="language-python">def onPulse(self, _par):
+  # Called when any pulse parameter is triggered that doesn't have a specific callback
+  # _par can be omitted if not needed
+</code></pre>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="nonode" tabindex="-1">NoNode <a class="heading-anchor" href="#nonode" aria-hidden="true">#</a></h2>
+<p>NoNode is a versatile utility class that centralizes the management of various types of executions and callbacks in TouchDesigner, eliminating the need for dedicated nodes.</p>
+<h3 id="usage-examples" tabindex="-1">Usage examples: <a class="heading-anchor" href="#usage-examples" aria-hidden="true">#</a></h3>
+<ol>
+<li>
+<p>Make sure ExtUtils is docked to your extension</p>
+</li>
+<li>
+<p>Import the NoNode class:</p>
+<pre><code class="language-python">NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+</code></pre>
+</li>
+<li>
+<p>Initialize the NoNode system in your extension:</p>
+<pre><code class="language-python">NoNode.Init(enable_chopexec=True, enable_datexec=True, enable_parexec=True, enable_keyboard_shortcuts=True)
+</code></pre>
+</li>
+<li>
+<p>CHOP executions:</p>
+<ul>
+<li>Register a callback for CHOP value changes:<pre><code class="language-python">NoNode.RegisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name(s), self.on_value_change_function)
+# callback signature: def on_value_change_function(self, channel: Channel, sampleIndex: int, val: float, prev: float):
+# can omit parameters from the right side of the signature if not needed
+</code></pre>
+</li>
+<li>Handle CHOP state changes:<pre><code class="language-python">NoNode.RegisterChopExec(NoNode.ChopExecType.OffToOn, chop_op, channel_name(s), self.on_activate_function)
+# callback signature: def on_activate_function(self, channel: Channel, sampleIndex: int, val: float, prev: float):
+# can omit parameters from the right side of the signature if not needed
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>DAT executions:</p>
+<ul>
+<li>React to table changes in a DAT:<pre><code class="language-python">NoNode.RegisterDatExec(NoNode.DatExecType.TableChange, dat_op, self.on_table_change_function)
+# callback signature depends on the event type, eg.: def on_table_change_function(self, dat: DAT):
+</code></pre>
+</li>
+<li>Handle cell value changes:<pre><code class="language-python">NoNode.RegisterDatExec(NoNode.DatExecType.CellChange, dat_op, self.on_cell_change_function)
+# callback signature depends on the event type, eg.: def on_cell_change_function(self, dat: DAT, cells: list[Cell], prev: Cell):
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Parameter executions:</p>
+<ul>
+<li>Register a callback for parameter value changes:<pre><code class="language-python">NoNode.RegisterParExec(NoNode.ParExecType.ValueChange, par_op, par_name, self.on_value_change_function)
+# callback signature depends on the event type, eg.: def on_value_change_function(self, par: Par, val: float, prev: float):
+# can omit prev, or use val only
+</code></pre>
+</li>
+<li>Handle pulse parameters:<pre><code class="language-python">NoNode.RegisterParExec(NoNode.ParExecType.OnPulse, par_op, par_name, self.on_pulse_function)
+# callback signature: def on_pulse_function(self,par: Par):
+# can omit par if not needed
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Keyboard shortcuts:</p>
+<ul>
+<li>Register a keyboard shortcut:<pre><code class="language-python">NoNode.RegisterKeyboardShortcut('ctrl.k', self.onKeyboardShortcut)
+# callback signature: def onKeyboardShortcut(self):
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Deregister callbacks:</p>
+<ul>
+<li>Deregister a CHOP execution:<pre><code class="language-python">NoNode.DeregisterChopExec(NoNode.ChopExecType.ValueChange, chop_op, channel_name(s))
+</code></pre>
+</li>
+<li>Deregister a DAT execution:<pre><code class="language-python">NoNode.DeregisterDatExec(NoNode.DatExecType.TableChange, dat_op)
+</code></pre>
+</li>
+<li>Deregister a parameter execution:<pre><code class="language-python">NoNode.DeregisterParExec(NoNode.ParExecType.ValueChange, par_op, par_name)
+</code></pre>
+</li>
+<li>Deregister a keyboard shortcut:<pre><code class="language-python">NoNode.DeregisterKeyboardShortcut('ctrl.k')
+</code></pre>
+</li>
+</ul>
+</li>
+<li>
+<p>Visual indication:</p>
+<ul>
+<li>Operators with registered callbacks are marked with a color for easy identification</li>
+<li>Customize the mark color:<pre><code class="language-python">NoNode.SetMarkColor((r, g, b))
+</code></pre>
+</li>
+</ul>
+</li>
+</ol>
+<p>To demo all the features you can download <a href="https://github.com/function-store/FunctionStore_tools/blob/main/modules/suspects/FunctionStore_tools_2023/QuickExtTest.tox">QuickExtTest.tox</a> and run it or just check its <a href="https://github.com/function-store/FunctionStore_tools/blob/main/scripts/QuickExt/templates/ExtUtils/ExtTest.py">extension code</a>.</p>
+
+  </div>
+  <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/CustomParTools.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
+</main>
+</div>
+<footer class="site">
+  <div class="wrap footer-inner">
+    <div>© 2026 FNSTools · Built for TouchDesigner</div>
+    <div class="footer-links">
+      <a href="/docs/">Docs</a>
+      <a href="https://github.com/function-store/FunctionStore_tools" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://discord.gg/b4CaCP3g3K" target="_blank" rel="noopener">Discord</a>
+      <a href="https://derivative.ca" target="_blank" rel="noopener">TouchDesigner</a>
+      <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+      <a href="https://functionstore.xyz" target="_blank" rel="noopener">Function Store</a>
+      <a href="mailto:dan%2Bfnstools@functionstore.xyz?subject=FNSTools%20feedback">Feedback</a>
+    </div>
+  </div>
+</footer>
+<script src="/site-nav.js" defer></script>
+<!-- Pagefind is emitted by the search step that runs after this build.
+     Both scripts are deferred so they run in order; if the index has not
+     been generated yet this 404s and docs.js just skips the search UI. -->
+<script src="/docs/pagefind/pagefind-ui.js" defer onerror="this.remove()"></script>
+<script src="/docs.js" defer></script>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script src="/_vercel/insights/script.js" defer></script>
+</body>
+</html>

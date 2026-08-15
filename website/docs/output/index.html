@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<link rel="icon" href="/favicon.png" type="image/png" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+<title>OUTPUT — FNSTools docs</title>
+<meta name="description" content="Output window and display routing helpers." />
+<meta property="og:title" content="OUTPUT — FNSTools docs" />
+<meta property="og:description" content="Output window and display routing helpers." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://tools.functionstore.xyz/og-image.png" />
+<link rel="canonical" href="https://tools.functionstore.xyz/docs/output/" />
+<meta name="robots" content="index, follow" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site-nav.css">
+<link rel="stylesheet" href="/docs.css">
+<link rel="stylesheet" href="/docs/pagefind/pagefind-ui.css" onerror="this.remove()">
+</head>
+<body>
+<header class="site">
+  <div class="site-inner">
+    <div class="brand">
+      <img class="brand-logo" src="/favicon.png" alt="" width="28" height="28" decoding="async" />
+      <div class="brand-lockup">
+        <a href="/" class="brand-name">FNSTools</a>
+        <span class="brand-credit">by <a href="https://functionstore.xyz/link-in-bio" target="_blank" rel="noopener noreferrer">Function Store</a></span>
+      </div>
+    </div>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+    </button>
+    <nav id="site-nav" class="site-nav">
+      <a href="/#get">Install</a>
+      <a href="/#tools">Tools</a>
+      <a href="/docs/" aria-current="page">Docs</a>
+      <a href="/#credits">Credits</a>
+      <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+      <a class="btn btn-secondary" href="https://github.com/function-store/FunctionStore_tools" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-primary" href="/#get">Get FNSTools →</a>
+    </nav>
+  </div>
+</header>
+<div class="docs-layout wrap">
+<aside class="docs-side" id="docs-side">
+  <div class="docs-search"><div id="search"></div></div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">◈</span>Core</h3>
+    <ul>
+      <li><a href="/docs/configregistry/">ConfigRegistry</a></li>
+      <li><a href="/docs/mainmenuregistry/">MainMenuRegistry</a></li>
+      <li><a href="/docs/navbarregistry/">NavbarRegistry</a></li>
+      <li><a href="/docs/opmenuregistry/">OpMenuRegistry</a></li>
+      <li><a href="/docs/panetyperegistry/">PaneTypeRegistry</a></li>
+      <li><a href="/docs/toolbarregistry/">ToolbarRegistry</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">▦</span>Surfaces</h3>
+    <ul>
+      <li><a href="/docs/borderlesstd/">BorderlessTD</a></li>
+      <li><a href="/docs/colorui/">ColorUI</a></li>
+      <li><a href="/docs/fns-mainmenu/">FNS_MainMenu</a></li>
+      <li><a href="/docs/fns-navbar/">FNS_Navbar</a></li>
+      <li><a href="/docs/fns-opmenu/">FNS_OpMenu</a></li>
+      <li><a href="/docs/fns-toolbar/">FNS_Toolbar</a></li>
+      <li><a href="/docs/tools-ui/">tools_ui</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">◎</span>Parameters</h3>
+    <ul>
+      <li><a href="/docs/clearpars/">ClearPars</a></li>
+      <li><a href="/docs/custompartools/">CustomParTools</a></li>
+      <li><a href="/docs/exprhotstrings/">ExprHotStrings</a></li>
+      <li><a href="/docs/paropdrop/">ParOPDrop</a></li>
+      <li><a href="/docs/parrandomizer/">ParRandomizer</a></li>
+      <li><a href="/docs/quickparcustom/">QuickParCustom</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">⇄</span>Network</h3>
+    <ul>
+      <li><a href="/docs/altselect/">AltSelect</a></li>
+      <li><a href="/docs/autocombine/">AutoCombine</a></li>
+      <li><a href="/docs/optemplates/">OpTemplates</a></li>
+      <li><a href="/docs/optoclipboard/">OpToClipboard</a></li>
+      <li><a href="/docs/paste-from-clipboard/">paste_from_clipboard</a></li>
+      <li><a href="/docs/quickcollapse/">QuickCollapse</a></li>
+      <li><a href="/docs/quickmarks/">QuickMarks</a></li>
+      <li><a href="/docs/swapops/">SwapOps</a></li>
+      <li><a href="/docs/switchops/">SwitchOPs</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">▶</span>Media &amp; Output</h3>
+    <ul>
+      <li><a href="/docs/autores/">AutoRes</a></li>
+      <li><a href="/docs/globaloutselect/">GlobalOutSelect</a></li>
+      <li><a href="/docs/globalvolcontrol/">GlobalVolControl</a></li>
+      <li><a href="/docs/hydrohomie/">HydroHomie</a></li>
+      <li><a href="/docs/output/" aria-current="page">OUTPUT</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">⊙</span>Control</h3>
+    <ul>
+      <li><a href="/docs/midimapper/">midiMapper</a></li>
+      <li><a href="/docs/oscmapper/">oscMapper</a></li>
+      <li><a href="/docs/setsmoothness/">SetSmoothness</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">⚡</span>Workflow</h3>
+    <ul>
+      <li><a href="/docs/fns-hotkeymanager/">FNS_HotkeyManager</a></li>
+      <li><a href="/docs/misc/">MISC</a></li>
+      <li><a href="/docs/my-hotkeys/">MY_HOTKEYS</a></li>
+      <li><a href="/docs/quickpane/">QuickPane</a></li>
+      <li><a href="/docs/quicktime/">QuickTime</a></li>
+      <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+    </ul>
+  </div>
+  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">⌨</span>Developer</h3>
+    <ul>
+      <li><a href="/docs/fns-updater/">FNS_Updater</a></li>
+      <li><a href="/docs/openext/">OpenExt</a></li>
+      <li><a href="/docs/vscodetools/">VSCodeTools</a></li>
+    </ul>
+  </div>
+</aside>
+<main class="docs-main" data-pagefind-body>
+  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> Media &amp; Output</p>
+  <h1>OUTPUT</h1>
+  <p class="lede">Output window and display routing helpers.</p>
+  <p class="badges"><span class="badge badge-cat">▶ Media &amp; Output</span></p>
+  
+  
+  <div class="docs-body">
+<h2 id="perform-window-tools" tabindex="-1">Perform Window Tools <a class="heading-anchor" href="#perform-window-tools" aria-hidden="true">#</a></h2>
+<p>Drag and drop an operator to set it as the <code>Window Operator</code> of the <code>/perform</code> Window. <strong>Left-Click</strong> to open the viewer, <strong>Right-Click</strong> to configure. In the configuration popup you have the option to turn NDI/Spout streaming of the same window on/off also.</p>
+<blockquote>
+<p>Note: In case you want to change the perform window reference, do it so in the custom parameter of <code>/FunctionStore_tools/MY_TOOLBAR/containers/button_perform</code> and re-install the toolbar by pulsing the <code>Install</code> parameter of the <code>FNS_Toolbar</code> component.</p>
+</blockquote>
+
+  </div>
+  <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/OUTPUT.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
+</main>
+</div>
+<footer class="site">
+  <div class="wrap footer-inner">
+    <div>© 2026 FNSTools · Built for TouchDesigner</div>
+    <div class="footer-links">
+      <a href="/docs/">Docs</a>
+      <a href="https://github.com/function-store/FunctionStore_tools" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://discord.gg/b4CaCP3g3K" target="_blank" rel="noopener">Discord</a>
+      <a href="https://derivative.ca" target="_blank" rel="noopener">TouchDesigner</a>
+      <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+      <a href="https://functionstore.xyz" target="_blank" rel="noopener">Function Store</a>
+      <a href="mailto:dan%2Bfnstools@functionstore.xyz?subject=FNSTools%20feedback">Feedback</a>
+    </div>
+  </div>
+</footer>
+<script src="/site-nav.js" defer></script>
+<!-- Pagefind is emitted by the search step that runs after this build.
+     Both scripts are deferred so they run in order; if the index has not
+     been generated yet this 404s and docs.js just skips the search UI. -->
+<script src="/docs/pagefind/pagefind-ui.js" defer onerror="this.remove()"></script>
+<script src="/docs.js" defer></script>
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script src="/_vercel/insights/script.js" defer></script>
+</body>
+</html>

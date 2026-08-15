@@ -1,0 +1,19 @@
+{
+  "name": "fnstools-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "tools.functionstore.xyz — landing page and generated docs for FNSTools",
+  "type": "module",
+  "scripts": {
+    "build": "node tools/build-site.mjs && npm run search",
+    "pages": "node tools/build-site.mjs",
+    "search": "pagefind --site docs --output-subdir pagefind",
+    "serve": "npx --yes serve ."
+  },
+  "devDependencies": {
+    "gray-matter": "^4.0.3",
+    "markdown-it": "^14.1.0",
+    "markdown-it-anchor": "^9.2.0",
+    "pagefind": "^1.1.1"
+  }
+}

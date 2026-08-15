@@ -78,3 +78,6 @@ packaging/publish/
 
 # wrangler local state
 .wrangler/
+
+# website deps. website/docs/ IS committed -- Vercel serves it with no build step.
+website/node_modules/

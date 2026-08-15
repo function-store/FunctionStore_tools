@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" href="/favicon.png" type="image/png" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+<title>FNSTools — TouchDesigner workflow toolkit</title>
+<meta name="description" content="FNSTools is a free, open-source toolkit of TouchDesigner workflow tools: operator templates, parameter promotion, MIDI/OSC mapping, network shortcuts and extension helpers. Pick only the tools you want — the installer downloads just those." />
+<meta property="og:title" content="FNSTools — TouchDesigner workflow toolkit" />
+<meta property="og:description" content="Operator templates, parameter promotion, MIDI/OSC mapping, network shortcuts and extension helpers for TouchDesigner. Free and open source — pick only the tools you want." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://tools.functionstore.xyz/og-image.png" />
+<link rel="canonical" href="https://tools.functionstore.xyz/" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/site-nav.css">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-1: #111111;
+    --bg-2: #161616;
+    --bg-3: #1c1c1c;
+    --bg-deep: #050505;
+    --border: #262626;
+    --border-strong: #3a3a3a;
+    --text: #f5f5f5;
+    --text-dim: #a3a3a3;
+    --text-faint: #737373;
+    --accent: #fbbf24;
+    --accent-dim: #2a1f08;
+    --accent-bright: #fcd34d;
+    --green: #4ade80;
+    --max-w: 1140px;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  /* Offset in-page anchor jumps so the sticky header doesn't cover the target. */
+  html { scroll-padding-top: 84px; scroll-behavior: smooth; }
+  :target { scroll-margin-top: 84px; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-bright); }
+  code, kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.92em; }
+
+  .wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+  /* ───── Header ───── */
+  header.site {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  .site-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 24px; max-width: var(--max-w); margin: 0 auto;
+  }
+  nav.site-nav { display: flex; gap: 28px; align-items: center; font-size: 14px; }
+  /* :not(.btn) keeps these from overriding the .btn-primary / .btn-secondary
+     color rules below — `nav.site-nav a` has higher specificity than
+     `.btn-primary`, so without the exclusion the CTA inherits the muted
+     nav color. */
+  nav.site-nav a:not(.btn) { color: var(--text-dim); }
+  nav.site-nav a:not(.btn):hover { color: var(--text); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 10px 18px; border-radius: 8px;
+    font-weight: 600; font-size: 14px;
+    border: 1px solid transparent; cursor: pointer;
+    transition: all 0.15s ease;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--accent); color: #0a0a0a; }
+  .btn-primary:hover { background: var(--accent-bright); color: #0a0a0a; }
+  .btn-secondary { background: transparent; color: var(--text); border-color: var(--border-strong); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-lg { padding: 14px 26px; font-size: 15px; }
+
+  /* ───── Hero ───── */
+  .hero { padding: 72px 0 24px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(600px 300px at 50% 0%, rgba(251,191,36,0.10), transparent 70%),
+      radial-gradient(400px 200px at 80% 20%, rgba(251,146,60,0.06), transparent 70%);
+  }
+  .hero-inner { position: relative; }
+  .eyebrow {
+    display: inline-block;
+    padding: 5px 12px; border-radius: 999px;
+    background: var(--accent-dim); color: var(--accent);
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    border: 1px solid rgba(251,191,36,0.25);
+    margin-bottom: 24px;
+  }
+  h1.hero-title {
+    font-size: clamp(40px, 6vw, 64px);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.025em;
+    margin: 0 0 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #b3b3b3 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    font-size: clamp(17px, 1.6vw, 19px);
+    color: var(--text-dim);
+    max-width: 640px;
+    margin: 0 auto 36px;
+  }
+  .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .hero-meta {
+    list-style: none;
+    margin: 28px auto 0;
+    padding: 0;
+    max-width: 700px;
+    font-size: 13px;
+    color: var(--text-faint);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 6px 0;
+  }
+  /* Normal inline flow inside each item, not flex: these are a <span> next to
+     a bare text node, and as flex items the whitespace between them is
+     trimmed — "45tools". The dot spaces itself with a margin instead. */
+  .hero-meta li { display: block; }
+  .hero-meta li:not(:last-child)::after {
+    content: '·'; margin: 0 12px; color: var(--text-faint);
+  }
+  .dot {
+    display: inline-block; vertical-align: middle;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--green); flex-shrink: 0; margin-right: 7px;
+  }
+  .hero-video { margin: 40px auto 0; max-width: 760px; text-align: center; }
+  .hero-video__caption { margin: 12px 0 0; font-size: 13px; color: var(--text-faint); }
+  .hero-video__caption a { color: var(--text-dim); }
+  .hero-video__caption a:hover { color: var(--accent-bright); }
+  @media (max-width: 600px) {
+    .hero-meta { flex-direction: column; align-items: center; gap: 8px; }
+    .hero-meta li:not(:last-child)::after { content: none; margin: 0; }
+  }
+
+  .embed-video {
+    position: relative; width: 100%; aspect-ratio: 16 / 9;
+    border-radius: 12px; border: 1px solid var(--border);
+    overflow: hidden; background: var(--bg-2);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  }
+  .embed-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+  /* ───── Sections ───── */
+  section { padding: 48px 0; }
+  .section-head { text-align: center; margin-bottom: 36px; }
+  .section-head h2 {
+    font-size: clamp(28px, 3.6vw, 36px);
+    font-weight: 700; letter-spacing: -0.02em;
+    margin: 0 0 12px;
+  }
+  .section-head p {
+    color: var(--text-dim); font-size: 17px;
+    max-width: 620px; margin: 0 auto;
+  }
+
+  /* ───── Paths (the three-step install story) ───── */
+  .paths { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 860px) { .paths { grid-template-columns: 1fr; } }
+  .path {
+    display: flex; flex-direction: column;
+    padding: 24px 24px 26px;
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px;
+  }
+  .path-tag {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px; border-radius: 7px;
+    background: var(--accent-dim); color: var(--accent);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 13px; font-weight: 500;
+    margin-bottom: 14px;
+  }
+  .path h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+  .path p { margin: 0 0 16px; font-size: 14px; color: var(--text-dim); line-height: 1.55; }
+  .path .btn { margin-top: auto; align-self: flex-start; }
+  .path-note { margin: 12px 0 0; font-size: 12px; color: var(--text-faint); }
+
+  /* ───── Quickstart ───── */
+  .quickstart {
+    padding: 28px 32px;
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px;
+  }
+  .quickstart ol { margin: 0; padding-left: 20px; font-size: 15px; color: var(--text-dim); }
+  .quickstart li { margin-bottom: 10px; line-height: 1.6; }
+  .quickstart li strong { color: var(--text); }
+  .quickstart code {
+    background: var(--bg-3); border: 1px solid var(--border);
+    padding: 1px 6px; border-radius: 4px; color: var(--accent-bright);
+  }
+  .quickstart-notes {
+    margin: 22px 0 0; padding: 18px 20px 4px;
+    border-top: 1px solid var(--border);
+  }
+  .quickstart-notes p { margin: 0 0 14px; font-size: 13px; color: var(--text-faint); line-height: 1.6; }
+  .quickstart-notes strong { color: var(--text-dim); }
+
+  /* ───── Docs callout ───── */
+  .docs-callout {
+    display: flex; flex-wrap: wrap;
+    align-items: center; justify-content: space-between;
+    gap: 20px 28px; padding: 28px 32px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.10) 0%, var(--bg-1) 55%);
+    border: 1px solid rgba(251,191,36,0.28);
+    border-radius: 14px;
+  }
+  .docs-callout__eyebrow {
+    display: block; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 6px;
+  }
+  .docs-callout h2 { margin: 0 0 8px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .docs-callout p { margin: 0; font-size: 15px; color: var(--text-dim); line-height: 1.55; max-width: 58ch; }
+  .docs-callout__links {
+    margin: 12px 0 0; padding: 0; list-style: none;
+    display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px;
+  }
+  .docs-callout__actions { flex-shrink: 0; }
+  @media (max-width: 700px) {
+    .docs-callout { padding: 22px 20px; }
+    .docs-callout__actions { width: 100%; }
+    .docs-callout__actions .btn { width: 100%; justify-content: center; }
+  }
+
+  /* ───── Feature catalog ───── */
+  .feature-cat {
+    display: grid; grid-template-columns: 220px 1fr;
+    gap: 40px; padding: 36px 0;
+    border-top: 1px solid var(--border);
+  }
+  .feature-cat:first-of-type { border-top: none; padding-top: 0; }
+  @media (max-width: 760px) {
+    .feature-cat { grid-template-columns: 1fr; gap: 16px; padding: 28px 0; }
+  }
+  .feature-cat-head h3 {
+    margin: 0 0 8px; font-size: 20px; font-weight: 600;
+    letter-spacing: -0.01em; color: var(--text);
+  }
+  .feature-cat-head p { margin: 0; font-size: 13px; color: var(--text-faint); line-height: 1.5; }
+  .feature-cat-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 32px; }
+  @media (max-width: 560px) { .feature-cat-list { grid-template-columns: 1fr; } }
+  .feat { display: grid; grid-template-columns: 28px 1fr; gap: 12px; align-items: start; }
+  .feat-icon {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: var(--accent-dim); color: var(--accent);
+    display: grid; place-items: center; font-size: 13px;
+  }
+  .feat-text strong { display: block; font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+  .feat-text strong a { color: var(--text); }
+  .feat-text strong a:hover { color: var(--accent); }
+  /* Direct child only: the description span. A descendant selector here
+     would also catch anything nested inside the <strong>. */
+  .feat-text > span { display: block; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+  /* ───── Config callout ───── */
+  .config-band {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    padding: 30px 32px;
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: 14px;
+  }
+  @media (max-width: 760px) { .config-band { grid-template-columns: 1fr; gap: 20px; } }
+  .config-band h2 { margin: 0 0 10px; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+  .config-band p { margin: 0 0 12px; font-size: 15px; color: var(--text-dim); line-height: 1.6; }
+  .config-band ul { margin: 0; padding-left: 20px; font-size: 14px; color: var(--text-dim); }
+  .config-band li { margin-bottom: 8px; line-height: 1.55; }
+  .config-band strong { color: var(--text); }
+
+  /* ───── Support band (this toolkit has no pricing) ───── */
+  .try-band {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+    gap: 20px 28px; padding: 26px 32px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, var(--bg-1) 60%);
+    border: 1px solid rgba(251,191,36,0.28);
+    border-radius: 14px;
+  }
+  .try-band-text h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .try-band-text p { margin: 0; font-size: 15px; color: var(--text-dim); max-width: 60ch; }
+  .try-band-actions { display: flex; gap: 10px; flex-wrap: wrap; flex-shrink: 0; }
+
+  /* ───── Credit cards ───── */
+  .alt-tools { padding-top: 8px; }
+  .alt-tools-head h3 { margin: 0 0 6px; font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .alt-tools-head p { margin: 0 0 20px; font-size: 14px; color: var(--text-dim); max-width: 62ch; }
+  .alt-tools-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px;
+  }
+  .alt-tool {
+    padding: 16px 18px;
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: 10px;
+  }
+  .alt-tool strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .alt-tool p { margin: 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+  .alt-tool-by { display: block; margin-top: 8px; font-size: 12px; color: var(--text-faint); }
+
+  /* ───── Footer ───── */
+  footer.site { border-top: 1px solid var(--border); padding: 28px 0; }
+  .footer-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 16px; font-size: 13px; color: var(--text-faint);
+  }
+  .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+  .footer-links a { color: var(--text-dim); }
+  .footer-links a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <div class="brand">
+      <img class="brand-logo" src="/favicon.png" alt="" width="28" height="28" decoding="async" />
+      <div class="brand-lockup">
+        <a href="/" class="brand-name">FNSTools</a>
+        <span class="brand-credit">by <a href="https://functionstore.xyz/link-in-bio" target="_blank" rel="noopener noreferrer">Function Store</a></span>
+      </div>
+    </div>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+    </button>
+    <nav id="site-nav" class="site-nav">
+      <a href="#get">Install</a>
+      <a href="#tools">Tools</a>
+      <a href="/docs/">Docs</a>
+      <a href="#credits">Credits</a>
+      <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+      <a class="btn btn-secondary" href="https://github.com/function-store/FunctionStore_tools" target="_blank" rel="noopener">GitHub</a>
+      <a class="btn btn-primary js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FunctionStore_tools_2025.tox" download>Get FNSTools<span class="js-fns-ver">v2.12.19</span> →</a>
+    </nav>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-inner">
+    <span class="eyebrow">FREE · OPEN SOURCE · MIT</span>
+    <h1 class="hero-title">TouchDesigner,<br />minus the busywork.</h1>
+    <p class="hero-sub">
+      Operator templates, parameter promotion by drag and drop, MIDI and OSC mapping,
+      network shortcuts and extension helpers — built to feel like they shipped with TD.
+      Take the whole toolkit or pick the three tools you actually want.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FunctionStore_tools_2025.tox" download>Get FNSTools<span class="js-fns-ver">v2.12.19</span> →</a>
+      <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
+    </div>
+    <ul class="hero-meta">
+      <li><span class="dot" aria-hidden="true"></span> TouchDesigner 2023.11600+</li>
+      <li>Windows &amp; macOS</li>
+      <li><span class="js-fns-count">45</span> tools, pick what you want</li>
+      <li>MIT licensed</li>
+    </ul>
+
+    <div class="hero-video">
+      <div class="embed-video">
+        <iframe src="https://www.youtube-nocookie.com/embed/hnpC5uh-GTs" title="InSession: FunctionStore tools with the TouchDesigner team" loading="lazy" allowfullscreen></iframe>
+      </div>
+      <p class="hero-video__caption">
+        A full walkthrough with the TouchDesigner team on
+        <a href="https://www.youtube.com/watch?v=hnpC5uh-GTs" target="_blank" rel="noopener">InSession</a>.
+        Recorded on an earlier release — the tools have grown since, but the ideas are the same.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="get">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Install what you want, not everything</h2>
+      <p>One container goes into your project. From there you pick the tools, and only those get downloaded.</p>
+    </div>
+    <div class="paths">
+      <div class="path">
+        <div class="path-tag">1</div>
+        <h3>Drop one <code>.tox</code></h3>
+        <p>
+          Drag the bootstrap container to the root of a project. It is about 150 KB and
+          arrives empty — it carries the installer, the updater and nothing else yet.
+          The container you drop <em>is</em> the install target.
+        </p>
+        <a class="btn btn-primary js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FunctionStore_tools_2025.tox" download>Download<span class="js-fns-ver">v2.12.19</span></a>
+        <p class="path-note">Already have a toolkit container? Grab the <a class="js-fns-installer" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_Installer.tox" download>bare installer</a> instead (~14 KB).</p>
+      </div>
+      <div class="path">
+        <div class="path-tag">2</div>
+        <h3>Pick your tools</h3>
+        <p>
+          Pulse <strong>Pick Tools</strong> and a picker opens, served from inside TouchDesigner —
+          nothing leaves your machine. Browse by category, read what each tool does, then
+          review the install plan before anything is written.
+        </p>
+        <a class="btn btn-secondary" href="/docs/">Browse the catalogue</a>
+      </div>
+      <div class="path">
+        <div class="path-tag">3</div>
+        <h3>Stays current</h3>
+        <p>
+          Each package carries its own version, and the updater compares it against the
+          published one. Update the tools you use, leave the rest alone, and keep your
+          settings across the swap.
+        </p>
+        <a class="btn btn-secondary" href="/docs/fns-updater/">How updates work</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="quickstart" style="padding-top: 12px;">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Three steps, no setup files</h2>
+    </div>
+    <div class="quickstart">
+      <ol>
+        <li>Drop <code>FunctionStore_tools_2025.tox</code> into the root (<code>/</code>) of a project.</li>
+        <li>On the <code>FNS_Installer</code> inside it, pulse <strong>Pick Tools</strong>. On the first run it fetches the catalogue and tells you it is doing so.</li>
+        <li>Pick your tools, hit <strong>Review install…</strong>, read the plan, hit <strong>Install</strong>. The packages land in the container you dropped.</li>
+      </ol>
+      <div class="quickstart-notes">
+        <p>
+          <strong>Make it the default.</strong> Save the project and set it as your startup file in
+          <code>Preferences → General → Startup File Mode</code>, and every new project opens with your tools already in it.
+        </p>
+        <p>
+          <strong>On macOS,</strong> everything works except the Olib Browser and clipboard image paste.
+          Where the docs say <code>Alt</code>, press <code>Cmd</code> — exceptions are called out per tool.
+        </p>
+        <p>
+          <strong>Finding help.</strong> <code>Alt</code>-right-click (or <code>Alt</code>-middle-click) any toolbar
+          icon to open that tool's page on this site. <code>Option</code> on macOS.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="documentation" style="padding-top: 12px;">
+  <div class="wrap">
+    <div class="docs-callout">
+      <div class="docs-callout__body">
+        <span class="docs-callout__eyebrow">Documentation</span>
+        <h2>Every tool documented on its own page</h2>
+        <p>
+          Each package ships with its own docs, so what you read matches exactly what you installed —
+          no hunting through one long page for the three tools you picked.
+        </p>
+        <ul class="docs-callout__links">
+          <li><a href="/docs/optemplates/">OpTemplates</a></li>
+          <li><a href="/docs/custompartools/">CustomPar Tools</a></li>
+          <li><a href="/docs/exprhotstrings/">ExprHotStrings</a></li>
+          <li><a href="/docs/midimapper/">MIDI mapping</a></li>
+          <li><a href="/docs/vscodetools/">VS Code tools</a></li>
+        </ul>
+      </div>
+      <div class="docs-callout__actions">
+        <a class="btn btn-primary" href="/docs/">Open the docs →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="tools">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>What's in the toolkit</h2>
+      <p>Every package installs on its own. Core goes in as a unit; everything else is optional.</p>
+    </div>
+    <!-- TOOLS:START -->
+      <div class="feature-cat">
+        <div class="feature-cat-head">
+          <h3>Core</h3>
+          <p>The registries every other tool plugs into. Installed as a unit.</p>
+        </div>
+        <div class="feature-cat-list">
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◈</div>
+          <div class="feat-text"><strong><a href="/docs/configregistry/">ConfigRegistry</a></strong><span>Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◈</div>
+          <div class="feat-text"><strong><a href="/docs/mainmenuregistry/">MainMenuRegistry</a></strong><span>TD main-menu surface registry, including project-name display. The raw master, promoted to /sys.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◈</div>
+          <div class="feat-text"><strong><a href="/docs/navbarregistry/">NavbarRegistry</a></strong><span>The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◈</div>
+          <div class="feat-text"><strong><a href="/docs/opmenuregistry/">OpMenuRegistry</a></strong><span>OP Create dialog surface registry: search words, row decorations, right-click items, filter stages. The raw master, promoted to /sys.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◈</div>
+          <div class="feat-text"><strong><a href="/docs/panetyperegistry/">PaneTypeRegistry</a></strong><span>Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◈</div>
+          <div class="feat-text"><strong><a href="/docs/toolbarregistry/">ToolbarRegistry</a></strong><span>The toolbar surface registry and mirror rail. The raw master, promoted to /sys -- clone it to put your own tools on the bar.</span></div>
+        </div>
+        </div>
+      </div>
+      <div class="feature-cat">
+        <div class="feature-cat-head">
+          <h3>Surfaces</h3>
+          <p>The parts of TouchDesigner you look at all day, made yours.</p>
+        </div>
+        <div class="feature-cat-list">
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▦</div>
+          <div class="feat-text"><strong><a href="/docs/borderlesstd/">BorderlessTD</a></strong><span>Borderless TouchDesigner window, plus timeline hiding.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▦</div>
+          <div class="feat-text"><strong><a href="/docs/colorui/">ColorUI</a></strong><span>Operator and family colour palettes, with the active palette roaming through config.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▦</div>
+          <div class="feat-text"><strong><a href="/docs/fns-mainmenu/">FNS_MainMenu</a></strong><span>Main-menu extras: the menu Configurator UI.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▦</div>
+          <div class="feat-text"><strong><a href="/docs/fns-navbar/">FNS_Navbar</a></strong><span>Pane-bar extras: parent-hierarchy navigation, path injection and drag-drop hijack, plus the navbar Configurator.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▦</div>
+          <div class="feat-text"><strong><a href="/docs/fns-opmenu/">FNS_OpMenu</a></strong><span>OP Create dialog extras: the IO filter, operator search words and script injection.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▦</div>
+          <div class="feat-text"><strong><a href="/docs/fns-toolbar/">FNS_Toolbar</a></strong><span>Toolbar extras: the Configurator UI for ordering, grouping and hiding bar widgets, plus stock widgets.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▦</div>
+          <div class="feat-text"><strong><a href="/docs/tools-ui/">tools_ui</a></strong><span>The tabbed panel that hosts the toolkit's larger tool UIs.</span></div>
+        </div>
+        </div>
+      </div>
+      <div class="feature-cat">
+        <div class="feature-cat-head">
+          <h3>Parameters</h3>
+          <p>Promote, bind, randomize and reset — by drag and drop.</p>
+        </div>
+        <div class="feature-cat-list">
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◎</div>
+          <div class="feat-text"><strong><a href="/docs/clearpars/">ClearPars</a></strong><span>Reset custom parameters back to their defaults.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◎</div>
+          <div class="feat-text"><strong><a href="/docs/custompartools/">CustomParTools</a></strong><span>Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◎</div>
+          <div class="feat-text"><strong><a href="/docs/exprhotstrings/">ExprHotStrings</a></strong><span>Abbreviations that expand into TouchDesigner expressions as you type in a parameter field.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◎</div>
+          <div class="feat-text"><strong><a href="/docs/paropdrop/">ParOPDrop</a></strong><span>Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◎</div>
+          <div class="feat-text"><strong><a href="/docs/parrandomizer/">ParRandomizer</a></strong><span>Randomize parameter values within range, for quick exploration.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">◎</div>
+          <div class="feat-text"><strong><a href="/docs/quickparcustom/">QuickParCustom</a></strong><span>Fast custom-parameter editing on the focused operator.</span></div>
+        </div>
+        </div>
+      </div>
+      <div class="feature-cat">
+        <div class="feature-cat-head">
+          <h3>Network</h3>
+          <p>Build, swap, collapse and navigate without touching a menu.</p>
+        </div>
+        <div class="feature-cat-list">
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/altselect/">AltSelect</a></strong><span>Alternative selection helpers for operators in the network editor.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/autocombine/">AutoCombine</a></strong><span>Hold Alt while placing a generator TOP to have it come in pre-set to composite over its input.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/optemplates/">OpTemplates</a></strong><span>A library of preconfigured operator templates to drop into a network.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/optoclipboard/">OpToClipboard</a></strong><span>Copy the selected operator's reference to the system clipboard, ready to paste into an expression.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/paste-from-clipboard/">paste_from_clipboard</a></strong><span>Paste images and data from the system clipboard into TouchDesigner.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/quickcollapse/">QuickCollapse</a></strong><span>Collapse a selection into a component, with an optional customize dialog.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/quickmarks/">QuickMarks</a></strong><span>Bookmark network locations and jump back to them. Bookmarks stay project-local by design.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/swapops/">SwapOps</a></strong><span>Swap one operator for another while keeping connections intact.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⇄</div>
+          <div class="feat-text"><strong><a href="/docs/switchops/">SwitchOPs</a></strong><span>Switch between operators in place.</span></div>
+        </div>
+        </div>
+      </div>
+      <div class="feature-cat">
+        <div class="feature-cat-head">
+          <h3>Media &amp; Output</h3>
+          <p>Where the picture and the sound actually leave the project.</p>
+        </div>
+        <div class="feature-cat-list">
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▶</div>
+          <div class="feat-text"><strong><a href="/docs/autores/">AutoRes</a></strong><span>Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▶</div>
+          <div class="feat-text"><strong><a href="/docs/globaloutselect/">GlobalOutSelect</a></strong><span>Browse Global OP Shortcuts and the out operators inside them in a tree, and drag any of them into a network as a Select.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▶</div>
+          <div class="feat-text"><strong><a href="/docs/globalvolcontrol/">GlobalVolControl</a></strong><span>Global audio volume control.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▶</div>
+          <div class="feat-text"><strong><a href="/docs/hydrohomie/">HydroHomie</a></strong><span>A toolbar reminder to drink water at an interval you set. Off by default.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">▶</div>
+          <div class="feat-text"><strong><a href="/docs/output/">OUTPUT</a></strong><span>Output window and display routing helpers.</span></div>
+        </div>
+        </div>
+      </div>
+      <div class="feature-cat">
+        <div class="feature-cat-head">
+          <h3>Control</h3>
+          <p>Hardware in, parameters out.</p>
+        </div>
+        <div class="feature-cat-list">
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⊙</div>
+          <div class="feat-text"><strong><a href="/docs/midimapper/">midiMapper</a></strong><span>Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⊙</div>
+          <div class="feat-text"><strong><a href="/docs/oscmapper/">oscMapper</a></strong><span>Map OSC messages to parameters. Mappings are saved into the project folder by design.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⊙</div>
+          <div class="feat-text"><strong><a href="/docs/setsmoothness/">SetSmoothness</a></strong><span>Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network.</span></div>
+        </div>
+        </div>
+      </div>
+      <div class="feature-cat">
+        <div class="feature-cat-head">
+          <h3>Workflow</h3>
+          <p>The small frictions, removed.</p>
+        </div>
+        <div class="feature-cat-list">
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⚡</div>
+          <div class="feat-text"><strong><a href="/docs/fns-hotkeymanager/">FNS_HotkeyManager</a></strong><span>Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⚡</div>
+          <div class="feat-text"><strong><a href="/docs/misc/">MISC</a></strong><span>Assorted small utilities that ship together (hog CHOP, mouse input and friends).</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⚡</div>
+          <div class="feat-text"><strong><a href="/docs/my-hotkeys/">MY_HOTKEYS</a></strong><span>Convenience hotkeys over stock TouchDesigner actions: open parameters, open the COMP editor, focus the palette search.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⚡</div>
+          <div class="feat-text"><strong><a href="/docs/quickpane/">QuickPane</a></strong><span>Pane layout shortcuts.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⚡</div>
+          <div class="feat-text"><strong><a href="/docs/quicktime/">QuickTime</a></strong><span>Timeline and time-related shortcuts.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⚡</div>
+          <div class="feat-text"><strong><a href="/docs/resetpls1/">ResetPLS1</a></strong><span>Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0.</span></div>
+        </div>
+        </div>
+      </div>
+      <div class="feature-cat">
+        <div class="feature-cat-head">
+          <h3>Developer</h3>
+          <p>Extensions, stubs and the editor you actually write them in.</p>
+        </div>
+        <div class="feature-cat-list">
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⌨</div>
+          <div class="feat-text"><strong><a href="/docs/fns-updater/">FNS_Updater</a></strong><span>In-place toolkit updates, with settings preserved across the replacement.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⌨</div>
+          <div class="feat-text"><strong><a href="/docs/openext/">OpenExt</a></strong><span>Open an operator's extension source quickly.</span></div>
+        </div>
+        <div class="feat">
+          <div class="feat-icon" aria-hidden="true">⌨</div>
+          <div class="feat-text"><strong><a href="/docs/vscodetools/">VSCodeTools</a></strong><span>VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs.</span></div>
+        </div>
+        </div>
+      </div>
+      <!-- TOOLS:END -->
+  </div>
+</section>
+
+<section id="settings" style="padding-top: 12px;">
+  <div class="wrap">
+    <div class="config-band">
+      <div>
+        <h2>Set it once, everywhere</h2>
+        <p>
+          Preferences do not live in the project file. They go into one aggregated JSON in your
+          user palette, so the way you set a tool up follows you into the next project — and
+          survives the next update.
+        </p>
+        <p style="margin-bottom:0;">
+          <a href="/docs/configregistry/">How settings persistence works →</a>
+        </p>
+      </div>
+      <ul>
+        <li><strong>Roams with you.</strong> Templates, expression abbreviations, hotkeys and reset exceptions live in the user palette.</li>
+        <li><strong>Stays with the project</strong> where it should — MIDI and OSC maps are saved into the project folder by design, so they travel with the show.</li>
+        <li><strong>Survives updates.</strong> Settings are preserved across a package being replaced, not re-entered afterwards.</li>
+        <li><strong>Extensible.</strong> The registries are promoted masters you can clone, so your own tools can sit on the toolbar, nav bar or OP menu too.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="support" style="padding-top: 12px;">
+  <div class="wrap">
+    <div class="try-band">
+      <div class="try-band-text">
+        <h2>Free forever. Patreon if it earns its keep.</h2>
+        <p>
+          MIT licensed and free for everyone, including commercial work. If the toolkit saves you
+          time, a Patreon follow keeps it moving — and the Discord is where bugs get sorted fastest.
+        </p>
+      </div>
+      <div class="try-band-actions">
+        <a class="btn btn-primary" href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+        <a class="btn btn-secondary" href="https://discord.gg/b4CaCP3g3K" target="_blank" rel="noopener">Discord</a>
+        <a class="btn btn-secondary" href="https://github.com/function-store/FunctionStore_tools/issues" target="_blank" rel="noopener">Report an issue</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="credits" style="padding-top: 12px;">
+  <div class="wrap">
+    <div class="alt-tools">
+      <div class="alt-tools-head">
+        <h3>Built with</h3>
+        <p>Plenty of this toolkit is not mine. These people contributed tools, mods and the habits I picked up from reading their components — please support them.</p>
+      </div>
+      <div class="alt-tools-grid">
+        <div class="alt-tool">
+          <strong>Olib Browser, op_store, MIDI &amp; OSC mappers</strong>
+          <p>Plus a great many best practices learned from reading his components.</p>
+          <span class="alt-tool-by">by <a href="https://alphamoonbase.de/" target="_blank" rel="noopener">AlphaMoonbase.berlin</a></span>
+        </div>
+        <div class="alt-tool">
+          <strong>TD_SearchPalette</strong>
+          <p>The palette search bar that is hard to work without once you have it.</p>
+          <span class="alt-tool-by">by <a href="https://www.instagram.com/yeataro" target="_blank" rel="noopener">Yea Chen</a></span>
+        </div>
+        <div class="alt-tool">
+          <strong>IO filters, and TouchDesigner</strong>
+          <p>The OP Create dialog filters — and the software all of this sits on.</p>
+          <span class="alt-tool-by">by <a href="https://derivative.ca" target="_blank" rel="noopener">Greg Hermanovic</a></span>
+        </div>
+        <div class="alt-tool">
+          <strong>Clipboard image paste, OpType acronyms</strong>
+          <p>Paste an image straight into a network; find operators by their initials.</p>
+          <span class="alt-tool-by">by <a href="https://www.patreon.com/dotsimulate" target="_blank" rel="noopener">DotSimulate</a></span>
+        </div>
+        <div class="alt-tool">
+          <strong>QuickMarks</strong>
+          <p>Bookmark spots in a project and jump straight back to them.</p>
+          <span class="alt-tool-by">by <a href="https://alex-guevara.com" target="_blank" rel="noopener">Alex Guevara</a></span>
+        </div>
+        <div class="alt-tool">
+          <strong>Early testing and feedback</strong>
+          <p>The people who used all of this while it was still sharp around the edges.</p>
+          <span class="alt-tool-by">by <a href="https://acrylicode.com/" target="_blank" rel="noopener">Acrylicode</a> and <a href="https://www.instagram.com/kim0slice" target="_blank" rel="noopener">kim0slice</a></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alt-tools" style="margin-top: 40px;">
+      <div class="alt-tools-head">
+        <h3>Also worth having</h3>
+        <p>Free tools from the community that pair well with this one.</p>
+      </div>
+      <div class="alt-tools-grid">
+        <div class="alt-tool">
+          <strong><a href="https://td-olib.org/" target="_blank" rel="noopener">Olib</a></strong>
+          <p>The de-facto free marketplace for TouchDesigner components.</p>
+          <span class="alt-tool-by">by Wieland Hilker (AlphaMoonbase.berlin)</span>
+        </div>
+        <div class="alt-tool">
+          <strong><a href="https://github.com/EnviralDesign/TD-Launcher/" target="_blank" rel="noopener">TD-Launcher</a></strong>
+          <p>A must-have if you keep several TouchDesigner builds installed.</p>
+          <span class="alt-tool-by">by Lucas Morgan</span>
+        </div>
+        <div class="alt-tool">
+          <strong><a href="https://launcher.functionstore.xyz" target="_blank" rel="noopener">TDX Launcher Ultra</a></strong>
+          <p>Mission control for TouchDesigner projects — gallery, palette, session control.</p>
+          <span class="alt-tool-by">by Function Store</span>
+        </div>
+        <div class="alt-tool">
+          <strong><a href="https://tdmap.functionstore.xyz" target="_blank" rel="noopener">TDMap</a></strong>
+          <p>MIDI controller mapping without the wiring, if you need more than the built-in mapper.</p>
+          <span class="alt-tool-by">by Function Store</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="final-cta" style="padding: 12px 0 72px;">
+  <div class="wrap" style="text-align: center;">
+    <h2 style="font-size: clamp(28px, 3.6vw, 36px); font-weight: 700; letter-spacing: -0.02em; margin: 0 0 14px;">Stop rebuilding the same setup.</h2>
+    <p style="color: var(--text-dim); font-size: 17px; max-width: 560px; margin: 0 auto 28px;">
+      One <code>.tox</code>, then pick what you need. It is free, and it takes about a minute.
+    </p>
+    <div class="hero-cta">
+      <a class="btn btn-primary btn-lg js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FunctionStore_tools_2025.tox" download>Get FNSTools<span class="js-fns-ver">v2.12.19</span> →</a>
+      <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="wrap footer-inner">
+    <div>© 2026 FNSTools · Built for TouchDesigner</div>
+    <div class="footer-links">
+      <a href="/docs/">Docs</a>
+      <a href="https://github.com/function-store/FunctionStore_tools" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://discord.gg/b4CaCP3g3K" target="_blank" rel="noopener">Discord</a>
+      <a href="https://derivative.ca" target="_blank" rel="noopener">TouchDesigner</a>
+      <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+      <a href="https://functionstore.xyz" target="_blank" rel="noopener">Function Store</a>
+      <a href="mailto:dan%2Bfnstools@functionstore.xyz?subject=FNSTools%20feedback">Feedback</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Keep the download buttons pointed at the newest published release.
+  //
+  // This is a bonus pass, not the mechanism: the build already stamped the
+  // release into these hrefs. The r2.dev bucket currently serves no
+  // Access-Control-Allow-Origin header, so this fetch is blocked by the
+  // browser and quietly does nothing — enabling CORS on the bucket would
+  // make the page self-refresh between deploys. Either way the static hrefs
+  // point at a release that exists.
+  //
+  // The artifact is still named FunctionStore_tools_2025.tox: the bucket path
+  // is already `fnstools` but the .tox filenames have not been renamed yet.
+  // Read the name from here rather than assuming it matches the brand.
+  (function () {
+    var BASE = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools';
+    var BOOTSTRAP = 'FunctionStore_tools_2025.tox';
+    var INSTALLER = 'FNS_Installer.tox';
+
+    function setAll(sel, fn) {
+      Array.prototype.forEach.call(document.querySelectorAll(sel), fn);
+    }
+
+    fetch(BASE + '/manifest.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) {
+        if (!m || !m.release) return;
+        var base = m.base_url || BASE;
+        setAll('.js-fns-download', function (a) {
+          a.href = base + '/' + m.release + '/' + BOOTSTRAP;
+        });
+        setAll('.js-fns-installer', function (a) {
+          a.href = base + '/' + m.release + '/' + INSTALLER;
+        });
+        setAll('.js-fns-ver', function (s) { s.textContent = ' ' + m.release; });
+        if (m.packages && m.packages.length) {
+          setAll('.js-fns-count', function (s) {
+            s.textContent = String(m.packages.length);
+          });
+        }
+      })
+      .catch(function () { /* offline or CORS — static hrefs remain valid */ });
+  })();
+</script>
+<script src="/site-nav.js" defer></script>
+<!-- Vercel Web Analytics. The platform serves this route once the feature is
+     enabled on the project, so there is no third-party host to preconnect to
+     and nothing to configure here. The stub queues any va() calls made before
+     the deferred script lands; without it those calls would throw. -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script src="/_vercel/insights/script.js" defer></script>
+</body>
+</html>

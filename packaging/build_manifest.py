@@ -136,8 +136,25 @@ def _hostedRegistries(comp):
     return sorted(found)
 
 
+DOCS_SITE = 'https://tools.functionstore.xyz/docs'
+
+
+def _docsSlug(name):
+    """URL slug for a package page. Must match packageSlug() in
+    website/tools/build-site.mjs and package_slug() in
+    docs_seed_from_wiki.py -- the three of them agreeing is what makes
+    help_url land on a page that exists."""
+    return name.lower().replace('_', '-')
+
+
 def _helpUrl(comp):
-    """Discovery, not migration: read the conventions already in use."""
+    """Discovery, not migration: read the conventions already in use.
+
+    Falls back to the package's own page on the docs site when
+    packaging/docs/<Name>.md exists. That file is the source the site is
+    generated from, so a package with docs always has a working help URL
+    without anyone hand-entering one; a component that declares its own
+    URL still wins."""
     fa = comp.op('FNS_About')
     if fa is not None:
         p = getattr(fa.par, 'Helpurl', None)
@@ -167,6 +184,8 @@ def _helpUrl(comp):
             path = info.get('panel_path', '')
             if path.startswith(comp.path + '/') and info.get('help_url'):
                 return info['help_url']
+    if os.path.exists(_repo(PKG_DIR, 'docs', '%s.md' % comp.name)):
+        return '%s/%s/' % (DOCS_SITE, _docsSlug(comp.name))
     return ''
 
 

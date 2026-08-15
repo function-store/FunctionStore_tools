@@ -24,7 +24,7 @@
   },
   "AutoCombine": {
    "category": "Network",
-   "description": "Combine selected operators into a sensible composite automatically."
+   "description": "Hold Alt while placing a generator TOP to have it come in pre-set to composite over its input."
   },
   "AutoRes": {
    "category": "Media & Output",
@@ -80,7 +80,7 @@
   },
   "GlobalOutSelect": {
    "category": "Media & Output",
-   "description": "Pick which operator feeds the global output, from anywhere in the project."
+   "description": "Browse Global OP Shortcuts and the out operators inside them in a tree, and drag any of them into a network as a Select."
   },
   "GlobalVolControl": {
    "category": "Media & Output",
@@ -88,7 +88,7 @@
   },
   "HydroHomie": {
    "category": "Media & Output",
-   "description": "Hydra-style live coding surface inside TouchDesigner."
+   "description": "A toolbar reminder to drink water at an interval you set. Off by default."
   },
   "MainMenuRegistry": {
    "category": "Core",
@@ -124,7 +124,7 @@
   },
   "OpToClipboard": {
    "category": "Network",
-   "description": "Copy operators to the system clipboard."
+   "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression."
   },
   "oscMapper": {
    "category": "Control",
@@ -140,7 +140,7 @@
   },
   "ParOPDrop": {
    "category": "Parameters",
-   "description": "Drop an operator onto a parameter to wire the reference for you."
+   "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey."
   },
   "ParRandomizer": {
    "category": "Parameters",
@@ -176,7 +176,7 @@
   },
   "SetSmoothness": {
    "category": "Control",
-   "description": "Set input smoothing/filtering on parameters."
+   "description": "Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network."
   },
   "SwapOps": {
    "category": "Network",
