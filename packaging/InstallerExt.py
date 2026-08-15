@@ -73,7 +73,7 @@ def _order(names, index):
     return out
 
 
-ROOT_NAME = 'FunctionStore_tools_2025'
+ROOT_NAME = 'FNSTools'
 
 
 def DefaultTarget(owner=None):

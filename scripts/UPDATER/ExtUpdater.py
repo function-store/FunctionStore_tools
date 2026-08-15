@@ -696,7 +696,7 @@ class ExtUpdater:
 		return {'ok': True, 'why': 'applying %d package(s)' % planned}
 
 	def _saveConfig(self):
-		cfg = getattr(op, 'CONFIGREGISTRY', None)
+		cfg = getattr(op, 'FNS_CONFIGREGISTRY', None)
 		if cfg and cfg.valid and cfg.extensionsReady:
 			try:
 				cfg.SaveAll()

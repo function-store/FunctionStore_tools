@@ -79,6 +79,13 @@ class RegistryBase:
 			return
 		if self._is_sys_global() or self._isUnderSysOrUi():
 			return
+		# A depth-1 RAW MASTER never proxies Registration pars onto its
+		# parent: that parent is the toolkit root, and decorating it
+		# re-creates the per-tool par surface the restructure removed
+		# (observed as dangling Cf* binds after every reload).
+		parent = self.ownerComp.parent()
+		if parent is not None and parent is getattr(op, 'FNS', None):
+			return
 		# Opt-out for shippers: Promotepars off = no proxy page on the tool
 		# (and an existing section is withdrawn). Missing par = on.
 		if not self._parBool('Promotepars', True):

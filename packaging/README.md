@@ -75,7 +75,7 @@ list has to be maintained by hand — add a tool the normal way and it appears.
 
 ## The droppable rails
 
-`packaging/dist/FunctionStore_tools_2025.tox` (~150 KB) is the **one-drop
+`packaging/dist/FNSTools.tox` (~150 KB) is the **one-drop
 bootstrap**: the (empty) toolkit root itself, carrying the installer COMP,
 a copy of the UPDATER package, and the vendored palette webBrowser
 (`packaging/webBrowser.tox`). The container you drop IS the install
@@ -118,7 +118,7 @@ rail cannot drift apart.
 
 ## End to end
 
-1. Drop `dist/FunctionStore_tools_2025.tox` (from the bucket) into the
+1. Drop `dist/FNSTools.tox` (from the bucket) into the
    project.
 2. On its `FNS_Installer`, pulse **Pick Tools**. First run: the page says
    it is downloading the catalog while the store refreshes.
@@ -172,7 +172,7 @@ python3 packaging/upload.py
 <release>/manifest.json      immutable snapshot
 <release>/<Package>.tox      immutable artifacts
 <release>/FNS_Installer.tox               bare installer (root already exists)
-<release>/FunctionStore_tools_2025.tox    one-drop bootstrap root
+<release>/FNSTools.tox    one-drop bootstrap root
 manifest.json                ROLLING pointer to the newest release
 ```
 

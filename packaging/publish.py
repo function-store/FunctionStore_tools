@@ -127,7 +127,7 @@ def Stage(clean=True):
     # the install rails ride along, unhashed (not packages): the bare
     # installer, and the one-drop bootstrap root (installer + UPDATER
     # inside an empty toolkit container) -- how a bare project starts.
-    for rail in ('FNS_Installer.tox', 'FunctionStore_tools_2025.tox'):
+    for rail in ('FNS_Installer.tox', 'FNSTools.tox'):
         src = _repo(DIST_DIR, rail)
         if os.path.exists(src):
             shutil.copy2(src, os.path.join(rel_dir, rail))

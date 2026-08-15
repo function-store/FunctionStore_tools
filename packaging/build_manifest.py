@@ -37,7 +37,7 @@ import re
 MANIFEST_SCHEMA = 1
 PKG_DIR = 'packaging'
 DIST_DIR = 'packaging/dist'
-TOOLKIT = '/FunctionStore_tools_2025'
+TOOLKIT = '/FNSTools'
 
 # Where published artifacts live. Releases are PINNED: every artifact URL
 # carries its release, so a manifest always resolves to the exact bytes it
@@ -54,27 +54,27 @@ BASE_URL = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools'
 # used to carry them are ordinary optional tools now: requires point at
 # the registries themselves, because that is all a host actually needs.
 REGISTRY_OWNER = {
-    'ConfigRegistry': 'ConfigRegistry',
-    'ToolbarRegistry': 'ToolbarRegistry',
-    'NavbarRegistry': 'NavbarRegistry',
-    'MainMenuRegistry': 'MainMenuRegistry',
-    'OpMenuRegistry': 'OpMenuRegistry',
-    'PaneTypeRegistry': 'PaneTypeRegistry',
+    'FNS_ConfigRegistry': 'FNS_ConfigRegistry',
+    'FNS_ToolbarRegistry': 'FNS_ToolbarRegistry',
+    'FNS_NavbarRegistry': 'FNS_NavbarRegistry',
+    'FNS_MainMenuRegistry': 'FNS_MainMenuRegistry',
+    'FNS_OpMenuRegistry': 'FNS_OpMenuRegistry',
+    'FNS_PaneTypeRegistry': 'FNS_PaneTypeRegistry',
 }
 SURFACE_OF = {
-    'ToolbarRegistry': 'toolbar',
-    'NavbarRegistry': 'navbar',
-    'MainMenuRegistry': 'mainmenu',
-    'OpMenuRegistry': 'opmenu',
-    'PaneTypeRegistry': 'panebar',
+    'FNS_ToolbarRegistry': 'toolbar',
+    'FNS_NavbarRegistry': 'navbar',
+    'FNS_MainMenuRegistry': 'mainmenu',
+    'FNS_OpMenuRegistry': 'opmenu',
+    'FNS_PaneTypeRegistry': 'panebar',
 }
 # Packages that ARE the infrastructure; always installed, never optional.
 # Core = the raw registries plus FNS_Updater -- the one non-registry
 # exception, because it is how an install ever becomes a newer install:
 # leaving it optional means the one package that can fetch updates is the
 # one a user can accidentally decline.
-CORE = ('ConfigRegistry', 'ToolbarRegistry', 'NavbarRegistry',
-        'MainMenuRegistry', 'OpMenuRegistry', 'PaneTypeRegistry',
+CORE = ('FNS_ConfigRegistry', 'FNS_ToolbarRegistry', 'FNS_NavbarRegistry',
+        'FNS_MainMenuRegistry', 'FNS_OpMenuRegistry', 'FNS_PaneTypeRegistry',
         'FNS_Updater')
 
 
@@ -220,7 +220,7 @@ def _shortcutOwners():
     return owners
 
 
-_REGHOST_RE = re.compile(r'/(Toolbar|Navbar|Config|OpMenu|MainMenu|PaneType)Registry(/|$)')
+_REGHOST_RE = re.compile(r'/FNS_(Toolbar|Navbar|Config|OpMenu|MainMenu|PaneType)Registry(/|$)')
 # Both reference forms must be caught. `op.X` is the bare (raising) one;
 # `getattr(op, 'X', ...)` is the GUARDED one an optional integration is
 # supposed to use -- miss it and the manifest under-reports precisely the
