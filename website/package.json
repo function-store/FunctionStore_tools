@@ -7,7 +7,7 @@
   "scripts": {
     "build": "node tools/build-site.mjs && npm run search",
     "pages": "node tools/build-site.mjs",
-    "search": "pagefind --site docs --output-subdir pagefind",
+    "search": "node -e \"require('fs').rmSync('docs/pagefind',{recursive:true,force:true})\" && pagefind --site docs --output-subdir pagefind",
     "serve": "npx --yes serve .",
     "cms": "node tools/cms.mjs"
   },
