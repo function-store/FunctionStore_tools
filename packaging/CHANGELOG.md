@@ -1,5 +1,65 @@
 # FNS tools changelog
 
+## v3.0.0 -- 2026-08-16
+
+- AltSelect 1.0.1
+- AutoCombine 1.0.1
+- AutoRes 1.0.4
+- BorderlessTD 1.0.1
+- ColorUI 1.0.1
+- CustomParTools 1.0.1
+- ExprHotStrings 1.1.0
+- FNS_ConfigRegistry 1.0.0
+- FNS_HotkeyManager 1.0.1
+- FNS_MainMenu 1.0.1
+- FNS_MainMenuRegistry 1.0.0
+- FNS_Navbar 1.0.3
+- FNS_NavbarRegistry 1.0.0
+- FNS_OpMenu 1.0.2
+- FNS_OpMenuRegistry 1.0.0
+- FNS_PaneTypeRegistry 1.0.0
+- FNS_Toolbar 1.0.5
+- FNS_ToolbarRegistry 1.0.0
+- FNS_Updater 1.0.9
+- GlobalOutSelect 1.0.0
+- GlobalVolControl 1.0.0
+- HydroHomie 1.0.1
+- MISC 1.0.0
+- MY_HOTKEYS 1.0.0
+- OUTPUT 1.0.0
+- OpTemplates 1.0.0
+- OpToClipboard 1.0.4
+- OpenExt 1.0.1
+- ParOPDrop 1.0.1
+- ParRandomizer 1.0.1
+- QuickCollapse 1.0.1
+- QuickMarks 1.0.0
+- QuickPane 1.0.5
+- QuickParCustom 1.0.0
+- QuickTime 1.0.0
+- ResetPLS1 1.0.1
+- SetSmoothness 1.0.0
+- SwapOps 1.0.1
+- SwitchOPs 1.0.1
+- VSCodeTools 1.0.0
+- midiMapper 1.0.0
+- oscMapper 1.0.0
+- paste_from_clipboard 1.0.5
+- tools_ui 1.0.0
+
+FNSTools 3.0 -- the toolkit takes its name, and core becomes the raw
+registries. The whole toolkit is renamed FNSTools; the six registry
+masters (FNS_ConfigRegistry, FNS_ToolbarRegistry, FNS_NavbarRegistry,
+FNS_MainMenuRegistry, FNS_OpMenuRegistry, FNS_PaneTypeRegistry) ship as
+their own core packages, promoted to /sys under those names -- raw,
+standalone and cloneable, so the toolkit can be extended with the same
+machinery it is built on. FNS_Updater (renamed from UPDATER) is the one
+non-registry core. The former surface packages -- toolbar, navbar,
+main-menu and OP-menu extras -- are ordinary optional tools now, and a
+tool's requirements are exactly the registries it hosts. Full design
+record: docs/FNSToolsRedesign.md. No migration from pre-3.0 installs;
+this is the first public shape of the toolkit.
+
 ## v2.12.19 -- 2026-08-15
 
 - UPDATER 1.0.8 -> 1.0.9 -- RefreshStore(names) scopes the artifact fetch -- a list fetches just those packages, an empty list is manifest-only, None still mirrors the whole release.

@@ -27,16 +27,16 @@ class ToolbarRegistryExt(RegistryBase):
 	MIRROR_ORDER_BASE = 1000
 
 	SELECTPANEL_EXPR = (
-		"op.TOOLBARREGISTRY.WidgetTarget({canonical!r}) "
-		"if hasattr(op, 'TOOLBARREGISTRY') else None"
+		"op.FNS_TOOLBARREGISTRY.WidgetTarget({canonical!r}) "
+		"if hasattr(op, 'FNS_TOOLBARREGISTRY') else None"
 	)
 	# Soft-enforced bar icon height: mirrors always render 19 px tall; the
 	# source widget's own size is never touched.
 	BAR_ICON_HEIGHT = 19
 	MIRROR_WIDTH_EXPR = (
-		"(op.TOOLBARREGISTRY.WidgetTarget({canonical!r}).width "
-		"if hasattr(op, 'TOOLBARREGISTRY') "
-		"and op.TOOLBARREGISTRY.WidgetTarget({canonical!r}) is not None else 30)"
+		"(op.FNS_TOOLBARREGISTRY.WidgetTarget({canonical!r}).width "
+		"if hasattr(op, 'FNS_TOOLBARREGISTRY') "
+		"and op.FNS_TOOLBARREGISTRY.WidgetTarget({canonical!r}) is not None else 30)"
 	)
 
 	# --- surface hooks (RegistryBase contract) ---
