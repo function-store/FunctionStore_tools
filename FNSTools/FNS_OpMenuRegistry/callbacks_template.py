@@ -49,7 +49,7 @@ LIVE TOGGLES
     Returning empty WITHDRAWS a contribution -- the registry prunes
     whatever it had injected. That is how you make a contribution
     conditional: decide it HERE (it is your tool's decision, not the
-    registry's), then call op.OPMENUREGISTRY.Resync() when your condition
+    registry's), then call op.FNS_OPMENUREGISTRY.Resync() when your condition
     changes, or let the ~2s healing tick pick it up.
     See FNS_OpMenu/IOFilter for a worked example driven by a parameter.
 """

@@ -36,7 +36,7 @@ def onChainNodes():
 	"""The stage that APPLIES the registry's aggregated contributions.
 
 	script_inject rescores and relabels TD's operator table using
-	op.OPMENUREGISTRY.SearchWords and .Decorators -- i.e. every tool's
+	op.FNS_OPMENUREGISTRY.SearchWords and .Decorators -- i.e. every tool's
 	contributions, not just this one's. It lives here rather than in the
 	registry because it is bound to TD's node-table schema (its columns, its
 	score range, its 'layouts/...' type strings); keeping that opinion in a

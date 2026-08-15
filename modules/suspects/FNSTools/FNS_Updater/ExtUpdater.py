@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtUpdater
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.15.toe
+Saveorigin : FunctionStore_tools_2025_DEV.35.toe
 Saveversion : 2025.33070
 Info Header End'''
 """Bucket + manifest updates for the toolkit.
@@ -696,7 +696,7 @@ class ExtUpdater:
 		return {'ok': True, 'why': 'applying %d package(s)' % planned}
 
 	def _saveConfig(self):
-		cfg = getattr(op, 'CONFIGREGISTRY', None)
+		cfg = getattr(op, 'FNS_CONFIGREGISTRY', None)
 		if cfg and cfg.valid and cfg.extensionsReady:
 			try:
 				cfg.SaveAll()

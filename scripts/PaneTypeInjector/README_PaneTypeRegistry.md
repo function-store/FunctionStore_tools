@@ -12,7 +12,7 @@ PaneTypeRegistry uses a **single authoritative runtime instance** plus optional 
 
 | Role | Location | Responsibility |
 |------|----------|----------------|
-| **Global registry** | `/sys/PaneTypeRegistry` (`op.PANETYPEREGISTRY`) | Panebar menu contents, left-click selection, right-click menus, recall execution, entry healing |
+| **Global registry** | `/sys/PaneTypeRegistry` (`op.FNS_PANETYPEREGISTRY`) | Panebar menu contents, left-click selection, right-click menus, recall execution, entry healing |
 | **Host registry** | Child of the COMP you want listed (often named `PaneTypeRegistry`) | Declares that COMP’s menu name, pane type, and default recall flags; registers and unregisters with the global registry |
 
 Host instances do not maintain their own menu table or handle panebar selection. Registration and unregistration always target the global registry, including when called on an older host copy. That keeps menu behavior and recall logic on the installed `/sys` version.
@@ -143,7 +143,7 @@ def onPaneRecall(ctx):
 Prefer the global shortcut so calls always hit the installed `/sys` instance:
 
 ```python
-reg = op.PANETYPEREGISTRY
+reg = op.FNS_PANETYPEREGISTRY
 
 reg.RegisterPanel(
     op('myComp'),

@@ -12,7 +12,7 @@ import json
 def _ext(webServerDAT):
 	# the global /sys registry is the API owner; fall back to our own comp
 	# (its Ui* methods delegate to the global anyway)
-	reg = getattr(op, 'CONFIGREGISTRY', None)
+	reg = getattr(op, 'FNS_CONFIGREGISTRY', None)
 	if reg is None or not reg.valid:
 		reg = webServerDAT.parent()
 	return reg.ext.ConfigRegistryExt

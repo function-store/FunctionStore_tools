@@ -153,7 +153,7 @@ def _helpUrl(comp):
         if p is not None and str(p.eval()).strip():
             return str(p.eval()).strip()
     # last resort: a registry entry published by this package carries one
-    for regname in ('TOOLBARREGISTRY', 'NAVBARREGISTRY', 'MAINMENUREGISTRY'):
+    for regname in ('FNS_TOOLBARREGISTRY', 'FNS_NAVBARREGISTRY', 'FNS_MAINMENUREGISTRY'):
         g = getattr(op, regname, None)
         if g is None or not g.valid:
             continue

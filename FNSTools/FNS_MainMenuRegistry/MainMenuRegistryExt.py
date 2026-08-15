@@ -31,13 +31,13 @@ class MainMenuRegistryExt(RegistryBase):
 	SIDES = ('left', 'right')
 
 	SELECTPANEL_EXPR = (
-		"op.MAINMENUREGISTRY.WidgetTarget({canonical!r}) "
-		"if hasattr(op, 'MAINMENUREGISTRY') else None"
+		"op.FNS_MAINMENUREGISTRY.WidgetTarget({canonical!r}) "
+		"if hasattr(op, 'FNS_MAINMENUREGISTRY') else None"
 	)
 	MIRROR_WIDTH_EXPR = (
-		"(op.MAINMENUREGISTRY.WidgetTarget({canonical!r}).width "
-		"if hasattr(op, 'MAINMENUREGISTRY') "
-		"and op.MAINMENUREGISTRY.WidgetTarget({canonical!r}) is not None else 30)"
+		"(op.FNS_MAINMENUREGISTRY.WidgetTarget({canonical!r}).width "
+		"if hasattr(op, 'FNS_MAINMENUREGISTRY') "
+		"and op.FNS_MAINMENUREGISTRY.WidgetTarget({canonical!r}) is not None else 30)"
 	)
 	# Soft-enforced bar icon height: every stock main-menu item renders 19 px
 	# tall (same convention as the bookmark bar); the source widget's own
