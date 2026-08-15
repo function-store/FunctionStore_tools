@@ -1,11 +1,14 @@
 ---
-package: "paste_from_clipboard"
-summary: "Copy an image to your clipboard and paste it directly in TD with alt+v shortcut"
+package: paste_from_clipboard
+summary: Copy an image to your clipboard and paste it directly in TD with alt+v shortcut
 features:
-  - name: "Clipboard Image Paste"
-    anchor: "clipboard-image-paste"
-platforms: [windows]
-credit: {name: "DotSimulate", url: "https://www.patreon.com/dotsimulate"}
+  - name: Clipboard Image Paste
+    anchor: clipboard-image-paste
+platforms:
+  - windows
+credit:
+  name: DotSimulate
+  url: 'https://www.patreon.com/dotsimulate'
 ---
 
 ## Clipboard Image Paste

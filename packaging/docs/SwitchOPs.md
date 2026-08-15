@@ -1,9 +1,9 @@
 ---
-package: "SwitchOPs"
-summary: "Press Ctrl+Tab or (Option+Tab) to switch between the two last selected operator's focus."
+package: SwitchOPs
+summary: Press Ctrl+Tab or (Option+Tab) to switch between the two last selected operator's focus.
 features:
-  - name: "SwitchOPs"
-    anchor: "switchops"
+  - name: SwitchOPs
+    anchor: switchops
 ---
 
 ## SwitchOPs

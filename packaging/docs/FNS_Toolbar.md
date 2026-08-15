@@ -1,6 +1,6 @@
 ---
-package: "FNS_Toolbar"
-summary: "The toolbar installs automatically when the component is dropped onto a project or at startup of the project."
+package: FNS_Toolbar
+summary: The toolbar installs automatically when the component is dropped onto a project or at startup of the project.
 ---
 
 ![](/docs/assets/icons/main.png)

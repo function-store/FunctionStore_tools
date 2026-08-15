@@ -1,6 +1,6 @@
 ---
-package: "FNS_MainMenu"
-summary: "Main-menu extras: the menu Configurator UI."
+package: FNS_MainMenu
+summary: 'Main-menu extras: the menu Configurator UI.'
 ---
 
 <!-- TODO: no wiki content existed for this package. Written

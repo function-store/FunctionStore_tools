@@ -1,10 +1,10 @@
 ---
-package: "ResetPLS1"
-summary: "YouTube breakdown"
+package: ResetPLS1
+summary: YouTube breakdown
 features:
-  - name: "Global ResetPLS"
-    anchor: "global-resetpls"
-    icon: "ResetPLS.png"
+  - name: Global ResetPLS
+    anchor: global-resetpls
+    icon: ResetPLS.png
 ---
 
 ## Global ResetPLS

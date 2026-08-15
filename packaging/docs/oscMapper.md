@@ -1,10 +1,12 @@
 ---
-package: "oscMapper"
-summary: "Simple OSC mapping tool by AlphaMoonbase.berlin."
+package: oscMapper
+summary: Simple OSC mapping tool by AlphaMoonbase.berlin.
 features:
-  - name: "oscMapper"
-    anchor: "oscmapper"
-credit: {name: "AlphaMoonbase.berlin", url: "https://alphamoonbase.de/"}
+  - name: oscMapper
+    anchor: oscmapper
+credit:
+  name: AlphaMoonbase.berlin
+  url: 'https://alphamoonbase.de/'
 ---
 
 ## oscMapper

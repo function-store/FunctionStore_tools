@@ -8,7 +8,8 @@
     "build": "node tools/build-site.mjs && npm run search",
     "pages": "node tools/build-site.mjs",
     "search": "pagefind --site docs --output-subdir pagefind",
-    "serve": "npx --yes serve ."
+    "serve": "npx --yes serve .",
+    "cms": "node tools/cms.mjs"
   },
   "devDependencies": {
     "gray-matter": "^4.0.3",

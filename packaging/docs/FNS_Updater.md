@@ -1,12 +1,12 @@
 ---
-package: "FNS_Updater"
-summary: "Clicking this icon will open this Wiki page."
+package: FNS_Updater
+summary: Clicking this icon will open this Wiki page.
 features:
-  - name: "Wiki"
-    anchor: "wiki"
-    icon: "Wiki.png"
-  - name: "Self-Update Feature"
-    anchor: "self-update-feature"
+  - name: Wiki
+    anchor: wiki
+    icon: Wiki.png
+  - name: Self-Update Feature
+    anchor: self-update-feature
 ---
 
 ## Wiki

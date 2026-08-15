@@ -1,10 +1,10 @@
 ---
-package: "ExprHotStrings"
-summary: "YouTube breakdown"
+package: ExprHotStrings
+summary: YouTube breakdown
 features:
-  - name: "ExprHotStrings"
-    anchor: "exprhotstrings"
-video: "https://www.youtube.com/watch?v=j43gZ0MB2xo"
+  - name: ExprHotStrings
+    anchor: exprhotstrings
+video: 'https://www.youtube.com/watch?v=j43gZ0MB2xo'
 ---
 
 ## ExprHotStrings

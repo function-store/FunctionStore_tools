@@ -1,6 +1,6 @@
 ---
-package: "NavbarRegistry"
-summary: "The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets."
+package: NavbarRegistry
+summary: 'The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets.'
 ---
 
 <!-- TODO: no wiki content existed for this package. Written

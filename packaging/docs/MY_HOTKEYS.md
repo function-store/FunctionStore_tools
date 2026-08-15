@@ -1,11 +1,11 @@
 ---
-package: "MY_HOTKEYS"
-summary: "There's a ton of hotkeys documented for each tool so read the wiki carefully, but here are some that might be not:"
+package: MY_HOTKEYS
+summary: 'There''s a ton of hotkeys documented for each tool so read the wiki carefully, but here are some that might be not:'
 features:
-  - name: "Hotkeys"
-    anchor: "hotkeys"
-  - name: "TD_SearchPalette"
-    anchor: "td-searchpalette"
+  - name: Hotkeys
+    anchor: hotkeys
+  - name: TD_SearchPalette
+    anchor: td-searchpalette
 ---
 
 ## Hotkeys

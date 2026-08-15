@@ -1,10 +1,10 @@
 ---
-package: "OUTPUT"
-summary: "Drag and drop an operator to set it as the Window Operator of the /perform Window."
+package: OUTPUT
+summary: Drag and drop an operator to set it as the Window Operator of the /perform Window.
 features:
-  - name: "Perform Window Tools"
-    anchor: "perform-window-tools"
-    icon: "PerformTools.png"
+  - name: Perform Window Tools
+    anchor: perform-window-tools
+    icon: PerformTools.png
 ---
 
 ## Perform Window Tools

@@ -1,19 +1,19 @@
 ---
-package: "MISC"
-summary: "The title says it all."
+package: MISC
+summary: The title says it all.
 features:
-  - name: "Show/Hide Backdrops"
-    anchor: "showhide-backdrops"
-    icon: "ToggleBackdrop.png"
-  - name: "Show/Hide Network Editor Grid"
-    anchor: "showhide-network-editor-grid"
-    icon: "Toggle Grid.png"
-  - name: "Global Hog CHOP"
-    anchor: "global-hog-chop"
-    icon: "HogCHOP.png"
-  - name: "Global Mouse CHOP"
-    anchor: "global-mouse-chop"
-    icon: "QuickMouse.png"
+  - name: Show/Hide Backdrops
+    anchor: showhide-backdrops
+    icon: ToggleBackdrop.png
+  - name: Show/Hide Network Editor Grid
+    anchor: showhide-network-editor-grid
+    icon: Toggle Grid.png
+  - name: Global Hog CHOP
+    anchor: global-hog-chop
+    icon: HogCHOP.png
+  - name: Global Mouse CHOP
+    anchor: global-mouse-chop
+    icon: QuickMouse.png
 ---
 
 ## Show/Hide Backdrops

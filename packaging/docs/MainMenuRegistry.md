@@ -1,6 +1,6 @@
 ---
-package: "MainMenuRegistry"
-summary: "TD main-menu surface registry, including project-name display. The raw master, promoted to /sys."
+package: MainMenuRegistry
+summary: 'TD main-menu surface registry, including project-name display. The raw master, promoted to /sys.'
 ---
 
 <!-- TODO: no wiki content existed for this package. Written

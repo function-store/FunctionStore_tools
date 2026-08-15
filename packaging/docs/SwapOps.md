@@ -1,10 +1,10 @@
 ---
-package: "SwapOps"
-summary: "Swap selected operators, works in many different cases."
+package: SwapOps
+summary: 'Swap selected operators, works in many different cases.'
 features:
-  - name: "Swap OPs"
-    anchor: "swap-ops"
-    icon: "SwapOPs.png"
+  - name: Swap OPs
+    anchor: swap-ops
+    icon: SwapOPs.png
 ---
 
 ## Swap OPs

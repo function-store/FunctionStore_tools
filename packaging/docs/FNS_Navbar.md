@@ -1,13 +1,13 @@
 ---
-package: "FNS_Navbar"
-summary: "There's a lot of NavBar Mods that help you working with Custom Pars, parent and global shortcuts, as well as iops."
+package: FNS_Navbar
+summary: 'There''s a lot of NavBar Mods that help you working with Custom Pars, parent and global shortcuts, as well as iops.'
 features:
-  - name: "NavBar Mods"
-    anchor: "navbar-mods"
-  - name: "Path Bar mods"
-    anchor: "path-bar-mods"
-  - name: "Parent Hierarchy"
-    anchor: "parent-hierarchy"
+  - name: NavBar Mods
+    anchor: navbar-mods
+  - name: Path Bar mods
+    anchor: path-bar-mods
+  - name: Parent Hierarchy
+    anchor: parent-hierarchy
 ---
 
 ## NavBar Mods

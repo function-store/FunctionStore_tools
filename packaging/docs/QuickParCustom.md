@@ -1,9 +1,9 @@
 ---
-package: "QuickParCustom"
-summary: "Quickest way to promote/customize parameters!"
+package: QuickParCustom
+summary: Quickest way to promote/customize parameters!
 features:
-  - name: "QuickParCustom"
-    anchor: "quickparcustom"
+  - name: QuickParCustom
+    anchor: quickparcustom
 ---
 
 ## QuickParCustom

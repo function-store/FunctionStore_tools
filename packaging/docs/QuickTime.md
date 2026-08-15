@@ -1,10 +1,10 @@
 ---
-package: "QuickTime"
-summary: "Left click the icon to access some common timing references:"
+package: QuickTime
+summary: 'Left click the icon to access some common timing references:'
 features:
-  - name: "QuickTime"
-    anchor: "quicktime"
-    icon: "QuickTime.png"
+  - name: QuickTime
+    anchor: quicktime
+    icon: QuickTime.png
 ---
 
 ## QuickTime

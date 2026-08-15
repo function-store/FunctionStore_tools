@@ -1,16 +1,18 @@
 ---
-package: "tools_ui"
-summary: "Clicking this will open a collection of tools that have some minimal user interface."
+package: tools_ui
+summary: Clicking this will open a collection of tools that have some minimal user interface.
 features:
-  - name: "tools_ui"
-    anchor: "tools-ui"
-    icon: "Fx.png"
-  - name: "op_store"
-    anchor: "op-store"
-  - name: "Olib Browser"
-    anchor: "olib-browser"
-    icon: "Olib.png"
-credit: {name: "AlphaMoonbase.berlin", url: "https://alphamoonbase.de/"}
+  - name: tools_ui
+    anchor: tools-ui
+    icon: Fx.png
+  - name: op_store
+    anchor: op-store
+  - name: Olib Browser
+    anchor: olib-browser
+    icon: Olib.png
+credit:
+  name: AlphaMoonbase.berlin
+  url: 'https://alphamoonbase.de/'
 ---
 
 ## tools_ui

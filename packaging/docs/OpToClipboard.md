@@ -1,9 +1,9 @@
 ---
-package: "OpToClipboard"
-summary: "Pressing Ctrl(Cmd)+Shift+C will copy the currently selected OP name to the clipboard, so you can easily paste OP references to expressions."
+package: OpToClipboard
+summary: 'Pressing Ctrl(Cmd)+Shift+C will copy the currently selected OP name to the clipboard, so you can easily paste OP references to expressions.'
 features:
-  - name: "OpToClipboard"
-    anchor: "optoclipboard"
+  - name: OpToClipboard
+    anchor: optoclipboard
 ---
 
 ## OpToClipboard

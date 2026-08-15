@@ -1,12 +1,12 @@
 ---
-package: "OpTemplates"
-summary: "Start with this feature as this is probably the most \"innovative\" and exciting addition to TD."
+package: OpTemplates
+summary: Start with this feature as this is probably the most "innovative" and exciting addition to TD.
 features:
-  - name: "OpTemplates"
-    anchor: "optemplates"
-  - name: "Open Templates"
-    anchor: "open-templates"
-    icon: "OpTemplates.png"
+  - name: OpTemplates
+    anchor: optemplates
+  - name: Open Templates
+    anchor: open-templates
+    icon: OpTemplates.png
 ---
 
 ## OpTemplates

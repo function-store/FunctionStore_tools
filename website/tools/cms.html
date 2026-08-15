@@ -1,0 +1,585 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FNSTools CMS</title>
+<link rel="icon" href="/favicon.png" type="image/png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --bg-1: #111111; --bg-2: #161616; --bg-3: #1c1c1c;
+    --border: #262626; --border-strong: #3a3a3a;
+    --text: #f5f5f5; --text-dim: #a3a3a3; --text-faint: #737373;
+    --accent: #fbbf24; --accent-dim: #2a1f08; --accent-bright: #fcd34d;
+    --green: #4ade80; --red: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  code, kbd, textarea, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* ───── Top bar ───── */
+  .bar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    background: var(--bg-1); flex-shrink: 0;
+  }
+  .bar h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+  .bar h1 span { color: var(--accent); }
+  .bar .spacer { flex: 1; }
+  .dirty { font-size: 12px; color: var(--accent); display: none; }
+  .dirty.on { display: inline; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border-strong); background: transparent;
+    color: var(--text); cursor: pointer; font-family: inherit;
+    transition: all 0.12s ease; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #0a0a0a; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-bright); border-color: var(--accent-bright); color: #0a0a0a; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+
+  /* ───── Layout ───── */
+  .cols { flex: 1; display: grid; grid-template-columns: 250px minmax(0,1fr) minmax(0,1fr); min-height: 0; }
+  .col { min-height: 0; overflow-y: auto; }
+  .col + .col { border-left: 1px solid var(--border); }
+
+  /* ───── Package list ───── */
+  .side-top { position: sticky; top: 0; background: var(--bg); padding: 12px; border-bottom: 1px solid var(--border); z-index: 2; }
+  input[type=search], input[type=text], textarea, select {
+    width: 100%; padding: 7px 10px; border-radius: 7px;
+    background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+    font-family: inherit; font-size: 13px;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+  .filters { display: flex; gap: 6px; margin-top: 8px; }
+  .chip {
+    flex: 1; padding: 4px 6px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    background: var(--bg-2); border: 1px solid var(--border); color: var(--text-dim);
+    cursor: pointer; text-align: center;
+  }
+  .chip.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .cat-label {
+    padding: 14px 12px 5px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-faint);
+  }
+  .pkg {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 12px; cursor: pointer; border-left: 2px solid transparent;
+  }
+  .pkg:hover { background: var(--bg-2); }
+  .pkg.on { background: var(--accent-dim); border-left-color: var(--accent); }
+  .pkg-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pkg.on .pkg-name { color: var(--accent-bright); font-weight: 600; }
+  .tag { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; letter-spacing: 0.04em; }
+  .tag-stub { background: #3b2508; color: #fdba74; }
+  .tag-todo { background: var(--bg-3); color: var(--text-faint); }
+
+  /* ───── Editor ───── */
+  .pane { padding: 16px 18px 40px; }
+  .field { margin-bottom: 14px; }
+  .field > label {
+    display: block; margin-bottom: 5px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  .hint { font-size: 11px; color: var(--text-faint); margin-top: 4px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  textarea { resize: vertical; line-height: 1.55; }
+  #body { min-height: 400px; font-size: 13px; }
+  h2.pane-title { margin: 0 0 4px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .pane-sub { margin: 0 0 18px; font-size: 12px; color: var(--text-faint); }
+  .pane-sub a { color: var(--text-dim); }
+
+  /* ───── Features ───── */
+  .feat-row {
+    display: grid; grid-template-columns: 1fr 150px 26px; gap: 8px;
+    align-items: start; padding: 9px 0; border-top: 1px solid var(--border);
+  }
+  .feat-row:first-of-type { border-top: none; }
+  .feat-name { font-size: 13px; font-weight: 600; }
+  .feat-anchor { font-size: 11px; color: var(--text-faint); }
+  .feat-hk { margin-top: 6px; font-size: 12px; min-height: 30px; }
+  .icon-x { background: none; border: none; color: var(--text-faint); cursor: pointer; font-size: 15px; padding: 2px; }
+  .icon-x:hover { color: var(--red); }
+  .empty { font-size: 12px; color: var(--text-faint); padding: 10px 0; }
+
+  /* ───── Preview ───── */
+  .tabs { display: flex; gap: 4px; padding: 10px 14px 0; position: sticky; top: 0; background: var(--bg); z-index: 2; }
+  .tab {
+    padding: 6px 12px; border-radius: 7px 7px 0 0; font-size: 12px; font-weight: 600;
+    background: transparent; border: 1px solid transparent; border-bottom: none;
+    color: var(--text-faint); cursor: pointer; font-family: inherit;
+  }
+  .tab.on { background: var(--bg-1); border-color: var(--border); color: var(--text); }
+  .tabpanes { border-top: 1px solid var(--border); }
+  .prev { padding: 16px 18px 60px; max-width: 74ch; }
+  .prev h2 { margin: 30px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 20px; }
+  .prev h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .prev h3 { margin: 22px 0 8px; font-size: 16px; }
+  .prev h4 { margin: 18px 0 6px; font-size: 14px; color: var(--text-dim); }
+  .prev p, .prev li { font-size: 14px; }
+  .prev ul, .prev ol { padding-left: 20px; }
+  .prev img { max-width: 100%; vertical-align: middle; }
+  .prev code { background: var(--bg-3); border: 1px solid var(--border); padding: 1px 5px; border-radius: 4px; color: var(--accent-bright); font-size: 0.9em; }
+  .prev pre { background: #050505; border: 1px solid var(--border); border-radius: 9px; padding: 14px; overflow-x: auto; }
+  .prev pre code { background: none; border: none; color: var(--text); padding: 0; }
+  .prev blockquote { margin: 0 0 16px; padding: 10px 16px; border-left: 3px solid var(--accent); background: var(--bg-1); color: var(--text-dim); }
+  .prev table { border-collapse: collapse; width: 100%; font-size: 13px; display: block; overflow-x: auto; }
+  .prev th, .prev td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+  iframe.built { width: 100%; height: calc(100vh - 100px); border: 0; background: var(--bg); }
+
+  /* ───── Build output ───── */
+  .log {
+    margin: 0; padding: 14px 18px; font-size: 12px; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word; color: var(--text-dim);
+  }
+  .log.ok { color: var(--green); }
+  .log.err { color: var(--red); }
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    background: var(--bg-2); border: 1px solid var(--border-strong);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5); opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease; z-index: 50;
+  }
+  .toast.on { opacity: 1; }
+  .toast.ok { border-color: var(--green); color: var(--green); }
+  .toast.err { border-color: var(--red); color: var(--red); }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>FNSTools <span>CMS</span></h1>
+  <span class="dirty" id="dirty">● unsaved</span>
+  <div class="spacer"></div>
+  <button class="btn" id="revert" disabled>Discard changes</button>
+  <button class="btn" id="build">Build site</button>
+  <button class="btn btn-primary" id="save" disabled>Save <kbd style="opacity:.6">⌘S</kbd></button>
+</div>
+
+<div class="cols">
+  <div class="col">
+    <div class="side-top">
+      <input type="search" id="filter" placeholder="Filter packages…" />
+      <div class="filters">
+        <button class="chip on" data-f="all">All</button>
+        <button class="chip" data-f="stub">Stubs</button>
+        <button class="chip" data-f="todo">TODO</button>
+      </div>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <div class="col">
+    <div class="pane" id="editor">
+      <p class="empty">Pick a package on the left.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="tabs">
+      <button class="tab on" data-t="preview">Preview</button>
+      <button class="tab" data-t="built">Built page</button>
+      <button class="tab" data-t="log">Build output</button>
+    </div>
+    <div class="tabpanes">
+      <div id="pane-preview"><div class="prev" id="preview"></div></div>
+      <div id="pane-built" hidden></div>
+      <div id="pane-log" hidden><pre class="log" id="log">Not built yet this session.</pre></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let STATE = null;        // {categories, icons, packages}
+let current = null;      // the loaded package record
+let draft = null;        // edited copy
+let filterMode = 'all';
+
+const api = async (url, opts) => {
+  const res = await fetch(url, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `${res.status} ${res.statusText}`);
+  return data;
+};
+
+function toast(msg, kind) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast on ' + (kind || '');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.className = 'toast ' + (kind || ''); }, 2600);
+}
+
+// ───── package list ─────
+
+function matchesFilter(p) {
+  const q = $('#filter').value.trim().toLowerCase();
+  if (q && !p.name.toLowerCase().includes(q) &&
+      !(p.description || '').toLowerCase().includes(q)) return false;
+  if (filterMode === 'stub') return p.stub;
+  if (filterMode === 'todo') return p.todos > 0;
+  return true;
+}
+
+function renderList() {
+  const list = $('#list');
+  list.innerHTML = '';
+  for (const cat of STATE.categories) {
+    const items = STATE.packages.filter((p) => p.category === cat && matchesFilter(p));
+    if (!items.length) continue;
+    const h = document.createElement('div');
+    h.className = 'cat-label';
+    h.textContent = cat;
+    list.appendChild(h);
+    for (const p of items) {
+      const el = document.createElement('div');
+      el.className = 'pkg' + (current && current.name === p.name ? ' on' : '');
+      el.innerHTML = `<span class="pkg-name"></span>` +
+        (p.stub ? '<span class="tag tag-stub">STUB</span>'
+                : (p.todos ? `<span class="tag tag-todo">${p.todos} TODO</span>` : ''));
+      el.querySelector('.pkg-name').textContent = p.name;
+      el.onclick = () => select(p.name);
+      list.appendChild(el);
+    }
+  }
+  if (!list.children.length) {
+    list.innerHTML = '<p class="empty" style="padding:14px 12px">Nothing matches.</p>';
+  }
+}
+
+// ───── editor ─────
+
+const H2_RE = /^##\s+(.+?)\s*$/gm;
+
+function slugify(text) {
+  return String(text)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/`/g, '').toLowerCase().trim()
+    .replace(/[^a-z0-9\s_-]/g, '').replace(/[\s_]+/g, '-')
+    .replace(/-{2,}/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/** Features mirror the body's h2 headings — that is what the build
+ *  validates anchors against. Re-derive them from the prose, keeping any
+ *  icon and hotkeys already attached to a surviving anchor. */
+function syncFeatures() {
+  const keep = new Map((draft.data.features || []).map((f) => [f.anchor, f]));
+  const next = [];
+  for (const m of draft.body.matchAll(H2_RE)) {
+    const name = m[1].replace(/\s*#+\s*$/, '');
+    const anchor = slugify(name);
+    const prev = keep.get(anchor) || {};
+    const f = { name, anchor };
+    if (prev.icon) f.icon = prev.icon;
+    if (prev.hotkeys && prev.hotkeys.length) f.hotkeys = prev.hotkeys;
+    next.push(f);
+  }
+  draft.data.features = next;
+}
+
+const hotkeysToText = (hk) => (hk || []).map((h) => `${h.keys} = ${h.does || ''}`).join('\n');
+const textToHotkeys = (txt) => txt.split('\n').map((l) => l.trim()).filter(Boolean)
+  .map((l) => {
+    const i = l.indexOf('=');
+    return i < 0 ? { keys: l, does: '' }
+                 : { keys: l.slice(0, i).trim(), does: l.slice(i + 1).trim() };
+  }).filter((h) => h.keys);
+
+function markDirty() {
+  const changed = JSON.stringify(draft) !== JSON.stringify(current);
+  $('#dirty').classList.toggle('on', changed);
+  $('#save').disabled = !changed;
+  $('#revert').disabled = !changed;
+}
+
+function renderEditor() {
+  const d = draft;
+  const cats = STATE.categories.map((c) =>
+    `<option value="${c}"${c === d.category ? ' selected' : ''}>${c}</option>`).join('');
+  const icons = ['<option value="">— none —</option>'].concat(
+    STATE.icons.map((i) => `<option value="${i}">${i}</option>`)).join('');
+
+  $('#editor').innerHTML = `
+    <h2 class="pane-title"></h2>
+    <p class="pane-sub">packaging/docs/<span class="mono" id="fname"></span>
+      · <a href="/docs/${d.name.toLowerCase().replace(/_/g, '-')}/" target="_blank">open built page ↗</a></p>
+
+    <div class="field">
+      <label for="category">Category <span class="hint">— shown on the landing page and in the installer picker</span></label>
+      <select id="category">${cats}</select>
+    </div>
+
+    <div class="field">
+      <label for="description">Description <span class="hint">— the curated one-liner. Lives in catalog.json; feeds the picker, the site and the docs lede.</span></label>
+      <textarea id="description" rows="2"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="summary">Summary <span class="hint">— optional fallback used only if Description is empty</span></label>
+      <textarea id="summary" rows="2"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="credit-name">Credit</label>
+        <input type="text" id="credit-name" placeholder="e.g. AlphaMoonbase.berlin" />
+      </div>
+      <div class="field">
+        <label for="credit-url">Credit link</label>
+        <input type="text" id="credit-url" placeholder="https://…" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="platforms">Platforms <span class="hint">— blank = both</span></label>
+        <select id="platforms">
+          <option value="">Windows &amp; macOS</option>
+          <option value="windows">Windows only</option>
+          <option value="macos">macOS only</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="video">Video</label>
+        <input type="text" id="video" placeholder="https://youtu.be/…" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Features <span class="hint">— derived from the <code>##</code> headings below; add an icon or hotkeys per feature</span></label>
+      <div id="features"></div>
+    </div>
+
+    <div class="field">
+      <label for="body">Documentation <span class="hint">— markdown. <code>##</code> headings become the page's sections and anchors.</span></label>
+      <textarea id="body" spellcheck="true"></textarea>
+    </div>`;
+
+  $('.pane-title').textContent = d.name;
+  $('#fname').textContent = d.name + '.md';
+  $('#description').value = d.description || '';
+  $('#summary').value = d.data.summary || '';
+  $('#credit-name').value = (d.data.credit && d.data.credit.name) || '';
+  $('#credit-url').value = (d.data.credit && d.data.credit.url) || '';
+  $('#video').value = d.data.video || '';
+  $('#body').value = d.body;
+  const plats = d.data.platforms || [];
+  $('#platforms').value = plats.length === 1 ? plats[0] : '';
+
+  $('#category').onchange = (e) => { d.category = e.target.value; markDirty(); renderList(); };
+  $('#description').oninput = (e) => { d.description = e.target.value; markDirty(); };
+  $('#summary').oninput = (e) => { setData('summary', e.target.value.trim()); };
+  $('#video').oninput = (e) => { setData('video', e.target.value.trim()); };
+  $('#platforms').onchange = (e) => {
+    setData('platforms', e.target.value ? [e.target.value] : undefined);
+  };
+  const credit = () => {
+    const name = $('#credit-name').value.trim();
+    const url = $('#credit-url').value.trim();
+    setData('credit', name ? (url ? { name, url } : { name }) : undefined);
+  };
+  $('#credit-name').oninput = credit;
+  $('#credit-url').oninput = credit;
+
+  let previewTimer;
+  $('#body').oninput = (e) => {
+    d.body = e.target.value;
+    syncFeatures();
+    renderFeatures();
+    markDirty();
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(renderPreview, 250);
+  };
+
+  renderFeatures();
+  renderPreview();
+  markDirty();
+
+  function setData(key, value) {
+    if (value === undefined || value === '' ||
+        (Array.isArray(value) && !value.length)) delete d.data[key];
+    else d.data[key] = value;
+    markDirty();
+  }
+}
+
+function renderFeatures() {
+  const wrap = $('#features');
+  if (!wrap) return;
+  const feats = draft.data.features || [];
+  if (!feats.length) {
+    wrap.innerHTML = '<p class="empty">No <code>##</code> headings yet — add one in the documentation below.</p>';
+    return;
+  }
+  wrap.innerHTML = '';
+  feats.forEach((f, i) => {
+    const row = document.createElement('div');
+    row.className = 'feat-row';
+    row.innerHTML = `
+      <div>
+        <div class="feat-name"></div>
+        <div class="feat-anchor mono"></div>
+        <textarea class="feat-hk" rows="1" placeholder="Ctrl+0 = what it does (one per line)"></textarea>
+      </div>
+      <select class="feat-icon"></select>
+      <button class="icon-x" title="Clear icon and hotkeys">×</button>`;
+    row.querySelector('.feat-name').textContent = f.name;
+    row.querySelector('.feat-anchor').textContent = '#' + f.anchor;
+    const sel = row.querySelector('.feat-icon');
+    sel.innerHTML = ['<option value="">— no icon —</option>']
+      .concat(STATE.icons.map((ic) => `<option value="${ic}">${ic}</option>`)).join('');
+    sel.value = f.icon || '';
+    sel.onchange = () => {
+      if (sel.value) f.icon = sel.value; else delete f.icon;
+      markDirty();
+    };
+    const hk = row.querySelector('.feat-hk');
+    hk.value = hotkeysToText(f.hotkeys);
+    hk.oninput = () => {
+      const parsed = textToHotkeys(hk.value);
+      if (parsed.length) f.hotkeys = parsed; else delete f.hotkeys;
+      markDirty();
+    };
+    row.querySelector('.icon-x').onclick = () => {
+      delete f.icon; delete f.hotkeys; renderFeatures(); markDirty();
+    };
+    wrap.appendChild(row);
+  });
+}
+
+async function renderPreview() {
+  try {
+    const { html } = await api('/api/render', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ markdown: draft.body }),
+    });
+    $('#preview').innerHTML = html;
+  } catch (e) { /* preview is best-effort */ }
+}
+
+// ───── actions ─────
+
+async function select(name) {
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  current = await api('/api/package/' + encodeURIComponent(name));
+  draft = JSON.parse(JSON.stringify(current));
+  renderList();
+  renderEditor();
+  showTab('preview');
+}
+
+async function save() {
+  if (!draft) return;
+  try {
+    const saved = await api('/api/package/' + encodeURIComponent(draft.name), {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        category: draft.category,
+        description: draft.description,
+        data: draft.data,
+        body: draft.body,
+        mtime: current.mtime,
+      }),
+    });
+    current = saved;
+    draft = JSON.parse(JSON.stringify(saved));
+    const idx = STATE.packages.findIndex((p) => p.name === saved.name);
+    if (idx >= 0) STATE.packages[idx] = saved;
+    renderList();
+    markDirty();
+    toast('Saved ' + saved.name + '.md', 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+async function build() {
+  const btn = $('#build');
+  btn.disabled = true;
+  btn.textContent = 'Building…';
+  showTab('log');
+  try {
+    const r = await api('/api/build', { method: 'POST' });
+    const log = $('#log');
+    log.textContent = r.output || '(no output)';
+    log.className = 'log ' + (r.ok ? 'ok' : 'err');
+    toast(r.ok ? 'Build OK' : 'Build failed — see output', r.ok ? 'ok' : 'err');
+    if (r.ok) STATE = await api('/api/state');
+    renderList();
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Build site';
+  }
+}
+
+function showTab(which) {
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.t === which));
+  $('#pane-preview').hidden = which !== 'preview';
+  $('#pane-built').hidden = which !== 'built';
+  $('#pane-log').hidden = which !== 'log';
+  if (which === 'built' && draft) {
+    const slug = draft.name.toLowerCase().replace(/_/g, '-');
+    $('#pane-built').innerHTML =
+      `<iframe class="built" src="/docs/${slug}/?t=${Date.now()}"></iframe>`;
+  }
+}
+
+// ───── wiring ─────
+
+document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => showTab(t.dataset.t); });
+document.querySelectorAll('.chip').forEach((c) => {
+  c.onclick = () => {
+    filterMode = c.dataset.f;
+    document.querySelectorAll('.chip').forEach((x) => x.classList.toggle('on', x === c));
+    renderList();
+  };
+});
+$('#filter').oninput = renderList;
+$('#save').onclick = save;
+$('#build').onclick = build;
+$('#revert').onclick = () => {
+  if (!current || !confirm('Discard your changes to ' + current.name + '?')) return;
+  draft = JSON.parse(JSON.stringify(current));
+  renderEditor();
+};
+window.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); }
+});
+window.addEventListener('beforeunload', (e) => {
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current)) e.preventDefault();
+});
+
+(async () => {
+  try {
+    STATE = await api('/api/state');
+    renderList();
+  } catch (e) {
+    document.body.innerHTML = '<p style="padding:40px;color:#f87171">' + e.message + '</p>';
+  }
+})();
+</script>
+</body>
+</html>

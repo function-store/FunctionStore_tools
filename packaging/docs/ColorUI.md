@@ -1,9 +1,9 @@
 ---
-package: "ColorUI"
-summary: "ColorUI: Recolor any TouchDesigner UI element, create presets, import/export, and share!"
+package: ColorUI
+summary: 'ColorUI: Recolor any TouchDesigner UI element, create presets, import/export, and share!'
 features:
-  - name: "ColorUI"
-    anchor: "colorui"
+  - name: ColorUI
+    anchor: colorui
 ---
 
 ## ColorUI

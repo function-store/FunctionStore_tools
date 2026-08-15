@@ -1,18 +1,18 @@
 ---
-package: "CustomParTools"
-summary: "This button is a quick way to manipulate Custom Parameters of a parent component."
+package: CustomParTools
+summary: This button is a quick way to manipulate Custom Parameters of a parent component.
 features:
-  - name: "CustomPar Tools"
-    anchor: "custompar-tools"
-    icon: "CustomParTools.png"
-  - name: "QuickExt"
-    anchor: "quickext"
-  - name: "CustomParCustomize"
-    anchor: "customparcustomize"
-  - name: "CustomParHelper"
-    anchor: "customparhelper"
-  - name: "NoNode"
-    anchor: "nonode"
+  - name: CustomPar Tools
+    anchor: custompar-tools
+    icon: CustomParTools.png
+  - name: QuickExt
+    anchor: quickext
+  - name: CustomParCustomize
+    anchor: customparcustomize
+  - name: CustomParHelper
+    anchor: customparhelper
+  - name: NoNode
+    anchor: nonode
 ---
 
 ## CustomPar Tools

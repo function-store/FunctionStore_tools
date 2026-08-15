@@ -1,9 +1,9 @@
 ---
-package: "AutoCombine"
-summary: "When holding Alt (same for Mac) and placing a Generator type TOP (e.g."
+package: AutoCombine
+summary: When holding Alt (same for Mac) and placing a Generator type TOP (e.g.
 features:
-  - name: "AutoCombine"
-    anchor: "autocombine"
+  - name: AutoCombine
+    anchor: autocombine
 ---
 
 ## AutoCombine

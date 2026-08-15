@@ -1,10 +1,10 @@
 ---
-package: "SetSmoothness"
-summary: "Sets the Input/Viewer Smoothness parameters found at the Common tab of selected TOP operators."
+package: SetSmoothness
+summary: Sets the Input/Viewer Smoothness parameters found at the Common tab of selected TOP operators.
 features:
-  - name: "Set Input/Viewer Smoothness"
-    anchor: "set-inputviewer-smoothness"
-    icon: "Set Smoothness.png"
+  - name: Set Input/Viewer Smoothness
+    anchor: set-inputviewer-smoothness
+    icon: Set Smoothness.png
 ---
 
 ## Set Input/Viewer Smoothness

@@ -1,11 +1,12 @@
 ---
-package: "BorderlessTD"
-summary: "For a cleaner TouchDesigner look."
+package: BorderlessTD
+summary: For a cleaner TouchDesigner look.
 features:
-  - name: "BorderlessTD"
-    anchor: "borderlesstd"
+  - name: BorderlessTD
+    anchor: borderlesstd
     hotkeys:
-      - {keys: "F7", does: "Toggle Windows title bar (**Windows only**)"}
+      - keys: F7
+        does: Toggle Windows title bar (**Windows only**)
 ---
 
 ## BorderlessTD

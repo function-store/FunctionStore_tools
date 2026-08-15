@@ -1,9 +1,9 @@
 ---
-package: "HydroHomie"
-summary: "This toolbar icon reminds you to drink water every 45 minutes (can be changed)"
+package: HydroHomie
+summary: This toolbar icon reminds you to drink water every 45 minutes (can be changed)
 features:
-  - name: "HydroHomie"
-    anchor: "hydrohomie"
+  - name: HydroHomie
+    anchor: hydrohomie
 ---
 
 ## HydroHomie

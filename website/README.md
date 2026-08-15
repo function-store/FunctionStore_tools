@@ -47,12 +47,55 @@ npm run serve     # http://localhost:3000
 Commit the generated `website/docs/` — Vercel serves these files directly
 and runs no build step.
 
+## The CMS
+
+```bash
+npm run cms       # http://127.0.0.1:8787
+```
+
+An internal editor for the two curated sources. Left: every package,
+grouped by category, with `STUB` and `TODO` badges and a filter. Middle:
+the metadata fields and the markdown. Right: live preview, the built page,
+and build output.
+
+It writes **straight to `packaging/catalog.json` and
+`packaging/docs/*.md`** — there is no database and no staging step. Review
+with `git diff`, undo with `git checkout -- packaging/`.
+
+- **Save** is `⌘S`. The window warns before you navigate away dirty.
+- **Build site** runs `build-site.mjs` and shows its output, including the
+  validation failures — so a link to a heading that does not exist surfaces
+  here rather than at deploy time.
+- **Features are derived, not typed.** The list re-syncs from the `##`
+  headings in the body as you write, keeping the icon and hotkeys attached
+  to each surviving anchor. That is what keeps `features[]` anchors and the
+  real heading slugs from drifting apart.
+- Hotkeys are one per line, `KEYS = what it does`.
+
+Bound to `127.0.0.1` on purpose: this process writes to the repo, so it
+must not be reachable from the network. There is no auth because there is
+no remote access.
+
+Saving a file rewrites its frontmatter through the same YAML serializer,
+so quoting is normalised. Every file has been run through it once already,
+which means a `git diff` after editing shows only what you actually
+changed. Prose is never touched — including trailing double-spaces, which
+are markdown hard line breaks.
+
+If a file changed on disk after the editor loaded it, saving returns a
+conflict instead of clobbering it. Reload and redo the edit.
+
 ## Adding or changing a tool's docs
 
-1. Edit `packaging/docs/<Name>.md` (or add it, if the package is new — it
-   must also exist in `catalog.json`).
-2. `npm run build`.
+1. `npm run cms`, edit, Save. (Or edit `packaging/docs/<Name>.md` by hand —
+   the CMS is a convenience, not a gate.)
+2. **Build site** in the CMS, or `npm run build` in a terminal.
 3. Commit both the markdown and the regenerated `website/docs/`.
+
+A package must exist in `catalog.json` before it can have docs — that file
+is derived from the TouchDesigner project, so new packages appear by
+adding the tool the normal way and re-running `build_manifest.py`. The CMS
+edits packages; it does not invent them.
 
 The landing page's tool catalogue is generated too, between the
 `<!-- TOOLS:START -->` / `<!-- TOOLS:END -->` markers in `index.html`.

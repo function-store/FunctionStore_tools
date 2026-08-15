@@ -1,19 +1,19 @@
 ---
-package: "FNS_OpMenu"
-summary: "This is a table to define custom search keywords for each OpType for the OpMenu / OP Create Dialog."
+package: FNS_OpMenu
+summary: This is a table to define custom search keywords for each OpType for the OpMenu / OP Create Dialog.
 features:
-  - name: "Custom OpMenu Search Keywords"
-    anchor: "custom-opmenu-search-keywords"
-  - name: "OpMenu Mods"
-    anchor: "opmenu-mods"
-  - name: "Greg's IO Filters"
-    anchor: "gregs-io-filters"
-  - name: "Custom Search Keywords"
-    anchor: "custom-search-keywords"
-  - name: "Dotsimulate's OpType acronyms"
-    anchor: "dotsimulates-optype-acronyms"
-  - name: "QuickOp"
-    anchor: "quickop"
+  - name: Custom OpMenu Search Keywords
+    anchor: custom-opmenu-search-keywords
+  - name: OpMenu Mods
+    anchor: opmenu-mods
+  - name: Greg's IO Filters
+    anchor: gregs-io-filters
+  - name: Custom Search Keywords
+    anchor: custom-search-keywords
+  - name: Dotsimulate's OpType acronyms
+    anchor: dotsimulates-optype-acronyms
+  - name: QuickOp
+    anchor: quickop
 ---
 
 ## Custom OpMenu Search Keywords

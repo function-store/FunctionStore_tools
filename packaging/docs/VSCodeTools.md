@@ -1,10 +1,10 @@
 ---
-package: "VSCodeTools"
-summary: "Youtube Breakdown"
+package: VSCodeTools
+summary: Youtube Breakdown
 features:
-  - name: "VSCode Tools"
-    anchor: "vscode-tools"
-    icon: "VSCodeTools.png"
+  - name: VSCode Tools
+    anchor: vscode-tools
+    icon: VSCodeTools.png
 ---
 
 ## VSCode Tools

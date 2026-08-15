@@ -1,15 +1,17 @@
 ---
-package: "midiMapper"
-summary: "Simple MIDI mapping tool by AlphaMoonbase.berlin."
+package: midiMapper
+summary: Simple MIDI mapping tool by AlphaMoonbase.berlin.
 features:
-  - name: "midiMapper"
-    anchor: "midimapper"
-  - name: "ResetMIDIPls"
-    anchor: "resetmidipls"
-  - name: "Mapper"
-    anchor: "mapper"
-    icon: "Mapper.png"
-credit: {name: "AlphaMoonbase.berlin", url: "https://alphamoonbase.de/"}
+  - name: midiMapper
+    anchor: midimapper
+  - name: ResetMIDIPls
+    anchor: resetmidipls
+  - name: Mapper
+    anchor: mapper
+    icon: Mapper.png
+credit:
+  name: AlphaMoonbase.berlin
+  url: 'https://alphamoonbase.de/'
 ---
 
 ## midiMapper

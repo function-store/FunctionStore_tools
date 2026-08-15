@@ -1,9 +1,9 @@
 ---
-package: "GlobalOutSelect"
-summary: "This component shows you your Global OP Shortcuts in a tree list view, as well as any out operators found in them."
+package: GlobalOutSelect
+summary: 'This component shows you your Global OP Shortcuts in a tree list view, as well as any out operators found in them.'
 features:
-  - name: "GlobalOutSelect"
-    anchor: "globaloutselect"
+  - name: GlobalOutSelect
+    anchor: globaloutselect
 ---
 
 ## GlobalOutSelect

@@ -1,6 +1,6 @@
 ---
-package: "ClearPars"
-summary: "Reset custom parameters back to their defaults."
+package: ClearPars
+summary: Reset custom parameters back to their defaults.
 ---
 
 <!-- TODO: no wiki content existed for this package. Written

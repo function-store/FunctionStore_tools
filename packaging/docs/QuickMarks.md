@@ -1,10 +1,12 @@
 ---
-package: "QuickMarks"
-summary: "Jump between different spots in your project file/network quickly"
+package: QuickMarks
+summary: Jump between different spots in your project file/network quickly
 features:
-  - name: "QuickMarks"
-    anchor: "quickmarks"
-credit: {name: "Alex Guevara", url: "https://alex-guevara.com"}
+  - name: QuickMarks
+    anchor: quickmarks
+credit:
+  name: Alex Guevara
+  url: 'https://alex-guevara.com'
 ---
 
 ## QuickMarks

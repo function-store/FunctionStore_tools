@@ -1,9 +1,9 @@
 ---
-package: "AutoRes"
-summary: "When holding Alt (same for Mac) and placing a Generator type TOP this component sets the Output Resolution parameter to 'Parent Panel Size' if available, otherwise Custom Resolution and the expression"
+package: AutoRes
+summary: 'When holding Alt (same for Mac) and placing a Generator type TOP this component sets the Output Resolution parameter to ''Parent Panel Size'' if available, otherwise Custom Resolution and the expression'
 features:
-  - name: "AutoRes"
-    anchor: "autores"
+  - name: AutoRes
+    anchor: autores
 ---
 
 ## AutoRes

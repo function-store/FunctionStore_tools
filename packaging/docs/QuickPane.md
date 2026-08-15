@@ -1,9 +1,9 @@
 ---
-package: "QuickPane"
-summary: "This component allows you to quickly peek into COMPs, without having to manually split panes and navigate into them."
+package: QuickPane
+summary: 'This component allows you to quickly peek into COMPs, without having to manually split panes and navigate into them.'
 features:
-  - name: "QuickPane"
-    anchor: "quickpane"
+  - name: QuickPane
+    anchor: quickpane
 ---
 
 ## QuickPane

@@ -1,9 +1,9 @@
 ---
-package: "FNS_HotkeyManager"
-summary: "Allows for externalized toolkit hotkeys:"
+package: FNS_HotkeyManager
+summary: 'Allows for externalized toolkit hotkeys:'
 features:
-  - name: "HotkeyManager"
-    anchor: "hotkeymanager"
+  - name: HotkeyManager
+    anchor: hotkeymanager
 ---
 
 ## HotkeyManager

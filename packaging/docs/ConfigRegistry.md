@@ -1,11 +1,11 @@
 ---
-package: "ConfigRegistry"
-summary: "There are a couple of components whose states/contents you'll probably want to synchronize between your projects, such as OpTemplates, ExprHotStrings, or Global ResetPLS exceptions."
+package: ConfigRegistry
+summary: 'There are a couple of components whose states/contents you''ll probably want to synchronize between your projects, such as OpTemplates, ExprHotStrings, or Global ResetPLS exceptions.'
 features:
-  - name: "Syncing/Externalizing"
-    anchor: "syncingexternalizing"
-  - name: "Custom Parameters"
-    anchor: "custom-parameters"
+  - name: Syncing/Externalizing
+    anchor: syncingexternalizing
+  - name: Custom Parameters
+    anchor: custom-parameters
 ---
 
 ## Syncing/Externalizing

@@ -1,10 +1,10 @@
 ---
-package: "ParOPDrop"
-summary: "Use this tool to create Param(Exec) CHOP/DATs inside of COMPs from their Custom Pars."
+package: ParOPDrop
+summary: Use this tool to create Param(Exec) CHOP/DATs inside of COMPs from their Custom Pars.
 features:
-  - name: "ParOpDrop"
-    anchor: "paropdrop"
-    icon: "ParOpDrop.png"
+  - name: ParOpDrop
+    anchor: paropdrop
+    icon: ParOpDrop.png
 ---
 
 ## ParOpDrop

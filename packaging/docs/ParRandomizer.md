@@ -1,10 +1,10 @@
 ---
-package: "ParRandomizer"
-summary: "Hotkeys also available:"
+package: ParRandomizer
+summary: 'Hotkeys also available:'
 features:
-  - name: "ParRandomizer"
-    anchor: "parrandomizer"
-    icon: "Random.png"
+  - name: ParRandomizer
+    anchor: parrandomizer
+    icon: Random.png
 ---
 
 ## ParRandomizer
