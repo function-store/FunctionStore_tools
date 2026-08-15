@@ -7,9 +7,9 @@ RegistryBase = mod('RegistryBase').RegistryBase
 
 
 class ToolbarRegistryExt(RegistryBase):
-	SHORTCUT = 'TOOLBARREGISTRY'
+	SHORTCUT = 'FNS_TOOLBARREGISTRY'
 	EXT_NAME = 'ToolbarRegistryExt'
-	REGISTRY_NAME = 'ToolbarRegistry'
+	REGISTRY_NAME = 'FNS_ToolbarRegistry'
 
 	# Standardized 'Registry' page on the parent tool (see RegistryBase).
 	TOOL_PAGE_PREFIX = 'Tb'
@@ -27,16 +27,16 @@ class ToolbarRegistryExt(RegistryBase):
 	MIRROR_ORDER_BASE = 1000
 
 	SELECTPANEL_EXPR = (
-		"op.TOOLBARREGISTRY.WidgetTarget({canonical!r}) "
-		"if hasattr(op, 'TOOLBARREGISTRY') else None"
+		"op.FNS_TOOLBARREGISTRY.WidgetTarget({canonical!r}) "
+		"if hasattr(op, 'FNS_TOOLBARREGISTRY') else None"
 	)
 	# Soft-enforced bar icon height: mirrors always render 19 px tall; the
 	# source widget's own size is never touched.
 	BAR_ICON_HEIGHT = 19
 	MIRROR_WIDTH_EXPR = (
-		"(op.TOOLBARREGISTRY.WidgetTarget({canonical!r}).width "
-		"if hasattr(op, 'TOOLBARREGISTRY') "
-		"and op.TOOLBARREGISTRY.WidgetTarget({canonical!r}) is not None else 30)"
+		"(op.FNS_TOOLBARREGISTRY.WidgetTarget({canonical!r}).width "
+		"if hasattr(op, 'FNS_TOOLBARREGISTRY') "
+		"and op.FNS_TOOLBARREGISTRY.WidgetTarget({canonical!r}) is not None else 30)"
 	)
 
 	# --- surface hooks (RegistryBase contract) ---
@@ -331,7 +331,7 @@ class ToolbarRegistryExt(RegistryBase):
 	# Location-independent: resolves through the toolbar package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
 	# _healHostClones and StampHost come from RegistryBase off these two.
-	CLONE_EXPR = "op.FNS.op('ToolbarRegistry') if hasattr(op, 'FNS') else None"
+	CLONE_EXPR = "op.FNS.op('FNS_ToolbarRegistry') if hasattr(op, 'FNS') else None"
 
 	# --- public API ---
 

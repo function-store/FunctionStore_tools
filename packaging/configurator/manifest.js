@@ -6,18 +6,18 @@ window.FNS_MANIFEST = {
  "channel": "stable",
  "base_url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools",
  "toolkit": {
-  "name": "FunctionStore_tools_2025",
+  "name": "FNSTools",
   "td_build": "099",
-  "project": "FunctionStore_tools_2025_DEV.16.toe"
+  "project": "FunctionStore_tools_2025_DEV.38.toe"
  },
  "core": [
-  "ConfigRegistry",
-  "FNS_Updater",
-  "MainMenuRegistry",
-  "NavbarRegistry",
-  "OpMenuRegistry",
-  "PaneTypeRegistry",
-  "ToolbarRegistry"
+  "FNS_ConfigRegistry",
+  "FNS_MainMenuRegistry",
+  "FNS_NavbarRegistry",
+  "FNS_OpMenuRegistry",
+  "FNS_PaneTypeRegistry",
+  "FNS_ToolbarRegistry",
+  "FNS_Updater"
  ],
  "categories": [
   "Core",
@@ -41,7 +41,7 @@ window.FNS_MANIFEST = {
    "shortcut": "ALT_SELECT",
    "ops": 97,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -65,7 +65,7 @@ window.FNS_MANIFEST = {
    "shortcut": "AUTO_COMBINE",
    "ops": 124,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -89,7 +89,7 @@ window.FNS_MANIFEST = {
    "shortcut": "AUTO_RES",
    "ops": 124,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -115,8 +115,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_BORDERLESS_TD",
    "ops": 369,
    "requires": [
-    "ConfigRegistry",
-    "MainMenuRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_MainMenuRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -140,7 +140,7 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_COLOR_UI",
    "ops": 165,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -151,28 +151,6 @@ window.FNS_MANIFEST = {
     "bytes": 100998,
     "sha256": "c7c194581c6c13d5fb5ff5df8acd025f50e56ba951a39b2e52baa5dfc9932870",
     "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/ColorUI.tox"
-   }
-  },
-  {
-   "name": "ConfigRegistry",
-   "kind": "core",
-   "category": "Core",
-   "description": "Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys.",
-   "version": "1.0.0",
-   "help_url": "",
-   "surfaces": [],
-   "shortcut": "",
-   "ops": 36,
-   "requires": [],
-   "integrates_with": [],
-   "tox_carrier": "own",
-   "cooking": true,
-   "whatsnew": "",
-   "artifact": {
-    "path": "packaging/dist/ConfigRegistry.tox",
-    "bytes": 46550,
-    "sha256": "f4308a80bf635063751df997aa2abc2d3a703a4da43c3fcc8c9402d9006db444",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/ConfigRegistry.tox"
    }
   },
   {
@@ -189,9 +167,9 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_CPP",
    "ops": 938,
    "requires": [
-    "ConfigRegistry",
-    "NavbarRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_NavbarRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [
     "QuickCollapse"
@@ -217,7 +195,7 @@ window.FNS_MANIFEST = {
    "shortcut": "HOTSTRINGS",
    "ops": 114,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [
     "CustomParTools"
@@ -241,6 +219,22 @@ window.FNS_MANIFEST = {
    }
   },
   {
+   "name": "FNS_ConfigRegistry",
+   "kind": "core",
+   "category": "Core",
+   "description": "Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys.",
+   "version": "1.0.0",
+   "help_url": "",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 36,
+   "requires": [],
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
+  },
+  {
    "name": "FNS_HotkeyManager",
    "kind": "tool",
    "category": "Workflow",
@@ -251,7 +245,7 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_HOTKEY_MANAGER",
    "ops": 198,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -291,8 +285,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_MAINMENU",
    "ops": 337,
    "requires": [
-    "ConfigRegistry",
-    "MainMenuRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_MainMenuRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "root",
@@ -304,6 +298,24 @@ window.FNS_MANIFEST = {
     "sha256": "9cce32faa8d92498d3384d3a795abe130da6cf88efc9f5a098a62800784307c5",
     "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_MainMenu.tox"
    }
+  },
+  {
+   "name": "FNS_MainMenuRegistry",
+   "kind": "core",
+   "category": "Core",
+   "description": "TD main-menu surface registry, including project-name display. The raw master, promoted to /sys.",
+   "version": "1.0.0",
+   "help_url": "",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 33,
+   "requires": [],
+   "integrates_with": [
+    "FNS_MainMenu"
+   ],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
   },
   {
    "name": "FNS_Navbar",
@@ -318,8 +330,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_NAVBAR",
    "ops": 1516,
    "requires": [
-    "ConfigRegistry",
-    "NavbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_NavbarRegistry"
    ],
    "integrates_with": [
     "CustomParTools"
@@ -335,6 +347,25 @@ window.FNS_MANIFEST = {
    }
   },
   {
+   "name": "FNS_NavbarRegistry",
+   "kind": "core",
+   "category": "Core",
+   "description": "The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets.",
+   "version": "1.0.0",
+   "help_url": "",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 33,
+   "requires": [],
+   "integrates_with": [
+    "FNS_Navbar",
+    "FNS_Toolbar"
+   ],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
+  },
+  {
    "name": "FNS_OpMenu",
    "kind": "tool",
    "category": "Surfaces",
@@ -347,8 +378,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_OPMOD",
    "ops": 291,
    "requires": [
-    "ConfigRegistry",
-    "OpMenuRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_OpMenuRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -370,6 +401,46 @@ window.FNS_MANIFEST = {
    }
   },
   {
+   "name": "FNS_OpMenuRegistry",
+   "kind": "core",
+   "category": "Core",
+   "description": "OP Create dialog surface registry: search words, row decorations, right-click items, filter stages. The raw master, promoted to /sys.",
+   "version": "1.0.0",
+   "help_url": "",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 34,
+   "requires": [],
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
+  },
+  {
+   "name": "FNS_PaneTypeRegistry",
+   "kind": "core",
+   "category": "Core",
+   "description": "Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks.",
+   "version": "1.0.0",
+   "help_url": "",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 227,
+   "requires": [],
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "portability": [
+    {
+     "op": "md",
+     "par": "externaltox",
+     "kind": "project",
+     "path": "/Users/dan/Documents/Projects/FunctionStore_tools/modules/suspects/FNSTools/../../../../../VJ/TD/Downloaded/dotsimulate/md_0.0.3.tox"
+    }
+   ],
+   "whatsnew": ""
+  },
+  {
    "name": "FNS_Toolbar",
    "kind": "tool",
    "category": "Surfaces",
@@ -382,8 +453,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_TOOLBAR",
    "ops": 564,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [
     "BorderlessTD"
@@ -397,6 +468,24 @@ window.FNS_MANIFEST = {
     "sha256": "bd656fc8df68255e4b7f02378e81f8bf1645e88add035d0f31295c30e0f25d5f",
     "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_Toolbar.tox"
    }
+  },
+  {
+   "name": "FNS_ToolbarRegistry",
+   "kind": "core",
+   "category": "Core",
+   "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys -- clone it to put your own tools on the bar.",
+   "version": "1.0.0",
+   "help_url": "",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 32,
+   "requires": [],
+   "integrates_with": [
+    "FNS_Toolbar"
+   ],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
   },
   {
    "name": "FNS_Updater",
@@ -433,7 +522,7 @@ window.FNS_MANIFEST = {
    "shortcut": "GLOBAL_OUT_SEL",
    "ops": 765,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -459,8 +548,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_VolControl",
    "ops": 229,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -486,8 +575,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_HYDROHOMIE",
    "ops": 203,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -498,30 +587,6 @@ window.FNS_MANIFEST = {
     "bytes": 120182,
     "sha256": "dfd8803c563d80c3c5700d358f83f3a6bd68591ac555a7ee1fd5f7e954635e5a",
     "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/HydroHomie.tox"
-   }
-  },
-  {
-   "name": "MainMenuRegistry",
-   "kind": "core",
-   "category": "Core",
-   "description": "TD main-menu surface registry, including project-name display. The raw master, promoted to /sys.",
-   "version": "1.0.0",
-   "help_url": "",
-   "surfaces": [],
-   "shortcut": "",
-   "ops": 33,
-   "requires": [],
-   "integrates_with": [
-    "FNS_MainMenu"
-   ],
-   "tox_carrier": "own",
-   "cooking": true,
-   "whatsnew": "",
-   "artifact": {
-    "path": "packaging/dist/MainMenuRegistry.tox",
-    "bytes": 41526,
-    "sha256": "1f3ec4bc438e6c7111e923c593826ddbbec4a2ca7ca92e438e5d4ae33509ccea",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/MainMenuRegistry.tox"
    }
   },
   {
@@ -537,8 +602,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_MULTIMIDI",
    "ops": 389,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "root",
@@ -564,8 +629,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_MISC",
    "ops": 153,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -589,7 +654,7 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_HOTKEYS",
    "ops": 95,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -603,31 +668,6 @@ window.FNS_MANIFEST = {
    }
   },
   {
-   "name": "NavbarRegistry",
-   "kind": "core",
-   "category": "Core",
-   "description": "The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets.",
-   "version": "1.0.0",
-   "help_url": "",
-   "surfaces": [],
-   "shortcut": "",
-   "ops": 33,
-   "requires": [],
-   "integrates_with": [
-    "FNS_Navbar",
-    "FNS_Toolbar"
-   ],
-   "tox_carrier": "own",
-   "cooking": true,
-   "whatsnew": "",
-   "artifact": {
-    "path": "packaging/dist/NavbarRegistry.tox",
-    "bytes": 41598,
-    "sha256": "8f7e6715f6db5ccb9011803261ab521e505a2c5b8802653ff88565b1a5b98353",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/NavbarRegistry.tox"
-   }
-  },
-  {
    "name": "OpenExt",
    "kind": "tool",
    "category": "Developer",
@@ -638,7 +678,7 @@ window.FNS_MANIFEST = {
    "shortcut": "",
    "ops": 89,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -649,28 +689,6 @@ window.FNS_MANIFEST = {
     "bytes": 66078,
     "sha256": "12efbeb7b4c8ef2ac8e0250f4a0d379701db90d850bb1117c43b53851c5c2f7e",
     "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/OpenExt.tox"
-   }
-  },
-  {
-   "name": "OpMenuRegistry",
-   "kind": "core",
-   "category": "Core",
-   "description": "OP Create dialog surface registry: search words, row decorations, right-click items, filter stages. The raw master, promoted to /sys.",
-   "version": "1.0.0",
-   "help_url": "",
-   "surfaces": [],
-   "shortcut": "",
-   "ops": 34,
-   "requires": [],
-   "integrates_with": [],
-   "tox_carrier": "own",
-   "cooking": true,
-   "whatsnew": "",
-   "artifact": {
-    "path": "packaging/dist/OpMenuRegistry.tox",
-    "bytes": 43822,
-    "sha256": "7e0e420b3ec98c8be3f956bc1bc58737650b71bbbef7ba20c27618f922a15326",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/OpMenuRegistry.tox"
    }
   },
   {
@@ -687,9 +705,9 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_OPTEMPLATES",
    "ops": 588,
    "requires": [
-    "ConfigRegistry",
-    "OpMenuRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_OpMenuRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [
     "AutoRes"
@@ -759,7 +777,7 @@ window.FNS_MANIFEST = {
    "shortcut": "",
    "ops": 102,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -783,7 +801,7 @@ window.FNS_MANIFEST = {
    "shortcut": "AMB_OSC_MAPPER",
    "ops": 257,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -809,8 +827,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_OUTPUT",
    "ops": 111,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -821,36 +839,6 @@ window.FNS_MANIFEST = {
     "bytes": 95958,
     "sha256": "7ebc007dc3cf47b50eef021c3f0846343556f5c204458e01a3469a9be6e8b51d",
     "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/OUTPUT.tox"
-   }
-  },
-  {
-   "name": "PaneTypeRegistry",
-   "kind": "core",
-   "category": "Core",
-   "description": "Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks.",
-   "version": "1.0.0",
-   "help_url": "",
-   "surfaces": [],
-   "shortcut": "",
-   "ops": 227,
-   "requires": [],
-   "integrates_with": [],
-   "tox_carrier": "root",
-   "cooking": true,
-   "portability": [
-    {
-     "op": "md",
-     "par": "externaltox",
-     "kind": "project",
-     "path": "/Users/dan/Documents/Projects/FunctionStore_tools/modules/suspects/../../../../../VJ/TD/Downloaded/dotsimulate/md_0.0.3.tox"
-    }
-   ],
-   "whatsnew": "",
-   "artifact": {
-    "path": "packaging/dist/PaneTypeRegistry.tox",
-    "bytes": 149294,
-    "sha256": "c00dd3320736cf5710e579bae09f2f249378ad10d7f62ba385a0925ca02bc08d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/PaneTypeRegistry.tox"
    }
   },
   {
@@ -866,8 +854,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_POP",
    "ops": 154,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -893,8 +881,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_PARRANDOM",
    "ops": 152,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -918,7 +906,7 @@ window.FNS_MANIFEST = {
    "shortcut": "",
    "ops": 204,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "root",
@@ -942,7 +930,7 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_QUICKCOLLAPSE",
    "ops": 189,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -966,7 +954,7 @@ window.FNS_MANIFEST = {
    "shortcut": "",
    "ops": 44,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "root",
@@ -990,7 +978,7 @@ window.FNS_MANIFEST = {
    "shortcut": "",
    "ops": 120,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -1014,7 +1002,7 @@ window.FNS_MANIFEST = {
    "shortcut": "",
    "ops": 138,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [
     "CustomParTools"
@@ -1042,8 +1030,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_QUICKTIME",
    "ops": 148,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -1069,8 +1057,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_RPLS",
    "ops": 218,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -1110,8 +1098,8 @@ window.FNS_MANIFEST = {
    "shortcut": "SMOOTHNESS_SET",
    "ops": 250,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -1137,8 +1125,8 @@ window.FNS_MANIFEST = {
    "shortcut": "SWAP_OPS",
    "ops": 134,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -1162,7 +1150,7 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_SWITCHOP",
    "ops": 95,
    "requires": [
-    "ConfigRegistry"
+    "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -1173,30 +1161,6 @@ window.FNS_MANIFEST = {
     "bytes": 66678,
     "sha256": "a5e746766f7d470033d82fd73aa46ee5a93e86d08c4a4ae722f7200f4494a8dd",
     "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/SwitchOPs.tox"
-   }
-  },
-  {
-   "name": "ToolbarRegistry",
-   "kind": "core",
-   "category": "Core",
-   "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys -- clone it to put your own tools on the bar.",
-   "version": "1.0.0",
-   "help_url": "",
-   "surfaces": [],
-   "shortcut": "",
-   "ops": 32,
-   "requires": [],
-   "integrates_with": [
-    "FNS_Toolbar"
-   ],
-   "tox_carrier": "own",
-   "cooking": true,
-   "whatsnew": "",
-   "artifact": {
-    "path": "packaging/dist/ToolbarRegistry.tox",
-    "bytes": 37118,
-    "sha256": "e9c24319f4cb5cd9476e245beec721bd6328e4d5c25fcdfe09b2320f0434caa6",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/ToolbarRegistry.tox"
    }
   },
   {
@@ -1212,8 +1176,8 @@ window.FNS_MANIFEST = {
    "shortcut": "MY_UI",
    "ops": 310,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -1239,8 +1203,8 @@ window.FNS_MANIFEST = {
    "shortcut": "FNS_VSCODETOOLS",
    "ops": 389,
    "requires": [
-    "ConfigRegistry",
-    "ToolbarRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
    "tox_carrier": "own",

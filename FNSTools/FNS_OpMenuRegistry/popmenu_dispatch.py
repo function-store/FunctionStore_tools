@@ -73,7 +73,7 @@ def onClick(info):
 			run(f"ui.openOperatorSnippets(optype='{myType}', example=1)",
 								delayFrames=1, delayRef=op.TDResources)
 	else:
-		registry = getattr(op, 'OPMENUREGISTRY', None)
+		registry = getattr(op, 'FNS_OPMENUREGISTRY', None)
 		if registry is None:
 			return
 		optype = selectedOp['pythonHelp',1].val

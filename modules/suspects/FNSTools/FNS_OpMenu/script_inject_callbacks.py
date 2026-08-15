@@ -27,7 +27,7 @@ import re
 import td as TD
 
 def onCook(scriptOp):
-	registry = getattr(op, 'OPMENUREGISTRY', None)
+	registry = getattr(op, 'FNS_OPMENUREGISTRY', None)
 	# Resolved once per cook -- this loop runs over every operator type.
 	searchWordsDict = {}
 	decorators = []

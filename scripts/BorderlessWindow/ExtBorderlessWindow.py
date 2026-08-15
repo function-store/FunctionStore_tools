@@ -373,7 +373,7 @@ class ExtBorderlessWindow:#
 		# its visibility through the manager API so the entry's Displayed
 		# state (and the host par) stay in sync. The direct-copy fallback
 		# below still covers projects without the registry.
-		reg = getattr(op, 'MAINMENUREGISTRY', None)
+		reg = getattr(op, 'FNS_MAINMENUREGISTRY', None)
 		if reg is not None and hasattr(reg.ext, 'MainMenuRegistryExt'):
 			reg.ext.MainMenuRegistryExt.SetWidgetDisplay('ProjName', bool(state))
 		targets = [self.ownerComp.op('projname'), op('/ui/dialogs/mainmenu/projname')]
