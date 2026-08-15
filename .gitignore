@@ -81,3 +81,6 @@ packaging/publish/
 
 # website deps. website/docs/ IS committed -- Vercel serves it with no build step.
 website/node_modules/
+
+# vercel CLI link state (per-machine)
+.vercel/

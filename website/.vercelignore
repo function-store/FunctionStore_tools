@@ -1,0 +1,21 @@
+# The deploy is a static upload of this directory — see vercel.json, which
+# sets an empty build and install command. Nothing here is needed at runtime
+# except the pages, assets and the search index under docs/.
+#
+# Without this file the CLI would ship node_modules (~60 MB, pagefind's
+# binaries included): the repo .gitignore covers it, but it lives at the repo
+# root and the deploy root is website/, so the CLI never reads it.
+
+node_modules/
+package.json
+package-lock.json
+
+# build + CMS tooling; never served
+tools/
+
+# local scratch and CLI state. .env.local holds a VERCEL_OIDC_TOKEN the CLI
+# writes on link — git ignores it, and it has no business being uploaded.
+.DS_Store
+*.log
+.env*
+.vercel/

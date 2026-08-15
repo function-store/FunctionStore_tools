@@ -143,11 +143,21 @@ video: "https://youtu.be/j43gZ0MB2xo"
 
 ## Deploying
 
-Vercel project, **root directory `website`**. `vercel.json` declares
-`buildCommand` and `installCommand` as empty on purpose: `website/docs/` is
-generated and committed, so a deploy is a pure static upload. Without those,
-Vercel auto-detects the `build` script in `package.json` and runs pagefind at
-deploy time for nothing.
+Vercel project **`fnstools`**, root directory **`website`**.
+
+`vercel.json` declares `buildCommand` and `installCommand` as empty on
+purpose: `website/docs/` is generated and committed, so a deploy is a pure
+static upload. Without those, Vercel auto-detects the `build` script in
+`package.json` and runs pagefind at deploy time for nothing. (The file
+cannot carry comments — Vercel's schema rejects unknown keys, `//`
+included.)
+
+`.vercelignore` keeps `node_modules/` out of the upload: the repo
+`.gitignore` covers it, but it lives at the repo root while the deploy root
+is `website/`, so the CLI never reads it. That is the difference between a
+1.8 MB upload and a 61 MB one. It also excludes `tools/` (build and CMS
+scripts, never served) and `.env.local`, which the CLI writes on link with a
+`VERCEL_OIDC_TOKEN` in it.
 
 To stand it up before this branch is merged, point the project at this branch
 as its production branch, then switch it to the real one after the merge.

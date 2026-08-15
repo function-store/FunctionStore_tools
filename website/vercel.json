@@ -1,23 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-
-  "//": [
-    "Vercel project root directory must be `website`.",
-    "",
-    "Deploys are a pure static upload: website/docs/ is generated and",
-    "committed, so there is nothing to build here. The empty build and",
-    "install commands are load-bearing -- package.json has a `build`",
-    "script, and without these Vercel auto-detects it and runs pagefind",
-    "at deploy time for no reason. CI is where the build is verified."
-  ],
   "framework": null,
   "buildCommand": "",
   "installCommand": "",
   "outputDirectory": ".",
-
   "cleanUrls": true,
   "trailingSlash": true,
-
   "headers": [
     {
       "source": "/docs/pagefind/(.*)",
