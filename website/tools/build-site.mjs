@@ -164,7 +164,14 @@ for (const p of pages) checkLinks(p.html, p.file, p.slug);
 
 const landingPath = path.join(WEB, 'index.html');
 if (fs.existsSync(landingPath)) {
-  checkLinks(fs.readFileSync(landingPath, 'utf8'), 'index.html', null);
+  // Only the hand-written parts. The TOOLS block still holds the PREVIOUS
+  // build's output at this point, so checking it would deadlock the build
+  // on any package rename: the stale block fails the check, and the check
+  // runs before the block is regenerated from the catalog. What the build
+  // writes there is correct by construction.
+  const landingSrc = fs.readFileSync(landingPath, 'utf8')
+    .replace(/<!-- TOOLS:START -->[\s\S]*?<!-- TOOLS:END -->/, '');
+  checkLinks(landingSrc, 'index.html', null);
 }
 
 if (problems.length) {

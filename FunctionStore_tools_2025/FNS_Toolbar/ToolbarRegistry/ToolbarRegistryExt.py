@@ -331,7 +331,8 @@ class ToolbarRegistryExt(RegistryBase):
 	# Location-independent: resolves through the toolbar package's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
 	# _healHostClones and StampHost come from RegistryBase off these two.
-	CLONE_EXPR = "op.FNS.op('ToolbarRegistry') if hasattr(op, 'FNS') else None"
+	CLONE_EXPR = "op.FNS_TOOLBAR.op('ToolbarRegistry') if hasattr(op, 'FNS_TOOLBAR') else None"
+	PACKAGE_SHORTCUT = 'FNS_TOOLBAR'
 
 	# --- public API ---
 

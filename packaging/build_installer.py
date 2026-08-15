@@ -4,7 +4,7 @@ Runs INSIDE TouchDesigner:
 
     exec(open('packaging/build_installer.py').read())
     result = BuildInstaller()    # packaging/dist/FNS_Installer.tox
-    result = BuildBootstrap()    # packaging/dist/FunctionStore_tools_2025.tox
+    result = BuildBootstrap()    # packaging/dist/FNSTools.tox
 
 Both are BUILD ARTIFACTS, not hand-made components: they embed a snapshot
 of InstallerExt.py, so editing that file means rebuilding. Constructing
@@ -12,7 +12,7 @@ them from a script keeps the two from drifting and means the artifacts can
 be recreated on any machine.
 
 FNS_Installer.tox is the bare installer for a project that already has a
-toolkit container. FunctionStore_tools_2025.tox is the ONE-DROP BOOTSTRAP:
+toolkit container. FNSTools.tox is the ONE-DROP BOOTSTRAP:
 the (empty) toolkit root itself, carrying the installer, a copy of the
 FNS_Updater package, and the vendored palette webBrowser, so a bare project
 goes from nothing to installed without ever leaving TD --
@@ -30,7 +30,7 @@ import os
 
 STAGING = '/sys/quiet'          # ephemeral: never saved with the project
 COMP_NAME = 'FNS_Installer'
-ROOT_NAME = 'FunctionStore_tools_2025'
+ROOT_NAME = 'FNSTools'
 OUT = 'packaging/dist/FNS_Installer.tox'
 OUT_BOOTSTRAP = 'packaging/dist/%s.tox' % ROOT_NAME
 UPDATER_TOX = 'packaging/dist/FNS_Updater.tox'
