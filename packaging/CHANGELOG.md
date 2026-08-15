@@ -1,5 +1,16 @@
 # FNS tools changelog
 
+## v2.12.19 -- 2026-08-15
+
+- UPDATER 1.0.8 -> 1.0.9 -- RefreshStore(names) scopes the artifact fetch -- a list fetches just those packages, an empty list is manifest-only, None still mirrors the whole release.
+
+The picker downloads only what you pick. A lightweight bootstrap no
+longer mirrors the whole release before showing the catalog: the page
+appears after a manifest-only fetch (seconds), the plan says how many MB
+your selection needs, and install fetches exactly those packages with
+live progress. The full-mirror Refresh Store pulse remains for offline
+installs and shared bindings.
+
 ## v2.12.18 -- 2026-08-15
 
 - UPDATER 1.0.7 -> 1.0.8 -- dropped the dangling internal-op shortcuts to TDAsyncIO and github_remote (legacy of the pre-bucket update flow) that flagged every fresh drop with invalid-path warnings.

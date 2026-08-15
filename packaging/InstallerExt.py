@@ -151,16 +151,19 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
             missing.append(name)
             continue
         path = _artifactPath(art, name, manifest_path)
-        if not os.path.exists(path):
-            missing.append(name + ' (artifact file absent)')
-            continue
+        # an absent file is a DOWNLOAD, not a failure: the picker fetches
+        # exactly the selection at install time, so planning must work
+        # against a store that holds only the manifest
         steps.append({'name': name, 'kind': pkg['kind'], 'path': path,
                       'sha256': art.get('sha256', ''),
                       'bytes': art.get('bytes', 0),
                       'release': manifest.get('release', ''),
+                      'have': os.path.exists(path),
                       'present': op(tgt + '/' + name) is not None})
     return {'target': tgt, 'steps': steps, 'order': [s['name'] for s in steps],
             'already_present': [s['name'] for s in steps if s['present']],
+            'to_fetch': [s['name'] for s in steps
+                         if not s['have'] and not s['present']],
             'missing_artifact': missing, 'unknown_packages': unknown}
 
 
@@ -268,6 +271,10 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
             results.append({'name': name, 'action': 'skipped (present)',
                             **state})
             continue
+        if not os.path.exists(step['path']):
+            results.append({'name': name, 'action': 'FAILED', 'ok': False,
+                            'why': 'artifact not downloaded (%s)' % step['path']})
+            continue
         if existing is not None:
             existing.destroy()
         # loadTox loads the component INTO the given COMP -- it creates the
@@ -326,8 +333,9 @@ class InstallerExt:
         t.clear()
         t.appendRow(['package', 'kind', 'state', 'MB', 'artifact'])
         for s in plan['steps']:
-            t.appendRow([s['name'], s['kind'],
-                         'present' if s['present'] else 'to install',
+            state = ('present' if s['present']
+                     else 'to install' if s.get('have') else 'to download')
+            t.appendRow([s['name'], s['kind'], state,
                          '%.2f' % (s.get('bytes', 0) / 1048576.0),
                          os.path.basename(s['path'])])
         for n in plan['missing_artifact']:
@@ -442,9 +450,10 @@ class InstallerExt:
         parent = self.ownerComp.parent()
         return parent.op('UPDATER') if parent is not None else None
 
-    def _refreshStore(self):
+    def _refreshStore(self, names=None):
         """Kick the sibling UPDATER's store refresh; harmless if one is
-        already running (it refuses).
+        already running (it refuses). `names` scopes the fetch ([] is
+        manifest-only -- the picker; a list is the selection at install).
 
         Scheduled via run(), never called inline: this fires from the web
         server's request callback, and the one observed refresh that
@@ -455,47 +464,40 @@ class InstallerExt:
         upd = self._updaterComp()
         if upd is None or getattr(upd, 'RefreshStore', None) is None:
             return 'no UPDATER next to the installer -- refresh the store yourself'
-        run("op(%r).RefreshStore()" % upd.path, delayFrames=1)
+        run("op(%r).RefreshStore(names=%r)" % (upd.path, names), delayFrames=1)
         return ''
 
-    def _refreshActive(self):
-        """Is the sibling UPDATER mid-job right now?"""
+    def _refreshJob(self):
+        """The sibling UPDATER's current job dict, or None."""
         upd = self._updaterComp()
         try:
-            job = getattr(upd.ext.ExtUpdater, '_job', None) if upd else None
+            return getattr(upd.ext.ExtUpdater, '_job', None) if upd else None
         except Exception:
-            job = None
+            return None
+
+    def _refreshActive(self):
+        job = self._refreshJob()
         return bool(job) and job.get('stage') not in ('done', 'failed')
-
-    def _storeComplete(self, manifest_path):
-        """Manifest present AND every artifact it names sits beside it.
-
-        The picker must not open on a half-fetched store: the manifest is
-        the FIRST file a refresh writes, so its presence alone proves
-        nothing about the artifacts (the first user test planned 26
-        packages against a store holding zero of them)."""
-        try:
-            with open(manifest_path, 'r', encoding='utf-8') as f:
-                man = json.load(f)
-        except Exception:
-            return False
-        for pkg in man.get('packages', []):
-            if not pkg.get('artifact'):
-                continue
-            if not os.path.exists(_artifactPath(pkg['artifact'], pkg['name'],
-                                                manifest_path)):
-                return False
-        return True
 
     def _planText(self, plan):
         lines = ['install into %s' % plan['target'], '']
+        fetch_bytes = 0
         for s in plan['steps']:
-            lines.append('%-26s %-5s %s' % (s['name'], s['kind'],
-                         'present, kept' if s['present'] else 'install'))
+            if s['present']:
+                state = 'present, kept'
+            elif s.get('have'):
+                state = 'install'
+            else:
+                state = 'install (download)'
+                fetch_bytes += s.get('bytes', 0)
+            lines.append('%-26s %-5s %s' % (s['name'], s['kind'], state))
         for n in plan['missing_artifact']:
             lines.append('%-26s %s' % (n, 'NO ARTIFACT'))
         for n in plan['unknown_packages']:
             lines.append('%-26s %s' % (n, 'NOT IN MANIFEST'))
+        if fetch_bytes:
+            lines.append('')
+            lines.append('%.1f MB to download' % (fetch_bytes / 1048576.0))
         return '\n'.join(lines)
 
     def ServeRequest(self, request, response):
@@ -512,15 +514,16 @@ class InstallerExt:
                 response['Content-Type'] = 'text/javascript; charset=utf-8'
                 path = self._par('Manifestfile') or DefaultManifest()
                 full = path if os.path.isabs(path) else RepoPath(path)
-                # ready = the whole store, not merely its manifest; and
-                # never mid-refresh, when files are still landing
-                if (os.path.exists(full) and not self._refreshActive()
-                        and self._storeComplete(full)):
+                # the picker needs only the MANIFEST -- artifacts download
+                # per-selection at install time, so a lightweight drop
+                # stays lightweight until the user actually picks
+                if os.path.exists(full):
                     with open(full, 'r', encoding='utf-8') as f:
                         response['data'] = ('window.FNS_SERVED = true;\n'
                                             'window.FNS_MANIFEST = %s;\n' % f.read())
                 else:
-                    why = '' if self._refreshActive() else self._refreshStore()
+                    why = '' if self._refreshActive() \
+                        else self._refreshStore(names=[])
                     response['data'] = ('window.FNS_REFRESHING = true;%s\n'
                                         % (' // ' + why if why else ''))
             elif method == 'POST' and uri == '/selection':
@@ -543,7 +546,46 @@ class InstallerExt:
                 else:
                     response['data'] = json.dumps({'ok': True,
                                                    'text': self._planText(plan)})
+            elif method == 'GET' and uri == '/status':
+                # the page's fetch-then-install poll: how far along is the
+                # scoped download, and is the selection installable yet?
+                response['Content-Type'] = 'application/json'
+                job = self._refreshJob()
+                fetching = bool(job) and job.get('stage') not in ('done', 'failed')
+                done = len(job.get('fetched', [])) if job else 0
+                togo = (len(job.get('queue', [])) + len(job.get('inflight', {}))
+                        if job else 0)
+                ready, failed = False, []
+                if not fetching:
+                    failed = list(job.get('failed', [])) if job else []
+                    try:
+                        plan = ResolvePlan(self._par('Selectionfile'),
+                                           self._par('Manifestfile') or DefaultManifest(),
+                                           self._par('Target')
+                                           or DefaultTarget(self.ownerComp))
+                        ready = not plan['to_fetch']
+                    except Exception:
+                        ready = False
+                response['data'] = json.dumps(
+                    {'fetching': fetching, 'fetched': done, 'togo': togo,
+                     'ready': ready, 'failed': failed[:4]})
             elif method == 'POST' and uri == '/install':
+                plan = ResolvePlan(self._par('Selectionfile'),
+                                   self._par('Manifestfile') or DefaultManifest(),
+                                   self._par('Target')
+                                   or DefaultTarget(self.ownerComp))
+                if plan['to_fetch']:
+                    # download exactly the selection, then the page polls
+                    # /status and re-posts /install once it is all here
+                    mb = sum(s.get('bytes', 0) for s in plan['steps']
+                             if s['name'] in plan['to_fetch']) / 1048576.0
+                    why = self._refreshStore(names=plan['to_fetch'])
+                    response['Content-Type'] = 'application/json'
+                    response['data'] = json.dumps(
+                        {'ok': not why, 'fetching': True,
+                         'text': why or 'downloading %d package(s), %.1f MB...'
+                                 % (len(plan['to_fetch']), mb)})
+                    return response
                 res = self.Install()
                 response['Content-Type'] = 'application/json'
                 if res is None:

@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtUpdater
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.13.toe
+Saveorigin : FunctionStore_tools_2025_DEV.15.toe
 Saveversion : 2025.33070
 Info Header End'''
 """Bucket + manifest updates for the toolkit.
@@ -567,7 +567,8 @@ class ExtUpdater:
 				names = [n for n in names if n in job['names']]
 			job['plan_names'] = names
 		else:
-			names = None
+			# a scoped refresh fetches just these; [] is manifest-only
+			names = job.get('names')
 		out = []
 		for pkg in man.get('packages', []):
 			if names is not None and pkg['name'] not in names:
@@ -599,10 +600,17 @@ class ExtUpdater:
 	# motion 1 -- refresh the store
 	# ------------------------------------------------------------------
 
-	def RefreshStore(self):
-		"""Fetch the manifest and every artifact whose bytes differ.
-		Machine-wide; no project is read or touched."""
-		return self._startJob('refresh')
+	def RefreshStore(self, names=None):
+		"""Fetch the manifest, then artifacts whose bytes differ.
+		Machine-wide; no project is read or touched.
+
+		`names` scopes the artifact fetch: None mirrors the whole release
+		(the Refresh Store pulse -- offline installs, shared bindings),
+		a list fetches just those packages (the picker downloads exactly
+		the selection at install time), and [] is manifest-only (what
+		makes the picker appear in seconds instead of after the mirror).
+		"""
+		return self._startJob('refresh', names=names)
 
 	def StoreStatus(self):
 		"""What the store actually holds, verified against its manifest."""

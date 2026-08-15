@@ -407,9 +407,36 @@
     a.click();
     URL.revokeObjectURL(a.href);
   });
+  // Install may answer "fetching": the server downloads exactly the
+  // selected packages, we show progress, and re-post once they're here.
+  var installPolls = 0;
+  function installOrPoll(res) {
+    if (!res.fetching) { showDialog(res.text, false); return; }
+    if (res.text) showDialog(res.text, false);
+    if (++installPolls > 400) {
+      showDialog('Download did not finish -- check the UPDATER status in TouchDesigner.', false);
+      return;
+    }
+    setTimeout(function () {
+      fetch('/status').then(function (r) { return r.json(); }).then(function (st) {
+        if (st.fetching) {
+          showDialog('Downloading… ' + st.fetched + ' done, ' + st.togo + ' to go', false);
+          installOrPoll({fetching: true, text: ''});
+        } else if (st.ready) {
+          showDialog('Installing…', false);
+          post('/install', '{}', installOrPoll);
+        } else {
+          showDialog('Download failed: ' +
+            ((st.failed && st.failed.join('; ')) || 'unknown -- see UPDATER status') +
+            '\nClose and try Install again to retry.', false);
+        }
+      }).catch(function (e) { showDialog('Status check failed: ' + e, false); });
+    }, 1200);
+  }
   document.getElementById('doinstall').addEventListener('click', function () {
+    installPolls = 0;
     showDialog('Installing…', false);
-    post('/install', '{}', function (res) { showDialog(res.text, false); });
+    post('/install', '{}', installOrPoll);
   });
   document.getElementById('copy').addEventListener('click', function () {
     var dlg = document.getElementById('dlg');

@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "release": "v2.12.18",
- "notes": "- UPDATER: dropped the dangling internal-op shortcuts to TDAsyncIO and github_remote (legacy of the pre-bucket update flow) that flagged every fresh drop with invalid-path warnings.\n\nThe bootstrap installer now targets whatever container it ships in --\nTD numbers a second drop into an occupied project, and matching the\nparent by literal name sent that installer at the other copy's root.\nThe plan status also names an existing toolkit root when installing\nsomewhere else.",
+ "release": "v2.12.19",
+ "notes": "The picker downloads only what you pick. A lightweight bootstrap no\nlonger mirrors the whole release before showing the catalog: the page\nappears after a manifest-only fetch (seconds), the plan says how many MB\nyour selection needs, and install fetches exactly those packages with\nlive progress. The full-mirror Refresh Store pulse remains for offline\ninstalls and shared bindings.\n\n- UPDATER: RefreshStore(names) scopes the artifact fetch -- a list fetches just those packages, an empty list is manifest-only, None still mirrors the whole release.",
  "channel": "stable",
  "base_url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools",
  "toolkit": {
@@ -51,7 +51,7 @@
     "path": "packaging/dist/AltSelect.tox",
     "bytes": 66902,
     "sha256": "0533509c1e211de9892824820e7d0ca662f7671482fba867824f7c30bac3df6c",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/AltSelect.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/AltSelect.tox"
    }
   },
   {
@@ -75,7 +75,7 @@
     "path": "packaging/dist/AutoCombine.tox",
     "bytes": 79686,
     "sha256": "14a05c0a86ef9a1bbb135fd00bc6319b3eb9e1af736615faed535d91a2d9c164",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/AutoCombine.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/AutoCombine.tox"
    }
   },
   {
@@ -99,7 +99,7 @@
     "path": "packaging/dist/AutoRes.tox",
     "bytes": 79446,
     "sha256": "90998852e77533bf58d58f30a55d00b64160bc92f4672bdcadedb38a392d6f5f",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/AutoRes.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/AutoRes.tox"
    }
   },
   {
@@ -126,7 +126,7 @@
     "path": "packaging/dist/BorderlessTD.tox",
     "bytes": 225750,
     "sha256": "496547ce2e40afc3aee038b3e825d3d3999053cbfcdd3b82cd22f52c61df3b43",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/BorderlessTD.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/BorderlessTD.tox"
    }
   },
   {
@@ -150,7 +150,7 @@
     "path": "packaging/dist/ColorUI.tox",
     "bytes": 100998,
     "sha256": "c7c194581c6c13d5fb5ff5df8acd025f50e56ba951a39b2e52baa5dfc9932870",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/ColorUI.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/ColorUI.tox"
    }
   },
   {
@@ -181,7 +181,7 @@
     "path": "packaging/dist/CustomParTools.tox",
     "bytes": 538800,
     "sha256": "3947808707a08972165c69a9e7aa0e672155f31dad9753774b58ffe86e714ee7",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/CustomParTools.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/CustomParTools.tox"
    }
   },
   {
@@ -215,7 +215,7 @@
     "path": "packaging/dist/ExprHotStrings.tox",
     "bytes": 76062,
     "sha256": "1c418dfbd840d48025ba170023f94eb517b61554b8545f82fd1007f6ddb4b909",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/ExprHotStrings.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/ExprHotStrings.tox"
    }
   },
   {
@@ -237,7 +237,7 @@
     "path": "packaging/dist/FNS_Config.tox",
     "bytes": 68686,
     "sha256": "6f27f4e993c1324023f412a59e07c25d7277a673dfec46c1ad847ebb564d0041",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/FNS_Config.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_Config.tox"
    }
   },
   {
@@ -273,7 +273,7 @@
     "path": "packaging/dist/FNS_HotkeyManager.tox",
     "bytes": 140910,
     "sha256": "4c9fb5d3a39e31960d150c781f9a4937d97c91a5060c76fbd13e8b78df361e4b",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/FNS_HotkeyManager.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -297,7 +297,7 @@
     "path": "packaging/dist/FNS_MainMenu.tox",
     "bytes": 262438,
     "sha256": "61b62a253b9e43068b60db94c7a0cf598a433bdf448501247a37f6f1d0143ae3",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/FNS_MainMenu.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_MainMenu.tox"
    }
   },
   {
@@ -323,7 +323,7 @@
     "path": "packaging/dist/FNS_Navbar.tox",
     "bytes": 630496,
     "sha256": "37823c2db97ee86d741caf6c1457d0839ed70281cb7e9c64f6552ec8d8e244b9",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/FNS_Navbar.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_Navbar.tox"
    }
   },
   {
@@ -355,7 +355,7 @@
     "path": "packaging/dist/FNS_OpMenu.tox",
     "bytes": 177478,
     "sha256": "b76de17a50e73377cf36d5be9eda026c1731ce4be27a2429ad7d406c22b3bdde",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/FNS_OpMenu.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_OpMenu.tox"
    }
   },
   {
@@ -381,7 +381,7 @@
     "path": "packaging/dist/FNS_Toolbar.tox",
     "bytes": 363734,
     "sha256": "2fa7c25c3417c9d80a994e06342f923b71940dd41361d3ba8c0ab30539980676",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/FNS_Toolbar.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/FNS_Toolbar.tox"
    }
   },
   {
@@ -405,7 +405,7 @@
     "path": "packaging/dist/GlobalOutSelect.tox",
     "bytes": 182654,
     "sha256": "7c8f7487aaa2608e4a4a119e17f5ea2fb41af140f5fd3884283d5d246f80519e",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/GlobalOutSelect.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/GlobalOutSelect.tox"
    }
   },
   {
@@ -432,7 +432,7 @@
     "path": "packaging/dist/GlobalVolControl.tox",
     "bytes": 161054,
     "sha256": "2f4205cf907eddc68b80e21d3bc628269a26ec85437266f5c2d894466819b921",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/GlobalVolControl.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/GlobalVolControl.tox"
    }
   },
   {
@@ -459,7 +459,7 @@
     "path": "packaging/dist/HydroHomie.tox",
     "bytes": 120182,
     "sha256": "dfd8803c563d80c3c5700d358f83f3a6bd68591ac555a7ee1fd5f7e954635e5a",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/HydroHomie.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/HydroHomie.tox"
    }
   },
   {
@@ -486,7 +486,7 @@
     "path": "packaging/dist/midiMapper.tox",
     "bytes": 197006,
     "sha256": "f8594d370f4ded6606f68e94f96da8c9e614f95f1aa54ccb1360ac1505aad512",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/midiMapper.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/midiMapper.tox"
    }
   },
   {
@@ -513,7 +513,7 @@
     "path": "packaging/dist/MISC.tox",
     "bytes": 122590,
     "sha256": "194968691e3e494f031d7bcfb04998250455607613f7143671736bf58dd8420d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/MISC.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/MISC.tox"
    }
   },
   {
@@ -537,7 +537,7 @@
     "path": "packaging/dist/MY_HOTKEYS.tox",
     "bytes": 65758,
     "sha256": "513d5f1086f1a162ffd4fbde0a0881290e91f96a79ecd7d7a73bb26a46c3fad5",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/MY_HOTKEYS.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/MY_HOTKEYS.tox"
    }
   },
   {
@@ -561,7 +561,7 @@
     "path": "packaging/dist/OpenExt.tox",
     "bytes": 66078,
     "sha256": "12efbeb7b4c8ef2ac8e0250f4a0d379701db90d850bb1117c43b53851c5c2f7e",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/OpenExt.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/OpenExt.tox"
    }
   },
   {
@@ -636,7 +636,7 @@
     "path": "packaging/dist/OpTemplates.tox",
     "bytes": 269216,
     "sha256": "b0f7d0eaa1b543e23804c103beb27418eb459fcb3e1311626ddc197bc8cd611b",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/OpTemplates.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/OpTemplates.tox"
    }
   },
   {
@@ -660,7 +660,7 @@
     "path": "packaging/dist/OpToClipboard.tox",
     "bytes": 67870,
     "sha256": "30c511ea9ee960eeb063dc9b68bbceb0c9219fd09457c23999a8d002063e3a59",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/OpToClipboard.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/OpToClipboard.tox"
    }
   },
   {
@@ -684,7 +684,7 @@
     "path": "packaging/dist/oscMapper.tox",
     "bytes": 125526,
     "sha256": "548cf244a8103ae35a449bf8d137332518f72fcecd3097a4f77c36b8a44f274d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/oscMapper.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/oscMapper.tox"
    }
   },
   {
@@ -711,7 +711,7 @@
     "path": "packaging/dist/OUTPUT.tox",
     "bytes": 95958,
     "sha256": "7ebc007dc3cf47b50eef021c3f0846343556f5c204458e01a3469a9be6e8b51d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/OUTPUT.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/OUTPUT.tox"
    }
   },
   {
@@ -741,7 +741,7 @@
     "path": "packaging/dist/PaneTypeRegistry.tox",
     "bytes": 149294,
     "sha256": "c00dd3320736cf5710e579bae09f2f249378ad10d7f62ba385a0925ca02bc08d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/PaneTypeRegistry.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/PaneTypeRegistry.tox"
    }
   },
   {
@@ -768,7 +768,7 @@
     "path": "packaging/dist/ParOPDrop.tox",
     "bytes": 108382,
     "sha256": "73834c579fafa57e13c858c480e006770aadb2ff453a41a85408f3daae3dc4e0",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/ParOPDrop.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/ParOPDrop.tox"
    }
   },
   {
@@ -795,7 +795,7 @@
     "path": "packaging/dist/ParRandomizer.tox",
     "bytes": 109094,
     "sha256": "81ea03debfc4f6cf63232306fe62b5697a2116ce14bb188089afcbafa67147ad",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/ParRandomizer.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/ParRandomizer.tox"
    }
   },
   {
@@ -819,7 +819,7 @@
     "path": "packaging/dist/paste_from_clipboard.tox",
     "bytes": 128566,
     "sha256": "9457cd230cc90be938f996cbede6447e9e79929d98dab2de6386e2ad7971f9d9",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/paste_from_clipboard.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/paste_from_clipboard.tox"
    }
   },
   {
@@ -843,7 +843,7 @@
     "path": "packaging/dist/QuickCollapse.tox",
     "bytes": 99790,
     "sha256": "390dba6abb1d914faf7cde7410d94e4d4a3ddb834e09f66bcae909e5e1b323c4",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/QuickCollapse.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/QuickCollapse.tox"
    }
   },
   {
@@ -867,7 +867,7 @@
     "path": "packaging/dist/QuickMarks.tox",
     "bytes": 45662,
     "sha256": "7afb38e5213b40fea13c376805f790ad509826b02c5b2437e594dea0df93be5a",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/QuickMarks.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/QuickMarks.tox"
    }
   },
   {
@@ -891,7 +891,7 @@
     "path": "packaging/dist/QuickPane.tox",
     "bytes": 68918,
     "sha256": "4f139a1d05bf042bda5983bbb9fa5bdb0a287ee920df5b97804fc1c9438b1e6c",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/QuickPane.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/QuickPane.tox"
    }
   },
   {
@@ -917,7 +917,7 @@
     "path": "packaging/dist/QuickParCustom.tox",
     "bytes": 85470,
     "sha256": "235d12c8f4e90484a46aa55bde34bbcbcaafaa0b19f2ff467f5611cfd8d5bd7d",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/QuickParCustom.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/QuickParCustom.tox"
    }
   },
   {
@@ -944,7 +944,7 @@
     "path": "packaging/dist/QuickTime.tox",
     "bytes": 105574,
     "sha256": "5ff5efd7a375f5e136d9e357e68e1fdc512c0f656120e0e50c3ab6c3763dada8",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/QuickTime.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/QuickTime.tox"
    }
   },
   {
@@ -985,7 +985,7 @@
     "path": "packaging/dist/ResetPLS1.tox",
     "bytes": 124302,
     "sha256": "dfed4e988c0891ef1077676da66a805fa852bc7279edea2c0e24b00688be3756",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/ResetPLS1.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/ResetPLS1.tox"
    }
   },
   {
@@ -1012,7 +1012,7 @@
     "path": "packaging/dist/SetSmoothness.tox",
     "bytes": 162742,
     "sha256": "07743bd43123b18c9e1c4113d9a6436ef9cd761632611169a3dfb617a5eb467c",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/SetSmoothness.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/SetSmoothness.tox"
    }
   },
   {
@@ -1039,7 +1039,7 @@
     "path": "packaging/dist/SwapOps.tox",
     "bytes": 105814,
     "sha256": "8512de678306c9a13b02cb74982fab5c7ba30e87a923d80fc6c7ec2c2b0d83d8",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/SwapOps.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/SwapOps.tox"
    }
   },
   {
@@ -1063,7 +1063,7 @@
     "path": "packaging/dist/SwitchOPs.tox",
     "bytes": 66678,
     "sha256": "a5e746766f7d470033d82fd73aa46ee5a93e86d08c4a4ae722f7200f4494a8dd",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/SwitchOPs.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/SwitchOPs.tox"
    }
   },
   {
@@ -1090,7 +1090,7 @@
     "path": "packaging/dist/tools_ui.tox",
     "bytes": 120158,
     "sha256": "7c096a7a5d93032447750d02654f9bbbf32062c909a6ca4f88ed6f91f544d753",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/tools_ui.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/tools_ui.tox"
    }
   },
   {
@@ -1098,7 +1098,7 @@
    "kind": "core",
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
-   "version": "1.0.8",
+   "version": "1.0.9",
    "help_url": "",
    "surfaces": [
     "toolbar"
@@ -1109,12 +1109,12 @@
    "integrates_with": [],
    "tox_carrier": "own",
    "cooking": true,
-   "whatsnew": "dropped the dangling internal-op shortcuts to TDAsyncIO and github_remote (legacy of the pre-bucket update flow) that flagged every fresh drop with invalid-path warnings.",
+   "whatsnew": "RefreshStore(names) scopes the artifact fetch -- a list fetches just those packages, an empty list is manifest-only, None still mirrors the whole release.",
    "artifact": {
     "path": "packaging/dist/UPDATER.tox",
-    "bytes": 135774,
-    "sha256": "9d371f4c456dbb092d2e72bcffde5c3f2b70bf1b58cacdde4decb1964eb8df2b",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/UPDATER.tox"
+    "bytes": 135926,
+    "sha256": "aaf360b38b047d01906314e76fd1df9dcc5487f77367877ec398b9280dead2ef",
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/UPDATER.tox"
    }
   },
   {
@@ -1141,7 +1141,7 @@
     "path": "packaging/dist/VSCodeTools.tox",
     "bytes": 627448,
     "sha256": "06d7a1e0809665d3360e1f2f1fbdd972e4439077dae0728585e4f143b5e5b398",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.18/VSCodeTools.tox"
+    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v2.12.19/VSCodeTools.tox"
    }
   }
  ]
