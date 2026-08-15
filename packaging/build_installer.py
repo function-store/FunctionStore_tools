@@ -84,6 +84,12 @@ def _installerComp(parent):
     pg.appendPulse('Install', label='Install')
     p = pg.appendToggle('Replace', label='Replace Existing')[0]
     p.help = 'Re-load packages that are already installed.'
+    p = pg.appendToggle('Removeunselected', label='Remove Unselected')[0]
+    p.help = ("Apply semantics: manifest TOOLS present in the target but "
+              "absent from the selection are removed (COMP + install "
+              "record; settings stay in the palette config for "
+              "reinstall). The served picker always applies removals -- "
+              "its plan shows them. Core is never removed.")
     p = pg.appendMenu('Packagefiles', label='Package Files')[0]
     p.menuNames = ['embedded', 'shared', 'project']
     p.menuLabels = ['Embedded in this project',

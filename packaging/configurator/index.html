@@ -177,8 +177,16 @@
   function stored(key, fallback) {
     try { return localStorage.getItem(key); } catch (e) { return fallback; }
   }
-  var picked = new Set(JSON.parse(stored('fns.pick', null) || '[]')
-                        .filter(function (n) { return byName[n]; }));
+  // Served mode edits the PROJECT's state: pre-check what is actually
+  // installed there, so unchecking an installed tool means remove.
+  // Static mode keeps the localStorage nicety.
+  var installedNow = (window.FNS_INSTALLED || []).filter(function (n) {
+    return byName[n] && byName[n].kind === 'tool';
+  });
+  var picked = served
+    ? new Set(installedNow)
+    : new Set(JSON.parse(stored('fns.pick', null) || '[]')
+               .filter(function (n) { return byName[n]; }));
 
   document.getElementById('sub').textContent =
     M.packages.length + ' packages · TD ' + (M.toolkit.td_build || '');
@@ -330,11 +338,22 @@
     picked.forEach(function (n) {
       (byName[n].requires || []).forEach(function (r) { need.add(r); });
     });
-    document.getElementById('deps').textContent = need.size
-      ? '+ ' + need.size + ' core package' + (need.size === 1 ? '' : 's') +
-        ' they need (already included)'
-      : '';
-    document.getElementById('save').disabled = picked.size === 0;
+    var removals = served ? installedNow.filter(function (n) {
+      return !picked.has(n);
+    }).length : 0;
+    document.getElementById('deps').textContent =
+      (need.size
+        ? '+ ' + need.size + ' core package' + (need.size === 1 ? '' : 's') +
+          ' they need (already included)' : '') +
+      (removals ? (need.size ? ' · ' : '') + removals + ' will be removed' : '');
+    var save = document.getElementById('save');
+    if (served) {
+      save.textContent = removals ? 'Apply changes…' : 'Review install…';
+      // removals alone are actionable even with nothing picked
+      save.disabled = picked.size === 0 && removals === 0;
+    } else {
+      save.disabled = picked.size === 0;
+    }
   }
 
   function save() {

@@ -16,6 +16,7 @@ clone. The manifest's `requires` already encodes that, so the plan is a
 topological walk of it rather than a hardcoded list.
 """
 
+import hashlib
 import json
 import os
 import shutil
@@ -143,6 +144,17 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
     if isinstance(tgt, OP):
         tgt = tgt.path
 
+    # Manifest TOOLS present in the target but not selected are removal
+    # candidates -- the picker edits the project's state, not just adds to
+    # it. Core is never a candidate (wanted always includes it), and
+    # comps the manifest does not know (installer, webBrowser, DATs, the
+    # user's own work) are never touched.
+    tool_names = {p['name'] for p in manifest['packages'] if p['kind'] == 'tool'}
+    root_comp = op(tgt)
+    to_remove = sorted(c.name for c in root_comp.children
+                       if c.family == 'COMP' and c.name in tool_names
+                       and c.name not in wanted) if root_comp else []
+
     steps, missing = [], []
     for name in ordered:
         pkg = index[name]
@@ -164,6 +176,7 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
             'already_present': [s['name'] for s in steps if s['present']],
             'to_fetch': [s['name'] for s in steps
                          if not s['have'] and not s['present']],
+            'to_remove': to_remove,
             'missing_artifact': missing, 'unknown_packages': unknown}
 
 
@@ -221,6 +234,67 @@ def _bindPackage(comp, step, bind):
     comp.par.externaltox = dest
     comp.par.enableexternaltox = True
     return dest
+
+
+def _fileSha(path):
+    h = hashlib.sha256()
+    with open(path, 'rb') as f:
+        for chunk in iter(lambda: f.read(1 << 20), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def RemoveTools(plan):
+    """Remove the plan's `to_remove` tools from the project.
+
+    Scope rules, deliberately asymmetric:
+      * PROJECT state goes: the COMP, its `installed` row, and a
+        project-mode package file -- the file only when its bytes still
+        match the published artifact (a modified copy is the user's work
+        and stays, with a note).
+      * MACHINE state stays: the store cache is other projects' business
+        and a reinstall's shortcut; the tool's section in the palette
+        config survives so preferences roam across remove/reinstall and
+        across the user's other projects.
+    """
+    parent_comp = op(plan['target'])
+    if parent_comp is None:
+        return {'removed': [], 'notes': []}
+    by_name = {s['name']: s for s in plan['steps']}
+    removed, notes = [], []
+    for name in plan.get('to_remove', []):
+        comp = parent_comp.op(name)
+        if comp is None:
+            continue
+        bound = ''
+        p = getattr(comp.par, 'externaltox', None)
+        if p is not None and comp.par.enableexternaltox.eval():
+            bound = str(p.eval()).replace('\\', '/')
+        comp.destroy()
+        if bound:
+            full = bound if os.path.isabs(bound) else RepoPath(bound)
+            store_dir = os.path.dirname(by_name.get(name, {}).get('path', ''))
+            in_store = store_dir and os.path.normcase(
+                os.path.dirname(full)) == os.path.normcase(store_dir)
+            if in_store:
+                pass          # shared binding: the store file is machine-wide
+            elif os.path.exists(full):
+                want = by_name.get(name, {}).get('sha256', '')
+                try:
+                    pristine = bool(want) and _fileSha(full) == want
+                except Exception:
+                    pristine = False
+                if pristine:
+                    os.remove(full)
+                else:
+                    notes.append('%s: kept %s (modified)' % (name, full))
+        t = parent_comp.op(INSTALLED_DAT)
+        if t is not None:
+            for i in range(t.numRows - 1, 0, -1):
+                if t[i, 0].val == name:
+                    t.deleteRow(i)
+        removed.append(name)
+    return {'removed': removed, 'notes': notes}
 
 
 def RecordInstalled(parent_comp, name, sha256, release=''):
@@ -387,16 +461,27 @@ class InstallerExt:
         folder = self._par('Packagefolder')
         return folder or (project.folder + '/FNStools').replace('\\', '/')
 
-    def Install(self):
-        """Install everything the plan resolves to."""
+    def Install(self, remove=None):
+        """Install everything the plan resolves to; with `remove` (or the
+        Remove Unselected toggle) also remove manifest tools the
+        selection no longer includes -- the picker's apply semantics."""
         plan = self.Plan()
         if plan is None:
             return None
         replace = bool(getattr(self.ownerComp.par, 'Replace', None)
                        and self.ownerComp.par.Replace.eval())
+        if remove is None:
+            p = getattr(self.ownerComp.par, 'Removeunselected', None)
+            remove = bool(p and p.eval())
         res = InstallPlan(plan, replace=replace, bind=self._bindChoice())
-        self._status('installed %d, failed %d%s'
-                     % (len(res['installed']), len(res['failed']),
+        res['removed'], res['remove_notes'] = [], []
+        if remove and plan.get('to_remove'):
+            rm = RemoveTools(plan)
+            res['removed'] = rm['removed']
+            res['remove_notes'] = rm['notes']
+        self._status('installed %d, removed %d, failed %d%s'
+                     % (len(res['installed']), len(res['removed']),
+                        len(res['failed']),
                         ': ' + ', '.join(res['failed']) if res['failed'] else ''))
         return res
 
@@ -491,6 +576,9 @@ class InstallerExt:
                 state = 'install (download)'
                 fetch_bytes += s.get('bytes', 0)
             lines.append('%-26s %-5s %s' % (s['name'], s['kind'], state))
+        for n in plan.get('to_remove', []):
+            lines.append('%-26s %-5s %s' % (n, 'tool',
+                         'REMOVE (settings kept for reinstall)'))
         for n in plan['missing_artifact']:
             lines.append('%-26s %s' % (n, 'NO ARTIFACT'))
         for n in plan['unknown_packages']:
@@ -518,9 +606,20 @@ class InstallerExt:
                 # per-selection at install time, so a lightweight drop
                 # stays lightweight until the user actually picks
                 if os.path.exists(full):
+                    # the page pre-checks what THIS PROJECT actually has,
+                    # so unchecking an installed tool reads as removal --
+                    # the machine-wide selection.json is scratch, not truth
+                    installed = []
+                    tgt = op(self._par('Target')
+                             or DefaultTarget(self.ownerComp))
+                    if tgt is not None:
+                        installed = sorted(c.name for c in tgt.children
+                                           if c.family == 'COMP')
                     with open(full, 'r', encoding='utf-8') as f:
                         response['data'] = ('window.FNS_SERVED = true;\n'
-                                            'window.FNS_MANIFEST = %s;\n' % f.read())
+                                            'window.FNS_INSTALLED = %s;\n'
+                                            'window.FNS_MANIFEST = %s;\n'
+                                            % (json.dumps(installed), f.read()))
                 else:
                     why = '' if self._refreshActive() \
                         else self._refreshStore(names=[])
@@ -586,15 +685,18 @@ class InstallerExt:
                          'text': why or 'downloading %d package(s), %.1f MB...'
                                  % (len(plan['to_fetch']), mb)})
                     return response
-                res = self.Install()
+                res = self.Install(remove=True)
                 response['Content-Type'] = 'application/json'
                 if res is None:
                     response['data'] = json.dumps(
                         {'ok': False, 'text': self._par('Status') or 'install failed'})
                 else:
-                    lines = ['installed %d, failed %d'
-                             % (len(res['installed']), len(res['failed']))]
+                    lines = ['installed %d, removed %d, failed %d'
+                             % (len(res['installed']), len(res.get('removed', [])),
+                                len(res['failed']))]
                     lines += ['  %s' % n for n in res['installed']]
+                    lines += ['  removed %s' % n for n in res.get('removed', [])]
+                    lines += ['  %s' % n for n in res.get('remove_notes', [])]
                     lines += ['  FAILED %s' % n for n in res['failed']]
                     response['data'] = json.dumps(
                         {'ok': not res['failed'], 'text': '\n'.join(lines)})
