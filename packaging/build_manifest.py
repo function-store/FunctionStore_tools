@@ -43,10 +43,9 @@ TOOLKIT = '/FNSTools'
 # carries its release, so a manifest always resolves to the exact bytes it
 # was built from. Never point an installer at a mutable "latest/" path --
 # unreproducible installs make bug reports uncorrelatable (§3).
-# R2 public dev URL (bucket `fnstools`, objects under the fnstools/ prefix).
-# Moving to storage.functionstore.xyz later is this constant plus the
-# UPDATER comp's Baseurl default, then one Build + Stage + upload.
-BASE_URL = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools'
+# Custom domain over the R2 bucket (objects under the fnstools/ prefix).
+# The r2.dev dev URL keeps serving the same bucket as a fallback.
+BASE_URL = 'https://storage.functionstr.com/fnstools'
 
 # Registry host name -> the core package that owns that registry's master.
 # Every registry package IS its master -- the raw registry, promoted to
@@ -346,16 +345,22 @@ def PortabilityWarnings(comp):
                 continue
             if not v or not (':' in v[:3] or v.startswith('/')):
                 continue  # relative == portable
+            # REDACT the machine-specific prefix: the manifest is PUBLIC,
+            # and a raw absolute path publishes the username and disk
+            # layout. The classification plus the relative tail carries
+            # everything the picker or a bug report needs.
             if palette and v.startswith(palette):
-                kind = 'palette'
+                kind, shown = 'palette', '<palette>' + v[len(palette):]
             elif v.startswith(here):
-                kind = 'project'
+                kind, shown = 'project', '<repo>' + v[len(here):]
             elif tdroot and v.startswith(tdroot):
-                kind = 'tdinstall'
+                kind, shown = 'tdinstall', '<td>' + v[len(tdroot):]
             else:
                 kind = 'absolute'
+                home = os.path.expanduser('~').replace('\\', '/')
+                shown = '~' + v[len(home):] if home and v.startswith(home) else v
             hits.append({'op': o.path[len(comp.path) + 1:] or o.name,
-                         'par': pname, 'kind': kind, 'path': v})
+                         'par': pname, 'kind': kind, 'path': shown})
     return hits
 
 

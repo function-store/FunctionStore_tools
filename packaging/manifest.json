@@ -1,9 +1,9 @@
 {
  "schema": 1,
  "release": "v3.0.0",
- "notes": "FNSTools 3.0 -- the toolkit takes its name, and core becomes the raw\nregistries. The whole toolkit is renamed FNSTools; the six registry\nmasters (FNS_ConfigRegistry, FNS_ToolbarRegistry, FNS_NavbarRegistry,\nFNS_MainMenuRegistry, FNS_OpMenuRegistry, FNS_PaneTypeRegistry) ship as\ntheir own core packages, promoted to /sys under those names -- raw,\nstandalone and cloneable, so the toolkit can be extended with the same\nmachinery it is built on. FNS_Updater (renamed from UPDATER) is the one\nnon-registry core. The former surface packages -- toolbar, navbar,\nmain-menu and OP-menu extras -- are ordinary optional tools now, and a\ntool's requirements are exactly the registries it hosts. Full design\nrecord: docs/FNSToolsRedesign.md. No migration from pre-3.0 installs;\nthis is the first public shape of the toolkit.",
+ "notes": "",
  "channel": "stable",
- "base_url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools",
+ "base_url": "https://storage.functionstr.com/fnstools",
  "toolkit": {
   "name": "FNSTools",
   "td_build": "099",
@@ -50,7 +50,7 @@
     "path": "packaging/dist/AltSelect.tox",
     "bytes": 68470,
     "sha256": "bd4259afd8af33e6cac2949af9a72b42dea112c55039db56c3964bda19bc1889",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/AltSelect.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/AltSelect.tox"
    }
   },
   {
@@ -74,7 +74,7 @@
     "path": "packaging/dist/AutoCombine.tox",
     "bytes": 81318,
     "sha256": "21becf12d5a02c53d1bb8029a493e37968b3c53cb87c517bfd80e1ebf5c3ce6e",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/AutoCombine.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/AutoCombine.tox"
    }
   },
   {
@@ -98,7 +98,7 @@
     "path": "packaging/dist/AutoRes.tox",
     "bytes": 81070,
     "sha256": "ef6fd2490a4390db5aaee27684c5a853ed209127ff6e919401292ddbe029e656",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/AutoRes.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/AutoRes.tox"
    }
   },
   {
@@ -125,7 +125,7 @@
     "path": "packaging/dist/BorderlessTD.tox",
     "bytes": 228438,
     "sha256": "9c74cb9c90d3d116de18a7381ec933001dcdc78447b94225a7d0ed5789ef3257",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/BorderlessTD.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/BorderlessTD.tox"
    }
   },
   {
@@ -149,7 +149,7 @@
     "path": "packaging/dist/ColorUI.tox",
     "bytes": 102646,
     "sha256": "c26369048241026fe92412da9f2224a535f7f98d7597eab8065dfeb922ba7774",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/ColorUI.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/ColorUI.tox"
    }
   },
   {
@@ -180,7 +180,7 @@
     "path": "packaging/dist/CustomParTools.tox",
     "bytes": 548680,
     "sha256": "36413aa1d3710128430f48ce30c8347226b40cec599180c659271c94244e4819",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/CustomParTools.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/CustomParTools.tox"
    }
   },
   {
@@ -206,7 +206,7 @@
      "op": "ExprHotStrings_tab",
      "par": "file",
      "kind": "palette",
-     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/ExprHotStrings_tab.tsv"
+     "path": "<palette>/FNStools_ext/tables/ExprHotStrings_tab.tsv"
     }
    ],
    "whatsnew": "",
@@ -214,7 +214,7 @@
     "path": "packaging/dist/ExprHotStrings.tox",
     "bytes": 77510,
     "sha256": "60c0cdc3f695bf7a53b8545be616e71a181a60c209ecad130f51b1555950d8b9",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/ExprHotStrings.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/ExprHotStrings.tox"
    }
   },
   {
@@ -236,7 +236,7 @@
     "path": "packaging/dist/FNS_ConfigRegistry.tox",
     "bytes": 47766,
     "sha256": "31fc7f5656bac02c8be7f62cf746054e480151af2e5b10ce0736e8c2d5b03cc2",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_ConfigRegistry.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_ConfigRegistry.tox"
    }
   },
   {
@@ -260,13 +260,13 @@
      "op": "table_gathered_hotkeys",
      "par": "file",
      "kind": "palette",
-     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/Hotkeys.tsv"
+     "path": "<palette>/FNStools_ext/tables/Hotkeys.tsv"
     },
     {
      "op": "table_gathered_hotkeys1",
      "par": "file",
      "kind": "palette",
-     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/Hotkeys.tsv"
+     "path": "<palette>/FNStools_ext/tables/Hotkeys.tsv"
     }
    ],
    "whatsnew": "",
@@ -274,7 +274,7 @@
     "path": "packaging/dist/FNS_HotkeyManager.tox",
     "bytes": 143926,
     "sha256": "b85f2b52a53ab416b6953fee2da785cb86fea3383fe66162d1760f9ee71286e4",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_HotkeyManager.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -301,7 +301,7 @@
     "path": "packaging/dist/FNS_MainMenu.tox",
     "bytes": 223438,
     "sha256": "d05818f90c579caff293ff35eeb25075403e528c6e08ea7a06bfbbadc289e988",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_MainMenu.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_MainMenu.tox"
    }
   },
   {
@@ -325,7 +325,7 @@
     "path": "packaging/dist/FNS_MainMenuRegistry.tox",
     "bytes": 42734,
     "sha256": "6cba821d6fdd7426d1acbcdeaa3d5e442bbb378262c15def33c7760fbe712ae7",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_MainMenuRegistry.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_MainMenuRegistry.tox"
    }
   },
   {
@@ -354,7 +354,7 @@
     "path": "packaging/dist/FNS_Navbar.tox",
     "bytes": 594352,
     "sha256": "8964eb3df37be52f1f188a3670953f06223017b74b85f0e6d341a7dc9663c837",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_Navbar.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_Navbar.tox"
    }
   },
   {
@@ -379,7 +379,7 @@
     "path": "packaging/dist/FNS_NavbarRegistry.tox",
     "bytes": 42830,
     "sha256": "09949f6a0950859be312831da79d4b7f0f341140f3dfc167fed0e020d1145e29",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_NavbarRegistry.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_NavbarRegistry.tox"
    }
   },
   {
@@ -406,7 +406,7 @@
      "op": "OpSearchWords",
      "par": "file",
      "kind": "palette",
-     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/OpSearchWords.tsv"
+     "path": "<palette>/FNStools_ext/tables/OpSearchWords.tsv"
     }
    ],
    "whatsnew": "",
@@ -414,7 +414,7 @@
     "path": "packaging/dist/FNS_OpMenu.tox",
     "bytes": 181582,
     "sha256": "ec7b2defe687441c10652b1e363ccb4c0c7d377761fca93744f7bdeb63664ef6",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_OpMenu.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_OpMenu.tox"
    }
   },
   {
@@ -436,7 +436,7 @@
     "path": "packaging/dist/FNS_OpMenuRegistry.tox",
     "bytes": 45014,
     "sha256": "326ee13a07868768f935ae65ac6601384250e0ee03435b84f8f48d442a006121",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_OpMenuRegistry.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_OpMenuRegistry.tox"
    }
   },
   {
@@ -458,7 +458,7 @@
      "op": "md",
      "par": "externaltox",
      "kind": "project",
-     "path": "/Users/dan/Documents/Projects/FunctionStore_tools/modules/suspects/FNSTools/../../../../../VJ/TD/Downloaded/dotsimulate/md_0.0.3.tox"
+     "path": "<repo>/modules/suspects/FNSTools/../../../../../VJ/TD/Downloaded/dotsimulate/md_0.0.3.tox"
     }
    ],
    "whatsnew": "",
@@ -466,7 +466,7 @@
     "path": "packaging/dist/FNS_PaneTypeRegistry.tox",
     "bytes": 150574,
     "sha256": "c2d0a1a513bf684516a68479ad218bb5dc5607d3b245015bfd709e369fe63b78",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_PaneTypeRegistry.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_PaneTypeRegistry.tox"
    }
   },
   {
@@ -495,7 +495,7 @@
     "path": "packaging/dist/FNS_Toolbar.tox",
     "bytes": 332566,
     "sha256": "f935673254cdc631cc2a8dfffa174df3d3b3db016dedf3683c4f8877dba863f5",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_Toolbar.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_Toolbar.tox"
    }
   },
   {
@@ -519,7 +519,7 @@
     "path": "packaging/dist/FNS_ToolbarRegistry.tox",
     "bytes": 38318,
     "sha256": "6c8994fc2f5c0a27707cae6d0381ccdf0b367f7e3b104d9878a6259f1d68e7be",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_ToolbarRegistry.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_ToolbarRegistry.tox"
    }
   },
   {
@@ -541,9 +541,9 @@
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Updater.tox",
-    "bytes": 138390,
-    "sha256": "c0d9f310b1b551836e9b795765c0b9035187fafe3a387f94af5db39c032540f3",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/FNS_Updater.tox"
+    "bytes": 138358,
+    "sha256": "87ba8bd46b6adc50af96ea30cb1907399c0883604e4152d1d532d25ff12bd4cc",
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/FNS_Updater.tox"
    }
   },
   {
@@ -567,7 +567,7 @@
     "path": "packaging/dist/GlobalOutSelect.tox",
     "bytes": 184014,
     "sha256": "81f544a908ab037310ae2cebdcab0d6fa90cc178d56bd4495f0973b88332b057",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/GlobalOutSelect.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/GlobalOutSelect.tox"
    }
   },
   {
@@ -594,7 +594,7 @@
     "path": "packaging/dist/GlobalVolControl.tox",
     "bytes": 165278,
     "sha256": "0f9712e305f42c7d344d8e66c191f7c41f38ff4ae13d4e4c61cc1fdf05556a29",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/GlobalVolControl.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/GlobalVolControl.tox"
    }
   },
   {
@@ -621,7 +621,7 @@
     "path": "packaging/dist/HydroHomie.tox",
     "bytes": 122934,
     "sha256": "9900e4b659bc0b81ce6cd8ab976f814a17efb9b6869840e72de8b0c6046dd74b",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/HydroHomie.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/HydroHomie.tox"
    }
   },
   {
@@ -648,7 +648,7 @@
     "path": "packaging/dist/midiMapper.tox",
     "bytes": 202958,
     "sha256": "80f662deff49db7a3684136427f260b5ab23404fb57086aa660a04aa9ce551a9",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/midiMapper.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/midiMapper.tox"
    }
   },
   {
@@ -675,7 +675,7 @@
     "path": "packaging/dist/MISC.tox",
     "bytes": 126806,
     "sha256": "bb0b2fe5c20f60fec186220cab5955466d9132e5597886c2c8f2231ae38ff489",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/MISC.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/MISC.tox"
    }
   },
   {
@@ -699,7 +699,7 @@
     "path": "packaging/dist/MY_HOTKEYS.tox",
     "bytes": 67150,
     "sha256": "04e22b160a3dd267daaba56b275d40704459264bf8d924a982957ef516ba9944",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/MY_HOTKEYS.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/MY_HOTKEYS.tox"
    }
   },
   {
@@ -723,7 +723,7 @@
     "path": "packaging/dist/OpenExt.tox",
     "bytes": 67534,
     "sha256": "499c9265efe0f3281dfbf8f48ea13b9bb45e24842d0816f75400d8eba34abd07",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/OpenExt.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/OpenExt.tox"
    }
   },
   {
@@ -754,43 +754,43 @@
      "op": "OPTemplates1",
      "par": "externaltox",
      "kind": "palette",
-     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/OpTemplates/OPTemplates1.tox"
+     "path": "<palette>/FNStools_ext/OpTemplates/OPTemplates1.tox"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP/cam1/file1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defcam.geo"
+     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defcam.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP/null1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defnull.geo"
+     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP/light1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defnull.geo"
+     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/cam1/file1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defcam.geo"
+     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defcam.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/null1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defnull.geo"
+     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/light1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "/Applications/TouchDesigner 4.app/Contents/Resources/tfs/Samples/Geo/defnull.geo"
+     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defnull.geo"
     }
    ],
    "whatsnew": "",
@@ -798,7 +798,7 @@
     "path": "packaging/dist/OpTemplates.tox",
     "bytes": 275288,
     "sha256": "962d9f6956cd11cbf4d421c189ebccfd1695d552c3b509865a98d8126e55e55e",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/OpTemplates.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/OpTemplates.tox"
    }
   },
   {
@@ -822,7 +822,7 @@
     "path": "packaging/dist/OpToClipboard.tox",
     "bytes": 69158,
     "sha256": "a5998371ae9d22c556e64d68d8c2528952e9d0fac620604ddb701f1620dfccb2",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/OpToClipboard.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/OpToClipboard.tox"
    }
   },
   {
@@ -846,7 +846,7 @@
     "path": "packaging/dist/oscMapper.tox",
     "bytes": 126750,
     "sha256": "f3ceed4b3590f991cbf26cb4ac9ce88bd3740382a245bfab7ee60eb85e33fbbb",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/oscMapper.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/oscMapper.tox"
    }
   },
   {
@@ -873,7 +873,7 @@
     "path": "packaging/dist/OUTPUT.tox",
     "bytes": 98414,
     "sha256": "31cb08c1ca6b1c625cbfba43fe3df0bc134c6311115877f770cb38b6e735658c",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/OUTPUT.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/OUTPUT.tox"
    }
   },
   {
@@ -900,7 +900,7 @@
     "path": "packaging/dist/ParOPDrop.tox",
     "bytes": 110598,
     "sha256": "b98abd6dfbdfcc4cfd63e716be807c4ca47de35e505e191f7632ab43ceaeebe3",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/ParOPDrop.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/ParOPDrop.tox"
    }
   },
   {
@@ -927,7 +927,7 @@
     "path": "packaging/dist/ParRandomizer.tox",
     "bytes": 111774,
     "sha256": "26de2576e4c2d9e06d568b27373d7135b7d463c2ae60528349c3fc6bd05b6f61",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/ParRandomizer.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/ParRandomizer.tox"
    }
   },
   {
@@ -951,7 +951,7 @@
     "path": "packaging/dist/paste_from_clipboard.tox",
     "bytes": 131542,
     "sha256": "c66e71f06931e85b01e3cd7f46423da397c4300f77d2c93b0f07a8b17780f2a7",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/paste_from_clipboard.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/paste_from_clipboard.tox"
    }
   },
   {
@@ -975,7 +975,7 @@
     "path": "packaging/dist/QuickCollapse.tox",
     "bytes": 101038,
     "sha256": "b9ee99542c4ad00a009a86d58cd6a664696f4d8c05329df286919eb8f7327373",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/QuickCollapse.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/QuickCollapse.tox"
    }
   },
   {
@@ -999,7 +999,7 @@
     "path": "packaging/dist/QuickMarks.tox",
     "bytes": 48054,
     "sha256": "2c226f5f33cc8455a31513ba803975d19593a2df9369e23b821008eecd6820db",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/QuickMarks.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/QuickMarks.tox"
    }
   },
   {
@@ -1023,7 +1023,7 @@
     "path": "packaging/dist/QuickPane.tox",
     "bytes": 70478,
     "sha256": "0ed8cf98976baa13d9da2b0828f053f8287f80c8b7fa467af0b114f266d74108",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/QuickPane.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/QuickPane.tox"
    }
   },
   {
@@ -1049,7 +1049,7 @@
     "path": "packaging/dist/QuickParCustom.tox",
     "bytes": 89846,
     "sha256": "1c2facc959d63061e3a4e32c620e544a9a519cf8d9130dffd1ecb1501f04583b",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/QuickParCustom.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/QuickParCustom.tox"
    }
   },
   {
@@ -1076,7 +1076,7 @@
     "path": "packaging/dist/QuickTime.tox",
     "bytes": 107966,
     "sha256": "1061567f171b3ce598c6365afff1c1bd76ffd382cba54544651ef03e8cd7c7a3",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/QuickTime.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/QuickTime.tox"
    }
   },
   {
@@ -1103,13 +1103,13 @@
      "op": "table_except_static",
      "par": "file",
      "kind": "palette",
-     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/table_except_static.tsv"
+     "path": "<palette>/FNStools_ext/tables/table_except_static.tsv"
     },
     {
      "op": "table_custom_resetpars",
      "par": "file",
      "kind": "palette",
-     "path": "/Users/dan/Library/Application Support/Derivative/TouchDesigner099/Palette/FNStools_ext/tables/table_custom_resetpars.tsv"
+     "path": "<palette>/FNStools_ext/tables/table_custom_resetpars.tsv"
     }
    ],
    "whatsnew": "",
@@ -1117,7 +1117,7 @@
     "path": "packaging/dist/ResetPLS1.tox",
     "bytes": 126702,
     "sha256": "3a8fe81d57679b006d6904334c7d424737c18e2fa36e1871941ecaaf2b94be02",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/ResetPLS1.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/ResetPLS1.tox"
    }
   },
   {
@@ -1144,7 +1144,7 @@
     "path": "packaging/dist/SetSmoothness.tox",
     "bytes": 166182,
     "sha256": "d70b8ec5056004c9ee325ade959cae63932ed281a94ae20ab4749cc01f5a2510",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/SetSmoothness.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/SetSmoothness.tox"
    }
   },
   {
@@ -1171,7 +1171,7 @@
     "path": "packaging/dist/SwapOps.tox",
     "bytes": 109022,
     "sha256": "c391ca338cfadb5bb4c31b7ba47b4a518371e1a3a1382d3e8e9f826a3df52500",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/SwapOps.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/SwapOps.tox"
    }
   },
   {
@@ -1195,7 +1195,7 @@
     "path": "packaging/dist/SwitchOPs.tox",
     "bytes": 67982,
     "sha256": "a257dec81367124cc63ba183ba856bf092688e205de9abb738db4c3b95ecff17",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/SwitchOPs.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/SwitchOPs.tox"
    }
   },
   {
@@ -1222,7 +1222,7 @@
     "path": "packaging/dist/tools_ui.tox",
     "bytes": 122062,
     "sha256": "dcefb8d5e494b221c2e0ae1c0211d371c5319d5e0a062511089346957c53fdc3",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/tools_ui.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/tools_ui.tox"
    }
   },
   {
@@ -1249,7 +1249,7 @@
     "path": "packaging/dist/VSCodeTools.tox",
     "bytes": 630560,
     "sha256": "2c42f95cc52d90cabf3b28e2305bd53b5e70c14b7cba98a33bfc0b95e2379d46",
-    "url": "https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.0/VSCodeTools.tox"
+    "url": "https://storage.functionstr.com/fnstools/v3.0.0/VSCodeTools.tox"
    }
   }
  ]
