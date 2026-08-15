@@ -2,11 +2,21 @@
 '''Info Header Start
 Name : ExtScriptExternalize
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 import re
 from pathlib import Path
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class ExtScriptExternalize:
 	def __init__(self, ownerComp):
@@ -14,7 +24,8 @@ class ExtScriptExternalize:
 		self.__script = None
 		self.popDialog = self.ownerComp.op('popDialog')
 		self.tags = ['FNS_externalized', 'pi_suspect']
-		
+		fnsLog('ScriptSyncFile: init')
+
 #############################################
 # Properties
 	@property
@@ -73,6 +84,7 @@ class ExtScriptExternalize:
 
 
 	def _setFilePath(self, file_path):
+		fnsLog(f'ScriptSyncFile: externalizing {self.ScriptOp.path} -> {self.__ensureForwardSlashes(file_path)}')
 		self.ScriptOp.par['file'] = self.__ensureForwardSlashes(file_path)
 		self.ScriptOp.par.syncfile = True
 		self.ScriptOp.color = (1, 0.5, 0.5)

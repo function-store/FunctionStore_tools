@@ -2,11 +2,21 @@
 '''Info Header Start
 Name : extExprHotString
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 import re
 import TDFunctions as TDF
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class extExprHotString:
 	"""
@@ -20,6 +30,7 @@ class extExprHotString:
 		self.parentPromoteShortStrBind = '#@!'
 		self.parentPromoteShortStrExpr = '#@~'
 		self.hotstrings = self.ownerComp.op('ExprHotStrings_tab')
+		fnsLog('ExprHotStrings: init')
 
 	def _customParPromoter(self):
 		"""Resolve CustomParTools inline -- never cached.
@@ -196,7 +207,8 @@ class extExprHotString:
 					expands = self.hotstrings.cell(hotstring.row, 'Expands', val=True)
 					
 			if expands:
-				# replace 
+				fnsLog(f'ExprHotStrings: expanding on {OP}.{PAR}: {expands!r}')
+				# replace
 				if op_par.mode == ParMode.BIND:
 					op_par.bindExpr = expands
 				else:

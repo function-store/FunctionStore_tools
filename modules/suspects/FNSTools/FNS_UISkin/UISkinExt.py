@@ -12,6 +12,17 @@ hand, no second list to keep in sync.
 """
 
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
+
 class UISkinExt:
 
 	# (page, par name, label, help, target patterns)
@@ -68,6 +79,7 @@ class UISkinExt:
 
 	def onInitTD(self):
 		"""Build any missing parameters, then assert the skin."""
+		fnsLog('FNS_UISkin: init, scheduling EnsurePars/Apply')
 		run('args[0].EnsurePars()', self, delayFrames=1, delayRef=op.TDResources)
 		run('args[0].Apply()', self, delayFrames=5, delayRef=op.TDResources)
 
@@ -135,6 +147,7 @@ class UISkinExt:
 				if str(target.eval() or '') != str(desired or ''):
 					try:
 						target.val = desired
+						fnsLog(f'FNS_UISkin: {panel.path} -> {desired or "(restored)"}', level='DEBUG')
 					except Exception as e:
 						debug(f'FNS_UISkin: {par_name} -> {panel.path}: {e}')
 		if captured:
@@ -162,6 +175,7 @@ class UISkinExt:
 		Blanks the parameters too, so a later Apply() re-captures from a
 		clean slate. This is what to call before removing the tool.
 		"""
+		fnsLog('FNS_UISkin: releasing all skin claims')
 		for _, par_name, _, _, _ in self.SKIN_TARGETS:
 			par = getattr(self.ownerComp.par, par_name, None)
 			if par is not None:

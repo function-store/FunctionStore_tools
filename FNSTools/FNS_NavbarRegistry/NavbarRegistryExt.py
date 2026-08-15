@@ -495,6 +495,7 @@ class NavbarRegistryExt(RegistryBase):
 			entry['source_registry_id'] = int(source_registry.id)
 		prev = self.stored['PaneRegistry'].get(canonical_name)
 		self.stored['PaneRegistry'][canonical_name] = entry
+		self.fnsLog(f'{self.REGISTRY_NAME}: registered {kind} "{canonical_name}" ({widget_op.path}, side={side})')
 		if prev and prev.get('panel_id') != entry['panel_id']:
 			self._destroyInstances(canonical_name)
 		if self._barReady():
@@ -513,6 +514,7 @@ class NavbarRegistryExt(RegistryBase):
 		if canonical_name in self.stored['PaneRegistry']:
 			self._destroyInstances(canonical_name)
 			self.stored['PaneRegistry'].pop(canonical_name, None)
+			self.fnsLog(f'{self.REGISTRY_NAME}: unregistered "{canonical_name}"')
 			self._syncSurface()
 
 	# RegistryBase healing calls self.UnregisterPanel(name); alias it.

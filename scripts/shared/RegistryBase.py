@@ -11,6 +11,16 @@ class RegistryBase:
 	REGISTRY_NAME = 'Registry'
 	HOST_PAGE_NAME = 'Registration'
 
+	def fnsLog(self, *args, level='INFO'):
+		"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op
+		when the logger is absent (standalone installs) or its Active par is off."""
+		try:
+			_logger = op.FNS.op('logger')
+			if _logger and _logger.par.Active.eval():
+				_logger.Log(*args, level=level)
+		except Exception:
+			pass
+
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		# BEFORE CustomParHelper touches the pars: a dangling BIND (tool
@@ -427,6 +437,10 @@ class RegistryBase:
 	def _setRegStatus(self, status):
 		if hasattr(self.ownerComp.par, 'Regstatus'):
 			self.ownerComp.par.Regstatus.val = status
+		# Registered/Error transitions are the interesting ones; Idle/Skipped
+		# states fire for every host copy at startup and stay at DEBUG.
+		_lvl = 'INFO' if str(status).startswith(('Registered', 'Error')) else 'DEBUG'
+		self.fnsLog(f'{self.REGISTRY_NAME} [{self.ownerComp.path}]: {status}', level=_lvl)
 
 	def _hostMenuOrder(self):
 		"""Read Registration Menuorder par; None means default append."""
@@ -779,6 +793,7 @@ class RegistryBase:
 
 		self._destroy_other_globals()
 
+		self.fnsLog(f'{self.REGISTRY_NAME}: installing global registry copy into /sys from {self.ownerComp.path}')
 		new_registry = sys_comp.copy(self.ownerComp, name=self.REGISTRY_NAME)
 		new_registry.allowCooking = True
 		# The /sys global is STANDALONE: the copy inherits whatever clone

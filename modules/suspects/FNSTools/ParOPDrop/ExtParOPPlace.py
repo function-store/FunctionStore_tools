@@ -2,10 +2,20 @@
 '''Info Header Start
 Name : ExtParOPPlace
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 import TDFunctions as TDF
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class ExtParOPPlace:
 	def __init__(self, ownerComp):
@@ -17,6 +27,7 @@ class ExtParOPPlace:
 		self.parameterChop = None
 		self.parameterDat = None
 		self.parameterExecDat = None
+		fnsLog('ParOPDrop: init')
 
 	def OnChopPre(self, value: bool):
 		# Set CHOP pre-enabled state and reset parameter CHOP if disabled
@@ -71,6 +82,7 @@ class ExtParOPPlace:
 			
 			# Helper function to create a new parameter instance
 			def create_new_instance():
+				fnsLog(f'ParOPDrop: creating {op_type} for par {curr_parameter.owner.path}.{curr_parameter.name}')
 				new_instance = ui.panes.current.owner.create(op_type, op_name)
 				new_instance.viewer = True
 				new_instance.current = True

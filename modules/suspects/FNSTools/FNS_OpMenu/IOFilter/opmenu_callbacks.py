@@ -14,8 +14,22 @@ calls the registry back when the toggle flips.
 def _enabled():
 	"""The user-facing switch: Iofilteractive on FNS_OpMenu itself --
 	the tool owns its toggle, no root parameter involved."""
+	host = me.parent(2)
+	par = getattr(host.par, 'Iofilteractive', None)
+	if par is None:
+		# The redesigned .tox shipped without the toggle; recreate it here so
+		# every install self-heals instead of erroring on each menu open.
+		try:
+			page = next((p for p in host.customPages if p.name == 'IO Filter'),
+						None) or host.appendCustomPage('IO Filter')
+			par = page.appendToggle('Iofilteractive', label='IO Filter Active')[0]
+			par.default = True
+			par.val = True
+		except Exception as e:
+			debug('IOFilter: could not create Iofilteractive, defaulting on:', e)
+			return True
 	try:
-		return bool(me.parent(2).par.Iofilteractive.eval())
+		return bool(par.eval())
 	except Exception as e:
 		debug('IOFilter: Iofilteractive unreadable, defaulting on:', e)
 		return True

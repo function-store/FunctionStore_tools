@@ -3,7 +3,7 @@
 '''Info Header Start
 Name : extStubser
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 import ast
@@ -11,7 +11,17 @@ from pathlib import Path
 import re
 from stubsTransformer import StubsTransformer
 
-debug = op("logger").Log
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log('stubser:', *args, level=level)
+	except Exception:
+		pass
+
+debug = fnsLog
 
 class extStubser:
 	"""

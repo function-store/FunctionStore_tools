@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : OpTemplateExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 from functools import cached_property
@@ -11,6 +11,16 @@ import itertools
 import os
 import re
 import TDFunctions
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class OpTemplateExt:
 
@@ -30,7 +40,7 @@ class OpTemplateExt:
 			       					'choptoDAT','soptoDAT','chopexecDAT',
 									'choptoSOP','trailSOP','toptoPOP','poptoTOP','choptoPOP',
 									'soptoPOP','dattoPOP','poptoCHOP','poptoDAT','poptoSOP']
-		self.logger = op('logger1')
+		fnsLog('OpTemplates: init')
 
 	def getAllOptypes(self):
 		all_optypes = []
@@ -73,7 +83,7 @@ class OpTemplateExt:
 		return types_ops
 	
 	def log(self, smth):
-		self.logger.Log(smth)
+		fnsLog('OpTemplates:', smth)
 	
 
 	def OnNewOp(self, _op: OP):
@@ -110,6 +120,7 @@ class OpTemplateExt:
 		if not template_ops:
 			template_ops = self.pendingTemplates
 		if orig_op and template_ops:
+			fnsLog(f'OpTemplates: placing template for {orig_op.OPType} at {orig_op.path}')
 			self.placeOPchain(orig_op, template_ops)
 			
 		self.ownerComp.op('kindergaertner_mymod').Refresh()
@@ -326,6 +337,7 @@ class OpTemplateExt:
 ####################################################################	
 
 	def DropOp(self, _op):
+		fnsLog(f'OpTemplates: storing {_op.path} as template for {_op.OPType}')
 		comp = self.createOrReturnTypeBase(_op.OPType, allowCooking=False)
 		self.colorNewBase([comp])
 		new_op = comp.copy(_op, includeDocked=True)
@@ -457,6 +469,7 @@ class OpTemplateExt:
 	def ExternalChange(self, onSave=False, startup=False, enable=None):
 		if enable is None:
 			enable = self.ownerComp.par.External.eval()
+		fnsLog(f'OpTemplates: external templates change (enable={enable}, onSave={onSave}, startup={startup})')
 
 		ext_tox_par = self.templatesCOMP.par.externaltox
 		if enable:

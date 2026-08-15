@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : QuickParCustomExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -10,12 +10,23 @@ Info Header End'''
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 ###
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class QuickParCustomExt:
 	def __init__(self, ownerComp):
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
 		self.ownerComp : baseCOMP = ownerComp
 		self.compEditor = op('/sys/TDDialogs/CompEditor')
 		self.customParPromoter : customParPromoterExt = getattr(op, 'FNS_CPP', None)
+		fnsLog('QuickParCustom: init')
 
 	@property
 	def rolloverPar(self):
@@ -29,6 +40,7 @@ class QuickParCustomExt:
 		_par = self.rolloverPar
 		if _par is None:
 			return
+		fnsLog(f'QuickParCustom: shortcut "{shortcutName}" on par {_par.owner.path}.{_par.name}')
 		_owner = _par.owner
 		_target = None
 		do_promote = True

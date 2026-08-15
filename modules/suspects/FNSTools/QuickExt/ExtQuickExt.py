@@ -2,13 +2,23 @@
 '''Info Header Start
 Name : ExtQuickExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 
 from TDStoreTools import StorageManager
 import TDFunctions as TDF
 import copy
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class ExtQuickExt:
 	def __init__(self, ownerComp):
@@ -21,6 +31,7 @@ class ExtQuickExt:
 		# < - DO NOT REMOVE THIS VERY IMPORTANT LINE!!! used by QuickExt to inject extension - >
 		self.MY_FORCED_TAG = f'# < - DO NOT REMOVE THIS VERY IMPORTANT LINE!!! used by {self.my_ext_type} to inject extension - >'
 		self.__modifyCompEditor()
+		fnsLog('QuickExt: init (CompEditor patched)')
 
 	def __modifyCompEditor(self):
 		compEditor = op.TDDialogs.op('CompEditor')
@@ -64,6 +75,7 @@ class ExtQuickExt:
 		if not _target:
 			return
 		self.ConfigComp = _target
+		fnsLog(f'QuickExt: creating extension on {_target.path}')
 		self.dialog.Open(textEntry='Ext')
 		pass
 
@@ -160,6 +172,7 @@ class ExtQuickExt:
 						+ extModuleName + '(me)'
 			extDat.text = extensionText
 
+			fnsLog(f'QuickExt: installed extension "{extModuleName}" on {self.ConfigComp.path} (slot {extIndex})')
 			self.ConfigComp.initializeExtensions(extIndex-1)
 			self.__updateCompEditor(extIndex)
 

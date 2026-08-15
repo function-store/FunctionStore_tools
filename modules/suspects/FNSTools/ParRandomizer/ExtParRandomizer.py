@@ -2,9 +2,19 @@
 '''Info Header Start
 Name : ExtParRandomizer
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class ExtParRandomizer:
 	def __init__(self, ownerComp):
@@ -12,6 +22,7 @@ class ExtParRandomizer:
 		self.random = iop.Random # this is an extension
 		self.ignorePages = ['About','Info','Common', 'Version Ctrl']
 		self.checkShortcutRayTK()#
+		fnsLog('ParRandomizer: init')
 	
 	@property
 	def shortcutopEval(self):
@@ -54,6 +65,7 @@ class ExtParRandomizer:
 		_op = _op or ui.panes.current.owner.currentChild
 		if not _op:
 			return
+		fnsLog(f'ParRandomizer: randomizing current page of {_op.path}')
 		_par_list = []
 
 		_page = _op.currentPage
@@ -122,7 +134,8 @@ class ExtParRandomizer:
 	def onResetAllCustom(self, all = False):
 		ui.undo.startBlock('Reset all custom parameters on current page')
 		_owner = ui.panes.current.owner.currentChild
-			
+		fnsLog(f'ParRandomizer: resetting {"all" if all else "current page"} custom pars on {_owner.path if _owner else None}')
+
 		par_names = [_par.name for _par in (_owner.currentPage.pars if not all else _owner.customPars)if not _par.readOnly and _par.enable and _par.page.name not in self.ignorePages]
 		_owner.resetPars(parNames=' '.join(par_names))
 		ui.undo.endBlock()
@@ -132,6 +145,7 @@ class ExtParRandomizer:
 			_op = ui.panes.current.owner.currentChild
 			if not _op:
 				return
+		fnsLog(f'ParRandomizer: saving custom par defaults on {_op.path}')
 		for _par in _op.customPars:
 			_par.defaultMode = _par.mode
 			_par.default = _par.eval()

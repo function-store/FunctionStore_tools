@@ -4,11 +4,21 @@
 '''Info Header Start
 Name : ExtNoUI
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 ###
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class ExtNoUI:
 	# TODO: is there a safer way to make sure we always restore to the "actual" height? currently using magic number 75 at one place
@@ -22,6 +32,7 @@ class ExtNoUI:
 		self._setShortcuts()
 		self._save_bg_color = self.bg_color if self.play_state else [0.25, 0.25, 0.25]
 		self.UpdatePlayState(self.play_state)
+		fnsLog('HideTimeline: init')
 
 	@property
 	def pause_indicator_ui_element(self):
@@ -66,10 +77,11 @@ class ExtNoUI:
 	def _setStateTimeline(self, state=None):
 		if not self.module_enabled:
 			return
-			
+
 		if state is None:
 			state = not bool(self.timeline_height)  # Toggle based on current height
-			
+		fnsLog(f'HideTimeline: timeline {"shown" if state else "hidden"}', level='DEBUG')
+
 		if state:
 			height = max(self._timeline_height_saved, 75)  # Ensure we never restore to 0
 			if self.timeline_height == 0:

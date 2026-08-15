@@ -6,6 +6,16 @@ import TDFunctions as TDF
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 ############
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log('HotkeyManager:', *args, level=level)
+	except Exception:
+		pass
+
 KILL = False
 
 # Modifier vocabulary: l/r variants normalize to their base for conflict grouping.
@@ -85,8 +95,6 @@ class HotkeyManagerExt:
 		self.hotkeyTable: 'tableDAT' = self.ownerComp.op('table_gathered_hotkeys')
 		self.defaultTable: 'tableDAT' = self.ownerComp.op('table_gathered_hotkeys1')
 		self.supressWatch = False
-		self.logger = self.ownerComp.op('Logger').ext.Logger
-		self.logger.SetTextPort(False)
 
 		self._records: List[HotkeyRecord] = []
 		self._conflicts = {}          # combo -> [HotkeyRecord]
@@ -98,7 +106,7 @@ class HotkeyManagerExt:
 		for _key in ('propertyPaths', 'gatheredPaths', 'allHotkeyParsDebug', 'gatherParamsDebug'):
 			self.ownerComp.unstore(_key)
 
-		self.logger.log("HotkeyManagerExt initialized")
+		fnsLog("HotkeyManagerExt initialized")
 
 	# ------------------------------------------------------------------
 	# Discovery (single source of truth)
@@ -213,10 +221,10 @@ class HotkeyManagerExt:
 		records = deduped
 
 		self._records = records
-		self.logger.log(f"Discover: {len(records)} hotkey parameters "
+		fnsLog(f"Discover: {len(records)} hotkey parameters "
 						f"({sum(1 for r in records if r.kind == 'CHOP')} CHOP, "
 						f"{sum(1 for r in records if r.kind == 'DAT')} DAT, "
-						f"{sum(1 for r in records if r.kind == 'COMP')} COMP)", textport=True)
+						f"{sum(1 for r in records if r.kind == 'COMP')} COMP)")
 		return records
 
 	def AllHotkeyPars(self) -> List[tuple]:
@@ -276,7 +284,7 @@ class HotkeyManagerExt:
 					if base is not None:
 						_op = base.op(rest) if rest else base
 		if _op is None:
-			self.logger.log(f"Could not resolve operator for path {path_str}")
+			fnsLog(f"Could not resolve operator for path {path_str}")
 		return _op
 
 	def _displayPath(self, _op: 'OP') -> str:
@@ -354,7 +362,7 @@ class HotkeyManagerExt:
 		if self._conflicts:
 			for combo, recs in self._conflicts.items():
 				owners = ', '.join(f"{self._displayPath(r.owner)}:{r.par_name}" for r in recs)
-				self.logger.log(f"CONFLICT {combo}: {owners}", textport=True)
+				fnsLog(f"CONFLICT {combo}: {owners}")
 		return self._conflicts
 
 	def _conflictComboFor(self, rec: HotkeyRecord) -> str:
@@ -418,7 +426,7 @@ class HotkeyManagerExt:
 		try:
 			le.SelectRow(row)
 		except Exception as e:
-			self.logger.log(f"SelectRow failed: {e}")
+			fnsLog(f"SelectRow failed: {e}")
 		try:
 			lst.scroll(row, 0)
 		except Exception:
@@ -432,21 +440,21 @@ class HotkeyManagerExt:
 
 	def onStart(self):
 		self.AllHotkeys = self.AllHotkeyPars()
-		self.logger.log("Starting hotkeys initialization...")
+		fnsLog("Starting hotkeys initialization...")
 		self.setAllHotkeys()
 		self.ComputeConflicts()
 		self.RefreshUI()
-		self.logger.log("Hotkey initialization complete")
+		fnsLog("Hotkey initialization complete")
 
 	def onParSavehotkeys(self):
 		self.SaveHotkeys()
 
 	def onParLoadhotkeys(self):
-		self.logger.log("Loading hotkeys...")
+		fnsLog("Loading hotkeys...")
 		self._loadWithWatchSuppressed(default=False)
 
 	def onParLoaddefault(self):
-		self.logger.log("Loading default hotkeys...", textport=True)
+		fnsLog("Loading default hotkeys...")
 		self._loadWithWatchSuppressed(default=True)
 		self.hotkeyTable.clear()
 		self.hotkeyTable.copy(self.defaultTable)
@@ -479,10 +487,9 @@ class HotkeyManagerExt:
 			new_val = ""
 		key = (self._displayPath(_par.owner), _par.name)
 		self._pendingChanges[key] = (str(prev), new_val)
-		self.logger.log(
+		fnsLog(
 			f"Shortcut '{_par.owner.path}:{_par.name}' changed "
-			f"from '{prev}' to '{new_val}' -- unsaved (Save externalizes it)",
-			textport=True)
+			f"from '{prev}' to '{new_val}' -- unsaved (Save externalizes it)")
 		self.ComputeConflicts()
 		self.RefreshUI()
 
@@ -492,7 +499,7 @@ class HotkeyManagerExt:
 
 	def SaveHotkeys(self):
 		"""Externalize the current live bindings into the gathered table."""
-		self.logger.log("Saving hotkeys...")
+		fnsLog("Saving hotkeys...")
 		self.gatherAllHotkeys()
 		self._pendingChanges = {}
 		self.RefreshUI()
@@ -538,12 +545,12 @@ class HotkeyManagerExt:
 					row[f"dat_{rec.par_name}_expr"] = rec.expr
 			table.appendRow([row[h] for h in TABLE_HEADERS])
 
-		self.logger.log(f"Externalized {table.numRows - 1} hotkey rows", textport=True)
+		fnsLog(f"Externalized {table.numRows - 1} hotkey rows")
 		return table
 
 	def setAllHotkeys(self, default=False):
 		"""Restore bindings from the gathered (or default) table onto the ops."""
-		self.logger.log("Setting all hotkeys...")
+		fnsLog("Setting all hotkeys...")
 		hotkeyTable = self.hotkeyTable if not (self.evalForcedefault or default) else self.defaultTable
 		headers = [h.val for h in hotkeyTable.row(0)]
 		success = 0
@@ -559,7 +566,7 @@ class HotkeyManagerExt:
 			for _par_name in _data.get('par', '').split(', '):
 				_par = getattr(_op.par, _par_name, None)
 				if _par is None:
-					self.logger.log(f"No parameter '{_par_name}' found on operator {_op}")
+					fnsLog(f"No parameter '{_par_name}' found on operator {_op}")
 					continue
 				if _type == "COMP":
 					col_prefix = "custom"
@@ -576,7 +583,7 @@ class HotkeyManagerExt:
 			if applied:
 				success += 1
 
-		self.logger.log(f"Successfully loaded {success} hotkeys", textport=True)
+		fnsLog(f"Successfully loaded {success} hotkeys")
 
 	# ------------------------------------------------------------------
 	# Config persistence (ConfigRegistry pilot)
@@ -649,7 +656,7 @@ class HotkeyManagerExt:
 			self._setHint(f"{display_path}: persisted via '{self.CONFIG_TAG}' on "
 						  f'{carrier.path} -- remove the tag there to opt out')
 			declared = True
-		self.logger.log(f'TogglePersist {display_path}: declared={declared}', textport=True)
+		fnsLog(f'TogglePersist {display_path}: declared={declared}')
 		self.RefreshUI()
 		return declared
 
@@ -691,7 +698,7 @@ class HotkeyManagerExt:
 		if not rows:
 			return 0
 		if headers_in != TABLE_HEADERS:
-			self.logger.log('Config hotkey rows ignored: table schema mismatch', textport=True)
+			fnsLog('Config hotkey rows ignored: table schema mismatch')
 			return 0
 		table = self.hotkeyTable
 		if table.numRows < 1:
@@ -721,8 +728,8 @@ class HotkeyManagerExt:
 					table[row_idx, col] = v
 			merged += 1
 		if merged:
-			self.logger.log(f'Config: merged {merged} declared hotkey row(s), '
-							f'{len(self._config_orphan_rows)} kept unresolved', textport=True)
+			fnsLog(f'Config: merged {merged} declared hotkey row(s), '
+							f'{len(self._config_orphan_rows)} kept unresolved')
 			self._loadWithWatchSuppressed(default=False)
 		return merged
 
@@ -754,7 +761,7 @@ class HotkeyManagerExt:
 		defaults = self._defaultsMap()
 		row = defaults.get((display_path, '__row__'))
 		if row is None:
-			self.logger.log(f"No default recorded for {display_path}", textport=True)
+			fnsLog(f"No default recorded for {display_path}")
 			return False
 		_op = self._resolveOP(row.get('path', ''))
 		if _op is None:
@@ -772,7 +779,7 @@ class HotkeyManagerExt:
 			_par.val = _val
 		else:
 			return False
-		self.logger.log(f"Reset {display_path}:{par_name} to default", textport=True)
+		fnsLog(f"Reset {display_path}:{par_name} to default")
 		return True
 
 	# ------------------------------------------------------------------
@@ -788,13 +795,13 @@ class HotkeyManagerExt:
 		"""Arm the capture keyboardin; next non-modifier keypress becomes the binding."""
 		kb = self.ownerComp.op('HotkeyUI/keyboardin_capture')
 		if kb is None:
-			self.logger.log("No capture keyboardin found", textport=True)
+			fnsLog("No capture keyboardin found")
 			return
 		self._capture = {'path': display_path, 'par': par_name}
 		kb.par.active = True
 		self._setHint(f"press keys for {display_path}:{par_name} (Esc cancels)")
-		self.logger.log(f"Capturing new binding for {display_path}:{par_name} "
-						"(press keys, Esc cancels)", textport=True)
+		fnsLog(f"Capturing new binding for {display_path}:{par_name} "
+						"(press keys, Esc cancels)")
 		self.RefreshUI()
 
 	def CancelCapture(self):
@@ -827,7 +834,7 @@ class HotkeyManagerExt:
 			target['force_combo'] = combo
 			owners = ', '.join(sorted({f"{self._displayPath(r.owner)}:{r.par_name}" for r in others}))
 			self._setHint(f"'{combo}' taken by {owners} -- same keys again to force, Esc cancels")
-			self.logger.log(f"Capture: '{combo}' already bound by {owners}; awaiting confirm", textport=True)
+			fnsLog(f"Capture: '{combo}' already bound by {owners}; awaiting confirm")
 			self.RefreshUI()
 			return
 
@@ -847,7 +854,7 @@ class HotkeyManagerExt:
 			return False
 		_par = getattr(_op.par, par_name, None)
 		if _par is None:
-			self.logger.log(f"No parameter '{par_name}' on {display_path}", textport=True)
+			fnsLog(f"No parameter '{par_name}' on {display_path}")
 			return False
 		if _par.mode == ParMode.EXPRESSION and _par.expr and 'app.osName' in _par.expr:
 			win = combo
@@ -855,17 +862,17 @@ class HotkeyManagerExt:
 			_par.expr = f"'{win}' if app.osName == 'Windows' else '{mac}'"
 		else:
 			if _par.mode == ParMode.BIND:
-				self.logger.log(f"NOTE: {display_path}:{par_name} was bind-mode; now constant", textport=True)
+				fnsLog(f"NOTE: {display_path}:{par_name} was bind-mode; now constant")
 			# preserve the par's separator convention (Embody uses 'cmd+shift+o')
 			current = str(_par.eval())
 			if '+' in current and '.' not in current:
 				combo = combo.replace('.', '+')
 			if _par.style == 'Menu' and combo not in _par.menuNames:
 				self._setHint(f"{display_path}:{par_name} is a menu par -- valid: {' '.join(_par.menuNames)}")
-				self.logger.log(f"Declined: '{combo}' not a menu option of {display_path}:{par_name}", textport=True)
+				fnsLog(f"Declined: '{combo}' not a menu option of {display_path}:{par_name}")
 				return False
 			_par.val = combo
-		self.logger.log(f"Bound {display_path}:{par_name} = {combo}", textport=True)
+		fnsLog(f"Bound {display_path}:{par_name} = {combo}")
 		# watcher marks it pending; recompute + refresh happen there unless suppressed
 		if self.supressWatch:
 			self.ComputeConflicts()
@@ -879,7 +886,7 @@ class HotkeyManagerExt:
 	def OpenUI(self):
 		ui_comp = self.ownerComp.op('HotkeyUI')
 		if ui_comp is None:
-			self.logger.log("HotkeyUI not built yet", textport=True)
+			fnsLog("HotkeyUI not built yet")
 			return
 		self.Discover()
 		self.ComputeConflicts()

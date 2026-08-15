@@ -485,6 +485,7 @@ class ConfigRegistryExt(RegistryBase):
 		ok = self._writeFile(data)
 		if ok:
 			debug(f'{self.REGISTRY_NAME}: saved {saved} tool section(s) -> {self.ConfigPath}')
+			self.fnsLog(f'{self.REGISTRY_NAME}: SaveAll wrote {saved} tool section(s) -> {self.ConfigPath}')
 		return ok
 
 	def SaveTool(self, canonical_name):
@@ -535,6 +536,7 @@ class ConfigRegistryExt(RegistryBase):
 			if self._applyToolConfig(canonical):
 				count += 1
 		debug(f'{self.REGISTRY_NAME}: LoadAll applied {count} tool section(s)')
+		self.fnsLog(f'{self.REGISTRY_NAME}: LoadAll applied {count} tool section(s)')
 		return count
 
 	# --- Settings UI: a JSON API over the registrations -------------------
@@ -808,6 +810,7 @@ class ConfigRegistryExt(RegistryBase):
 			entry['source_registry'] = source_registry.path
 			entry['source_registry_id'] = int(source_registry.id)
 		self.stored['PaneRegistry'][canonical_name] = entry
+		self.fnsLog(f'{self.REGISTRY_NAME}: registered tool "{canonical_name}" ({comp.path})')
 		if autoload:
 			self._queueApply(canonical_name)
 

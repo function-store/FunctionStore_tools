@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ClipboardImageEXT
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 """
@@ -24,6 +24,16 @@ import sys
 import numpy as np
 from dot_chat_util import DotChatUtil
 
+def fnsLog(*args, level='INFO'):
+    """Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+    the logger is absent (standalone installs) or its Active par is off."""
+    try:
+        _logger = op.FNS.op('logger')
+        if _logger and _logger.par.Active.eval():
+            _logger.Log(*args, level=level)
+    except Exception:
+        pass
+
 class ClipboardImageEXT(DotChatUtil):
     """
     ClipboardImageEXT allows pasting images from clipboard directly into TouchDesigner networks.
@@ -36,10 +46,7 @@ class ClipboardImageEXT(DotChatUtil):
     def __init__(self, ownerComp):
         # Initialize parent class first
         super().__init__(ownerComp)
-        
-        # Setup logger
-        self.logger = self.ownerComp.op('Logger').ext.Logger
-        self.logger.log('ClipboardImageEXT initialized', 'INFO')
+
         # Add a flag to prevent double execution
         self._is_pasting = False
         # Setup parameters
@@ -48,19 +55,19 @@ class ClipboardImageEXT(DotChatUtil):
         # Check platform compatibility
         self.is_windows = sys.platform == 'win32'
         if not self.is_windows:
-            self.logger.log("This extension is currently Windows-only", 'WARNING')
+            fnsLog("This extension is currently Windows-only", level='WARNING')
         
         # Initialize ctypes and Windows constants
         if self.is_windows:
             self._init_clipboard_ctypes()
         self.ownerComp.par.Imagewidth = 0
         self.ownerComp.par.Imageheight = 0
-        self.ownerComp.op('Logger').par.Clearlog.pulse()
         # self.ownerComp.par.Status = "Ready"
 
         # popMenu
         self.popMenu = self.ownerComp.op('popMenu')
         self.PopMenuItemsShortcuts = {'File In':'1', 'ScriptTOP':'2','Annotate':'3','Cancel':'esc'}
+        fnsLog('paste_from_clipboard: init')
 
 
     def _init_clipboard_ctypes(self):
@@ -208,7 +215,7 @@ class ClipboardImageEXT(DotChatUtil):
         if self.ownerComp.par.Bypass.eval():
             return
         """Paste image from clipboard as TOP"""
-        self.logger.log("[ClipboardImageEXT] Starting Pasteimage", 'INFO')
+        fnsLog("[ClipboardImageEXT] Starting Pasteimage", level='INFO')
         self.paste_image('top')
         
     def Pastescriptop(self):
@@ -228,16 +235,17 @@ class ClipboardImageEXT(DotChatUtil):
         try:
             # Prevent double execution
             if hasattr(self, '_is_pasting') and self._is_pasting:
-                self.logger.log("[ClipboardImageEXT] Already processing a paste operation, skipping", 'INFO')
+                fnsLog("[ClipboardImageEXT] Already processing a paste operation, skipping", level='INFO')
                 return
                 
             self._is_pasting = True
-            self.logger.log(f"[ClipboardImageEXT] Starting paste_image with save_type: {save_type}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Starting paste_image with save_type: {save_type}", level='INFO')
+            fnsLog(f'paste_from_clipboard: pasting clipboard image as {save_type}')
             # self.ownerComp.par.Status = "Getting clipboard image..."
             
             # Check platform compatibility
             if not self.is_windows:
-                self.logger.log("This extension is currently Windows-only", 'ERROR')
+                fnsLog("This extension is currently Windows-only", level='ERROR')
                 # self.ownerComp.par.Status = "Error: Windows-only feature"
                 self._is_pasting = False
                 return
@@ -245,7 +253,7 @@ class ClipboardImageEXT(DotChatUtil):
             # Get image from clipboard (now returns numpy array)
             image_array = self.get_clipboard_image()
             if image_array is None:
-                self.logger.log("No image found in clipboard", 'WARNING')
+                fnsLog("No image found in clipboard", level='WARNING')
                 # self.ownerComp.par.Status = "No image in clipboard"
                 self._is_pasting = False
                 return
@@ -254,29 +262,29 @@ class ClipboardImageEXT(DotChatUtil):
             height, width = image_array.shape[:2]  # numpy is height, width ordering
             self.ownerComp.par.Imagewidth = width
             self.ownerComp.par.Imageheight = height
-            self.logger.log(f"[ClipboardImageEXT] Image found with dimensions: {width}x{height}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Image found with dimensions: {width}x{height}", level='INFO')
             
             # Process based on save type
             if save_type == 'top':
                 # Create TOP with image saved to disk
-                self.logger.log("[ClipboardImageEXT] Creating TOP from saved image", 'INFO')
+                fnsLog("[ClipboardImageEXT] Creating TOP from saved image", level='INFO')
                 self.create_top_from_image(image_array)
             
             elif save_type == 'scriptop':
                 # Create scriptTOP with image data
-                self.logger.log("[ClipboardImageEXT] Creating scriptTOP with image", 'INFO')
+                fnsLog("[ClipboardImageEXT] Creating scriptTOP with image", level='INFO')
                 self.create_script_top_from_image(image_array)
             
             elif save_type == 'annotate':
                 # Create annotateCOMP with image
-                self.logger.log("[ClipboardImageEXT] Creating annotateCOMP with image", 'INFO')
+                fnsLog("[ClipboardImageEXT] Creating annotateCOMP with image", level='INFO')
                 self.create_annotate_comp_with_image(image_array)
             
             # self.ownerComp.par.Status = f"Image pasted successfully ({width}x{height})"
-            self.logger.log(f"[ClipboardImageEXT] Image pasted successfully ({width}x{height})", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Image pasted successfully ({width}x{height})", level='INFO')
             
         except Exception as e:
-            self.logger.log(f"Error pasting image: {str(e)}", 'ERROR')
+            fnsLog(f"Error pasting image: {str(e)}", level='ERROR')
             # self.ownerComp.par.Status = f"Error: {str(e)}"
         
         finally:
@@ -290,20 +298,20 @@ class ClipboardImageEXT(DotChatUtil):
         """
         # Check if we're on Windows
         if not self.is_windows:
-            self.logger.log("Cannot get clipboard image: Windows-only feature", 'WARNING')
+            fnsLog("Cannot get clipboard image: Windows-only feature", level='WARNING')
             return None
         
         try:
-            self.logger.log("[ClipboardImageEXT] Getting image from clipboard using ctypes", 'INFO')
+            fnsLog("[ClipboardImageEXT] Getting image from clipboard using ctypes", level='INFO')
             
             # Open clipboard
             if not self.OpenClipboard(None):
-                self.logger.log(f"Failed to open clipboard: {self.get_last_error_message()}", 'WARNING')
+                fnsLog(f"Failed to open clipboard: {self.get_last_error_message()}", level='WARNING')
                 return None
             
             try:
                 # Check available formats for debugging
-                self.logger.log("[ClipboardImageEXT] Available clipboard formats:", 'INFO')
+                fnsLog("[ClipboardImageEXT] Available clipboard formats:", level='INFO')
                 format_id = self.EnumClipboardFormats(0)
                 while format_id:
                     format_name = None
@@ -315,26 +323,26 @@ class ClipboardImageEXT(DotChatUtil):
                         format_name = "CF_DIBV5"
                         
                     if format_name:
-                        self.logger.log(f"[ClipboardImageEXT] Format ID: {format_id} ({format_name})", 'INFO')
+                        fnsLog(f"[ClipboardImageEXT] Format ID: {format_id} ({format_name})", level='INFO')
                     else:
-                        self.logger.log(f"[ClipboardImageEXT] Format ID: {format_id}", 'INFO')
+                        fnsLog(f"[ClipboardImageEXT] Format ID: {format_id}", level='INFO')
                     format_id = self.EnumClipboardFormats(format_id)
                 
                 # Check for DIB format first (preferred)
                 h_dib = self.GetClipboardData(self.CF_DIB)
                 if h_dib and h_dib != 0:
                     h_dib_uint = self.ctypes.c_void_p(h_dib).value
-                    self.logger.log(f"[ClipboardImageEXT] DIB data found: handle 0x{h_dib_uint:X}", 'INFO')
+                    fnsLog(f"[ClipboardImageEXT] DIB data found: handle 0x{h_dib_uint:X}", level='INFO')
                     return self._process_dib_handle(h_dib)
                 
                 # Check for DIBV5 format if DIB not available
                 h_dibv5 = self.GetClipboardData(self.CF_DIBV5)
                 if h_dibv5 and h_dibv5 != 0:
                     h_dibv5_uint = self.ctypes.c_void_p(h_dibv5).value
-                    self.logger.log(f"[ClipboardImageEXT] DIBV5 data found: handle 0x{h_dibv5_uint:X}", 'INFO')
+                    fnsLog(f"[ClipboardImageEXT] DIBV5 data found: handle 0x{h_dibv5_uint:X}", level='INFO')
                     return self._process_dib_handle(h_dibv5)
                 
-                self.logger.log("[ClipboardImageEXT] No image data found in clipboard", 'INFO')
+                fnsLog("[ClipboardImageEXT] No image data found in clipboard", level='INFO')
                 return None
                 
             finally:
@@ -342,7 +350,7 @@ class ClipboardImageEXT(DotChatUtil):
                 self.CloseClipboard()
                 
         except Exception as e:
-            self.logger.log(f"Error getting clipboard image: {str(e)}", 'ERROR')
+            fnsLog(f"Error getting clipboard image: {str(e)}", level='ERROR')
             
             # Ensure clipboard is closed
             try:
@@ -403,14 +411,14 @@ class ClipboardImageEXT(DotChatUtil):
         try:
             import numpy as np
         except ImportError:
-            self.logger.log("numpy is required but not available", 'ERROR')
+            fnsLog("numpy is required but not available", level='ERROR')
             return None
         
         # Lock the memory
         data_ptr = self.GlobalLock(h_dib)
         if not data_ptr:
             error_info = self.get_last_error_message()
-            self.logger.log(f"Failed to lock DIB data: {error_info}", 'ERROR')
+            fnsLog(f"Failed to lock DIB data: {error_info}", level='ERROR')
             return None
         
         try:
@@ -419,7 +427,7 @@ class ClipboardImageEXT(DotChatUtil):
             
             # Verify header size
             if header.biSize < self.ctypes.sizeof(self.BITMAPINFOHEADER):
-                self.logger.log(f"Invalid DIB header size: {header.biSize}", 'ERROR')
+                fnsLog(f"Invalid DIB header size: {header.biSize}", level='ERROR')
                 return None
             
             # Get image dimensions and color depth
@@ -428,8 +436,8 @@ class ClipboardImageEXT(DotChatUtil):
             bit_count = header.biBitCount
             is_top_down = header.biHeight < 0
             
-            self.logger.log(f"[ClipboardImageEXT] Image info: {width}x{height}, {bit_count} bits per pixel", 'INFO')
-            self.logger.log(f"[ClipboardImageEXT] Image orientation: {'top-down' if is_top_down else 'bottom-up'}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Image info: {width}x{height}, {bit_count} bits per pixel", level='INFO')
+            fnsLog(f"[ClipboardImageEXT] Image orientation: {'top-down' if is_top_down else 'bottom-up'}", level='INFO')
             
             # Calculate color table size
             clr_used = header.biClrUsed
@@ -463,7 +471,7 @@ class ClipboardImageEXT(DotChatUtil):
             if bits_offset + image_size > data_size:
                 image_size = data_size - bits_offset
                 if image_size <= 0:
-                    self.logger.log("Invalid image size calculation", 'ERROR')
+                    fnsLog("Invalid image size calculation", level='ERROR')
                     return None
             
             # Direct approach for 32-bit BGRA
@@ -534,14 +542,14 @@ class ClipboardImageEXT(DotChatUtil):
                 
             else:
                 # For unsupported bit depths, return error
-                self.logger.log(f"Unsupported bit depth: {bit_count}", 'ERROR')
-                self.logger.log(f"[ClipboardImageEXT] Unsupported bit depth: {bit_count}", 'ERROR')
+                fnsLog(f"Unsupported bit depth: {bit_count}", level='ERROR')
+                fnsLog(f"[ClipboardImageEXT] Unsupported bit depth: {bit_count}", level='ERROR')
                 return None
                     
         except Exception as e:
-            self.logger.log(f"Error processing DIB data: {str(e)}", 'ERROR')
+            fnsLog(f"Error processing DIB data: {str(e)}", level='ERROR')
             import traceback
-            traceback.self.logger.log_exc()  # This will help with debugging
+            fnsLog(traceback.format_exc(), level='ERROR')
             return None
             
         finally:
@@ -577,11 +585,11 @@ class ClipboardImageEXT(DotChatUtil):
             save_top.lock = True
             
             if not save_top:
-                self.logger.log("Missing required 'script_save' scriptTOP in component", 'ERROR')
+                fnsLog("Missing required 'script_save' scriptTOP in component", level='ERROR')
                 raise RuntimeError("Missing required 'script_save' scriptTOP in component")
             
             if not save_top.lock:
-                self.logger.log("The 'script_save' scriptTOP must be locked", 'ERROR')
+                fnsLog("The 'script_save' scriptTOP must be locked", level='ERROR')
                 raise RuntimeError("The 'script_save' scriptTOP must be locked")
             
             # Ensure the array is contiguous with the correct memory layout
@@ -593,33 +601,33 @@ class ClipboardImageEXT(DotChatUtil):
             # Save the image using TouchDesigner's built-in save method
             save_top.save(file_path, createFolders=True)
             
-            self.logger.log(f"Image saved to: {file_path}", 'INFO')
+            fnsLog(f"Image saved to: {file_path}", level='INFO')
             
             return file_path
             
         except Exception as e:
-            self.logger.log(f"Error saving to disk: {str(e)}", 'ERROR')
+            fnsLog(f"Error saving to disk: {str(e)}", level='ERROR')
             raise
             
     def create_top_from_image(self, image_array):
         """Create a Movie File In TOP with the clipboard image"""
         try:
-            self.logger.log("[ClipboardImageEXT] Starting create_top_from_image", 'INFO')
+            fnsLog("[ClipboardImageEXT] Starting create_top_from_image", level='INFO')
             
             # Save image to disk first using our dedicated scriptTOP
             file_path = self.save_image_to_disk(image_array)
             
             # Determine the current network to paste into
             target_network = self.get_current_network()
-            self.logger.log(f"[ClipboardImageEXT] Target network for paste: {target_network.path}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Target network for paste: {target_network.path}", level='INFO')
             
             # Create movie file in TOP
             movie_top_name = 'clipboard_image'
             
             # Create a new movie file in TOP with a unique name
-            self.logger.log(f"[ClipboardImageEXT] Creating movie TOP: {movie_top_name} with file: {file_path}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Creating movie TOP: {movie_top_name} with file: {file_path}", level='INFO')
             movie_top = target_network.create(moviefileinTOP, movie_top_name)
-            self.logger.log(f"[ClipboardImageEXT] Created movie TOP: {movie_top.path}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Created movie TOP: {movie_top.path}", level='INFO')
             
             # Set the file path AND viewer to True
             movie_top.par.file = file_path
@@ -627,17 +635,17 @@ class ClipboardImageEXT(DotChatUtil):
             
             # Store reference to the created TOP
             self.clipboard_top = movie_top
-            self.logger.log(f"[ClipboardImageEXT] Successfully configured movie TOP: {movie_top.path}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Successfully configured movie TOP: {movie_top.path}", level='INFO')
             
             # Position at mouse immediately
             if self.ownerComp.par.Positionatmouse.eval():
-                self.logger.log("[ClipboardImageEXT] Immediately positioning at mouse", 'INFO')
+                fnsLog("[ClipboardImageEXT] Immediately positioning at mouse", level='INFO')
                 self.position_at_mouse()
             
             return movie_top
             
         except Exception as e:
-            self.logger.log(f"Error creating movie TOP: {str(e)}", 'ERROR')
+            fnsLog(f"Error creating movie TOP: {str(e)}", level='ERROR')
             raise
             
     def create_script_top_with_image(self, image_array, name='clipboard_image', target_network=None):
@@ -648,7 +656,7 @@ class ClipboardImageEXT(DotChatUtil):
         try:
             # Get image dimensions
             height, width = image_array.shape[:2]
-            self.logger.log(f"[ClipboardImageEXT] Creating scriptTOP with image dimensions: {width}x{height}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Creating scriptTOP with image dimensions: {width}x{height}", level='INFO')
             
             # Ensure contiguous array with correct memory layout
             contiguous_array = np.ascontiguousarray(image_array, dtype=np.uint8)
@@ -656,11 +664,11 @@ class ClipboardImageEXT(DotChatUtil):
             # Use provided target network or get current network
             if target_network is None:
                 target_network = self.get_current_network()
-            self.logger.log(f"[ClipboardImageEXT] Target network for scriptTOP: {target_network.path}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Target network for scriptTOP: {target_network.path}", level='INFO')
             
             # Create a new scriptTOP directly in the target network
             new_top = target_network.create('scriptTOP', name)
-            self.logger.log(f"[ClipboardImageEXT] Created scriptTOP: {new_top.path}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Created scriptTOP: {new_top.path}", level='INFO')
             
             # Lock the scriptTOP and set viewer to True
             new_top.lock = True
@@ -669,17 +677,17 @@ class ClipboardImageEXT(DotChatUtil):
             # Remove the callbacks DAT to avoid errors
             callbacks_dat = target_network.op(f'{new_top.name}_callbacks')
             if callbacks_dat:
-                self.logger.log(f"[ClipboardImageEXT] Removing callbacks DAT: {callbacks_dat.path}", 'INFO')
+                fnsLog(f"[ClipboardImageEXT] Removing callbacks DAT: {callbacks_dat.path}", level='INFO')
                 callbacks_dat.destroy()
             
             # Load the numpy array directly into the scriptTOP
             new_top.copyNumpyArray(contiguous_array)
-            self.logger.log(f"[ClipboardImageEXT] Loaded image data into scriptTOP: {width}x{height}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Loaded image data into scriptTOP: {width}x{height}", level='INFO')
             
             return new_top
             
         except Exception as e:
-            self.logger.log(f"Error creating scriptTOP: {str(e)}", 'ERROR')
+            fnsLog(f"Error creating scriptTOP: {str(e)}", level='ERROR')
             raise
 
     def create_script_top_from_image(self, image_array):
@@ -693,32 +701,32 @@ class ClipboardImageEXT(DotChatUtil):
             
             # Position at mouse if enabled
             if self.ownerComp.par.Positionatmouse.eval():
-                self.logger.log("[ClipboardImageEXT] Immediately positioning at mouse", 'INFO')
+                fnsLog("[ClipboardImageEXT] Immediately positioning at mouse", level='INFO')
                 self.position_at_mouse()
             
-            self.logger.log("[ClipboardImageEXT] Successfully created scriptTOP from image", 'INFO')
+            fnsLog("[ClipboardImageEXT] Successfully created scriptTOP from image", level='INFO')
             
             return new_top
             
         except Exception as e:
-            self.logger.log(f"Error in create_script_top_from_image: {str(e)}", 'ERROR')
+            fnsLog(f"Error in create_script_top_from_image: {str(e)}", level='ERROR')
             raise
 
     def create_annotate_comp_with_image(self, image_array):
         """Create an annotateCOMP with the clipboard image"""
         try:
-            self.logger.log("[ClipboardImageEXT] Starting create_annotate_comp_with_image", 'INFO')
+            fnsLog("[ClipboardImageEXT] Starting create_annotate_comp_with_image", level='INFO')
             
             # Get image dimensions from numpy array (height, width)
             height, width = image_array.shape[:2]
-            self.logger.log(f"[ClipboardImageEXT] Image dimensions: {width}x{height}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Image dimensions: {width}x{height}", level='INFO')
             
             # Determine the current network to paste into
             target_network = self.get_current_network()
             
             # Create annotateCOMP
             annotate_comp = target_network.create('annotateCOMP', 'clipboard_note')
-            self.logger.log(f"[ClipboardImageEXT] Created annotateCOMP: {annotate_comp.path}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Created annotateCOMP: {annotate_comp.path}", level='INFO')
             
             # Create scriptTOP using the shared function
             script_top = self.create_script_top_with_image(
@@ -741,14 +749,14 @@ class ClipboardImageEXT(DotChatUtil):
             margin = 10
             annotate_comp.nodeWidth = width + margin
             annotate_comp.nodeHeight = height + margin
-            self.logger.log(f"[ClipboardImageEXT] Set annotateCOMP size to: {annotate_comp.nodeWidth}x{annotate_comp.nodeHeight}", 'INFO')
+            fnsLog(f"[ClipboardImageEXT] Set annotateCOMP size to: {annotate_comp.nodeWidth}x{annotate_comp.nodeHeight}", level='INFO')
             
             # Store reference to created components
             self.clipboard_top = annotate_comp
             
             # Position at mouse if enabled
             if self.ownerComp.par.Positionatmouse.eval():
-                self.logger.log("[ClipboardImageEXT] Immediately positioning at mouse", 'INFO')
+                fnsLog("[ClipboardImageEXT] Immediately positioning at mouse", level='INFO')
                 self.position_at_mouse()
                 
             # Now dock the scriptTOP and hide it
@@ -756,34 +764,34 @@ class ClipboardImageEXT(DotChatUtil):
             script_top.showDocked = False
             script_top.expose = False
             
-            self.logger.log("[ClipboardImageEXT] Successfully created annotateCOMP with image", 'INFO')
+            fnsLog("[ClipboardImageEXT] Successfully created annotateCOMP with image", level='INFO')
             
             return annotate_comp
             
         except Exception as e:
-            self.logger.log(f"Error creating annotateCOMP: {str(e)}", 'ERROR')
+            fnsLog(f"Error creating annotateCOMP: {str(e)}", level='ERROR')
             raise
 
     def position_at_mouse(self):
         """Position the created TOP at the current mouse position"""
-        self.logger.log("[ClipboardImageEXT] Starting position_at_mouse", 'INFO')
+        fnsLog("[ClipboardImageEXT] Starting position_at_mouse", level='INFO')
         
         if not hasattr(self, 'clipboard_top'):
-            self.logger.log("No clipboard image TOP to position", 'WARNING')
+            fnsLog("No clipboard image TOP to position", level='WARNING')
             return
         
         try:
             # Safety check to ensure the TOP still exists
             if not self.clipboard_top.valid:
-                self.logger.log("[ClipboardImageEXT] TOP reference is no longer valid", 'WARNING')
+                fnsLog("[ClipboardImageEXT] TOP reference is no longer valid", level='WARNING')
                 return
                 
             # Use the ViewportMonitorExt directly
-            self.logger.log("[ClipboardImageEXT] Using ViewportMonitorExt for positioning", 'INFO')
+            fnsLog("[ClipboardImageEXT] Using ViewportMonitorExt for positioning", level='INFO')
             mouse_data = self.ownerComp.ext.ViewportMonitorExt.UpdateMouseData()
             
             if mouse_data:
-                self.logger.log(f"[ClipboardImageEXT] Mouse data: {mouse_data}", 'INFO')
+                fnsLog(f"[ClipboardImageEXT] Mouse data: {mouse_data}", level='INFO')
                 
                 # Get base coordinates
                 node_x = int(mouse_data['network_x'])
@@ -793,11 +801,11 @@ class ClipboardImageEXT(DotChatUtil):
                 
                 # Check operator type for proper offsets
                 op_type = self.clipboard_top.type
-                self.logger.log(f"[ClipboardImageEXT] Operator type is: {op_type}", 'INFO')
+                fnsLog(f"[ClipboardImageEXT] Operator type is: {op_type}", level='INFO')
                 
                 # Special positioning for annotate to center it at mouse position
                 if op_type == "annotate":
-                    self.logger.log("[ClipboardImageEXT] Found annotate component, attempting to center", 'INFO')
+                    fnsLog("[ClipboardImageEXT] Found annotate component, attempting to center", level='INFO')
                     
                     # Get the scriptTOP that contains the image
                     script_top_name = self.clipboard_top.par.Opviewer.eval()
@@ -816,10 +824,10 @@ class ClipboardImageEXT(DotChatUtil):
                         node_x = original_x - offset_x
                         node_y = original_y - offset_y
                         
-                        self.logger.log(f"[ClipboardImageEXT] Actual image dimensions from scriptTOP: {img_width}x{img_height}", 'INFO')
-                        self.logger.log(f"[ClipboardImageEXT] Calculated center offsets: x={offset_x}, y={offset_y}", 'INFO')
-                        self.logger.log(f"[ClipboardImageEXT] Original mouse position: {original_x}, {original_y}", 'INFO')
-                        self.logger.log(f"[ClipboardImageEXT] New annotate position after centering: {node_x}, {node_y}", 'INFO')
+                        fnsLog(f"[ClipboardImageEXT] Actual image dimensions from scriptTOP: {img_width}x{img_height}", level='INFO')
+                        fnsLog(f"[ClipboardImageEXT] Calculated center offsets: x={offset_x}, y={offset_y}", level='INFO')
+                        fnsLog(f"[ClipboardImageEXT] Original mouse position: {original_x}, {original_y}", level='INFO')
+                        fnsLog(f"[ClipboardImageEXT] New annotate position after centering: {node_x}, {node_y}", level='INFO')
                         
                         # Position both the annotate and its scriptTOP
                         self.clipboard_top.nodeX = node_x
@@ -828,7 +836,7 @@ class ClipboardImageEXT(DotChatUtil):
                         # Move the scriptTOP with it (before docking)
                         script_top.nodeX = node_x
                         script_top.nodeY = node_y - script_top.height - 10
-                        self.logger.log(f"[ClipboardImageEXT] Positioning docked scriptTOP at: {script_top.nodeX}, {script_top.nodeY}", 'INFO')
+                        fnsLog(f"[ClipboardImageEXT] Positioning docked scriptTOP at: {script_top.nodeX}, {script_top.nodeY}", level='INFO')
                 
                 # Apply specific offsets by operator type
                 elif "moviefilein" in op_type:
@@ -836,9 +844,9 @@ class ClipboardImageEXT(DotChatUtil):
                     offset_y = 86
                     node_x = original_x - offset_x
                     node_y = original_y - offset_y
-                    self.logger.log(f"[ClipboardImageEXT] Positioning moviefilein with offsets: x={offset_x}, y={offset_y}")
-                    self.logger.log(f"[ClipboardImageEXT] Original position: {original_x}, {original_y}")
-                    self.logger.log(f"[ClipboardImageEXT] New position after offset: {node_x}, {node_y}")
+                    fnsLog(f"[ClipboardImageEXT] Positioning moviefilein with offsets: x={offset_x}, y={offset_y}")
+                    fnsLog(f"[ClipboardImageEXT] Original position: {original_x}, {original_y}")
+                    fnsLog(f"[ClipboardImageEXT] New position after offset: {node_x}, {node_y}")
                     self.clipboard_top.nodeX = node_x
                     self.clipboard_top.nodeY = node_y
                 
@@ -847,20 +855,20 @@ class ClipboardImageEXT(DotChatUtil):
                     offset_y = 86
                     node_x = original_x - offset_x
                     node_y = original_y - offset_y
-                    self.logger.log(f"[ClipboardImageEXT] Positioning scriptTOP with offsets: x={offset_x}, y={offset_y}")
-                    self.logger.log(f"[ClipboardImageEXT] Original position: {original_x}, {original_y}")
-                    self.logger.log(f"[ClipboardImageEXT] New position after offset: {node_x}, {node_y}")
+                    fnsLog(f"[ClipboardImageEXT] Positioning scriptTOP with offsets: x={offset_x}, y={offset_y}")
+                    fnsLog(f"[ClipboardImageEXT] Original position: {original_x}, {original_y}")
+                    fnsLog(f"[ClipboardImageEXT] New position after offset: {node_x}, {node_y}")
                     self.clipboard_top.nodeX = node_x
                     self.clipboard_top.nodeY = node_y
                 
-                self.logger.log(f"Positioned {op_type} at mouse coordinates with offset: {node_x}, {node_y}", 'INFO')
+                fnsLog(f"Positioned {op_type} at mouse coordinates with offset: {node_x}, {node_y}", level='INFO')
             else:
-                self.logger.log("[ClipboardImageEXT] No mouse data available from ViewportMonitorExt")
-                self.logger.log("No mouse data available", 'WARNING')
+                fnsLog("[ClipboardImageEXT] No mouse data available from ViewportMonitorExt")
+                fnsLog("No mouse data available", level='WARNING')
                 
         except Exception as e:
-            self.logger.log(f"Error positioning at mouse: {str(e)}", 'ERROR')
-            self.logger.log(f"[ClipboardImageEXT] Error positioning at mouse: {str(e)}")
+            fnsLog(f"Error positioning at mouse: {str(e)}", level='ERROR')
+            fnsLog(f"[ClipboardImageEXT] Error positioning at mouse: {str(e)}")
 
     def get_current_network(self):
         """Determine the currently active network"""
@@ -873,16 +881,16 @@ class ClipboardImageEXT(DotChatUtil):
                 # Get the component that the pane is looking at
                 target_network = pane.owner
                 if target_network:
-                    self.logger.log(f"[ClipboardImageEXT] Found current network: {target_network.path}")
+                    fnsLog(f"[ClipboardImageEXT] Found current network: {target_network.path}")
                     return target_network
     
-            self.logger.log("[ClipboardImageEXT] Could not determine current network, using parent")
+            fnsLog("[ClipboardImageEXT] Could not determine current network, using parent")
             # Fallback to parent
             return self.ownerComp.parent()
         
         except Exception as e:
-            self.logger.log(f"Error determining current network: {str(e)}", 'ERROR')
-            self.logger.log(f"[ClipboardImageEXT] Error determining network: {str(e)}")
+            fnsLog(f"Error determining current network: {str(e)}", level='ERROR')
+            fnsLog(f"[ClipboardImageEXT] Error determining network: {str(e)}")
             # Fallback to parent
             return self.ownerComp.parent()
         
@@ -901,11 +909,11 @@ class ClipboardImageEXT(DotChatUtil):
         # Show message with result
         if has_image:
             message = "Image found in clipboard"
-            self.logger.log(message, 'INFO')
+            fnsLog(message, level='INFO')
             ui.status = message
         else:
             message = "No image found in clipboard"
-            self.logger.log(message, 'INFO')
+            fnsLog(message, level='INFO')
             ui.status = message
             
         return has_image

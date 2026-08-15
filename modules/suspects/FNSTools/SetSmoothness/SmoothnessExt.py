@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : SmoothnessExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 """
@@ -18,6 +18,16 @@ Help: search "Extensions" in wiki
 from TDStoreTools import StorageManager
 import TDFunctions as TDF
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class SmoothnessExt:
 	"""
 	SmoothnessExt description
@@ -25,6 +35,7 @@ class SmoothnessExt:
 	def __init__(self, ownerComp):
 		# The component to which this extension is attached
 		self.ownerComp = ownerComp
+		fnsLog('SetSmoothness: init')
 
 	def OnSelected(self):
 		selected = ui.panes.current.owner.selectedChildren
@@ -35,9 +46,10 @@ class SmoothnessExt:
 		self.setSmoothness(selected)
 		
 	def setSmoothness(self, _ops):
+		fnsLog(f'SetSmoothness: setting smoothness on {len(_ops)} ops')
 		insmooth = parent().par.Inputfiltertype.menuIndex
 		viewsmooth = parent().par.Filtertype.menuIndex
-		
+
 		tops = list(filter(lambda _op: _op.family == 'TOP' and _op.pars('inputfiltertype', 'filtertype') ,_ops))
 		
 		for top in tops:

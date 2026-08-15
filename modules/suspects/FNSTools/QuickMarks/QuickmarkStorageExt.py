@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : QuickmarkStorageExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 ### Code and idea from Alex Guevara
@@ -11,7 +11,17 @@ Info Header End'''
 from datetime import datetime
 from TDStoreTools import StorageManager
 
-TDF = op.TDModules.mod.TDFunctions 
+TDF = op.TDModules.mod.TDFunctions
+
+def fnsLog(*args, level='INFO'):
+    """Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+    the logger is absent (standalone installs) or its Active par is off."""
+    try:
+        _logger = op.FNS.op('logger')
+        if _logger and _logger.par.Active.eval():
+            _logger.Log(*args, level=level)
+    except Exception:
+        pass
 
 class QuickmarkStorageExt:
     def __init__(self, ownerComp):
@@ -21,13 +31,15 @@ class QuickmarkStorageExt:
         # Stored items for quickmarks
         storedItems = [{'name': f'Quickmark{i}', 'default': None} for i in range(10)]
         self.stored = StorageManager(self, ownerComp, storedItems)
+        fnsLog('QuickMarks: init')
 
     def custom_print(self, message):
         # Prints a message to the status bar and the console
         current_time = datetime.now().strftime('%H:%M:%S')
         formatted_message = f"{current_time} {message}"
-        
+
         ui.status = formatted_message
+        fnsLog(f'QuickMarks: {message}')
 
     def StoreQuickmark(self, key):
         # Get current pane details and store it

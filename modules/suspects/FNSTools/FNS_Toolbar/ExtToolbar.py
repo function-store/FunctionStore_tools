@@ -5,6 +5,17 @@ Author : Dan@DAN-4090
 Saveorigin : FunctionStore_tools_2025_DEV.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class ExtToolbar:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
@@ -12,7 +23,8 @@ class ExtToolbar:
 			_table.text = self.ownerComp.op('ToolbarDef_default').text
 		if _table and _table.text.strip() != '':
 			_table.save(_table.par.file.eval(), createFolders=True)
-		
+		fnsLog('FNS_Toolbar: init')
+
 	# def On<Insert Paramname>(self, _par, _val, _prev):
 	# def On<Insert PulseParamName>(self, _par):
 
@@ -21,6 +33,7 @@ class ExtToolbar:
 
 	def postInit(self):
 		ui.status = 'Installed Custom Toolbar'
+		fnsLog('FNS_Toolbar: installing toolbar into /ui/dialogs/bookmark_bar')
 		try:
 			target = op('/ui/dialogs/bookmark_bar')
 		
@@ -59,6 +72,7 @@ class ExtToolbar:
 			_block.par.Order = _child.par.alignorder.eval()-self.ownerComp.par.Layoutstart.eval()
 
 	def OnResetdefs(self):
+		fnsLog('FNS_Toolbar: resetting toolbar definition to defaults')
 		mainTable = self.ownerComp.op('ToolbarDef')
 		defaultTable = self.ownerComp.op('ToolbarDef_default')
 

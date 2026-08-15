@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtOpenVSCode
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 import subprocess
@@ -10,10 +10,20 @@ import os
 import json
 from pathlib import Path
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class ExtOpenVSCode:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
-		self.logger = self.ownerComp.op('logger1')
+		fnsLog('OpenVSCode: init')
 		run(
 			"args[0].postInit() if args[0] "
 					"and hasattr(args[0], 'postInit') else None",
@@ -66,6 +76,7 @@ class ExtOpenVSCode:
 			self.postInit()
 
 	def OnOpen(self):
+		fnsLog('OpenVSCode: opening VS Code workspace')
 		if self.is_autodetect:
 			self.set_codeexe()
 			self.set_workspace()
@@ -76,12 +87,12 @@ class ExtOpenVSCode:
 
 		# Step 1 & 2: Check if Codeexe is Set and Verify Existence
 		if code_exe_path and Path(code_exe_path).exists():
-			self.logger.Log(f"VS Code executable found at: {code_exe_path}")
+			fnsLog('OpenVSCode:',f"VS Code executable found at: {code_exe_path}")
 		else:
 			# Step 3: Fallback to Preferences
 			fallback_path = ui.preferences['dats.texteditor']
 			if fallback_path and Path(fallback_path).exists():
-				self.logger.Log(f"Falling back to preference's text editor at: {fallback_path}")
+				fnsLog('OpenVSCode:',f"Falling back to preference's text editor at: {fallback_path}")
 				# Detect MacOS
 				if fallback_path.endswith(".app"):
 					if 'Cursor.app' in fallback_path:
@@ -91,7 +102,7 @@ class ExtOpenVSCode:
 				self.codeexe = fallback_path  # Update Codeexe to the fallback path
 			else:
 				# Step 4: Error Handling
-				self.logger.Log("Error: No valid VS Code executable found. Please set the path manually.")
+				fnsLog('OpenVSCode:',"Error: No valid VS Code executable found. Please set the path manually.")
 
 
 	def set_workspace(self):
@@ -111,7 +122,7 @@ class ExtOpenVSCode:
 		# Step 4: Handle Path Conversion
 		# Update the workspace property to use the relative path
 		self.workspace = str(relative_workspace_file)
-		self.logger.Log(f"Using workspace file: {relative_workspace_file}")
+		fnsLog('OpenVSCode:',f"Using workspace file: {relative_workspace_file}")
 
 
 	def OpenVSCode(self):
@@ -155,9 +166,9 @@ class ExtOpenVSCode:
 			json.dump(workspace_config, file, indent=4)
 		
 		if not workspace_path.exists():
-			self.logger.Log(f"Created workspace file: {workspace_path}")
+			fnsLog('OpenVSCode:',f"Created workspace file: {workspace_path}")
 		else:
-			self.logger.Log(f"Updated interpreter path in workspace file: {workspace_path}")
+			fnsLog('OpenVSCode:',f"Updated interpreter path in workspace file: {workspace_path}")
 		
 		
 		# DEPRECATED: runtime stub deployment via TDTypings is disabled. The
@@ -219,7 +230,7 @@ class ExtOpenVSCode:
 		# First check current app version
 		current_td = Path(app.installFolder)
 		version = self._parse_td_version(current_td)
-		self.logger.Log(f"Current TD version: {version}")
+		fnsLog('OpenVSCode:',f"Current TD version: {version}")
 		
 		if app.osName != 'Windows': # this will be the norm for windows too in the future
 			return Path(app.pythonExecutable)
@@ -228,15 +239,15 @@ class ExtOpenVSCode:
 		td_interpreter = current_td / 'bin' / 'python.exe'
 		if td_interpreter.exists():
 			if self._is_valid_td_version(version):
-				self.logger.Log(f"Using current TD interpreter in {version[0]}.{version[1]}")
+				fnsLog('OpenVSCode:',f"Using current TD interpreter in {version[0]}.{version[1]}")
 				return td_interpreter
 			else:
-				self.logger.Log("Current TD version is not valid, but interpreter exists")
+				fnsLog('OpenVSCode:',"Current TD version is not valid, but interpreter exists")
 				# Store current interpreter as fallback
 				current_interpreter = td_interpreter
 		else:
 			current_interpreter = None
-			self.logger.Log("Current TD interpreter not found")
+			fnsLog('OpenVSCode:',"Current TD interpreter not found")
 		
 		# If current version is not valid, search for highest version
 		td_installations = current_td.parent
@@ -253,7 +264,7 @@ class ExtOpenVSCode:
 				if td_interpreter.exists():
 					highest_version = version
 					highest_match = td_interpreter
-					self.logger.Log(f"Found interpreter in TD {version[0]}.{version[1]}")
+					fnsLog('OpenVSCode:',f"Found interpreter in TD {version[0]}.{version[1]}")
 
 		# Return highest valid version if found, otherwise return current interpreter
 		return highest_match if highest_match else current_interpreter
@@ -265,7 +276,7 @@ class ExtOpenVSCode:
 		if td_interpreter:
 			interpreter_file = td_interpreter
 		else:
-			self.logger.Log("No valid TD installation (>= 2023.30000) found with python.exe")
+			fnsLog('OpenVSCode:',"No valid TD installation (>= 2023.30000) found with python.exe")
 			# Fallback to local typings
 			interpreter_file = Path("typings", "python.exe")
 

@@ -2,14 +2,26 @@
 '''Info Header Start
 Name : QuickParentExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class QuickParentExt:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		self.popDialog = self.ownerComp.op('popDialog')
 		self.paneParent = None
+		fnsLog('QuickParent: init')
 
 	
 
@@ -26,5 +38,6 @@ class QuickParentExt:
 				parentshortcutpar = self.paneParent.par.parentshortcut
 				if parentshortcutpar is not None:
 					parentshortcutpar.val = result['enteredText']
+					fnsLog(f'QuickParent: set parent shortcut "{result["enteredText"]}" on {self.paneParent.path}')
 
 

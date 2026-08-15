@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtIopPromoter
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 """
@@ -18,6 +18,16 @@ Help: search "Extensions" in wiki
 from TDStoreTools import StorageManager
 import TDFunctions as TDF
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class ExtIopPromoter:
 	"""
 	ExtIopPromoter description
@@ -28,10 +38,12 @@ class ExtIopPromoter:
 		self.dialog = self.ownerComp.op('popDialog')
 		self.target = None
 		self._op = None
+		fnsLog('iopPromoter: init')
 
 	def PromoteIop(self, _op, target):
 		self.target = target
 		self._op = _op
+		fnsLog(f'iopPromoter: promoting {_op.path} as IOP on {target.path if target else None}')
 		self.dialog.Open(textEntry=_op.name)
 
 	def OnSelect(self, info):

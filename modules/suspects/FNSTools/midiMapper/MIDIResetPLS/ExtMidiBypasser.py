@@ -2,17 +2,28 @@
 '''Info Header Start
 Name : ExtMidiBypasser
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.27.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 ###
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class ExtMidiBypasser:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
+		fnsLog('MIDIResetPLS: init')
 
 
 	@property
@@ -27,6 +38,7 @@ class ExtMidiBypasser:
 		return all_midis
 
 	def DoBypass(self, _val: bool, channel: int = None):
+		fnsLog(f'MIDIResetPLS: bypass={_val} channel={channel}')
 		for _op in self.AllMidiOps:
 			if channel is not None and int(_op.par.id.eval()) != channel:
 				continue

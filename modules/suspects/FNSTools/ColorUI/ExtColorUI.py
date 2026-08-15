@@ -2,8 +2,8 @@
 
 '''Info Header Start
 Name : ExtClownUI
-Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2025_DEV.toe
+Author : root
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -16,18 +16,28 @@ import json
 import random
 import os
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class ExtColorUI:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
-		
+
 		# before anything happens
 		self.activeColorTable : tableDAT= self.ownerComp.op('null_active')
 		self.default_fam_colors = {}
 		self.default_all_colors = {}
 
 		self.table_out : tableDAT = self.ownerComp.op('table_out')
-		self.logger = self.ownerComp.op('Logger').ext.Logger
+		fnsLog('ColorUI: init')
 
 
 	@property
@@ -51,6 +61,7 @@ class ExtColorUI:
 			self.default_all_colors[_color] = ui.colors[_color]
 
 	def OnStart(self):
+		fnsLog('ColorUI: OnStart, storing defaults and loading saved colors')
 		self.updateSearchStatus('')
 		self._resetFamiliesColors(save=False)
 		self.storeDefaultColors()
@@ -81,6 +92,7 @@ class ExtColorUI:
 
 
 	def onParResetallcolors(self):
+		fnsLog('ColorUI: resetting all UI colors to defaults')
 		ui.colors.resetToDefaults()
 		self.ownerComp.store('colors', {})
 		self.ownerComp.store('fam_colors', {})
@@ -238,7 +250,7 @@ class ExtColorUI:
 
 
 	def _resetFamiliesColors(self, save = True):
-		self.logger.log(f'Resetting families colors to defaults: {self.default_fam_colors}')
+		fnsLog(f'ColorUI: resetting families colors to defaults: {self.default_fam_colors}', level='DEBUG')
 		for _fam in self.default_fam_colors:
 			self.setColor(_fam, self.default_fam_colors[_fam])
 			self.famcolors_sequence[self._available_families.index(_fam)].parGroup.Rgb.val = self.default_fam_colors[_fam]
@@ -256,7 +268,7 @@ class ExtColorUI:
 			self.setColor(fam, rgb)
 			self.famcolors_sequence[idx].parGroup.Rgb.val = rgb
 		else:
-			self.logger.log(f'No default color found for {fam}')
+			fnsLog(f'ColorUI: no default color found for {fam}', level='WARNING')
 
 	def onSeqMatchingNResetcolor(self, idx):
 		element = self.seq_matching[idx].par.Uielement.eval()
@@ -318,6 +330,7 @@ class ExtColorUI:
 ####
 
 	def onParRandomize(self):
+		fnsLog('ColorUI: randomizing all UI colors')
 		for ui_element in ui.colors:
 			self.setColor(ui_element, [random.uniform(0, 1) for _ in range(3)])
 		pass
@@ -371,6 +384,7 @@ class ExtColorUI:
 ####
 	def onParImport(self):
 		_file = self.evalFile
+		fnsLog(f'ColorUI: importing colors from {_file}')
 		if _file:
 			colors = {}
 			with open(_file, 'r') as f:
@@ -408,6 +422,7 @@ class ExtColorUI:
 			# take all colors from stored colors and save them to the file as json dictionary
 			colors = self.ownerComp.fetch('colors', {})
 			if colors:
+				fnsLog(f'ColorUI: exporting {len(colors)} colors to {_file}')
 				with open(_file, 'w') as f:
 					json.dump(colors, f)
 		pass

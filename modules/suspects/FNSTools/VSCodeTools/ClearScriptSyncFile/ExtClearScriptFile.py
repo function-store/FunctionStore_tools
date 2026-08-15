@@ -2,13 +2,25 @@
 '''Info Header Start
 Name : ExtClearScriptFile
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class ExtClearScriptFile:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
-	
+		fnsLog('ClearScriptSyncFile: init')
+
 	@property
 	def tags(self):
 		return self.ownerComp.par.Tags.eval().split(" ")
@@ -49,6 +61,7 @@ class ExtClearScriptFile:
 
 
 	def __clear(self, _ops):
+		fnsLog(f'ClearScriptSyncFile: clearing file sync on {len(_ops)} DAT(s)')
 		ui.undo.startBlock('Clear Externalized Script Files')
 		ui.undo.addCallback(self.__restoreTags, info = _ops)
 		for _op in _ops:

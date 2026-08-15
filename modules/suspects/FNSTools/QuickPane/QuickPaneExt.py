@@ -2,9 +2,20 @@
 '''Info Header Start
 Name : QuickPaneExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class QuickPaneExt:
 	def __init__(self, ownerComp):
 		# The component to which this extension is attached
@@ -20,6 +31,7 @@ class QuickPaneExt:
 			'top': 'topPane',
 			'bottom': 'bottomPane'
 		}
+		fnsLog('QuickPane: init')
 
 	@property
 	def allPanes(self):
@@ -51,6 +63,7 @@ class QuickPaneExt:
 		pane_exists = lambda _my_pane: _my_pane.id in [pane.id for pane in ui.panes] if _my_pane else None
 		my_pane = getattr(self, pane_attr)
 		if not pane_exists(my_pane) and curr_comp.isCOMP:
+			fnsLog(f'QuickPane: opening {dir} pane for {curr_comp.path}')
 			new_pane = split_method()
 			setattr(self, pane_attr, new_pane)
 		else:
@@ -71,6 +84,7 @@ class QuickPaneExt:
 			pane = getattr(self, pane_attr)
 
 		if pane:
+			fnsLog(f'QuickPane: closing {dir} pane')
 			panenav = op(f'/ui/panes/panebar/{pane.name}/panenav')
 			if panenav:
 				self.setBorder(panenav, 0)

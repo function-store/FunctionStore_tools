@@ -380,6 +380,7 @@ class ToolbarRegistryExt(RegistryBase):
 			entry['source_registry'] = source_registry.path
 			entry['source_registry_id'] = int(source_registry.id)
 		self.stored['PaneRegistry'][canonical_name] = entry
+		self.fnsLog(f'{self.REGISTRY_NAME}: registered widget "{canonical_name}" ({widget_op.path})')
 		if self._barReady():
 			self._injectWidget(canonical_name)
 		elif not self._pane_sync_queued:
@@ -394,6 +395,7 @@ class ToolbarRegistryExt(RegistryBase):
 				  f' -- no global /sys registry ready')
 			return
 		self.stored['PaneRegistry'].pop(canonical_name, None)
+		self.fnsLog(f'{self.REGISTRY_NAME}: unregistered widget "{canonical_name}"')
 		bar = self._bar()
 		if bar:
 			name = self._mirrorName(canonical_name)

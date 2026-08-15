@@ -68,6 +68,16 @@ GetWindowPlacement = ctypes.windll.user32.GetWindowPlacement
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 ###
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class MONITORINFO(ctypes.Structure):
 	_fields_ = [
 		("cbSize", ctypes.c_ulong),
@@ -90,7 +100,8 @@ class ExtBorderlessWindow:#
 		self.default_width_offset = 9
 		self.default_height_offset = -9
 		self.applied_offsets = False
-		
+		fnsLog('BorderlessWindow: init (save-state UI injected)')
+
 
 	def __injectUI(self):
 		nodetable = op('/ui/dialogs/mainmenu/menu')
@@ -118,6 +129,7 @@ class ExtBorderlessWindow:#
 
 	def onStart(self):
 		"""Called on component initialization"""
+		fnsLog('BorderlessWindow: onStart')
 		# Check if we should go fullscreen on start
 		if self.evalFixfullscreenonstart or self.evalFullscreen:
 			# Get foreground window
@@ -265,7 +277,8 @@ class ExtBorderlessWindow:#
 		# Check if it's main TouchDesigner window
 		if not self.is_main_td_window(hwnd):
 			return
-		
+		fnsLog('BorderlessWindow: removing window borders')
+
 		# Check if window is maximized
 		is_maximized = self.is_window_maximized(hwnd)
 		
@@ -328,11 +341,12 @@ class ExtBorderlessWindow:#
 
 	def restore_borders(self):
 		hwnd = GetForegroundWindow()  # Get active window
-		
+
 		# Check if it's main TouchDesigner window
 		if not self.is_main_td_window(hwnd):
 			return
-			
+		fnsLog('BorderlessWindow: restoring window borders')
+
 		# Get current window rect before restoring borders
 		window_rect = RECT()
 		GetWindowRect(hwnd, ctypes.byref(window_rect))

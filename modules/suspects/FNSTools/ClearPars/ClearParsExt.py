@@ -2,9 +2,19 @@
 '''Info Header Start
 Name : ClearParsExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class ClearParsExt:
 	"""
@@ -13,12 +23,15 @@ class ClearParsExt:
 	def __init__(self, ownerComp):
 		# The component to which this extension is attached
 		self.ownerComp = ownerComp
-		self.Op = None 
+		self.Op = None
+		fnsLog('ClearPars: init')
 
 	def ClearPars(self):
-		
+
 		_ops = [self.Op]
-		
+		fnsLog(f'ClearPars: clearing par errors on {self.Op.path if self.Op else None} '
+			f'(recursive={self.ownerComp.par.Recursive.eval()})')
+
 		if self.ownerComp.par.Recursive.eval():
 			if _op := _ops[0]:
 				if _op.isCOMP:

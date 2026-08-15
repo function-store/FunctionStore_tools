@@ -2,9 +2,20 @@
 '''Info Header Start
 Name : script_reset
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 customables = ['baseCOMP',
 				'containerCOMP',
 				'geometryCOMP',
@@ -14,6 +25,7 @@ customables = ['baseCOMP',
 				'scriptTOP']
 
 root = op(parent().par.Root.eval() if parent().par.Root.eval() else '../')
+fnsLog(f'ResetPLS: resetting ops under {root.path if root else None}')
 optypes = [r[0].val for r in op('table_optypes').rows()]
 exceptions = [p[1:] if p.startswith('^') else p for p in (r[0].val for r in op('merge1').rows())]
 

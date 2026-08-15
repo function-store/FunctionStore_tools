@@ -2,11 +2,21 @@
 '''Info Header Start
 Name : customParPromoterExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 import re
 import TDFunctions as TDF
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class customParPromoterExt:
 	"""
@@ -22,6 +32,7 @@ class customParPromoterExt:
 		self.popDialog = self.ownerComp.op('popDialog')
 		self.__parNumTypes = ['Float', 'Int', 'Xy', 'Xyz', 'Xyzw', 'Uv', 'Uvw', 'Wh','Rgb', 'Rgba']
 		self.__saveParamNameBeforePurge = ''
+		fnsLog('CustomParPromoter: init')
 
 	@property
 	def Reference(self):
@@ -61,6 +72,7 @@ class customParPromoterExt:
 		if _page.name in self.ignorePages:
 			# continue
 			return
+		fnsLog(f'CustomParPromoter: promoting all pars of page "{_page.name}" from {self.Reference.path}')
 
 		page_name = f'{self.Reference.name}:{_page.name}'
 
@@ -149,8 +161,9 @@ class customParPromoterExt:
 			else:
 				new_p.val = p.val
 				p.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
-				p.mode = ParMode.BIND	
+				p.mode = ParMode.BIND
 		ui.undo.endBlock()
+		fnsLog(f'CustomParPromoter: promoted parGroup "{name}" to {target.path}')
 		return new_par
 
 
@@ -225,6 +238,7 @@ class customParPromoterExt:
 			_par.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_par.name}"
 			_par.mode = ParMode.BIND
 		ui.undo.endBlock()
+		fnsLog(f'CustomParPromoter: promoted par "{name}" to {target.path}')
 		return new_par
 
 	def _appendSinglePar(self, new_page, name, label, _par):
@@ -523,6 +537,7 @@ class customParPromoterExt:
 
 
 	def SetTableMenu(self, _table, _target):
+		fnsLog(f'CustomParPromoter: creating table menu par from {_table.path} on {_target.path}')
 		_page = self._getTargetPage(None, _target, None)
 		_target.currentPage = _page
 		table_name = _table.name.replace('_', '').title()

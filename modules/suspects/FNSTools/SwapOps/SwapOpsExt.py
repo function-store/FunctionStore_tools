@@ -1,10 +1,21 @@
 
 '''Info Header Start
 Name : SwapOpsExt
-Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2025_DEV.toe
+Author : root
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class SwapOpsExt:
 	"""
 	SwapOpsExt description
@@ -12,12 +23,14 @@ class SwapOpsExt:
 	def __init__(self, ownerComp):
 		# The component to which this extension is attached
 		self.ownerComp = ownerComp
+		fnsLog('SwapOps: init')
 
 	def OnSwap(self):
 		selected = ui.panes.current.owner.selectedChildren
 		selected = sorted(selected, key=lambda x: x.nodeCenterX)
 		num_selected = len(selected)
-		
+		fnsLog(f'SwapOps: swapping {num_selected} selected ops in {ui.panes.current.owner.path}')
+
 		ui.undo.startBlock("Swap selected OPs")
 		# reversed effect: middle-out order
 		for i in reversed(range(int(num_selected/2))):

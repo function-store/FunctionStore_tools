@@ -2,7 +2,7 @@
 '''Info Header Start
 Name : ExtUpdater
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.35.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 """Bucket + manifest updates for the toolkit.
@@ -117,6 +117,17 @@ def _sha256(path):
 	return h.hexdigest()
 
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
+
 class ExtUpdater:
 	"""Update motions for the toolkit, driven by artifact hashes."""
 
@@ -126,6 +137,7 @@ class ExtUpdater:
 		# project has packages the store has newer bytes for".
 		self.IsUpdatable = tdu.Dependency(False)
 		self._job = None
+		fnsLog('UPDATER: init')
 
 	# ------------------------------------------------------------------
 	# where things live
@@ -273,6 +285,7 @@ class ExtUpdater:
 		p = getattr(self.ownerComp.par, 'Status', None)
 		if p is not None:
 			p.val = str(text)[:400]
+		fnsLog(f'UPDATER: {text}')
 		return text
 
 	def _writeUpdates(self, rows):

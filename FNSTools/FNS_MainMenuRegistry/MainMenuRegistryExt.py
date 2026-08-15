@@ -507,6 +507,7 @@ class MainMenuRegistryExt(RegistryBase):
 			entry['source_registry'] = source_registry.path
 			entry['source_registry_id'] = int(source_registry.id)
 		self.stored['PaneRegistry'][canonical_name] = entry
+		self.fnsLog(f'{self.REGISTRY_NAME}: registered widget "{canonical_name}" ({widget_op.path}, side={side})')
 		# Fires on EVERY publish, including boot and healing re-applies --
 		# hooks must be idempotent ("my entry is live", not "first time").
 		self._invokeHook(entry, 'onRegistered', canonical_name, dict(entry))
@@ -525,6 +526,7 @@ class MainMenuRegistryExt(RegistryBase):
 			return
 		if canonical_name in self.stored['PaneRegistry']:
 			info = self.stored['PaneRegistry'].pop(canonical_name, None)
+			self.fnsLog(f'{self.REGISTRY_NAME}: unregistered "{canonical_name}"')
 			bar = self._bar()
 			if bar:
 				mirror = bar.op(self._mirrorName(canonical_name))

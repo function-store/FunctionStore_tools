@@ -641,6 +641,7 @@ class OpMenuRegistryExt(RegistryBase):
 			entry['source_registry'] = source_registry.path
 			entry['source_registry_id'] = int(source_registry.id)
 		self.stored['PaneRegistry'][canonical_name] = entry
+		self.fnsLog(f'{self.REGISTRY_NAME}: registered contributor "{canonical_name}" ({comp.path})')
 		if self._menuReady():
 			self._syncPopMenu()
 		elif not self._pane_sync_queued:
@@ -655,6 +656,7 @@ class OpMenuRegistryExt(RegistryBase):
 				  f' -- no global /sys registry ready')
 			return
 		self.stored['PaneRegistry'].pop(canonical_name, None)
+		self.fnsLog(f'{self.REGISTRY_NAME}: unregistered contributor "{canonical_name}"')
 		if self._menuReady():
 			self._syncPopMenu()
 

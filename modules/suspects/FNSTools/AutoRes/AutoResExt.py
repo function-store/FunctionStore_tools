@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : AutoResExt
-Author : Dan@DAN-4090
-Saveorigin : FunctionStore_tools_2025_DEV.toe
+Author : root
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 """
@@ -18,6 +18,16 @@ Help: search "Extensions" in wiki
 from TDStoreTools import StorageManager
 import TDFunctions as TDF
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class AutoResExt:
 	"""
 	AutoResExt description
@@ -25,12 +35,14 @@ class AutoResExt:
 	def __init__(self, ownerComp):
 		# The component to which this extension is attached
 		self.ownerComp = ownerComp
+		fnsLog('AutoRes: init')
 
 	def SetRes(self, _op):
 		if self.ownerComp.op('null_hk')['activate'].eval() and _op.pars('outputresolution'):
 			if not _op.inputs:
 				if _op.par.outputresolution.enable and not _op.isFilter:
-					
+					fnsLog(f'AutoRes: setting resolution on {_op.path}', level='DEBUG')
+
 					parentPanel = False
 					i = 1
 					try:

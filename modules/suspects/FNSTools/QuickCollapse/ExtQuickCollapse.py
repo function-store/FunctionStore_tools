@@ -2,11 +2,21 @@
 '''Info Header Start
 Name : ExtQuickCollapse
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 ###
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class ExtQuickCollapse:
 	def __init__(self, ownerComp):
@@ -15,7 +25,7 @@ class ExtQuickCollapse:
 		self.popDialog = ownerComp.op('popDialog')
 		self.newCOMP = None
 		self.selected = None
-		#
+		fnsLog('QuickCollapse: init')
 
 	def undoCollapse(self, isUndo, _return):
 		ui.panes.current.owner = _return
@@ -34,6 +44,8 @@ class ExtQuickCollapse:
 		pass
 
 	def collapse(self, _name=None, _shortcut=None, ok_by_enter=False):
+		fnsLog(f'QuickCollapse: collapsing {len(self.selected) if self.selected else 0} ops'
+			+ (f' into "{_name}"' if _name else ''))
 		ui.undo.startBlock('Collapsing')
 		ui.undo.addCallback(self.undoCollapse, info = ui.panes.current.owner)
 		

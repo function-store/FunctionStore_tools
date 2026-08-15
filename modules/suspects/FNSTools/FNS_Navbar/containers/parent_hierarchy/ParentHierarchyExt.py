@@ -4,7 +4,7 @@
 '''Info Header Start
 Name : ParentHierarchyExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -12,6 +12,16 @@ import TDFunctions as TDF
 import TDStoreTools as TDS
 import re
 from copy import copy
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
 
 class ParentHierarchyExt:
 	"""
@@ -44,6 +54,7 @@ class ParentHierarchyExt:
 		)
 
 	def postInit(self):
+		fnsLog('FNS_Navbar/ParentHierarchy: postInit')
 		TDF.createProperty(self, 'ParentShortcuts', value=self.ParentHierarchyContent(), dependable=True,
 						   readOnly=False)
 
@@ -355,6 +366,7 @@ class ParentHierarchyExt:
 		if clipboard_text:
 			ui.clipboard = clipboard_text
 			ui.status = f'Copied to clipboard: {clipboard_text}'
+			fnsLog(f'FNS_Navbar/ParentHierarchy: copied "{clipboard_text}"')
 		# legacy in-bar placement only -- absent at the mirror-scheme source
 		pn = self.ownerComp.op('../panenav/path')
 		if pn is not None:

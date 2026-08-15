@@ -2,14 +2,25 @@
 '''Info Header Start
 Name : ExtTDTypings
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
 from pathlib import Path
 
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class ExtTDTypings:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
+		fnsLog('TDTypings: init')
 
 	@property
 	def repo(self):
@@ -39,6 +50,7 @@ class ExtTDTypings:
 
 
 	def DeployStubs(self, force=False):
+		fnsLog(f'TDTypings: deploying stubs to {self.path} (force={force})')
 		#check if the path exists if not create it
 		if not self.path.exists():
 			self.path.mkdir(parents=True)

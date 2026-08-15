@@ -8,6 +8,17 @@ Saveversion : 2025.33070
 Info Header End'''
 
 import re, requests
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class githubRemote:
 	"""
 	githubRemote description
@@ -15,7 +26,8 @@ class githubRemote:
 	def __init__(self, ownerComp):
 		# The component to which this extension is attached
 		self.ownerComp = ownerComp
-		self.log = self.ownerComp.op("logger").Log
+		# response-check failures are warnings on the central logger
+		self.log = lambda *a: fnsLog('githubRemote:', *a, level='WARNING')
 	
 	def checkResponse(self, response:requests.Request ):
 		if not response.ok: 

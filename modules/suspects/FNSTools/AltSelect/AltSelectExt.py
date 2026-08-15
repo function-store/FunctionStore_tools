@@ -2,9 +2,20 @@
 '''Info Header Start
 Name : AltSelectExt
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Saveorigin : FunctionStore_tools_2025_DEV.38.toe
 Saveversion : 2025.33070
 Info Header End'''
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
 class AltSelectExt:
 	"""
 	AltSelectExt description
@@ -24,7 +35,8 @@ class AltSelectExt:
 		self._tag = 'FNS_AltSelect'
 		self.selectColor = (0.71, 0.53, 0.16)
 		self.lastSelectedPos = None
-			
+		fnsLog('AltSelect: init')
+
 
 	def OnSelectOP(self, _op):
 		if _op:
@@ -54,6 +66,7 @@ class AltSelectExt:
 			self.lastSelectedPos = None
 			return
 		
+		fnsLog(f'AltSelect: creating select for {_op.path}', level='DEBUG')
 		ui.undo.startBlock('Selecting OP') #---------
 
 		sel_par = self.family_to_selectpar[_op.family]
