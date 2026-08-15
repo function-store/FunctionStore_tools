@@ -41,6 +41,63 @@ function writeCatalog(cat) {
   fs.writeFileSync(CATALOG, JSON.stringify(cat, null, 1) + '\n');
 }
 
+const countByCategory = (cat) => {
+  const n = {};
+  for (const name of Object.keys(cat.packages)) {
+    const c = cat.packages[name].category;
+    n[c] = (n[c] || 0) + 1;
+  }
+  return n;
+};
+
+/** Apply a whole desired category list: order, renames, additions, removals.
+ *
+ *  Taken as one transaction rather than per-row edits, because a rename has
+ *  to move every package assigned to the old name in the same breath — the
+ *  site build refuses to run on a package whose category is not in the list,
+ *  so a half-applied rename is a broken repo. */
+function applyCategories(cat, incoming) {
+  const seen = new Set();
+  for (const row of incoming) {
+    const name = String(row.name || '').trim();
+    if (!name) throw new Error('a category cannot have an empty name');
+    if (seen.has(name)) throw new Error(`duplicate category "${name}"`);
+    seen.add(name);
+  }
+
+  const counts = countByCategory(cat);
+  const removed = cat.categories.filter((c) =>
+    !incoming.some((r) => (r.from || r.name) === c));
+  for (const c of removed) {
+    if (counts[c]) {
+      throw new Error(
+        `"${c}" still has ${counts[c]} package${counts[c] > 1 ? 's' : ''} in it — ` +
+        'move them somewhere else before deleting it');
+    }
+  }
+
+  const meta = {};
+  for (const row of incoming) {
+    const name = String(row.name).trim();
+    const from = row.from && row.from !== name ? row.from : null;
+    if (from) {
+      if (!cat.categories.includes(from)) throw new Error(`unknown category "${from}"`);
+      for (const pkg of Object.values(cat.packages)) {
+        if (pkg.category === from) pkg.category = name;
+      }
+    }
+    const prev = (cat.category_meta || {})[from || name] || {};
+    meta[name] = {
+      glyph: String(row.glyph ?? prev.glyph ?? '·').trim() || '·',
+      pitch: String(row.pitch ?? prev.pitch ?? '').trim(),
+    };
+  }
+
+  cat.categories = incoming.map((r) => String(r.name).trim());
+  cat.category_meta = meta;
+  return cat;
+}
+
 /** A package name is only ever accepted if it is already a catalog key.
  *  Nothing from a request is allowed to build a path on its own. */
 function docPath(cat, name) {
@@ -91,8 +148,15 @@ function state() {
         missing: true,
       };
     });
+  const counts = countByCategory(cat);
   return {
     categories: cat.categories,
+    categoryMeta: cat.categories.map((c) => ({
+      name: c,
+      glyph: (cat.category_meta?.[c] || {}).glyph || '·',
+      pitch: (cat.category_meta?.[c] || {}).pitch || '',
+      count: counts[c] || 0,
+    })),
     icons: fs.readdirSync(ICONS).filter((f) => /\.(png|jpg)$/i.test(f)).sort(),
     packages,
   };
@@ -171,6 +235,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (p === '/api/state' && req.method === 'GET') {
+      return json(res, 200, state());
+    }
+
+    if (p === '/api/categories' && req.method === 'PUT') {
+      const { categories } = await readBody(req);
+      if (!Array.isArray(categories) || !categories.length) {
+        return json(res, 400, { error: 'expected a non-empty categories array' });
+      }
+      const cat = readCatalog();
+      try {
+        writeCatalog(applyCategories(cat, categories));
+      } catch (e) {
+        return json(res, 400, { error: e.message });
+      }
       return json(res, 200, state());
     }
 

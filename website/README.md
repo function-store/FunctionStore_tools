@@ -72,6 +72,26 @@ with `git diff`, undo with `git checkout -- packaging/`.
   real heading slugs from drifting apart.
 - Hotkeys are one per line, `KEYS = what it does`.
 
+### Categories
+
+**Categories** in the top bar edits the category list itself — add, rename,
+reorder, delete, and set each one's glyph and one-line pitch.
+
+Order is meaningful: it is the order sections appear on the landing page,
+in the docs sidebar, and in the installer picker. Move rows with ▲▼.
+
+Renaming moves every package in that category with it, in a single write.
+That is deliberate — the site build refuses to run on a package whose
+category is not in the list, so a half-applied rename would leave the repo
+unbuildable. Deleting is only allowed once a category is empty; the button
+stays disabled while anything is still in it.
+
+The glyph and pitch live in `catalog.json` under `category_meta`, beside
+the category list. `build_manifest.py` reads only `categories` and
+`packages`, so that key is invisible to packaging and to the manifest —
+it is website presentation. It used to be hardcoded in `build-site.mjs`,
+which meant renaming a category silently dropped its glyph and pitch.
+
 Bound to `127.0.0.1` on purpose: this process writes to the repo, so it
 must not be reachable from the network. There is no auth because there is
 no remote access.

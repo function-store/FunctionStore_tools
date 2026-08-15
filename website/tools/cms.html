@@ -115,6 +115,29 @@
   .icon-x:hover { color: var(--red); }
   .empty { font-size: 12px; color: var(--text-faint); padding: 10px 0; }
 
+  /* ───── Categories panel ───── */
+  .cat-row {
+    display: grid; grid-template-columns: 22px 52px 1fr 44px 26px;
+    gap: 8px; align-items: start;
+    padding: 10px 0; border-top: 1px solid var(--border);
+  }
+  .cat-row:first-of-type { border-top: none; }
+  .cat-move { display: flex; flex-direction: column; gap: 2px; }
+  .cat-move button {
+    background: var(--bg-2); border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 4px; cursor: pointer; font-size: 9px; line-height: 1; padding: 3px 0;
+  }
+  .cat-move button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .cat-move button:disabled { opacity: 0.3; cursor: default; }
+  .cat-glyph { text-align: center; font-size: 17px; }
+  .cat-count { font-size: 11px; color: var(--text-faint); padding-top: 8px; text-align: right; }
+  .cat-pitch { margin-top: 6px; font-size: 12px; }
+  .warn {
+    margin: 0 0 16px; padding: 10px 14px; border-radius: 8px;
+    background: #2a1408; border: 1px solid rgba(251,146,60,0.35);
+    color: #fdba74; font-size: 12px; line-height: 1.5;
+  }
+
   /* ───── Preview ───── */
   .tabs { display: flex; gap: 4px; padding: 10px 14px 0; position: sticky; top: 0; background: var(--bg); z-index: 2; }
   .tab {
@@ -165,6 +188,7 @@
   <h1>FNSTools <span>CMS</span></h1>
   <span class="dirty" id="dirty">● unsaved</span>
   <div class="spacer"></div>
+  <button class="btn" id="cats">Categories</button>
   <button class="btn" id="revert" disabled>Discard changes</button>
   <button class="btn" id="build">Build site</button>
   <button class="btn btn-primary" id="save" disabled>Save <kbd style="opacity:.6">⌘S</kbd></button>
@@ -476,9 +500,102 @@ async function renderPreview() {
   } catch (e) { /* preview is best-effort */ }
 }
 
+// ───── categories ─────
+
+let catDraft = null;   // non-null while the categories panel is open
+
+function openCategories() {
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  draft = current = null;
+  // `from` remembers the original name, so a rename can move its packages.
+  catDraft = STATE.categoryMeta.map((c) => ({ ...c, from: c.name }));
+  renderCategories();
+  renderList();
+}
+
+function renderCategories() {
+  const rows = catDraft.map((c, i) => `
+    <div class="cat-row" data-i="${i}">
+      <div class="cat-move">
+        <button data-up ${i === 0 ? 'disabled' : ''} title="Move up">▲</button>
+        <button data-down ${i === catDraft.length - 1 ? 'disabled' : ''} title="Move down">▼</button>
+      </div>
+      <input class="cat-glyph" data-glyph value="${c.glyph.replace(/"/g, '&quot;')}" maxlength="2" />
+      <div>
+        <input type="text" data-name value="${c.name.replace(/"/g, '&quot;')}" />
+        <textarea class="cat-pitch" data-pitch rows="2" placeholder="One-line pitch shown above this section on the landing page">${c.pitch.replace(/</g, '&lt;')}</textarea>
+      </div>
+      <div class="cat-count">${c.count} pkg</div>
+      <button class="icon-x" data-del ${c.count ? 'disabled title="Move its packages out first"' : 'title="Delete"'}>×</button>
+    </div>`).join('');
+
+  $('#editor').innerHTML = `
+    <h2 class="pane-title">Categories</h2>
+    <p class="pane-sub">packaging/<span class="mono">catalog.json</span> · order here is the order sections appear on the site and in the installer picker</p>
+    <p class="warn">Renaming moves every package in that category with it, in one write. Deleting is only possible once a category is empty.</p>
+    <div id="catrows">${rows}</div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" id="cat-add">+ Add category</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="cat-cancel">Cancel</button>
+      <button class="btn btn-primary" id="cat-save">Save categories</button>
+    </div>`;
+
+  $('#catrows').oninput = (e) => {
+    const row = e.target.closest('.cat-row');
+    const c = catDraft[Number(row.dataset.i)];
+    if (e.target.hasAttribute('data-name')) c.name = e.target.value;
+    if (e.target.hasAttribute('data-glyph')) c.glyph = e.target.value;
+    if (e.target.hasAttribute('data-pitch')) c.pitch = e.target.value;
+  };
+  $('#catrows').onclick = (e) => {
+    const row = e.target.closest('.cat-row');
+    if (!row) return;
+    const i = Number(row.dataset.i);
+    if (e.target.hasAttribute('data-up')) swapCat(i, i - 1);
+    else if (e.target.hasAttribute('data-down')) swapCat(i, i + 1);
+    else if (e.target.hasAttribute('data-del') && !e.target.disabled) {
+      catDraft.splice(i, 1);
+      renderCategories();
+    }
+  };
+  $('#cat-add').onclick = () => {
+    catDraft.push({ name: '', glyph: '·', pitch: '', count: 0, from: null });
+    renderCategories();
+    const inputs = document.querySelectorAll('[data-name]');
+    inputs[inputs.length - 1].focus();
+  };
+  $('#cat-cancel').onclick = () => { catDraft = null; $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>'; };
+  $('#cat-save').onclick = saveCategories;
+}
+
+function swapCat(a, b) {
+  if (b < 0 || b >= catDraft.length) return;
+  [catDraft[a], catDraft[b]] = [catDraft[b], catDraft[a]];
+  renderCategories();
+}
+
+async function saveCategories() {
+  try {
+    STATE = await api('/api/categories', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ categories: catDraft }),
+    });
+    catDraft = null;
+    $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>';
+    renderList();
+    toast('Categories saved', 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
 // ───── actions ─────
 
 async function select(name) {
+  catDraft = null;
   if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
       !confirm('Discard unsaved changes to ' + current.name + '?')) return;
   current = await api('/api/package/' + encodeURIComponent(name));
@@ -558,6 +675,7 @@ document.querySelectorAll('.chip').forEach((c) => {
   };
 });
 $('#filter').oninput = renderList;
+$('#cats').onclick = openCategories;
 $('#save').onclick = save;
 $('#build').onclick = build;
 $('#revert').onclick = () => {

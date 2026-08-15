@@ -1,6 +1,9 @@
 {
  "_comment": [
   "CURATED package metadata, merged into manifest.json by build_manifest.py.",
+  "categories is the canonical ORDERED list -- its order drives section order",
+  "on the website and in the installer picker. category_meta carries the",
+  "website's glyph and one-line pitch per category; packaging ignores it.",
   "Everything else in the manifest is derived live from the project -- this file",
   "holds only what a machine cannot know: category and human description.",
   "Descriptions were seeded by inspection and NEED OWNER REVIEW; correct them here",
@@ -17,6 +20,40 @@
   "Workflow",
   "Developer"
  ],
+ "category_meta": {
+  "Core": {
+   "glyph": "◈",
+   "pitch": "The registries every other tool plugs into. Installed as a unit."
+  },
+  "Surfaces": {
+   "glyph": "▦",
+   "pitch": "The parts of TouchDesigner you look at all day, made yours."
+  },
+  "Parameters": {
+   "glyph": "◎",
+   "pitch": "Promote, bind, randomize and reset — by drag and drop."
+  },
+  "Network": {
+   "glyph": "⇄",
+   "pitch": "Build, swap, collapse and navigate without touching a menu."
+  },
+  "Media & Output": {
+   "glyph": "▶",
+   "pitch": "Where the picture and the sound actually leave the project."
+  },
+  "Control": {
+   "glyph": "⊙",
+   "pitch": "Hardware in, parameters out."
+  },
+  "Workflow": {
+   "glyph": "⚡",
+   "pitch": "The small frictions, removed."
+  },
+  "Developer": {
+   "glyph": "⌨",
+   "pitch": "Extensions, stubs and the editor you actually write them in."
+  }
+ },
  "packages": {
   "AltSelect": {
    "category": "Network",

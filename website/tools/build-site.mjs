@@ -33,32 +33,6 @@ const GH = 'https://github.com/function-store/FunctionStore_tools';
 const BUCKET = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools';
 const EDIT_BASE = `${GH}/blob/main/packaging/docs`;
 
-// One glyph per catalog category, in the siblings' style. The repo's
-// icons/*.png are 30x19 UI chrome and unusable at tile size.
-const GLYPH = {
-  'Core': '◈',
-  'Surfaces': '▦',
-  'Parameters': '◎',
-  'Network': '⇄',
-  'Media & Output': '▶',
-  'Control': '⊙',
-  'Workflow': '⚡',
-  'Developer': '⌨',
-};
-
-// Landing-page framing for each catalog category. catalog.json owns the
-// per-package descriptions; these are the one-line pitches above them.
-const CATEGORY_PITCH = {
-  'Core': 'The registries every other tool plugs into. Installed as a unit.',
-  'Surfaces': 'The parts of TouchDesigner you look at all day, made yours.',
-  'Parameters': 'Promote, bind, randomize and reset — by drag and drop.',
-  'Network': 'Build, swap, collapse and navigate without touching a menu.',
-  'Media & Output': 'Where the picture and the sound actually leave the project.',
-  'Control': 'Hardware in, parameters out.',
-  'Workflow': 'The small frictions, removed.',
-  'Developer': 'Extensions, stubs and the editor you actually write them in.',
-};
-
 const problems = [];
 const fail = (msg) => problems.push(msg);
 
@@ -88,6 +62,17 @@ const esc = (s) => String(s)
 const catalog = JSON.parse(fs.readFileSync(CATALOG, 'utf8'));
 const categories = catalog.categories;
 const curated = catalog.packages;
+
+// Presentation per category — the glyph on each tile and the one-line pitch
+// above each section. Curated in catalog.json next to the category list, so
+// renaming or adding a category in the CMS carries them along; hardcoding
+// them here meant a rename silently lost both. The repo's icons/*.png are
+// 30x19 UI chrome and unusable at tile size, hence unicode glyphs.
+const catMeta = catalog.category_meta || {};
+const GLYPH = Object.fromEntries(
+  categories.map((c) => [c, (catMeta[c] && catMeta[c].glyph) || '·']));
+const CATEGORY_PITCH = Object.fromEntries(
+  categories.map((c) => [c, (catMeta[c] && catMeta[c].pitch) || '']));
 
 if (!fs.existsSync(SRC)) {
   console.error(`missing ${path.relative(REPO, SRC)} — run packaging/docs_seed_from_wiki.py first`);
