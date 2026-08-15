@@ -344,6 +344,7 @@ class RegistryBase:
 		self._release_shipped_shortcut()
 		self._applyHostRegistration()
 		self._ensureSelectionExecuteRole()
+		self._ensurePresaveHealPar()
 
 	def _neutralizeHostParameters(self):
 		"""The global /sys instance is pure infrastructure -- host-publisher
@@ -433,6 +434,29 @@ class RegistryBase:
 			if hasattr(global_reg.ext, self.EXT_NAME):
 				return getattr(global_reg.ext, self.EXT_NAME)
 		return self
+
+	PRESAVE_HEAL_PAR = 'Presaveheal'
+
+	def _ensurePresaveHealPar(self):
+		"""Surface the pre-save heal switch on the in-project MASTER only.
+
+		The pre-save exec (/FNSTools/registry_presave_exec) reads this toggle
+		per registry before healing; hosts and the /sys global never carry the
+		decision. Created in code so every install self-heals the par."""
+		if self.ownerComp is not self._masterComp():
+			return
+		if getattr(self.ownerComp.par, self.PRESAVE_HEAL_PAR, None) is not None:
+			return
+		try:
+			page = next((p for p in self.ownerComp.customPages
+						 if p.name == self.HOST_PAGE_NAME), None) \
+				or self.ownerComp.appendCustomPage(self.HOST_PAGE_NAME)
+			p = page.appendToggle(self.PRESAVE_HEAL_PAR, label='Pre-Save Heal')[0]
+			p.startSection = True
+			p.default = True
+			p.val = True
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: could not create {self.PRESAVE_HEAL_PAR}: {e}')
 
 	def _setRegStatus(self, status):
 		if hasattr(self.ownerComp.par, 'Regstatus'):
@@ -927,8 +951,20 @@ class RegistryBase:
 
 	# --- registry watch / heal ---
 
+	# Master switch for the periodic heal/prune loop (and with it the boot
+	# re-publish sweeps that run inside its first ticks). OFF: the sweeps
+	# re-apply every autoregister host in one frame (~10ms x ~20 hosts) and
+	# showed up as sporadic load. Healing now runs once per project save
+	# instead (/FNSTools/registry_presave_exec -> healAllRegistries()).
+	# NOTE while off: a host whose extension initialized BEFORE the /sys
+	# global existed stays unpublished until its Register pulse is touched,
+	# the global re-inits, or the next save's heal republishes it.
+	REGISTRY_WATCH_ENABLED = False
+
 	def _armRegistryWatch(self):
 		"""Periodic heal/prune loop — only on the /sys global registry."""
+		if not self.REGISTRY_WATCH_ENABLED:
+			return
 		if not self._is_sys_global():
 			return
 		if self._registry_watch_armed:
