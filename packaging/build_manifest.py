@@ -472,6 +472,14 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             # each other in a way the picker should surface
             requires = []
 
+        surfaces = {SURFACE_OF[h] for h in hosts if h in SURFACE_OF}
+        # The 'UI Tab' capability page marks a tool that contributes a tab
+        # to the tools_ui panel (tools_ui sweeps for it). Presence of the
+        # par, not its current toggle state: the toggle is user preference
+        # that roams via config, the capability is what the package ships.
+        if getattr(comp.par, 'Uitab', None) is not None:
+            surfaces.add('tools_ui')
+
         entry = {
             'name': name,
             'kind': 'core' if is_core else 'tool',
@@ -479,7 +487,7 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             'description': meta.get('description', ''),
             'version': _version(comp),
             'help_url': _helpUrl(comp),
-            'surfaces': sorted({SURFACE_OF[h] for h in hosts if h in SURFACE_OF}),
+            'surfaces': sorted(surfaces),
             'shortcut': str(comp.par.opshortcut.eval()),
             'ops': len(comp.findChildren()),
             'requires': requires,

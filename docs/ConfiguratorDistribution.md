@@ -199,6 +199,50 @@ Assessed all three before touching them; they do not resolve the same way.
   Now `.par.Resetall.pulse()`. Invisible until now because the button
   could not reach a non-cooking tool at all.
 
+### 1.2c tools_ui tabs — discovered, not hardcoded (2026-08-16)
+
+The tab panel was the last structural coupling: a static six-name list
+(`switch_hack` DAT + `Menunames`) naming sibling COMPs, sibling panels
+hand-WIRED into tools_ui as panel children, a startup timer working around
+a 2023 folderTabs bug, and two tabs (`SearchWords`, `OpColor`) that were
+unpackaged root glue no `.tox` carried — dead tabs even on a full install,
+and a `None.family` crash in the switcher on any partial one.
+
+Resolved by a **capability sweep**, same philosophy as the `Refresh` par
+(§1.2b): a tool contributes a tab by carrying a `UI Tab` par page
+(`Uitab`/`Uitablabel`/`Uitaborder`/`Uitabpanel`); tools_ui's `build_tabs`
+sweeps depth-1 siblings on startup/create/open and rebuilds the folderTabs
+menu. Missing tool = missing tab, zero tabs = an empty-state hint. Tab
+order and active tab roam via tools_ui's ConfigRegistry host
+(`Tabuserorder`/`Activetab`); a tab's ✕ simply flips the tool's `Uitab`
+off, which roams too.
+
+**The rendering lesson (hard-won):** TD builds panels lazily and ONLY as
+real panel children — opviewerCOMP and selectCOMP render a panel that is
+already built somewhere, but neither force-builds an offscreen one
+(selectCOMP mirrors already-rendering panels; opviewerCOMP force-renders
+only non-panel viewers like DATs). So the old wiring was load-bearing, and
+the sweep now reproduces it: root-panel tabs get WIRED
+(`tools_ui.output → tool.input`) by `Rebuild()` itself; non-panel content
+gets a local shim child inside tools_ui (opviewer for DATs, parameterCOMP
+for `params:<pagescope>` tabs). Interior panel COMPs are rejected with a
+log line — only the tool root can be a panel tab.
+
+The orphan glue died: root `SearchWords` (opviewer onto
+`FNS_OpMenu/OpSearchWords` — now FNS_OpMenu's own `./OpSearchWords` tab),
+root `OpColor` + `openOp1` (a par-window springboard at ColorUI — now
+`params:Families Colors Search` on ColorUI, a strictly better tab: the
+full palette editor inline). Node-viewer redirects (`opviewer` par) on the
+four root-panel tab tools were cleared — they pointed at mapping-table
+DATs and would have hijacked any viewer-based rendering.
+
+`build_manifest.py` derives a `tools_ui` surface from the presence of the
+`Uitab` par (capability, not toggle state). Effect on §1.1's graph: the
+`tools_ui → GlobalOutSelect` guard stays capability-based, `openOp1 →
+ColorUI` is gone with its comp, and tab membership is no longer an edge
+of any kind. Pkgversions bumped: tools_ui 1.1.0 (rework), the six tab
+tools patch (+`UI Tab` pars, redirects cleared).
+
 ### 1.3 MY_HOTKEYS → zero dependencies (2026-08-13)
 
 Six active hotkeys, and only ONE touches a tool:

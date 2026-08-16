@@ -1,40 +1,49 @@
 ---
 package: tools_ui
-summary: Clicking this will open a collection of tools that have some minimal user interface.
+summary: The tabbed panel that hosts the toolkit's larger tool UIs.
 features:
   - name: tools_ui
     anchor: tools-ui
     icon: Fx.png
-  - name: op_store
-    anchor: op-store
-  - name: Olib Browser
-    anchor: olib-browser
-    icon: Olib.png
-credit:
-  name: AlphaMoonbase.berlin
-  url: 'https://alphamoonbase.de/'
 ---
 
 ## tools_ui
 
-Clicking this will open a collection of tools that have some minimal user interface. They are accessible through the UI tabs. 
-**Right-Clicking** on the tabs will open further customization of the respective tool *(very important for midi/oscMapper configuration)*.
-The tabs can also be re-ordered by drag-dropping, and you can also add new tabs easily by parenting a container to `/FunctionStore_tools/tools_ui`.
+Clicking the **Fx** toolbar button opens a tabbed panel collecting the
+toolkit's larger tool UIs — the mappers, hotstrings, palette editors and
+friends. **Right-clicking** a tab opens the owning tool's parameters
+*(very important for midi/oscMapper configuration)*. Tabs can be
+re-ordered by drag-and-drop, and closed with their **✕** button (closing a
+tab switches the tool's *UI Tab* toggle off; re-enable it on the tool's
+parameters to bring the tab back). Tab order and the active tab roam with
+your config.
 
-## op_store
+Tabs are **discovered, not hardcoded**: tools_ui sweeps its sibling tools
+for a `UI Tab` parameter page and builds exactly the tabs of the tools you
+have installed. Installing or removing tools never leaves dead tabs — the
+panel rebuilds on startup and every time it opens.
 
-This component is a modified version of `AlphamoonBase.berlin`'s [Operator Store](https://td-olib.org/component/operator-store). You can drag and drop any operator or component from your network to this UI.
-After that you can reference the dropped OP/COMP with a **Shortcut** of the Shortcut column.
+## Contributing a tab
 
-The tool itself has a global shortcut of `STORE`, so drag-and-dropping a `KinectCHOP` named `kinect1` from `/SENSORS/KINECT/kinect1` onto the UI, you can easily reference that operator as follows:** `op.STORE.Kinect`
-You can also drag and drop from the operator column onto your network editor to place a **Select OP **of the OP! You can also use the buttons on the right to:** open a viewer, open parameters, open a floating network at the referenced operator location.
+Any depth-1 COMP next to tools_ui can contribute a tab by carrying a
+custom parameter page named **UI Tab**:
 
-This tool is a good way to keep clean references to project-wide operators, similar to Global OP Shortcuts, but for operators; or `iop`s for the whole project.
+| Parameter | Meaning |
+|---|---|
+| `Uitab` (toggle) | contribute a tab at all |
+| `Uitablabel` (str) | tab label; empty = the COMP's name |
+| `Uitaborder` (int) | default ordering (user re-ordering wins) |
+| `Uitabpanel` (str) | what the tab shows — see below |
 
-If enabled in the `FunctionStore_tools` base custom parameters, the contents of the table will be externalized to the project folder.
+`Uitabpanel` accepts three forms:
 
-> **BEWARE:** Moving the referenced operator to a different location will break the references, and you'll have to manually update the `store_table` inside the component.
+- **empty** — the tool root itself is the tab's panel (it must be a panel
+  COMP; tools_ui wires it in as a panel child).
+- **`./somePath`** — a DAT/CHOP/TOP inside the tool, shown through a
+  viewer (the SearchWords table works this way).
+- **`params:<pages>`** — a parameter view of the tool root scoped to the
+  named custom pages, e.g. `params:Families Colors` (bare `params:` shows
+  all pages). The ColorUI tab works this way.
 
-## Olib Browser
-
-Opens the [Olib Browser](https://td-olib.org/) by AlphaMoonbase.berlin. You can browse and directly place tons of very useful components to your network.
+A tool that also wants a **refresh on show** simply carries a `Refresh`
+pulse parameter — tools_ui pulses it by capability, never by name.
