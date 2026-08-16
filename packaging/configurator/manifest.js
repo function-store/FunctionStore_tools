@@ -8,7 +8,7 @@ window.FNS_MANIFEST = {
  "toolkit": {
   "name": "FNSTools",
   "td_build": "099",
-  "project": "FunctionStore_tools_2025_DEV.44.toe"
+  "project": "FunctionStore_tools_2025_DEV.48.toe"
  },
  "core": [
   "FNS_ConfigRegistry",
@@ -1214,11 +1214,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
-   "version": "1.0.0",
+   "version": "1.1.0",
    "help_url": "https://tools.functionstore.xyz/docs/tdx-searchpalette/",
    "surfaces": [],
-   "shortcut": "",
-   "ops": 110,
+   "shortcut": "TDX_SEARCH_PALETTE",
+   "ops": 111,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1228,8 +1228,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/TDX_SearchPalette.tox",
-    "bytes": 55606,
-    "sha256": "beebc344f5ee454b83e6fcedd9ecd4a192e3549506bb7ae2f1d376cb48941aa3",
+    "bytes": 57286,
+    "sha256": "dff1701e74fd1a9cdd6defa87bca4efc31aa8831bfd594135a6235b6886242c8",
     "url": "https://storage.functionstr.com/fnstools/v3.0.0/TDX_SearchPalette.tox"
    }
   },
