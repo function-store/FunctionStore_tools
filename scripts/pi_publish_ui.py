@@ -345,10 +345,26 @@ def EditNotes():
 # dialog chain instead of living in a module global that a re-stamp or a
 # mid-flow error would strand.
 
+# The dialog centres its text and wraps mid-word, so a long line comes
+# out as a ragged block (and clipped buttons taught us it is narrow).
+# Wrap it ourselves, short, on word boundaries.
+def _wrap(text, width=38):
+\tout = []
+\tfor para in str(text).split('\\n'):
+\t\tline = ''
+\t\tfor word in para.split():
+\t\t\tif line and len(line) + 1 + len(word) > width:
+\t\t\t\tout.append(line)
+\t\t\t\tline = word
+\t\t\telse:
+\t\t\t\tline = (line + ' ' + word) if line else word
+\t\tout.append(line)
+\treturn '\\n'.join(out)
+
 def _ask(state, text, buttons, title=None):
 \t"""One step. buttons[0] is always the way out, so Esc lands there."""
 \top.TDResources.PopDialog.OpenDefault(
-\t\ttext=text,
+\t\ttext=_wrap(text),
 \t\ttitle=title or ('Guided release  --  step %s of 4' % state.get('step', '?')),
 \t\tbuttons=buttons,
 \t\tcallback=_step,
@@ -387,15 +403,21 @@ def _listerSelection():
 
 def _preflightText(names, pre):
 \tlines = ['Shipping: %s' % ', '.join(names), '']
+\t# Each check carries its own advice after ' -- '; on a 38-column
+\t# dialog that doubles the text to repeat what the buttons say.
+\tclaim = lambda t: t.split(' -- ')[0].strip()
 \tfor b in pre['blockers']:
-\t\tlines.append('BLOCK   ' + b)
+\t\tlines.append('BLOCK  ' + claim(b))
 \tfor w in pre['warnings']:
-\t\tlines.append('warn    ' + w)
+\t\tlines.append('warn   ' + claim(w))
 \tif pre['ok'] and not pre['warnings']:
 \t\tlines.append('Nothing is being forgotten.')
 \tif pre['unlanded']:
 \t\tlines += ['', 'Landing is manual: Save those rows in the lister, save '
 \t\t\t\t'the project, then start this again.']
+\tlines.append('')
+\tlines.append('[Rebuild] rebuild the stale rails    [Continue] ship anyway'
+\t\t\t\t if pre['stale_rails'] else '[Continue] ship anyway')
 \treturn '\\n'.join(lines)
 
 
@@ -407,11 +429,16 @@ def GuidedRelease():
 \tbuttons drive, in the order that is easy to get wrong."""
 \tns = _rail()
 \tsel, bumped = _listerSelection(), _bumpedOnly(ns)
+\t# Labels stay short: the dialog clips wide ones, and a truncated
+\t# button is worse than a terse one. The body carries the meaning.
 \ttext = ['What are you shipping?', '',
-\t\t\t'Selected rows:   %s' % (', '.join(sel) if sel else '(nothing selected)'),
-\t\t\t'Already bumped:  %s' % (', '.join(bumped) if bumped else '(none)')]
+\t\t\t'[Selected] the rows picked in the lister:',
+\t\t\t'    %s' % (', '.join(sel) if sel else '(nothing selected)'),
+\t\t\t'',
+\t\t\t'[Bumped] every package already ahead of the bucket:',
+\t\t\t'    %s' % (', '.join(bumped) if bumped else '(none)')]
 \t_ask({'step': 1, 'sel': sel, 'bumped': bumped}, '\\n'.join(text),
-\t\t['Cancel', 'Selected rows', 'Everything bumped'])
+\t\t['Cancel', 'Selected', 'Bumped'])
 
 
 def _step(info):
@@ -427,7 +454,7 @@ def _step(info):
 \tns = _rail()
 
 \tif step == 1:
-\t\tnames = state['sel'] if button == 'Selected rows' else state['bumped']
+\t\tnames = state['sel'] if button == 'Selected' else state['bumped']
 \t\tif not names:
 \t\t\t_ask({}, 'Nothing to ship in that choice.', ['OK'],
 \t\t\t\ttitle='Guided release')
@@ -435,9 +462,9 @@ def _step(info):
 \t\tstate = {'step': 2, 'names': names}
 \t\tstep = 2
 
-\tif step == 2 and button == 'Rebuild rails':
+\tif step == 2 and button == 'Rebuild':
 \t\t_ask({'step': 2, 'names': state['names'], 'ack': True},
-\t\t\t'\\n'.join(_rebuildRails()), ['Stop', 'Back to checks'],
+\t\t\t'\\n'.join(_rebuildRails()), ['Stop', 'Back'],
 \t\t\ttitle='Guided release  --  rails')
 \t\treturn
 
@@ -445,16 +472,15 @@ def _step(info):
 \t\tnames = state['names']
 \t\tpre = ns['Preflight'](names, quiet=True)
 \t\t# entering the step, or coming back from a rebuild: show the checks
-\t\tif state.get('ack') or button in ('Selected rows', 'Everything bumped',
-\t\t\t\t\t\t\t\t\t\t'Back to checks'):
+\t\tif state.get('ack') or button in ('Selected', 'Bumped', 'Back'):
 \t\t\tif pre['ok'] and not pre['warnings']:
 \t\t\t\tstate = {'step': 3, 'names': names}
 \t\t\t\tstep = 3
 \t\t\telse:
 \t\t\t\tbuttons = ['Stop']
 \t\t\t\tif pre['stale_rails']:
-\t\t\t\t\tbuttons.append('Rebuild rails')
-\t\t\t\tbuttons.append('Continue anyway' if pre['blockers'] else 'Continue')
+\t\t\t\t\tbuttons.append('Rebuild')
+\t\t\t\tbuttons.append('Continue')
 \t\t\t\t_ask({'step': 2, 'names': names, 'checked': True},
 \t\t\t\t\t_preflightText(names, pre), buttons)
 \t\t\t\treturn
@@ -462,25 +488,28 @@ def _step(info):
 \t\t\tstate = {'step': 3, 'names': names}
 \t\t\tstep = 3
 
+\t# BEFORE the step-3 block below, which returns on its own and left
+\t# this unreachable: clicking Notes just re-showed the same dialog.
+\tif step == 3 and button == 'Notes':
+\t\tEditNotes()
+\t\t_ask({}, 'Write the notes, save the file, then start Guided'
+\t\t\t' Release again.', ['OK'], title='Guided release')
+\t\treturn
+
 \tif step == 3:
 \t\tnames = state['names']
 \t\tpre = ns['Preflight'](names, quiet=True)
-\t\tif pre['unnoted'] and button != 'Ship without notes':
+\t\tif pre['unnoted'] and button != 'Skip':
 \t\t\t_ask({'step': 3, 'names': names, 'asked': True},
 \t\t\t\t'No release notes for: %s\\n\\n'
 \t\t\t\t'Their changelog bullet and in-tool "whatsnew" ship empty.\\n'
-\t\t\t\t'A line starting "PackageName:" rides that package.'
+\t\t\t\t'A line starting "PackageName:" rides that package.\\n\\n'
+\t\t\t\t'[Notes] open the file     [Skip] ship without them'
 \t\t\t\t% ', '.join(pre['unnoted']),
-\t\t\t\t['Stop', 'Write notes now', 'Ship without notes'])
+\t\t\t\t['Stop', 'Notes', 'Skip'])
 \t\t\treturn
 \t\tstate = {'step': 4, 'names': names}
 \t\tstep = 4
-
-\tif step == 3 and button == 'Write notes now':
-\t\tEditNotes()
-\t\t_ask({}, 'Write the notes, save the file, then start Guided Release '
-\t\t\t'again.', ['OK'], title='Guided release')
-\t\treturn
 
 \tif step == 4:
 \t\tnames = state['names']
