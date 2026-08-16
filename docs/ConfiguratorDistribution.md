@@ -209,10 +209,12 @@ unpackaged root glue no `.tox` carried — dead tabs even on a full install,
 and a `None.family` crash in the switcher on any partial one.
 
 Resolved by a **capability sweep**, same philosophy as the `Refresh` par
-(§1.2b): a tool contributes a tab by carrying a `UI Tab` par page
-(`Uitab`/`Uitablabel`/`Uitaborder`/`Uitabpanel`); tools_ui's `build_tabs`
-sweeps depth-1 siblings on startup/create/open and rebuilds the folderTabs
-menu. Missing tool = missing tab, zero tabs = an empty-state hint. Tab
+(§1.2b): a tool contributes a tab by carrying a `UI Tab` section on its
+`Registry` par page (`Uitabsection` header +
+`Uitab`/`Uitablabel`/`Uitaborder`/`Uitabpanel` — same page as the stamped
+`Cf*`/`Tb*` sections, one prefixed section per surface); tools_ui's
+`build_tabs` sweeps depth-1 siblings on startup/create/open and rebuilds
+the folderTabs menu. Missing tool = missing tab, zero tabs = an empty-state hint. Tab
 order and active tab roam via tools_ui's ConfigRegistry host
 (`Tabuserorder`/`Activetab`); a tab's ✕ simply flips the tool's `Uitab`
 off, which roams too.

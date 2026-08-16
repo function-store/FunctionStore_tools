@@ -26,7 +26,9 @@ panel rebuilds on startup and every time it opens.
 ## Contributing a tab
 
 Any depth-1 COMP next to tools_ui can contribute a tab by carrying a
-custom parameter page named **UI Tab**:
+**UI Tab** section on its `Registry` parameter page (a `Uitabsection`
+header plus these parameters — the same page that hosts the registry
+sections like `Cf*`/`Tb*`):
 
 | Parameter | Meaning |
 |---|---|
