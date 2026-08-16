@@ -416,17 +416,14 @@ ${items}
       </div>`;
 }).filter(Boolean).join('\n');
 
-// The published release, stamped into the version LABEL at build time.
+// The published release. NOTHING release-shaped is stamped into the landing
+// page any more: the download hrefs point at the mutable latest/ aliases,
+// and the version text next to them is gone. A release therefore cannot
+// leave this page stale, and does not need a rebuild to stay correct.
 //
-// The hrefs themselves are no longer stamped: they point at the mutable
-// latest/ aliases, so a release cannot leave them serving stale bytes even
-// if nobody rebuilds. Only the visible "v3.0.1" text is stamped, and it is
-// cosmetic — a stale label sits next to a download that is still correct.
-//
-// The page also refreshes both at runtime, but that fetch cannot be relied
-// on: neither the r2.dev bucket nor storage.functionstr.com serves an
-// Access-Control-Allow-Origin header, so the browser blocks it. Enabling
-// CORS on the bucket is what would make the label self-correcting too.
+// Still fetched because /get/ bakes the published manifest (it carries the
+// `rails` hashes the paste script shows), and because the count note below
+// compares the catalogue against what the release actually publishes.
 async function publishedRelease() {
   // CI sets this. Without it the stamped release depends on what is published
   // at the moment the build runs, so a release cut between commit and CI would
@@ -465,20 +462,15 @@ if (fs.existsSync(landing)) {
     `$1${pages.length}$2`);
 
   if (live) {
-    // Only the label. The hrefs stay on latest/ -- see publishedRelease().
-    // No leading space: the span sits inside a .btn, which is inline-flex
-    // with its own 8px gap, so one would render as a double space.
-    out = out.replace(/(<span class="js-fns-ver">)[^<]*(<\/span>)/g,
-      `$1${live.release}$2`);
-    console.log(`stamped label ${live.release} (${live.packages?.length ?? '?'} packages published)`);
+    console.log(`release ${live.release} published (${live.packages?.length ?? '?'} packages)`);
     if (live.packages && live.packages.length !== pages.length) {
       console.log(`note: catalog has ${pages.length} packages but ${live.release} publishes ` +
         `${live.packages.length} — the site lists the catalog, so these align at the next publish`);
     }
   } else if (process.env.FNSTOOLS_NO_RELEASE_FETCH) {
-    console.log('release fetch skipped — version label keeps whatever index.html already says');
+    console.log('release fetch skipped — landing page carries no release, so nothing to keep');
   } else {
-    console.log('note: could not reach the release manifest — version label keeps whatever index.html already says');
+    console.log('note: could not reach the release manifest — /get/ falls back to the repo manifest');
   }
   fs.writeFileSync(landing, out);
 } else {

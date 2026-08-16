@@ -206,17 +206,22 @@ resolve pinned URLs from the manifest, because reproducible installs are
 what make bug reports correlatable (`publish.py`, "Never publish a mutable
 `latest/<Package>.tox`").
 
-Only the visible version **label** is stamped at build time, read from the
-rolling manifest at
-`https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/manifest.json`.
-A stale label is cosmetic: it sits next to a download that is still
-correct. Rebuild after a release if you want the number to match.
+**The landing page carries no version number at all** — the buttons say
+"Get FNSTools", not "Get FNSTools v3.0.1". Nothing release-shaped is
+stamped into it, so there is no number that can go stale and no reason to
+rebuild the site when a release ships.
 
-The page also tries to refresh label and hrefs at runtime, but **that fetch
-is currently blocked**: neither the r2.dev bucket nor
-`storage.functionstr.com` sends an `Access-Control-Allow-Origin` header.
-Enabling CORS on the bucket would make the label self-correcting and would
-upgrade the hrefs from `latest/` to the pinned release in the browser.
+`/get/` bakes the published manifest (it carries the `rails` hashes), but
+that is display data: the paste script it hands you re-fetches the rolling
+manifest *at paste time* from inside TouchDesigner via `requests`, and
+resolves every artifact and hash from that. A `/get/` page built months ago
+still installs the current release; only the picker's package list can lag.
+
+The page also tries to refresh hrefs at runtime, but **that fetch is
+blocked**: neither the r2.dev bucket nor `storage.functionstr.com` sends an
+`Access-Control-Allow-Origin` header. Enabling CORS would let the browser
+upgrade hrefs from `latest/` to the pinned release, and would keep the
+picker's list current between deploys.
 
 The bootstrap artifact is `FNSTools.tox`, renamed from
 `FunctionStore_tools_2025.tox` in the v3.0.0 redesign. The filename is a
