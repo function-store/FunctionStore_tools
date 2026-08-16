@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -148,7 +150,8 @@
 Multiple buttons implement extra functionality with drag-and-dropping and different mouse click actions, so be sure to read this page carefully.</p>
 <p>Below is the description of the tools from left to right found in the toolbar.</p>
 <blockquote>
-<p>You can customize which button appears and their order by pulsing the custom parameter <code>Open Toolbar Definition</code> (which links to the table <code>/FunctionStore_tools/FNS_Toolbar/ToolbarDef</code> where you can define these --- be sure to save after. Please note that currently this feature is not synced globally between project files!</p>
+<p>The primary way to customize the bar today is the <strong>Toolbar Configurator</strong>: click the gear button it adds to the bar to reorder, group, hide/show and add dividers between widgets (drag rows in the list, right-click a name for its docs), and drag any panel COMP onto the gear to register it as a toolbar package. This layout is saved and synced across project files.</p>
+<p>A legacy, lower-level option still exists: pulsing the custom parameter <code>Open Definition</code> (which links to the table <code>/FNSTools/FNS_Toolbar/ToolbarDef</code> where you can define these --- be sure to save after) lets you redefine the button set directly, but this table is not synced globally between project files.</p>
 </blockquote>
 
   </div>

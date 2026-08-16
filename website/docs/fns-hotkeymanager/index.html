@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -144,12 +146,14 @@
   
   <div class="docs-body">
 <h2 id="hotkeymanager" tabindex="-1">HotkeyManager <a class="heading-anchor" href="#hotkeymanager" aria-hidden="true">#</a></h2>
-<p>Allows for externalized toolkit hotkeys:</p>
+<p>A lister UI for discovering, rebinding and de-conflicting hotkeys across the whole project, not just the toolkit. Pulse <code>Open UI</code> on the component to open it.</p>
 <ul>
-<li>Any hotkey changes made are now externalized into your user palette <code>FNSTools_ext/tables</code> folder so they are retained and synced between your projects</li>
-<li>Hotkeys can be changed for most tools --- find them inside the toolkit in the marked area!</li>
-<li>This is ground-work for a future actual hotkey manager</li>
-<li>Can always revert or force to default hotkeys</li>
+<li><strong>Discovery</strong> scans every top-level component (except <code>ui</code>/<code>sys</code>/<code>local</code>) for hotkey-bearing <code>keyboardin</code> CHOPs/DATs and custom parameters named like a shortcut, and lists them one row per binding: Tool, Path, Par, Hotkey, Default, Persist, Status.</li>
+<li><strong>Click a Hotkey cell</strong> to capture a new binding (press the keys; <code>Esc</code> cancels). If the combo is already used elsewhere, the row asks for confirmation -- press the same keys again to force it.</li>
+<li><strong>Right-click a Hotkey cell</strong> to reset that binding to its default.</li>
+<li><strong>Conflicts</strong> (the same combo bound by more than one tool) are flagged in the Status column; clicking a conflicted row's status jumps to (and cycles through) the other row(s) sharing that combo.</li>
+<li><strong>Persist column</strong>: toolkit hotkeys always persist. A hotkey outside the toolkit only persists across projects/updates if declared -- tag its <code>keyboardin</code> (or a COMP containing it) <code>FNS_hotkeys</code>, or use the Persist cell to toggle it. Declared bindings are externalized into your user palette via <a href="/docs/fns-configregistry/">FNS_ConfigRegistry</a> and restored on load; project-local bindings never persist.</li>
+<li><code>Save</code>/<code>Load</code>/<code>Load Default</code> pulses (and a <code>Force Default</code> toggle) are also exposed as the component's own custom parameters.</li>
 </ul>
 
   </div>

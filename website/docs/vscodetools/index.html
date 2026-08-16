@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -145,7 +147,7 @@
   <div class="docs-body">
 <h2 id="vscode-tools" tabindex="-1">VSCode Tools <a class="heading-anchor" href="#vscode-tools" aria-hidden="true">#</a></h2>
 <p><a href="https://youtu.be/aZtraQ2N4Oc">Youtube Breakdown</a></p>
-<p>VSCodeTools helps creating/opening/managing VSCode workspaces and synced (externalized) scripts or tables (<code>.py, .vert, .frag, .tsv</code>).
+<p>VSCodeTools helps creating/opening/managing VSCode workspaces and synced (externalized) scripts or tables. The file extension is detected from the DAT's declared language or content (<code>.py, .vert, .frag, .tsv</code>, plus <code>.json, .yaml, .xml, .html</code> and others).
 The only requirement is code.exe set up as the default text editor in TD Preferences.</p>
 <p>The component is a button with the following interactions (and more, check the parameters below to get a full picture of what it does!!!)</p>
 <ul>
@@ -161,7 +163,7 @@ The only requirement is code.exe set up as the default text editor in TD Prefere
 <li><strong>Workspace</strong>: path to VSCode workspace file (with extension .code-workspace) [his may be auto-filled, see Auto-detect]</li>
 <li><strong>Auto-detect</strong>: will attempt to auto-fill the Code.exe and Workspace parameters. (on by default)
 <ul>
-<li>Code.exe will be auto-filled if it is already set up in TD Preferences</li>
+<li>Code.exe will be auto-filled if it is already set up in TD Preferences (Cursor is also detected and used if set as the Preferences text editor)</li>
 <li>Workspace will be the name of the project file by default</li>
 </ul>
 </li>

@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <link rel="icon" href="/favicon.png" type="image/png" />
 <link rel="apple-touch-icon" href="/favicon.png" />
-<title>HydroHomie — FNSTools docs</title>
-<meta name="description" content="A toolbar reminder to drink water at an interval you set. Off by default." />
-<meta property="og:title" content="HydroHomie — FNSTools docs" />
-<meta property="og:description" content="A toolbar reminder to drink water at an interval you set. Off by default." />
+<title>TDX_SearchPalette — FNSTools docs</title>
+<meta name="description" content="Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen." />
+<meta property="og:title" content="TDX_SearchPalette — FNSTools docs" />
+<meta property="og:description" content="Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen." />
 <meta property="og:type" content="website" />
 <meta property="og:image" content="https://tools.functionstore.xyz/og-image.png" />
-<link rel="canonical" href="https://tools.functionstore.xyz/docs/hydrohomie/" />
+<link rel="canonical" href="https://tools.functionstore.xyz/docs/tdx-searchpalette/" />
 <meta name="robots" content="index, follow" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -104,7 +104,7 @@
       <li><a href="/docs/autores/">AutoRes</a></li>
       <li><a href="/docs/globaloutselect/">GlobalOutSelect</a></li>
       <li><a href="/docs/globalvolcontrol/">GlobalVolControl</a></li>
-      <li><a href="/docs/hydrohomie/" aria-current="page">HydroHomie</a></li>
+      <li><a href="/docs/hydrohomie/">HydroHomie</a></li>
       <li><a href="/docs/output/">OUTPUT</a></li>
     </ul>
   </div>
@@ -125,7 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
-      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
+      <li><a href="/docs/tdx-searchpalette/" aria-current="page">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -138,29 +138,47 @@
   </div>
 </aside>
 <main class="docs-main" data-pagefind-body>
-  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> Media &amp; Output</p>
-  <h1>HydroHomie</h1>
-  <p class="lede">A toolbar reminder to drink water at an interval you set. Off by default.</p>
-  <p class="badges"><span class="badge badge-cat">▶ Media &amp; Output</span></p>
+  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> Workflow</p>
+  <h1>TDX_SearchPalette</h1>
+  <p class="lede">Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.</p>
+  <p class="badges"><span class="badge badge-cat">⚡ Workflow</span> <span class="badge">by <a href="https://github.com/yeataro/TD-SearchPalette" target="_blank" rel="noopener">Yea Chen</a></span></p>
   
   
   <div class="docs-body">
-<h2 id="hydrohomie" tabindex="-1">HydroHomie <a class="heading-anchor" href="#hydrohomie" aria-hidden="true">#</a></h2>
-<p>This toolbar icon reminds you to drink water every 45 minutes (can be changed)</p>
+<h2 id="tdx-searchpalette" tabindex="-1">TDX_SearchPalette <a class="heading-anchor" href="#tdx-searchpalette" aria-hidden="true">#</a></h2>
+<p>Adds a search field to TouchDesigner's palette browser, so palette
+components can be found by typing instead of scrolling the folder tree.
+This is <a href="https://github.com/yeataro/TD-SearchPalette">Yea Chen's TD-SearchPalette</a>,
+vendored into the toolkit.</p>
+<p>The component installs itself into the palette on project start while
+<strong>Auto Install</strong> is on (the toggle roams with your config), and can be
+installed or removed at any time with the <strong>Install</strong> / <strong>Uninstall</strong>
+pulses on its parameters.</p>
+<p>With <a href="/docs/my-hotkeys/">MY_HOTKEYS</a> installed, <code>ctrl+shift+f</code> focuses the
+palette search field directly. The hotkey feature-detects the installed
+field, so it simply stays quiet when TDX_SearchPalette is absent.</p>
+<h2 id="search-behavior" tabindex="-1">Search behavior <a class="heading-anchor" href="#search-behavior" aria-hidden="true">#</a></h2>
+<p>Matching goes beyond the original module's prefix search:</p>
 <ul>
-<li>This feature is off by default. It is optional (but recommended) to turn this on via HydroHomie's own <code>Enable</code> parameter (right-click the icon to open its parameters)</li>
-<li>Shows a small alert icon in the toolbar to remind you taking a few sips of water. Important!
-<ul>
-<li>Clicking the icon will make it go away until the next reminder</li>
-</ul>
-</li>
-<li>The interval can be changed from the default 45 minutes right clicking on the icon that opens the settings</li>
-<li>If it was enabled, can also be disabled in the same menu</li>
-<li>Thank me later 💦</li>
+<li><strong>Substring, case-insensitive</strong> — <code>blur</code> finds <code>hsvBlur</code>, <code>radialBlur</code>
+and <code>barrel_blur</code>, not just names that start with it.</li>
+<li><strong>Multiple words AND together</strong> — <code>audio an</code> finds <code>audioAnalysis</code>.</li>
+<li><strong>Ranked results</strong> — exact matches first, then names starting with the
+query, then everything containing it, alphabetical within each group.</li>
+<li><strong>Wildcards still work</strong> — a word carrying <code>*</code> or <code>?</code> is matched as a
+pattern (<code>audio*</code> = classic prefix search).</li>
+<li><strong>Folder search</strong> — a word containing <code>/</code> matches the palette <em>folder</em>
+instead of the name: <code>gen/ noise</code> finds <code>noise</code> in the Generators
+folder, and <code>tools/</code> alone lists a whole folder. Toggleable via the
+<strong>Folder Search</strong> parameter.</li>
+<li><strong>Latest version only</strong> — numbered copies of one component (<code>tool</code>,
+<code>tool1</code>, <code>tool2</code>, or the same name in two folders) collapse to the
+latest-modified file. Toggleable via the <strong>Latest Version Only</strong>
+parameter.</li>
 </ul>
 
   </div>
-  <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/HydroHomie.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
+  <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/TDX_SearchPalette.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
 </main>
 </div>
 <footer class="site">

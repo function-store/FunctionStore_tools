@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -153,6 +155,12 @@ Forget <code>absTime.seconds</code>, use <code>#AT</code>! The abbreviations wor
 <li>#!.par.Something -&gt; parent.Project.par.Something (for example)</li>
 <li>#!!Something -&gt; parent.Project.par.Something (for example)</li>
 <li>Encouraging even more to use parent shortcuts (which you can easily add by <code>ctrl+shift-clicking</code> on the diamond button</li>
+</ul>
+<p>Two more abbreviations promote the parameter you're typing in straight to its parent (via <a href="/docs/custompartools/#custompar-tools">CustomParTools</a>, if installed) and replace themselves with the resulting shortcut path:</p>
+<ul>
+<li><code>#@!</code> promotes with a <strong>Bind</strong> reference</li>
+<li><code>#@~</code> promotes with an <strong>Expression</strong> reference</li>
+<li>Leave off a name to reuse the parameter's own name, or supply one, e.g. <code>#@!MyName</code></li>
 </ul>
 <blockquote>
 <p><strong>IMPORTANT</strong>: due to what's available through the TD API, you need to have your mouse over the parameter box when finishing typing (either by clicking away, in which case you need to move the mouse over to the parameter again, or my suggested way of hitting <code>Enter</code>).</p>

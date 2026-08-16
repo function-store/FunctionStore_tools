@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -139,26 +141,66 @@
   <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> Surfaces</p>
   <h1>tools_ui</h1>
   <p class="lede">The tabbed panel that hosts the toolkit's larger tool UIs.</p>
-  <p class="badges"><span class="badge badge-cat">▦ Surfaces</span> <span class="badge">by <a href="https://alphamoonbase.de/" target="_blank" rel="noopener">AlphaMoonbase.berlin</a></span></p>
+  <p class="badges"><span class="badge badge-cat">▦ Surfaces</span></p>
   
-  <nav class="toc"><span>On this page</span><ul><li><a href="#tools-ui">tools_ui</a></li><li><a href="#op-store">op_store</a></li><li><a href="#olib-browser">Olib Browser</a></li></ul></nav>
+  
   <div class="docs-body">
 <h2 id="tools-ui" tabindex="-1">tools_ui <a class="heading-anchor" href="#tools-ui" aria-hidden="true">#</a></h2>
-<p>Clicking this will open a collection of tools that have some minimal user interface. They are accessible through the UI tabs.
-<strong>Right-Clicking</strong> on the tabs will open further customization of the respective tool <em>(very important for midi/oscMapper configuration)</em>.
-The tabs can also be re-ordered by drag-dropping, and you can also add new tabs easily by parenting a container to <code>/FunctionStore_tools/tools_ui</code>.</p>
-<h2 id="op-store" tabindex="-1">op_store <a class="heading-anchor" href="#op-store" aria-hidden="true">#</a></h2>
-<p>This component is a modified version of <code>AlphamoonBase.berlin</code>'s <a href="https://td-olib.org/component/operator-store">Operator Store</a>. You can drag and drop any operator or component from your network to this UI.
-After that you can reference the dropped OP/COMP with a <strong>Shortcut</strong> of the Shortcut column.</p>
-<p>The tool itself has a global shortcut of <code>STORE</code>, so drag-and-dropping a <code>KinectCHOP</code> named <code>kinect1</code> from <code>/SENSORS/KINECT/kinect1</code> onto the UI, you can easily reference that operator as follows:** <code>op.STORE.Kinect</code>
-You can also drag and drop from the operator column onto your network editor to place a **Select OP <strong>of the OP! You can also use the buttons on the right to:</strong> open a viewer, open parameters, open a floating network at the referenced operator location.</p>
-<p>This tool is a good way to keep clean references to project-wide operators, similar to Global OP Shortcuts, but for operators; or <code>iop</code>s for the whole project.</p>
-<p>If enabled in the <code>FunctionStore_tools</code> base custom parameters, the contents of the table will be externalized to the project folder.</p>
-<blockquote>
-<p><strong>BEWARE:</strong> Moving the referenced operator to a different location will break the references, and you'll have to manually update the <code>store_table</code> inside the component.</p>
-</blockquote>
-<h2 id="olib-browser" tabindex="-1">Olib Browser <a class="heading-anchor" href="#olib-browser" aria-hidden="true">#</a></h2>
-<p>Opens the <a href="https://td-olib.org/">Olib Browser</a> by AlphaMoonbase.berlin. You can browse and directly place tons of very useful components to your network.</p>
+<p>Clicking the <strong>Fx</strong> toolbar button opens a tabbed panel collecting the
+toolkit's larger tool UIs — the mappers, hotstrings, palette editors and
+friends. <strong>Right-clicking</strong> a tab opens the owning tool's parameters
+<em>(very important for midi/oscMapper configuration)</em>. Tabs can be
+re-ordered by drag-and-drop, and closed with their <strong>✕</strong> button (closing a
+tab switches the tool's <em>UI Tab</em> toggle off; re-enable it on the tool's
+parameters to bring the tab back). Tab order and the active tab roam with
+your config.</p>
+<p>Tabs are <strong>discovered, not hardcoded</strong>: tools_ui sweeps its sibling tools
+for a <code>UI Tab</code> parameter page and builds exactly the tabs of the tools you
+have installed. Installing or removing tools never leaves dead tabs — the
+panel rebuilds on startup and every time it opens.</p>
+<h2 id="contributing-a-tab" tabindex="-1">Contributing a tab <a class="heading-anchor" href="#contributing-a-tab" aria-hidden="true">#</a></h2>
+<p>Any depth-1 COMP next to tools_ui can contribute a tab by carrying a
+<strong>UI Tab</strong> section on its <code>Registry</code> parameter page (a <code>Uitabsection</code>
+header plus these parameters — the same page that hosts the registry
+sections like <code>Cf*</code>/<code>Tb*</code>):</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Uitab</code> (toggle)</td>
+<td>contribute a tab at all</td>
+</tr>
+<tr>
+<td><code>Uitablabel</code> (str)</td>
+<td>tab label; empty = the COMP's name</td>
+</tr>
+<tr>
+<td><code>Uitaborder</code> (int)</td>
+<td>default ordering (user re-ordering wins)</td>
+</tr>
+<tr>
+<td><code>Uitabpanel</code> (str)</td>
+<td>what the tab shows — see below</td>
+</tr>
+</tbody>
+</table>
+<p><code>Uitabpanel</code> accepts three forms:</p>
+<ul>
+<li><strong>empty</strong> — the tool root itself is the tab's panel (it must be a panel
+COMP; tools_ui wires it in as a panel child).</li>
+<li><strong><code>./somePath</code></strong> — a DAT/CHOP/TOP inside the tool, shown through a
+viewer (the SearchWords table works this way).</li>
+<li><strong><code>params:&lt;pages&gt;</code></strong> — a parameter view of the tool root scoped to the
+named custom pages, e.g. <code>params:Families Colors</code> (bare <code>params:</code> shows
+all pages). The ColorUI tab works this way.</li>
+</ul>
+<p>A tool that also wants a <strong>refresh on show</strong> simply carries a <code>Refresh</code>
+pulse parameter — tools_ui pulses it by capability, never by name.</p>
 
   </div>
   <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/tools_ui.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>

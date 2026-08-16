@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -143,9 +145,11 @@
   
   
   <div class="docs-body">
-<!-- TODO: no wiki content existed for this package. Written
-     from the catalog description only -- please expand. -->
-<p>Reset custom parameters back to their defaults.</p>
+<h2 id="clearpars" tabindex="-1">ClearPars <a class="heading-anchor" href="#clearpars" aria-hidden="true">#</a></h2>
+<p>Clears parameter errors on an operator: any parameter left in <code>Bind</code> mode with no valid bind master, or in <code>Expression</code> mode whose expression currently raises, is switched to <code>Constant</code> mode (dropping the dangling bind/expression). <code>COMP</code>s also have their script errors cleared.</p>
+<ul>
+<li><strong>Recursive</strong>: also processes the operator's immediate children (excluding annotations)</li>
+</ul>
 
   </div>
   <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/ClearPars.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>

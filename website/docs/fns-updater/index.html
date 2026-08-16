@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -144,13 +146,13 @@
   <nav class="toc"><span>On this page</span><ul><li><a href="#wiki">Wiki</a></li><li><a href="#self-update-feature">Self-Update Feature</a></li></ul></nav>
   <div class="docs-body">
 <h2 id="wiki" tabindex="-1">Wiki <a class="heading-anchor" href="#wiki" aria-hidden="true">#</a></h2>
-<p>Clicking this icon will open this Wiki page. If the border of this icon is yellow it means there's an update available to the toolkit. Clicking it in that state will prompt you for an update, that will also replace the current .tox with the new one!</p>
+<p>Clicking this icon will open this Wiki page. If the border of this icon is yellow it means one or more of your installed packages have an update available. Clicking it in that state will prompt you for an update.</p>
 <h2 id="self-update-feature" tabindex="-1">Self-Update Feature <a class="heading-anchor" href="#self-update-feature" aria-hidden="true">#</a></h2>
-<p>If the toolkit (v2.4.0+) is installed in your project and there is an update, the <code>?</code> icon in the toolbar will have a yellow border. Clicking the icon will prompt you for an update, you can say <code>No</code> in which case it will take you to the Wiki as usual, otherwise the following is going to happen:</p>
+<p>If there is an update available for any package installed in your project, the <code>?</code> icon in the toolbar will have a yellow border. Clicking the icon will prompt you for an update, you can say <code>No</code> in which case it will take you to the Wiki as usual, otherwise the following is going to happen:</p>
 <ul>
 <li>Save all configs (custom parameters of tools) to a <code>json</code> file</li>
-<li>Download the new version of the toolkit <code>.tox</code> into the user palette, and replace the existing one with it</li>
-<li>Load all the saved configs from the previously saved <code>json</code> file</li>
+<li>Fetch only the packages that actually changed from the store (verifying each download's hash), and replace just those -- a package you never installed stays uninstalled</li>
+<li>Reload each replaced tool's saved configs</li>
 </ul>
 <p>This way we can ensure that your settings are retained between updates, alongside the externally retained data, outlined in the next chapter.</p>
 

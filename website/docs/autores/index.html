@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -144,7 +146,7 @@
   
   <div class="docs-body">
 <h2 id="autores" tabindex="-1">AutoRes <a class="heading-anchor" href="#autores" aria-hidden="true">#</a></h2>
-<p>When holding <code>Alt</code> (same for Mac) and placing a <strong>Generator</strong> type TOP this component sets the <code>Output Resolution</code> parameter to 'Parent Panel Size' if available, otherwise <code>Custom Resolution</code> and the expression for the <code>resolutionh</code> (and similarly to <code>resolutionw</code>): <code>&quot;tdu.tryExcept(lambda: parent.Project.width, op.AUTO_RES.par.Resolutionw)&quot;</code>. In a nutshell this means if <code>parent.Project.width</code> is defined it will set the resolution to those values, if not it will set the resolution to the value defined by this component's custom parameters.</p>
+<p>When holding <code>Alt</code> (same for Mac) and placing a <strong>Generator</strong> type TOP this component sets the <code>Output Resolution</code> parameter to 'Parent Panel Size' if available, otherwise <code>Custom Resolution</code> and the expression for the <code>resolutionw</code> (and similarly to <code>resolutionh</code>): <code>&quot;tdu.tryExcept(lambda: parent.Project.width, op.AUTO_RES.par.Resolutionw)&quot;</code>. In a nutshell this means if <code>parent.Project.width</code> is defined it will set the resolution to those values, if not it will set the resolution to the value defined by this component's custom parameters. Where available it also sets the <code>RGB</code> and <code>Pixel Format</code> parameters to this component's defaults.</p>
 
   </div>
   <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/AutoRes.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>

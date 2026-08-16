@@ -37,6 +37,7 @@
     </button>
     <nav id="site-nav" class="site-nav">
       <a href="/#get">Install</a>
+      <a href="/get/">Configurator</a>
       <a href="/#tools">Tools</a>
       <a href="/docs/" aria-current="page">Docs</a>
       <a href="/#credits">Credits</a>
@@ -124,6 +125,7 @@
       <li><a href="/docs/quickpane/">QuickPane</a></li>
       <li><a href="/docs/quicktime/">QuickTime</a></li>
       <li><a href="/docs/resetpls1/" aria-current="page">ResetPLS1</a></li>
+      <li><a href="/docs/tdx-searchpalette/">TDX_SearchPalette</a></li>
     </ul>
   </div>
   <div class="side-group">
@@ -144,7 +146,7 @@
   
   <div class="docs-body">
 <h2 id="global-resetpls" tabindex="-1">Global ResetPLS <a class="heading-anchor" href="#global-resetpls" aria-hidden="true">#</a></h2>
-<p><a href="https:**//youtu.be/G25n1DAI2pM">YouTube breakdown</a></p>
+<p><a href="https://youtu.be/G25n1DAI2pM">YouTube breakdown</a></p>
 <p>This component takes care of all your reset needs, pulsing all <code>resetpulse</code> or similar parameters of operators included in search.
 You can enable or disable certain operator types (hope I didn't forget any). No more dragging a Keyboard In CHOP all across your networks!
 You can also specify exceptions and whether those exceptions block further resets down the line (only relevant for COMPs).</p>
@@ -157,6 +159,7 @@ You can also specify exceptions and whether those exceptions block further reset
 <li><strong>Except:</strong> list of opeartor exceptions the search should ignore.</li>
 <li><strong>Exceptions Limit:</strong> only relevant for baseCOMP that are listed as Exception. If enabled all further operators under are also excluded.</li>
 <li><strong>Enable/Disable All OPtypes:</strong> sets the state of all operator type toggles</li>
+<li><strong>Reset On Startup:</strong> pulses <code>Reset</code> automatically when the project starts</li>
 <li><strong>Reset:</strong> pulses reset parameter for all included operators</li>
 </ul>
 <h3 id="top-chop-sop-comp" tabindex="-1">TOP, CHOP, SOP, COMP <a class="heading-anchor" href="#top-chop-sop-comp" aria-hidden="true">#</a></h3>
@@ -168,7 +171,7 @@ You can also specify exceptions and whether those exceptions block further reset
 <ul>
 <li><strong>Reset Timeline:</strong> if enabled resets root timeline to the frame specified in <code>Reset Frame</code></li>
 <li><strong>Reset Frame:</strong> which frame to reset to if <code>Reset Timeline</code> is enabled</li>
-<li><strong>Custom Script:</strong> toggles executing a custom callback on reset</li>
+<li><strong>Callback:</strong> toggles executing a custom callback on reset</li>
 <li><strong>Create Callbacks:</strong> create a text DAT next to this component where you can define an <code>onReset</code> script</li>
 <li><strong>Callbacks:</strong> location of the callback script (points to the default script by default)</li>
 <li><strong>Static Exceptions:</strong> you should list all pattern match strings here you want to exclude.
