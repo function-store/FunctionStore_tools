@@ -8,7 +8,7 @@ window.FNS_MANIFEST = {
  "toolkit": {
   "name": "FNSTools",
   "td_build": "099",
-  "project": "FunctionStore_tools_2025_DEV.40.toe"
+  "project": "FunctionStore_tools_2025_DEV.41.toe"
  },
  "core": [
   "FNS_ConfigRegistry",
@@ -134,9 +134,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "Operator and family colour palettes, with the active palette roaming through config.",
-   "version": "1.0.1",
+   "version": "1.0.2",
    "help_url": "https://tools.functionstore.xyz/docs/colorui/",
-   "surfaces": [],
+   "surfaces": [
+    "tools_ui"
+   ],
    "shortcut": "FNS_COLOR_UI",
    "ops": 165,
    "requires": [
@@ -189,9 +191,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field.",
-   "version": "1.1.0",
+   "version": "1.1.1",
    "help_url": "https://tools.functionstore.xyz/docs/exprhotstrings/",
-   "surfaces": [],
+   "surfaces": [
+    "tools_ui"
+   ],
    "shortcut": "HOTSTRINGS",
    "ops": 114,
    "requires": [
@@ -388,10 +392,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "OP Create dialog extras: the IO filter, operator search words and script injection.",
-   "version": "1.0.2",
+   "version": "1.0.3",
    "help_url": "https://tools.functionstore.xyz/docs/fns-opmenu/",
    "surfaces": [
-    "opmenu"
+    "opmenu",
+    "tools_ui"
    ],
    "shortcut": "FNS_OPMOD",
    "ops": 291,
@@ -552,11 +557,13 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Media & Output",
    "description": "Browse Global OP Shortcuts and the out operators inside them in a tree, and drag any of them into a network as a Select.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://tools.functionstore.xyz/docs/globaloutselect/",
-   "surfaces": [],
+   "surfaces": [
+    "tools_ui"
+   ],
    "shortcut": "GLOBAL_OUT_SEL",
-   "ops": 765,
+   "ops": 750,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -630,10 +637,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Control",
    "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://tools.functionstore.xyz/docs/midimapper/",
    "surfaces": [
-    "toolbar"
+    "toolbar",
+    "tools_ui"
    ],
    "shortcut": "FNS_MULTIMIDI",
    "ops": 389,
@@ -831,9 +839,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Control",
    "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://tools.functionstore.xyz/docs/oscmapper/",
-   "surfaces": [],
+   "surfaces": [
+    "tools_ui"
+   ],
    "shortcut": "AMB_OSC_MAPPER",
    "ops": 257,
    "requires": [
@@ -1204,13 +1214,13 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "The tabbed panel that hosts the toolkit's larger tool UIs.",
-   "version": "1.0.0",
+   "version": "1.1.0",
    "help_url": "https://tools.functionstore.xyz/docs/tools-ui/",
    "surfaces": [
     "toolbar"
    ],
    "shortcut": "MY_UI",
-   "ops": 310,
+   "ops": 284,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
