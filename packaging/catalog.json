@@ -71,10 +71,6 @@
    "category": "Surfaces",
    "description": "Borderless TouchDesigner window, plus timeline hiding."
   },
-  "ClearPars": {
-   "category": "Parameters",
-   "description": "Reset custom parameters back to their defaults."
-  },
   "ColorUI": {
    "category": "Surfaces",
    "description": "Operator and family colour palettes, with the active palette roaming through config."

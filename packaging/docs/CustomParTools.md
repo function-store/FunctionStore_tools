@@ -30,7 +30,7 @@ This button is a quick way to manipulate **Custom Parameters** of a parent compo
 - **Shift-LeftClick:** Opens **Selected OP Parameters**.
 - **RightClick:** Opens **Parent Component Editor**.
 - **Shift-RightClick:** Opens **Selected OP Component Editor**.
-- **Alt-LeftClick (Cmd+LeftClick for Mac):** Clears broken parameter expressions/binds of a selected COMP recursively (usually useful after copying a COMP from another project)
+- **Alt-LeftClick (Cmd+LeftClick for Mac):** Runs **ClearPars** on the selected COMP — any parameter left in `Bind` mode with no valid bind master, or in `Expression` mode whose expression currently raises, is switched to `Constant` mode (dropping the dangling bind/expression), and the COMP's script errors are cleared too. Recursive into the COMP's immediate children (excluding annotations) — usually useful after copying a COMP from another project
 - **Ctrl+Alt+Drag** an **OP** (Ctrl+Cmd+Drag on Mac): Promote as `iop` to parent
 - **Ctrl+Shift+Click**: Add Parent shortcut
 - **Shift+Alt+LeftClick** (Shift+Cmd+LeftClick for Mac): Add [QuickExt](/docs/custompartools/#quickext) to parent for a streamlined python Extension workflow - see [QuickExt](/docs/custompartools/)  
