@@ -27,7 +27,14 @@ tool to published bytes:
 2. **Write the notes.** Prose into `release_notes.md`; a `PackageName:`
    line rides that package's changelog bullet and ships as its
    `whatsnew`. See [Release notes](#release-notes).
-3. **Release**, from the Textport:
+3. **Publish** — click the ☁ in that package's row in Private
+   Investigator's lister. Select several rows first and use **Publish
+   Selected to Bucket** on PI's `Publish` page to ship them as one drop;
+   click the ☁ on the toolkit **root** to publish everything whose
+   version is already ahead of the bucket. Every path shows you the
+   packages, their version transitions, the release label and the first
+   line of the notes before anything happens. The Textport does the same
+   thing without the dialogs:
 
    ```python
    exec(open('packaging/release_one.py').read())
@@ -41,11 +48,18 @@ step 3 (see [The droppable rails](#the-droppable-rails)) — `Stage()`
 hashes them into the manifest as it goes, so a stale bootstrap would
 publish under fresh hashes.
 
-Private Investigator's **Release** button is a different motion from
-this: it runs the component's `pre_release` hook and exports a tox into
-`modules/release/`, which is PI's own versioning apparatus. It does not
-bump `Pkgversion`, rebuild the manifest, or reach the bucket — the rail
-above is what publishes.
+Two buttons in that lister sound alike and are not. **Publish** (☁) is
+the rail above: bump → build → stage → upload to the bucket.
+**Release** is PI's own apparatus — it runs the component's
+`pre_release` hook and writes a tox into `modules/release/`, touching
+neither `Pkgversion` nor the manifest nor the bucket.
+
+The publish UI is stamped into PI by
+[`scripts/pi_publish_ui.py`](../scripts/pi_publish_ui.py), not authored
+inside it. PI reloads from its own `.tox` on every project open, so
+anything typed into it live is temporary; if the ☁ column ever
+disappears, re-run that script and save PI. That is exactly how this
+feature was lost once already.
 
 ## Regenerating the manifest
 
