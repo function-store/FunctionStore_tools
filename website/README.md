@@ -197,22 +197,30 @@ published than the one the download links point at.
 
 ## Release links
 
-Download buttons are stamped with the published release at build time,
-read from the rolling manifest at
+Download buttons point at the **mutable `latest/` aliases**
+(`latest/FNSTools.tox`, `latest/FNS_Installer.tox`) that `upload.py`
+publishes beside each release. That is deliberate: a release cannot leave
+the buttons serving bytes that are no longer current, so **a version bump
+needs no site rebuild**. `latest/` is for humans only — installs still
+resolve pinned URLs from the manifest, because reproducible installs are
+what make bug reports correlatable (`publish.py`, "Never publish a mutable
+`latest/<Package>.tox`").
+
+Only the visible version **label** is stamped at build time, read from the
+rolling manifest at
 `https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/manifest.json`.
-If that fetch fails the build says so and keeps the release already in
-`index.html`, so the links always point at something real.
+A stale label is cosmetic: it sits next to a download that is still
+correct. Rebuild after a release if you want the number to match.
 
-The page also tries to refresh them at runtime, but **that fetch is
-currently blocked**: the r2.dev bucket sends no
-`Access-Control-Allow-Origin` header. Enabling CORS on the bucket would
-make the page self-update between deploys. Until then, re-run the build
-after each release.
+The page also tries to refresh label and hrefs at runtime, but **that fetch
+is currently blocked**: neither the r2.dev bucket nor
+`storage.functionstr.com` sends an `Access-Control-Allow-Origin` header.
+Enabling CORS on the bucket would make the label self-correcting and would
+upgrade the hrefs from `latest/` to the pinned release in the browser.
 
-Note the artifact is still named `FunctionStore_tools_2025.tox` — the
-bucket path is already `fnstools`, but the `.tox` filenames have not been
-renamed. The filename is a constant in `index.html` and in
-`tools/build-site.mjs`; do not assume it tracks the brand.
+The bootstrap artifact is `FNSTools.tox`, renamed from
+`FunctionStore_tools_2025.tox` in the v3.0.0 redesign. The filename is a
+constant in `index.html`; do not assume it tracks the brand.
 
 ## Brand assets
 

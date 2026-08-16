@@ -416,13 +416,17 @@ ${items}
       </div>`;
 }).filter(Boolean).join('\n');
 
-// The published release, stamped into the static hrefs at build time.
+// The published release, stamped into the version LABEL at build time.
 //
-// The page also refreshes these at runtime, but that fetch cannot be relied
-// on: the r2.dev bucket serves no Access-Control-Allow-Origin header, so the
-// browser blocks it (TDMap's site has the same silent failure). Stamping here
-// is what actually keeps the download links current — the runtime fetch only
-// helps if CORS is enabled on the bucket later.
+// The hrefs themselves are no longer stamped: they point at the mutable
+// latest/ aliases, so a release cannot leave them serving stale bytes even
+// if nobody rebuilds. Only the visible "v3.0.1" text is stamped, and it is
+// cosmetic — a stale label sits next to a download that is still correct.
+//
+// The page also refreshes both at runtime, but that fetch cannot be relied
+// on: neither the r2.dev bucket nor storage.functionstr.com serves an
+// Access-Control-Allow-Origin header, so the browser blocks it. Enabling
+// CORS on the bucket is what would make the label self-correcting too.
 async function publishedRelease() {
   // CI sets this. Without it the stamped release depends on what is published
   // at the moment the build runs, so a release cut between commit and CI would
@@ -461,20 +465,20 @@ if (fs.existsSync(landing)) {
     `$1${pages.length}$2`);
 
   if (live) {
-    out = out.replace(/(r2\.dev\/fnstools\/)v[^/"]+\//g, `$1${live.release}/`);
+    // Only the label. The hrefs stay on latest/ -- see publishedRelease().
     // No leading space: the span sits inside a .btn, which is inline-flex
     // with its own 8px gap, so one would render as a double space.
     out = out.replace(/(<span class="js-fns-ver">)[^<]*(<\/span>)/g,
       `$1${live.release}$2`);
-    console.log(`stamped release ${live.release} (${live.packages?.length ?? '?'} packages published)`);
+    console.log(`stamped label ${live.release} (${live.packages?.length ?? '?'} packages published)`);
     if (live.packages && live.packages.length !== pages.length) {
       console.log(`note: catalog has ${pages.length} packages but ${live.release} publishes ` +
         `${live.packages.length} — the site lists the catalog, so these align at the next publish`);
     }
   } else if (process.env.FNSTOOLS_NO_RELEASE_FETCH) {
-    console.log('release fetch skipped — download links keep the release already in index.html');
+    console.log('release fetch skipped — version label keeps whatever index.html already says');
   } else {
-    console.log('note: could not reach the release manifest — download links keep the release already in index.html');
+    console.log('note: could not reach the release manifest — version label keeps whatever index.html already says');
   }
   fs.writeFileSync(landing, out);
 } else {

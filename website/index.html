@@ -349,7 +349,7 @@
       <a href="#credits">Credits</a>
       <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
       <a class="btn btn-secondary" href="https://github.com/function-store/FunctionStore_tools" target="_blank" rel="noopener">GitHub</a>
-      <a class="btn btn-primary js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.1/FunctionStore_tools_2025.tox" download>Get FNSTools<span class="js-fns-ver">v3.0.1</span> →</a>
+      <a class="btn btn-primary js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNSTools.tox" download>Get FNSTools<span class="js-fns-ver">v3.0.1</span> →</a>
     </nav>
   </div>
 </header>
@@ -364,7 +364,7 @@
       Take the whole toolkit or pick the three tools you actually want.
     </p>
     <div class="hero-cta">
-      <a class="btn btn-primary btn-lg js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.1/FunctionStore_tools_2025.tox" download>Get FNSTools<span class="js-fns-ver">v3.0.1</span> →</a>
+      <a class="btn btn-primary btn-lg js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNSTools.tox" download>Get FNSTools<span class="js-fns-ver">v3.0.1</span> →</a>
       <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
     </div>
     <ul class="hero-meta">
@@ -402,8 +402,8 @@
           arrives empty — it carries the installer, the updater and nothing else yet.
           The container you drop <em>is</em> the install target.
         </p>
-        <a class="btn btn-primary js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.1/FunctionStore_tools_2025.tox" download>Download<span class="js-fns-ver">v3.0.1</span></a>
-        <p class="path-note">Already have a toolkit container? Grab the <a class="js-fns-installer" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.1/FNS_Installer.tox" download>bare installer</a> instead (~14 KB).</p>
+        <a class="btn btn-primary js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNSTools.tox" download>Download<span class="js-fns-ver">v3.0.1</span></a>
+        <p class="path-note">Already have a toolkit container? Grab the <a class="js-fns-installer" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNS_Installer.tox" download>bare installer</a> instead (~14 KB).</p>
         <p class="path-note">No download at all: <a href="/get/">pick your tools online</a> and paste one line into the Textport — it fetches and verifies everything itself.</p>
       </div>
       <div class="path">
@@ -437,7 +437,7 @@
     </div>
     <div class="quickstart">
       <ol>
-        <li>Drop <code>FunctionStore_tools_2025.tox</code> into the root (<code>/</code>) of a project.</li>
+        <li>Drop <code>FNSTools.tox</code> into the root (<code>/</code>) of a project.</li>
         <li>On the <code>FNS_Installer</code> inside it, pulse <strong>Pick Tools</strong>. On the first run it fetches the catalogue and tells you it is doing so.</li>
         <li>Pick your tools, hit <strong>Review install…</strong>, read the plan, hit <strong>Install</strong>. The packages land in the container you dropped.</li>
       </ol>
@@ -861,7 +861,7 @@
       One <code>.tox</code>, then pick what you need. It is free, and it takes about a minute.
     </p>
     <div class="hero-cta">
-      <a class="btn btn-primary btn-lg js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/v3.0.1/FunctionStore_tools_2025.tox" download>Get FNSTools<span class="js-fns-ver">v3.0.1</span> →</a>
+      <a class="btn btn-primary btn-lg js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNSTools.tox" download>Get FNSTools<span class="js-fns-ver">v3.0.1</span> →</a>
       <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
     </div>
   </div>
@@ -892,12 +892,15 @@
   // make the page self-refresh between deploys. Either way the static hrefs
   // point at a release that exists.
   //
-  // The artifact is still named FunctionStore_tools_2025.tox: the bucket path
-  // is already `fnstools` but the .tox filenames have not been renamed yet.
-  // Read the name from here rather than assuming it matches the brand.
+  // The static hrefs point at latest/, the mutable human aliases upload.py
+  // publishes beside each release -- so a release never leaves the download
+  // buttons pointing at bytes that are no longer current, with no rebuild.
+  // Installs still resolve pinned: when the fetch below succeeds it upgrades
+  // every href to the release the manifest names, which is the reproducible
+  // URL. Until the bucket sends CORS the static latest/ href is what serves.
   (function () {
     var BASE = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools';
-    var BOOTSTRAP = 'FunctionStore_tools_2025.tox';
+    var BOOTSTRAP = 'FNSTools.tox';
     var INSTALLER = 'FNS_Installer.tox';
 
     function setAll(sel, fn) {
