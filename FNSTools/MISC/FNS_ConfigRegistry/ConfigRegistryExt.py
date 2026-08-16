@@ -668,14 +668,60 @@ class ConfigRegistryExt(RegistryBase):
 	# timer, and the timer deactivates it after UI_IDLE_SECONDS of silence.
 	# Nothing listens when nobody is looking.
 
+	SETTINGS_ASSETS = ('settings_page', 'settings_server_callbacks')
+
+	def _ensureSettingsServer(self):
+		"""The Web Server DAT that serves the settings page, created if absent.
+
+		It lives HERE, on whichever copy owns the API -- in practice the
+		/sys global, which `_registryApi()` has already routed us to. Not
+		on the in-project master: hosts clone the master
+		(`enablecloning`, see StampHost), so a server op there would
+		replicate into every tool's host copy, and one settings page would
+		become seven listening sockets. The global sheds its clone binding
+		on promotion and owns itself, which is exactly the singleton this
+		wants.
+
+		Built in code, like _ensurePresaveHealPar, because it was not: an
+		install carried the page and the callbacks with nothing to serve
+		them, so OpenSettingsUI answered "no settings_server" and the
+		settings UI was unreachable. A hand-made op can go missing again;
+		one the registry re-creates on demand cannot -- and because it is
+		re-created per session it never has to be saved into a package.
+
+		A global promoted BEFORE the page existed carries no assets to
+		serve (promotion is a comp copy, so a fresh one would have them);
+		they are pulled from the master here rather than leaving the UI
+		dead until the next promotion. Returns None when neither copy has
+		a page."""
+		comp = self.ownerComp
+		master = self._masterComp()
+		for name in self.SETTINGS_ASSETS:
+			if comp.op(name) is None and master is not None and master.valid:
+				src = master.op(name)
+				if src is not None:
+					comp.copy(src, name=name)
+		page = comp.op('settings_page')
+		if page is None:
+			return None
+		ws = comp.op('settings_server')
+		if ws is None:
+			ws = comp.create(webserverDAT, 'settings_server')
+			ws.nodeX, ws.nodeY = page.nodeX, page.nodeY - 150
+			ws.par.active = False        # OpenSettingsUI turns it on
+		cb = comp.op('settings_server_callbacks')
+		if cb is not None:
+			ws.par.callbacks = cb
+		return ws
+
 	def OpenSettingsUI(self):
 		api = self._registryApi()
 		if api is not self:
 			return api.OpenSettingsUI()
-		ws = self.ownerComp.op('settings_server')
+		ws = self._ensureSettingsServer()
 		if ws is None:
 			return {'ok': False,
-					'why': f'no settings_server on {self.ownerComp.path}'}
+					'why': f'no settings_page in {self.ownerComp.path}'}
 		if not ws.par.active.eval():
 			port = self._freeUiPort()
 			if port is None:
