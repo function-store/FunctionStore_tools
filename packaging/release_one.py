@@ -1,7 +1,8 @@
 """Single-motion package releases: bump -> build -> stage (-> upload).
 
-Runs INSIDE TouchDesigner. Private Investigator's lister Publish buttons
-drive this; headless use is identical:
+Runs INSIDE TouchDesigner, from the Textport (or any button wired to it
+-- nothing drives it automatically today; Private Investigator's lister
+Release button is its own component-export motion, not this):
 
     exec(open('packaging/release_one.py').read())
     result = ReleaseOne('AutoRes')                    # auto bump + upload

@@ -13,6 +13,40 @@ configurator/       static picker over manifest.json -> selection.json
 dist/               exported .tox artifacts (gitignored; rebuild on demand)
 ```
 
+## Releasing, in short
+
+Everything else in this file is detail. The whole motion, from a changed
+tool to published bytes:
+
+1. **Land what you changed.** Each touched package has to write back to
+   its own `.tox`. Private Investigator's lister is the surface for this:
+   dirty rows are marked, and its **Save** button lands that package.
+   Then save the project. Skipping this is the classic way to lose work —
+   an externalized package reloads from its file on next open, so live
+   edits that never reached the file are simply gone.
+2. **Write the notes.** Prose into `release_notes.md`; a `PackageName:`
+   line rides that package's changelog bullet and ships as its
+   `whatsnew`. See [Release notes](#release-notes).
+3. **Release**, from the Textport:
+
+   ```python
+   exec(open('packaging/release_one.py').read())
+   result = ReleaseMany(['AutoRes', 'QuickPane'])   # bump, build, stage, upload
+   ```
+
+4. **Commit** the re-exported toxes, `manifest.json` and `CHANGELOG.md`.
+
+If the installer or the bootstrap changed, rebuild the rails *before*
+step 3 (see [The droppable rails](#the-droppable-rails)) — `Stage()`
+hashes them into the manifest as it goes, so a stale bootstrap would
+publish under fresh hashes.
+
+Private Investigator's **Release** button is a different motion from
+this: it runs the component's `pre_release` hook and exports a tox into
+`modules/release/`, which is PI's own versioning apparatus. It does not
+bump `Pkgversion`, rebuild the manifest, or reach the bucket — the rail
+above is what publishes.
+
 ## Regenerating the manifest
 
 From a session with TD running:
@@ -204,9 +238,9 @@ answers "what is current?" once. Never publish a mutable
 
 ### The one-motion rail
 
-`release_one.py` conducts the same three steps — bump → build → stage
-(→ upload) — so Private Investigator's lister **Publish** buttons and the
-manual flow above cannot drift apart:
+`release_one.py` conducts the same steps the manual flow above runs by
+hand — bump → build → stage (→ upload) — over those same functions, so
+the two cannot drift apart:
 
 ```python
 exec(open('packaging/release_one.py').read())
@@ -215,6 +249,9 @@ result = ReleaseMany(['AutoRes', 'QuickPane'])    # one release, N tools
 result = ReleaseMany([...], label='v3.1.0')       # name the drop yourself
 result = ReleaseOne('AutoRes', upload=False)      # stage only
 ```
+
+It does **not** rebuild the rails; `BuildBootstrap()` / `BuildInstaller()`
+run before it when the installer or bootstrap changed.
 
 `bump='auto'` patch-bumps a package whose live `Pkgversion` still equals
 the published one and leaves a hand-set version alone. It also clamps
