@@ -2,11 +2,45 @@
 package: FNS_ConfigRegistry
 summary: 'There are a couple of components whose states/contents you''ll probably want to synchronize between your projects, such as OpTemplates, ExprHotStrings, or Global ResetPLS exceptions.'
 features:
+  - name: Settings UI
+    anchor: settings-ui
   - name: Syncing/Externalizing
     anchor: syncingexternalizing
   - name: Custom Parameters
     anchor: custom-parameters
 ---
+
+## Settings UI
+
+Every installed tool's settings, on one page in your browser:
+
+```python
+op.FNS_CONFIGREGISTRY.OpenSettingsUI()
+```
+
+This is the toolkit's settings panel -- the replacement for the
+hand-authored control parameters that used to live on the toolkit root.
+It lists every tool that is registered, with its version and its
+parameters, and writing a value there goes through the same filters and
+persistence as any other change, so the page and the components can never
+disagree.
+
+Nothing in the page is hardcoded: there is no list of tools or parameters
+in the HTML. It asks the registry what exists and renders that, which is
+why it is always correct for the subset of tools you actually installed
+and never grows dead entries for ones you removed. Each tool's `Registry`
+page is skipped -- that is registration plumbing, not settings.
+
+A Web Server DAT inside the master serves it on `127.0.0.1`, taking the
+first free port in **9871-9880**. It only runs while you are looking at
+it: `OpenSettingsUI()` starts it and opens your browser, every request
+re-arms an idle timer, and after **10 minutes** of silence it shuts itself
+off. `op.FNS_CONFIGREGISTRY.CloseSettingsUI()` closes it immediately.
+
+> Only the master serves the page. Tools carry a host copy of the registry,
+> but calling `OpenSettingsUI()` on one forwards to the promoted `/sys`
+> master, so there is exactly one server and one page however many tools
+> you have installed.
 
 ## Syncing/Externalizing
 
