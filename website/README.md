@@ -10,13 +10,13 @@ Static files, no framework, deployed on Vercel with **root directory =
 packaging/catalog.json     category + description per package  (curated)
 packaging/docs/<Name>.md   prose + frontmatter per package     (curated)
 website/index.html         landing page                        (hand-written)
-website/docs/              GENERATED — wiped and rebuilt every run
-website/get/               GENERATED — the online configurator
+website/docs/              GENERATED — gitignored, built on every deploy
+website/get/               GENERATED — gitignored, the online configurator
 ```
 
 `/get/` is emitted from `packaging/configurator/index.html` with the
-manifest baked in (the bucket serves no CORS header, so the page's live
-refresh is best-effort) and `window.FNS_SITE` set, which promotes the
+manifest baked in (the bucket now sends CORS, so the page also refreshes
+that manifest at runtime) and `window.FNS_SITE` set, which promotes the
 **Copy install script** button — the paste rail described in
 `packaging/README.md`. Edit the configurator, not the emitted page.
 
@@ -51,8 +51,11 @@ npm run serve     # http://localhost:3000
 | `npm run pages` | pages only — leaves the existing search index alone |
 | `npm run search` | re-index only |
 
-Commit the generated `website/docs/` — Vercel serves these files directly
-and runs no build step.
+**Do not commit `website/docs/` or `website/get/`** — both are gitignored.
+Vercel runs this same build on every deploy, so the generated tree exists
+only on your machine (for preview) and on the deploy. Build output in git
+is what used to let the site drift from its sources, and it needed a CI
+job to police it; now there is nothing to drift.
 
 ## The CMS
 
@@ -116,8 +119,10 @@ conflict instead of clobbering it. Reload and redo the edit.
 
 1. `npm run cms`, edit, Save. (Or edit `packaging/docs/<Name>.md` by hand —
    the CMS is a convenience, not a gate.)
-2. **Build site** in the CMS, or `npm run build` in a terminal.
-3. Commit both the markdown and the regenerated `website/docs/`.
+2. Commit the markdown. That is the whole step — the deploy builds the
+   pages from it.
+3. Optionally **Build site** in the CMS (or `npm run build`) first, to see
+   the result locally and to catch a bad link before the deploy does.
 
 A package must exist in `catalog.json` before it can have docs — that file
 is derived from the TouchDesigner project, so new packages appear by
@@ -150,50 +155,35 @@ video: "https://youtu.be/j43gZ0MB2xo"
 
 ## Deploying
 
-Vercel project **`fnstools`**, root directory **`website`**.
+Vercel project **`fnstools`**, root directory **`website`**. Vercel builds
+the site on every deploy: `vercel.json` sets `installCommand` to `npm ci`
+and `buildCommand` to `npm run build`, and serves the result from
+`outputDirectory: "."`. (The file cannot carry comments — Vercel's schema
+rejects unknown keys, `//` included.)
 
-`vercel.json` declares `buildCommand` and `installCommand` as empty on
-purpose: `website/docs/` is generated and committed, so a deploy is a pure
-static upload. Without those, Vercel auto-detects the `build` script in
-`package.json` and runs pagefind at deploy time for nothing. (The file
-cannot carry comments — Vercel's schema rejects unknown keys, `//`
-included.)
+That is the whole pipeline. Push the markdown; the deploy generates the
+pages. Nothing generated is committed, so nothing can go stale, and there
+is no CI job policing the gap — there is no gap.
 
-`.vercelignore` keeps `node_modules/` out of the upload: the repo
-`.gitignore` covers it, but it lives at the repo root while the deploy root
-is `website/`, so the CLI never reads it. That is the difference between a
-1.8 MB upload and a 61 MB one. It also excludes `tools/` (build and CMS
-scripts, never served) and `.env.local`, which the CLI writes on link with a
+A build failure is the safety net: a broken internal link, a docs file with
+no catalog entry, a frontmatter/filename mismatch all fail the build, so
+the deploy fails and **production keeps serving the last good build**. Run
+`npm run build` locally first if you would rather see it before Vercel does.
+
+`.vercelignore` must not exclude anything the build needs — `package.json`,
+`package-lock.json` and `tools/` all have to reach the builder. It keeps out
+`node_modules/` (~60 MB of pagefind binaries), the generated `docs/` and
+`get/`, and `.env.local`, which the CLI writes on link with a
 `VERCEL_OIDC_TOKEN` in it.
 
-To stand it up before this branch is merged, point the project at this branch
-as its production branch, then switch it to the real one after the merge.
-Every other branch gets a preview URL automatically.
+**Set the production branch** to whichever branch you deploy from. If it is
+not set, a push only produces a Preview and production stays where it is
+until someone promotes a deployment by hand — which is exactly how the live
+site once sat 30 hours behind the repo.
 
 Also turn on **Web Analytics** in the project — the page already ships the
 stub and the `/_vercel/insights/script.js` tag the platform serves once it is
 enabled. It is cookieless, which is why there is no consent banner.
-
-## CI
-
-`.github/workflows/website.yml` runs on any change to `website/`,
-`packaging/docs/` or `packaging/catalog.json`.
-
-It builds, and then asserts that the committed `website/docs/` and
-`index.html` match what the build produces. That check is the point of the
-job: the generated output is committed so Vercel needs no build step, which
-means it can go stale silently — edit a `.md`, forget to rebuild, and the
-site would show something other than the source. CI makes that a failed
-build instead.
-
-The build is reproducible, so the comparison is exact. CI sets
-`FNSTOOLS_NO_RELEASE_FETCH=1`; otherwise a release published between the
-commit and the run would restamp `index.html` and fail the check for reasons
-nobody changed.
-
-Two non-blocking reports land in the job summary: which packages are still
-documented only by their catalog line, and whether a newer release has been
-published than the one the download links point at.
 
 ## Release links
 
