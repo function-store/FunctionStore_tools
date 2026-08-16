@@ -20,4 +20,4 @@ Hotkeys also available:
 * Alt(Opt)+Shift+R to randomize selected OP
 * Alt(Opt)+R to randomize hovered param
 * Ctrl+Shift+R reset hovered param
-* Ctrl+Shift+Alt reset all params in hovered param's page
+* Ctrl+Shift+Alt+R reset all params in hovered param's page
