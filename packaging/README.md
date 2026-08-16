@@ -15,8 +15,32 @@ dist/               exported .tox artifacts (gitignored; rebuild on demand)
 
 ## Releasing, in short
 
-Everything else in this file is detail. The whole motion, from a changed
-tool to published bytes:
+**The short version: run the preflight, then `Release()`.**
+
+```python
+exec(open('packaging/release_one.py').read())
+Preflight()                          # what am I forgetting? (changes nothing)
+Release(['FNS_ConfigRegistry'])      # preflight, then bump/build/stage/upload
+```
+
+`Preflight()` checks the things the publish rails cannot: a package edited
+live but never landed to its `.tox` (an externalized package reloads from
+its file, so that work is not unsaved, it is gone), a rail artifact older
+than the script that builds it (`Stage()` hashes it in regardless, so the
+manifest would promise bytes nobody built), packages shipping with no
+release notes, and whether the repo is dirty for step 4. `Release()` runs
+it first and REFUSES on a blocker; `Release(..., force=True)` overrides.
+
+With no arguments `Preflight()` reports on everything, which is the "what
+is in flight" view. It prints only the rows that need attention.
+
+A note it raises but does not enforce: **registry ripple**. Every package
+vendors a copy of the registry hosts it uses, so one propagation pass
+makes them all look newer than their toxes. Whether that needs a re-save
+depends on whether the tox embeds those bytes or externalizes to them, so
+it is a warning, not a blocker.
+
+Everything below is the same motion by hand, and what each step means:
 
 1. **Land what you changed.** Each touched package has to write back to
    its own `.tox`. Private Investigator's lister is the surface for this:
