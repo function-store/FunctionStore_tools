@@ -248,27 +248,48 @@ def BuildBootstrap(out_path=OUT_BOOTSTRAP):
     web.nodeX, web.nodeY = 350, -250
     web.par.Address = ''      # nothing to show until Configure serves the page
 
-    # The root's own par surface stays minimal, but the two entry points
+    # The root's own par surface stays minimal, but the three entry points
     # ride it so nobody has to find the installer COMP first: a pulse that
-    # serves + opens the configurator web page, and one that opens the
-    # installer's parameters. Guarded -- a root whose installer was removed
-    # logs instead of raising.
+    # serves + opens the configurator web page, one that opens the
+    # installer's parameters, and one that opens the settings UI. Guarded --
+    # a root whose installer was removed logs instead of raising.
+    #
+    # Settings deliberately does NOT go through the installer: it is what a
+    # user reaches for once installing is over, and it must still work in a
+    # root the installer has been removed from. It resolves the registry the
+    # way every other cross-tool caller does -- getattr on the global
+    # shortcut, which IS the feature detect (ConfiguratorDistribution 1.1),
+    # so a pre-install root logs instead of raising.
     pg = root.appendCustomPage('FNSTools')
     p = pg.appendPulse('Picktools', label='Pick Tools (configurator)')[0]
     p.help = ('Serve the configurator page and open it (webBrowser panel, '
               'or your system browser as fallback).')
     p = pg.appendPulse('Openinstaller', label='Open Installer')[0]
     p.help = "Open the FNS_Installer's parameters."
+    p = pg.appendPulse('Opensettings', label='Open Settings')[0]
+    p.help = ('Open the settings page for every installed tool in your '
+              'browser (served from this project on 127.0.0.1).')
     pe = root.create(parameterexecuteDAT, 'parexec_root_pulses')
     pe.nodeX, pe.nodeY = -350, -250
     pe.par.op = root
-    pe.par.pars = 'Picktools Openinstaller'
+    pe.par.pars = 'Picktools Openinstaller Opensettings'
     pe.par.custom = True
     pe.par.builtin = False
     pe.par.valuechange = False
     pe.par.onpulse = True
-    pe.text = ('# Root-level entry points; the installer COMP does the work.\n\n'
+    pe.text = ('# Root-level entry points; the installer COMP does the work,\n'
+               '# except Settings, which the config registry serves itself.\n\n'
                'def onPulse(par):\n'
+               '\tif par.name == "Opensettings":\n'
+               '\t\treg = getattr(op, "FNS_CONFIGREGISTRY", None)\n'
+               '\t\tif reg is None:\n'
+               '\t\t\tdebug("FNSTools: no FNS_ConfigRegistry installed yet")\n'
+               '\t\t\treturn\n'
+               '\t\tres = reg.OpenSettingsUI()\n'
+               '\t\tif isinstance(res, dict) and not res.get("ok"):\n'
+               '\t\t\tdebug("FNSTools: settings UI did not open --",\n'
+               '\t\t\t      res.get("why"))\n'
+               '\t\treturn\n'
                '\tinst = parent().op(%r)\n'
                '\tif inst is None:\n'
                '\t\tdebug("FNSTools: no installer in this root")\n'
