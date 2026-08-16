@@ -696,19 +696,39 @@ class ConfigRegistryExt(RegistryBase):
 		a page."""
 		comp = self.ownerComp
 		master = self._masterComp()
-		for name in self.SETTINGS_ASSETS:
-			if comp.op(name) is None and master is not None and master.valid:
-				src = master.op(name)
-				if src is not None:
-					comp.copy(src, name=name)
-		page = comp.op('settings_page')
-		if page is None:
-			return None
 		ws = comp.op('settings_server')
 		if ws is None:
 			ws = comp.create(webserverDAT, 'settings_server')
-			ws.nodeX, ws.nodeY = page.nodeX, page.nodeY - 150
 			ws.par.active = False        # OpenSettingsUI turns it on
+			# create() spawns its OWN empty callbacks DAT, named for the
+			# server. Destroy it before the assets land: left alone it
+			# squats on settings_server_callbacks, and the copy below --
+			# which only fills in what is missing -- would then leave the
+			# server wired to an empty stub that answers nothing.
+			auto = ws.par.callbacks.eval()
+			if auto is not None and auto is not master:
+				try:
+					if auto.name.startswith('settings_server_callbacks'):
+						auto.destroy()
+				except Exception:
+					pass
+		# Pull the assets, replacing anything empty: a stub left by an
+		# earlier run must not win over the real page or callbacks.
+		for name in self.SETTINGS_ASSETS:
+			src = master.op(name) if (master is not None and master.valid) else None
+			if src is None:
+				continue
+			local = comp.op(name)
+			if local is not None and local.text.strip():
+				continue
+			if local is not None:
+				local.destroy()
+			comp.copy(src, name=name)
+		page = comp.op('settings_page')
+		if page is None:
+			return None
+		if not ws.nodeX and not ws.nodeY:
+			ws.nodeX, ws.nodeY = page.nodeX, page.nodeY - 150
 		cb = comp.op('settings_server_callbacks')
 		if cb is not None:
 			ws.par.callbacks = cb

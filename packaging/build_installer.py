@@ -309,6 +309,12 @@ def _bootstrapRoot(stage):
         return None, ('no live toolkit root (op.FNS) to derive the bootstrap '
                       'from -- open the dev project and run this there')
     root = stage.copy(dev, name=ROOT_NAME)
+    # Drop the inherited shortcuts while the surgery runs: the copy arrives
+    # holding opshortcut/parentshortcut = 'FNS', and two ops claiming the
+    # same global shortcut is a state nothing here needs. Re-asserted at the
+    # end, once this is a root again rather than a comp being taken apart.
+    root.par.opshortcut = ''
+    root.par.parentshortcut = ''
     # Bake the dev root's live state into the shipped pars, BEFORE the
     # children go. Evaluating here is the whole point: this is the one place
     # the binds and expressions still resolve, because the config host they
@@ -334,8 +340,27 @@ def _bootstrapRoot(stage):
                 p.val = val
             except Exception:
                 pass              # read-only or otherwise unsettable
-    for child in list(root.children):
-        child.destroy()
+    # Children come off in WAVES, not one pass. `.destroy()` takes an op's
+    # DOCKED ops with it -- `logger` docks its callbacks, `LICENSE` docks
+    # the docsHelper comps -- so a list snapshotted up front goes dangling
+    # mid-loop, and destroying a stale handle raises "Invalid OP object"
+    # roughly half way through. Re-snapshot each pass and skip whatever a
+    # previous destroy already claimed. Bounded, so a child that refuses to
+    # die reports itself instead of spinning forever.
+    for _ in range(20):
+        kids = [c for c in root.children if c.valid]
+        if not kids:
+            break
+        for child in kids:
+            if child.valid:
+                try:
+                    child.destroy()
+                except Exception:
+                    pass
+    left = [c.name for c in root.children if c.valid]
+    if left:
+        return None, 'could not empty the staged root; still holds: %s' % (
+            ', '.join(sorted(left)[:10]))
     for page in list(root.customPages):
         if page.name in BOOTSTRAP_STRIP_PAGES:
             page.destroy()
