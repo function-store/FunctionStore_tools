@@ -9,7 +9,7 @@ features:
 
 ## Global ResetPLS
 
-[YouTube breakdown](https:**//youtu.be/G25n1DAI2pM)
+[YouTube breakdown](https://youtu.be/G25n1DAI2pM)
 
 This component takes care of all your reset needs, pulsing all `resetpulse` or similar parameters of operators included in search.
 You can enable or disable certain operator types (hope I didn't forget any). No more dragging a Keyboard In CHOP all across your networks!
@@ -25,6 +25,7 @@ It is bound to `Ctrl+0` hotkey (which I have bound to one of my mouse buttons as
 - **Except:** list of opeartor exceptions the search should ignore.
 - **Exceptions Limit:** only relevant for baseCOMP that are listed as Exception. If enabled all further operators under are also excluded. 
 - **Enable/Disable All OPtypes:** sets the state of all operator type toggles
+- **Reset On Startup:** pulses `Reset` automatically when the project starts
 - **Reset:** pulses reset parameter for all included operators
 
 ### TOP, CHOP, SOP, COMP
@@ -36,7 +37,7 @@ It is bound to `Ctrl+0` hotkey (which I have bound to one of my mouse buttons as
 
 - **Reset Timeline:** if enabled resets root timeline to the frame specified in `Reset Frame`
 - **Reset Frame:** which frame to reset to if `Reset Timeline` is enabled
-- **Custom Script:** toggles executing a custom callback on reset
+- **Callback:** toggles executing a custom callback on reset
 - **Create Callbacks:** create a text DAT next to this component where you can define an `onReset` script
 - **Callbacks:** location of the callback script (points to the default script by default)
 - **Static Exceptions:** you should list all pattern match strings here you want to exclude.

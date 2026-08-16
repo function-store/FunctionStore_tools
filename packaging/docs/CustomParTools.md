@@ -21,7 +21,7 @@ This button is a quick way to manipulate **Custom Parameters** of a parent compo
 
 - **Drag-and-Drop onto the icon:**
   - **A Parameter:** Promote that **Parameter** to the **Parent Custom Params** and Bind/Reference automatically (always to the currently active/selected page).
-     - Hold `Alt/Opt` or `Ctrl` to customize parameter promotion—name it, set min/max values, and tweak clamping.
+     - Hold `Ctrl` to customize parameter promotion—name it, set min/max values, and tweak clamping.
        - `Label` and `ParName` for **all** params, and for slider-type params: `min`, `max` values, `clamping` tickboxes, and `default` value  
        - **Quickly jump** between text fields by pressing `Tab` and `Shift+Tab`
   - **A Table DAT**: adds a new ParMenu and sets the table as a menu source
@@ -34,7 +34,7 @@ This button is a quick way to manipulate **Custom Parameters** of a parent compo
 - **Ctrl+Alt+Drag** an **OP** (Ctrl+Cmd+Drag on Mac): Promote as `iop` to parent
 - **Ctrl+Shift+Click**: Add Parent shortcut
 - **Shift+Alt+LeftClick** (Shift+Cmd+LeftClick for Mac): Add [QuickExt](/docs/custompartools/#quickext) to parent for a streamlined python Extension workflow - see [QuickExt](/docs/custompartools/)  
-- **MiddleClick:** Promotes **Parent Parameters** further to **_its_** **Parent**.
+- **MiddleClick:** Collapses the selected nodes via [QuickCollapse](/docs/quickcollapse/#quickcollapse) (if installed). Hold `Ctrl` or `Shift` to pop the naming dialog first.
 
 ## QuickExt
 
@@ -45,9 +45,9 @@ See the extensive description of [QuickExt](/docs/custompartools/).
 
 ## CustomParCustomize
 
-A fast way to customize parameter promotion—name it, set min/max values, and tweak clamping. Related to [CustomParTools](/docs/quicktime/#quicktime)
+A fast way to customize parameter promotion—name it, set min/max values, and tweak clamping. Related to [CustomParTools](/docs/custompartools/#custompar-tools)
    - `Label` and `ParName` for **all** params, and for slider-type params: `min`, `max` values, `clamping` tickboxes, and `default` value  
-   - **Invoked** by holding `Ctrl` or `Alt`(`Opt`) while drag-and-dropping a parameter onto the `diamond` button or a parent in the path bar  
+   - **Invoked** by holding `Ctrl` while drag-and-dropping a parameter onto the `diamond` button or a parent in the path bar  
    - **Quickly jump** between text fields by pressing `Tab` and `Shift+Tab`  
 
 When adding an extension using [CustomParTools](/docs/custompartools/#quickext)![](/docs/assets/icons/CustomParTools.png) **Shift+Alt+LeftClick**, the created default Extension will have the following available:

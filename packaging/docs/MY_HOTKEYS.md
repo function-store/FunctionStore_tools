@@ -1,6 +1,6 @@
 ---
 package: MY_HOTKEYS
-summary: 'There''s a ton of hotkeys documented for each tool so read the wiki carefully, but here are some that might be not:'
+summary: "There's a ton of hotkeys documented on each tool's own doc page, but here are some that might be not:"
 features:
   - name: Hotkeys
     anchor: hotkeys
@@ -10,7 +10,7 @@ features:
 
 ## Hotkeys
 
-There's a ton of hotkeys documented for each tool so read the wiki carefully, but here are some that might be not:
+There's a ton of hotkeys documented on each tool's own doc page, but here are some that might be not:
 - **Ctrl+Alt+W (Ctrl+Option+W for Mac):** Opens **Parent Component Editor**.
 - **Ctrl+Alt+Q (Ctrl+Option+Q for Mac):** Opens **Parent Parameters**.
 - **Shift+Alt+W (Mac: Shift+Option+W):** Opens **Selected COMP's Editor**.

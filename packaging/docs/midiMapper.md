@@ -27,7 +27,7 @@ Bypass and un-bypass MIDI operators to unstick them (requested by Jacopo)
    - 🖱️ **Middle-click** the `midiMapper` toolbar button to reset **all**  
    - Can be set to **auto-reset all on startup**  
 
-If enabled in the `FunctionStore_tools` base custom parameters, the contents of the table will be externalized to the project folder.
+If enabled in the `FNSTools` base custom parameters, the contents of the table will be externalized to the project folder.
 
 ## Mapper
 

@@ -12,7 +12,7 @@ features:
 ## OpTemplates
 
 Start with this feature as this is probably the most "innovative" and exciting addition to TD. 
-This component lets you define default operator states (`templates`) which you may want to use instead of the factory ones, and is found under `FunctionStore_tools/OpTemplates` (or in the **Toolbar**)
+This component lets you define default operator states (`templates`) which you may want to use instead of the factory ones, and is found under `FNSTools/OpTemplates` (or in the **Toolbar**)
 
 ### Defining a Template
 

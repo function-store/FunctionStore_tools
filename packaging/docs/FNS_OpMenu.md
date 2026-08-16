@@ -18,7 +18,7 @@ features:
 
 ## Custom OpMenu Search Keywords
 
-This is a table to define custom search keywords for each OpType for the **OpMenu / OP Create Dialog**. Read more [here](/docs/fns-opmenu/#opmenu-mods).
+This is a table to define custom search keywords for each OpType for the **OpMenu / OP Create Dialog**. Read more [here](/docs/fns-opmenu/#opmenu-mods). It is also reachable as the **SearchWords** tab in the [tools_ui](/docs/tools-ui/) (`Fx`) panel.
 
 ## OpMenu Mods
 
@@ -26,7 +26,7 @@ This is a table to define custom search keywords for each OpType for the **OpMen
 
 ## Greg's IO Filters
 
-This OP Create dialog mod by [Greg Hermanovic](https://derivative.ca) installs automatically from `FunctionStore_tools/Gregs_opmenu_mod` and adds filtering options to the OP Create dialog menu to the top right, showing only IO operators (`IO` option), or ops without the IO ones (`-IO`) or all (`All`, default).
+This OP Create dialog mod by [Greg Hermanovic](https://derivative.ca) adds filtering options to the OP Create dialog menu to the top right, showing only IO operators (`IO` option), or ops without the IO ones (`-IO`) or all (`All`, default).
 
 IO operators are considered ones that interact with resources outside of TouchDesigner such as sensors or web interfaces. 
 

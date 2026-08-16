@@ -11,7 +11,7 @@ features:
 
 [Youtube Breakdown](https://youtu.be/aZtraQ2N4Oc)
 
-VSCodeTools helps creating/opening/managing VSCode workspaces and synced (externalized) scripts or tables (`.py, .vert, .frag, .tsv`).
+VSCodeTools helps creating/opening/managing VSCode workspaces and synced (externalized) scripts or tables. The file extension is detected from the DAT's declared language or content (`.py, .vert, .frag, .tsv`, plus `.json, .yaml, .xml, .html` and others).
 The only requirement is code.exe set up as the default text editor in TD Preferences.
 
 The component is a button with the following interactions (and more, check the parameters below to get a full picture of what it does!!!)
@@ -27,7 +27,7 @@ The component is a button with the following interactions (and more, check the p
 * **Code.exe**: path to code.exe [this may be auto-filled, see Auto-detect]
 * **Workspace**: path to VSCode workspace file (with extension .code-workspace) [his may be auto-filled, see Auto-detect] 
 * **Auto-detect**: will attempt to auto-fill the Code.exe and Workspace parameters. (on by default)
-    * Code.exe will be auto-filled if it is already set up in TD Preferences 
+    * Code.exe will be auto-filled if it is already set up in TD Preferences (Cursor is also detected and used if set as the Preferences text editor)
     * Workspace will be the name of the project file by default 
 * **Auto-open**: will open the VSCode workspace when the project starts
 * **Open**: opens workspace, if it didn't exist before, a new one is created and opened in the project root folder
