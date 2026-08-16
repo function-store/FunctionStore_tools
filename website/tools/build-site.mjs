@@ -30,7 +30,7 @@ const OUT = path.join(WEB, 'docs');
 const SITE = 'https://tools.functionstore.xyz';
 const GH = 'https://github.com/function-store/FunctionStore_tools';
 // Rolling pointer published by packaging/publish.py; base_url in manifest.json.
-const BUCKET = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools';
+const BUCKET = 'https://storage.functionstr.com/fnstools';
 const EDIT_BASE = `${GH}/blob/main/packaging/docs`;
 
 const problems = [];

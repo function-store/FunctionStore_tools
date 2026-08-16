@@ -349,7 +349,7 @@
       <a href="#credits">Credits</a>
       <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
       <a class="btn btn-secondary" href="https://github.com/function-store/FunctionStore_tools" target="_blank" rel="noopener">GitHub</a>
-      <a class="btn btn-primary js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
+      <a class="btn btn-primary js-fns-download" href="https://storage.functionstr.com/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
     </nav>
   </div>
 </header>
@@ -364,7 +364,7 @@
       Take the whole toolkit or pick the three tools you actually want.
     </p>
     <div class="hero-cta">
-      <a class="btn btn-primary btn-lg js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
+      <a class="btn btn-primary btn-lg js-fns-download" href="https://storage.functionstr.com/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
       <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
     </div>
     <ul class="hero-meta">
@@ -402,8 +402,8 @@
           arrives empty — it carries the installer, the updater and nothing else yet.
           The container you drop <em>is</em> the install target.
         </p>
-        <a class="btn btn-primary js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNSTools.tox" download>Download</a>
-        <p class="path-note">Already have a toolkit container? Grab the <a class="js-fns-installer" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNS_Installer.tox" download>bare installer</a> instead (~14 KB).</p>
+        <a class="btn btn-primary js-fns-download" href="https://storage.functionstr.com/fnstools/latest/FNSTools.tox" download>Download</a>
+        <p class="path-note">Already have a toolkit container? Grab the <a class="js-fns-installer" href="https://storage.functionstr.com/fnstools/latest/FNS_Installer.tox" download>bare installer</a> instead (~14 KB).</p>
         <p class="path-note">No download at all: <a href="/get/">pick your tools online</a> and paste one line into the Textport — it fetches and verifies everything itself.</p>
       </div>
       <div class="path">
@@ -861,7 +861,7 @@
       One <code>.tox</code>, then pick what you need. It is free, and it takes about a minute.
     </p>
     <div class="hero-cta">
-      <a class="btn btn-primary btn-lg js-fns-download" href="https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
+      <a class="btn btn-primary btn-lg js-fns-download" href="https://storage.functionstr.com/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
       <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
     </div>
   </div>
@@ -883,14 +883,13 @@
 </footer>
 
 <script>
-  // Keep the download buttons pointed at the newest published release.
+  // Upgrade the download buttons from latest/ to the pinned release.
   //
-  // This is a bonus pass, not the mechanism: the build already stamped the
-  // release into these hrefs. The r2.dev bucket currently serves no
-  // Access-Control-Allow-Origin header, so this fetch is blocked by the
-  // browser and quietly does nothing — enabling CORS on the bucket would
-  // make the page self-refresh between deploys. Either way the static hrefs
-  // point at a release that exists.
+  // The bucket sends Access-Control-Allow-Origin for this site, so this
+  // fetch succeeds and visitors get reproducible URLs -- the exact bytes
+  // the manifest names, rather than an alias that moves under them. It is
+  // an upgrade, not the mechanism: if it ever fails the static hrefs below
+  // still resolve, because latest/ is always a release that exists.
   //
   // The static hrefs point at latest/, the mutable human aliases upload.py
   // publishes beside each release -- so a release never leaves the download
@@ -899,7 +898,7 @@
   // every href to the release the manifest names, which is the reproducible
   // URL. Until the bucket sends CORS the static latest/ href is what serves.
   (function () {
-    var BASE = 'https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools';
+    var BASE = 'https://storage.functionstr.com/fnstools';
     var BOOTSTRAP = 'FNSTools.tox';
     var INSTALLER = 'FNS_Installer.tox';
 

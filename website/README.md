@@ -217,11 +217,16 @@ manifest *at paste time* from inside TouchDesigner via `requests`, and
 resolves every artifact and hash from that. A `/get/` page built months ago
 still installs the current release; only the picker's package list can lag.
 
-The page also tries to refresh hrefs at runtime, but **that fetch is
-blocked**: neither the r2.dev bucket nor `storage.functionstr.com` sends an
-`Access-Control-Allow-Origin` header. Enabling CORS would let the browser
-upgrade hrefs from `latest/` to the pinned release, and would keep the
-picker's list current between deploys.
+The page also refreshes hrefs at runtime, and **that fetch now works**: the
+bucket sends `Access-Control-Allow-Origin` for `tools.functionstore.xyz`.
+The browser upgrades hrefs from `latest/` to the pinned release, so
+visitors get reproducible URLs, and `/get/`'s picker list stays current
+between deploys. If the fetch ever fails the static `latest/` hrefs still
+resolve.
+
+Everything is served from the custom domain `storage.functionstr.com`, not
+the `pub-*.r2.dev` development endpoint — the latter is rate-limited, not
+intended for production, and can be switched off in the bucket settings.
 
 The bootstrap artifact is `FNSTools.tox`, renamed from
 `FunctionStore_tools_2025.tox` in the v3.0.0 redesign. The filename is a

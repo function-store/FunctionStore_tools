@@ -94,7 +94,7 @@ jobs:
         continue-on-error: true
         run: |
           live=$(curl -sf --max-time 15 -A 'fnstools-ci' \
-            https://pub-8001b4bd92174be7a4544571b53f23da.r2.dev/fnstools/manifest.json \
+            https://storage.functionstr.com/fnstools/manifest.json \
             | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{console.log(JSON.parse(s).release||'')}catch{console.log('')}})")
           site=$(grep -o 'fnstools/v[^/]*/' index.html | head -1 | sed 's|fnstools/||; s|/$||')
           if [ -n "$live" ] && [ -n "$site" ] && [ "$live" != "$site" ]; then
