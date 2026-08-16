@@ -8,7 +8,7 @@ window.FNS_MANIFEST = {
  "toolkit": {
   "name": "FNSTools",
   "td_build": "099",
-  "project": "FunctionStore_tools_2025_DEV.48.toe"
+  "project": "FunctionStore_tools_2025_DEV.50.toe"
  },
  "core": [
   "FNS_ConfigRegistry",
@@ -533,7 +533,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
-   "version": "1.0.9",
+   "version": "1.0.10",
    "help_url": "https://tools.functionstore.xyz/docs/fns-updater/",
    "surfaces": [
     "toolbar"

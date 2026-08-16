@@ -51,6 +51,18 @@ for _t in _c0.findChildren(name='vc_data', type=tableDAT):
     except Exception:
         pass
 
+# --- scrub baked log data from vendored ExtUtils copies -------------------
+# The QuickExt stub machinery (ExtUtils/extStubser) rides inside FNS_About
+# and registry hosts across the fleet, and its logger tables still carry
+# 2024 log lines from the author's 2023 project -- dead bytes in every
+# artifact and a checkout-path leak. Clear them on the staged copy.
+for _d in _c0.findChildren(type=DAT):
+    try:
+        if 'extStubser' in _d.path and _d.name in ('out1', 'logger'):
+            _d.clear()
+    except Exception:
+        pass
+
 for _c in [_c0] + _c0.findChildren(type=COMP):
     for _pg in list(_c.customPages):
         if _pg.name != 'Version Ctrl':
