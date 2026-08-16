@@ -227,6 +227,10 @@
    "category": "Network",
    "description": "Switch between operators in place."
   },
+  "TDX_SearchPalette": {
+   "category": "Workflow",
+   "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen."
+  },
   "tools_ui": {
    "category": "Surfaces",
    "description": "The tabbed panel that hosts the toolkit's larger tool UIs."
