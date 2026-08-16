@@ -1,6 +1,6 @@
 ---
 package: AltSelect
-summary: Quickly create Select SOP/TOP/CHOP/DAT/COMP of an operator by Alt-Dragging (Cmd-Drag for Mac) it to a new location in the same network viewer pane.
+summary: Quickly create Select SOP/TOP/CHOP/DAT/POP/COMP of an operator by Alt-Dragging (Cmd-Drag for Mac) it to a new location in the same network viewer pane.
 features:
   - name: AltSelect
     anchor: altselect
@@ -8,4 +8,4 @@ features:
 
 ## AltSelect
 
-Quickly create `Select SOP/TOP/CHOP/DAT/COMP` of an operator by `Alt-Dragging` (`Cmd-Drag` for **Mac**) it to a new location in the same network viewer pane.
+Quickly create `Select SOP/TOP/CHOP/DAT/POP/COMP` of an operator by `Alt-Dragging` (`Cmd-Drag` for **Mac**) it to a new location in the same network viewer pane.
