@@ -394,9 +394,11 @@ def _rebuildRails():
 
 
 def _listerSelection():
+\t# ui/treeLister, not 'lister' -- PublishSelected had it right and
+\t# this did not, so the Selected path silently offered nothing.
 \ttry:
-\t\tlister = _pi().op('lister')
-\t\treturn Candidates([r[0].val for r in lister.SelectedRows]) if lister else []
+\t\tpaths = list(_pi().op('ui/treeLister').ext.TreeListerExt.SelectedPaths)
+\t\treturn Candidates(paths)
 \texcept Exception:
 \t\treturn []
 
@@ -429,16 +431,19 @@ def GuidedRelease():
 \tbuttons drive, in the order that is easy to get wrong."""
 \tns = _rail()
 \tsel, bumped = _listerSelection(), _bumpedOnly(ns)
+\tevery = sorted(c.name for c in ns['Packages']())
 \t# Labels stay short: the dialog clips wide ones, and a truncated
 \t# button is worse than a terse one. The body carries the meaning.
 \ttext = ['What are you shipping?', '',
 \t\t\t'[Selected] the rows picked in the lister:',
 \t\t\t'    %s' % (', '.join(sel) if sel else '(nothing selected)'),
 \t\t\t'',
-\t\t\t'[Bumped] every package already ahead of the bucket:',
-\t\t\t'    %s' % (', '.join(bumped) if bumped else '(none)')]
-\t_ask({'step': 1, 'sel': sel, 'bumped': bumped}, '\\n'.join(text),
-\t\t['Cancel', 'Selected', 'Bumped'])
+\t\t\t'[Bumped] already ahead of the bucket:',
+\t\t\t'    %s' % (', '.join(bumped) if bumped else '(none)'),
+\t\t\t'',
+\t\t\t'[All] every package, auto patch-bumped: %d' % len(every)]
+\t_ask({'step': 1, 'sel': sel, 'bumped': bumped, 'every': every},
+\t\t'\\n'.join(text), ['Cancel', 'Selected', 'Bumped', 'All'])
 
 
 def _step(info):
@@ -454,7 +459,9 @@ def _step(info):
 \tns = _rail()
 
 \tif step == 1:
-\t\tnames = state['sel'] if button == 'Selected' else state['bumped']
+\t\tnames = {'Selected': state.get('sel') or [],
+\t\t\t\t'Bumped': state.get('bumped') or [],
+\t\t\t\t'All': state.get('every') or []}.get(button, [])
 \t\tif not names:
 \t\t\t_ask({}, 'Nothing to ship in that choice.', ['OK'],
 \t\t\t\ttitle='Guided release')
@@ -472,7 +479,7 @@ def _step(info):
 \t\tnames = state['names']
 \t\tpre = ns['Preflight'](names, quiet=True)
 \t\t# entering the step, or coming back from a rebuild: show the checks
-\t\tif state.get('ack') or button in ('Selected', 'Bumped', 'Back'):
+\t\tif state.get('ack') or button in ('Selected', 'Bumped', 'All', 'Back'):
 \t\t\tif pre['ok'] and not pre['warnings']:
 \t\t\t\tstate = {'step': 3, 'names': names}
 \t\t\t\tstep = 3
