@@ -1,5 +1,39 @@
 # FNS tools changelog
 
+## v3.0.1 -- 2026-08-16
+
+- ColorUI 1.0.2 -- Its tab in the tools panel is now the palette editor itself, with families, colours and search inline, instead of a button that opened a parameter window.
+- ExprHotStrings 1.1.1 -- Contributes its tools panel tab through the new UI Tab parameters, so the tab travels with the package and can be reordered or hidden.
+- FNS_OpMenu 1.0.3 -- Carries the search-keywords tab in the tools panel now. It used to be loose glue sitting in the toolkit root that no package owned, which meant it simply went missing unless you had installed everything.
+- FNS_Updater 1.0.10 -- Fixed a dead reference to a component that left the toolkit long ago, which made one node inside the updater throw an error on every cook.
+- GlobalOutSelect 1.0.1 -- Contributes its tools panel tab through the new UI Tab parameters, and still refreshes itself whenever the tab is shown.
+- MY_HOTKEYS 1.0.1 -- The palette search hotkey now checks that TDX_SearchPalette is actually installed rather than doing nothing when it is not.
+- TDX_SearchPalette 1.1.0 -- New package, vendored from Yea Chen's TD-SearchPalette: a search field inside TouchDesigner's palette browser. Matching is case-insensitive and looks anywhere in the name rather than only at the start, several words narrow the result together, a word containing a slash matches the palette folder instead (`gen/ noise`), and numbered copies of one component collapse to the most recently modified. The last two are toggles on the package, and `ctrl+shift+f` jumps straight to the field when MY_HOTKEYS is installed.
+- midiMapper 1.0.1 -- Contributes its tools panel tab through the new UI Tab parameters, so the tab travels with the package and can be reordered or hidden.
+- oscMapper 1.0.1 -- Contributes its tools panel tab through the new UI Tab parameters, so the tab travels with the package and can be reordered or hidden.
+- tools_ui 1.1.0 -- The tabbed panel builds itself from the tools you actually have installed instead of a fixed list, so a partial install no longer shows tabs that lead nowhere, and the panel refreshes itself on start and every time it opens. Drag the tabs to reorder them, close one with its X to hide it (turn it back on from that tool's own UI Tab parameters), and both the order and the tab you were last on come back with your settings.
+
+Installing from the website is now one line. Pick the tools you want on
+the site, press Copy install script, and paste the single line into the
+Textport: it fetches the bootstrap and your selection straight from this
+release, checks every hash before writing anything to disk, and installs.
+
+Partial installs are the theme of this drop. Tools that reach for each
+other now look first and stay quiet when the other side is absent, so a
+subset behaves like a deliberate configuration rather than a broken one.
+Packages have also stopped assuming the toolkit root is there at all --
+each one resolves through its own global shortcut, so a single dropped
+tox works standalone.
+
+Every package page was re-read against the components themselves.
+Twenty-six of forty-six had something stale -- paths left over from the
+rename, wrong key combinations, descriptions of how things worked before
+the redesign -- and the worst of them were rewritten outright. ClearPars
+lost its own page, because it lives inside CustomParTools now.
+
+Downloads are a little leaner too: artifacts had been carrying log data
+baked in from an old project, and that no longer rides along.
+
 ## v3.0.0 -- 2026-08-16
 
 - AltSelect 1.0.1
