@@ -278,15 +278,76 @@ def EnsureRootEntryPoints(root):
             'forwarder': pe.path}
 
 
+# Dev-only par pages, removed from the shipped root. Version Ctrl is
+# authoring metadata (Vcname/Vcauthor/Vcbuild/save timestamps) that means
+# nothing in a user's project. About and Registry SHIP: the update controls
+# are user-facing, and the root is itself a config-registry host, so a
+# shipped root keeps roaming its own settings.
+BOOTSTRAP_STRIP_PAGES = ('Version Ctrl',)
+
+
+def _bootstrapRoot(stage):
+    """The shipped root: the LIVE dev root, castrated -- not a lookalike.
+
+    Building a second root from scratch is what let the two drift: every
+    top-level par had to be declared twice and stay in step by hand. The
+    bootstrap is the same comp with the dev-only bits removed, so there is
+    one set of top-level pars and it is the one being used every day.
+
+    Castration is: no children (the installer fetches everything, so the
+    shipped root is empty), no dev-only par pages, no authoring storage.
+    Identity is inherited rather than re-declared -- the `FNS` global and
+    parent shortcuts come with the copy, and are re-asserted here because
+    shipped tools reach for `parent.FNS` through the guarded tryExcept
+    idiom and a missing shortcut makes those lookups fail quietly.
+
+    Returns (root, error). Refuses rather than silently shipping a
+    different root when there is no live one to copy.
+    """
+    dev = getattr(op, 'FNS', None)
+    if dev is None or not dev.valid:
+        return None, ('no live toolkit root (op.FNS) to derive the bootstrap '
+                      'from -- open the dev project and run this there')
+    root = stage.copy(dev, name=ROOT_NAME)
+    # Freeze the surviving pars to constants BEFORE the children go: the
+    # kept Registry page binds Cf* to the config host below, and pre_release
+    # pays the same price on host Registration pars -- a shipped copy whose
+    # bind master was removed carries a dangling expression that errors on
+    # every load. Evaluate first, so the frozen value is the live one.
+    for page in root.customPages:
+        for p in page.pars:
+            if p.mode == ParMode.CONSTANT:
+                continue
+            try:
+                val = p.eval()
+            except Exception:
+                val = None
+            try:
+                p.mode = ParMode.CONSTANT
+                if val is not None:
+                    p.val = val
+            except Exception:
+                pass
+    for child in list(root.children):
+        child.destroy()
+    for page in list(root.customPages):
+        if page.name in BOOTSTRAP_STRIP_PAGES:
+            page.destroy()
+    for key in list(root.storage):
+        root.unstore(key)
+    root.par.opshortcut = 'FNS'
+    root.par.parentshortcut = 'FNS'
+    return root, None
+
+
 def BuildBootstrap(out_path=OUT_BOOTSTRAP):
     """The one-drop bootstrap: the toolkit root with installer + FNS_Updater.
 
-    The root ships with the dev root's identity -- global and parent
-    shortcut `FNS` -- because shipped tools reach for `parent.FNS` (only
-    ever through the guarded `tdu.tryExcept` idiom, but the shortcut is
-    what lets a root-level control still resolve). It does NOT carry the
-    dev root's Active/UI parameter surface: per-tool controls belong to
-    the registry-derived settings UI, not to root pars.
+    The root is a castrated copy of the live dev root (see _bootstrapRoot),
+    so the bundle a user drops and the root we develop in cannot diverge in
+    their top-level parameters. Per-tool controls are still absent by
+    design: those belong to the registry-derived settings UI, reachable
+    from the root's own 'Open Settings' pulse.
     """
     updater = _repo(UPDATER_TOX)
     if not os.path.exists(updater):
@@ -294,9 +355,10 @@ def BuildBootstrap(out_path=OUT_BOOTSTRAP):
                 'error': "%s missing -- run Build(export=['FNS_Updater']) first"
                          % UPDATER_TOX}
     stage = _stage('bootstrap_build')
-    root = stage.create(baseCOMP, ROOT_NAME)
-    root.par.opshortcut = 'FNS'
-    root.par.parentshortcut = 'FNS'
+    root, err = _bootstrapRoot(stage)
+    if err:
+        stage.destroy()
+        return {'exported': False, 'error': err}
 
     inst = _installerComp(root)
     inst.nodeX, inst.nodeY = 0, 0
