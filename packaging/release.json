@@ -12,6 +12,6 @@
   "Remember: this label is for humans and changelogs. Whether a package",
   "needs updating is decided by its Pkgversion, not by this."
  ],
- "release": "v3.0.0",
+ "release": "v3.0.1",
  "channel": "stable"
 }
