@@ -202,6 +202,47 @@ always resolves to the bytes it was built from. The rolling root copy only
 answers "what is current?" once. Never publish a mutable
 `latest/<Package>.tox`.
 
+### The one-motion rail
+
+`release_one.py` conducts the same three steps — bump → build → stage
+(→ upload) — so Private Investigator's lister **Publish** buttons and the
+manual flow above cannot drift apart:
+
+```python
+exec(open('packaging/release_one.py').read())
+result = ReleaseOne('AutoRes')                    # auto bump + upload
+result = ReleaseMany(['AutoRes', 'QuickPane'])    # one release, N tools
+result = ReleaseMany([...], label='v3.1.0')       # name the drop yourself
+result = ReleaseOne('AutoRes', upload=False)      # stage only
+```
+
+`bump='auto'` patch-bumps a package whose live `Pkgversion` still equals
+the published one and leaves a hand-set version alone. It also clamps
+against the **published** manifest, so a `Pkgversion` that a tox reload
+reverted can never ship as a downgrade — the failure that reads as
+"current" everywhere and updates nobody. Upload runs detached (40+
+wrangler calls would block the main thread) into
+`packaging/publish/.upload.log`; `upload=False` lets several releases
+batch before one sync.
+
+### Release notes
+
+Write the prose **before** releasing, in `release_notes.md`. A line that
+starts with a package name and a colon rides that package's changelog
+bullet *and* ships as its `whatsnew` in the manifest, which is what the
+updater shows next to an available update:
+
+```
+AutoRes: Follows the project resolution again when the reference moves.
+```
+
+Everything else is release-level prose. Attribution is by exact package
+name, so a typo silently demotes a line to general prose — nothing is
+lost, but the tool's bullet loses its note. Do not write version numbers
+or the release label; those are stamped at publish time. The file is
+cleared on a successful publish, its text moving to `CHANGELOG.md` and
+into the release's own manifest.
+
 ## Versioning
 
 **`Pkgversion` drives updates.** Every package carries a `Pkgversion`
