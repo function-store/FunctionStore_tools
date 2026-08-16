@@ -84,3 +84,4 @@ website/node_modules/
 
 # vercel CLI link state (per-machine)
 .vercel/
+.env.local
