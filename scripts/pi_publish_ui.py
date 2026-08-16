@@ -19,8 +19,11 @@ stamped into. After running this, SAVE PI:
     pi.save(os.path.join(project.folder, pi.par.externaltox.eval()))
 
 WHAT IT ADDS
-  * a `Publish` page on PI: Releaselabel, Publishselected, Editnotes,
-    Nextlabel (the parameter set recovered from the 2026-08-14 backup);
+  * a `Publish` page on PI: Guidedrelease, Releaselabel,
+    Publishselected, Editnotes, Nextlabel;
+  * `Guided Release...`, a PopDialog wizard walking scope -> preflight
+    -> notes -> publish, for when remembering the order is the hard
+    part. Every step it takes is also its own button;
   * `fns_publish`, a DAT inside PI holding the orchestration -- confirm
     dialogs, version previews, and the call into packaging/release_one.py;
   * a `Pkg` column in the lister (the live `Pkgversion` par, editable and
@@ -251,24 +254,27 @@ def PollUpload():
 \t\t_log('upload failed (exit %s) for %s' % (code, rel), level='ERROR')
 
 
-def PublishNames(names, bump='auto', upload=True, ns=None):
+def PublishNames(names, bump='auto', upload=True, ns=None, confirm=True):
+\t"""confirm=False skips the modal: the guided flow has already
+\tasked, in a dialog that does not block the main thread."""
 \tif not names:
 \t\tui.messageBox('FNS publish', 'Nothing shippable in that selection.')
-\t\treturn
+\t\treturn None
 \tns = ns or _rail()
 \tover = str(getattr(_pi().par, 'Releaselabel', None).eval() or '').strip()
 \tlabel = over or None
 \tversions = _preview(ns, names, bump)
 \ttext = ConfirmText(names, versions, over or NextLabel(), upload)
-\tif ui.messageBox('FNS publish', text, buttons=['Cancel', 'Publish']) != 1:
+\tif confirm and ui.messageBox('FNS publish', text,
+\t\t\t\t\t\t\t\tbuttons=['Cancel', 'Publish']) != 1:
 \t\t_log('publish cancelled at the confirm dialog')
-\t\treturn
+\t\treturn None
 \tres = ns['ReleaseMany'](names, bump=bump, label=label, upload=upload)
 \tif not res.get('ok'):
 \t\tui.messageBox('FNS publish', 'Refused: %s' % res.get('why', 'unknown'))
 \t\t_log('publish refused: %s' % res.get('why'), level='WARNING')
 \t\tRefreshLabel()
-\t\treturn
+\t\treturn res
 \tdone = ['Released %s' % res['release'], '']
 \tdone += ['    %s %s' % (k, v) for k, v in sorted(res['packages'].items())]
 \tif res.get('uploading'):
@@ -282,6 +288,7 @@ def PublishNames(names, bump='auto', upload=True, ns=None):
 \tRefreshLabel()
 \tRefreshState()
 \t_armUploadWatch(res)
+\treturn res
 
 
 def PublishPath(path):
@@ -322,6 +329,176 @@ def PublishSelected():
 
 def EditNotes():
 \tui.viewFile(NOTES)
+
+
+# --------------------------------------------------------------------------
+# guided release -- the same rails, walked one dialog at a time
+# --------------------------------------------------------------------------
+# Every step here is reachable from its own button. This exists because
+# knowing WHICH buttons, in WHICH order, is the part nobody remembers at
+# 2am -- and the skipped steps are the ones with no error to announce
+# them: a package never landed still publishes, it just publishes
+# yesterday's bytes under a fresh version.
+#
+# PopDialog, not ui.messageBox: it does not block the main thread, and it
+# hands `details` back to the callback, so the wizard's state rides the
+# dialog chain instead of living in a module global that a re-stamp or a
+# mid-flow error would strand.
+
+def _ask(state, text, buttons, title=None):
+\t"""One step. buttons[0] is always the way out, so Esc lands there."""
+\top.TDResources.PopDialog.OpenDefault(
+\t\ttext=text,
+\t\ttitle=title or ('Guided release  --  step %s of 4' % state.get('step', '?')),
+\t\tbuttons=buttons,
+\t\tcallback=_step,
+\t\tdetails=state,
+\t\ttextEntry=False,
+\t\tescButton=1,
+\t\tenterButton=len(buttons),
+\t\tescOnClickAway=True)
+
+
+def _rebuildRails():
+\t"""Rebuild the installer + bootstrap artifacts. Stage() hashes these
+\tinto the manifest as it goes, so a stale one publishes under a fresh
+\thash -- a manifest promising bytes nobody built."""
+\tns = {}
+\texec(open('packaging/build_installer.py', encoding='utf-8').read(), ns)
+\tout = []
+\tfor fn, what in (('BuildInstaller', 'installer'), ('BuildBootstrap', 'bootstrap')):
+\t\ttry:
+\t\t\tr = ns[fn]()
+\t\texcept Exception as e:
+\t\t\tout.append('%s FAILED: %s' % (what, e))
+\t\t\tcontinue
+\t\tout.append('%s %s' % (what, 'rebuilt' if r.get('exported')
+\t\t\t\t\t\t\t\telse 'FAILED: %s' % r.get('error')))
+\treturn out
+
+
+def _listerSelection():
+\ttry:
+\t\tlister = _pi().op('lister')
+\t\treturn Candidates([r[0].val for r in lister.SelectedRows]) if lister else []
+\texcept Exception:
+\t\treturn []
+
+
+def _preflightText(names, pre):
+\tlines = ['Shipping: %s' % ', '.join(names), '']
+\tfor b in pre['blockers']:
+\t\tlines.append('BLOCK   ' + b)
+\tfor w in pre['warnings']:
+\t\tlines.append('warn    ' + w)
+\tif pre['ok'] and not pre['warnings']:
+\t\tlines.append('Nothing is being forgotten.')
+\tif pre['unlanded']:
+\t\tlines += ['', 'Landing is manual: Save those rows in the lister, save '
+\t\t\t\t'the project, then start this again.']
+\treturn '\\n'.join(lines)
+
+
+def GuidedRelease():
+\t"""The whole release, one dialog at a time.
+
+\tStep 1 scope, 2 preflight (with a Rebuild Rails escape hatch), 3 notes,
+\t4 confirm and publish. No new machinery -- the same rails the cloud
+\tbuttons drive, in the order that is easy to get wrong."""
+\tns = _rail()
+\tsel, bumped = _listerSelection(), _bumpedOnly(ns)
+\ttext = ['What are you shipping?', '',
+\t\t\t'Selected rows:   %s' % (', '.join(sel) if sel else '(nothing selected)'),
+\t\t\t'Already bumped:  %s' % (', '.join(bumped) if bumped else '(none)')]
+\t_ask({'step': 1, 'sel': sel, 'bumped': bumped}, '\\n'.join(text),
+\t\t['Cancel', 'Selected rows', 'Everything bumped'])
+
+
+def _step(info):
+\t"""Every dialog in the chain lands here; `details` says which step."""
+\tstate = info.get('details') or {}
+\tbutton = str(info.get('button') or '')
+\tstep = state.get('step')
+\tif not step or button in ('Cancel', 'Stop', ''):
+\t\tif step:
+\t\t\t_log('guided release stopped at step %s' % step)
+\t\treturn
+
+\tns = _rail()
+
+\tif step == 1:
+\t\tnames = state['sel'] if button == 'Selected rows' else state['bumped']
+\t\tif not names:
+\t\t\t_ask({}, 'Nothing to ship in that choice.', ['OK'],
+\t\t\t\ttitle='Guided release')
+\t\t\treturn
+\t\tstate = {'step': 2, 'names': names}
+\t\tstep = 2
+
+\tif step == 2 and button == 'Rebuild rails':
+\t\t_ask({'step': 2, 'names': state['names'], 'ack': True},
+\t\t\t'\\n'.join(_rebuildRails()), ['Stop', 'Back to checks'],
+\t\t\ttitle='Guided release  --  rails')
+\t\treturn
+
+\tif step == 2:
+\t\tnames = state['names']
+\t\tpre = ns['Preflight'](names, quiet=True)
+\t\t# entering the step, or coming back from a rebuild: show the checks
+\t\tif state.get('ack') or button in ('Selected rows', 'Everything bumped',
+\t\t\t\t\t\t\t\t\t\t'Back to checks'):
+\t\t\tif pre['ok'] and not pre['warnings']:
+\t\t\t\tstate = {'step': 3, 'names': names}
+\t\t\t\tstep = 3
+\t\t\telse:
+\t\t\t\tbuttons = ['Stop']
+\t\t\t\tif pre['stale_rails']:
+\t\t\t\t\tbuttons.append('Rebuild rails')
+\t\t\t\tbuttons.append('Continue anyway' if pre['blockers'] else 'Continue')
+\t\t\t\t_ask({'step': 2, 'names': names, 'checked': True},
+\t\t\t\t\t_preflightText(names, pre), buttons)
+\t\t\t\treturn
+\t\telse:
+\t\t\tstate = {'step': 3, 'names': names}
+\t\t\tstep = 3
+
+\tif step == 3:
+\t\tnames = state['names']
+\t\tpre = ns['Preflight'](names, quiet=True)
+\t\tif pre['unnoted'] and button != 'Ship without notes':
+\t\t\t_ask({'step': 3, 'names': names, 'asked': True},
+\t\t\t\t'No release notes for: %s\\n\\n'
+\t\t\t\t'Their changelog bullet and in-tool "whatsnew" ship empty.\\n'
+\t\t\t\t'A line starting "PackageName:" rides that package.'
+\t\t\t\t% ', '.join(pre['unnoted']),
+\t\t\t\t['Stop', 'Write notes now', 'Ship without notes'])
+\t\t\treturn
+\t\tstate = {'step': 4, 'names': names}
+\t\tstep = 4
+
+\tif step == 3 and button == 'Write notes now':
+\t\tEditNotes()
+\t\t_ask({}, 'Write the notes, save the file, then start Guided Release '
+\t\t\t'again.', ['OK'], title='Guided release')
+\t\treturn
+
+\tif step == 4:
+\t\tnames = state['names']
+\t\tif button == 'Publish':
+\t\t\tres = PublishNames(names, confirm=False)
+\t\t\tif res and res.get('ok'):
+\t\t\t\t_ask({}, 'Published %s.\\n\\nThe upload runs in the background; '
+\t\t\t\t\t'you get a dialog either way.\\n\\nLast step, in git:\\n'
+\t\t\t\t\t'    the re-exported .tox files\\n'
+\t\t\t\t\t'    packaging/manifest.json\\n'
+\t\t\t\t\t'    packaging/CHANGELOG.md' % res.get('release', ''),
+\t\t\t\t\t['OK'], title='Guided release  --  done')
+\t\t\treturn
+\t\tover = str(getattr(_pi().par, 'Releaselabel', None).eval() or '').strip()
+\t\tversions = _preview(ns, names, 'auto')
+\t\t_ask({'step': 4, 'names': names},
+\t\t\tConfirmText(names, versions, over or NextLabel()),
+\t\t\t['Cancel', 'Publish'])
 '''
 
 
@@ -365,7 +542,9 @@ def _mod():
 
 
 def onPulse(par):
-	if par.name == 'Publishselected':
+	if par.name == 'Guidedrelease':
+		_mod().GuidedRelease()
+	elif par.name == 'Publishselected':
 		_mod().PublishSelected()
 	elif par.name == 'Editnotes':
 		_mod().EditNotes()
@@ -494,10 +673,22 @@ def Apply():
 
 	# 1. the Publish parameter page
 	pg = _page(pi, PUBLISH_PAGE)
+	_par(pg, 'Pulse', 'Guidedrelease', 'Guided Release...')
 	_par(pg, 'Str', 'Releaselabel', 'Release Label (blank = auto)')
 	_par(pg, 'Pulse', 'Publishselected', 'Publish Selected to Bucket')
 	_par(pg, 'Pulse', 'Editnotes', 'Edit Release Notes')
 	_par(pg, 'Str', 'Nextlabel', 'Next Release', readOnly=True)
+	# append lands at the END of a page that already exists, so the order
+	# is asserted rather than assumed -- a PI stamped before the guided
+	# button existed would otherwise keep it last forever.
+	for i, _n in enumerate(('Guidedrelease', 'Releaselabel',
+							'Publishselected', 'Editnotes', 'Nextlabel')):
+		_p = getattr(pi.par, _n, None)
+		if _p is not None:
+			try:
+				_p.order = i
+			except Exception:
+				pass
 	report['page'] = PUBLISH_PAGE
 
 	# 2. the orchestration module
@@ -515,7 +706,7 @@ def Apply():
 		pe = pi.create(parameterexecuteDAT, PAREXEC_NAME)
 		pe.nodeX, pe.nodeY = mod.nodeX + 200, mod.nodeY
 	pe.par.op = pi
-	pe.par.pars = 'Publishselected Editnotes Releaselabel'
+	pe.par.pars = 'Guidedrelease Publishselected Editnotes Releaselabel'
 	pe.par.custom = True
 	pe.par.builtin = False
 	pe.par.valuechange = True
