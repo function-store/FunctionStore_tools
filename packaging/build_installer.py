@@ -309,25 +309,31 @@ def _bootstrapRoot(stage):
         return None, ('no live toolkit root (op.FNS) to derive the bootstrap '
                       'from -- open the dev project and run this there')
     root = stage.copy(dev, name=ROOT_NAME)
-    # Freeze the surviving pars to constants BEFORE the children go: the
-    # kept Registry page binds Cf* to the config host below, and pre_release
-    # pays the same price on host Registration pars -- a shipped copy whose
-    # bind master was removed carries a dangling expression that errors on
-    # every load. Evaluate first, so the frozen value is the live one.
+    # Bake the dev root's live state into the shipped pars, BEFORE the
+    # children go. Evaluating here is the whole point: this is the one place
+    # the binds and expressions still resolve, because the config host they
+    # point at is still below us. A moment later it is not, and pre_release
+    # pays this same price on host Registration pars -- a shipped copy whose
+    # bind master was removed carries an expression that errors on load.
+    #
+    # The evaluated value becomes .default as well as .val. Without that, a
+    # user hitting "reset to default" on the bundle gets whatever the par
+    # happened to be created with in the dev comp, which is not the state we
+    # shipped and may be a value no shipped install should ever hold.
     for page in root.customPages:
         for p in page.pars:
-            if p.mode == ParMode.CONSTANT:
-                continue
+            if p.style in ('Pulse', 'Momentary', 'Header'):
+                continue          # nothing to freeze; .default is meaningless
             try:
                 val = p.eval()
             except Exception:
-                val = None
+                continue          # unresolvable already -- leave it alone
             try:
                 p.mode = ParMode.CONSTANT
-                if val is not None:
-                    p.val = val
+                p.default = val
+                p.val = val
             except Exception:
-                pass
+                pass              # read-only or otherwise unsettable
     for child in list(root.children):
         child.destroy()
     for page in list(root.customPages):
