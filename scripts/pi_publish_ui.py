@@ -115,10 +115,18 @@ def RefreshState():
 
 
 def _notesLine():
+\t"""First line of the RELEASE-LEVEL prose. Per-tool 'Name: ...' lines
+\tare skipped -- one tool's note is a poor summary of the drop."""
 \ttry:
 \t\twith open(NOTES, encoding='utf-8') as f:
 \t\t\tt = re.sub(r'<!--.*?-->', '', f.read(), flags=re.S).strip()
-\t\treturn t.splitlines()[0][:88] if t else '(empty -- the entry will be just the package list)'
+\t\tif not t:
+\t\t\treturn '(empty -- the entry will be just the package list)'
+\t\tfor line in t.splitlines():
+\t\t\ts = line.strip()
+\t\t\tif s and not re.match(r'^[-*]?\\s*[A-Za-z_][\\w]*\\s*:', s):
+\t\t\t\treturn s[:88]
+\t\treturn t.splitlines()[0][:88]
 \texcept Exception:
 \t\treturn '(unreadable)'
 
@@ -189,6 +197,60 @@ def _bumpedOnly(ns):
 \treturn sorted(out)
 
 
+def ConfirmText(names, versions, label, upload=True):
+\t"""Exactly what the confirm dialog says. Split out so it can be read
+\twithout opening a modal."""
+\tlines = ['Publish %d package%s as %s' % (len(names),
+\t\t\t\t\t\t\t\t\t\t'' if len(names) == 1 else 's', label), '']
+\tlines += ['    %s   %s' % (n, versions.get(n, '?')) for n in names]
+\tlines += ['', 'Notes: ' + _notesLine()]
+\tif not upload:
+\t\tlines += ['', 'Staging only -- no upload.']
+\treturn '\\n'.join(lines)
+
+
+_WATCH = {}
+
+
+def _armUploadWatch(res):
+\t"""Upload runs detached, so nothing would ever say whether it worked.
+\tPoll the process and finish with a dialog either way."""
+\tproc = res.get('_proc')
+\tif proc is None:
+\t\treturn
+\t_WATCH.update({'proc': proc, 'log': res.get('upload_log', ''),
+\t\t\t\t'release': res.get('release', '')})
+\trun("op('%s').module.PollUpload()" % me.path, delayFrames=180)
+
+
+def PollUpload():
+\tproc = _WATCH.get('proc')
+\tif proc is None:
+\t\treturn
+\tcode = proc.poll()
+\tif code is None:
+\t\trun("op('%s').module.PollUpload()" % me.path, delayFrames=180)
+\t\treturn
+\tlog = _WATCH.get('log', '')
+\trel = _WATCH.get('release', '')
+\t_WATCH.clear()
+\ttail = ''
+\ttry:
+\t\twith open(log, encoding='utf-8') as f:
+\t\t\ttail = '\\n'.join(f.read().strip().splitlines()[-6:])
+\texcept Exception:
+\t\tpass
+\tif code == 0:
+\t\tui.messageBox('FNS publish', 'Upload finished -- %s is live.\\n\\n%s' % (rel, tail))
+\t\t_log('upload finished for %s' % rel)
+\telse:
+\t\tui.messageBox('FNS publish',
+\t\t\t\t\t'Upload FAILED for %s (exit %s).\\n\\n%s\\n\\n'
+\t\t\t\t\t'The staged bytes are fine -- retry with:\\n'
+\t\t\t\t\t'    python3 packaging/upload.py' % (rel, code, tail))
+\t\t_log('upload failed (exit %s) for %s' % (code, rel), level='ERROR')
+
+
 def PublishNames(names, bump='auto', upload=True, ns=None):
 \tif not names:
 \t\tui.messageBox('FNS publish', 'Nothing shippable in that selection.')
@@ -197,14 +259,9 @@ def PublishNames(names, bump='auto', upload=True, ns=None):
 \tover = str(getattr(_pi().par, 'Releaselabel', None).eval() or '').strip()
 \tlabel = over or None
 \tversions = _preview(ns, names, bump)
-\tlines = ['Publish %d package%s as %s' % (len(names), '' if len(names) == 1 else 's',
-\t\t\t\t\t\t\t\t\t\tover or NextLabel()), '']
-\tlines += ['    %s   %s' % (n, versions.get(n, '?')) for n in names]
-\tlines += ['', 'Notes: ' + _notesLine()]
-\tif not upload:
-\t\tlines += ['', 'Staging only -- no upload.']
-\tif ui.messageBox('FNS publish', '\\n'.join(lines),
-\t\t\t\t\tbuttons=['Cancel', 'Publish']) != 1:
+\ttext = ConfirmText(names, versions, over or NextLabel(), upload)
+\tif ui.messageBox('FNS publish', text, buttons=['Cancel', 'Publish']) != 1:
+\t\t_log('publish cancelled at the confirm dialog')
 \t\treturn
 \tres = ns['ReleaseMany'](names, bump=bump, label=label, upload=upload)
 \tif not res.get('ok'):
@@ -224,6 +281,7 @@ def PublishNames(names, bump='auto', upload=True, ns=None):
 \tgetattr(_pi().par, 'Releaselabel').val = ''
 \tRefreshLabel()
 \tRefreshState()
+\t_armUploadWatch(res)
 
 
 def PublishPath(path):
