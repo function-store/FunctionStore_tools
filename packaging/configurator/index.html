@@ -126,6 +126,7 @@
     <span class="muted" id="deps"></span>
     <span class="spacer"></span>
     <button id="copy">Copy list</button>
+    <button id="script">Copy install script</button>
     <button class="primary" id="save">Download selection.json</button>
   </div>
 </footer>
@@ -139,13 +140,14 @@
   <pre id="out"></pre>
   <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end">
     <button id="close">Close</button>
+    <button class="primary" id="docopy" hidden>Copy</button>
     <button class="primary" id="doinstall" hidden>Install</button>
   </div>
 </div></dialog>
 
 <script src="manifest.js"></script>
 <script>
-(function () {
+function fnsBoot() {
   var M = window.FNS_MANIFEST;
   var listEl = document.getElementById('list');
   // Served by the bootstrap's Web Server DAT and the store is still being
@@ -391,18 +393,125 @@
     else document.documentElement.removeAttribute('data-theme');
   });
   // Served mode talks straight to the installer COMP; static mode
-  // downloads a selection.json to feed it by hand.
+  // downloads a selection.json to feed it by hand; both offer the paste
+  // rail (a Textport script) except served mode, where the user is
+  // already inside TD with a one-click install in front of them.
+  var HINTS = {
+    selection: served
+      ? 'This goes straight to the installer in your project.'
+      : 'Save this as selection.json next to the installer COMP, or paste ' +
+        'the list into the toolkit’s installer.',
+    script: 'Paste into a TouchDesigner Textport (Dialogs ▸ Textport ' +
+      'and DATs) — macOS or Windows. TD pauses briefly while it ' +
+      'downloads; everything is sha256-verified against the release ' +
+      'manifest before anything is installed.'
+  };
   if (served) {
     document.getElementById('save').textContent = 'Review install…';
-    document.getElementById('dlghint').textContent =
-      'This goes straight to the installer in your project.';
+    document.getElementById('script').hidden = true;
   }
-  function showDialog(text, installable) {
+  document.getElementById('dlghint').textContent = HINTS.selection;
+  // The website flavor leads with the paste rail -- a selection.json is
+  // only useful to someone who already has an installer COMP.
+  if (window.FNS_SITE && !served) {
+    document.getElementById('script').classList.add('primary');
+    document.getElementById('save').classList.remove('primary');
+    var home = document.createElement('a');
+    home.className = 'help';
+    home.href = '/';
+    home.textContent = '← tools.functionstore.xyz';
+    var bar = document.querySelector('.bar');
+    bar.insertBefore(home, document.getElementById('q'));
+  }
+  function showDialog(text, installable, hint) {
     var dlg = document.getElementById('dlg');
     document.getElementById('out').textContent = text;
     document.getElementById('doinstall').hidden = !installable;
+    document.getElementById('docopy').hidden = true;
+    document.getElementById('dlghint').textContent = hint || HINTS.selection;
     if (!dlg.open) dlg.showModal();
   }
+
+  // The paste rail: one Textport line that reproduces this selection in a
+  // bare project. It embeds ONLY the picked tool names -- release, URLs
+  // and hashes are resolved from the ROLLING manifest at paste time, so a
+  // copied script stays valid across releases. Order of operations:
+  // download core + selection + bootstrap, verify every sha256 BEFORE
+  // writing anything, stock the palette store (where DefaultManifest()
+  // looks), drop the bootstrap, then hand its installer the selection one
+  // deferred run() later -- extensions need a frame to initialize.
+  // One line, because the Textport executes pasted text line by line.
+  function installScript() {
+    var rolling = String(M.base_url || '').replace(/\/+$/, '') + '/manifest.json';
+    return [
+      "import requests, hashlib, os, json, tempfile",
+      "H = {'User-Agent': 'FNSTools-Install'}",
+      "SEL = " + JSON.stringify(Array.from(picked).sort()),
+      "m = requests.get('" + rolling + "', headers=H, timeout=30).json()",
+      "idx = {p['name']: p for p in m['packages']}",
+      "miss = [t for t in SEL if t not in idx]",
+      "assert not miss, 'not in release %s: %s' % (m['release'], ', '.join(miss))",
+      "rail = m.get('rails', {}).get('FNSTools.tox')",
+      "assert rail, 'release %s publishes no bootstrap' % m['release']",
+      "names = m['core'] + SEL",
+      "blobs = {t: requests.get(idx[t]['artifact']['url'], headers=H, timeout=120).content for t in names}",
+      "boot = requests.get(rail['url'], headers=H, timeout=120).content",
+      "bad = [t for t in names if hashlib.sha256(blobs[t]).hexdigest() != idx[t]['artifact']['sha256']] + ([] if hashlib.sha256(boot).hexdigest() == rail['sha256'] else ['FNSTools.tox'])",
+      "assert not bad, 'checksum mismatch: %s' % ', '.join(bad)",
+      "st = os.path.join(app.userPaletteFolder, 'FNStools_ext', 'store')",
+      "os.makedirs(st, exist_ok=True)",
+      "_ = [open(os.path.join(st, t + '.tox'), 'wb').write(blobs[t]) for t in names]",
+      "_ = open(os.path.join(st, 'manifest.json'), 'w').write(json.dumps(m, indent=1))",
+      "sp = os.path.join(st, 'selection.json').replace(chr(92), '/')",
+      "_ = open(sp, 'w').write(json.dumps({'schema': 1, 'toolkit': m['toolkit']['name'], 'core': m['core'], 'tools': SEL, 'install': names}, indent=1))",
+      "f = os.path.join(tempfile.gettempdir(), 'FNSTools.tox')",
+      "_ = open(f, 'wb').write(boot)",
+      "pn = ui.panes.current",
+      "pn = pn if pn.type == PaneType.NETWORKEDITOR else next(x for x in ui.panes if x.type == PaneType.NETWORKEDITOR)",
+      "root = pn.owner.loadTox(f)",
+      "r_ = run(\"i = op('%s/FNS_Installer'); i.par.Selectionfile = '%s'; i.par.Install.pulse()\" % (root.path, sp), delayFrames=90)",
+      "print('FNSTools', m['release'], '--', len(names), 'packages verified; installing into', root.path)"
+    ].join('; ');
+  }
+
+  // Clipboard with a fallback textarea INSIDE the dialog: a modal
+  // <dialog> makes the rest of the document inert, so a body-level
+  // textarea cannot take the selection execCommand needs.
+  function toClipboard(text, btn) {
+    var label = btn.textContent;
+    function fed() {
+      btn.textContent = 'Copied ✓';
+      setTimeout(function () { btn.textContent = label; }, 1600);
+    }
+    function fallback() {
+      var host = document.getElementById('dlg');
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      (host.open ? host : document.body).appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); fed(); } catch (e) { /* leave label */ }
+      ta.remove();
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(fed, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  document.getElementById('script').addEventListener('click', function () {
+    var text = installScript();
+    showDialog(text, false, HINTS.script);
+    var docopy = document.getElementById('docopy');
+    docopy.hidden = false;
+    toClipboard(text, docopy);
+  });
+  document.getElementById('docopy').addEventListener('click', function () {
+    toClipboard(document.getElementById('out').textContent,
+                document.getElementById('docopy'));
+  });
   function post(uri, body, onDone) {
     fetch(uri, {method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -458,10 +567,7 @@
     post('/install', '{}', installOrPoll);
   });
   document.getElementById('copy').addEventListener('click', function () {
-    var dlg = document.getElementById('dlg');
-    document.getElementById('out').textContent =
-      JSON.stringify(selection(), null, 1);
-    dlg.showModal();
+    showDialog(JSON.stringify(selection(), null, 1), false);
     var pre = document.getElementById('out');
     var r = document.createRange(); r.selectNodeContents(pre);
     var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
@@ -472,6 +578,29 @@
   });
 
   render();
+}
+
+// Site mode (window.FNS_SITE, set by the website build) bakes the manifest
+// at build time but prefers the live rolling copy when the bucket allows
+// cross-origin reads -- the baked copy is the fallback, so a CORS-less
+// bucket degrades to "as fresh as the last site deploy", not to a broken
+// page. Every other mode boots on whatever manifest.js provided.
+(function () {
+  var baked = window.FNS_MANIFEST;
+  if (!window.FNS_SITE || !baked || !baked.base_url) { fnsBoot(); return; }
+  var started = false;
+  function go() { if (!started) { started = true; fnsBoot(); } }
+  var slow = setTimeout(go, 4000);
+  try {
+    fetch(String(baked.base_url).replace(/\/+$/, '') + '/manifest.json',
+          {cache: 'no-store'})
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (m) {
+        if (m && m.packages && m.core) window.FNS_MANIFEST = m;
+      })
+      .catch(function () {})
+      .then(function () { clearTimeout(slow); go(); });
+  } catch (e) { clearTimeout(slow); go(); }
 })();
 </script>
 </body>

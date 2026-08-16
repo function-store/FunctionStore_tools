@@ -14,6 +14,8 @@ LAYOUT
 
     <release>/manifest.json     immutable snapshot of this release
     <release>/<Package>.tox     immutable artifacts, hashes in the manifest
+    <release>/FNSTools.tox      one-drop bootstrap; hash in manifest `rails`
+    <release>/FNS_Installer.tox bare installer; hash in manifest `rails`
     manifest.json               ROLLING pointer: a copy of the newest release
 
 Releases are pinned: every artifact URL inside a manifest carries its
@@ -124,13 +126,28 @@ def Stage(clean=True):
             continue
         staged.append(pkg['name'])
 
-    # the install rails ride along, unhashed (not packages): the bare
-    # installer, and the one-drop bootstrap root (installer + UPDATER
-    # inside an empty toolkit container) -- how a bare project starts.
+    # the install rails ride along: the bare installer, and the one-drop
+    # bootstrap root (installer + UPDATER inside an empty toolkit
+    # container) -- how a bare project starts. They are not packages (no
+    # Pkgversion, never update-compared), but they ARE hashed here, per
+    # release: the website's paste-script rail downloads the bootstrap and
+    # must be able to verify the bytes like any other artifact.
+    rails = {}
     for rail in ('FNS_Installer.tox', 'FNSTools.tox'):
         src = _repo(DIST_DIR, rail)
         if os.path.exists(src):
-            shutil.copy2(src, os.path.join(rel_dir, rail))
+            dst = os.path.join(rel_dir, rail)
+            shutil.copy2(src, dst)
+            rails[rail] = {
+                'bytes': os.path.getsize(dst),
+                'sha256': _sha256(dst),
+                'url': '%s/%s/%s' % (manifest.get('base_url', '').rstrip('/'),
+                                     release, rail),
+            }
+    # Stamped into the STAGED manifests only (release snapshot + rolling
+    # copy), not the repo's: build_manifest.py cannot know these hashes --
+    # the rails are built afterwards by build_installer.py.
+    manifest['rails'] = rails
 
     with open(os.path.join(rel_dir, 'manifest.json'), 'w', encoding='utf-8') as f:
         json.dump(manifest, f, indent=1)
@@ -142,7 +159,9 @@ def Stage(clean=True):
     total = sum(os.path.getsize(os.path.join(rel_dir, f))
                 for f in os.listdir(rel_dir))
     return {'release': release, 'out': out, 'staged': len(staged),
-            'bumped': bumped, 'added': added,
+            'bumped': bumped, 'added': added, 'rails': sorted(rails),
+            'rails_missing': [r for r in ('FNS_Installer.tox', 'FNSTools.tox')
+                              if r not in rails],
             'missing': missing, 'hash_mismatch': mismatched,
             'total_mb': round(total / 1048576.0, 2),
             'ok': not missing and not mismatched,

@@ -11,7 +11,14 @@ packaging/catalog.json     category + description per package  (curated)
 packaging/docs/<Name>.md   prose + frontmatter per package     (curated)
 website/index.html         landing page                        (hand-written)
 website/docs/              GENERATED — wiped and rebuilt every run
+website/get/               GENERATED — the online configurator
 ```
+
+`/get/` is emitted from `packaging/configurator/index.html` with the
+manifest baked in (the bucket serves no CORS header, so the page's live
+refresh is best-effort) and `window.FNS_SITE` set, which promotes the
+**Copy install script** button — the paste rail described in
+`packaging/README.md`. Edit the configurator, not the emitted page.
 
 `packaging/docs/` is the source of truth for documentation. It is *not*
 generated from the GitHub wiki — the wiki seeded it once

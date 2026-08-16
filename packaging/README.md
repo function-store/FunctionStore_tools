@@ -9,6 +9,7 @@ catalog.json        curated: category + description (the only hand-written data)
 build_manifest.py   runs inside TD; derives everything else, writes manifest.json
 manifest.json       generated catalog the configurator and UPDATER both read
 configurator/       static picker over manifest.json -> selection.json
+                    or a one-line Textport install script (the paste rail)
 dist/               exported .tox artifacts (gitignored; rebuild on demand)
 ```
 
@@ -138,6 +139,19 @@ exec(open('packaging/install.py').read())
 Install('packaging/example-selection.json')
 ```
 
+**Or the paste rail, no download at all.** `tools.functionstore.xyz/get/`
+serves the same picker (emitted by `website/tools/build-site.mjs` from
+`configurator/index.html`, manifest baked in at site build). **Copy
+install script** turns the selection into ONE Textport line that embeds
+only the picked names — release, URLs and hashes are resolved from the
+ROLLING manifest at paste time, so a copied script stays valid across
+releases. The line fetches core + selection + bootstrap from the pinned
+release URLs, verifies every sha256 BEFORE writing anything, stocks the
+palette store (where `DefaultManifest()` already looks), loads the
+bootstrap into the current network editor and hands its installer the
+selection one deferred `run()` later. It needs the `rails` hashes that
+`Stage()` stamps, so it refuses a manifest published before those existed.
+
 **Install tests must target a cooking-disabled container.** A live copy of a
 registry master will otherwise try to promote itself to the `/sys` global and
 destroy the running one:
@@ -175,6 +189,13 @@ python3 packaging/upload.py
 <release>/FNSTools.tox    one-drop bootstrap root
 manifest.json                ROLLING pointer to the newest release
 ```
+
+The rails are not packages (no `Pkgversion`, never update-compared), but
+`Stage()` hashes them into the STAGED manifests under `rails` — bytes,
+sha256, pinned URL per rail — so the website's paste script can verify
+the bootstrap it downloads. Only the staged copies carry `rails`:
+`build_manifest.py` cannot know these hashes because the rails are built
+afterwards by `build_installer.py`.
 
 Releases are **pinned**: artifact URLs carry their release, so a manifest
 always resolves to the bytes it was built from. The rolling root copy only
