@@ -76,7 +76,6 @@
   <div class="side-group">
     <h3><span class="side-glyph" aria-hidden="true">◎</span>Parameters</h3>
     <ul>
-      <li><a href="/docs/clearpars/">ClearPars</a></li>
       <li><a href="/docs/custompartools/">CustomParTools</a></li>
       <li><a href="/docs/exprhotstrings/" aria-current="page">ExprHotStrings</a></li>
       <li><a href="/docs/paropdrop/">ParOPDrop</a></li>
@@ -148,7 +147,10 @@
 <h2 id="exprhotstrings" tabindex="-1">ExprHotStrings <a class="heading-anchor" href="#exprhotstrings" aria-hidden="true">#</a></h2>
 <p><a href="https://www.youtube.com/watch?v=j43gZ0MB2xo">YouTube breakdown</a></p>
 <p>Define <code>Abbreviations</code> in the first column that when used in a parameter expression will expand to the string defined in the <code>Expands</code> column.
-Forget <code>absTime.seconds</code>, use <code>#AT</code>! The abbreviations work in-line too, meaing you can type <code>#AT * 0.2</code> or even combine them!</p>
+Forget <code>absTime.seconds</code>, use <code>#AT</code>! With <code>Replace inline</code> enabled on the component (off by default -- without it an abbreviation only expands when it is the <em>entire</em> expression) the abbreviations work in-line too, meaning you can type <code>#AT * 0.2</code> or even combine them!</p>
+<blockquote>
+<p>Most of the behaviors below live behind their own toggle on the component, and only <code>CustomPar Promote Enable</code> is on by default: <code>#@op Wrap Enable</code> gates <code>#@</code>, <code>#! Parent Shortcut Enable</code> gates <code>#!</code>/<code>#!!</code>.</p>
+</blockquote>
 <p>There is a special reserved abbreviation, <code>#@</code> which will wrap anything valid after it in <code>op('...')</code>. So <code>#@noise1.par.amp</code> becomes <code>op('noise1').par.amp</code> saving you some heavy keystrokes!</p>
 <p>Another special abbreviation <code>#!</code> will resolve to the closest parent shortcut, as well as <code>#!!</code> will also add a .par after it!</p>
 <ul>

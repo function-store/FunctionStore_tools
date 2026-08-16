@@ -76,7 +76,6 @@
   <div class="side-group">
     <h3><span class="side-glyph" aria-hidden="true">◎</span>Parameters</h3>
     <ul>
-      <li><a href="/docs/clearpars/">ClearPars</a></li>
       <li><a href="/docs/custompartools/">CustomParTools</a></li>
       <li><a href="/docs/exprhotstrings/">ExprHotStrings</a></li>
       <li><a href="/docs/paropdrop/">ParOPDrop</a></li>
@@ -145,9 +144,15 @@
   
   
   <div class="docs-body">
-<!-- TODO: no wiki content existed for this package. Written
-     from the catalog description only -- please expand. -->
-<p>Main-menu extras: the menu Configurator UI.</p>
+<h2 id="main-menu-configurator" tabindex="-1">Main Menu Configurator <a class="heading-anchor" href="#main-menu-configurator" aria-hidden="true">#</a></h2>
+<p>Click the gear (<code>Configure</code>) icon at the right end of TouchDesigner's main-menu bar to open the Main Menu Configurator.</p>
+<ul>
+<li>Lists every entry with <strong>Name / Side / Show / Group / Origin</strong> columns. TD's own built-in items (wiki, forum, tutorials, startstop, fps, gpuUsage, realtime, stringfield, OpFamUI, update) are adopted into the list too, so your own entries can be ordered between them -- the topbar's &quot;Show TouchDesigner's own menu-bar items&quot; button can right-click-restore their original order.</li>
+<li>Toggle <strong>Show</strong> to hide/show an entry without unregistering it.</li>
+<li>Select rows and use the topbar buttons to <strong>Group</strong> them into a collapsible bracket or <strong>Ungroup</strong> a selection (members stay put).</li>
+<li><strong>Refresh</strong> re-reads the registry and rebuilds the list.</li>
+<li>Drag any panel COMP onto the gear to register it as a new, self-registering main-menu entry.</li>
+</ul>
 
   </div>
   <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/FNS_MainMenu.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>

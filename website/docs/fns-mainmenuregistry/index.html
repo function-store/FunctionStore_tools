@@ -76,7 +76,6 @@
   <div class="side-group">
     <h3><span class="side-glyph" aria-hidden="true">◎</span>Parameters</h3>
     <ul>
-      <li><a href="/docs/clearpars/">ClearPars</a></li>
       <li><a href="/docs/custompartools/">CustomParTools</a></li>
       <li><a href="/docs/exprhotstrings/">ExprHotStrings</a></li>
       <li><a href="/docs/paropdrop/">ParOPDrop</a></li>
@@ -145,9 +144,9 @@
   
   
   <div class="docs-body">
-<!-- TODO: no wiki content existed for this package. Written
-     from the catalog description only -- please expand. -->
-<p>TD main-menu surface registry, including project-name display. The raw master, promoted to /sys.</p>
+<h2 id="main-menu-registry" tabindex="-1">Main Menu Registry <a class="heading-anchor" href="#main-menu-registry" aria-hidden="true">#</a></h2>
+<p>The raw registry that manages TouchDesigner's main-menu bar as a single surface: order, visibility and left/right placement of every entry -- both TD's own built-in items (wiki, forum, tutorials, fps, etc.) and the ones tools publish -- live here, not in ad-hoc per-widget parameters.</p>
+<p>It ships as its own core package, promoted to <code>/sys</code> (global shortcut <code>op.FNS_MAINMENUREGISTRY</code>), one of the toolkit's six core registries. A tool that wants a main-menu entry -- for example <a href="/docs/borderlesstd/">BorderlessTD</a>'s project-name display, or <a href="/docs/fns-mainmenu/">FNS_MainMenu</a>'s own Configurator gear -- ships a small host copy of this registry alongside its widget. You don't interact with the registry directly: open the <a href="/docs/fns-mainmenu/#main-menu-configurator">Main Menu Configurator</a> (the gear icon in the bar) to reorder, hide or group entries.</p>
 
   </div>
   <p class="edit-page"><a href="https://github.com/function-store/FunctionStore_tools/blob/main/packaging/docs/FNS_MainMenuRegistry.md" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
