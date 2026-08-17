@@ -1,0 +1,581 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ColorUI</title>
+<style>
+:root{
+  --bg:#191b1e; --panel:#212428; --row:#24272b; --rowh:#2c3036;
+  --line:#31353b; --fg:#d6d9dd; --dim:#878d94; --acc:#e8963f;
+  --good:#7dc98a; --bad:#d96a6a;
+}
+*{box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  margin:0;background:var(--bg);color:var(--fg);
+  font:13px/1.45 -apple-system,'Segoe UI','Helvetica Neue',sans-serif;
+  -webkit-user-select:none;user-select:none;
+  display:flex;flex-direction:column;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#3a3f46;border-radius:5px}
+::-webkit-scrollbar-track{background:transparent}
+
+header{
+  flex:none;display:flex;align-items:center;gap:10px;
+  padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.brand{font-weight:600;letter-spacing:.4px;color:var(--acc)}
+.brand small{color:var(--dim);font-weight:400;margin-left:6px}
+input[type=text],input[type=number]{
+  background:var(--bg);color:var(--fg);border:1px solid var(--line);
+  border-radius:4px;padding:4px 8px;outline:none;font:inherit;
+  -webkit-user-select:text;user-select:text;
+}
+input[type=text]:focus,input[type=number]:focus{border-color:var(--acc)}
+#search{width:230px}
+button{
+  background:#2e3237;color:var(--fg);border:1px solid var(--line);
+  border-radius:4px;padding:4px 10px;font:inherit;cursor:pointer;white-space:nowrap;
+}
+button:hover{background:#383d43;border-color:#4a505a}
+button.warn:hover{border-color:var(--bad);color:var(--bad)}
+button:disabled{opacity:.4;cursor:default}
+label.chk{display:inline-flex;align-items:center;gap:5px;color:var(--dim);cursor:pointer;white-space:nowrap}
+label.chk input{accent-color:var(--acc)}
+.sep{width:1px;align-self:stretch;background:var(--line);margin:0 2px}
+.spacer{flex:1}
+
+#famrow{
+  flex:none;display:flex;gap:8px;align-items:center;padding:7px 12px;
+  background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap;
+}
+#famrow .cap{color:var(--dim);margin-right:2px}
+.fam{
+  display:inline-flex;align-items:center;gap:6px;padding:3px 8px 3px 4px;
+  background:var(--row);border:1px solid var(--line);border-radius:5px;cursor:pointer;
+}
+.fam:hover{background:var(--rowh)}
+.fam .sw{width:20px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,.15)}
+.fam.mod .nm::after{content:'•';color:var(--acc);margin-left:4px}
+
+#nearrow{display:flex;align-items:center;gap:6px}
+#nearsw{width:22px;height:22px;border-radius:4px;border:1px solid var(--line);cursor:pointer}
+#neartol{width:60px}
+
+main{flex:1;overflow-y:auto;overflow-x:hidden}
+.row{
+  display:flex;align-items:center;gap:9px;padding:3px 12px;cursor:pointer;
+  border-bottom:1px solid #202226;
+}
+.row:nth-child(even){background:var(--row)}
+.row:hover{background:var(--rowh)}
+.row .sw{
+  flex:none;width:26px;height:18px;border-radius:3px;
+  border:1px solid rgba(255,255,255,.14);
+}
+.row .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row.mod .nm{color:#fff}
+.row .dot{flex:none;width:6px;height:6px;border-radius:3px;background:var(--acc);visibility:hidden}
+.row.mod .dot{visibility:visible}
+.row .def{
+  flex:none;display:none;align-items:center;gap:5px;color:var(--dim);font-size:11px;
+}
+.row.mod .def{display:inline-flex}
+.row .def .dsw{width:14px;height:12px;border-radius:2px;border:1px solid rgba(255,255,255,.12)}
+.row .def button{padding:1px 7px;font-size:11px}
+
+footer{
+  flex:none;display:flex;gap:14px;padding:5px 12px;color:var(--dim);
+  background:var(--panel);border-top:1px solid var(--line);font-size:12px;
+}
+#conn{color:var(--bad)} #conn.on{color:var(--good)}
+
+#overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;z-index:9;
+}
+#picker{
+  position:fixed;z-index:10;display:none;flex-direction:column;gap:8px;
+  background:var(--panel);border:1px solid #444a52;border-radius:8px;
+  padding:12px;width:264px;box-shadow:0 10px 30px rgba(0,0,0,.55);
+}
+#picker .title{
+  font-size:12px;color:var(--dim);max-width:240px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#sv{width:240px;height:150px;border-radius:5px;cursor:crosshair}
+#hue{width:240px;height:14px;border-radius:4px;cursor:ew-resize}
+#picker .fields{display:flex;gap:6px;align-items:center}
+#picker .fields input{width:56px;font-size:12px;padding:3px 5px}
+#hex{width:76px !important}
+#picker .btns{display:flex;gap:6px;justify-content:flex-end}
+
+#toast{
+  position:fixed;left:50%;bottom:44px;transform:translateX(-50%);
+  background:#111;border:1px solid var(--acc);color:var(--fg);
+  padding:6px 16px;border-radius:6px;opacity:0;transition:opacity .25s;z-index:20;
+  pointer-events:none;max-width:80%;
+}
+#wait{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:var(--bg);z-index:30;color:var(--dim);flex-direction:column;gap:10px;
+}
+#wait .pulse{width:10px;height:10px;border-radius:5px;background:var(--acc);
+  animation:pl 1.1s ease-in-out infinite}
+@keyframes pl{50%{opacity:.25;transform:scale(.7)}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">ColorUI<small id="ver"></small></div>
+  <input type="text" id="search" placeholder="filter elements — space = AND, * wildcard">
+  <label class="chk"><input type="checkbox" id="modonly">changed only</label>
+  <div id="nearrow">
+    <label class="chk"><input type="checkbox" id="nearon">near</label>
+    <div id="nearsw" title="reference color"></div>
+    <span style="color:var(--dim)">±</span>
+    <input type="number" id="neartol" min="0" max="1" step="0.01" value="0.05">
+  </div>
+  <span class="spacer"></span>
+  <button id="setshown" title="apply one color to every listed element">Set shown…</button>
+  <div class="sep"></div>
+  <button id="randomize">Randomize</button>
+  <button id="undorandom" disabled>Undo</button>
+  <button id="resetall" class="warn">Reset all</button>
+  <div class="sep"></div>
+  <button id="import">Import</button>
+  <button id="export">Export</button>
+  <label class="chk"><input type="checkbox" id="autoload">auto-load</label>
+</header>
+
+<div id="famrow"><span class="cap">Families</span></div>
+<main id="list"></main>
+<footer>
+  <span id="conn">waiting…</span>
+  <span id="counts"></span>
+  <span class="spacer"></span>
+  <span>click a color to edit · right side resets</span>
+</footer>
+
+<div id="overlay"></div>
+<div id="picker">
+  <div class="title" id="ptitle"></div>
+  <canvas id="sv" width="240" height="150"></canvas>
+  <canvas id="hue" width="240" height="14"></canvas>
+  <div class="fields">
+    <input type="text" id="hex" maxlength="7">
+    <input type="number" id="fr" min="0" max="1" step="0.001">
+    <input type="number" id="fg" min="0" max="1" step="0.001">
+    <input type="number" id="fb" min="0" max="1" step="0.001">
+  </div>
+  <div class="btns">
+    <button id="pdefault">Default</button>
+    <button id="pclose">Close</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div id="wait"><div class="pulse"></div><div>waiting for TouchDesigner…</div></div>
+
+<script>
+'use strict';
+/* ================================================================ bridge */
+const Bridge = (() => {
+  const CHUNK = 800;
+  // per-load prefix so nonces never collide across page reloads
+  const SESS = Math.random().toString(36).slice(2, 7);
+  let seq = 0, wait = null, queue = [], previewSlot = null;
+
+  function post(msg, retriable) {
+    if (msg.cmd === 'preview') { previewSlot = msg; pump(); return; }
+    queue.push({msg, retriable: retriable !== false});
+    pump();
+  }
+  function take() {
+    if (queue.length) return queue.shift();
+    if (previewSlot) { const m = {msg: previewSlot, retriable: true}; previewSlot = null; return m; }
+    return null;
+  }
+  function pump() {
+    if (wait) return;
+    const item = take();
+    if (!item) return;
+    const payload = JSON.stringify(item.msg);
+    seq++;
+    if (payload.length <= CHUNK) {
+      wait = {base: seq, tries: 0, single: payload, retriable: item.retriable};
+      fire();
+    } else {
+      const parts = [];
+      for (let i = 0; i < payload.length; i += CHUNK) parts.push(payload.slice(i, i + CHUNK));
+      wait = {base: seq, tries: 0, parts, idx: 0, retriable: item.retriable};
+      fire();
+    }
+  }
+  function nonce() { return SESS + wait.base + (wait.tries ? '.' + wait.tries : ''); }
+  function fire() {
+    if (!wait) return;
+    if (wait.single !== undefined) {
+      document.title = 'FNSCUI:' + nonce() + ':' + wait.single;
+    } else {
+      document.title = 'FNSCUI#' + nonce() + ':' + wait.idx + '/' + wait.parts.length + ':' + wait.parts[wait.idx];
+    }
+    clearTimeout(wait.timer);
+    wait.timer = setTimeout(timeout, 1600);
+  }
+  function timeout() {
+    if (!wait) return;
+    if (wait.retriable && wait.tries < 3) { wait.tries++; fire(); return; }
+    wait = null;
+    FNS.toast('TouchDesigner not responding');
+    pump();
+  }
+  function ack(n, i) {
+    if (!wait || String(n) !== nonce()) return;
+    clearTimeout(wait.timer);
+    if (wait.single !== undefined) { wait = null; pump(); return; }
+    if (i !== wait.idx) return;
+    wait.idx++;
+    if (wait.idx >= wait.parts.length) { wait = null; pump(); }
+    else fire();
+  }
+  return {post, ack};
+})();
+
+/* ================================================================= model */
+const S = {
+  colors: {}, defaults: {}, overrides: new Set(), families: [],
+  names: [], connected: false, randomized: false,
+};
+const $ = id => document.getElementById(id);
+const EPS = 1e-3;
+
+function isMod(n) { return S.overrides.has(n); }
+function css(rgb) {
+  const c = v => Math.round(Math.max(0, Math.min(1, v)) * 255);
+  return `rgb(${c(rgb[0])},${c(rgb[1])},${c(rgb[2])})`;
+}
+function toHex(rgb) {
+  return '#' + rgb.map(v => Math.round(Math.max(0, Math.min(1, v)) * 255)
+    .toString(16).padStart(2, '0')).join('');
+}
+function fromHex(h) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(h.trim());
+  if (!m) return null;
+  const v = parseInt(m[1], 16);
+  return [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255];
+}
+
+/* ============================================================== TD entry */
+window.FNS = {
+  setState(st) {
+    S.colors = st.colors; S.defaults = st.defaults;
+    S.overrides = new Set(st.overrides); S.families = st.families;
+    S.randomized = !!st.randomized;
+    S.names = Object.keys(st.colors).filter(n => !st.families.includes(n)).sort();
+    $('autoload').checked = !!st.autoload;
+    $('ver').textContent = st.version ? 'v' + st.version : '';
+    if (!S.connected) { S.connected = true; $('wait').style.display = 'none'; }
+    $('conn').textContent = 'connected';
+    $('conn').className = 'on';
+    $('undorandom').disabled = !S.randomized;
+    renderFams(); renderList();
+  },
+  setAutoload(v) { $('autoload').checked = !!v; },
+  toast(t) { toast(t); },
+  _ack(n, i) { Bridge.ack(n, i); },
+  /* TD->page payloads over the executeJavaScript size cap stream in parts */
+  _rxopen() { this._buf = []; },
+  _rxpart(s) { if (this._buf) this._buf.push(s); },
+  _rxdone(fn) {
+    if (!this._buf) return;
+    const raw = this._buf.join('');
+    this._buf = null;
+    try { this[fn](JSON.parse(raw)); }
+    catch (e) { toast('bad payload from TD: ' + e); }
+  },
+};
+
+/* ============================================================ local edits */
+function applyLocal(names, rgb, record) {
+  const upd = {};
+  for (const n of names) {
+    S.colors[n] = rgb.slice();
+    upd[n] = [+rgb[0].toFixed(4), +rgb[1].toFixed(4), +rgb[2].toFixed(4)];
+    if (record) {
+      const d = S.defaults[n];
+      if (d && d.every((v, i) => Math.abs(v - rgb[i]) < EPS)) S.overrides.delete(n);
+      else S.overrides.add(n);
+    }
+  }
+  Bridge.post({cmd: record ? 'set' : 'preview', colors: upd});
+  if (record) { renderFams(); renderList(); }
+  else patchSwatches(names);
+}
+function resetNames(names) {
+  const upd = {};
+  for (const n of names) {
+    const d = S.defaults[n];
+    if (!d) continue;
+    S.colors[n] = d.slice();
+    S.overrides.delete(n);
+    upd[n] = d.slice();
+  }
+  Bridge.post({cmd: 'set', colors: upd});
+  renderFams(); renderList();
+}
+
+/* ================================================================ render */
+function terms() {
+  return $('search').value.toLowerCase().split(/\s+/).filter(Boolean);
+}
+function matchTerm(t, name) {
+  if (!t.includes('*')) return name.includes(t);
+  const parts = t.split('*');
+  if (!name.startsWith(parts[0])) return false;
+  if (!name.endsWith(parts[parts.length - 1])) return false;
+  let pos = parts[0].length;
+  for (let i = 1; i < parts.length - 1; i++) {
+    const at = name.indexOf(parts[i], pos);
+    if (at < 0) return false;
+    pos = at + parts[i].length;
+  }
+  return true;
+}
+let near = {rgb: [0.5, 0.5, 0.5]};
+function visibleNames() {
+  const ts = terms(), mod = $('modonly').checked, nr = $('nearon').checked;
+  const tol = Math.max(0, parseFloat($('neartol').value) || 0);
+  let out = [];
+  for (const n of S.names) {
+    if (mod && !isMod(n)) continue;
+    if (ts.length && !ts.every(t => matchTerm(t, n.toLowerCase()))) continue;
+    if (nr) {
+      const c = S.colors[n];
+      if (Math.abs(c[0] - near.rgb[0]) > tol || Math.abs(c[1] - near.rgb[1]) > tol ||
+          Math.abs(c[2] - near.rgb[2]) > tol) continue;
+    }
+    out.push(n);
+  }
+  if (nr) {
+    const dist = n => S.colors[n].reduce((a, v, i) => a + Math.abs(v - near.rgb[i]), 0);
+    out.sort((a, b) => dist(a) - dist(b));
+  }
+  return out;
+}
+
+function renderFams() {
+  const host = $('famrow');
+  host.querySelectorAll('.fam').forEach(e => e.remove());
+  for (const f of S.families) {
+    const el = document.createElement('div');
+    el.className = 'fam' + (isMod(f) ? ' mod' : '');
+    el.innerHTML = `<div class="sw" style="background:${css(S.colors[f])}"></div><span class="nm">${f}</span>`;
+    el.onclick = () => openPicker([f], f);
+    el.dataset.name = f;
+    host.appendChild(el);
+  }
+}
+
+let shown = [];
+function renderList() {
+  shown = visibleNames();
+  const host = $('list');
+  const frag = document.createDocumentFragment();
+  for (const n of shown) {
+    const row = document.createElement('div');
+    row.className = 'row' + (isMod(n) ? ' mod' : '');
+    row.dataset.name = n;
+    const d = S.defaults[n] || [0, 0, 0];
+    row.innerHTML =
+      `<div class="sw" style="background:${css(S.colors[n])}"></div>` +
+      `<span class="nm">${n}</span><span class="dot"></span>` +
+      `<span class="def"><span class="dsw" style="background:${css(d)}"></span><button>reset</button></span>`;
+    row.querySelector('.def button').onclick = e => { e.stopPropagation(); resetNames([n]); };
+    row.onclick = () => openPicker([n], n);
+    frag.appendChild(row);
+  }
+  host.replaceChildren(frag);
+  $('counts').textContent =
+    `${shown.length} shown / ${S.names.length} elements · ${S.overrides.size} changed`;
+}
+function patchSwatches(names) {
+  const set = new Set(names);
+  for (const row of $('list').children) {
+    if (set.has(row.dataset.name)) {
+      row.querySelector('.sw').style.background = css(S.colors[row.dataset.name]);
+    }
+  }
+  for (const f of $('famrow').querySelectorAll('.fam')) {
+    if (set.has(f.dataset.name)) {
+      f.querySelector('.sw').style.background = css(S.colors[f.dataset.name]);
+    }
+  }
+}
+
+/* ================================================================ picker */
+const P = {names: [], hsv: [0, 0, 1], local: null, throttle: 0};
+
+function rgb2hsv(r, g, b) {
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+  let h = 0;
+  if (d) {
+    if (mx === r) h = ((g - b) / d) % 6;
+    else if (mx === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h = (h * 60 + 360) % 360;
+  }
+  return [h, mx ? d / mx : 0, mx];
+}
+function hsv2rgb(h, s, v) {
+  const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0]; else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x]; else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c]; else [r, g, b] = [c, 0, x];
+  return [r + m, g + m, b + m];
+}
+function drawPicker() {
+  const sv = $('sv').getContext('2d'), W = 240, H = 150;
+  const base = hsv2rgb(P.hsv[0], 1, 1);
+  const gx = sv.createLinearGradient(0, 0, W, 0);
+  gx.addColorStop(0, '#fff'); gx.addColorStop(1, css(base));
+  sv.fillStyle = gx; sv.fillRect(0, 0, W, H);
+  const gy = sv.createLinearGradient(0, 0, 0, H);
+  gy.addColorStop(0, 'rgba(0,0,0,0)'); gy.addColorStop(1, '#000');
+  sv.fillStyle = gy; sv.fillRect(0, 0, W, H);
+  const px = P.hsv[1] * W, py = (1 - P.hsv[2]) * H;
+  sv.strokeStyle = '#fff'; sv.lineWidth = 2;
+  sv.beginPath(); sv.arc(px, py, 6, 0, 7); sv.stroke();
+  sv.strokeStyle = '#000'; sv.lineWidth = 1;
+  sv.beginPath(); sv.arc(px, py, 7, 0, 7); sv.stroke();
+
+  const hu = $('hue').getContext('2d');
+  const gh = hu.createLinearGradient(0, 0, W, 0);
+  for (let i = 0; i <= 6; i++) gh.addColorStop(i / 6, css(hsv2rgb(i * 60 % 360, 1, 1)));
+  hu.fillStyle = gh; hu.fillRect(0, 0, W, 14);
+  const hx = P.hsv[0] / 360 * W;
+  hu.strokeStyle = '#fff'; hu.lineWidth = 2; hu.strokeRect(hx - 2, 0, 4, 14);
+}
+function pickerRGB() { return hsv2rgb(P.hsv[0], P.hsv[1], P.hsv[2]); }
+function syncFields() {
+  const rgb = pickerRGB();
+  $('hex').value = toHex(rgb);
+  $('fr').value = rgb[0].toFixed(3);
+  $('fg').value = rgb[1].toFixed(3);
+  $('fb').value = rgb[2].toFixed(3);
+}
+function pickerPreview() {
+  const rgb = pickerRGB();
+  if (P.local) { P.local(rgb); return; }
+  const now = Date.now();
+  if (now - P.throttle > 70) { P.throttle = now; applyLocal(P.names, rgb, false); }
+}
+function pickerCommit() {
+  const rgb = pickerRGB();
+  if (P.local) { P.local(rgb); return; }
+  applyLocal(P.names, rgb, true);
+}
+function openPicker(names, title, localCb, startRGB) {
+  P.names = names; P.local = localCb || null;
+  const rgb = startRGB || (names.length ? S.colors[names[0]].slice() : [0.5, 0.5, 0.5]);
+  P.hsv = rgb2hsv(rgb[0], rgb[1], rgb[2]);
+  $('ptitle').textContent = title;
+  $('pdefault').style.display =
+    (!localCb && names.length === 1 && S.defaults[names[0]]) ? '' : 'none';
+  $('overlay').style.display = 'block';
+  const pk = $('picker');
+  pk.style.display = 'flex';
+  pk.style.left = Math.max(8, (innerWidth - 264) / 2) + 'px';
+  pk.style.top = Math.max(8, (innerHeight - 320) / 2) + 'px';
+  drawPicker(); syncFields();
+}
+function closePicker() {
+  $('picker').style.display = 'none';
+  $('overlay').style.display = 'none';
+  P.names = []; P.local = null;
+}
+
+function dragCanvas(cv, move) {
+  let on = false;
+  cv.addEventListener('mousedown', e => { on = true; move(e); });
+  window.addEventListener('mousemove', e => { if (on) move(e); });
+  window.addEventListener('mouseup', () => {
+    if (!on) return;
+    on = false;
+    if ($('picker').style.display !== 'none') pickerCommit();
+  });
+}
+dragCanvas($('sv'), e => {
+  const r = $('sv').getBoundingClientRect();
+  P.hsv[1] = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+  P.hsv[2] = 1 - Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+  drawPicker(); syncFields(); pickerPreview();
+});
+dragCanvas($('hue'), e => {
+  const r = $('hue').getBoundingClientRect();
+  P.hsv[0] = Math.max(0, Math.min(0.9999, (e.clientX - r.left) / r.width)) * 360;
+  drawPicker(); syncFields(); pickerPreview();
+});
+$('hex').addEventListener('change', () => {
+  const rgb = fromHex($('hex').value);
+  if (rgb) { P.hsv = rgb2hsv(...rgb); drawPicker(); syncFields(); pickerCommit(); }
+});
+for (const id of ['fr', 'fg', 'fb']) {
+  $(id).addEventListener('change', () => {
+    const rgb = [$('fr'), $('fg'), $('fb')].map(i =>
+      Math.max(0, Math.min(1, parseFloat(i.value) || 0)));
+    P.hsv = rgb2hsv(...rgb); drawPicker(); syncFields(); pickerCommit();
+  });
+}
+$('pdefault').onclick = () => {
+  if (P.names.length === 1) { resetNames(P.names); closePicker(); }
+};
+$('pclose').onclick = closePicker;
+$('overlay').onclick = closePicker;
+
+/* =============================================================== toolbar */
+let refilter;
+for (const id of ['search', 'modonly', 'nearon', 'neartol']) {
+  $(id).addEventListener('input', () => {
+    clearTimeout(refilter);
+    refilter = setTimeout(renderList, 120);
+  });
+}
+$('nearsw').onclick = () =>
+  openPicker([], 'reference color', rgb => {
+    near.rgb = rgb;
+    $('nearsw').style.background = css(rgb);
+    if ($('nearon').checked) renderList();
+  }, near.rgb);
+$('setshown').onclick = () => {
+  if (!shown.length) return;
+  openPicker(shown.slice(), `set ${shown.length} shown elements`);
+};
+$('randomize').onclick = () => Bridge.post({cmd: 'randomize'});
+$('undorandom').onclick = () => Bridge.post({cmd: 'undoRandom'});
+$('resetall').onclick = () => {
+  if (confirm('Reset every UI color to its default and clear saved changes?'))
+    Bridge.post({cmd: 'resetAll'});
+};
+$('import').onclick = () => Bridge.post({cmd: 'import'}, false);
+$('export').onclick = () => Bridge.post({cmd: 'export'}, false);
+$('autoload').addEventListener('change', () =>
+  Bridge.post({cmd: 'autoload', value: $('autoload').checked}));
+
+/* ================================================================= misc */
+let toastTimer;
+function toast(t) {
+  const el = $('toast');
+  el.textContent = t;
+  el.style.opacity = 1;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.style.opacity = 0, 2600);
+}
+$('nearsw').style.background = css(near.rgb);
+Bridge.post({cmd: 'ready'});
+</script>
+</body>
+</html>
