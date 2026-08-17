@@ -3,150 +3,310 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FNSTools — pick your install</title>
+<title>FNSTools — build your install</title>
 <style>
+  /* The FNSTools family palette, token-for-token with website/docs.css.
+     This page is served three ways -- as /get/ on the site, by the
+     bootstrap's Web Server DAT inside TouchDesigner, and as a single
+     double-clickable file -- so every style it needs is inline. On the site
+     the build ALSO links docs.css + site-nav.css for the shared header and
+     footer; those declare the same tokens with the same values, so the two
+     never disagree. */
   :root {
-    --bg: #f7f7f8;      --panel: #ffffff;   --ink: #16171a;
-    --muted: #6a6d75;   --line: #e2e3e7;    --accent: #3b6ef5;
+    --bg: #0a0a0a;        --bg-1: #111111;      --bg-2: #161616;
+    --bg-3: #1c1c1c;      --bg-deep: #050505;
+    --border: #262626;    --border-strong: #3a3a3a;
+    --text: #f5f5f5;      --text-dim: #a3a3a3;  --text-faint: #737373;
+    --accent: #fbbf24;    --accent-dim: #2a1f08; --accent-bright: #fcd34d;
+    --accent-ink: #0a0a0a;
+    --green: #4ade80;     --warn: #fdba74;      --warn-dim: #2a1408;
+    --max-w: 1140px;      --radius: 10px;
+    /* Height of the chrome that sits above the sticky filter bar. 0 on its
+       own; the site flavor sets it to the site header's height. */
+    --stick: 0px;
+  }
+  /* Opt-in only, and only where this page is the whole window: the site is
+     dark everywhere, so the site flavor hides the toggle rather than letting
+     the picker drift away from the header above it. */
+  :root[data-theme="light"] {
+    --bg: #f7f7f8;        --bg-1: #ffffff;      --bg-2: #f0f1f4;
+    --bg-3: #e9eaee;      --bg-deep: #f2f3f5;
+    --border: #e2e3e7;    --border-strong: #c6c8ce;
+    --text: #16171a;      --text-dim: #5c6069;  --text-faint: #83878f;
+    --accent: #a16207;    --accent-dim: #fdf3d7; --accent-bright: #854d0e;
     --accent-ink: #ffffff;
-    --core: #7a5af8;    --warn: #b45309;    --chip: #f0f1f4;
-    --radius: 10px;
+    --green: #16a34a;     --warn: #b45309;      --warn-dim: #fff5e8;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #0f1012;    --panel: #17181c;   --ink: #e8e9ec;
-      --muted: #9b9fa8; --line: #2a2c33;    --accent: #6b91ff;
-      --accent-ink: #0f1012;
-      --core: #a48cff;  --warn: #f0b429;    --chip: #23252b;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg: #0f1012;      --panel: #17181c;   --ink: #e8e9ec;
-    --muted: #9b9fa8;   --line: #2a2c33;    --accent: #6b91ff;
-    --accent-ink: #0f1012;
-    --core: #a48cff;    --warn: #f0b429;    --chip: #23252b;
-  }
+
   * { box-sizing: border-box; }
+  /* .btn sets display:inline-flex, and an author display beats the UA's
+     [hidden] rule. Served mode hides the paste-rail button that way, and the
+     dialog toggles Copy/Install the same way, so this has to win. */
+  [hidden] { display: none !important; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-padding-top: calc(var(--stick) + 72px); scroll-behavior: smooth; }
   body {
-    margin: 0; background: var(--bg); color: var(--ink);
-    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   }
-  header {
-    position: sticky; top: 0; z-index: 10; background: var(--panel);
-    border-bottom: 1px solid var(--line); padding: 14px 20px;
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--accent-bright); }
+  code, kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.9em; }
+
+  .wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+  /* ───── Hero ───── */
+  .cfg-hero { padding: 44px 0 26px; }
+  .eyebrow {
+    display: inline-block; padding: 5px 12px; border-radius: 999px;
+    background: var(--accent-dim); color: var(--accent);
+    border: 1px solid rgba(251,191,36,0.25);
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    margin-bottom: 18px;
   }
-  .bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; }
-  h1 { font-size: 16px; margin: 0; letter-spacing: -0.01em; }
-  h1 small { color: var(--muted); font-weight: 400; margin-left: 8px; }
+  h1 {
+    margin: 0 0 14px; font-size: clamp(30px, 4.4vw, 44px);
+    font-weight: 700; letter-spacing: -0.025em; line-height: 1.08;
+  }
+  .cfg-sub {
+    margin: 0; font-size: 17px; color: var(--text-dim); max-width: 64ch;
+  }
+  .cfg-meta {
+    margin: 18px 0 0; font-size: 13px; color: var(--text-faint);
+  }
+  .cfg-meta .dot {
+    display: inline-block; vertical-align: middle; margin-right: 7px;
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+  }
+
+  /* ───── Filter bar ───── */
+  .cfg-bar {
+    position: sticky; top: var(--stick); z-index: 6;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    padding: 12px 0; margin-bottom: 4px;
+    background: var(--bg); border-bottom: 1px solid var(--border);
+  }
   input[type=search] {
-    flex: 1 1 220px; min-width: 160px; padding: 8px 12px; border-radius: var(--radius);
-    border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit;
+    flex: 1 1 240px; min-width: 150px; padding: 9px 13px;
+    border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-1); color: var(--text); font: inherit; font-size: 14px;
   }
-  button {
-    padding: 8px 14px; border-radius: var(--radius); border: 1px solid var(--line);
-    background: var(--panel); color: var(--ink); font: inherit; cursor: pointer;
+  input[type=search]:focus {
+    outline: none; border-color: var(--accent); background: var(--bg-2);
   }
-  button:hover { border-color: var(--accent); }
-  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-  button.primary:disabled { opacity: .5; cursor: not-allowed; }
-  main { max-width: 1100px; margin: 0 auto; padding: 20px 20px 140px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 16px; border-radius: 8px;
+    font: inherit; font-size: 14px; font-weight: 600;
+    border: 1px solid transparent; cursor: pointer; white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .btn-primary { background: var(--accent); color: var(--accent-ink); }
+  .btn-primary:hover { background: var(--accent-bright); color: var(--accent-ink); }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; background: var(--accent); }
+  .btn-secondary { background: transparent; color: var(--text); border-color: var(--border-strong); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-quiet {
+    background: transparent; color: var(--text-dim);
+    border-color: var(--border); font-weight: 500;
+  }
+  .btn-quiet:hover { border-color: var(--border-strong); color: var(--text); }
+  .spacer { flex: 1 1 auto; }
+  .bar-docs { font-size: 13px; color: var(--text-dim); white-space: nowrap; }
+  .bar-docs:hover { color: var(--accent); }
+
+  /* ───── Core note ───── */
   .note {
-    background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--core);
-    border-radius: var(--radius); padding: 12px 16px; margin-bottom: 20px; color: var(--muted); font-size: 14px;
+    margin: 22px 0 8px; padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, var(--bg-1) 60%);
+    border: 1px solid rgba(251,191,36,0.26); border-radius: 12px;
+    font-size: 14px; color: var(--text-dim); line-height: 1.6;
   }
-  .note b { color: var(--ink); }
-  h2 {
-    font-size: 13px; text-transform: uppercase; letter-spacing: .07em; color: var(--muted);
-    margin: 26px 0 10px; display: flex; align-items: baseline; gap: 10px;
+  .note b { color: var(--text); }
+  .note a { white-space: nowrap; }
+
+  /* ───── Category sections ───── */
+  .cat {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    margin: 34px 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
   }
-  h2 .count { font-size: 12px; letter-spacing: 0; text-transform: none; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 10px; }
+  .cat-glyph { color: var(--accent); font-size: 15px; font-weight: 400; }
+  .cat-count {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  .cat-docs { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+  .cat-docs:hover { color: var(--accent); }
+  .cat-pitch { margin: 0 0 14px; font-size: 13px; color: var(--text-faint); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+
+  /* ───── Cards ───── */
   .card {
-    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 12px 14px; display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 16px; cursor: pointer;
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
-  .card:hover { border-color: var(--accent); }
-  .card.on { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
-  .card.core { cursor: default; box-shadow: inset 3px 0 0 var(--core); }
-  .card.core:hover { border-color: var(--line); }
-  .card input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
-  .body { min-width: 0; }
-  .name { font-weight: 600; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
-  .desc { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
-  .chips { margin-top: 7px; display: flex; gap: 5px; flex-wrap: wrap; }
+  .card:hover { border-color: var(--border-strong); background: var(--bg-2); }
+  .card.on {
+    border-color: var(--accent);
+    background: linear-gradient(135deg, rgba(251,191,36,0.07) 0%, var(--bg-1) 55%);
+  }
+  .card.core { cursor: default; }
+  .card.core:hover { border-color: var(--border); background: var(--bg-1); }
+  .card input {
+    flex: none; margin: 3px 0 0; width: 16px; height: 16px;
+    accent-color: var(--accent); cursor: pointer;
+  }
+  .body { min-width: 0; flex: 1; }
+  .name {
+    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+    font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .desc { margin-top: 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+  a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+  a.help:hover { color: var(--accent); }
+
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
   .chip {
-    font-size: 11px; padding: 2px 7px; border-radius: 99px; background: var(--chip);
-    color: var(--muted); white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 999px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    font-size: 11px; font-weight: 500; color: var(--text-dim); white-space: nowrap;
   }
-  .chip.core { background: var(--core); color: #fff; }
-  .chip.hint { background: transparent; border: 1px dashed var(--warn); color: var(--warn); }
-  a.help { color: var(--muted); text-decoration: none; font-size: 12px; }
-  a.help:hover { color: var(--accent); text-decoration: underline; }
-  footer {
-    position: fixed; bottom: 0; left: 0; right: 0; background: var(--panel);
-    border-top: 1px solid var(--line); padding: 12px 20px;
+  .chip.core {
+    background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
   }
-  .sum { max-width: 1100px; margin: 0 auto; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
-  .sum .n { font-weight: 600; }
-  .sum .muted { color: var(--muted); font-size: 13px; }
-  .spacer { flex: 1; }
+  .chip.hint {
+    background: var(--warn-dim); border-color: rgba(251,146,60,0.3); color: var(--warn);
+  }
+
+  .empty { padding: 48px 0; text-align: center; color: var(--text-faint); }
+  .empty code {
+    background: var(--bg-3); border: 1px solid var(--border);
+    padding: 1px 5px; border-radius: 4px; color: var(--accent-bright);
+  }
+
+  /* ───── Summary rail ─────
+     Sticky rather than fixed: it rides the viewport while there is list left
+     to scroll, then settles at the end of the page instead of sitting on top
+     of the footer forever. */
+  .sum {
+    position: sticky; bottom: 0; z-index: 7;
+    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    margin: 40px 0 0; padding: 14px 18px;
+    background: rgba(17,17,17,0.94);
+    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    border: 1px solid var(--border); border-radius: 12px 12px 0 0;
+    border-bottom: none;
+  }
+  :root[data-theme="light"] .sum { background: rgba(255,255,255,0.94); }
+  .sum .n { font-size: 15px; font-weight: 700; }
+  .sum .muted { font-size: 13px; color: var(--text-faint); }
+  .sum-count { display: flex; align-items: baseline; gap: 8px; }
+
+  /* ───── Dialog ───── */
   dialog {
-    border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel);
-    color: var(--ink); max-width: 640px; width: 92vw; padding: 0;
+    max-width: 720px; width: 92vw; padding: 0; color: var(--text);
+    background: var(--bg-1); border: 1px solid var(--border-strong); border-radius: 14px;
   }
-  dialog::backdrop { background: rgba(0,0,0,.5); }
-  .dlg { padding: 18px 20px; }
+  dialog::backdrop { background: rgba(0,0,0,0.7); }
+  .dlg { padding: 22px 24px 20px; }
+  .dlg h3 { margin: 0 0 8px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .dlg-hint { margin: 0 0 14px; font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
   pre {
-    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
-    padding: 12px; overflow-x: auto; font-size: 12.5px; max-height: 46vh;
+    margin: 0; padding: 14px 16px; max-height: 44vh; overflow: auto;
+    background: var(--bg-deep); border: 1px solid var(--border); border-radius: 10px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 12px; line-height: 1.6; color: var(--text-dim);
+    white-space: pre-wrap; word-break: break-word;
   }
-  .empty { color: var(--muted); padding: 30px 0; text-align: center; }
+  .dlg-actions {
+    display: flex; gap: 10px; align-items: center; margin-top: 16px;
+  }
+
+  @media (max-width: 640px) {
+    .cfg-hero { padding: 32px 0 20px; }
+    .grid { grid-template-columns: 1fr; }
+    /* The rail is stuck to the bottom of a phone screen and the labels are
+       too long to share a row, so each button gets one -- kept as tight as
+       a tap target allows, because every pixel here is list the reader
+       cannot see. */
+    .sum { gap: 7px 10px; padding: 11px 14px; }
+    .sum-count { flex: 1 1 100%; }
+    .sum .spacer { display: none; }
+    .sum .btn { flex: 1 1 auto; justify-content: center; padding: 9px 12px; }
+  }
 </style>
 </head>
 <body>
-<header>
-  <div class="bar">
-    <h1>FNSTools <small id="sub">loading…</small></h1>
-    <input type="search" id="q" placeholder="Filter by name, description or category…" autocomplete="off">
-    <button id="all">All</button>
-    <button id="none">None</button>
-    <button id="theme" title="Toggle theme">◐</button>
-  </div>
-</header>
+<!-- FNS:HEADER -->
+<main class="wrap">
 
-<main>
+  <section class="cfg-hero">
+    <span class="eyebrow">CONFIGURATOR</span>
+    <h1>Build your install.</h1>
+    <p class="cfg-sub">
+      Pick the tools you actually want. Nothing else is downloaded, and nothing else
+      ends up in your project — then take one line to paste into the TouchDesigner
+      Textport, or a <code>selection.json</code> for the installer.
+    </p>
+    <p class="cfg-meta" id="sub">loading…</p>
+  </section>
+
+  <div class="cfg-bar">
+    <input type="search" id="q" placeholder="Filter by name, description or category…" autocomplete="off">
+    <button class="btn btn-quiet" id="all">Select all</button>
+    <button class="btn btn-quiet" id="none">Clear</button>
+    <button class="btn btn-quiet" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    <span class="spacer"></span>
+    <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
+  </div>
+
   <div class="note" id="corenote"></div>
   <div id="list"></div>
   <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
-</main>
 
-<footer>
   <div class="sum">
-    <span><span class="n" id="cnt">0</span> tools selected</span>
+    <span class="sum-count"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span></span>
     <span class="muted" id="deps"></span>
     <span class="spacer"></span>
-    <button id="copy">Copy list</button>
-    <button id="script">Copy install script</button>
-    <button class="primary" id="save">Download selection.json</button>
+    <button class="btn btn-quiet" id="copy">Copy list</button>
+    <button class="btn btn-secondary" id="script">Copy install script</button>
+    <button class="btn btn-primary" id="save">Download selection.json</button>
   </div>
-</footer>
+
+</main>
+<!-- FNS:FOOTER -->
 
 <dialog id="dlg"><div class="dlg">
-  <h3 style="margin:0 0 10px">Your selection</h3>
-  <p class="muted" id="dlghint" style="color:var(--muted);margin:0 0 12px;font-size:13.5px">
+  <h3 id="dlgtitle">Your selection</h3>
+  <p class="dlg-hint" id="dlghint">
     Save this as <code>selection.json</code> next to the installer COMP, or paste the
     list into the toolkit's installer.
   </p>
   <pre id="out"></pre>
-  <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end">
-    <button id="close">Close</button>
-    <button class="primary" id="docopy" hidden>Copy</button>
-    <button class="primary" id="doinstall" hidden>Install</button>
+  <div class="dlg-actions">
+    <a class="bar-docs" id="dlgdocs" target="_blank" rel="noopener">Installation notes ↗</a>
+    <span class="spacer"></span>
+    <button class="btn btn-quiet" id="close">Close</button>
+    <button class="btn btn-primary" id="docopy" hidden>Copy</button>
+    <button class="btn btn-primary" id="doinstall" hidden>Install</button>
   </div>
 </div></dialog>
 
 <script src="manifest.js"></script>
 <script>
+// Where a tool's documentation lives. help_url in the manifest is already
+// absolute against this host; the category and section links below are built
+// from it so they resolve identically in all three flavors -- including the
+// one served from inside TouchDesigner, where a root-relative /docs/ would
+// point at the installer's own web server.
+var FNS_DOCS = 'https://tools.functionstore.xyz';
+
 function fnsBoot() {
   var M = window.FNS_MANIFEST;
   var listEl = document.getElementById('list');
@@ -157,7 +317,6 @@ function fnsBoot() {
     listEl.innerHTML = '<div class="empty">Downloading the package catalog ' +
       'from the bucket…<br>this page refreshes itself.</div>';
     document.getElementById('sub').textContent = 'refreshing store…';
-    setTimeout(function () { location.reload(); }, 2500);
     return;
   }
   var served = !!window.FNS_SERVED;
@@ -173,6 +332,13 @@ function fnsBoot() {
   var core = M.packages.filter(function (p) { return p.kind === 'core'; });
   var byName = {};
   M.packages.forEach(function (p) { byName[p.name] = p; });
+  // Category glyph and pitch are curated in packaging/catalog.json (the CMS
+  // edits them) and travel here on the manifest; the site build also bakes a
+  // copy, so /get/ has them even against a release published before the
+  // manifest carried the key. Missing entirely: headings still render, just
+  // without the glyph and the one-liner.
+  var catMeta = M.category_meta || window.FNS_CATEGORY_META || {};
+  var metaOf = function (cat) { return catMeta[cat] || {}; };
   // localStorage THROWS in sandboxed contexts (data: URLs, some private
   // modes). Remembering the selection is a nicety; blanking the page
   // because storage is unavailable is not.
@@ -190,14 +356,32 @@ function fnsBoot() {
     : new Set(JSON.parse(stored('fns.pick', null) || '[]')
                .filter(function (n) { return byName[n]; }));
 
-  document.getElementById('sub').textContent =
-    M.packages.length + ' packages · TD ' + (M.toolkit.td_build || '');
-  document.getElementById('corenote').innerHTML =
-    '<b>' + core.length + ' core packages are always installed</b> — ' +
-    core.map(function (c) { return c.name; }).join(', ') +
-    '. They carry the registries, settings persistence and shared surfaces that ' +
+  var meta = [
+    M.packages.length + ' packages',
+    core.length + ' core, always installed',
+    'every download sha256-verified',
+  ];
+  if (M.release) meta.push(M.release);
+  if (M.toolkit && M.toolkit.td_build) meta.push('TD ' + M.toolkit.td_build);
+  var sub = document.getElementById('sub');
+  sub.textContent = '';
+  var dot = document.createElement('span');
+  dot.className = 'dot';
+  dot.setAttribute('aria-hidden', 'true');
+  sub.appendChild(dot);
+  sub.appendChild(document.createTextNode(meta.join(' · ')));
+
+  var note = document.getElementById('corenote');
+  note.textContent = '';
+  var b = document.createElement('b');
+  b.textContent = core.length + ' core packages are always installed.';
+  note.appendChild(b);
+  note.appendChild(document.createTextNode(
+    ' They carry the registries, settings persistence and shared surfaces that ' +
     'every tool plugs into, so tools never depend on each other and you can pick ' +
-    'any subset below without breaking anything.';
+    'any subset below without breaking anything. '));
+  note.appendChild(docsLink(FNS_DOCS + '/docs/fns-configregistry/',
+                            'How settings persistence works ↗'));
 
   // who lights up when this package is present (reverse integrations)
   var enhances = {};
@@ -206,6 +390,25 @@ function fnsBoot() {
       (enhances[t] = enhances[t] || []).push(p.name);
     });
   });
+
+  /** An external link to a documentation page. */
+  function docsLink(href, text, cls) {
+    var a = document.createElement('a');
+    a.className = cls || '';
+    a.href = href; a.target = '_blank'; a.rel = 'noopener';
+    a.textContent = text;
+    return a;
+  }
+
+  /** Heading anchor on the docs index. Must match slugify() in
+   *  website/tools/build-site.mjs, which generates those ids. */
+  function catSlug(cat) {
+    return String(cat).toLowerCase().trim()
+      .replace(/[^a-z0-9\s_-]/g, '')
+      .replace(/[\s_]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
 
   function card(p) {
     var on = picked.has(p.name);
@@ -227,9 +430,9 @@ function fnsBoot() {
     name.className = 'name';
     name.appendChild(document.createTextNode(p.name));
     if (p.help_url) {
-      var a = document.createElement('a');
-      a.className = 'help'; a.href = p.help_url; a.target = '_blank';
-      a.rel = 'noopener'; a.textContent = 'docs ↗';
+      var a = docsLink(p.help_url, 'docs ↗', 'help');
+      // The card is a <label>: without this the docs link would also toggle
+      // the checkbox it is nested in.
       a.addEventListener('click', function (e) { e.stopPropagation(); });
       name.appendChild(a);
     }
@@ -277,15 +480,47 @@ function fnsBoot() {
     var n = document.createElement('div');
     n.className = 'name';
     n.appendChild(document.createTextNode(p.name));
-    n.appendChild(chip('always installed', 'core'));
+    if (p.help_url) n.appendChild(docsLink(p.help_url, 'docs ↗', 'help'));
     body.appendChild(n);
     if (p.description) {
       var d = document.createElement('div');
       d.className = 'desc'; d.textContent = p.description;
       body.appendChild(d);
     }
+    var chips = document.createElement('div');
+    chips.className = 'chips';
+    chips.appendChild(chip('always installed', 'core'));
+    body.appendChild(chips);
     el.appendChild(body);
     return el;
+  }
+
+  /** Category heading: glyph, name, live count, and a link into the docs
+   *  index section for the same category. */
+  function heading(cat, count) {
+    var frag = document.createDocumentFragment();
+    var h = document.createElement('h2');
+    h.className = 'cat';
+    var m = metaOf(cat);
+    if (m.glyph) {
+      var g = document.createElement('span');
+      g.className = 'cat-glyph'; g.setAttribute('aria-hidden', 'true');
+      g.textContent = m.glyph;
+      h.appendChild(g);
+    }
+    h.appendChild(document.createTextNode(cat));
+    if (count) {
+      var c = document.createElement('span');
+      c.className = 'cat-count'; c.textContent = count;
+      h.appendChild(c);
+    }
+    h.appendChild(docsLink(FNS_DOCS + '/docs/#' + catSlug(cat), 'docs ↗', 'cat-docs'));
+    frag.appendChild(h);
+    var pitch = document.createElement('p');
+    pitch.className = 'cat-pitch';
+    pitch.textContent = m.pitch || '';
+    frag.appendChild(pitch);
+    return frag;
   }
 
   function render() {
@@ -303,12 +538,7 @@ function fnsBoot() {
     });
 
     if (!q) {
-      var h = document.createElement('h2');
-      h.textContent = 'Core';
-      var cc = document.createElement('span');
-      cc.className = 'count'; cc.textContent = core.length + ' packages';
-      h.appendChild(cc);
-      listEl.appendChild(h);
+      listEl.appendChild(heading('Core', core.length + ' packages'));
       var g0 = document.createElement('div');
       g0.className = 'grid';
       core.forEach(function (p) { g0.appendChild(coreCard(p)); });
@@ -321,13 +551,7 @@ function fnsBoot() {
       if (!items.length) return;
       shown += items.length;
       var sel = items.filter(function (p) { return picked.has(p.name); }).length;
-      var h = document.createElement('h2');
-      h.textContent = cat;
-      var c = document.createElement('span');
-      c.className = 'count';
-      c.textContent = sel + ' of ' + items.length + ' selected';
-      h.appendChild(c);
-      listEl.appendChild(h);
+      listEl.appendChild(heading(cat, sel + ' of ' + items.length + ' selected'));
       var g = document.createElement('div');
       g.className = 'grid';
       items.forEach(function (p) { g.appendChild(card(p)); });
@@ -379,6 +603,8 @@ function fnsBoot() {
     };
   }
 
+  document.getElementById('alldocs').href = FNS_DOCS + '/docs/';
+  document.getElementById('dlgdocs').href = FNS_DOCS + '/#quickstart';
   document.getElementById('q').addEventListener('input', render);
   document.getElementById('all').addEventListener('click', function () {
     tools.forEach(function (p) { picked.add(p.name); }); save(); render();
@@ -386,12 +612,22 @@ function fnsBoot() {
   document.getElementById('none').addEventListener('click', function () {
     picked.clear(); save(); render();
   });
-  document.getElementById('theme').addEventListener('click', function () {
-    var cur = document.documentElement.getAttribute('data-theme');
-    var next = cur === 'dark' ? 'light' : cur === 'light' ? null : 'dark';
-    if (next) document.documentElement.setAttribute('data-theme', next);
-    else document.documentElement.removeAttribute('data-theme');
-  });
+  // Dark is the default in every flavor -- it matches both the site and
+  // TouchDesigner. The toggle is a light escape hatch, and it is hidden on
+  // the site, whose header and footer are dark-only.
+  var themeBtn = document.getElementById('theme');
+  if (window.FNS_SITE) {
+    themeBtn.hidden = true;
+  } else {
+    var savedTheme = stored('fns.theme', null);
+    if (savedTheme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    themeBtn.addEventListener('click', function () {
+      var light = document.documentElement.getAttribute('data-theme') === 'light';
+      if (light) document.documentElement.removeAttribute('data-theme');
+      else document.documentElement.setAttribute('data-theme', 'light');
+      try { localStorage.setItem('fns.theme', light ? 'dark' : 'light'); } catch (e) { /* nicety */ }
+    });
+  }
   // Served mode talks straight to the installer COMP; static mode
   // downloads a selection.json to feed it by hand; both offer the paste
   // rail (a Textport script) except served mode, where the user is
@@ -414,14 +650,11 @@ function fnsBoot() {
   // The website flavor leads with the paste rail -- a selection.json is
   // only useful to someone who already has an installer COMP.
   if (window.FNS_SITE && !served) {
-    document.getElementById('script').classList.add('primary');
-    document.getElementById('save').classList.remove('primary');
-    var home = document.createElement('a');
-    home.className = 'help';
-    home.href = '/';
-    home.textContent = '← tools.functionstore.xyz';
-    var bar = document.querySelector('.bar');
-    bar.insertBefore(home, document.getElementById('q'));
+    var script = document.getElementById('script');
+    var saveBtn = document.getElementById('save');
+    script.className = 'btn btn-primary';
+    saveBtn.className = 'btn btn-secondary';
+    script.parentNode.insertBefore(script, saveBtn.nextSibling);
   }
   function showDialog(text, installable, hint) {
     var dlg = document.getElementById('dlg');
@@ -504,6 +737,7 @@ function fnsBoot() {
   document.getElementById('script').addEventListener('click', function () {
     var text = installScript();
     showDialog(text, false, HINTS.script);
+    document.getElementById('dlgtitle').textContent = 'Paste this into the Textport';
     var docopy = document.getElementById('docopy');
     docopy.hidden = false;
     toClipboard(text, docopy);
@@ -522,6 +756,7 @@ function fnsBoot() {
   }
   document.getElementById('save').addEventListener('click', function () {
     if (served) {
+      document.getElementById('dlgtitle').textContent = 'Install plan';
       showDialog('Planning…', false);
       post('/selection', JSON.stringify(selection(), null, 1) + '\n',
            function (res) { showDialog(res.text, !!res.ok); });
@@ -567,6 +802,7 @@ function fnsBoot() {
     post('/install', '{}', installOrPoll);
   });
   document.getElementById('copy').addEventListener('click', function () {
+    document.getElementById('dlgtitle').textContent = 'Your selection';
     showDialog(JSON.stringify(selection(), null, 1), false);
     var pre = document.getElementById('out');
     var r = document.createRange(); r.selectNodeContents(pre);
@@ -586,6 +822,26 @@ function fnsBoot() {
 // bucket degrades to "as fresh as the last site deploy", not to a broken
 // page. Every other mode boots on whatever manifest.js provided.
 (function () {
+  // The filter bar sticks under the site header rather than under the top of
+  // the window; nothing sits above it in the other two flavors. Measured
+  // rather than assumed -- the header is a two-line brand lockup whose height
+  // depends on the font that actually loaded.
+  function stick() {
+    var head = document.querySelector('header.site');
+    if (head) {
+      document.documentElement.style.setProperty(
+        '--stick', Math.round(head.getBoundingClientRect().height) + 'px');
+    }
+  }
+  if (window.FNS_SITE) {
+    stick();
+    window.addEventListener('resize', stick);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(stick);
+  }
+  // Polling for the refreshed store belongs to the served flavor, and the
+  // reload has to be scheduled outside fnsBoot so the boot path stays a
+  // pure render.
+  if (window.FNS_REFRESHING) setTimeout(function () { location.reload(); }, 2500);
   var baked = window.FNS_MANIFEST;
   if (!window.FNS_SITE || !baked || !baked.base_url) { fnsBoot(); return; }
   var started = false;
@@ -596,7 +852,13 @@ function fnsBoot() {
           {cache: 'no-store'})
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (m) {
-        if (m && m.packages && m.core) window.FNS_MANIFEST = m;
+        if (m && m.packages && m.core) {
+          // The published manifest wins, but a release cut before
+          // category_meta existed carries none -- keep the baked copy's
+          // presentation rather than losing the glyphs to a stale release.
+          if (!m.category_meta && baked.category_meta) m.category_meta = baked.category_meta;
+          window.FNS_MANIFEST = m;
+        }
       })
       .catch(function () {})
       .then(function () { clearTimeout(slow); go(); });

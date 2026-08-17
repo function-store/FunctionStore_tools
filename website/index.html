@@ -147,6 +147,12 @@
     width: 6px; height: 6px; border-radius: 50%;
     background: var(--green); flex-shrink: 0; margin-right: 7px;
   }
+  .hero-cta-note {
+    margin: 16px auto 0; max-width: 60ch;
+    font-size: 13.5px; color: var(--text-faint);
+  }
+  .hero-cta-note a { color: var(--text-dim); text-decoration: underline; text-underline-offset: 2px; }
+  .hero-cta-note a:hover { color: var(--accent-bright); }
   .hero-video { margin: 40px auto 0; max-width: 760px; text-align: center; }
   .hero-video__caption { margin: 12px 0 0; font-size: 13px; color: var(--text-faint); }
   .hero-video__caption a { color: var(--text-dim); }
@@ -175,6 +181,133 @@
   .section-head p {
     color: var(--text-dim); font-size: 17px;
     max-width: 620px; margin: 0 auto;
+  }
+
+  /* ───── Configurator band ─────
+     The picker is the reason the toolkit does not have to be an all-or-
+     nothing install, so it gets a band of its own directly under the hero
+     rather than a footnote inside step 1. */
+  .cfg-band {
+    display: grid; grid-template-columns: 1fr 1.02fr;
+    gap: 44px; align-items: center;
+    padding: 34px 36px;
+    background:
+      radial-gradient(700px 220px at 78% 0%, rgba(251,191,36,0.10), transparent 70%),
+      var(--bg-1);
+    border: 1px solid rgba(251,191,36,0.26); border-radius: 16px;
+  }
+  @media (max-width: 900px) { .cfg-band { grid-template-columns: 1fr; gap: 28px; padding: 26px 22px; } }
+  .cfg-band__eyebrow {
+    display: block; margin-bottom: 8px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent);
+  }
+  .cfg-band h2 {
+    margin: 0 0 12px; font-size: clamp(24px, 2.8vw, 30px);
+    font-weight: 700; letter-spacing: -0.02em; line-height: 1.15;
+  }
+  .cfg-band > .cfg-band__body > p {
+    margin: 0 0 18px; font-size: 15px; color: var(--text-dim); line-height: 1.6; max-width: 56ch;
+  }
+  .cfg-band__points { margin: 0 0 22px; padding: 0; list-style: none; }
+  .cfg-band__points li {
+    position: relative; margin-bottom: 9px; padding-left: 22px;
+    font-size: 14px; color: var(--text-dim); line-height: 1.5;
+  }
+  .cfg-band__points li::before {
+    content: '✓'; position: absolute; left: 0; top: 0;
+    color: var(--accent); font-size: 12px;
+  }
+  .cfg-band__points strong { color: var(--text); font-weight: 600; }
+  .cfg-band__points code {
+    background: var(--bg-3); border: 1px solid var(--border);
+    padding: 1px 5px; border-radius: 4px; color: var(--accent-bright);
+  }
+  .cfg-band__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  /* ───── Picker preview ─────
+     A depiction of /get/, generated from the same catalogue the picker
+     itself lists, so it cannot drift into showing tools that do not exist.
+     Not interactive: the whole thing is one link to the real page. */
+  .picker {
+    display: block; overflow: hidden; color: var(--text);
+    background: var(--bg-deep); border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    box-shadow: 0 18px 44px rgba(0,0,0,0.45);
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .picker:hover { border-color: var(--accent); color: var(--text); transform: translateY(-2px); }
+  .picker__bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 12px; border-bottom: 1px solid var(--border); background: var(--bg);
+  }
+  .picker__search {
+    flex: 1; padding: 6px 10px; border-radius: 6px;
+    background: var(--bg-1); border: 1px solid var(--border);
+    font-size: 12px; color: var(--text-faint);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .picker__chip {
+    padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border);
+    font-size: 12px; font-weight: 600; color: var(--text-dim); white-space: nowrap;
+  }
+  /* Everything inside .picker is a <span> — the whole preview is one <a>, so
+     it may not contain block elements. Each part therefore declares its own
+     display; an inline span would drop its padding and overlap its
+     neighbours. */
+  .picker__body { display: block; padding: 14px 12px 4px; }
+  .picker__cat {
+    display: flex; align-items: baseline; gap: 8px;
+    margin: 0 0 8px; font-size: 13px; font-weight: 700; letter-spacing: -0.01em;
+  }
+  .picker__cat + .picker__card { margin-top: 0; }
+  .picker__cat-glyph { color: var(--accent); font-size: 11px; font-weight: 400; }
+  .picker__cat-count {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  .picker__card {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin: 0 0 8px; padding: 9px 11px;
+    background: var(--bg-1); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .picker__card.is-on {
+    border-color: rgba(251,191,36,0.5);
+    background: linear-gradient(135deg, rgba(251,191,36,0.09) 0%, var(--bg-1) 60%);
+  }
+  .picker__box {
+    flex: none; width: 13px; height: 13px; margin-top: 2px;
+    border: 1px solid var(--border-strong); border-radius: 3px;
+  }
+  .picker__card.is-on .picker__box {
+    background: var(--accent); border-color: var(--accent);
+    color: #0a0a0a; font-size: 10px; line-height: 12px; text-align: center;
+  }
+  .picker__card-body { min-width: 0; }
+  .picker__card-body b {
+    display: block; font-size: 12.5px; font-weight: 600; letter-spacing: -0.01em;
+  }
+  .picker__card-body span {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+    overflow: hidden; margin-top: 2px;
+    font-size: 11.5px; color: var(--text-faint); line-height: 1.45;
+  }
+  .picker__card-docs { font-size: 10px; color: var(--text-faint); white-space: nowrap; }
+  .picker__sum {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 11px 12px; border-top: 1px solid var(--border); background: var(--bg-1);
+    font-size: 11.5px; color: var(--text-faint);
+  }
+  .picker__sum-text { flex: 1 1 auto; min-width: 0; }
+  .picker__sum b { color: var(--text); font-size: 13px; }
+  .picker__sum-cta {
+    margin-left: auto; padding: 6px 12px; border-radius: 6px;
+    background: var(--accent); color: #0a0a0a; font-size: 11.5px; font-weight: 600;
+  }
+  .picker__open {
+    display: block; padding: 10px 12px;
+    border-top: 1px solid var(--border); background: var(--bg);
+    font-size: 12px; font-weight: 600; color: var(--accent); text-align: center;
   }
 
   /* ───── Paths (the three-step install story) ───── */
@@ -365,8 +498,12 @@
     </p>
     <div class="hero-cta">
       <a class="btn btn-primary btn-lg js-fns-download" href="https://storage.functionstr.com/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
-      <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
+      <a class="btn btn-secondary btn-lg" href="/get/">Build your install →</a>
     </div>
+    <p class="hero-cta-note">
+      No download needed to start: <a href="/get/">pick your tools in the browser</a> and paste one
+      line into the Textport. Every package is <a href="/docs/">documented on its own page</a>.
+    </p>
     <ul class="hero-meta">
       <li><span class="dot" aria-hidden="true"></span> TouchDesigner 2023.11600+</li>
       <li>Windows &amp; macOS</li>
@@ -387,7 +524,92 @@
   </div>
 </section>
 
-<section id="get">
+<section id="configurator">
+  <div class="wrap">
+    <div class="cfg-band">
+      <div class="cfg-band__body">
+        <span class="cfg-band__eyebrow">Configurator</span>
+        <h2>Pick your tools before you install anything</h2>
+        <p>
+          Browse all <span class="js-fns-count">45</span> packages by category, read what each one
+          does, and check the ones you want. You get a single line to paste into the TouchDesigner
+          Textport — it downloads exactly that selection, verifies every file against the release
+          manifest, and installs nothing else.
+        </p>
+        <ul class="cfg-band__points">
+          <li><strong>No download to browse.</strong> The same picker the installer serves from inside TouchDesigner, on the web.</li>
+          <li><strong>Every card links to its docs.</strong> Read the page for a tool before you commit to it.</li>
+          <li><strong>sha256-verified.</strong> The paste script resolves the current release at paste time, so a copied line stays valid.</li>
+          <li><strong>Or take a <code>selection.json</code></strong> and hand it to the installer COMP instead.</li>
+        </ul>
+        <div class="cfg-band__actions">
+          <a class="btn btn-primary btn-lg" href="/get/">Open the configurator →</a>
+          <a class="btn btn-secondary btn-lg" href="/docs/">Browse the docs</a>
+        </div>
+      </div>
+      <a class="picker" href="/get/" aria-label="Open the online configurator">
+        <!-- CONFIGURATOR:START -->
+        <span class="picker__bar" aria-hidden="true">
+          <span class="picker__search">Filter by name, description or category…</span>
+          <span class="picker__chip">Select all</span>
+          <span class="picker__chip">Clear</span>
+        </span>
+        <span class="picker__body" aria-hidden="true">
+          <span class="picker__cat">
+            <span class="picker__cat-glyph" aria-hidden="true">▦</span>
+            Surfaces
+            <span class="picker__cat-count">1 of 7 selected</span>
+          </span>
+          <span class="picker__card is-on">
+            <span class="picker__box" aria-hidden="true">✓</span>
+            <span class="picker__card-body">
+              <b>BorderlessTD</b>
+              <span>Borderless TouchDesigner window, plus timeline hiding.</span>
+            </span>
+            <span class="picker__card-docs">docs ↗</span>
+          </span>
+          <span class="picker__card">
+            <span class="picker__box" aria-hidden="true"></span>
+            <span class="picker__card-body">
+              <b>ColorUI</b>
+              <span>Operator and family colour palettes, with the active palette roaming through config.</span>
+            </span>
+            <span class="picker__card-docs">docs ↗</span>
+          </span>
+          <span class="picker__cat">
+            <span class="picker__cat-glyph" aria-hidden="true">◎</span>
+            Parameters
+            <span class="picker__cat-count">1 of 5 selected</span>
+          </span>
+          <span class="picker__card is-on">
+            <span class="picker__box" aria-hidden="true">✓</span>
+            <span class="picker__card-body">
+              <b>CustomParTools</b>
+              <span>Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion.</span>
+            </span>
+            <span class="picker__card-docs">docs ↗</span>
+          </span>
+          <span class="picker__card">
+            <span class="picker__box" aria-hidden="true"></span>
+            <span class="picker__card-body">
+              <b>ExprHotStrings</b>
+              <span>Abbreviations that expand into TouchDesigner expressions as you type in a parameter field.</span>
+            </span>
+            <span class="picker__card-docs">docs ↗</span>
+          </span>
+        </span>
+        <span class="picker__sum" aria-hidden="true">
+          <span class="picker__sum-text"><b>2</b> tools selected · + the core packages they need (already included)</span>
+          <span class="picker__sum-cta">Copy install script</span>
+        </span>
+        <!-- CONFIGURATOR:END -->
+        <span class="picker__open">Open the configurator →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<section id="get" style="padding-top: 12px;">
   <div class="wrap">
     <div class="section-head">
       <h2>Install what you want, not everything</h2>
@@ -404,17 +626,17 @@
         </p>
         <a class="btn btn-primary js-fns-download" href="https://storage.functionstr.com/fnstools/latest/FNSTools.tox" download>Download</a>
         <p class="path-note">Already have a toolkit container? Grab the <a class="js-fns-installer" href="https://storage.functionstr.com/fnstools/latest/FNS_Installer.tox" download>bare installer</a> instead (~14 KB).</p>
-        <p class="path-note">No download at all: <a href="/get/">pick your tools online</a> and paste one line into the Textport — it fetches and verifies everything itself.</p>
+        <p class="path-note">Or no download at all — <a href="/get/">build your install in the browser</a> and paste one line into the Textport.</p>
       </div>
       <div class="path">
         <div class="path-tag">2</div>
         <h3>Pick your tools</h3>
         <p>
-          Pulse <strong>Pick Tools</strong> and a picker opens, served from inside TouchDesigner —
-          nothing leaves your machine. Browse by category, read what each tool does, then
-          review the install plan before anything is written.
+          Pulse <strong>Pick Tools</strong> and the same picker opens, served from inside
+          TouchDesigner — nothing leaves your machine. Browse by category, follow any card
+          through to its docs, then review the install plan before anything is written.
         </p>
-        <a class="btn btn-secondary" href="/docs/">Browse the catalogue</a>
+        <a class="btn btn-secondary" href="/get/">See the picker →</a>
       </div>
       <div class="path">
         <div class="path-tag">3</div>
@@ -467,7 +689,9 @@
         <h2>Every tool documented on its own page</h2>
         <p>
           Each package ships with its own docs, so what you read matches exactly what you installed —
-          no hunting through one long page for the three tools you picked.
+          no hunting through one long page for the three tools you picked. Every card in the
+          <a href="/get/">configurator</a> links straight through to its page, in the browser and
+          inside TouchDesigner.
         </p>
         <ul class="docs-callout__links">
           <li><a href="/docs/optemplates/">OpTemplates</a></li>
@@ -862,6 +1086,7 @@
     </p>
     <div class="hero-cta">
       <a class="btn btn-primary btn-lg js-fns-download" href="https://storage.functionstr.com/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
+      <a class="btn btn-secondary btn-lg" href="/get/">Build your install →</a>
       <a class="btn btn-secondary btn-lg" href="/docs/">Read the docs</a>
     </div>
   </div>

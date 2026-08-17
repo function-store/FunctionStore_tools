@@ -89,6 +89,18 @@ the browser; the same page still works as a plain double-clicked HTML
 project that already has a toolkit container. Same served picker, minus
 the webBrowser panel — Pick Tools opens the system browser.
 
+**One file, three flavors.** `configurator/index.html` is served here,
+double-clicked as `configurator-standalone.html`, and published as
+`/get/` — so every style it needs is inline and every documentation link
+it builds is absolute (`https://tools.functionstore.xyz/...`). A
+root-relative `/docs/` would point at the installer's own web server.
+The site build dresses it in the real site header and footer by replacing
+the `<!-- FNS:HEADER -->` and `<!-- FNS:FOOTER -->` markers, and refuses
+to build if either goes missing; do not delete them. Category glyphs and
+pitches come off `category_meta` on the manifest — curated in
+`catalog.json`, edited in the website CMS — so the picker heads its
+sections exactly like the site does, with or without a site to ask.
+
 Both are BUILD ARTIFACTS, not hand-made components — they embed snapshots
 of `InstallerExt.py` and `configurator/index.html`, so editing either
 means rebuilding (the bootstrap also embeds `dist/FNS_Updater.tox`).

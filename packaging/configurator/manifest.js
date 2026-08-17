@@ -29,6 +29,40 @@ window.FNS_MANIFEST = {
   "Workflow",
   "Developer"
  ],
+ "category_meta": {
+  "Core": {
+   "glyph": "\u25c8",
+   "pitch": "The registries every other tool plugs into. Installed as a unit."
+  },
+  "Surfaces": {
+   "glyph": "\u25a6",
+   "pitch": "The parts of TouchDesigner you look at all day, made yours."
+  },
+  "Parameters": {
+   "glyph": "\u25ce",
+   "pitch": "Promote, bind, randomize and reset \u2014 by drag and drop."
+  },
+  "Network": {
+   "glyph": "\u21c4",
+   "pitch": "Build, swap, collapse and navigate without touching a menu."
+  },
+  "Media & Output": {
+   "glyph": "\u25b6",
+   "pitch": "Where the picture and the sound actually leave the project."
+  },
+  "Control": {
+   "glyph": "\u2299",
+   "pitch": "Hardware in, parameters out."
+  },
+  "Workflow": {
+   "glyph": "\u26a1",
+   "pitch": "The small frictions, removed."
+  },
+  "Developer": {
+   "glyph": "\u2328",
+   "pitch": "Extensions, stubs and the editor you actually write them in."
+  }
+ },
  "packages": [
   {
    "name": "AltSelect",

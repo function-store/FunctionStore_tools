@@ -246,7 +246,9 @@ ${links}
 </header>`;
 }
 
-const FOOT = `<footer class="site">
+// Shared by the docs pages and by /get/ — every page below the landing page
+// ends the same way, so the footer markup has one definition.
+const FOOTER = `<footer class="site">
   <div class="wrap footer-inner">
     <div>© 2026 FNSTools · Built for TouchDesigner</div>
     <div class="footer-links">
@@ -259,17 +261,21 @@ const FOOT = `<footer class="site">
       <a href="mailto:dan%2Bfnstools@functionstore.xyz?subject=FNSTools%20feedback">Feedback</a>
     </div>
   </div>
-</footer>
+</footer>`;
+
+const ANALYTICS = `<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script src="/_vercel/insights/script.js" defer></script>`;
+
+const FOOT = `${FOOTER}
 <script src="/site-nav.js" defer></script>
 <!-- Pagefind is emitted by the search step that runs after this build.
      Both scripts are deferred so they run in order; if the index has not
      been generated yet this 404s and docs.js just skips the search UI. -->
 <script src="/docs/pagefind/pagefind-ui.js" defer onerror="this.remove()"></script>
 <script src="/docs.js" defer></script>
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script src="/_vercel/insights/script.js" defer></script>
+${ANALYTICS}
 </body>
 </html>`;
 
@@ -416,6 +422,48 @@ ${items}
       </div>`;
 }).filter(Boolean).join('\n');
 
+// ------------------------------- picker preview injected into index.html
+//
+// A depiction of /get/ on the landing page, built from the same catalogue
+// the picker lists — so it can never show a tool that no longer ships, and
+// the categories it shows are simply the first two the CMS puts after Core.
+// Static markup inside one link: the real thing is one click away, and a
+// second copy of the picker's logic here would be a second thing to keep
+// true.
+const previewCats = categories.filter((c) => c !== 'Core').slice(0, 2);
+const previewBlock = previewCats.map((cat) => {
+  const items = pages
+    .filter((p) => p.category === cat)
+    .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+  const cards = items.slice(0, 2).map((p, i) => `          <span class="picker__card${i === 0 ? ' is-on' : ''}">
+            <span class="picker__box" aria-hidden="true">${i === 0 ? '✓' : ''}</span>
+            <span class="picker__card-body">
+              <b>${esc(p.name)}</b>
+              <span>${esc(p.description || p.meta.summary || '')}</span>
+            </span>
+            <span class="picker__card-docs">docs ↗</span>
+          </span>`).join('\n');
+  return `          <span class="picker__cat">
+            <span class="picker__cat-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>
+            ${esc(cat)}
+            <span class="picker__cat-count">1 of ${items.length} selected</span>
+          </span>
+${cards}`;
+}).join('\n');
+
+const preview = `        <span class="picker__bar" aria-hidden="true">
+          <span class="picker__search">Filter by name, description or category…</span>
+          <span class="picker__chip">Select all</span>
+          <span class="picker__chip">Clear</span>
+        </span>
+        <span class="picker__body" aria-hidden="true">
+${previewBlock}
+        </span>
+        <span class="picker__sum" aria-hidden="true">
+          <span class="picker__sum-text"><b>${previewCats.length}</b> tools selected · + the core packages they need (already included)</span>
+          <span class="picker__sum-cta">Copy install script</span>
+        </span>`;
+
 // The published release. NOTHING release-shaped is stamped into the landing
 // page any more: the download hrefs point at the mutable latest/ aliases,
 // and the version text next to them is gone. A release therefore cannot
@@ -455,7 +503,18 @@ if (fs.existsSync(landing)) {
     console.error('index.html is missing the <!-- TOOLS:START --> / <!-- TOOLS:END --> markers');
     process.exit(1);
   }
-  let out = src.replace(re, `$1\n${grid}\n      $2`);
+  // Function replacements throughout: these bodies are built from catalog
+  // prose, and `$1` or `$&` inside a replacement STRING is a capture-group
+  // reference. One description with a dollar sign in it would otherwise
+  // rewrite the page in a way nobody would think to look for.
+  let out = src.replace(re, (_m, a, b) => `${a}\n${grid}\n      ${b}`);
+
+  const previewRe = /(<!-- CONFIGURATOR:START -->)[\s\S]*?(<!-- CONFIGURATOR:END -->)/;
+  if (!previewRe.test(out)) {
+    console.error('index.html is missing the <!-- CONFIGURATOR:START --> / <!-- CONFIGURATOR:END --> markers');
+    process.exit(1);
+  }
+  out = out.replace(previewRe, (_m, a, b) => `${a}\n${preview}\n        ${b}`);
 
   // "N tools" always matches the catalogue this build actually rendered.
   out = out.replace(/(<span class="js-fns-count">)[^<]*(<\/span>)/g,
@@ -482,11 +541,16 @@ if (fs.existsSync(landing)) {
 // The same configurator the installer serves from inside TD, published as
 // a page: pick tools, copy a one-line Textport install script (or a
 // selection.json for the manual rail). The manifest is BAKED in at build
-// time — the bucket serves no Access-Control-Allow-Origin header, so the
-// page's own live-refresh fetch only helps if CORS is enabled later.
-// Prefer the published rolling manifest (it carries the `rails` hashes
-// publish.py stamps, and it is what a paste actually installs); fall back
-// to the repo's, which lists the same catalogue minus rails.
+// time; the page also refreshes it at runtime, which works because the
+// bucket sends Access-Control-Allow-Origin for this host. Prefer the
+// published rolling manifest (it carries the `rails` hashes publish.py
+// stamps, and it is what a paste actually installs); fall back to the
+// repo's, which lists the same catalogue minus rails.
+//
+// Everything site-shaped is added HERE rather than in the configurator:
+// that file is also read verbatim into a Text DAT and served from inside
+// TouchDesigner, where /docs.css and /site-nav.js do not exist. The source
+// stays self-contained and this build dresses it in the site's chrome.
 const cfgSrc = path.join(REPO, 'packaging', 'configurator', 'index.html');
 if (fs.existsSync(cfgSrc)) {
   const manifest = live
@@ -497,18 +561,50 @@ if (fs.existsSync(cfgSrc)) {
     console.error('packaging/configurator/index.html lost its manifest.js script tag');
     process.exit(1);
   }
-  page = page.replace(tag, '<script>\nwindow.FNS_SITE = true;\n'
-    + 'window.FNS_MANIFEST = ' + JSON.stringify(manifest, null, 1) + ';\n</script>');
+  // catMeta is the curated presentation from catalog.json — the same glyph
+  // and pitch the landing page and the docs sidebar use, so a category
+  // renamed in the CMS reads the same in all three places. build_manifest.py
+  // now carries it on the manifest too (for the picker served inside TD);
+  // baking it here means /get/ has it even against a release published
+  // before that key existed.
+  const baked = '<script>\nwindow.FNS_SITE = true;\n'
+    + 'window.FNS_CATEGORY_META = ' + JSON.stringify(catMeta) + ';\n'
+    + 'window.FNS_MANIFEST = ' + JSON.stringify(manifest, null, 1) + ';\n</script>';
+  page = page.replace(tag, () => baked);
   page = page.replace('<title>',
     `<link rel="icon" href="/favicon.png" type="image/png" />\n`
+    + `<link rel="apple-touch-icon" href="/favicon.png" />\n`
     + `<link rel="canonical" href="${SITE}/get/" />\n`
     + `<meta name="description" content="Pick your FNSTools packages and copy a one-line install script for the TouchDesigner Textport — sha256-verified, macOS or Windows." />\n`
+    + `<meta property="og:title" content="Build your FNSTools install" />\n`
+    + `<meta property="og:description" content="Pick the TouchDesigner tools you want and get a single sha256-verified line to paste into the Textport." />\n`
+    + `<meta property="og:type" content="website" />\n`
+    + `<meta property="og:image" content="${SITE}/og-image.png" />\n`
+    + `<link rel="preconnect" href="https://fonts.googleapis.com">\n`
+    + `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n`
+    + `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">\n`
+    + `<link rel="stylesheet" href="/site-nav.css">\n`
+    + `<link rel="stylesheet" href="/docs.css">\n`
     + `<title>`);
+
+  for (const [marker, markup] of [
+    ['<!-- FNS:HEADER -->', header('/get/')],
+    ['<!-- FNS:FOOTER -->', `${FOOTER}\n<script src="/site-nav.js" defer></script>\n${ANALYTICS}`],
+  ]) {
+    if (!page.includes(marker)) {
+      console.error(`packaging/configurator/index.html lost its ${marker} marker — `
+        + '/get/ would ship without the site header or footer');
+      process.exit(1);
+    }
+    page = page.replace(marker, () => markup);
+  }
+
   fs.mkdirSync(path.join(WEB, 'get'), { recursive: true });
   fs.writeFileSync(path.join(WEB, 'get', 'index.html'),
     '<!-- GENERATED by tools/build-site.mjs from packaging/configurator/index.html — do not edit here -->\n' + page);
   console.log(`built /get/ (release ${manifest.release}, ${live ? 'published' : 'repo'} manifest`
-    + `${manifest.rails ? '' : ', no rails hashes yet — paste script needs the next publish'})`);
+    + `${manifest.rails ? '' : ', no rails hashes yet — paste script needs the next publish'}`
+    + `${manifest.category_meta ? '' : ', category_meta baked from catalog.json'})`);
 } else {
   console.warn('note: packaging/configurator/index.html missing — /get/ not built');
 }

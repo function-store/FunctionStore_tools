@@ -524,7 +524,7 @@ function renderCategories() {
       <input class="cat-glyph" data-glyph value="${c.glyph.replace(/"/g, '&quot;')}" maxlength="2" />
       <div>
         <input type="text" data-name value="${c.name.replace(/"/g, '&quot;')}" />
-        <textarea class="cat-pitch" data-pitch rows="2" placeholder="One-line pitch shown above this section on the landing page">${c.pitch.replace(/</g, '&lt;')}</textarea>
+        <textarea class="cat-pitch" data-pitch rows="2" placeholder="One-line pitch shown above this section on the landing page and in the picker">${c.pitch.replace(/</g, '&lt;')}</textarea>
       </div>
       <div class="cat-count">${c.count} pkg</div>
       <button class="icon-x" data-del ${c.count ? 'disabled title="Move its packages out first"' : 'title="Delete"'}>×</button>
@@ -532,7 +532,7 @@ function renderCategories() {
 
   $('#editor').innerHTML = `
     <h2 class="pane-title">Categories</h2>
-    <p class="pane-sub">packaging/<span class="mono">catalog.json</span> · order here is the order sections appear on the site and in the installer picker</p>
+    <p class="pane-sub">packaging/<span class="mono">catalog.json</span> · order here is the order sections appear on the site and in the picker — and the first two after Core are the ones the landing page previews</p>
     <p class="warn">Renaming moves every package in that category with it, in one write. Deleting is only possible once a category is empty.</p>
     <div id="catrows">${rows}</div>
     <div style="display:flex;gap:8px;margin-top:16px">

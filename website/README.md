@@ -20,6 +20,21 @@ that manifest at runtime) and `window.FNS_SITE` set, which promotes the
 **Copy install script** button — the paste rail described in
 `packaging/README.md`. Edit the configurator, not the emitted page.
 
+That same file is also read verbatim into a Text DAT and served from
+inside TouchDesigner, so it carries its own copy of the palette and every
+style it needs; `/docs.css` and `/site-nav.js` do not exist over there.
+The site flavor is assembled here instead: this build injects the fonts,
+`site-nav.css` and `docs.css`, and replaces the `<!-- FNS:HEADER -->` and
+`<!-- FNS:FOOTER -->` markers with the real site header and footer. It
+**refuses to build** if either marker is gone, because the failure mode
+otherwise is a live page that silently loses its navigation.
+
+The tokens are declared twice on purpose — once inline in the
+configurator, once in `docs.css` — with the same names and the same
+values, so the two cannot disagree while the page is dressed in both. The
+picker's light theme is opt-in and its toggle is hidden on the site,
+whose header and footer are dark-only.
+
 `packaging/docs/` is the source of truth for documentation. It is *not*
 generated from the GitHub wiki — the wiki seeded it once
 (`packaging/docs_seed_from_wiki.py`) and is now frozen. Edit the markdown.
@@ -97,10 +112,17 @@ unbuildable. Deleting is only allowed once a category is empty; the button
 stays disabled while anything is still in it.
 
 The glyph and pitch live in `catalog.json` under `category_meta`, beside
-the category list. `build_manifest.py` reads only `categories` and
-`packages`, so that key is invisible to packaging and to the manifest —
-it is website presentation. It used to be hardcoded in `build-site.mjs`,
-which meant renaming a category silently dropped its glyph and pitch.
+the category list. It used to be hardcoded in `build-site.mjs`, which
+meant renaming a category silently dropped its glyph and pitch.
+
+They reach four surfaces now: the landing page sections, the docs sidebar
+and index, the picker preview — and the configurator itself, which heads
+its categories the same way. `build_manifest.py` copies `category_meta`
+onto `manifest.json` for that last one, because the picker served from
+inside TouchDesigner has no site to fetch it from; packaging itself still
+reads only `categories` and `packages`, so the key is inert there. The
+site build also bakes a copy into `/get/`, so the online picker keeps its
+glyphs against a release published before the manifest carried the key.
 
 Bound to `127.0.0.1` on purpose: this process writes to the repo, so it
 must not be reachable from the network. There is no auth because there is
@@ -130,8 +152,17 @@ adding the tool the normal way and re-running `build_manifest.py`. The CMS
 edits packages; it does not invent them.
 
 The landing page's tool catalogue is generated too, between the
-`<!-- TOOLS:START -->` / `<!-- TOOLS:END -->` markers in `index.html`.
-Everything outside those markers is hand-written — edit it freely.
+`<!-- TOOLS:START -->` / `<!-- TOOLS:END -->` markers in `index.html`, as
+is the picker preview in the configurator band, between
+`<!-- CONFIGURATOR:START -->` / `<!-- CONFIGURATOR:END -->`. Everything
+outside those markers is hand-written — edit it freely.
+
+The preview is a depiction of `/get/` built from the same catalogue the
+picker itself lists, so it cannot end up advertising a tool that no longer
+ships. It shows the **first two categories after Core**, two packages
+each — reorder categories in the CMS and the preview follows. It is
+deliberately static markup inside one link: a second copy of the picker's
+logic on the landing page would be a second thing to keep true.
 
 ## Frontmatter
 

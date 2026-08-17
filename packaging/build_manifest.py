@@ -553,6 +553,12 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
         },
         'core': [p['name'] for p in packages if p['kind'] == 'core'],
         'categories': catalog.get('categories', []),
+        # Presentation per category -- the glyph and the one-line pitch the
+        # CMS curates beside the category list. Packaging does not read it;
+        # it rides along so the configurator can head its sections the same
+        # way the website does, including when the picker is served from
+        # inside TouchDesigner with no site to fetch it from.
+        'category_meta': catalog.get('category_meta', {}),
         'packages': packages,
     }
     with open(out_path, 'w', encoding='utf-8') as f:
