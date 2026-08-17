@@ -78,8 +78,15 @@ main{flex:1;overflow-y:auto;overflow-x:hidden}
 .ghead:hover .gbtns{display:inline-flex}
 .ghead .gbtns button{padding:1px 8px;font-size:11px}
 button.armed{border-color:var(--bad);color:var(--bad)}
-#grpctl{margin-left:auto;display:inline-flex;gap:6px}
+#grpctl{margin-left:auto;display:inline-flex;gap:6px;align-items:center}
 #grpctl button{padding:2px 8px;font-size:11px;color:var(--dim)}
+#modes{display:inline-flex;margin-right:4px}
+#modes .cap{margin-right:6px;align-self:center}
+#modes button{border-radius:0;border-right-width:0}
+#modes button:first-of-type{border-radius:4px 0 0 4px}
+#modes button:last-of-type{border-radius:0 4px 4px 0;border-right-width:1px}
+#modes button.on{background:#3a3325;border-color:var(--acc);border-right-width:1px;color:var(--acc)}
+#modes button.on + button{border-left-width:0}
 .row{
   display:flex;align-items:center;gap:9px;padding:3px 12px;cursor:pointer;
   border-bottom:1px solid #202226;
@@ -165,7 +172,7 @@ footer{
   <label class="chk"><input type="checkbox" id="autoload">auto-load</label>
 </header>
 
-<div id="famrow"><span class="cap">Families</span><span id="grpctl"><button id="expandall">expand all</button><button id="collapseall">collapse all</button></span></div>
+<div id="famrow"><span class="cap">Families</span><span id="grpctl"><span id="modes"><span class="cap">group by</span><button id="mprefix" class="on">prefix</button><button id="mrole">role</button></span><button id="expandall">expand all</button><button id="collapseall">collapse all</button></span></div>
 <main id="list"></main>
 <footer>
   <span id="conn">waiting…</span>
@@ -262,7 +269,7 @@ const Bridge = (() => {
 /* ================================================================= model */
 const S = {
   colors: {}, defaults: {}, overrides: new Set(), families: [],
-  names: [], connected: false, randomized: false,
+  names: [], connected: false, randomized: false, groupby: 'prefix',
 };
 const $ = id => document.getElementById(id);
 const EPS = 1e-3;
@@ -290,6 +297,8 @@ window.FNS = {
     S.overrides = new Set(st.overrides); S.families = st.families;
     S.randomized = !!st.randomized;
     S.names = Object.keys(st.colors).filter(n => !st.families.includes(n)).sort();
+    if (st.groupby) S.groupby = st.groupby === 'role' ? 'role' : 'prefix';
+    syncModeButtons();
     buildGroups();
     $('autoload').checked = !!st.autoload;
     $('ver').textContent = st.version ? 'v' + st.version : '';
@@ -300,6 +309,7 @@ window.FNS = {
     renderFams(); renderList();
   },
   setAutoload(v) { $('autoload').checked = !!v; },
+  setGroupby(v) { setGroupby(v, true); },
   toast(t) { toast(t); },
   _ack(n, i) { Bridge.ack(n, i); },
   /* TD->page payloads over the executeJavaScript size cap stream in parts */
@@ -401,6 +411,14 @@ const FGROUP = 'OP families', MISC = 'misc';
 let groups = [];
 const expanded = new Set();
 function groupOf(n) {
+  if (S.groupby === 'role') {
+    // last non-numeric segment, trailing digits stripped: bg1->bg, aux3->aux
+    const parts = n.split('.');
+    for (let i = parts.length - 1; i >= 0; i--) {
+      if (!/^\d+$/.test(parts[i])) return parts[i].replace(/\d+$/, '') || parts[i];
+    }
+    return parts[parts.length - 1];
+  }
   const p = n.split('.')[0];
   return /^[A-Z]+$/.test(p) ? FGROUP : p;
 }
@@ -421,6 +439,20 @@ function buildGroups() {
       a.name === FGROUP ? -1 : b.name === FGROUP ? 1 :
       a.name === MISC ? 1 : b.name === MISC ? -1 :
       a.name.localeCompare(b.name));
+}
+function setGroupby(v, fromTD) {
+  if (v !== 'prefix' && v !== 'role') v = 'prefix';
+  if (v === S.groupby) { syncModeButtons(); return; }
+  S.groupby = v;
+  syncModeButtons();
+  expanded.clear();
+  buildGroups();
+  renderList();
+  if (!fromTD) Bridge.post({cmd: 'groupby', value: v});
+}
+function syncModeButtons() {
+  $('mprefix').classList.toggle('on', S.groupby !== 'role');
+  $('mrole').classList.toggle('on', S.groupby === 'role');
 }
 
 /* two-click confirm — native confirm() blocks forever in offscreen CEF */
@@ -663,6 +695,8 @@ $('undorandom').onclick = () => Bridge.post({cmd: 'undoRandom'});
 $('resetall').onclick = e => armThen(e.currentTarget, () => Bridge.post({cmd: 'resetAll'}));
 $('expandall').onclick = () => { groups.forEach(g => expanded.add(g.name)); renderList(); };
 $('collapseall').onclick = () => { expanded.clear(); renderList(); };
+$('mprefix').onclick = () => setGroupby('prefix');
+$('mrole').onclick = () => setGroupby('role');
 $('import').onclick = () => Bridge.post({cmd: 'import'}, false);
 $('export').onclick = () => Bridge.post({cmd: 'export'}, false);
 $('autoload').addEventListener('change', () =>

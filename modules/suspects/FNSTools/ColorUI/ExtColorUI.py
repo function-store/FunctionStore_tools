@@ -1,7 +1,7 @@
 ﻿'''Info Header Start
 Name : ExtColorUI
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.61.toe
+Saveorigin : FunctionStore_tools_2025_DEV.63.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -156,6 +156,7 @@ class ExtColorUI:
 			'defaults': {k: rnd(v) for k, v in self.defaults.items()},
 			'overrides': sorted(self.Overrides),
 			'autoload': bool(self.evalAutoload),
+			'groupby': self.evalGroupby,
 			'randomized': self._randomized,
 			'version': self.ownerComp.par.Pkgversion.eval(),
 		}
@@ -216,6 +217,10 @@ class ExtColorUI:
 			self.DoExport(dialog=True)
 		elif cmd == 'autoload':
 			self.ownerComp.par.Autoload = bool(msg.get('value'))
+		elif cmd == 'groupby':
+			v = msg.get('value')
+			if v in ('prefix', 'role'):
+				self.ownerComp.par.Groupby = v
 		elif cmd == 'refresh':
 			self.SendState()
 		else:
@@ -319,6 +324,9 @@ class ExtColorUI:
 	def onParAutoload(self, _val):
 		# keep the page checkbox in sync however the par was flipped
 		self._js('window.FNS && FNS.setAutoload(' + ('true' if _val else 'false') + ')')
+
+	def onParGroupby(self, _val):
+		self._js('window.FNS && FNS.setGroupby(' + json.dumps(str(_val)) + ')')
 
 	def onParFile(self, _file):
 		if _file and not _file.endswith('.json'):
