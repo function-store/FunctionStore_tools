@@ -22,10 +22,10 @@ body{
 ::-webkit-scrollbar-track{background:transparent}
 
 header{
-  flex:none;display:flex;align-items:center;gap:10px;
-  padding:8px 12px;background:var(--panel);border-bottom:1px solid var(--line);
-  flex-wrap:wrap;
+  flex:none;display:flex;flex-direction:column;gap:6px;
+  padding:7px 12px;background:var(--panel);border-bottom:1px solid var(--line);
 }
+.hrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
 .brand{font-weight:600;letter-spacing:.4px;color:var(--acc)}
 .brand small{color:var(--dim);font-weight:400;margin-left:6px}
 input[type=text],input[type=number]{
@@ -34,7 +34,7 @@ input[type=text],input[type=number]{
   -webkit-user-select:text;user-select:text;
 }
 input[type=text]:focus,input[type=number]:focus{border-color:var(--acc)}
-#search{width:230px}
+#search{flex:1 1 150px;min-width:120px;max-width:340px}
 button{
   background:#2e3237;color:var(--fg);border:1px solid var(--line);
   border-radius:4px;padding:4px 10px;font:inherit;cursor:pointer;white-space:nowrap;
@@ -159,30 +159,47 @@ footer{
 #wait .pulse{width:10px;height:10px;border-radius:5px;background:var(--acc);
   animation:pl 1.1s ease-in-out infinite}
 @keyframes pl{50%{opacity:.25;transform:scale(.7)}}
+
+/* tight square panels (min supported 650x650) */
+@media (max-width: 760px){
+  header{padding:6px 8px;gap:5px}
+  .hrow{gap:6px}
+  #famrow{padding:6px 8px;gap:6px}
+  .row,.ghead{padding-left:8px;padding-right:8px}
+  .subhead{padding-left:20px}
+  .row.sub{padding-left:32px}
+  button{padding:4px 8px}
+  footer .hint{display:none}
+  .fam .sw{width:17px;height:17px}
+  .fam{padding:2px 6px 2px 3px}
+}
 </style>
 </head>
 <body>
 
 <header>
-  <div class="brand">ColorUI<small id="ver"></small></div>
-  <input type="text" id="search" placeholder="filter elements — space = AND, * wildcard">
-  <label class="chk"><input type="checkbox" id="modonly">changed only</label>
-  <div id="nearrow">
-    <label class="chk"><input type="checkbox" id="nearon">near</label>
-    <div id="nearsw" title="reference color"></div>
-    <span style="color:var(--dim)">±</span>
-    <input type="number" id="neartol" min="0" max="1" step="0.01" value="0.05">
+  <div class="hrow">
+    <div class="brand">ColorUI<small id="ver"></small></div>
+    <input type="text" id="search" placeholder="filter — space = AND, * wildcard">
+    <label class="chk"><input type="checkbox" id="modonly">changed only</label>
+    <div id="nearrow">
+      <label class="chk"><input type="checkbox" id="nearon">near</label>
+      <div id="nearsw" title="reference color"></div>
+      <span style="color:var(--dim)">±</span>
+      <input type="number" id="neartol" min="0" max="1" step="0.01" value="0.05">
+    </div>
   </div>
-  <span class="spacer"></span>
-  <button id="setshown" title="apply one color to every listed element">Set shown…</button>
-  <div class="sep"></div>
-  <button id="randomize">Randomize</button>
-  <button id="undorandom" disabled>Undo</button>
-  <button id="resetall" class="warn">Reset all</button>
-  <div class="sep"></div>
-  <button id="import">Import</button>
-  <button id="export">Export</button>
-  <label class="chk"><input type="checkbox" id="autoload">auto-load</label>
+  <div class="hrow">
+    <button id="setshown" title="apply one color to every listed element">Set shown…</button>
+    <div class="sep"></div>
+    <button id="randomize">Randomize</button>
+    <button id="undorandom" disabled>Undo</button>
+    <button id="resetall" class="warn">Reset all</button>
+    <div class="sep"></div>
+    <button id="import">Import</button>
+    <button id="export">Export</button>
+    <label class="chk"><input type="checkbox" id="autoload">auto-load</label>
+  </div>
 </header>
 
 <div id="famrow"><span class="cap">Families</span><span id="grpctl"><span id="modes"><span class="cap">group by</span><button id="mprefix" class="on">prefix</button><button id="mrole">role</button></span><button id="expandall">expand all</button><button id="collapseall">collapse all</button></span></div>
@@ -191,7 +208,7 @@ footer{
   <span id="conn">waiting…</span>
   <span id="counts"></span>
   <span class="spacer"></span>
-  <span>click a color to edit · right side resets</span>
+  <span class="hint">click a color to edit · right side resets</span>
 </footer>
 
 <div id="overlay"></div>
