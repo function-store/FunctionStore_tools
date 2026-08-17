@@ -77,6 +77,19 @@ main{flex:1;overflow-y:auto;overflow-x:hidden}
 .ghead .gbtns{margin-left:auto;display:none;gap:6px}
 .ghead:hover .gbtns{display:inline-flex}
 .ghead .gbtns button{padding:1px 8px;font-size:11px}
+.subhead{
+  display:flex;align-items:center;gap:7px;padding:3px 12px 3px 26px;
+  background:#212429;border-bottom:1px solid #24272c;cursor:pointer;
+  color:#aeb3b9;font-weight:500;font-size:12.5px;
+}
+.subhead:hover{background:#282c32}
+.subhead .tri{width:10px;color:var(--dim);font-size:9px}
+.subhead .cnt{color:var(--dim);font-weight:400;font-size:11px}
+.subhead .gmod{color:var(--acc);font-weight:400;font-size:11px}
+.subhead .gbtns{margin-left:auto;display:none;gap:6px}
+.subhead:hover .gbtns{display:inline-flex}
+.subhead .gbtns button{padding:1px 8px;font-size:11px}
+.row.sub{padding-left:40px}
 button.armed{border-color:var(--bad);color:var(--bad)}
 #grpctl{margin-left:auto;display:inline-flex;gap:6px;align-items:center}
 #grpctl button{padding:2px 8px;font-size:11px;color:var(--dim)}
@@ -422,6 +435,30 @@ function groupOf(n) {
   const p = n.split('.')[0];
   return /^[A-Z]+$/.test(p) ? FGROUP : p;
 }
+function subKeyOf(n) {
+  if (S.groupby === 'role') return n.split('.')[0].replace(/\d+$/, '') || n.split('.')[0];
+  const parts = n.split('.');
+  return parts.length >= 3 ? parts[1] : null;
+}
+function buildSubs(gname, items) {
+  if (gname === FGROUP || gname === MISC) return {direct: items.slice(), subs: []};
+  const sm = new Map(), direct = [];
+  for (const n of items) {
+    const k = subKeyOf(n);
+    if (k == null) { direct.push(n); continue; }
+    if (!sm.has(k)) sm.set(k, []);
+    sm.get(k).push(n);
+  }
+  const subs = [];
+  for (const [k, si] of [...sm]) {
+    if (si.length < 3) direct.push(...si);
+    else subs.push({name: k, items: si});
+  }
+  if (subs.length < 2) return {direct: items.slice(), subs: []};
+  subs.sort((a, b) => a.name.localeCompare(b.name));
+  direct.sort();
+  return {direct, subs};
+}
 function buildGroups() {
   const m = new Map();
   for (const n of S.names) {
@@ -434,7 +471,8 @@ function buildGroups() {
     if (g !== FGROUP && items.length < 3) { misc.push(...items); m.delete(g); }
   }
   if (misc.length) m.set(MISC, misc.sort());
-  groups = [...m.entries()].map(([name, items]) => ({name, items}))
+  groups = [...m.entries()].map(([name, items]) =>
+      ({name, items, ...buildSubs(name, items)}))
     .sort((a, b) =>
       a.name === FGROUP ? -1 : b.name === FGROUP ? 1 :
       a.name === MISC ? 1 : b.name === MISC ? -1 :
@@ -446,6 +484,7 @@ function setGroupby(v, fromTD) {
   S.groupby = v;
   syncModeButtons();
   expanded.clear();
+  collapsedSub.clear();
   buildGroups();
   renderList();
   if (!fromTD) Bridge.post({cmd: 'groupby', value: v});
@@ -474,9 +513,9 @@ function armThen(btn, fn) {
   }, 2500);
 }
 
-function makeRow(n) {
+function makeRow(n, indent) {
   const row = document.createElement('div');
-  row.className = 'row' + (isMod(n) ? ' mod' : '');
+  row.className = 'row' + (isMod(n) ? ' mod' : '') + (indent ? ' sub' : '');
   row.dataset.name = n;
   const d = S.defaults[n] || [0, 0, 0];
   row.innerHTML =
@@ -512,6 +551,35 @@ function makeGhead(g, items, changed, open, filtering) {
   };
   return h;
 }
+const collapsedSub = new Set();   // subs default OPEN; this tracks closed ones
+function makeSubhead(g, sub, items, filtering) {
+  const key = g.name + '/' + sub.name;
+  const open = filtering || !collapsedSub.has(key);
+  const changed = sub.items.filter(isMod).length;
+  const h = document.createElement('div');
+  h.className = 'subhead';
+  h.innerHTML =
+    `<span class="tri">${open ? '▾' : '▸'}</span>` +
+    `<span>${sub.name}</span><span class="cnt">${items.length}</span>` +
+    (changed ? `<span class="gmod">${changed} changed</span>` : '') +
+    `<span class="gbtns"><button class="gset">set…</button>` +
+    (changed ? '<button class="greset">reset</button>' : '') + '</span>';
+  h.querySelector('.gset').onclick = e => {
+    e.stopPropagation();
+    openPicker(items.slice(), `set ${items.length} in ${g.name} · ${sub.name}`);
+  };
+  const gr = h.querySelector('.greset');
+  if (gr) gr.onclick = e => {
+    e.stopPropagation();
+    armThen(gr, () => resetNames(sub.items.filter(isMod)));
+  };
+  if (!filtering) h.onclick = () => {
+    if (collapsedSub.has(key)) collapsedSub.delete(key);
+    else collapsedSub.add(key);
+    renderList();
+  };
+  return h;
+}
 
 let shown = [];
 function renderList() {
@@ -530,7 +598,22 @@ function renderList() {
       const changed = g.items.filter(isMod).length;
       const open = filtering || expanded.has(g.name);
       frag.appendChild(makeGhead(g, items, changed, open, filtering));
-      if (open) for (const n of items) frag.appendChild(makeRow(n));
+      if (!open) continue;
+      if (!g.subs.length) {
+        for (const n of items) frag.appendChild(makeRow(n));
+        continue;
+      }
+      for (const n of g.direct) {
+        if (visSet.has(n)) frag.appendChild(makeRow(n));
+      }
+      for (const sub of g.subs) {
+        const si = sub.items.filter(n => visSet.has(n));
+        if (!si.length) continue;
+        frag.appendChild(makeSubhead(g, sub, si, filtering));
+        if (filtering || !collapsedSub.has(g.name + '/' + sub.name)) {
+          for (const n of si) frag.appendChild(makeRow(n, true));
+        }
+      }
     }
   }
   host.replaceChildren(frag);
@@ -693,8 +776,12 @@ $('setshown').onclick = () => {
 $('randomize').onclick = () => Bridge.post({cmd: 'randomize'});
 $('undorandom').onclick = () => Bridge.post({cmd: 'undoRandom'});
 $('resetall').onclick = e => armThen(e.currentTarget, () => Bridge.post({cmd: 'resetAll'}));
-$('expandall').onclick = () => { groups.forEach(g => expanded.add(g.name)); renderList(); };
-$('collapseall').onclick = () => { expanded.clear(); renderList(); };
+$('expandall').onclick = () => {
+  groups.forEach(g => expanded.add(g.name));
+  collapsedSub.clear();
+  renderList();
+};
+$('collapseall').onclick = () => { expanded.clear(); collapsedSub.clear(); renderList(); };
 $('mprefix').onclick = () => setGroupby('prefix');
 $('mrole').onclick = () => setGroupby('role');
 $('import').onclick = () => Bridge.post({cmd: 'import'}, false);
