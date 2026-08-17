@@ -32,10 +32,22 @@ Matching goes beyond the original module's prefix search:
 - **Substring, case-insensitive** — `blur` finds `hsvBlur`, `radialBlur`
   and `barrel_blur`, not just names that start with it.
 - **Multiple words AND together** — `audio an` finds `audioAnalysis`.
-- **Ranked results** — exact matches first, then names starting with the
-  query, then everything containing it, alphabetical within each group.
+- **Ranked results** — an exact match first, then names starting with the
+  query, then names where it starts a word (`blur` puts `hsvBlur` and
+  `barrel_blur` above `unblurred`), then the rest, alphabetical within
+  each group.
 - **Wildcards still work** — a word carrying `*` or `?` is matched as a
-  pattern (`audio*` = classic prefix search).
+  pattern, anchored at the front only, so a wildcard can only ever widen
+  the search: `audio*` is still classic prefix search, `*fee` finds
+  `feedbackGen` just like plain `fee` does, and `web*ser` finds
+  `webBrowser`.
+- **Exclude with `-`** — a word prefixed with a minus removes matches
+  rather than requiring them: `blur -barrel` finds every blur except the
+  `barrel_blur` pair.
+- **Fuzzy fallback** — when nothing matches literally, each word is
+  re-read as a *subsequence*, so initials find the component: `fbg` finds
+  `feedbackGen`, `wbrsr` finds `webBrowser`. These only ever appear when
+  the strict search came up empty, ranked tightest-match first.
 - **Folder search** — a word containing `/` matches the palette *folder*
   instead of the name: `gen/ noise` finds `noise` in the Generators
   folder, and `tools/` alone lists a whole folder. Toggleable via the
@@ -44,3 +56,6 @@ Matching goes beyond the original module's prefix search:
   `tool1`, `tool2`, or the same name in two folders) collapse to the
   latest-modified file. Toggleable via the **Latest Version Only**
   parameter.
+
+The list stops at 200 rows, so a one-character query returns the 200
+best-ranked components rather than the whole palette.
