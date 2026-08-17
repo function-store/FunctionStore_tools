@@ -1,7 +1,7 @@
 ﻿'''Info Header Start
 Name : ExtColorUI
 Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.63.toe
+Saveorigin : FunctionStore_tools_2025_DEV.65.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -233,7 +233,10 @@ class ExtColorUI:
 		for el, rgb in colors.items():
 			if el not in ui.colors or not isinstance(rgb, (list, tuple)) or len(rgb) < 3:
 				continue
-			rgb = [max(0.0, min(1.0, float(c))) for c in rgb[:3]]
+			try:
+				rgb = [max(0.0, min(1.0, float(c))) for c in rgb[:3]]
+			except (TypeError, ValueError):
+				continue
 			ui.colors[el] = rgb
 			if record:
 				d = self.defaults.get(el)
@@ -270,27 +273,34 @@ class ExtColorUI:
 	def DoImport(self, dialog=False):
 		path = self.evalFile
 		if dialog or not path:
-			path = ui.chooseFile(load=True, fileTypes=['json'], title='Import UI colors')
+			path = ui.chooseFile(load=True, start=path or None,
+								 fileTypes=['json'], title='Import UI colors')
 			if not path:
 				return
 			self.evalFile = path
 		try:
 			with open(path, 'r', encoding='utf-8') as f:
 				data = json.load(f)
+			if not isinstance(data, dict):
+				raise ValueError('not a {element: [r,g,b]} dictionary')
 		except Exception as e:
 			fnsLog(f'ColorUI: import failed: {e}', level='ERROR')
 			self.Toast(f'Import failed: {e}')
 			return
 		valid = {k: v for k, v in data.items() if k in ui.colors}
 		self._apply(valid, record=True)
-		fnsLog(f'ColorUI: imported {len(valid)} colors from {path}')
-		self.Toast(f'Imported {len(valid)} colors')
+		skipped = len(data) - len(valid)
+		fnsLog(f'ColorUI: imported {len(valid)} colors from {path}'
+			   + (f' ({skipped} unknown keys skipped)' if skipped else ''))
+		self.Toast(f'Imported {len(valid)} colors'
+				   + (f' · {skipped} unknown skipped' if skipped else ''))
 		self.SendState()
 
 	def DoExport(self, dialog=False):
 		path = self.evalFile
 		if dialog or not path:
-			path = ui.chooseFile(load=False, fileTypes=['json'], title='Export UI colors')
+			path = ui.chooseFile(load=False, start=path or None,
+								 fileTypes=['json'], title='Export UI colors')
 			if not path:
 				return
 		if not path.endswith('.json'):
