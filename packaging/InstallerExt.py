@@ -98,15 +98,26 @@ def DefaultTarget(owner=None):
     return home.rstrip('/') + '/' + ROOT_NAME
 
 
+def StoreFolder():
+    """The machine-wide palette store. By contract a MIRROR of the bucket:
+    nothing in it is anyone's work, so a file that disagrees with the
+    manifest is stale cache, never a modification to preserve."""
+    return ('%s/FNStools_ext/store' % app.userPaletteFolder).replace('\\', '/')
+
+
 def DefaultManifest():
     """The manifest to read when none is given: the palette store's, if the
     store has ever been refreshed -- artifacts sit beside it, so a user
     project needs no further configuration -- else the repo's (dev)."""
-    store = ('%s/FNStools_ext/store/manifest.json'
-             % app.userPaletteFolder).replace('\\', '/')
+    store = StoreFolder() + '/manifest.json'
     if os.path.exists(store):
         return store
     return DEFAULT_MANIFEST
+
+
+def _inStore(path):
+    return (os.path.normcase(os.path.dirname(os.path.abspath(path)))
+            == os.path.normcase(os.path.abspath(StoreFolder())))
 
 
 def _artifactPath(art, name, manifest_path):
@@ -155,7 +166,7 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
                        if c.family == 'COMP' and c.name in tool_names
                        and c.name not in wanted) if root_comp else []
 
-    steps, missing = [], []
+    steps, missing, hash_warnings = [], [], []
     for name in ordered:
         pkg = index[name]
         art = pkg.get('artifact')
@@ -166,16 +177,37 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
         # an absent file is a DOWNLOAD, not a failure: the picker fetches
         # exactly the selection at install time, so planning must work
         # against a store that holds only the manifest
+        have = os.path.exists(path)
+        # a present store file is only trustworthy if its bytes are the
+        # manifest's bytes -- the store is a mirror, and a mirror can lag.
+        # Elsewhere (dev dist/, a hand-pointed manifest) a mismatch can be
+        # deliberately staged local work, so it is reported, never refetched.
+        stale = False
+        if have and art.get('sha256'):
+            try:
+                matches = _fileSha(path) == art['sha256']
+            except Exception:
+                matches = True     # unreadable surfaces at loadTox instead
+            if not matches:
+                if _inStore(path):
+                    stale = True
+                else:
+                    hash_warnings.append(name)
         steps.append({'name': name, 'kind': pkg['kind'], 'path': path,
                       'sha256': art.get('sha256', ''),
                       'bytes': art.get('bytes', 0),
                       'release': manifest.get('release', ''),
-                      'have': os.path.exists(path),
+                      'have': have, 'stale': stale,
                       'present': op(tgt + '/' + name) is not None})
     return {'target': tgt, 'steps': steps, 'order': [s['name'] for s in steps],
             'already_present': [s['name'] for s in steps if s['present']],
+            # stale store copies re-download even when the package is
+            # already present: Replace installs from the file, and healing
+            # the mirror is never wrong
             'to_fetch': [s['name'] for s in steps
-                         if not s['have'] and not s['present']],
+                         if s['stale'] or (not s['have'] and not s['present'])],
+            'stale_store': [s['name'] for s in steps if s['stale']],
+            'hash_warnings': hash_warnings,
             'to_remove': to_remove,
             'missing_artifact': missing, 'unknown_packages': unknown}
 
@@ -349,6 +381,14 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
             results.append({'name': name, 'action': 'FAILED', 'ok': False,
                             'why': 'artifact not downloaded (%s)' % step['path']})
             continue
+        if step.get('stale'):
+            # never load bytes the plan already knows are not the
+            # manifest's; the picker flow re-downloads these before it
+            # ever gets here, so this only fires on a manual Install
+            results.append({'name': name, 'action': 'FAILED', 'ok': False,
+                            'why': 'stale store copy (sha mismatch) -- '
+                                   'Refresh Store in FNS_Updater, then re-Plan'})
+            continue
         if existing is not None:
             existing.destroy()
         # loadTox loads the component INTO the given COMP -- it creates the
@@ -374,7 +414,14 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
                 results.append({'name': name, 'action': 'installed', 'ok': False,
                                 'why': 'bind failed: %s' % str(e)[:120]})
                 continue
-        RecordInstalled(parent_comp, name, step.get('sha256', ''), step.get('release', ''))
+        # record the hash of the bytes that actually landed, not the
+        # manifest's promise -- on a hash_warnings install they differ,
+        # and the updater's comparison must start from the truth
+        try:
+            landed = _fileSha(step['path'])
+        except Exception:
+            landed = step.get('sha256', '')
+        RecordInstalled(parent_comp, name, landed, step.get('release', ''))
         results.append({'name': name, 'action': 'installed', 'bound': bound,
                         **_verify(comp)})
     return {'target': tgt,
@@ -407,7 +454,8 @@ class InstallerExt:
         t.clear()
         t.appendRow(['package', 'kind', 'state', 'MB', 'artifact'])
         for s in plan['steps']:
-            state = ('present' if s['present']
+            state = ('stale cache -> re-download' if s.get('stale')
+                     else 'present' if s['present']
                      else 'to install' if s.get('have') else 'to download')
             t.appendRow([s['name'], s['kind'], state,
                          '%.2f' % (s.get('bytes', 0) / 1048576.0),
@@ -438,6 +486,13 @@ class InstallerExt:
         if other is not None and other.path != plan['target'] \
                 and not plan['target'].startswith(other.path + '/'):
             note = ' (NOTE: this project already has a toolkit at %s)' % other.path
+        if plan.get('stale_store'):
+            note += ('; %d stale store cop%s to re-download'
+                     % (len(plan['stale_store']),
+                        'y' if len(plan['stale_store']) == 1 else 'ies'))
+        if plan.get('hash_warnings'):
+            note += ('; HASH MISMATCH kept as-is (not the store): '
+                     + ', '.join(plan['hash_warnings']))
         self._status('%d package(s) to install into %s%s%s'
                      % (len(plan['steps']), plan['target'],
                         '; MISSING: ' + ', '.join(plan['missing_artifact'])
@@ -568,7 +623,11 @@ class InstallerExt:
         lines = ['install into %s' % plan['target'], '']
         fetch_bytes = 0
         for s in plan['steps']:
-            if s['present']:
+            if s.get('stale'):
+                state = ('present, stale cache -> re-download' if s['present']
+                         else 'install (stale cache -> re-download)')
+                fetch_bytes += s.get('bytes', 0)
+            elif s['present']:
                 state = 'present, kept'
             elif s.get('have'):
                 state = 'install'
