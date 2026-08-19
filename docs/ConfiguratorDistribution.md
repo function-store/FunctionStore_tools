@@ -410,7 +410,18 @@ is our own bootstrap's job, whichever rail delivers the bytes.
 2. ~~Manifest + per-tool tox export automation~~ — **DONE**, `packaging/`.
 3. ~~Installer consuming manifest + selection JSON~~ — **DONE as a script**
    (`packaging/install.py`). The droppable *COMP* wrapper is still open.
-4. TDXGL store panel over the `load_tox` bus. **Open.**
+4. ~~TDXGL store panel over the `load_tox` bus~~ — **DONE (2026-08-19),
+   launcher-side** (TDXLPP `docs/fns-integration.md`): an **FNS Tools**
+   tab in TDX Launcher Ultra renders this manifest by category, stocks
+   the palette store (sha256-verified), writes a `selection.json` and
+   drives `FNS_Installer` in a running session via new companion verbs
+   (`fns_install` / `fns_status`, utility ≥ 0.9.0) — plus a live
+   configurator over the ConfigRegistry settings server
+   (`fns_settings_url` + `/api/state`//`/api/set` proxy), an offline
+   editor over `FNStools_config.json`, a per-component palette shelf
+   (standalone drops), and the §2.4 paste rail as fallback. Nothing on
+   this repo's side had to change — the bucket, store, installer and
+   settings-server contracts were consumed as published.
 5. ~~Static configurator~~ — **DONE**, `packaging/configurator/`.
 6. Optional: pip marker-package rail on top (§3), sharing the same
    artifacts and manifest. **Open.**
