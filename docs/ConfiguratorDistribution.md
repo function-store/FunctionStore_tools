@@ -316,10 +316,10 @@ consumers.
    local artifacts; the bucket fetch is the remaining piece and should
    reuse the vendored `UPDATER/fileDownloader` rather than hand-rolled
    HTTP.
-2. **TDXGL sidecar** — the launcher utility bus already exposes
+2. **TDXLU sidecar** — the launcher utility bus already exposes
    `load_tox` with `persist`, `parent`, `externaltox`, `toxfile_module`
-   (see `TDXGLUtilityExt._handleCmdLine`, action `load_tox`). A
-   "store" panel in TDXGL renders the manifest with checkboxes and
+   (see `TDXLUUtilityExt._handleCmdLine`, action `load_tox`). A
+   "store" panel in TDXLU renders the manifest with checkboxes and
    pushes `load_tox` commands into live sessions; `persist` survives
    restarts. Best UX: already installed, already knows which TD
    sessions are alive, and browsers can't speak raw TCP to the bus
@@ -333,7 +333,7 @@ features, dependencies auto-check, output one of:
 
 - a downloadable `selection.json` + installer-COMP bundle;
 - a client-side-assembled zip of the chosen toxes;
-- a deep link (`tdxlpp://install?tools=...`) handled by TDXGL, which
+- a deep link (`tdxlpp://install?tools=...`) handled by TDXLU, which
   performs the install over its bus — website as storefront, launcher as
   installer;
 - a `pip install fns-tool-a fns-tool-b` line (§3 route).
@@ -410,7 +410,7 @@ is our own bootstrap's job, whichever rail delivers the bytes.
 2. ~~Manifest + per-tool tox export automation~~ — **DONE**, `packaging/`.
 3. ~~Installer consuming manifest + selection JSON~~ — **DONE as a script**
    (`packaging/install.py`). The droppable *COMP* wrapper is still open.
-4. ~~TDXGL store panel over the `load_tox` bus~~ — **DONE (2026-08-19),
+4. ~~TDXLU store panel over the `load_tox` bus~~ — **DONE (2026-08-19),
    launcher-side** (TDXLPP `docs/fns-integration.md`): an **FNS Tools**
    tab in TDX Launcher Ultra renders this manifest by category, stocks
    the palette store (sha256-verified), writes a `selection.json` and
@@ -756,7 +756,7 @@ shipped artifacts.
 
 - [ ] Does TDPyEnvManager offer any shared/global (non-per-project)
       environment mode? (Affects §3 objection 2.)
-- [ ] `tdxlpp://` protocol-handler registration in TDXGL — feasible on
+- [ ] `tdxlpp://` protocol-handler registration in TDXLU — feasible on
       all target OSes?
 - [ ] Ephemeral vs persisted installs as the default: `load_tox
       persist=True` semantics vs load-fresh-every-start (affects update
