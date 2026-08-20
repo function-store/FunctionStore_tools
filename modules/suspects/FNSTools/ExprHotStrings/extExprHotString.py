@@ -167,15 +167,20 @@ class extExprHotString:
 			return check in text
 
 
-	def HotstringCheck(self, OP, PAR, EXPR, BINDEXPR):
+	def HotstringCheck(self, OP, PAR, EXPR, BINDEXPR, _depth=0):
 		if OP == 'None':
 			return
-		op_par = op(OP).par[PAR]
-		_mode = op_par.mode
-		if op_par.mode == ParMode.BIND:
-			EXPR = BINDEXPR
+		if _depth > 8:
+			fnsLog('ExprHotStrings: expansion recursion limit hit -- check for abbreviations that expand into each other', level='WARNING')
+			return
+		_owner = op(OP)
+		if _owner is None:
+			return
+		op_par = _owner.par[PAR]
 		if op_par is None:
 			return
+		if op_par.mode == ParMode.BIND:
+			EXPR = BINDEXPR
 		if op_par.mode in [ParMode.EXPRESSION, ParMode.CONSTANT, ParMode.BIND] and EXPR != 'None':
 			expands = None
 
@@ -199,7 +204,7 @@ class extExprHotString:
 					expands = self.hotstrings.cell(abbreviation[0], 'Expands', val=True)
 					if expands is None or expands == '':
 						return
-					expands = re.sub(abbreviation[1], expands, EXPR)
+					expands = EXPR.replace(abbreviation[1], expands)
 
 			else:
 				hotstring = self.hotstrings.findCell(EXPR, cols = ['Abbreviation'], valuePattern=False, caseSensitive=True)
@@ -214,7 +219,7 @@ class extExprHotString:
 				else:
 					op_par.expr = expands
 				# recurse in case multiple abbreviations were used
-				self.HotstringCheck(OP,PAR,expands, expands)
+				self.HotstringCheck(OP, PAR, expands, expands, _depth + 1)
 	
 
 	def closestParent(self, _op):

@@ -64,7 +64,11 @@ class QuickmarkStorageExt:
         # Get the quickmark from the stored dictionary
         quickmark = self.stored.get(key, None)
         if quickmark and 'current_network' in quickmark:
-            ui.panes.current.owner = op(quickmark['current_network'])
+            target = op(quickmark['current_network'])
+            if target is None or not target.isCOMP:
+                self.custom_print(f"QuickMarks {key}: stored network {quickmark['current_network']} no longer exists")
+                return quickmark
+            ui.panes.current.owner = target
             if 'current_child' in quickmark:
                 child_op = op(quickmark['current_child'])
                 if child_op:

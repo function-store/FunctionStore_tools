@@ -50,6 +50,7 @@ class SmoothnessExt:
 		insmooth = parent().par.Inputfiltertype.menuIndex
 		viewsmooth = parent().par.Filtertype.menuIndex
 
+		ui.undo.startBlock('Set smoothness')
 		tops = list(filter(lambda _op: _op.family == 'TOP' and _op.pars('inputfiltertype', 'filtertype') ,_ops))
 		
 		for top in tops:
@@ -60,3 +61,4 @@ class SmoothnessExt:
 		for comp in comps:
 			comp.par.Inputfiltertype = insmooth
 			comp.par.Filtertype = viewsmooth+1 #skipping same as input
+		ui.undo.endBlock()

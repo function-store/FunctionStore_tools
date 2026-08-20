@@ -24,15 +24,21 @@ customables = ['baseCOMP',
 				'scriptSOP',
 				'scriptTOP']
 
-root = op(parent().par.Root.eval() if parent().par.Root.eval() else '../')
-fnsLog(f'ResetPLS: resetting ops under {root.path if root else None}')
+_root_path = parent().par.Root.eval()
+root = op(_root_path if _root_path else '../')
+if root is None:
+	_err = f"ResetPLS: Root '{_root_path}' does not resolve -- nothing was reset"
+	fnsLog(_err, level='ERROR')
+	raise ValueError(_err)
+fnsLog(f'ResetPLS: resetting ops under {root.path}')
 optypes = [r[0].val for r in op('table_optypes').rows()]
 exceptions = [p[1:] if p.startswith('^') else p for p in (r[0].val for r in op('merge1').rows())]
 
 def isAllowed(o):
 	return o.OPType in optypes and not any(tdu.match(p, [o.path]) for p in exceptions)
 
-for o in root.findChildren(key=isAllowed):
+maxDepth = int(parent().par.Depth.eval()) if parent().par.Limitdepth.eval() else None
+for o in root.findChildren(key=isAllowed, maxDepth=maxDepth):
 	op_type = o.OPType
 	
 	# there are some exceptions

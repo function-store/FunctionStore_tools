@@ -61,16 +61,16 @@ class ExtParRandomizer:
 			self.checkShortcutRayTK()
 
 	def OnRandomizeOp(self, _op = None):
-		ui.undo.startBlock('Randomize OP parameters')
 		_op = _op or ui.panes.current.owner.currentChild
 		if not _op:
 			return
+		ui.undo.startBlock('Randomize OP parameters')
 		fnsLog(f'ParRandomizer: randomizing current page of {_op.path}')
 		_par_list = []
 
 		_page = _op.currentPage
 		for _par in _page.pars:
-			if not (_par.readOnly and _par.enable and _par.page.name not in self.ignorePages):
+			if not _par.readOnly and _par.enable and _par.page.name not in self.ignorePages:
 				_par_list.append(_par)
 
 		for _par in _par_list:
@@ -109,20 +109,20 @@ class ExtParRandomizer:
 
 
 	def OnRandomizeRolloverPar(self):
-		ui.undo.startBlock('Randomize parameter')
 		_par = ui.rolloverPar if not hasattr(ui, 'rolloverParGroup') else ui.rolloverParGroup
 		if _par is None or _par.page.name in self.ignorePages:
 			return
+		ui.undo.startBlock('Randomize parameter')
 		
 		self.RandomizePar(_par)
 		ui.undo.endBlock()
 
 	def onResetPar(self):
+		_par = ui.rolloverPar if not hasattr(ui, 'rolloverParGroup') else ui.rolloverParGroup
+		if _par is None or _par.page.name in self.ignorePages:
+			return
 		ui.undo.startBlock('Reset parameter')
 		try:
-			_par = ui.rolloverPar if not hasattr(ui, 'rolloverParGroup') else ui.rolloverParGroup
-			if _par is None or _par.page.name in self.ignorePages:
-				return
 			_par.reset()
 		except:
 			pass
@@ -132,8 +132,10 @@ class ExtParRandomizer:
 		self.onResetAllCustom(all)
 
 	def onResetAllCustom(self, all = False):
-		ui.undo.startBlock('Reset all custom parameters on current page')
 		_owner = ui.panes.current.owner.currentChild
+		if not _owner:
+			return
+		ui.undo.startBlock('Reset all custom parameters on current page')
 		fnsLog(f'ParRandomizer: resetting {"all" if all else "current page"} custom pars on {_owner.path if _owner else None}')
 
 		par_names = [_par.name for _par in (_owner.currentPage.pars if not all else _owner.customPars)if not _par.readOnly and _par.enable and _par.page.name not in self.ignorePages]

@@ -23,13 +23,14 @@ class ExtSwitchOp:
 		fnsLog('SwitchOPs: init')
 
 	def OnSelectOP(self, _op):
-		if _op not in self.fifo.rows(val=True):
-			self.fifo.appendRow(_op)
-		pass
+		if _op.path not in [row[0] for row in self.fifo.rows(val=True)]:
+			self.fifo.appendRow(_op.path)
 
 	def OnSwitch(self):
 		_current = ui.panes.current.owner.currentChild
-		_swop = next((_op for _op in self.fifo.rows(val=True) if _op != _current.path), None)
-		fnsLog(f'SwitchOPs: switching current to {_swop[0] if _swop else None}')
-		opex(_swop[0]).current = True
-		pass
+		_cur_path = _current.path if _current else None
+		_swop = next((row[0] for row in self.fifo.rows(val=True) if row[0] != _cur_path and op(row[0])), None)
+		if not _swop:
+			return
+		fnsLog(f'SwitchOPs: switching current to {_swop}')
+		op(_swop).current = True

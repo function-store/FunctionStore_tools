@@ -44,13 +44,13 @@ class ExtQuickCollapse:
 		pass
 
 	def collapse(self, _name=None, _shortcut=None, ok_by_enter=False):
-		fnsLog(f'QuickCollapse: collapsing {len(self.selected) if self.selected else 0} ops'
+		if not self.selected or ok_by_enter:
+			return
+		fnsLog(f'QuickCollapse: collapsing {len(self.selected)} ops'
 			+ (f' into "{_name}"' if _name else ''))
 		ui.undo.startBlock('Collapsing')
 		ui.undo.addCallback(self.undoCollapse, info = ui.panes.current.owner)
 		
-		if not self.selected or ok_by_enter:
-			return#
 		self.selected[0].parent().collapseSelected()
 		self.newCOMP = ui.panes.current.owner.currentChild
 
