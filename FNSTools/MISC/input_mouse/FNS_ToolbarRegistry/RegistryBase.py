@@ -11,6 +11,16 @@ class RegistryBase:
 	REGISTRY_NAME = 'Registry'
 	HOST_PAGE_NAME = 'Registration'
 
+	def fnsLog(self, *args, level='INFO'):
+		"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op
+		when the logger is absent (standalone installs) or its Active par is off."""
+		try:
+			_logger = op.FNS.op('logger')
+			if _logger and _logger.par.Active.eval():
+				_logger.Log(*args, level=level)
+		except Exception:
+			pass
+
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		# BEFORE CustomParHelper touches the pars: a dangling BIND (tool
@@ -78,6 +88,13 @@ class RegistryBase:
 		if not self.TOOL_PAGE_PREFIX or not self.TOOL_PAGE_PARS:
 			return
 		if self._is_sys_global() or self._isUnderSysOrUi():
+			return
+		# A depth-1 RAW MASTER never proxies Registration pars onto its
+		# parent: that parent is the toolkit root, and decorating it
+		# re-creates the per-tool par surface the restructure removed
+		# (observed as dangling Cf* binds after every reload).
+		parent = self.ownerComp.parent()
+		if parent is not None and parent is getattr(op, 'FNS', None):
 			return
 		# Opt-out for shippers: Promotepars off = no proxy page on the tool
 		# (and an existing section is withdrawn). Missing par = on.
@@ -327,6 +344,7 @@ class RegistryBase:
 		self._release_shipped_shortcut()
 		self._applyHostRegistration()
 		self._ensureSelectionExecuteRole()
+		self._ensurePresaveHealPar()
 
 	def _neutralizeHostParameters(self):
 		"""The global /sys instance is pure infrastructure -- host-publisher
@@ -417,9 +435,36 @@ class RegistryBase:
 				return getattr(global_reg.ext, self.EXT_NAME)
 		return self
 
+	PRESAVE_HEAL_PAR = 'Presaveheal'
+
+	def _ensurePresaveHealPar(self):
+		"""Surface the pre-save heal switch on the in-project MASTER only.
+
+		The pre-save exec (/FNSTools/registry_presave_exec) reads this toggle
+		per registry before healing; hosts and the /sys global never carry the
+		decision. Created in code so every install self-heals the par."""
+		if self.ownerComp is not self._masterComp():
+			return
+		if getattr(self.ownerComp.par, self.PRESAVE_HEAL_PAR, None) is not None:
+			return
+		try:
+			page = next((p for p in self.ownerComp.customPages
+						 if p.name == self.HOST_PAGE_NAME), None) \
+				or self.ownerComp.appendCustomPage(self.HOST_PAGE_NAME)
+			p = page.appendToggle(self.PRESAVE_HEAL_PAR, label='Pre-Save Heal')[0]
+			p.startSection = True
+			p.default = True
+			p.val = True
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: could not create {self.PRESAVE_HEAL_PAR}: {e}')
+
 	def _setRegStatus(self, status):
 		if hasattr(self.ownerComp.par, 'Regstatus'):
 			self.ownerComp.par.Regstatus.val = status
+		# Registered/Error transitions are the interesting ones; Idle/Skipped
+		# states fire for every host copy at startup and stay at DEBUG.
+		_lvl = 'INFO' if str(status).startswith(('Registered', 'Error')) else 'DEBUG'
+		self.fnsLog(f'{self.REGISTRY_NAME} [{self.ownerComp.path}]: {status}', level=_lvl)
 
 	def _hostMenuOrder(self):
 		"""Read Registration Menuorder par; None means default append."""
@@ -577,6 +622,19 @@ class RegistryBase:
 	def _installGlobalRegistry(self):
 		if self._is_sys_global(self.ownerComp):
 			self.ownerComp.par.opshortcut = self.SHORTCUT
+			# A freshly promoted global REPLACED its predecessor, killing
+			# any sync chains scheduled against the old copy -- without a
+			# settle sync of its own, registrations merged into this copy
+			# never reach the surface (observed: two toolbar buttons on
+			# open, all nineteen after one manual sync).
+			if hasattr(self, '_syncSurface'):
+				run('args[0].valid and args[0].ext.%s._syncSurface()'
+					% self.EXT_NAME,
+					self.ownerComp, delayFrames=90, delayRef=op.TDResources)
+			try:
+				self._armRegistryWatch()
+			except Exception:
+				pass
 			return
 
 		global_registry = self._global_registry()
@@ -759,6 +817,7 @@ class RegistryBase:
 
 		self._destroy_other_globals()
 
+		self.fnsLog(f'{self.REGISTRY_NAME}: installing global registry copy into /sys from {self.ownerComp.path}')
 		new_registry = sys_comp.copy(self.ownerComp, name=self.REGISTRY_NAME)
 		new_registry.allowCooking = True
 		# The /sys global is STANDALONE: the copy inherits whatever clone
@@ -892,8 +951,20 @@ class RegistryBase:
 
 	# --- registry watch / heal ---
 
+	# Master switch for the periodic heal/prune loop (and with it the boot
+	# re-publish sweeps that run inside its first ticks). OFF: the sweeps
+	# re-apply every autoregister host in one frame (~10ms x ~20 hosts) and
+	# showed up as sporadic load. Healing now runs once per project save
+	# instead (/FNSTools/registry_presave_exec -> healAllRegistries()).
+	# NOTE while off: a host whose extension initialized BEFORE the /sys
+	# global existed stays unpublished until its Register pulse is touched,
+	# the global re-inits, or the next save's heal republishes it.
+	REGISTRY_WATCH_ENABLED = False
+
 	def _armRegistryWatch(self):
 		"""Periodic heal/prune loop — only on the /sys global registry."""
+		if not self.REGISTRY_WATCH_ENABLED:
+			return
 		if not self._is_sys_global():
 			return
 		if self._registry_watch_armed:
