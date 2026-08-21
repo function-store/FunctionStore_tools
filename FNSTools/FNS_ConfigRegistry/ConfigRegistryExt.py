@@ -706,8 +706,11 @@ class ConfigRegistryExt(RegistryBase):
 				continue
 			tools.append({'name': canonical, 'path': tool.path,
 						  'version': self._toolVersion(tool), 'pars': pars})
+		inst = self._installerComp()
 		return {'tools': tools, 'config_path': self.ConfigPath,
-				'project': project.name}
+				'project': project.name,
+				'scope': 'project' if self._scopeIsProject() else 'global',
+				'installer': inst.path if inst is not None else None}
 
 	# pages that persist fine but are registration plumbing, not settings
 	UI_SKIP_PAGES = ('Registry',)
@@ -800,6 +803,139 @@ class ConfigRegistryExt(RegistryBase):
 			return {'ok': False, 'why': str(e)}
 		self.SaveTool(canonical_name)
 		return {'ok': True, 'val': self._jsonSafe(p.eval())}
+
+	# --- Settings UI: console extensions (export / import / scope / picker) --
+	# The page is a landing for the whole toolkit: besides settings it fronts
+	# the FNS_Installer picker (proxied by settings_server_callbacks through
+	# _installerComp) and moves whole config documents in and out. Install
+	# changes WHAT is in the project; the config is a separate layer that
+	# re-applies over any install, which is why removal keeps sections and
+	# import works even for tools that are not installed yet.
+
+	def _installerComp(self):
+		"""The FNS_Installer COMP inside the toolkit root, if this project
+		ships one. The console's Tools view degrades gracefully without it."""
+		root = getattr(op, 'FNS', None)
+		return root.op('FNS_Installer') if root is not None else None
+
+	def UiExport(self):
+		"""A portable config document snapshotted from the LIVE tools.
+
+		Same shape as the roaming file, built fresh instead of read from
+		disk so it is correct under project scope too (where the file is
+		deliberately never written)."""
+		api = self._registryApi()
+		if api is not self:
+			return api.UiExport()
+		tools = {}
+		for canonical, info in self.stored['PaneRegistry'].items():
+			try:
+				section = self._snapshotTool(canonical, dict(info))
+			except Exception as e:
+				debug(f'{self.REGISTRY_NAME}: export {canonical!r}: {e}')
+				continue
+			if section is not None:
+				tools[canonical] = section
+		return {'schema': self.SCHEMA,
+				'saved': time.strftime('%Y-%m-%dT%H:%M:%S'),
+				'saved_by': {'project': project.name, 'export': True},
+				'tools': tools}
+
+	def UiImport(self, data):
+		"""Apply an exported/roamed config document from the page.
+
+		Tools that are installed AND registered get the document's pars and
+		state applied now; sections for anything else are merged into the
+		roaming file so they land when that tool is next installed (the
+		file's normal preserve-unknown-sections behavior). Under project
+		scope the live apply still happens but the file stays untouched --
+		the .toe is the store there."""
+		api = self._registryApi()
+		if api is not self:
+			return api.UiImport(data)
+		if not isinstance(data, dict) or data.get('schema') != self.SCHEMA:
+			return {'ok': False,
+					'why': 'not a schema-%s FNStools config document' % self.SCHEMA}
+		sections = data.get('tools')
+		if not isinstance(sections, dict) or not sections:
+			return {'ok': False, 'why': 'document has no tool sections'}
+		applied, deferred = [], []
+		for canonical, section in sections.items():
+			if not isinstance(section, dict):
+				continue
+			info = self.stored['PaneRegistry'].get(canonical)
+			tool = self._resolvePanelOp(dict(info)) if info else None
+			if tool is None:
+				deferred.append(canonical)
+				continue
+			if info.get('persist_pars', '1') == '1':
+				self._applyPars(tool, section.get('pars'), canonical)
+			state = section.get('state')
+			if state is not None:
+				module = self._callbackModule(info)
+				fn = getattr(module, 'onConfigLoad', None) if module is not None else None
+				if callable(fn):
+					try:
+						fn(state)
+					except Exception as e:
+						debug(f'{self.REGISTRY_NAME}: import onConfigLoad '
+							  f'{canonical!r}: {e}')
+			applied.append(canonical)
+		if not self._scopeIsProject():
+			# merge not-installed sections first, then SaveAll snapshots the
+			# live (just-applied) tools on top -- its read-merge-write keeps
+			# the foreign sections we just planted
+			if deferred:
+				file_data = self._readFile()
+				if file_data.get('schema') != self.SCHEMA:
+					self._retireFile('.schema%s.bak' % file_data.get('schema'))
+					file_data = self._freshData()
+				file_tools = file_data.setdefault('tools', {})
+				for canonical in deferred:
+					file_tools[canonical] = sections[canonical]
+				file_data['schema'] = self.SCHEMA
+				file_data['saved'] = time.strftime('%Y-%m-%dT%H:%M:%S')
+				file_data['saved_by'] = {'project': project.name, 'import': True}
+				self._writeFile(file_data)
+			self.SaveAll()
+		self.fnsLog(f'{self.REGISTRY_NAME}: UiImport applied {len(applied)} '
+					f'tool(s), deferred {len(deferred)} to next install')
+		return {'ok': True, 'applied': sorted(applied),
+				'deferred': sorted(deferred),
+				'scope': 'project' if self._scopeIsProject() else 'global'}
+
+	def UiScope(self, value=None, mode=None):
+		"""Read or flip the config scope from the console.
+
+		value None -> report only. 'project' flips quietly (no data moves;
+		the .toe becomes the store). 'global' must say what happens to the
+		machine-global file: mode 'push' overwrites it with this project's
+		state, 'adopt' applies the global config onto this project -- the
+		same three-way choice the in-TD dialog offers, decided explicitly
+		by the page instead of a popup."""
+		api = self._registryApi()
+		if api is not self:
+			return api.UiScope(value=value, mode=mode)
+		if value is None:
+			return {'ok': True,
+					'scope': 'project' if self._scopeIsProject() else 'global'}
+		value = str(value)
+		if value == 'project':
+			ok = self.SetConfigScope('project')
+		elif value == 'global':
+			if mode not in ('push', 'adopt'):
+				return {'ok': False,
+						'why': "flipping to global needs mode 'push' or 'adopt'"}
+			ok = self.SetConfigScope('global')
+			if ok:
+				if mode == 'push':
+					self.SaveAll()
+				else:
+					self.LoadAll()
+		else:
+			return {'ok': False, 'why': f'unknown scope: {value}'}
+		return {'ok': bool(ok),
+				'scope': 'project' if self._scopeIsProject() else 'global'}
 
 	# --- Settings UI: ephemeral server lifecycle --------------------------
 	# The server exists only while the page is in use: OpenSettingsUI

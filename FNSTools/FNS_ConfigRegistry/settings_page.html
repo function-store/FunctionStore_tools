@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FNS tools — Settings</title>
+<title>FNS tools — Console</title>
 <style>
   :root {
     --bg: #191b1e; --panel: #212429; --panel2: #26292f;
@@ -14,13 +14,41 @@
   body {
     margin: 0; font: 13px/1.5 -apple-system, 'Segoe UI', sans-serif;
     background: var(--bg); color: var(--text);
-    display: grid; grid-template-columns: 220px 1fr; height: 100vh;
+    display: flex; flex-direction: column; height: 100vh;
   }
+
+  /* ── top bar: identity, tabs, config-document actions ── */
+  #topbar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 14px; background: var(--panel);
+    border-bottom: 1px solid var(--line); flex: none;
+  }
+  #topbar .brand {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    padding: 10px 8px 10px 0; white-space: nowrap;
+  }
+  .tab {
+    padding: 10px 14px; background: none; border: 0; color: var(--muted);
+    border-bottom: 2px solid transparent; cursor: pointer; font: inherit;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.sel { color: var(--text); border-bottom-color: var(--accent); }
+  #topbar .spacer { flex: 1; }
+  #topbar .meta { color: var(--muted); font-size: 11px; margin-right: 8px; }
+  .act {
+    padding: 5px 11px; margin: 6px 0; background: var(--panel2);
+    border: 1px solid var(--line); border-radius: 4px; color: var(--text);
+    cursor: pointer; font: inherit; white-space: nowrap;
+  }
+  .act:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── settings view (nav + scrollable sections) ── */
+  .view { flex: 1; min-height: 0; }
+  #view-settings { display: grid; grid-template-columns: 220px 1fr; }
   nav {
     background: var(--panel); border-right: 1px solid var(--line);
     overflow-y: auto; padding: 10px 0;
   }
-  nav h1 { font-size: 13px; margin: 4px 14px 10px; color: var(--accent); }
   nav #search {
     display: block; width: calc(100% - 20px); margin: 0 10px 10px;
     background: var(--panel2); color: var(--text);
@@ -29,15 +57,30 @@
   }
   nav button {
     display: block; width: 100%; text-align: left; padding: 6px 14px;
-    background: none; border: 0; color: var(--text); cursor: pointer;
-    font: inherit;
+    background: none; border: 0; border-left: 2px solid transparent;
+    color: var(--text); cursor: pointer; font: inherit;
   }
   nav button:hover { background: var(--panel2); }
-  nav button.sel { background: var(--panel2); color: var(--accent); }
+  nav button.sel {
+    background: var(--panel2); color: var(--accent);
+    border-left-color: var(--accent);
+  }
   nav .ver { color: var(--muted); font-size: 11px; float: right; }
-  main { overflow-y: auto; padding: 18px 26px 60px; }
-  main h2 { font-size: 16px; margin: 0 0 2px; }
-  main .path { color: var(--muted); font-size: 11px; margin-bottom: 14px; }
+  main { overflow-y: auto; padding: 0 26px 60vh; scroll-behavior: smooth; }
+  section.tool { margin-top: 26px; }
+  section.tool > header {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--bg); padding: 12px 0 6px;
+    border-bottom: 1px solid var(--line);
+  }
+  section.tool h2 { font-size: 16px; margin: 0; display: inline; }
+  section.tool .ver { color: var(--accent); font-size: 12px; margin-left: 8px; }
+  section.tool .path { color: var(--muted); font-size: 11px; }
+  section.tool .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 8px; padding: 14px 18px 8px; margin-top: 12px;
+    max-width: 680px;
+  }
   .page { margin-bottom: 18px; }
   .page h3 {
     font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
@@ -63,10 +106,31 @@
     width: 22px; height: 22px; border-radius: 4px; flex: none;
     border: 1px solid var(--line);
   }
+
+  /* ── tools (install/remove) view ── */
+  #view-tools { display: none; flex-direction: column; }
+  #view-tools .note {
+    flex: none; padding: 8px 16px; font-size: 12px; color: var(--muted);
+    background: var(--panel); border-bottom: 1px solid var(--line);
+  }
+  #view-tools .note b { color: var(--text); }
+  #view-tools iframe { flex: 1; border: 0; width: 100%; background: #0a0a0a; }
+
+  /* ── dialogs / toast ── */
+  dialog {
+    background: var(--panel); color: var(--text);
+    border: 1px solid var(--line); border-radius: 8px;
+    max-width: 480px; padding: 18px 20px;
+  }
+  dialog::backdrop { background: rgba(0,0,0,0.6); }
+  dialog h3 { margin: 0 0 8px; font-size: 14px; }
+  dialog p { margin: 0 0 14px; color: var(--muted); }
+  dialog .actions { display: flex; gap: 8px; justify-content: flex-end; }
   #toast {
     position: fixed; bottom: 14px; right: 18px; padding: 7px 14px;
     border-radius: 5px; background: var(--panel2); border: 1px solid var(--line);
-    opacity: 0; transition: opacity .25s; pointer-events: none;
+    opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 3;
+    max-width: 46ch;
   }
   #toast.show { opacity: 1; }
   #toast.ok { border-color: var(--ok); }
@@ -75,14 +139,57 @@
 </style>
 </head>
 <body>
-<nav><h1>FNS tools</h1>
-<input id="search" type="text" placeholder="Search settings…">
-<div id="nav"></div></nav>
-<main id="main"><div class="empty">Loading…</div></main>
+
+<div id="topbar">
+  <span class="brand">FNS tools</span>
+  <button class="tab sel" id="tab-settings">Settings</button>
+  <button class="tab" id="tab-tools">Install &amp; remove</button>
+  <span class="spacer"></span>
+  <span class="meta" id="meta"></span>
+  <button class="act" id="scopebtn" title="Where settings live: global roams across projects via the config file; project keeps them in this .toe only.">scope: …</button>
+  <button class="act" id="export" title="Download the current settings of every tool as one FNStools_config.json.">Export</button>
+  <button class="act" id="import" title="Apply a previously exported FNStools_config.json. Tools not installed keep their section for when they are.">Import</button>
+  <input type="file" id="importfile" accept=".json,application/json" hidden>
+</div>
+
+<div class="view" id="view-settings">
+  <nav>
+    <input id="search" type="text" placeholder="Search settings…">
+    <div id="nav"></div>
+  </nav>
+  <main id="main"><div class="empty">Loading…</div></main>
+</div>
+
+<div class="view" id="view-tools">
+  <div class="note">
+    Picking tools here changes <b>what is installed</b> in the project —
+    unchecking an installed tool removes it. Your settings are a separate
+    layer: <b>they always take precedence</b>, re-apply after installs and
+    updates, and a removed tool keeps its saved settings for the next
+    install.
+  </div>
+  <iframe id="picker" title="FNS tools picker"></iframe>
+</div>
+
+<dialog id="scopedlg">
+  <h3>Switch config scope to global?</h3>
+  <p>Global scope roams settings through the machine-wide config file.
+     Choose what happens right now: <b>Push</b> overwrites the global
+     config with this project's current settings; <b>Adopt</b> applies the
+     existing global config onto this project.</p>
+  <div class="actions">
+    <button class="act" id="scope-cancel">Cancel</button>
+    <button class="act" id="scope-adopt">Adopt global</button>
+    <button class="act" id="scope-push">Push to global</button>
+  </div>
+</dialog>
+
 <div id="toast"></div>
+
 <script>
 'use strict';
 let STATE = null, SELECTED = null;
+let SECTIONS = new Map();   // tool name -> its <section> element
 
 const $ = (t, attrs, ...kids) => {
   const el = document.createElement(t);
@@ -97,7 +204,7 @@ function toast(msg, ok) {
   t.textContent = msg;
   t.className = 'show ' + (ok ? 'ok' : 'err');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.className = '', 1400);
+  toastTimer = setTimeout(() => t.className = '', 2200);
 }
 
 async function setPar(tool, par, value, label) {
@@ -183,17 +290,19 @@ const parMatch = (g, q) =>
 const toolMatch = (t, q) =>
   !q || t.name.toLowerCase().includes(q) || t.pars.some(g => parMatch(g, q));
 
-function renderTool(name) {
+function markSelected(name) {
   SELECTED = name;
   for (const b of document.querySelectorAll('nav button'))
     b.classList.toggle('sel', b.dataset.name === name);
-  const tool = STATE.tools.find(t => t.name === name);
-  const main = document.getElementById('main');
-  main.replaceChildren();
-  if (!tool) { main.append($('div', {className: 'empty'}, 'No tool selected')); return; }
-  main.append($('h2', {}, tool.name),
-              $('div', {className: 'path'},
-                tool.path + (tool.version ? '  ·  v' + tool.version : '')));
+}
+
+function toolSection(tool) {
+  const sec = $('section', {className: 'tool'});
+  sec.dataset.name = tool.name;
+  sec.append($('header', {},
+    $('h2', {}, tool.name),
+    $('span', {className: 'ver'}, tool.version ? 'v' + tool.version : ''),
+    $('div', {className: 'path'}, tool.path)));
   // a par-level query narrows the rows, unless it only hit the tool name
   const q = QUERY && !tool.name.toLowerCase().includes(QUERY) ? QUERY : '';
   const pages = new Map();
@@ -202,51 +311,187 @@ function renderTool(name) {
     if (!pages.has(p.page)) pages.set(p.page, []);
     pages.get(p.page).push(p);
   }
+  const card = $('div', {className: 'card'});
   for (const [page, pars] of pages) {
-    const sec = $('div', {className: 'page'}, $('h3', {}, page));
+    const pg = $('div', {className: 'page'}, $('h3', {}, page));
     pars.sort((a, b) => a.order - b.order);
     for (const p of pars)
-      sec.append($('div', {className: 'row'},
-                   $('label', {title: p.help ? p.name + ' — ' + p.help
-                                             : p.name},
-                     p.label || p.name),
-                   control(tool.name, p)));
-    main.append(sec);
+      pg.append($('div', {className: 'row'},
+                  $('label', {title: p.help ? p.name + ' — ' + p.help
+                                            : p.name},
+                    p.label || p.name),
+                  control(tool.name, p)));
+    card.append(pg);
   }
   if (!pages.size)
-    main.append($('div', {className: 'empty'}, 'No matching settings.'));
+    card.append($('div', {className: 'page'},
+      $('span', {className: 'ro'}, 'No matching settings.')));
+  sec.append(card);
+  return sec;
 }
 
-function renderNav() {
+function scrollToTool(name) {
+  const sec = SECTIONS.get(name);
+  if (!sec) return;
+  markSelected(name);
+  suppressSpyUntil = Date.now() + 800;   // let smooth-scroll land
+  sec.scrollIntoView({block: 'start'});
+}
+
+// --- scrollspy: highlight the section under the header line ---
+let suppressSpyUntil = 0;
+function spy() {
+  if (Date.now() < suppressSpyUntil || !SECTIONS.size) return;
+  const main = document.getElementById('main');
+  const line = main.scrollTop + 40;
+  let current = null;
+  for (const [name, sec] of SECTIONS) {
+    if (sec.offsetTop <= line) current = name;
+    else break;
+  }
+  // bottom of the list: last section wins even if its top never reaches the line
+  if (main.scrollTop + main.clientHeight >= main.scrollHeight - 2) {
+    const names = [...SECTIONS.keys()];
+    if (names.length) current = names[names.length - 1];
+  }
+  if (current && current !== SELECTED) markSelected(current);
+}
+
+function render() {
   const nav = document.getElementById('nav');
+  const main = document.getElementById('main');
   nav.replaceChildren();
+  main.replaceChildren();
+  SECTIONS = new Map();
   const visible = STATE.tools.filter(t => toolMatch(t, QUERY));
   for (const t of visible) {
     const b = $('button', {}, t.name,
                 $('span', {className: 'ver'}, t.version || ''));
     b.dataset.name = t.name;
-    b.onclick = () => renderTool(t.name);
+    b.onclick = () => scrollToTool(t.name);
     nav.append(b);
+    const sec = toolSection(t);
+    SECTIONS.set(t.name, sec);
+    main.append(sec);
   }
   if (!visible.length) {
-    document.getElementById('main').replaceChildren(
-      $('div', {className: 'empty'}, QUERY ? 'No matches.' :
-        'No registered tools expose settings.'));
+    main.append($('div', {className: 'empty'}, QUERY ? 'No matches.' :
+      'No registered tools expose settings.'));
     return;
   }
-  renderTool(visible.some(t => t.name === SELECTED)
-             ? SELECTED : visible[0].name);
+  if (SELECTED && SECTIONS.has(SELECTED)) markSelected(SELECTED);
+  else markSelected(visible[0].name);
+  spy();
 }
+
+document.getElementById('main').onscroll = spy;
 
 document.getElementById('search').oninput = e => {
   QUERY = e.target.value.trim().toLowerCase();
-  renderNav();
+  render();
+};
+
+// --- tabs -------------------------------------------------------------
+function showView(which) {
+  const settings = which === 'settings';
+  document.getElementById('view-settings').style.display = settings ? 'grid' : 'none';
+  document.getElementById('view-tools').style.display = settings ? 'none' : 'flex';
+  document.getElementById('tab-settings').classList.toggle('sel', settings);
+  document.getElementById('tab-tools').classList.toggle('sel', !settings);
+  if (!settings) {
+    const f = document.getElementById('picker');
+    if (!f.src) f.src = '/tools';   // lazy: the picker loads on first visit
+  }
+}
+document.getElementById('tab-settings').onclick = () => showView('settings');
+document.getElementById('tab-tools').onclick = () => showView('tools');
+
+// --- scope ------------------------------------------------------------
+function paintChrome() {
+  document.getElementById('scopebtn').textContent = 'scope: ' + (STATE.scope || '…');
+  document.getElementById('meta').textContent = STATE.project || '';
+}
+
+async function postScope(value, mode) {
+  try {
+    const r = await fetch('/api/scope', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({value, mode}),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      STATE.scope = d.scope;
+      paintChrome();
+      toast('config scope: ' + d.scope +
+            (mode ? ' (' + mode + ')' : ''), true);
+      if (mode === 'adopt') load();   // values on screen just changed
+    } else toast(d.why || 'scope change rejected', false);
+  } catch (e) { toast(String(e), false); }
+}
+
+document.getElementById('scopebtn').onclick = () => {
+  if (STATE && STATE.scope === 'global') postScope('project');
+  else document.getElementById('scopedlg').showModal();
+};
+document.getElementById('scope-cancel').onclick =
+  () => document.getElementById('scopedlg').close();
+document.getElementById('scope-push').onclick = () => {
+  document.getElementById('scopedlg').close();
+  postScope('global', 'push');
+};
+document.getElementById('scope-adopt').onclick = () => {
+  document.getElementById('scopedlg').close();
+  postScope('global', 'adopt');
+};
+
+// --- export / import --------------------------------------------------
+document.getElementById('export').onclick = async () => {
+  try {
+    const r = await fetch('/api/export');
+    const doc = await r.json();
+    const n = Object.keys(doc.tools || {}).length;
+    const blob = new Blob([JSON.stringify(doc, null, 1) + '\n'],
+                          {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'FNStools_config.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('exported ' + n + ' tool section(s)', true);
+  } catch (e) { toast(String(e), false); }
+};
+
+document.getElementById('import').onclick =
+  () => document.getElementById('importfile').click();
+document.getElementById('importfile').onchange = async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  let doc;
+  try { doc = JSON.parse(await file.text()); }
+  catch (err) { toast('not valid JSON: ' + err, false); return; }
+  try {
+    const r = await fetch('/api/import', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(doc),
+    });
+    const d = await r.json();
+    if (!d.ok) { toast(d.why || 'import rejected', false); return; }
+    toast('applied ' + d.applied.length + ' tool(s)' +
+          (d.deferred.length
+            ? ', ' + d.deferred.length + ' kept for later install' : ''),
+          true);
+    load();   // re-read: the values on screen just changed
+  } catch (err) { toast(String(err), false); }
 };
 
 async function load() {
   const r = await fetch('/api/state');
   STATE = await r.json();
-  renderNav();
+  paintChrome();
+  render();
 }
 load();
 </script>

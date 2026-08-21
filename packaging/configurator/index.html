@@ -379,7 +379,10 @@ function fnsBoot() {
   note.appendChild(document.createTextNode(
     ' They carry the registries, settings persistence and shared surfaces that ' +
     'every tool plugs into, so tools never depend on each other and you can pick ' +
-    'any subset below without breaking anything. '));
+    'any subset below without breaking anything. Installing only decides what is ' +
+    'in the project — after installation your saved tool settings (the config) ' +
+    'take precedence: they re-apply over installs and updates, and a removed ' +
+    'tool keeps its settings for the next install. '));
   note.appendChild(docsLink(FNS_DOCS + '/docs/fns-configregistry/',
                             'How settings persistence works ↗'));
 

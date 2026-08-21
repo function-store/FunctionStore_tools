@@ -752,6 +752,37 @@ the live `AutoRes` with an artifact and losing its Embody bindings — and
 note that `pi_suspect` is no help as a marker, since it survives into the
 shipped artifacts.
 
+## 4.3 The console: one landing page over settings + install (2026-08-21)
+
+The ConfigRegistry settings server is now the toolkit's single in-project
+landing ("FNS tools — Console", `FNSTools/FNS_ConfigRegistry/
+settings_page.html` + `settings_server_callbacks.py` + Ui* methods on the
+ext). One page, two tabs plus document actions:
+
+- **Settings** — the scrollable all-tools sections view (nav = scrollspy
+  jump list), unchanged `UiState`/`UiSet` contract.
+- **Install & remove** — the FNS_Installer picker, NOT reimplemented: the
+  settings server serves `/tools` and forwards `/manifest.js`,
+  `/selection`, `/status`, `/install` straight to
+  `InstallerExt.ServeRequest` in-process — one origin, one port, zero
+  duplicated picker logic. Without an installer COMP the tab shows a
+  plain explanation (verified in the DEV project, which has none;
+  the forwarding path itself still needs a live check in a project that
+  ships the bootstrap). Unchecking an installed tool = removal, and the
+  tab's banner states the precedence rule: install decides WHAT is in
+  the project; the config layer always re-applies on top, and removed
+  tools keep their settings for the next install. The same sentence now
+  ships in the picker's core note (all three flavors).
+- **Export / Import** — `/api/export` snapshots every registered tool
+  LIVE into a schema-1 config document (correct under project scope,
+  where the file is stale by design); `/api/import` applies a document
+  onto installed tools now and merges sections of not-installed tools
+  into the roaming file for their next install (verified end to end,
+  including the deferred merge surviving a later SaveAll). Schema-gated.
+- **Scope** — `/api/scope` reads/flips `Configscope`. `project` flips
+  quietly; `global` REQUIRES `mode: push|adopt` (the page shows the same
+  three-way choice as the in-TD dialog — no popup, an explicit decision).
+
 ## 5. Open questions
 
 - [ ] Does TDPyEnvManager offer any shared/global (non-per-project)
