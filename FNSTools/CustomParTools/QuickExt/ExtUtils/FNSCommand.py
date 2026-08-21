@@ -37,18 +37,21 @@ contract (spec fields, param styles, coercion rules).
 
 
 def fns_command(fn=None, *, id=None, label=None, help='', params=None,
-				args=None, kwargs=None):
+				args=None, kwargs=None, hidden=False):
 	"""Mark a promoted extension method as a quick-launch command.
 
 	Pure metadata - safe at class-compile time with no registry present.
 	Every argument is optional; anything omitted is derived from the
 	method at harvest. Works bare (@fns_command) or with arguments
-	(@fns_command(label='...', params=[...])).
+	(@fns_command(label='...', params=[...])). hidden=True declares the
+	command surfaced only when a user opts in (consumers keep it off
+	their default listings - an "advanced" affordance, not a secret).
 	"""
 	def mark(f):
 		f._fns_command = {
 			'id': id, 'label': label, 'help': help,
 			'params': params, 'args': args, 'kwargs': kwargs,
+			'hidden': hidden,
 		}
 		return f
 	return mark(fn) if callable(fn) else mark
