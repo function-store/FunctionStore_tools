@@ -737,6 +737,26 @@ class HotkeyManagerExt:
 	# Defaults
 	# ------------------------------------------------------------------
 
+	def _parDefault(self, par: 'Par') -> str:
+		"""A custom par's OWN shipped default, as a display string.
+
+		Custom pars carry their default with them (Par.default / .defaultExpr /
+		.defaultBindExpr, selected by .defaultMode), so the default survives the
+		op being renamed or reparented -- which a path-keyed table row does not.
+		Returns "" for built-in pars, whose factory default is empty/'ignore'
+		and would UNBIND the hotkey rather than restore it."""
+		if par is None or not par.isCustom:
+			return ""
+		try:
+			mode = par.defaultMode
+			if mode == ParMode.BIND:
+				return par.defaultBindExpr or ""
+			if mode == ParMode.EXPRESSION:
+				return par.defaultExpr or ""
+			return str(par.default or "")
+		except Exception:
+			return ""
+
 	def _defaultsMap(self) -> dict:
 		"""(display_path, par_name) -> default display value, from the default table."""
 		defaults = {}
@@ -757,7 +777,19 @@ class HotkeyManagerExt:
 		return defaults
 
 	def ResetToDefault(self, display_path: str, par_name: str) -> bool:
-		"""Restore one binding to its default-table value."""
+		"""Restore one binding to its default.
+
+		A custom par owns its default, so Par.reset() restores value, expression,
+		bind expression and mode as a unit -- and keeps working after the op is
+		renamed or moved. The default table is the fallback for keyboardin
+		built-ins, which cannot carry an authored default."""
+		_op = self._resolveOP(display_path)
+		_par = getattr(_op.par, par_name, None) if _op is not None else None
+		if _par is not None and self._parDefault(_par):
+			_par.reset()
+			fnsLog(f"Reset {display_path}:{par_name} to its Par default")
+			return True
+
 		defaults = self._defaultsMap()
 		row = defaults.get((display_path, '__row__'))
 		if row is None:
@@ -917,7 +949,10 @@ class HotkeyManagerExt:
 			if rec.kind == 'CHOP' and rec.par_name == 'modifiers':
 				continue  # folded into the keys row's combo display
 			path_d = self._displayPath(rec.owner)
-			default_v = self._displayValue(defaults.get((path_d, rec.par_name), ""))
+			# a custom par's own default wins -- it follows the op through renames
+			# and moves, where the path-keyed table row goes stale
+			default_v = self._displayValue(
+				self._parDefault(rec.par) or defaults.get((path_d, rec.par_name), ""))
 			status = ""
 			if cap and cap['path'] == path_d and cap['par'] == rec.par_name:
 				if cap.get('force_combo'):

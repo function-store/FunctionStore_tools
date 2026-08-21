@@ -88,9 +88,35 @@ project ride along untouched, so switching projects can't drop another project's
 
 ## 7. Defaults
 
-`Load Default` restores from `table_gathered_hotkeys1` and right-clicking a Hotkey cell
-resets that one row. Ship your tool with its intended bindings baked in as constants (or
-OS-switch expressions) so a default capture is meaningful.
+**Custom pars carry their own default.** Author it on the parameter and the manager reads
+it from there -- no table row, no path key:
+
+| Par mode | Member to author |
+|---|---|
+| CONSTANT | `default` |
+| EXPRESSION | `defaultExpr` |
+| BIND | `defaultBindExpr` |
+| *(selects which applies)* | `defaultMode` |
+
+`ResetToDefault` calls `Par.reset()`, restoring value, expression, bind expression and
+mode as a unit. This is why it is the preferred home: a default authored on the par
+follows the op through renames and reparenting, whereas a table row keyed by path goes
+stale the moment a tool moves.
+
+**Keyboard In built-ins cannot do this.** `default`/`defaultExpr`/`defaultBindExpr` are
+settable on custom parameters only, and the factory default of `keys`/`shortcuts` is the
+empty string (`modifiers` is `ignore`) -- so `reset()` on a keyboardin would *unbind* the
+hotkey rather than restore it. Those rows still fall back to `table_gathered_hotkeys1`.
+
+To get a keyboardin onto the `.default` path, give its owning COMP a hotkey-named custom
+par and have the keyboardin follow it by expression:
+
+```python
+parent().par.Keys.eval() if app.osName == 'Windows' else parent().par.Keys.eval().replace('ctrl','cmd')
+```
+
+`Load Default` (and the `Force Default` toggle) still restore wholesale from the default
+table; note that `Load Default` also **overwrites** the gathered table with it.
 
 ## Quick checklist
 
@@ -101,5 +127,7 @@ OS-switch expressions) so a default capture is meaningful.
 - [ ] Value uses `mod.key` syntax with recognized modifier names
 - [ ] Op does not sit under a `popMenu`/`popDialog`/`KeyModifiers` path
 - [ ] Outside the tools package: `FNS_hotkeys` tag added if it should persist
+- [ ] Custom par: shipped default authored via `default` / `defaultExpr` /
+      `defaultBindExpr` + `defaultMode` (not a default-table row)
 - [ ] Verified by opening the manager UI (`Open UI`) and finding your row, with no
       unintended Status conflict
