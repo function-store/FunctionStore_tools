@@ -33,13 +33,37 @@ New optional command field `state` (spec dict AND decorator kwarg):
 | Form | Meaning |
 |---|---|
 | `state='Parname'` | Name of a custom par on the OWNER comp; registry evaluates `owner.par.Parname.eval()` at query time |
-| `state={'method': 'GetState'}` | Name of a PROMOTED no-arg method returning bool or short str; escape hatch for non-par state (inverse pars, computed state) |
+| `state={'method': 'GetState'}` | Name of a PROMOTED no-arg method; escape hatch for non-par state (inverse pars, child-widget values, computed state) |
+
+State values are `bool`, `int`, `float`, or a short `str` (~16 chars) —
+not just toggles. "Set volume" showing `0.8`, "Set BPM" showing `120`
+are exactly as valuable as ON/OFF on a toggle.
 
 ```python
 @FNSCommand.fns_command(state='Active')
 def ToggleActive(self):
 	...
+
+@FNSCommand.fns_command(state={'method': 'GetVolume'})
+def SetVolume(self, level: float):
+	...
 ```
+
+### Param prefill — the second half of the same idea
+
+For value-setters the chip is half the win; the other half is the
+prompt opening AT the current value. New optional param field:
+
+| Field | Meaning |
+|---|---|
+| `current` | `'Parname'` or `{'method': 'GetX'}` — evaluated at fetch time like `state`; the launcher seeds the prompt with it instead of the static `default` (which remains the fallback when evaluation fails or the field is absent) |
+
+`? volume` then opens pre-filled with `0.8` — nudge and enter, no blind
+typing. Inline args are unaffected (`? volume 0.5` still runs
+immediately). When a command has exactly one param and declares
+`state`, the launcher MAY reuse the state value as the prefill without
+a separate `current` declaration (they are almost always the same
+value; explicit `current` wins when both exist).
 
 Evaluation rules (registry-side, in the `Commands()` item build):
 
@@ -59,7 +83,10 @@ Evaluation rules (registry-side, in the `Commands()` item build):
 ## Launcher side
 
 - Row chip after the label: `ON` / `OFF` for bools (distinct colors),
-  raw text for strings. No chip when `state` absent.
+  the value for numbers (floats trimmed, e.g. `0.8`, `120`), raw text
+  for strings. No chip when `state` absent.
+- Param prompts seed from `current` (or the single-param state reuse
+  rule) instead of the static default.
 - `fns_commands` protocol: items may carry `state` — additive, no
   version negotiation needed beyond the existing seen-catalog/struct
   field addition (same pattern as `hidden`/`builtin`).
@@ -71,10 +98,14 @@ Evaluation rules (registry-side, in the `Commands()` item build):
 
 - The FNSCommand module master gains the `state` kwarg (additive — the
   attribute contract ignores unknown keys, so mixed versions are safe).
-- ~25 commands declare state, mostly `state='Active'` one-liners on the
-  Toggle wrappers; oddballs use the method form (HideTimeline's
+- ~25 toggle commands declare state, mostly `state='Active'` one-liners
+  on the Toggle wrappers; oddballs use the method form (HideTimeline's
   `Hidetimeline` par is inverted — a two-line `TimelineShown()` method
   reads better than an `invert` flag in the schema).
+- Value-setters gain state + prefill: SetVolume (slider child value via
+  method), HydroHomie SetInterval (`Intervalminutes`), QuickPane's
+  split direction stays prompt-only. TDXLPP's own TD_Project built-ins
+  (set cook rate, master volume) are natural adopters too.
 - No other changes: announcer, kit, and release pipeline are untouched.
 
 ## Explicitly out of scope
