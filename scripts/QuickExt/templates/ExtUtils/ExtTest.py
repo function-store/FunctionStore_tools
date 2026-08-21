@@ -1,6 +1,9 @@
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+fns_command = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand').fns_command # import
+fns_announce = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand').announce # import
 ####
+from typing import Literal
 
 class ExtTest:
 	def __init__(self, ownerComp):
@@ -9,6 +12,12 @@ class ExtTest:
 		#CustomParHelper.DisableCallbacks()
 		NoNode.Init(ownerComp, enable_chopexec=True, enable_datexec=True, enable_parexec=True, enable_keyboard_shortcuts=True)
 		NoNode.SetMarkColor((0.5, 0.05, 0.5))
+
+		# FNS command test: announce this COMP so the command registry
+		# (quick-launch etc.) harvests the @fns_command-marked methods below.
+		# Safe without any registry present; deferred so a just-injected
+		# registry has finished promoting and TDN imports have settled.
+		run(lambda: fns_announce(self.ownerComp), delayFrames=60)
 
 		# CHOP Exec tests
 		NoNode.RegisterChopExec(NoNode.ChopExecType.ValueChange, self.ownerComp.op('null_test_chopexec'), 'v1', self.onTestChopValueChange)
@@ -118,3 +127,20 @@ class ExtTest:
 	# Keyboard shortcut callback
 	def onTestKeyboardShortcut(self):
 		debug('onTestKeyboardShortcut: ctrl+t pressed')
+
+
+	# FNS command tests — promoted methods marked for the command registry
+	# (surface in the launcher's quick-launch under ">" / "?"). Anything the
+	# decorator omits derives from the method: label from the CamelCase name,
+	# help from the docstring's first line, params from the signature.
+	@fns_command
+	def TestCommand(self):
+		"""Log a hello from the command registry."""
+		debug('TestCommand: run via FNS_CommandRegistry')
+
+	@fns_command(label='Test command with args', help='Echo the typed arguments')
+	def TestCommandArgs(self, count: int = 3, mode: Literal['low', 'high'] = 'low', loud: bool = False):
+		# count -> int prompt (default 3), mode -> menu [low, high],
+		# loud -> toggle; values arrive coerced, never as strings.
+		debug(f'TestCommandArgs: count={count} mode={mode} loud={loud}')
+		return {'count': count, 'mode': mode, 'loud': loud}

@@ -2,8 +2,8 @@
 
 '''Info Header Start
 Name : description
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.16.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 See full documentation at the Wiki page: https://github.com/function-store/FunctionStore_tools/wiki/04.-QuickExt
