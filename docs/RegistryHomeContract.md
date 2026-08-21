@@ -81,11 +81,20 @@ already in the home.
   `{name, path, version, shortcut}` per global. It is a snapshot of the
   running process. Forced re-promotion was considered and deliberately not
   built; add it explicitly if you need it.
-- **Shipped artifacts are stale.** Every `.tox` in `modules/release/` and
-  `packaging/dist/` still bakes the pre-move `RegistryBase`. Mixed old/new
-  hosts converge safely (an old one promotes to bare `/sys`, a new one
-  relocates it), but **re-export before shipping**. C6 exists for exactly
-  this window and can be deleted once no shipped artifact predates it.
+- **Shipped artifacts lag, but do not guess how much.** Ask the tooling, not
+  your instincts: `exec(open('packaging/release_one.py').read()); Preflight()`
+  is read-only and authoritative. It distinguishes *registry ripple* (a
+  vendored host copy merely looking newer — a warning, not a blocker; empty
+  as of `790be63`) from `unlanded` (a package whose own code is genuinely
+  newer than its `.tox` — a blocker). After the move that was six packages:
+  CustomParTools and the five registry packages. Landing them is PI's
+  per-package **Save** button; there is no script API, and every scriptable
+  path in `release_one.py` publishes. See
+  [packaging/RELEASING.md](../packaging/RELEASING.md).
+
+  Mixed old/new hosts converge safely regardless (an old one promotes to bare
+  `/sys`, a new one relocates it), which is what C6 buys. C6 can be deleted
+  once no shipped artifact predates the move.
 
 ## Editing the registry code
 
@@ -99,10 +108,13 @@ main menu and op menu. So:
 2. Check `get_sessions` first — one writer per checkout.
 3. After landing, verify (below) before doing anything else.
 
-`FNSTools/MISC/button_hog/FNS_ToolbarRegistry/RegistryBase.py` is a known
-**duplicate**: that DAT's `file` par points at its own copy instead of the
-shared source, so it does not receive edits. Contents were re-synced by hand
-in `a019218`; the wiring is still wrong and should be repaired separately.
+**If a shared-source edit does not reach a host, check its `file` par.** The
+par value is the carrier — 62 of the 83 DATs have no tags at all and still
+resolve to the shared file, so tags prove nothing. button_hog's
+`FNS_ToolbarRegistry/RegistryBase` was the one host pointing at a per-op copy
+and therefore sat out this whole change; repaired in `790be63` (par re-pointed,
+stray `text` tag dropped, duplicate `.py` deleted). Worth re-running the
+census in the recipe below after any bulk registry work.
 
 ## Family members outside RegistryBase
 
@@ -149,3 +161,13 @@ len([c for c in op('/ui/dialogs/bookmark_bar').children
 
 `op('/FNSTools/registry_presave_exec').module.healAllRegistries()` should
 return all six names. `get_op_errors` on `/sys/FNS_Registries` must be clean.
+
+Finally, confirm no host has drifted off the shared source — this is what
+caught button_hog:
+
+```python
+import collections
+c = collections.Counter(d.par.file.eval()
+                        for d in op('/').findChildren(name='RegistryBase'))
+assert list(c) == ['scripts/shared/RegistryBase.py'], dict(c)
+```
