@@ -42,6 +42,20 @@ class ConfigRegistryExt(RegistryBase):
 	before it replaces the toolkit. Load: per tool at registration time
 	(Autoload, default on), deferred a few frames, once per session.
 
+	Scope (Configscope par): authored on the TOOLKIT ROOT (op.FNS,
+	'FNSTools' page) -- the master's and global's own Configscope pars
+	BIND to it, so the root par is the single record and either surface
+	edits it. 'global' (default) roams through the JSON
+	above; 'project' never reads or writes the file -- the .toe is the
+	whole store (host pars, state tables and tool pars all boot from the
+	project itself), so the config travels with the project file. Save
+	triggers still run every tool's onConfigSave for its side effects
+	(the configurators freshen their state tables there) -- only the file
+	I/O is gated. NOTE for the updater rework: under project scope both
+	roaming directions are blocked, so the tool-replacement handoff must
+	carry sections itself (own snapshot/apply, or a temp Configfile with
+	scope forced global for the swap).
+
 	The file is read-merge-write: sections of tools that are not currently
 	installed are PRESERVED on save, so partial installs never lose data.
 	A file with a different schema version is never merged into and never
@@ -217,6 +231,28 @@ class ConfigRegistryExt(RegistryBase):
 		if override:
 			return override.replace('\\', '/')
 		return (app.userPaletteFolder + '/' + self.SUBFOLDER + '/' + self.FILE_NAME).replace('\\', '/')
+
+	def _scopeIsProject(self):
+		"""True when Configscope says the config lives in the .toe only.
+
+		The own par normally BINDS to the toolkit root's Configscope
+		(op.FNS, the authored record); a rootless/standalone deploy falls
+		through to its own constant value, and anything missing or broken
+		reads as global -- a copy predating the par behaves as before."""
+		p = getattr(self.ownerComp.par, 'Configscope', None)
+		if p is not None:
+			try:
+				return str(p.eval()) == 'project'
+			except Exception:
+				pass  # dangling bind (no toolkit root) -- try the root directly
+		root = getattr(op, 'FNS', None)
+		p = getattr(root.par, 'Configscope', None) if root is not None else None
+		if p is not None:
+			try:
+				return str(p.eval()) == 'project'
+			except Exception:
+				pass
+		return False
 
 	def _freshData(self):
 		return {'schema': self.SCHEMA, 'tools': {}}
@@ -462,6 +498,21 @@ class ConfigRegistryExt(RegistryBase):
 		# values written out first -- otherwise that apply lands the foreign
 		# section on it a few frames later.
 		self._sweepPersistTags()
+		if self._scopeIsProject():
+			# Project scope: the .toe is the store. Still run every tool's
+			# snapshot -- onConfigSave callbacks freshen in-project state
+			# (the configurators' group rows live there) -- but leave the
+			# roaming file untouched.
+			snapped = 0
+			for canonical, info in self.stored['PaneRegistry'].items():
+				try:
+					if self._snapshotTool(canonical, dict(info)) is not None:
+						snapped += 1
+				except Exception as e:
+					debug(f'{self.REGISTRY_NAME}: snapshot {canonical!r}: {e}')
+			debug(f'{self.REGISTRY_NAME}: SaveAll (project scope): refreshed '
+				  f'{snapped} tool(s), file untouched')
+			return True
 		data = self._readFile()
 		if data.get('schema') != self.SCHEMA:
 			# never merge into an unknown shape; keep the old file as a .bak
@@ -502,6 +553,8 @@ class ConfigRegistryExt(RegistryBase):
 		section = self._snapshotTool(canonical_name, dict(info))
 		if section is None:
 			return False
+		if self._scopeIsProject():
+			return True  # snapshot ran for its side effects; file untouched
 		data = self._readFile()
 		if data.get('schema') != self.SCHEMA:
 			self._retireFile('.schema%s.bak' % data.get('schema'))
@@ -538,6 +591,76 @@ class ConfigRegistryExt(RegistryBase):
 		debug(f'{self.REGISTRY_NAME}: LoadAll applied {count} tool section(s)')
 		self.fnsLog(f'{self.REGISTRY_NAME}: LoadAll applied {count} tool section(s)')
 		return count
+
+	# --- scope-flip confirmation (configscope_parexec watches the toolkit
+	# root's Configscope; clone hosts and the /sys copy carry the DAT too,
+	# so only the master's copy is armed AND handled) ---
+
+	def _isRootMaster(self):
+		"""True only on the in-project master directly beside the root."""
+		root = getattr(op, 'FNS', None)
+		return root is not None and self.ownerComp is root.op(self.REGISTRY_NAME)
+
+	def ConfigScopeChanged(self, par, prev):
+		"""Confirm the risky flip. Back to 'global' means the next save
+		OVERWRITES the machine-global config, so it gets a three-way
+		dialog (push / adopt / stay project); flipping to 'project' moves
+		no data and just logs. Programmatic flips go through
+		SetConfigScope, which keeps the dialog quiet by default."""
+		if not self._isRootMaster():
+			return  # inert on clone hosts and the /sys copy
+		new = str(par.eval())
+		self.fnsLog(f'{self.REGISTRY_NAME}: config scope -> {new}')
+		if new != 'global' or getattr(self, '_scope_set_quietly', False):
+			return
+		op.TDResources.PopDialog.OpenDefault(
+			text=('Config scope is back to GLOBAL: from the next save on, '
+				  'this project OVERWRITES the machine-global config '
+				  '(bar layouts + tool settings).\n\n'
+				  'Push: write this project\'s state to the global file '
+				  'now.\nAdopt: apply the current global config onto this '
+				  'project instead.\nStay Project: cancel the flip.'),
+			title='Config Scope -> Global',
+			buttons=['Push to Global', 'Adopt Global', 'Stay Project'],
+			callback=self._onScopeDialog,
+			escButton=3, enterButton=1)
+
+	def _onScopeDialog(self, info):
+		n = info.get('buttonNum')
+		if n == 1:
+			self.SaveAll()          # routes to the /sys global
+		elif n == 2:
+			self.LoadAll()
+		elif n == 3:
+			self.SetConfigScope('project')
+
+	def SetConfigScope(self, value, prompt=False):
+		"""Flip the config scope programmatically ('global' / 'project').
+		Default is quiet -- scripts, tests and the future updater handoff
+		must not pop the confirm dialog; that is for interactive flips.
+		Routes to the master so the quiet flag lands where the dialog
+		handler runs."""
+		if str(value) not in ('global', 'project'):
+			return False
+		root = getattr(op, 'FNS', None)
+		master = root.op(self.REGISTRY_NAME) if root is not None else None
+		if (master is not None and master is not self.ownerComp
+				and hasattr(master.ext, self.EXT_NAME)):
+			return getattr(master.ext, self.EXT_NAME).SetConfigScope(
+				value, prompt=prompt)
+		p = getattr(root.par, 'Configscope', None) if root is not None else None
+		if p is None:
+			p = getattr(self.ownerComp.par, 'Configscope', None)
+		if p is None:
+			return False
+		if not prompt:
+			# parexec fires on the set below; lift the flag a few frames
+			# later so only THIS change is exempt from the dialog
+			self._scope_set_quietly = True
+			run('setattr(args[0], "_scope_set_quietly", False)',
+				self, delayFrames=3, delayRef=op.TDResources)
+		p.val = str(value)
+		return True
 
 	# --- Settings UI: a JSON API over the registrations -------------------
 	# The HTML page (settings_page, served by settings_server) is a DUMB
@@ -818,6 +941,13 @@ class ConfigRegistryExt(RegistryBase):
 	def _applyToolConfig(self, canonical_name):
 		"""Apply pars, then hand state to the tool's onConfigLoad."""
 		self._applied_this_session.add(canonical_name)
+		if self._scopeIsProject():
+			# .toe state stands; log the skip once per session, not per tool
+			if not getattr(self, '_scope_skip_logged', False):
+				self._scope_skip_logged = True
+				self.fnsLog(f'{self.REGISTRY_NAME}: project scope -- roamed '
+							f'config not applied (.toe state stands)')
+			return False
 		info = self.stored['PaneRegistry'].get(canonical_name)
 		if not info:
 			return False
