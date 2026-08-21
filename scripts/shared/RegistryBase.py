@@ -598,8 +598,39 @@ class RegistryBase:
 
 	# --- global registry lifecycle ---
 
-	def _sys_comp(self):
-		return op('/sys')
+	SYS_HOME = 'FNS_Registries'
+
+	def _sys_comp(self, create=False):
+		"""Home of the promoted globals: /sys/FNS_Registries.
+
+		One container keeps the FNS globals out of TD's own /sys furniture
+		and gives the installer a single place to look. Global OP shortcuts
+		resolve from any depth, so nesting costs consumers nothing.
+
+		Only the promotion path passes create=True -- every read stays
+		side-effect free, so merely asking the question never grows a
+		container in a project that has no registries.
+		"""
+		sys_root = op('/sys')
+		if sys_root is None:
+			return None
+		home = sys_root.op(self.SYS_HOME)
+		if home is None and create:
+			home = sys_root.create(baseCOMP, self.SYS_HOME)
+			home.color = (0.35, 0.45, 0.55)
+			anchor = sys_root.op('TDDialogs') or sys_root.op('TDResources')
+			if anchor:
+				home.nodeX = anchor.nodeX
+				home.nodeY = anchor.nodeY - 300
+			self.fnsLog(f'{self.REGISTRY_NAME}: created global registry home {home.path}')
+		return home
+
+	def _isLegacySysCopy(self, registry_comp=None):
+		"""A copy promoted straight into /sys, before the FNS_Registries home."""
+		comp = registry_comp or self.ownerComp
+		sys_root = op('/sys')
+		return bool(sys_root and comp and comp.valid
+					and comp.parent() == sys_root and comp is not self._sys_comp())
 
 	def _is_in_sys(self, registry_comp=None):
 		comp = registry_comp or self.ownerComp
@@ -611,10 +642,7 @@ class RegistryBase:
 			reg = getattr(op, self.SHORTCUT)
 			if reg and reg.valid and self._is_global_registry(reg):
 				return reg
-		sys_comp = self._sys_comp()
-		if not sys_comp:
-			return None
-		for child in sys_comp.findChildren(name=self.REGISTRY_NAME + '*', depth=1):
+		for child in self._find_sys_registries():
 			if self._is_global_registry(child):
 				return child
 		return None
@@ -639,9 +667,13 @@ class RegistryBase:
 
 		global_registry = self._global_registry()
 		if global_registry and global_registry != self.ownerComp:
-			if self._check_version_against(global_registry):
+			# a global still parked directly in /sys predates the
+			# FNS_Registries home: relocate it even at an equal version,
+			# so the two homes never both hold a live global
+			relocating = not self._is_in_sys(global_registry)
+			if not relocating and self._check_version_against(global_registry):
 				return
-			self._replace_global_registry(global_registry)
+			self._replace_global_registry(global_registry, force=relocating)
 			return
 
 		if not self._reconcile_parked_sys_registries():
@@ -672,16 +704,8 @@ class RegistryBase:
 		return False
 
 	def _find_parked_sys_registries(self):
-		sys_comp = self._sys_comp()
-		if not sys_comp:
-			return []
-		parked = []
-		for child in sys_comp.findChildren(name=self.REGISTRY_NAME + '*', depth=1):
-			if child == self.ownerComp:
-				continue
-			if not self._is_global_registry(child):
-				parked.append(child)
-		return parked
+		return [child for child in self._find_sys_registries()
+				if child != self.ownerComp and not self._is_global_registry(child)]
 
 	def _reconcile_parked_sys_registries(self):
 		parked = self._find_parked_sys_registries()
@@ -699,7 +723,10 @@ class RegistryBase:
 				self._merge_into_registry(winner, reg)
 				reg.destroy()
 
-		if self._compare_versions(winner, self.ownerComp) == winner:
+		# a winner still parked in the pre-container /sys is never promoted
+		# where it stands -- absorb it instead, so promotion always lands
+		# in the FNS_Registries home
+		if self._is_in_sys(winner) and self._compare_versions(winner, self.ownerComp) == winner:
 			self._merge_into_registry(winner, self.ownerComp)
 			self._promote_to_global(winner)
 			return False
@@ -766,10 +793,18 @@ class RegistryBase:
 					candidate.destroy()
 
 	def _find_sys_registries(self):
-		sys_comp = self._sys_comp()
-		if not sys_comp:
-			return []
-		return list(sys_comp.findChildren(name=self.REGISTRY_NAME + '*', depth=1))
+		"""Every promoted copy: the FNS_Registries home, plus any pre-container
+		copy still parked directly in /sys (where older builds promoted)."""
+		found = []
+		home = self._sys_comp()
+		if home:
+			found.extend(home.findChildren(name=self.REGISTRY_NAME + '*', depth=1))
+		sys_root = op('/sys')
+		if sys_root:
+			for child in sys_root.findChildren(name=self.REGISTRY_NAME + '*', depth=1):
+				if child not in found:
+					found.append(child)
+		return found
 
 	def _retryGlobalExtensionInit(self, registry_comp, attempts_left=20):
 		"""Re-init /sys copy when ExtUtils dock lagged behind first extension compile."""
@@ -807,7 +842,7 @@ class RegistryBase:
 			self._armRegistryWatch()
 			return
 
-		sys_comp = self._sys_comp()
+		sys_comp = self._sys_comp(create=True)
 		if not sys_comp:
 			debug(f'{self.REGISTRY_NAME}: /sys not found, cannot become global registry.')
 			return
@@ -831,10 +866,16 @@ class RegistryBase:
 		except Exception:
 			pass
 
-		anchor_comp = sys_comp.op('OpFamRegistry') or sys_comp.op('TDDialogs')
-		if anchor_comp:
-			new_registry.nodeX = anchor_comp.nodeX
-			new_registry.nodeY = anchor_comp.nodeY - 300
+		# one tidy column inside the home: each new global drops below the
+		# highest sibling, spaced by its own height so tall copies never overlap
+		sibs = [c for c in sys_comp.children if c is not new_registry]
+		if sibs:
+			step = ((int(new_registry.nodeHeight) + 100 + 199) // 200) * 200
+			new_registry.nodeX = int(min(c.nodeX for c in sibs))
+			new_registry.nodeY = int(min(c.nodeY for c in sibs)) - step
+		else:
+			new_registry.nodeX = 0
+			new_registry.nodeY = 0
 
 		# The copy's extension initializes DURING copy() (initextonstart),
 		# before it has our shortcut or data -- hand both over explicitly.
@@ -849,10 +890,18 @@ class RegistryBase:
 		self._promote_to_global(new_registry)
 
 		self._release_shipped_shortcut()
+		if self._isLegacySysCopy():
+			# we WERE the pre-container global; the home copy carries our
+			# data now, so the old parking spot is litter -- clear it a few
+			# frames out, never from inside our own init
+			self.fnsLog(f'{self.REGISTRY_NAME}: retiring pre-container copy '
+						f'{self.ownerComp.path}')
+			run('args[0].valid and args[0].destroy()', self.ownerComp,
+				delayFrames=5, delayRef=op.TDResources)
 		return new_registry
 
-	def _replace_global_registry(self, old_registry):
-		if self._check_version_against(old_registry):
+	def _replace_global_registry(self, old_registry, force=False):
+		if not force and self._check_version_against(old_registry):
 			return
 		self._merge_pane_registry_from(old_registry)
 		if self._is_global_registry(old_registry):

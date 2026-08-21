@@ -34,7 +34,7 @@ p.Displayed = True
 p.Callback = ''
 p.Barwidth = 0
 p.Helpurl = ''
-p.Promotepars = True  # shippers may opt out per-tool; the bare registry ships with the default
+p.Promotepars = False  # shippers may opt out per-tool; the bare registry ships with the default
 p.opshortcut = ''
 p.clone = ''  # never ship with in-project cloning on
 # never ship an external-tox binding (a copied binding silently reloads

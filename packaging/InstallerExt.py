@@ -352,6 +352,40 @@ def RecordInstalled(parent_comp, name, sha256, release=''):
     t.appendRow(row)
 
 
+# Where a registry master promotes its global copy. One container instead of
+# seven loose children of TD's own /sys, so anything that needs to know what
+# is live -- this installer, the updater, a support dump -- reads one place.
+SYS_REGISTRY_HOME = '/sys/FNS_Registries'
+
+
+def PromotedRegistries():
+    """The global registries live in this TD process, newest state first-hand.
+
+    /sys is never saved with the .toe: every master re-promotes on open, so
+    this is a snapshot of the running process, not of the project file. A
+    freshly installed master replaces a lower-versioned global by itself
+    (RegistryBase compares versions on init) -- this is how the installer
+    REPORTS what happened, not how it makes it happen.
+    """
+    home = op(SYS_REGISTRY_HOME)
+    if home is None:
+        return []
+    out = []
+    for comp in home.children:
+        version = ''
+        for parname in ('Pkgversion', 'Version'):
+            par = getattr(comp.par, parname, None)
+            if par is not None:
+                version = str(par.eval())
+                break
+        shortcut = getattr(comp.par, 'opshortcut', None)
+        out.append({'name': comp.name,
+                    'path': comp.path,
+                    'version': version,
+                    'shortcut': str(shortcut.eval()) if shortcut is not None else ''})
+    return sorted(out, key=lambda r: r['name'])
+
+
 def InstallPlan(plan, replace=False, only=None, bind=None):
     """Execute a plan from ResolvePlan. `only` limits to named packages,
     which is how a large install is batched under the MCP timeout. `bind`
@@ -427,7 +461,8 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
     return {'target': tgt,
             'installed': [r['name'] for r in results if r.get('action') == 'installed'],
             'failed': [r['name'] for r in results if not r.get('ok', True)],
-            'results': results}
+            'results': results,
+            'registries': PromotedRegistries()}
 
 
 # --- COMP extension ---------------------------------------------------

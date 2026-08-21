@@ -31,6 +31,9 @@ DEFAULT_MANIFEST = _impl['DEFAULT_MANIFEST']
 ResolvePlan = _impl['ResolvePlan']
 InstallPlan = _impl['InstallPlan']
 DefaultTarget = _impl['DefaultTarget']
+# what is promoted in /sys/FNS_Registries right now -- also ridden back on
+# every InstallPlan result under the 'registries' key
+PromotedRegistries = _impl['PromotedRegistries']
 
 
 def Plan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):

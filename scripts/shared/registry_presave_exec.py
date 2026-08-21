@@ -1,4 +1,4 @@
-"""Pre-save heal for the /sys global registries.
+"""Pre-save heal for the promoted global registries (/sys/FNS_Registries).
 
 Replaces the disabled periodic watch (RegistryBase.REGISTRY_WATCH_ENABLED is
 off): stale/renamed entries are pruned and silent autoregister hosts
@@ -18,13 +18,26 @@ def fnsLog(*args, level='INFO'):
 		pass
 
 
+def promotedRegistries():
+	"""Every promoted global: the /sys/FNS_Registries home, plus any
+	pre-container copy still parked directly in /sys."""
+	sys_root = op('/sys')
+	if sys_root is None:
+		return []
+	found = []
+	home = sys_root.op('FNS_Registries')
+	if home is not None:
+		found.extend(home.children)
+	for comp in sys_root.children:
+		if comp not in found:
+			found.append(comp)
+	return found
+
+
 def healAllRegistries():
 	healed = []
-	sys_comp = op('/sys')
-	if sys_comp is None:
-		return healed
 	fns = getattr(op, 'FNS', None)
-	for comp in sys_comp.children:
+	for comp in promotedRegistries():
 		if 'Registry' not in comp.name or not comp.valid:
 			continue
 		if not comp.extensionsReady:

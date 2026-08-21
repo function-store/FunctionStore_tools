@@ -367,9 +367,21 @@ A hook that raises is contained: debug()'d, skipped, dialog keeps working.
 
 ## 1. Core idea: one global manager, many host publishers
 
+> **Where the globals live.** Every promoted global sits in one container,
+> `/sys/FNS_Registries` — created on demand by whichever registry promotes
+> first, and shared with FNS_CommandRegistry from TDXLauncherUtility. Global
+> OP shortcuts resolve from any depth, so nothing that *consumes* a registry
+> changes; the container just keeps the family out of TD's own `/sys`
+> furniture and gives the installer/updater one place to look
+> (`InstallerExt.PromotedRegistries()`). `/sys` still does not save with the
+> project, so this is per-process state re-created on every open, and copies
+> found parked directly in `/sys` are treated as pre-container legacy and
+> absorbed.
+
 Every registry component can play two roles, decided at runtime:
 
-- **Global instance** — lives at `/sys/<RegistryName>`, owns the global OP
+- **Global instance** — lives at `/sys/FNS_Registries/<RegistryName>`, owns
+  the global OP
   shortcut, and is the **single manager** of its surface: which entries
   exist, which are shown, in what order, and how they are recalled. It is
   pure infrastructure — its host-publisher parameters (the Registration
@@ -391,12 +403,15 @@ On extension init (`postInit`), an instance that is NOT the sys-global runs:
    - A global exists and is **newer or equal** (semver on the `Version` About
      par) → stand down.
    - A global exists and is **older** → merge its entries, destroy it, copy
-     self to `/sys` (`_become_global_registry`), hand data over via the
+     self into the home (`_become_global_registry`), hand data over via the
      `post_update` raw-storage handoff (the copy's extension may not compile
      on the first frames — a 20-attempt `reinitextensions` retry loop
      recovers), promote (set shortcut, neutralize Registration page, sync surface).
-   - No global → reconcile any *parked* (shortcut-less) `/sys` copies
+   - No global → reconcile any *parked* (shortcut-less) copies in the home
      (highest version wins, entries merged additively), then self-promote.
+   - A global still sitting **directly in `/sys`** predates the
+     `FNS_Registries` home → relocated whatever its version (merge, destroy,
+     re-promote into the home), so the two spots never both hold a live one.
    - **Major**-version mismatch → `ui.messageBox` chooser; minor/patch
      resolve silently, ties favor the incumbent.
 2. `_release_shipped_shortcut()` — a host never keeps the global shortcut.
@@ -449,7 +464,7 @@ everything above. A new registry supplies:
 class MyRegistryExt(RegistryBase):
     SHORTCUT      = 'MYREGISTRY'      # global OP shortcut it claims
     EXT_NAME      = 'MyRegistryExt'   # class AND ext-DAT name (must match)
-    REGISTRY_NAME = 'MyRegistry'      # COMP family name for /sys discovery
+    REGISTRY_NAME = 'MyRegistry'      # COMP family name for home discovery
     # HOST_PAGE_NAME = 'Registration' (inherited default)
     CLONE_EXPR = "op.FNS_X.op('MyRegistry') if hasattr(op, 'FNS_X') else None"
     PACKAGE_SHORTCUT = 'FNS_X'        # the package shortcut CLONE_EXPR uses
@@ -752,7 +767,7 @@ copy/create alone is rarely the whole contract.
 3. Adjust the Registration page pars + help text; set About `Version` to
    `0.1.0`.
 4. Externalize COMP (tdn) + both `.py` DATs; verify `get_op_errors` clean.
-5. Reinit → confirm `/sys/MyRegistry` promotes, shortcut resolves,
+5. Reinit → confirm `/sys/FNS_Registries/MyRegistry` promotes, shortcut resolves,
    Registration page stripped on the global.
 6. Pilot: copy the host into one tool, configure, `Autoregister` on; verify
    the entry + surface artifact + unregister cascade (wait a frame after

@@ -52,7 +52,7 @@ p.Regstatus.val = ''
 p.Comp = '..'
 p.Menuorder = -1
 p.Callback = ''
-p.Promotepars = True  # shippers may opt out per-tool; the bare registry ships with the default
+p.Promotepars = False  # shippers may opt out per-tool; the bare registry ships with the default
 p.opshortcut = ''
 p.clone = ''          # never ship with in-project cloning on
 
