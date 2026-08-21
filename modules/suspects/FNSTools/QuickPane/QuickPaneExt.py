@@ -112,7 +112,7 @@ class QuickPaneExt:
 		panenav.par.topborder = state
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle QuickPane')
+	@FNSCommand.fns_command(label='Toggle QuickPane', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable QuickPane."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

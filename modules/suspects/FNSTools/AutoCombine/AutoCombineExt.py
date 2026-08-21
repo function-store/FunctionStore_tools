@@ -63,7 +63,7 @@ class AutoCombineExt:
 		pass
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle AutoCombine')
+	@FNSCommand.fns_command(label='Toggle AutoCombine', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable AutoCombine."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

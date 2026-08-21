@@ -123,10 +123,16 @@ same day. One lifecycle implementation, everywhere.
   on `tool#id`. Renaming a shipped id (or the tool COMP) orphans all
   three. Treat every shipped id as public API.
 - Caps: 24 commands/tool, 6 params/command, menus ≤ 16 entries.
-- **Proposed, not yet live**: `state=` chips for toggle commands (live
-  ON/OFF in the palette, evaluated at query time) — see
-  `docs/CommandStateProposal.md`. Do NOT stamp `state` kwargs until the
-  registry side lands the schema.
+- **Live state chips (registry ≥ 1.6.0, adopted 2026-08-22)**: declare
+  `state='Parname'` (custom par on the owner) or
+  `state={'method': 'GetX'}` (promoted no-arg method — for inverse
+  pars, child-widget values, computed state). Evaluated at QUERY time
+  inside `Commands()` — always fresh, no re-announce needed. Values:
+  bool → ON/OFF chip, number/str → value chip. Params may declare
+  `current` for prompt prefill; a single-param command with `state`
+  reuses it implicitly (SetVolume, SetInterval work this way). ~24 of
+  our commands carry state. Design rationale:
+  `docs/CommandStateProposal.md`.
 - Handlers run synchronously on the main thread — return fast, kick long
   work off with `run(..., delayFrames=1)`. A dict with `ok: False` marks
   the run failed in the palette footer.

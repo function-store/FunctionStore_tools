@@ -109,7 +109,7 @@ class ExtNoUI:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle timeline')
+	@FNSCommand.fns_command(label='Toggle timeline', state={'method': 'TimelineShown'})
 	def ToggleTimeline(self):
 		"""Show or hide the timeline bar."""
 		if not self.module_enabled:
@@ -138,3 +138,7 @@ class ExtNoUI:
 	def onParPauseindicator(self, vals):
 		self.UpdatePlayState(self.play_state)
 
+
+	def TimelineShown(self):
+		"""Is the timeline bar currently visible?"""
+		return bool(self.timeline_height)

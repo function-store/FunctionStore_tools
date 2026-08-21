@@ -130,7 +130,7 @@ class QuickmarkStorageExt:
         self.UnstoreQuickmark(int(slot))
         return {'ok': True, 'slot': int(slot)}
 
-    @FNSCommand.fns_command(label='Toggle QuickMarks')
+    @FNSCommand.fns_command(label='Toggle QuickMarks', state='Active')
     def ToggleActive(self):
         """Enable or disable QuickMarks."""
         self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

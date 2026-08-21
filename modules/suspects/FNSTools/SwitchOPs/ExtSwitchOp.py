@@ -41,7 +41,7 @@ class ExtSwitchOp:
 		op(_swop).current = True
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle SwitchOPs')
+	@FNSCommand.fns_command(label='Toggle SwitchOPs', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable SwitchOPs."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

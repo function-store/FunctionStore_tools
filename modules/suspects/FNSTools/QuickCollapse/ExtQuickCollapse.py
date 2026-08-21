@@ -105,7 +105,7 @@ class ExtQuickCollapse:
 		except Exception:
 			pass
 
-	@FNSCommand.fns_command(label='Toggle QuickCollapse')
+	@FNSCommand.fns_command(label='Toggle QuickCollapse', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable QuickCollapse."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

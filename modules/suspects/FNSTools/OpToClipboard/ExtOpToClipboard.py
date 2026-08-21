@@ -78,7 +78,7 @@ class ExtOpToClipboard:
 		self.OnCopy()
 		return {'ok': True}
 
-	@FNSCommand.fns_command(label='Toggle OpToClipboard')
+	@FNSCommand.fns_command(label='Toggle OpToClipboard', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable OpToClipboard."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

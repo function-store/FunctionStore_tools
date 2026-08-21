@@ -119,7 +119,7 @@ class ExtParOPPlace:
 			self.parameterDat = False
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle ParOPDrop')
+	@FNSCommand.fns_command(label='Toggle ParOPDrop', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable ParOPDrop."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

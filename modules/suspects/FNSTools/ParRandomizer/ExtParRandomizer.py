@@ -199,7 +199,7 @@ class ExtParRandomizer:
 		self.SaveAllCustomDefaults()
 		return {'ok': True}
 
-	@FNSCommand.fns_command(label='Toggle ParRandomizer')
+	@FNSCommand.fns_command(label='Toggle ParRandomizer', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable ParRandomizer."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

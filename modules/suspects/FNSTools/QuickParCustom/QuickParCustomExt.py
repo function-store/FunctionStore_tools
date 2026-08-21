@@ -131,7 +131,7 @@ class QuickParCustomExt:
 			_comp_editor_pars.scroll(_par_idx, 0)
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle QuickParCustom')
+	@FNSCommand.fns_command(label='Toggle QuickParCustom', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable QuickParCustom."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

@@ -402,13 +402,13 @@ class ExtBorderlessWindow:#
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle borderless')
+	@FNSCommand.fns_command(label='Toggle borderless', state='Borderless')
 	def ToggleBorderless(self):
 		"""Toggle the borderless TouchDesigner main window."""
 		self.ownerComp.par.Borderless = not self.evalBorderless
 		return {'ok': True, 'borderless': bool(self.evalBorderless)}
 
-	@FNSCommand.fns_command(label='Toggle fullscreen')
+	@FNSCommand.fns_command(label='Toggle fullscreen', state='Fullscreen')
 	def ToggleFullscreen(self):
 		"""Toggle fullscreen on the TouchDesigner main window."""
 		self.ownerComp.par.Fullscreen = not self.evalFullscreen

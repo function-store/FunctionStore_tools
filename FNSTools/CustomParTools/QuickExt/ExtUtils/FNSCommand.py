@@ -37,7 +37,8 @@ contract (spec fields, param styles, coercion rules).
 
 
 def fns_command(fn=None, *, id=None, label=None, help='', params=None,
-				args=None, kwargs=None, hidden=False, builtin=False):
+				args=None, kwargs=None, hidden=False, builtin=False,
+				state=None):
 	"""Mark a promoted extension method as a quick-launch command.
 
 	Pure metadata - safe at class-compile time with no registry present.
@@ -49,12 +50,19 @@ def fns_command(fn=None, *, id=None, label=None, help='', params=None,
 	builtin=True marks TD/system functionality (registry >= 1.4.0):
 	consumers list it with their native commands rather than under
 	tools - FNS tools should not normally set it.
+
+	state (registry >= 1.6.0) declares where the command's live value
+	lives so consumers can chip it (ON/OFF on toggles, the number on
+	setters): 'Parname' names a custom par on the owner COMP, or
+	{'method': 'GetX'} names a promoted no-arg method for computed
+	state. Evaluated at QUERY time by the registry - never stale, and
+	it MUST be trivially cheap (a par read, a one-liner).
 	"""
 	def mark(f):
 		f._fns_command = {
 			'id': id, 'label': label, 'help': help,
 			'params': params, 'args': args, 'kwargs': kwargs,
-			'hidden': hidden, 'builtin': builtin,
+			'hidden': hidden, 'builtin': builtin, 'state': state,
 		}
 		return f
 	return mark(fn) if callable(fn) else mark

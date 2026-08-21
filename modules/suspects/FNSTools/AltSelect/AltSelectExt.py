@@ -106,7 +106,7 @@ class AltSelectExt:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle AltSelect')
+	@FNSCommand.fns_command(label='Toggle AltSelect', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable AltSelect."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()

@@ -74,7 +74,7 @@ class AutoResExt:
 		pass
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Toggle AutoRes')
+	@FNSCommand.fns_command(label='Toggle AutoRes', state='Active')
 	def ToggleActive(self):
 		"""Enable or disable AutoRes."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()
