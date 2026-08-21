@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : SmoothnessExt
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 """
@@ -27,6 +27,11 @@ def fnsLog(*args, level='INFO'):
 			_logger.Log(*args, level=level)
 	except Exception:
 		pass
+
+
+
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class SmoothnessExt:
 	"""
@@ -62,3 +67,31 @@ class SmoothnessExt:
 			comp.par.Inputfiltertype = insmooth
 			comp.par.Filtertype = viewsmooth+1 #skipping same as input
 		ui.undo.endBlock()
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Smoothness -> selected')
+	def SmoothnessSelected(self):
+		"""Apply the smoothness setting to the selected operators."""
+		self.OnSelected()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Smoothness -> all')
+	def SmoothnessAll(self):
+		"""Apply the smoothness setting to all operators in the network."""
+		self.OnAll()
+		return {'ok': True}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass

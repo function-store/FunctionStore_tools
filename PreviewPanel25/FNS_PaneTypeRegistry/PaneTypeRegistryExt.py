@@ -1,4 +1,4 @@
-
+﻿
 
 CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or me.parent().op('ExtUtils')).mod('CustomParHelper').CustomParHelper # import
 ###
@@ -7,6 +7,22 @@ import enum
 import TDFunctions
 
 RegistryBase = mod('RegistryBase').RegistryBase
+
+
+### FNS_CommandRegistry helpers - from the FNSCommand module in ExtUtils
+### (single source of truth: QuickExt/ExtUtils/FNSCommand.py). Missing
+### module degrades to no-commands; the registry ext itself must never
+### fail to compile over it.
+try:
+	_fnsmod = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or me.parent().op('ExtUtils')).mod('FNSCommand')
+	fns_command = _fnsmod.fns_command
+	fns_announce = _fnsmod.announce
+except Exception:
+	def fns_command(fn=None, **kw):
+		return fn if callable(fn) else (lambda f: f)
+	def fns_announce(comp):
+		return None
+
 
 class PaneActions(enum.Enum):
 	NONE = 'NONE'
@@ -243,7 +259,7 @@ def onPaneRecall(ctx):
 
 	def onParViewreadme(self, _par=None):
 		"""Pulse: build README annotate and open the md/scroll panel viewer."""
-		# CustomParHelper uses a class-level EXT_SELF — always resolve from the pulsed par.
+		# CustomParHelper uses a class-level EXT_SELF â€” always resolve from the pulsed par.
 		owner = _par.owner if _par is not None else self.ownerComp
 		if owner is None or not owner.valid:
 			owner = self.ownerComp
@@ -402,8 +418,8 @@ def onPaneRecall(ctx):
 		with onPaneRecall(ctx). Legacy action=OWNER|NONE still maps when flags omitted.
 
 		menu_order: optional int sort wish among registered entries.
-		  None or < 0 → append (default, same as before).
-		  0, 1, 2, … → lower values appear earlier among custom rows.
+		  None or < 0 â†’ append (default, same as before).
+		  0, 1, 2, â€¦ â†’ lower values appear earlier among custom rows.
 		"""
 		if not self._is_sys_global():
 			api = self._registryApi()
@@ -420,7 +436,7 @@ def onPaneRecall(ctx):
 			debug(
 				'PaneTypeRegistry: RegisterPanel ignored on '
 				+ self.ownerComp.path
-				+ ' — no global /sys registry ready'
+				+ ' â€” no global /sys registry ready'
 			)
 			return
 
@@ -525,7 +541,7 @@ def onPaneRecall(ctx):
 			debug(
 				'PaneTypeRegistry: UnregisterPanel ignored on '
 				+ self.ownerComp.path
-				+ ' — no global /sys registry ready'
+				+ ' â€” no global /sys registry ready'
 			)
 			return
 
@@ -1006,7 +1022,7 @@ def onPaneRecall(ctx):
 		if not prev:
 			return
 		if not ext._ownsGlobalMenuName(prev):
-			# Stale name from template — do not unregister the template's live entry.
+			# Stale name from template â€” do not unregister the template's live entry.
 			ext.stored['HostCanonical'] = ''
 			try:
 				ext.stored['PaneRegistry'].clear()
@@ -1371,7 +1387,7 @@ def onPaneRecall(ctx):
 			self.RecallPanel(pane, canonical, flags=one_shot[item], run_callback=False)
 
 	def onPaneTypeSelected(self, change_dat):
-		"""Panebar selection callback — global /sys registry only."""
+		"""Panebar selection callback â€” global /sys registry only."""
 		if not self._is_sys_global():
 			return
 		pane = change_dat.parent(2)
@@ -1380,7 +1396,7 @@ def onPaneRecall(ctx):
 			self.RecallPanel(pane, selected)
 			return
 
-		# Injected builtins (e.g. OP Browser) — not in TD's desk table.
+		# Injected builtins (e.g. OP Browser) â€” not in TD's desk table.
 		injected = {label for label, _after in self.INJECTED_BUILTIN_MENU}
 		if selected in injected:
 			pane_type_name = self.BUILTIN_LABEL_TO_TYPE.get(selected)
@@ -1399,3 +1415,37 @@ def onPaneRecall(ctx):
 				debug('PaneTypeRegistry: changeType(' + pane_type_name + ') failed: ' + str(e))
 			return
 		# Native TD builtins are applied via the table's desk command column.
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+	# Registered only by the ACTIVE /sys global - this class runs in every
+	# host/shipper instance, and one palette row is enough.
+
+	@fns_command(label='Floating network editor')
+	def FloatingNetworkEditor(self):
+		"""Open a floating network editor on the current network."""
+		owner = ui.panes.current.owner if ui.panes.current else None
+		if owner is None:
+			return {'ok': False, 'error': 'no current pane'}
+		self.OpenFloatingNetworkEditor(owner)
+		return {'ok': True, 'owner': owner.path}
+
+	def _isCommandOwner(self):
+		return self.ownerComp is getattr(op, 'FNS_PANETYPEREGISTRY', None)
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		if self._isCommandOwner():
+			fns_announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		super().onDestroyTD()
+		try:
+			if self._isCommandOwner():
+				reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+				if reg is not None and hasattr(reg, 'Unregister'):
+					reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass
+

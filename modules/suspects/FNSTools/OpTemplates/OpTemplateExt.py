@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : OpTemplateExt
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 from functools import cached_property
@@ -21,6 +21,8 @@ def fnsLog(*args, level='INFO'):
 			_logger.Log(*args, level=level)
 	except Exception:
 		pass
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class OpTemplateExt:
 
@@ -514,3 +516,43 @@ class OpTemplateExt:
 	
 	def RefreshTemplates(self):
 		self.templatesCOMP.par.reinitnet.pulse()
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Open templates')
+	def OpenTemplates(self):
+		"""Open the OP templates browser (floating)."""
+		self.OpenTemplatesFloating()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Add selection to templates')
+	def AddToTemplates(self):
+		"""Save the current selection as a new template."""
+		self.TemplateSave()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Save templates', hidden=True)
+	def SaveTemplates(self):
+		"""Write the templates tox to disk."""
+		self.ownerComp.par.Savetemplates.pulse()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Refresh templates', hidden=True)
+	def RefreshTemplatesCmd(self):
+		"""Reload the templates from disk."""
+		self.ownerComp.par.Refreshtemplates.pulse()
+		return {'ok': True}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass

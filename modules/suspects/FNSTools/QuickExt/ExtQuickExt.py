@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : ExtQuickExt
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -19,6 +19,11 @@ def fnsLog(*args, level='INFO'):
 			_logger.Log(*args, level=level)
 	except Exception:
 		pass
+
+
+
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class ExtQuickExt:
 	def __init__(self, ownerComp):
@@ -212,3 +217,28 @@ class ExtQuickExt:
 
 	def OnOpen(self, info):
 		pass
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Create extension on current')
+	def CreateExtOnCurrent(self):
+		"""Run QuickExt's extension creator on the current COMP."""
+		target = ui.panes.current.owner.currentChild
+		if target is None or not target.isCOMP:
+			return {'ok': False, 'error': 'current operator is not a COMP'}
+		self.CreateExtension(target)
+		return {'ok': True, 'target': target.path}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass

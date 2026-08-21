@@ -29,6 +29,19 @@ class MyToolExt:
 the command would wrap. Labels are palette-row drafts; ids become muscle
 memory (`? rec 1`), so bikeshed them here, not after shipping.
 
+> **IMPLEMENTED 2026-08-21** — Tiers 1–5 + Second sweep are LIVE:
+> 81 commands from 42 owners, saved to suspects + .toe. Skipped (need
+> design): iopPromoter PromoteIop, PaneTypeRegistry RecallPanel,
+> OpTemplates PlaceTemplate, AutoRes SetRes, MY_HOTKEYS search-palette
+> mirror.
+>
+> **Built-in TD commands: DONE TDXLPP-side** (evening, registry 1.4.0 /
+> utility 0.16.0) — implemented as `TD_UI` + `TD_Project` comps in the
+> launcher companion, exactly the ownership this doc recommended. They
+> carry the new `builtin=True` flag: badged COMMAND, ranked in `>` after
+> tool commands, kept out of `?`. **FNS tools should not normally set
+> `builtin`** — none of the 81 rows here do, which is correct as-is.
+
 ---
 
 ## Tier 1 — performance / global actions (run from anywhere, mid-set)
@@ -168,69 +181,83 @@ installed. Note the 24-commands-per-tool cap: the full list below exceeds
 it, so either curate or split across two owners (`td-dialogs` +
 `td-session`).
 
+> **IMPLEMENTED 2026-08-21** (TDXLPP utility 0.15.0): two owners inside
+> the companion — **`TD_UI`** (dialogs & windows + panes, 22 commands)
+> and **`TD_Project`** (project & session + performance + files, 16),
+> both decorator-based with vendored `fns_command`, self-tagging +
+> announcing on init. Every API name verified against the live runtime;
+> PaneType turned out to have NINE members (adds `opbrowser` +
+> `parameters` to the list below). `set cook rate` and `toggle power`
+> ship `hidden=True`; undo/redo skipped per the note; "load recent"
+> became an int `index` param (1 = most recent) since spec menus are
+> registration-time snapshots and recent files churn. Window openers
+> defer a frame so the bus reply escapes; load/quit defer 30. Status
+> `yes` below = shipped in `TDXLPP/utility/TDXLauncherUtility/
+> TD_UI/TDUIExt.py` + `TD_Project/TDProjectExt.py`.
+
 ### Dialogs & windows (`ui.open*` — one-liners, zero risk)
 
 | Status | Command (label draft) | Source | Notes |
 |---|---|---|---|
-| | Open textport | `ui.openTextport()` | |
-| | Open errors dialog | `ui.openErrors()` | |
-| | Open console window | `ui.openConsole()` | The OS-level console, not textport |
-| | Open performance monitor | `ui.openPerformanceMonitor()` | |
-| | Open beat dialog | `ui.openBeat()` | Tap-tempo — mid-set relevant |
-| | Open bookmarks | `ui.openBookmarks()` | |
-| | Open key manager | `ui.openKeyManager()` | |
-| | Open MIDI device mapper | `ui.openMIDIDeviceMapper()` | Pairs with midiMapper tool |
-| | Open palette browser | `ui.openPaletteBrowser()` / `ui.showPaletteBrowser` toggle | Toggle form is nicer |
-| | Open operator snippets | `ui.openOperatorSnippets(optype=?)` | `params`: optional `optype` str → `? snip noiseTOP` |
-| | Open preferences | `ui.openPreferences()` | |
-| | Open window placement | `ui.openWindowPlacement()` | |
-| | Open search/replace | `ui.openSearch()` | Overlaps TDX_SearchPalette/MY_HOTKEYS rows — pick one |
-| | Import file… | `ui.openImportFile()` | |
-| | Export movie… | `ui.openExportMovie(path)` | `params`: `op` str path, default current/selected |
-| | Open version info | `ui.openVersion()` | |
+| yes | Open textport | `ui.openTextport()` | |
+| yes | Open errors dialog | `ui.openErrors()` | |
+| yes | Open console window | `ui.openConsole()` | The OS-level console, not textport |
+| yes | Open performance monitor | `ui.openPerformanceMonitor()` | |
+| yes | Open beat dialog | `ui.openBeat()` | Tap-tempo — mid-set relevant |
+| yes | Open bookmarks | `ui.openBookmarks()` | |
+| yes | Open key manager | `ui.openKeyManager()` | |
+| yes | Open MIDI device mapper | `ui.openMIDIDeviceMapper()` | Pairs with midiMapper tool |
+| yes | Open palette browser | `ui.openPaletteBrowser()` / `ui.showPaletteBrowser` toggle | Toggle form is nicer |
+| yes | Open operator snippets | `ui.openOperatorSnippets(optype=?)` | `params`: optional `optype` str → `? snip noiseTOP` |
+| yes | Open preferences | `ui.openPreferences()` | |
+| yes | Open window placement | `ui.openWindowPlacement()` | |
+| yes | Open search/replace | `ui.openSearch()` | Overlaps TDX_SearchPalette/MY_HOTKEYS rows — pick one |
+| yes | Import file… | `ui.openImportFile()` | |
+| yes | Export movie… | `ui.openExportMovie(path)` | `params`: `op` str path, default current/selected |
+| yes | Open version info | `ui.openVersion()` | |
 
 ### Project & session ([Project Class](https://docs.derivative.ca/Project_Class))
 
 | Status | Command (label draft) | Source | Notes |
 |---|---|---|---|
-| | Save project | `project.save()` | Increments filename — the standard save. The single most palette-worthy built-in |
-| | Save project + external toxes | `project.save(saveExternalToxs=True)` | Separate row; explicit help text |
-| | Load recent file | `project.load(path)` + `app.recentFiles` | `params`: `file` menu from `app.recentFiles[:16]` → `? recent 2`. Quits current session — confirm-worthy |
-| | Quit TouchDesigner | `project.quit()` | Prompts for unsaved changes by default (never `force=True` from a palette) |
-| | Toggle realtime | `project.realTime` | Classic render-mode flip |
-| | Set cook rate | `project.cookRate = x` | `params`: `fps` float |
-| | Toggle window on top | `project.windowOnTop` | |
-| | Toggle perform-on-start | `project.performOnStart` | |
+| yes | Save project | `project.save()` | Increments filename — the standard save. The single most palette-worthy built-in |
+| yes | Save project + external toxes | `project.save(saveExternalToxs=True)` | Separate row; explicit help text |
+| yes | Load recent file | `project.load(path)` + `app.recentFiles` | `params`: `file` menu from `app.recentFiles[:16]` → `? recent 2`. Quits current session — confirm-worthy |
+| yes | Quit TouchDesigner | `project.quit()` | Prompts for unsaved changes by default (never `force=True` from a palette) |
+| yes | Toggle realtime | `project.realTime` | Classic render-mode flip |
+| yes | Set cook rate | `project.cookRate = x` | `params`: `fps` float |
+| yes | Toggle window on top | `project.windowOnTop` | |
+| yes | Toggle perform-on-start | `project.performOnStart` | |
 
 ### Performance & playback
 
 | Status | Command (label draft) | Source | Notes |
 |---|---|---|---|
-| | Toggle perform mode | `ui.performMode` | Overlaps OUTPUT `button_perform` row — decide which owns it |
-| | Toggle power | `app.power` | The big master switch — halts ALL processing. Footgun-adjacent; loud help text |
-| | Set master volume | `ui.masterVolume = x` | Overlaps GlobalVolControl — pick one owner |
-| | Undo / Redo | `ui.undo.undo()` / `.redo()` | Ctrl+Z exists; palette value dubious — mark no unless wanted for macros |
+| yes | Toggle perform mode | `ui.performMode` | Overlaps OUTPUT `button_perform` row — decide which owns it |
+| yes | Toggle power | `app.power` | The big master switch — halts ALL processing. Footgun-adjacent; loud help text |
+| yes | Set master volume | `ui.masterVolume = x` | Overlaps GlobalVolControl — pick one owner |
+| no | Undo / Redo | `ui.undo.undo()` / `.redo()` | Ctrl+Z exists; palette value dubious — mark no unless wanted for macros |
 
 ### Panes & navigation ([Pane Class](https://docs.derivative.ca/Pane_Class), TDFunctions)
 
 | Status | Command (label draft) | Source | Notes |
 |---|---|---|---|
-| | Maximize current pane | `ui.panes.current.maximize` toggle | |
-| | Tear away current pane | `ui.panes.current.tearAway()` | |
-| | Change pane type | `pane.changeType(PaneType.X)` | `params`: `type` menu (8 PaneType values) → `? pane topviewer` |
-| | Floating copy of pane | `ui.panes.current.floatingCopy()` | |
-| | Show op in floating pane | `TDFunctions.showInPane(op, pane='Floating')` | `params`: `path` str → `? show /project1/geo1`. Navigation gem |
-| | Home network view | NetworkEditor `home()` | Verify exact signature on NetworkEditor Class before building |
+| yes | Maximize current pane | `ui.panes.current.maximize` toggle | |
+| yes | Tear away current pane | `ui.panes.current.tearAway()` | |
+| yes | Change pane type | `pane.changeType(PaneType.X)` | `params`: `type` menu (8 PaneType values) → `? pane topviewer` |
+| yes | Floating copy of pane | `ui.panes.current.floatingCopy()` | |
+| yes | Show op in floating pane | `TDFunctions.showInPane(op, pane='Floating')` | `params`: `path` str → `? show /project1/geo1`. Navigation gem |
+| yes | Home network view | NetworkEditor `home()` | Verify exact signature on NetworkEditor Class before building |
 
 ### Clipboard, files & folders ([App Class](https://derivative.ca/UserGuide/App_Class), `ui.viewFile`)
 
 | Status | Command (label draft) | Source | Notes |
 |---|---|---|---|
-| | Open project folder | `ui.viewFile(project.folder)` | Explorer/Finder on the .toe's folder — daily-driver row |
-| | Open TD folder… | `ui.viewFile(app.<x>Folder)` | `params`: `folder` menu — userPalette / desktop / temp / preferences / bin / samples / install |
-| | Copy current op path | `ui.clipboard = <op>.path` | Uses selected/rollover op; pairs with OpToClipboard tool |
-| | Open selected op parameters | `op.openParameters()` ([OP Class](https://docs.derivative.ca/OP_Class)) | Floating par dialog — overlaps MY_HOTKEYS currparam row |
-| | Open selected op viewer | `op.openViewer()` | |
+| yes | Open project folder | `ui.viewFile(project.folder)` | Explorer/Finder on the .toe's folder — daily-driver row |
+| yes | Open TD folder… | `ui.viewFile(app.<x>Folder)` | `params`: `folder` menu — userPalette / desktop / temp / preferences / bin / samples / install |
+| yes | Copy current op path | `ui.clipboard = <op>.path` | Uses selected/rollover op; pairs with OpToClipboard tool |
+| yes | Open selected op parameters | `op.openParameters()` ([OP Class](https://docs.derivative.ca/OP_Class)) | Floating par dialog — overlaps MY_HOTKEYS currparam row |
+| yes | Open selected op viewer | `op.openViewer()` | |
 
 ### Ruled out from the API sweep
 

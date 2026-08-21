@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : QuickmarkStorageExt
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 ### Code and idea from Alex Guevara
@@ -22,6 +22,11 @@ def fnsLog(*args, level='INFO'):
             _logger.Log(*args, level=level)
     except Exception:
         pass
+
+
+
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class QuickmarkStorageExt:
     def __init__(self, ownerComp):
@@ -104,3 +109,43 @@ class QuickmarkStorageExt:
         elif 'ctrl.' in shortcutName and 'alt.shift.' in shortcutName and key_number in [str(i) for i in range(1, 10)]:
             quickmark_key = f"Quickmark{key_number}"
             self.UnstoreQuickmark(quickmark_key)
+
+    ### FNS_CommandRegistry (quick-launch commands) ###
+
+    @FNSCommand.fns_command(label='Go to quickmark')
+    def GoToMark(self, slot: int):
+        """Jump to the quickmark stored in the given slot."""
+        self.RetrieveQuickmark(int(slot))
+        return {'ok': True, 'slot': int(slot)}
+
+    @FNSCommand.fns_command(label='Store quickmark')
+    def StoreMark(self, slot: int):
+        """Store the current network location in the given slot."""
+        self.StoreQuickmark(int(slot))
+        return {'ok': True, 'slot': int(slot)}
+
+    @FNSCommand.fns_command(label='Clear quickmark')
+    def ClearMark(self, slot: int):
+        """Clear the quickmark stored in the given slot."""
+        self.UnstoreQuickmark(int(slot))
+        return {'ok': True, 'slot': int(slot)}
+
+    def onInitTD(self):
+        run('args[0]._announceCommands()', self, delayFrames=60)
+
+    def _announceCommands(self):
+        FNSCommand.announce(self.ownerComp)
+
+    def onDestroyTD(self):
+        try:
+            reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+            if reg is not None and hasattr(reg, 'Unregister'):
+                reg.Unregister(self.ownerComp.path)
+        except Exception:
+            pass
+
+    @FNSCommand.fns_command(label='Toggle QuickMarks')
+    def ToggleActive(self):
+        """Enable or disable QuickMarks."""
+        self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()
+        return {'ok': True, 'active': bool(self.ownerComp.par.Active.eval())}

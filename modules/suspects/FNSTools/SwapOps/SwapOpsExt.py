@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : SwapOpsExt
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -15,6 +15,11 @@ def fnsLog(*args, level='INFO'):
 			_logger.Log(*args, level=level)
 	except Exception:
 		pass
+
+
+
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class SwapOpsExt:
 	"""
@@ -153,3 +158,24 @@ class SwapOpsExt:
 					middle_op.inputConnectors[1+idx].connect(moi)
 
 	
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Swap selected ops')
+	def SwapSelected(self):
+		"""Swap the connections of the selected operators."""
+		self.OnSwap()
+		return {'ok': True}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass

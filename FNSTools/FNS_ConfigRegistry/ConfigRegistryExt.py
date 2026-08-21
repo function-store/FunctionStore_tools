@@ -10,6 +10,22 @@ import os
 import time
 
 
+
+### FNS_CommandRegistry helpers - from the FNSCommand module in ExtUtils
+### (single source of truth: QuickExt/ExtUtils/FNSCommand.py). Missing
+### module degrades to no-commands; the registry ext itself must never
+### fail to compile over it.
+try:
+	_fnsmod = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or me.parent().op('ExtUtils')).mod('FNSCommand')
+	fns_command = _fnsmod.fns_command
+	fns_announce = _fnsmod.announce
+except Exception:
+	def fns_command(fn=None, **kw):
+		return fn if callable(fn) else (lambda f: f)
+	def fns_announce(comp):
+		return None
+
+
 class ConfigRegistryExt(RegistryBase):
 	"""Registry for persisted tool settings (the FNS config file).
 
@@ -1192,3 +1208,46 @@ class ConfigRegistryExt(RegistryBase):
 
 	def onParLoadall(self, _par):
 		self._hostExtFromPar(_par).LoadAll()
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+	# Registered only by the ACTIVE /sys global - this class runs in every
+	# host/shipper instance, and one palette row set is enough.
+
+	@fns_command(label='Save all tool configs')
+	def SaveAllConfigs(self):
+		"""Save every registered tool's config."""
+		self.SaveAll()
+		return {'ok': True}
+
+	@fns_command(label='Load all tool configs', hidden=True)
+	def LoadAllConfigs(self):
+		"""Load every registered tool's config."""
+		self.LoadAll()
+		return {'ok': True}
+
+	@fns_command(label='Open FNS settings')
+	def OpenConfigSettings(self):
+		"""Open the FNS_Config settings UI."""
+		self.OpenSettingsUI()
+		return {'ok': True}
+
+	def _isCommandOwner(self):
+		return self.ownerComp is getattr(op, 'FNS_CONFIGREGISTRY', None)
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		if self._isCommandOwner():
+			fns_announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		super().onDestroyTD()
+		try:
+			if self._isCommandOwner():
+				reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+				if reg is not None and hasattr(reg, 'Unregister'):
+					reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass
+

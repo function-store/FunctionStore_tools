@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : ExtOpToClipboard
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 import re
@@ -16,6 +16,8 @@ def fnsLog(*args, level='INFO'):
 			_logger.Log(*args, level=level)
 	except Exception:
 		pass
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class ExtOpToClipboard:
 	def __init__(self, ownerComp):
@@ -67,3 +69,31 @@ class ExtOpToClipboard:
 		# If no match, return None
 		return False
 
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Copy op to clipboard')
+	def CopyOpToClipboard(self):
+		"""Copy the current operator to the OS clipboard."""
+		self.OnCopy()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Toggle OpToClipboard')
+	def ToggleActive(self):
+		"""Enable or disable OpToClipboard."""
+		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()
+		return {'ok': True, 'active': bool(self.ownerComp.par.Active.eval())}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass

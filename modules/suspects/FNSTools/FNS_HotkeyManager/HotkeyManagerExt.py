@@ -4,6 +4,7 @@ from typing import List, Optional, Tuple
 import TDFunctions as TDF
 
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 ############
 
 def fnsLog(*args, level='INFO'):
@@ -984,3 +985,37 @@ class HotkeyManagerExt:
 		self.AllHotkeyPars()
 		self.ComputeConflicts()
 		self.RefreshUI()
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Open hotkey UI')
+	def OpenHotkeyUI(self):
+		"""Open the hotkey manager lister."""
+		self.OpenUI()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Save hotkeys')
+	def SaveHotkeysCmd(self):
+		"""Save the current hotkey bindings."""
+		self.ownerComp.par.Savehotkeys.pulse()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Load hotkeys')
+	def LoadHotkeysCmd(self):
+		"""Load the saved hotkey bindings."""
+		self.ownerComp.par.Loadhotkeys.pulse()
+		return {'ok': True}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass

@@ -15,9 +15,12 @@ so re-running after adding a module to the master is free.
 Two shapes of ExtUtils live in the project and only one is a target:
 
 	full - carries NoNode; what a tool's extension docks to.  CLONED.
-	slim - 9 children, no NoNode; lives inside the FNS_*Registry hosts
-	       and FNS_ConfigHost.  LEFT ALONE - cloning would force the
-	       master's whole child set onto a deliberately trimmed copy.
+	slim - no NoNode; lives inside the FNS_*Registry hosts and
+	       FNS_ConfigHost.  NOT cloned (cloning would force the master's
+	       whole child set onto a deliberately trimmed copy), but each
+	       slim MUST carry a FNSCommand DAT file-synced to the master's
+	       module - rollout() copies it in where missing, so the module
+	       has ONE source of truth everywhere.
 
 Cloning does NOT carry dock relationships: TD forces a clone's children,
 wiring, layout, parameter values and flags to match the master, but not
@@ -59,11 +62,14 @@ def survey():
 	dockmap = _dockMap(m)
 	modules = set(x.name for x in m.children)
 	out = {'ok': True, 'master': m.path, 'targets': 0, 'skipped': {},
-	       'need_clone': [], 'need_docks': [], 'missing_modules': []}
+	       'need_clone': [], 'need_docks': [], 'missing_modules': [],
+	       'slim_missing_fnscommand': []}
 	for c in _instances():
 		reason = _skipReason(c, m)
 		if reason:
 			out['skipped'][reason] = out['skipped'].get(reason, 0) + 1
+			if reason == 'slim' and c.op('FNSCommand') is None:
+				out['slim_missing_fnscommand'].append(c.path)
 			continue
 		out['targets'] += 1
 		if not _isCloneOf(c, m):
@@ -74,7 +80,9 @@ def survey():
 		drift = _dockDrift(c, dockmap)
 		if drift:
 			out['need_docks'].append((c.path, drift))
-	out['healthy'] = not (out['need_clone'] or out['need_docks'] or out['missing_modules'])
+	out['healthy'] = not (out['need_clone'] or out['need_docks']
+	                      or out['missing_modules']
+	                      or out['slim_missing_fnscommand'])
 	return out
 
 
@@ -89,11 +97,16 @@ def rollout(apply=False):
 		return {'ok': False, 'error': 'no master %r beside this DAT' % MASTER_NAME}
 	dockmap = _dockMap(m)
 	out = {'ok': True, 'apply': apply, 'master': m.path,
-	       'cloned': [], 'docks_repaired': [], 'skipped': {}}
+	       'cloned': [], 'docks_repaired': [], 'skipped': {},
+	       'slim_module_added': []}
 	for c in _instances():
 		reason = _skipReason(c, m)
 		if reason:
 			out['skipped'][reason] = out['skipped'].get(reason, 0) + 1
+			if reason == 'slim' and c.op('FNSCommand') is None:
+				if apply:
+					_addSlimModule(c, m)
+				out['slim_module_added'].append(c.path)
 			continue
 		if not _isCloneOf(c, m):
 			if apply:
@@ -110,13 +123,39 @@ def rollout(apply=False):
 	return out
 
 
+def _addSlimModule(slim, m):
+	"""Copy the master's FNSCommand DAT into a slim instance.
+
+	The copy keeps the master's file/syncfile binding, so every copy
+	syncs the ONE module file - single source of truth. Placed at the
+	slim network's clear bottom-left corner.
+	"""
+	import math
+	new = slim.copy(m.op('FNSCommand'))
+	sibs = [x for x in slim.children if x is not new]
+	if sibs:
+		new.nodeX = int(math.floor(min(x.nodeX for x in sibs) / 200.0) * 200)
+		new.nodeY = int(math.floor((min(x.nodeY for x in sibs)
+		                            - new.nodeHeight - 200) / 200.0) * 200)
+	return new
+
+
 def _instances():
-	"""Every ExtUtils in the project, by tag then by name."""
+	"""Every ExtUtils in the project, by tag then by name.
+
+	root.findChildren does NOT reach the promoted registry copies in
+	/sys (found the hard way: their slim ExtUtils missed a module
+	sweep), so /sys is scanned explicitly.
+	"""
 	found = {}
 	for c in root.findChildren(tags=[MASTER_NAME]):
 		found[c.path] = c
 	for c in root.findChildren(name=MASTER_NAME):
 		found.setdefault(c.path, c)
+	sysop = op('/sys')
+	if sysop:
+		for c in sysop.findChildren(name=MASTER_NAME):
+			found.setdefault(c.path, c)
 	return list(found.values())
 
 
@@ -128,6 +167,12 @@ def _skipReason(comp, m):
 		return 'excluded'
 	if comp.op(FULL_MARKER) is None:
 		return 'slim'
+	if comp.path.startswith('/sys/'):
+		# Full instances inside promoted /sys registry copies are
+		# process-transient - recreated from their (already covered)
+		# shippers on every promotion. Slims above still get the
+		# FNSCommand module check; fulls are not clone targets.
+		return 'sys-transient'
 	return None
 
 

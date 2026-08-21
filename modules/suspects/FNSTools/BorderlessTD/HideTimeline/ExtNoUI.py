@@ -3,11 +3,12 @@
 
 '''Info Header Start
 Name : ExtNoUI
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 ###
 
 def fnsLog(*args, level='INFO'):
@@ -105,6 +106,30 @@ class ExtNoUI:
 
 	def onParHidetimeline(self, value):
 		self._setStateTimeline(not value)
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Toggle timeline')
+	def ToggleTimeline(self):
+		"""Show or hide the timeline bar."""
+		if not self.module_enabled:
+			return {'ok': False, 'error': 'HideTimeline is disabled - turn Enable Timeline Module on first'}
+		self._setStateTimeline()
+		return {'ok': True, 'shown': bool(self.timeline_height)}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass
 
 
 	def OnShortcut(self, shortcutName):

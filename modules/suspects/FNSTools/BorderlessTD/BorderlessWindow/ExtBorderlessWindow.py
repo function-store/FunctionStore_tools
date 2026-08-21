@@ -66,6 +66,7 @@ GetClientRect = ctypes.windll.user32.GetClientRect
 GetWindowPlacement = ctypes.windll.user32.GetWindowPlacement
 
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 ###
 
 def fnsLog(*args, level='INFO'):
@@ -398,4 +399,32 @@ class ExtBorderlessWindow:#
 				continue
 
 			target.par.display = state
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Toggle borderless')
+	def ToggleBorderless(self):
+		"""Toggle the borderless TouchDesigner main window."""
+		self.ownerComp.par.Borderless = not self.evalBorderless
+		return {'ok': True, 'borderless': bool(self.evalBorderless)}
+
+	@FNSCommand.fns_command(label='Toggle fullscreen')
+	def ToggleFullscreen(self):
+		"""Toggle fullscreen on the TouchDesigner main window."""
+		self.ownerComp.par.Fullscreen = not self.evalFullscreen
+		return {'ok': True, 'fullscreen': bool(self.evalFullscreen)}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass
 

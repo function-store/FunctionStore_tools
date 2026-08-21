@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : QuickParentExt
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -15,6 +15,11 @@ def fnsLog(*args, level='INFO'):
 			_logger.Log(*args, level=level)
 	except Exception:
 		pass
+
+
+
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class QuickParentExt:
 	def __init__(self, ownerComp):
@@ -41,3 +46,28 @@ class QuickParentExt:
 					fnsLog(f'QuickParent: set parent shortcut "{result["enteredText"]}" on {self.paneParent.path}')
 
 
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Add parent shortcut')
+	def AddShortcutToCurrent(self):
+		"""Add a parent shortcut to the current COMP (prompts for the name)."""
+		target = ui.panes.current.owner.currentChild
+		if target is None or not target.isCOMP:
+			return {'ok': False, 'error': 'current operator is not a COMP'}
+		self.AddParentshortcut(target)
+		return {'ok': True, 'target': target.path}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass

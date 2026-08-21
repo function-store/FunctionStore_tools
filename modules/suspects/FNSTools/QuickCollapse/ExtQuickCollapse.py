@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : ExtQuickCollapse
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
@@ -17,6 +17,8 @@ def fnsLog(*args, level='INFO'):
 			_logger.Log(*args, level=level)
 	except Exception:
 		pass
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class ExtQuickCollapse:
 	def __init__(self, ownerComp):
@@ -80,3 +82,31 @@ class ExtQuickCollapse:
 
 	
 
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Collapse selected')
+	def CollapseSelected(self):
+		"""Collapse the selected operators into a container."""
+		self.OnCollapse()
+		return {'ok': True}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass
+
+	@FNSCommand.fns_command(label='Toggle QuickCollapse')
+	def ToggleActive(self):
+		"""Enable or disable QuickCollapse."""
+		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()
+		return {'ok': True, 'active': bool(self.ownerComp.par.Active.eval())}

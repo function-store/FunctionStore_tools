@@ -37,7 +37,7 @@ contract (spec fields, param styles, coercion rules).
 
 
 def fns_command(fn=None, *, id=None, label=None, help='', params=None,
-				args=None, kwargs=None, hidden=False):
+				args=None, kwargs=None, hidden=False, builtin=False):
 	"""Mark a promoted extension method as a quick-launch command.
 
 	Pure metadata - safe at class-compile time with no registry present.
@@ -46,12 +46,15 @@ def fns_command(fn=None, *, id=None, label=None, help='', params=None,
 	(@fns_command(label='...', params=[...])). hidden=True declares the
 	command surfaced only when a user opts in (consumers keep it off
 	their default listings - an "advanced" affordance, not a secret).
+	builtin=True marks TD/system functionality (registry >= 1.4.0):
+	consumers list it with their native commands rather than under
+	tools - FNS tools should not normally set it.
 	"""
 	def mark(f):
 		f._fns_command = {
 			'id': id, 'label': label, 'help': help,
 			'params': params, 'args': args, 'kwargs': kwargs,
-			'hidden': hidden,
+			'hidden': hidden, 'builtin': builtin,
 		}
 		return f
 	return mark(fn) if callable(fn) else mark

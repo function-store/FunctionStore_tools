@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : ExtParRandomizer
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 
@@ -15,6 +15,11 @@ def fnsLog(*args, level='INFO'):
 			_logger.Log(*args, level=level)
 	except Exception:
 		pass
+
+
+
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class ExtParRandomizer:
 	def __init__(self, ownerComp):
@@ -167,3 +172,49 @@ class ExtParRandomizer:
 		if shortcutName == self.ownerComp.par.Shortcutresetallcustom.eval():
 			self.onResetAllCustom()
 
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Randomize rollover par')
+	def RandomizeRollover(self):
+		"""Randomize the parameter under the mouse."""
+		self.OnRandomizeRolloverPar()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Randomize pars of op')
+	def RandomizeOp(self):
+		"""Randomize all parameters of the current operator."""
+		self.OnRandomizeOp()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Reset custom pars to defaults')
+	def ResetCustomDefaults(self):
+		"""Reset the current op's custom parameters to their defaults."""
+		self.OnResetAllCustom()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Save custom defaults')
+	def SaveCustomDefaults(self):
+		"""Store the current custom parameter values as defaults."""
+		self.SaveAllCustomDefaults()
+		return {'ok': True}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass
+
+	@FNSCommand.fns_command(label='Toggle ParRandomizer')
+	def ToggleActive(self):
+		"""Enable or disable ParRandomizer."""
+		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()
+		return {'ok': True, 'active': bool(self.ownerComp.par.Active.eval())}

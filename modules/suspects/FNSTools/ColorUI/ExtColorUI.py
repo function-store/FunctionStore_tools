@@ -1,12 +1,13 @@
 ﻿'''Info Header Start
 Name : ExtColorUI
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.65.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 
 
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 ###
 
@@ -341,3 +342,55 @@ class ExtColorUI:
 	def onParFile(self, _file):
 		if _file and not _file.endswith('.json'):
 			self.evalFile = _file + '.json'
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Open color UI')
+	def OpenColorUI(self):
+		"""Open the TouchDesigner UI color editor."""
+		self.OpenUI()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Randomize colors')
+	def RandomizeColors(self):
+		"""Randomize the UI colors."""
+		self.Randomize()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Undo randomize')
+	def UndoRandomize(self):
+		"""Undo the last color randomization."""
+		self.UndoRandom()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Reset all colors', hidden=True)
+	def ResetAllColors(self):
+		"""Reset every UI color to its default."""
+		self.ResetAll()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Import color palette', hidden=True)
+	def ImportPalette(self):
+		"""Import a UI color palette from file."""
+		self.DoImport()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Export color palette', hidden=True)
+	def ExportPalette(self):
+		"""Export the current UI colors to file."""
+		self.DoExport()
+		return {'ok': True}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass

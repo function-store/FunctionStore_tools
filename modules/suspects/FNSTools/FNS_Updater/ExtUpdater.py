@@ -1,8 +1,8 @@
 
 '''Info Header Start
 Name : ExtUpdater
-Author : root
-Saveorigin : FunctionStore_tools_2025_DEV.38.toe
+Author : Dan@DAN-4090
+Saveorigin : FunctionStore_tools_2025_DEV.69.toe
 Saveversion : 2025.33070
 Info Header End'''
 """Bucket + manifest updates for the toolkit.
@@ -127,6 +127,8 @@ def fnsLog(*args, level='INFO'):
 	except Exception:
 		pass
 
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
 class ExtUpdater:
 	"""Update motions for the toolkit, driven by artifact hashes."""
@@ -1106,3 +1108,31 @@ class ExtUpdater:
 
 	def Refreshstore(self, _=None):
 		self.RefreshStore()
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Check for updates')
+	def CheckForUpdates(self):
+		"""Check the store for FunctionStore tool updates."""
+		run('args[0].par.Check.pulse()', self.ownerComp, delayFrames=1)
+		return {'ok': True, 'started': True}
+
+	@FNSCommand.fns_command(label='Update tools', hidden=True)
+	def UpdateTools(self):
+		"""Download and install available tool updates."""
+		run('args[0].par.Update.pulse()', self.ownerComp, delayFrames=1)
+		return {'ok': True, 'started': True}
+
+	def onInitTD(self):
+		run('args[0]._announceCommands()', self, delayFrames=60)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def onDestroyTD(self):
+		try:
+			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+			if reg is not None and hasattr(reg, 'Unregister'):
+				reg.Unregister(self.ownerComp.path)
+		except Exception:
+			pass
