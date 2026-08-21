@@ -124,17 +124,3 @@ class ExtParOPPlace:
 		"""Enable or disable ParOPDrop."""
 		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()
 		return {'ok': True, 'active': bool(self.ownerComp.par.Active.eval())}
-
-	def onInitTD(self):
-		run('args[0]._announceCommands()', self, delayFrames=60)
-
-	def _announceCommands(self):
-		FNSCommand.announce(self.ownerComp)
-
-	def onDestroyTD(self):
-		try:
-			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
-			if reg is not None and hasattr(reg, 'Unregister'):
-				reg.Unregister(self.ownerComp.path)
-		except Exception:
-			pass

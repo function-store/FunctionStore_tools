@@ -380,17 +380,3 @@ class ExtColorUI:
 		"""Export the current UI colors to file."""
 		self.DoExport()
 		return {'ok': True}
-
-	def onInitTD(self):
-		run('args[0]._announceCommands()', self, delayFrames=60)
-
-	def _announceCommands(self):
-		FNSCommand.announce(self.ownerComp)
-
-	def onDestroyTD(self):
-		try:
-			reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
-			if reg is not None and hasattr(reg, 'Unregister'):
-				reg.Unregister(self.ownerComp.path)
-		except Exception:
-			pass
