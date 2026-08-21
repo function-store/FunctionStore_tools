@@ -367,7 +367,9 @@ A hook that raises is contained: debug()'d, skipped, dialog keeps working.
 
 ## 1. Core idea: one global manager, many host publishers
 
-> **Where the globals live.** Every promoted global sits in one container,
+> **Where the globals live.** (Contract for agents:
+> [RegistryHomeContract.md](RegistryHomeContract.md).)
+> Every promoted global sits in one container,
 > `/sys/FNS_Registries` — created on demand by whichever registry promotes
 > first, and shared with FNS_CommandRegistry from TDXLauncherUtility. Global
 > OP shortcuts resolve from any depth, so nothing that *consumes* a registry
