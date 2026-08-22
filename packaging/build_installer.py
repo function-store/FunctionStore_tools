@@ -109,7 +109,7 @@ def _installerComp(parent):
               "<project folder>/FNStools.")
     p = pg.appendInt('Port', label='Configurator Port')[0]
     p.normMin, p.normMax = 1024, 65535
-    p.default = p.val = 36720    # above the console's 36710-36719 block
+    p.default = p.val = 36760    # above the console's 36710-36759 block
     p.help = 'Local port the served configurator listens on.'
     p = pg.appendStr('Status')[0]
     p.readOnly = True
@@ -152,7 +152,7 @@ def _installerComp(parent):
 
     ws = comp.create(webserverDAT, 'webserver')
     ws.par.active = False
-    ws.par.port = 36720
+    ws.par.port = 36760
     ws.par.callbacks = 'webserver_callbacks'
     ws.nodeX, ws.nodeY = 200, -500
     _refreshInstallerSources(comp)

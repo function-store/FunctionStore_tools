@@ -688,9 +688,11 @@ class ConfigRegistryExt(RegistryBase):
 
 	# A deliberately uncommon block: the 8xxx/9xxx dev-server range is
 	# crowded, and a bind failure there is hard to tell from a toolkit bug.
-	# The installer's picker sits just above (36720+), so the two never
-	# scan into each other.
-	UI_PORTS = tuple(range(36710, 36720))
+	# The installer's picker sits just above (36760+), so the two never
+	# scan into each other. Fifty wide, not ten: Windows reserves ~16-port
+	# blocks for Hyper-V/WSL at semi-random places, and a narrow scan that
+	# starts inside one reports "no free port" on an idle machine.
+	UI_PORTS = tuple(range(36710, 36760))
 	UI_IDLE_SECONDS = 600
 	UI_TICK_FRAMES = 1800
 

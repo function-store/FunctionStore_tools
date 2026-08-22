@@ -670,16 +670,19 @@ class InstallerExt:
 
     def _port(self):
         try:
-            return int(self._par('Port') or 36720)
+            return int(self._par('Port') or 36760)
         except ValueError:
-            return 36720
+            return 36760
 
-    PORT_SPAN = 10
+    # Fifty wide, like the console's block: Windows reserves ~16-port
+    # ranges for Hyper-V/WSL at semi-random places, and a narrow scan that
+    # starts inside one finds nothing free on an idle machine.
+    PORT_SPAN = 50
 
     def _freePort(self):
         """First free port from Port upward (PORT_SPAN tries). Several
         open projects each carry an installer -- and the FNS console scans
-        36710-36719 the same way -- so a fixed port would make the second
+        36710-36759 the same way -- so a fixed port would make the second
         server fail to bind; a bind test picks a live one instead."""
         import socket
         base = self._port()
