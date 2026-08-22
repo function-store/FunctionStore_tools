@@ -766,9 +766,10 @@ ext). One page, two tabs plus document actions:
   `/selection`, `/status`, `/install` straight to
   `InstallerExt.ServeRequest` in-process — one origin, one port, zero
   duplicated picker logic. Without an installer COMP the tab shows a
-  plain explanation (verified in the DEV project, which has none;
-  the forwarding path itself still needs a live check in a project that
-  ships the bootstrap). Unchecking an installed tool = removal, and the
+  plain explanation. **Verified live (2026-08-22)** once the rails became
+  dev-root residents: `/tools` serves the picker, `/manifest.js` comes
+  back `FNS_SERVED` with the root's children pre-checked, `/status`
+  forwards. Unchecking an installed tool = removal, and the
   tab's banner states the precedence rule: install decides WHAT is in
   the project; the config layer always re-applies on top, and removed
   tools keep their settings for the next install. The same sentence now
@@ -782,6 +783,23 @@ ext). One page, two tabs plus document actions:
 - **Scope** — `/api/scope` reads/flips `Configscope`. `project` flips
   quietly; `global` REQUIRES `mode: push|adopt` (the page shows the same
   three-way choice as the in-TD dialog — no popup, an explicit decision).
+
+## 4.4 The rails live in the dev root (2026-08-22)
+
+`FNS_Installer` and `webBrowser` are now residents of the live `FNSTools`
+root beside `FNS_Updater`, and the bootstrap is that root **castrated with
+the rails kept** (`BOOTSTRAP_KEEP` in `build_installer.py`) rather than
+emptied and re-injected. The reason is the one that motivated castration
+in the first place: a build-only copy of anything is a second source that
+drifts. `EnsureDevRails()` builds missing rails and re-embeds the
+installer's two source snapshots in place; `BuildBootstrap()` runs the
+same refresh on its staged copy and blanks per-project installer state
+(selection, status, server). `FNS_Updater` stays a build-time injection
+from the dist artifact on purpose — the dev copy is an Embody-tracked
+master with file bindings. Known gap surfaced while doing this: the
+published `v2.11.2` has no `rails` (no bootstrap was ever built after the
+castration rework), so the website's paste-script rail asserts against it
+until the next publish.
 
 ## 5. Open questions
 

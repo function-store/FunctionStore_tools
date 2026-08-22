@@ -110,6 +110,21 @@ result = BuildInstaller()     # -> packaging/dist/FNS_Installer.tox
 result = BuildBootstrap()     # -> packaging/dist/FNSTools.tox
 ```
 
+The rails are residents of the dev root (`FNSTools/FNS_Installer` +
+`FNSTools/webBrowser`), and the bootstrap is the dev root castrated with
+those two kept. After editing `InstallerExt.py` or
+`configurator/index.html`, refresh the live copies first so the dev
+project runs what ships:
+
+```python
+exec(open('packaging/build_installer.py').read())
+result = EnsureDevRails()     # builds missing rails, re-embeds sources in place
+```
+
+`BuildBootstrap()` performs the same refresh on its staged copy regardless,
+so a forgotten `EnsureDevRails()` only ever leaves the DEV installer stale,
+never a shipped one.
+
 The bootstrap embeds the `FNS_Updater` artifact from `dist/`, so
 `Build(export=['FNS_Updater'])` first when the updater itself changed. A
 stale embedded copy is self-healing (its live `Pkgversion` is what the

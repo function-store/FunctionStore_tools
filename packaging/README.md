@@ -101,9 +101,17 @@ pitches come off `category_meta` on the manifest — curated in
 `catalog.json`, edited in the website CMS — so the picker heads its
 sections exactly like the site does, with or without a site to ask.
 
-Both are BUILD ARTIFACTS, not hand-made components — they embed snapshots
-of `InstallerExt.py` and `configurator/index.html`, so editing either
-means rebuilding (the bootstrap also embeds `dist/FNS_Updater.tox`).
+**The rails live in the dev root.** `FNS_Installer` and `webBrowser` are
+residents of the live `FNSTools` root, beside `FNS_Updater` — the bootstrap
+is that root castrated (tools stripped, rails kept), so what you drop is
+what we develop in, rail for rail. `EnsureDevRails()` in
+`build_installer.py` creates them when missing and otherwise re-embeds the
+installer's two source snapshots (`InstallerExt.py`,
+`configurator/index.html`) in place; `BuildBootstrap()` does the same
+refresh on the staged copy and blanks the installer's per-project state, so
+a shipped installer is never older than the sources. The dist artifacts are
+still BUILD ARTIFACTS: editing either source means re-running the rails
+refresh and rebuilding (the bootstrap also embeds `dist/FNS_Updater.tox`).
 Preflight flags stale rails; how to rebuild — a wizard button or two
 Textport lines — is in [RELEASING.md](RELEASING.md).
 

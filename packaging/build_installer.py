@@ -115,12 +115,9 @@ def _installerComp(parent):
     p.readOnly = True
 
     ext = comp.create(textDAT, 'InstallerExt')
-    with open(_repo('packaging/InstallerExt.py'), encoding='utf-8') as f:
-        ext.text = f.read()
     ext.nodeX, ext.nodeY = -400, 0
     comp.par.extension1 = "op('./InstallerExt').module.InstallerExt(me)"
     comp.par.promoteextension1 = True
-    comp.par.reinitextensions.pulse()
 
     plan = comp.create(tableDAT, 'plan')
     plan.nodeX, plan.nodeY = 0, -250
@@ -145,8 +142,6 @@ def _installerComp(parent):
 
     # the served configurator: page + server, dormant until Configure
     page = comp.create(textDAT, 'configurator_html')
-    with open(_repo('packaging/configurator/index.html'), encoding='utf-8') as f:
-        page.text = f.read()
     page.nodeX, page.nodeY = -400, -500
 
     wcb = comp.create(textDAT, 'webserver_callbacks')
@@ -160,7 +155,111 @@ def _installerComp(parent):
     ws.par.port = 9877
     ws.par.callbacks = 'webserver_callbacks'
     ws.nodeX, ws.nodeY = 200, -500
+    _refreshInstallerSources(comp)
     return comp
+
+
+def _refreshInstallerSources(comp):
+    """Re-embed the installer's two source snapshots from the repo.
+
+    The installer is a resident of the dev root (EnsureDevRails) and ships
+    inside the castrated bootstrap as-is, so the snapshots it carries are
+    what users run. Both the dev refresh and BuildBootstrap call this, so
+    neither copy can be older than packaging/InstallerExt.py and
+    packaging/configurator/index.html.
+    """
+    ext = comp.op('InstallerExt')
+    with open(_repo('packaging/InstallerExt.py'), encoding='utf-8') as f:
+        ext.text = f.read()
+    page = comp.op('configurator_html')
+    with open(_repo('packaging/configurator/index.html'), encoding='utf-8') as f:
+        page.text = f.read()
+    comp.par.reinitextensions.pulse()
+    return comp
+
+
+def _resetInstallerState(comp):
+    """Blank the per-project state before shipping a copy of the installer:
+    a dev selection path, a status line or a live server are not things a
+    fresh drop should inherit."""
+    for name in ('Selectionfile', 'Manifestfile', 'Target', 'Status'):
+        p = getattr(comp.par, name, None)
+        if p is not None:
+            p.val = ''
+    plan = comp.op('plan')
+    if plan is not None:
+        plan.clear()
+    ws = comp.op('webserver')
+    if ws is not None:
+        ws.par.active = False
+
+
+def _loadWebBrowser(root, x, y):
+    """The picker's display surface: TD's palette webBrowser (Web Render
+    TOP + interaction), vendored at packaging/webBrowser.tox. Returns
+    (comp, error)."""
+    browser_tox = _repo(WEBBROWSER_TOX)
+    if not os.path.exists(browser_tox):
+        return None, '%s missing -- vendored webBrowser not found' % WEBBROWSER_TOX
+    before = {c.id for c in root.children}
+    root.loadTox(browser_tox)
+    fresh = [c for c in root.children if c.id not in before]
+    web = fresh[0] if fresh else root.op('webBrowser')
+    if web is None:
+        return None, 'webBrowser failed to load from %s' % browser_tox
+    if web.name != 'webBrowser':
+        web.name = 'webBrowser'
+    web.nodeX, web.nodeY = x, y
+    web.par.Address = ''      # nothing to show until Configure serves the page
+    return web, None
+
+
+# The rails are RESIDENTS of the dev root, not build-time injections: the
+# bootstrap is the dev root castrated, so whatever the dev root carries is
+# what ships -- and a second, build-only copy is exactly the drift the
+# castration was adopted to end. Run this after editing InstallerExt.py or
+# configurator/index.html (it re-embeds both), or to (re)create the rails:
+#
+#     exec(open('packaging/build_installer.py').read())
+#     EnsureDevRails()
+#
+RAIL_POSITIONS = {COMP_NAME: (600, -375), 'webBrowser': (1400, -375)}
+
+
+def EnsureDevRails(root=None):
+    """Make the live toolkit root carry the install rails, current.
+
+    Idempotent: an existing FNS_Installer gets its source snapshots
+    refreshed in place (pars and layout untouched); a missing one is
+    built; a missing webBrowser is loaded from the vendored tox. Positions
+    for NEW comps come from RAIL_POSITIONS, chosen beside FNS_Updater in
+    the dev root -- an existing comp is never moved.
+    """
+    root = root or getattr(op, 'FNS', None)
+    if root is None or not root.valid:
+        return {'ok': False, 'error': 'no live toolkit root (op.FNS)'}
+    out = {'ok': True, 'root': root.path}
+    inst = root.op(COMP_NAME)
+    if inst is None:
+        inst = _installerComp(root)
+        inst.nodeX, inst.nodeY = RAIL_POSITIONS[COMP_NAME]
+        out['installer'] = 'built'
+    else:
+        _refreshInstallerSources(inst)
+        out['installer'] = 'refreshed'
+    web = root.op('webBrowser')
+    if web is None:
+        web, err = _loadWebBrowser(root, *RAIL_POSITIONS['webBrowser'])
+        if err:
+            out['ok'] = False
+            out['error'] = err
+            return out
+        out['webBrowser'] = 'loaded'
+    else:
+        out['webBrowser'] = 'present'
+    errs = inst.errors(recurse=True).splitlines()[:3]
+    out['installer_errors'] = errs or 'clean'
+    return out
 
 
 def _stage(name):
@@ -284,6 +383,10 @@ def EnsureRootEntryPoints(root):
 # are user-facing, and the root is itself a config-registry host, so a
 # shipped root keeps roaming its own settings.
 BOOTSTRAP_STRIP_PAGES = ('Version Ctrl',)
+# Dev-root children that ship INSIDE the bootstrap: the install rails.
+# FNS_Updater is deliberately not here -- the dev copy is an Embody-tracked
+# master with file bindings, so the shipped one is the clean dist artifact.
+BOOTSTRAP_KEEP = (COMP_NAME, 'webBrowser')
 
 
 def _bootstrapRoot(stage):
@@ -346,9 +449,12 @@ def _bootstrapRoot(stage):
     # mid-loop, and destroying a stale handle raises "Invalid OP object"
     # roughly half way through. Re-snapshot each pass and skip whatever a
     # previous destroy already claimed. Bounded, so a child that refuses to
-    # die reports itself instead of spinning forever.
+    # die reports itself instead of spinning forever. The install rails
+    # (BOOTSTRAP_KEEP) survive the cull: they are dev-root residents and
+    # ship as they are -- see EnsureDevRails.
     for _ in range(20):
-        kids = [c for c in root.children if c.valid]
+        kids = [c for c in root.children
+                if c.valid and c.name not in BOOTSTRAP_KEEP]
         if not kids:
             break
         for child in kids:
@@ -357,7 +463,8 @@ def _bootstrapRoot(stage):
                     child.destroy()
                 except Exception:
                     pass
-    left = [c.name for c in root.children if c.valid]
+    left = [c.name for c in root.children
+            if c.valid and c.name not in BOOTSTRAP_KEEP]
     if left:
         return None, 'could not empty the staged root; still holds: %s' % (
             ', '.join(sorted(left)[:10]))
@@ -391,8 +498,17 @@ def BuildBootstrap(out_path=OUT_BOOTSTRAP):
         stage.destroy()
         return {'exported': False, 'error': err}
 
-    inst = _installerComp(root)
-    inst.nodeX, inst.nodeY = 0, 0
+    # The rails came along with the copy (dev-root residents); a root that
+    # somehow lacks one gets it built/loaded here so the bundle is whole.
+    # Either way the shipped installer embeds CURRENT sources and no
+    # per-project state.
+    inst = root.op(COMP_NAME)
+    if inst is None:
+        inst = _installerComp(root)
+        inst.nodeX, inst.nodeY = 0, 0
+    else:
+        _refreshInstallerSources(inst)
+    _resetInstallerState(inst)
 
     before = {c.id for c in root.children}
     root.loadTox(updater)
@@ -410,25 +526,16 @@ def BuildBootstrap(out_path=OUT_BOOTSTRAP):
     readme.nodeX, readme.nodeY = -350, 0
     readme.viewer = True
 
-    # the picker's display surface: TD's palette webBrowser (Web Render
-    # TOP + interaction), vendored at packaging/webBrowser.tox. The
-    # installer's Configure points it at the served page and opens it.
-    browser_tox = _repo(WEBBROWSER_TOX)
-    if not os.path.exists(browser_tox):
-        stage.destroy()
-        return {'exported': False,
-                'error': '%s missing -- vendored webBrowser not found' % WEBBROWSER_TOX}
-    before = {c.id for c in root.children}
-    root.loadTox(browser_tox)
-    fresh = [c for c in root.children if c.id not in before]
-    web = fresh[0] if fresh else root.op('webBrowser')
+    # the picker's display surface, kept from the dev root or loaded fresh;
+    # the installer's Configure points it at the served page and opens it.
+    web = root.op('webBrowser')
     if web is None:
-        stage.destroy()
-        return {'exported': False, 'error': 'webBrowser failed to load from %s' % browser_tox}
-    if web.name != 'webBrowser':
-        web.name = 'webBrowser'
-    web.nodeX, web.nodeY = 350, -250
-    web.par.Address = ''      # nothing to show until Configure serves the page
+        web, err = _loadWebBrowser(root, 350, -250)
+        if err:
+            stage.destroy()
+            return {'exported': False, 'error': err}
+    else:
+        web.par.Address = ''  # nothing to show until Configure serves the page
 
     EnsureRootEntryPoints(root)
 
