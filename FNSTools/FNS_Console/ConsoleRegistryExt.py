@@ -173,9 +173,34 @@ class ConsoleRegistryExt(RegistryBase):
 			return None
 		return getattr(comp.par, 'Active', None)
 
+	def _toolExposureHook(self, tool=None):
+		"""A tool that manages its own renderer implements
+		OnConsoleExposure(exposed) on its extension; the host then hands the
+		decision over instead of flipping Active itself."""
+		tool = tool or self._hostComp()
+		if tool is None or not getattr(tool, 'valid', False):
+			return None
+		try:
+			exts = tool.extensions
+		except Exception:
+			exts = []
+		for ext in exts or []:
+			fn = getattr(ext, 'OnConsoleExposure', None)
+			if callable(fn):
+				return fn
+		return None
+
 	def _setLocalBrowser(self, on):
 		p = self._localBrowserActivePar()
 		if p is None:
+			return
+		hook = self._toolExposureHook()
+		if hook is not None:
+			try:
+				self._local_browser_owner = p.owner.path
+				hook(not on)
+			except Exception as e:
+				debug(f'{self.REGISTRY_NAME}: OnConsoleExposure hook: {e}')
 			return
 		try:
 			if bool(p.eval()) != bool(on):
@@ -196,7 +221,16 @@ class ConsoleRegistryExt(RegistryBase):
 		if not self.ownerComp.valid:
 			path = getattr(self, '_local_browser_owner', None)
 			comp = op(path) if path else None
-			p = getattr(comp.par, 'Active', None) if comp is not None else None
+			if comp is None:
+				return
+			hook = self._toolExposureHook(comp.parent())
+			if hook is not None:
+				try:
+					hook(False)
+				except Exception:
+					pass
+				return
+			p = getattr(comp.par, 'Active', None)
 			if p is not None:
 				try:
 					p.val = True

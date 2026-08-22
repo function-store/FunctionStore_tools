@@ -86,6 +86,7 @@ class ExtColorUI:
 		self._gotReady = False
 		self._lastNonce = None
 		self._rx = {}
+		self.SyncLocalBrowser()   # off unless the viewer is open right now
 		self._Kick(4)
 
 	def ApplyOverrides(self):
@@ -115,6 +116,48 @@ class ExtColorUI:
 			return bool(p.eval())
 		except Exception:
 			return False
+
+	def _servedByConsole(self):
+		"""Exposed AND a console exists to serve the page -- only then is
+		the local renderer redundant."""
+		con = getattr(op, 'FNS_CONSOLE', None)
+		return self._exposed() and con is not None and con.valid
+
+	def _viewerOpen(self):
+		"""The panel is open as a floating window (panel value winopen)."""
+		try:
+			return bool(self.ownerComp.panel.winopen)
+		except Exception:
+			return False
+
+	def SyncLocalBrowser(self):
+		"""The local Web Render runs only while someone can see it: the
+		viewer is open AND the console is not serving the page. Everything
+		else -- viewer closed, tab exposed -- leaves it off, so CEF costs
+		nothing in the background. Called by watch_viewer (winopen), by the
+		console's exposure hand-off and by the Expose par; compare-before-set
+		so nothing flickers."""
+		p = self._localActivePar()
+		if p is None:
+			return
+		want = self._viewerOpen() and not self._servedByConsole()
+		if bool(p.eval()) == want:
+			return
+		p.val = want
+		fnsLog(f'ColorUI: local web render {"on" if want else "off"} '
+			   f'(viewer {"open" if self._viewerOpen() else "closed"}, '
+			   f'{"served by the console" if self._servedByConsole() else "local"})')
+		if want:
+			self._gotReady = False
+			self._Kick(4)
+
+	def OnConsoleExposure(self, exposed):
+		"""FNS_Console hand-off: the host calls this instead of flipping the
+		renderer itself, so the viewer rule above stays the single owner."""
+		self.SyncLocalBrowser()
+
+	def onParCsautoregister(self, _par, _val, _prev):
+		self.SyncLocalBrowser()
 
 	def _localActivePar(self):
 		wb = self.ownerComp.op('webBrowser')
@@ -382,24 +425,17 @@ class ExtColorUI:
 		self.Toast(f'Exported {len(ov)} changed colors')
 
 	def OpenUI(self):
-		"""Exposed: the console is the UI, open its ColorUI tab. Local (or
-		no console to go to): the in-TD panel, renderer on."""
-		if self._exposed():
-			con = getattr(op, 'FNS_CONSOLE', None)
-			if con is not None and con.valid:
-				res = con.Open(tab='ColorUI')
-				if isinstance(res, dict) and res.get('ok'):
-					return
-				fnsLog(f'ColorUI: console did not open ({res}); falling back to the panel',
-					   level='WARNING')
-			else:
-				fnsLog('ColorUI: exposed but no FNS_Console -- opening the panel', level='WARNING')
-			p = self._localActivePar()
-			if p is not None and not p.eval():
-				p.val = True
-				self._gotReady = False
-				self._Kick(4)
+		"""Served by the console: open its ColorUI tab. Otherwise the in-TD
+		panel -- opening the viewer flips winopen, and watch_viewer turns
+		the renderer on from there."""
+		if self._servedByConsole():
+			res = op.FNS_CONSOLE.Open(tab='ColorUI')
+			if isinstance(res, dict) and res.get('ok'):
+				return
+			fnsLog(f'ColorUI: console did not open ({res}); falling back to the panel',
+				   level='WARNING')
 		self.ownerComp.openViewer()
+		self.SyncLocalBrowser()   # winopen may already read 1 by now
 
 	# ------------------------------------------------------------ par callbacks
 

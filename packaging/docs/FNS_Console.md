@@ -146,7 +146,7 @@ Registration page:
 | **Canonical Name** | URL-safe (letters, digits, `_ -`); the tab lives at `/t/<name>/`. Empty = the tool's name |
 | **Tab Page** | a text DAT holding the tab's HTML. Served **verbatim** in an iframe under `/t/<name>/` |
 | **Tab API** | optional Python DAT defining `onConsoleRequest(action, method, body)` |
-| **Local Browser** | optional: the tool's own web browser panel rendering the same page. While the tab is exposed the console serves the page and **switches that browser's `Active` off** -- a renderer nobody looks at would keep a CEF process and a texture alive -- and switches it back on when exposure ends (Expose off, a failed registration, the host removed) |
+| **Local Browser** | optional: the tool's own web browser panel rendering the same page. While the tab is exposed the console serves the page and **switches that browser's `Active` off** -- a renderer nobody looks at would keep a CEF process and a texture alive -- and switches it back on when exposure ends (Expose off, a failed registration, the host removed). A tool that wants finer control implements `OnConsoleExposure(exposed)` on its extension; the host then calls that instead of touching `Active` |
 | **Expose to Console** (Auto-register) | the tool's own decision: on = publish the tab while the component exists; **off = local only** -- the tool keeps its own interface and contributes nothing |
 | **Register / Status** | publish once regardless of Expose; read-only status |
 | **Shown in Console** (Displayed) | on the bar or hidden. The console's tab manager writes here, so a user's show/hide persists with the tool |
@@ -240,11 +240,18 @@ def onConsoleRequest(action, method, body):
 ```
 
 Host pars: Tab Page `webui_html`, Tab API `console_api`, Local Browser
-`webBrowser`, label `ColorUI`, order 20. While exposed, ColorUI's own
-panel renderer is off (the console owns that switch) and ColorUI's *Open
-UI* pulse opens the console's ColorUI tab instead of the panel; it also
-skips pushing JavaScript at, or reload-kicking, a renderer that is off.
-Expose off brings the panel back exactly as it was.
+`webBrowser`, label `ColorUI`, order 20.
+
+ColorUI goes one step further and keeps its renderer off **whenever
+nobody can see it**: a Panel Execute DAT (`watch_viewer`) on the panel
+value `winopen` -- "1 if panel is open as a floating window" -- feeds
+`SyncLocalBrowser`, whose single rule is *Active = viewer open AND not
+served by the console*. The console's hand-off (`OnConsoleExposure`)
+and the Expose parameter call the same rule, so there is one owner and
+no flicker. Consequences: with the viewer closed the Web Render cooks
+nothing at all; *Open UI* opens the console's tab while served, else the
+panel (and the renderer with it); JavaScript pushes and reload-kicks are
+skipped while the renderer is off.
 
 ## HTTP API
 

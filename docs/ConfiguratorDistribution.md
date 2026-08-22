@@ -910,6 +910,17 @@ install decides once, config remembers. Written up for users in
 the install"). General rule recorded there: a host whose exposure takes
 a local surface away ships dormant and is enabled by the install rail.
 
+**Renderer off unless the viewer is open (owner ask, last one of the
+day).** Signal verified against the docs: panel value `winopen` = "1 if
+panel is open as a floating window" (`display` is just the Display par
+-- it read 0 with the viewer open). ColorUI: `watch_viewer` panelexec
+on `winopen` -> `SyncLocalBrowser`, rule *Active = winopen AND not
+served by the console*. The console hands exposure changes to a tool's
+`OnConsoleExposure(exposed)` when it exists (host `_setLocalBrowser`
+and the destroy hand-back both route through it), so the renderer has
+exactly one owner. A viewer shown any way other than a floating window
+is outside `winopen` and stays off -- documented, accepted.
+
 `FNS_ConfigRegistry` keeps its Ui* API and nothing else of the UI: the
 page, callbacks and server lifecycle are gone; `OpenSettingsUI(tab, panel)`
 is a thin forward to `op.FNS_CONSOLE.Open` so the root pulses and the
