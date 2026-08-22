@@ -798,6 +798,27 @@ same refresh on its staged copy and blanks per-project installer state
 from the dist artifact on purpose — the dev copy is an Embody-tracked
 master with file bindings.
 
+**Tracked like everything else, shipped unbound.** `FNS_Installer` is a
+Private Investigator suspect like every other dev-root component (tox
+under `modules/suspects/FNSTools/`, version history in the lister). Two
+guards make that safe: `build_manifest.RAILS` keeps it (and `webBrowser`)
+out of `Packages()` — rails publish under the manifest's `rails`, never as
+installable packages — and `_resetInstallerState` cuts the shipped copy's
+`externaltox` binding, because a NESTED binding survives export and would
+point a user's bootstrap at a dev-only path. Its DATs are deliberately
+NOT Embody-externalized: `packaging/InstallerExt.py` and
+`configurator/index.html` stay the single sources, re-embedded by
+`EnsureDevRails()`.
+
+**Root entry points, revised (2026-08-22).** Three pulses on the root's
+`FNSTools` page, three roles: **Pick Tools** → the console's Install &
+remove tab (`#tools`, in the in-TD webBrowser panel when the root has
+one; the installer's own picker only while core is not installed yet);
+**Open Settings** → the console's Settings tab in the system browser
+(export/import want a real download + file dialog); **Installer
+Parameters** → the manual rail. `OpenSettingsUI(tab=, panel=)` grew the
+two knobs; the console reads its tab from the URL fragment.
+
 **The source-checkout lock.** A resident installer's default target is
 the dev root itself, and the picker pre-checks every live child — an
 Apply there would remove authored masters. `SourceLock(target)` in

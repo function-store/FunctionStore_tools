@@ -1009,10 +1009,19 @@ class ConfigRegistryExt(RegistryBase):
 			ws.par.callbacks = cb
 		return ws
 
-	def OpenSettingsUI(self):
+	def OpenSettingsUI(self, tab=None, panel=False):
+		"""Serve the FNS console and show it.
+
+		tab: 'settings' (default) or 'tools' -- the console opens on that
+		tab via the URL fragment. panel=True shows it in the toolkit root's
+		webBrowser panel when the root has one (the bootstrap's in-TD
+		surface, the same one the installer's Pick Tools uses); otherwise,
+		and by default, the system browser -- the Settings tab's
+		export/import lean on a real download and file-chooser, which is
+		not something to rely on from the in-TD panel."""
 		api = self._registryApi()
 		if api is not self:
-			return api.OpenSettingsUI()
+			return api.OpenSettingsUI(tab=tab, panel=panel)
 		ws = self._ensureSettingsServer()
 		if ws is None:
 			return {'ok': False,
@@ -1025,9 +1034,24 @@ class ConfigRegistryExt(RegistryBase):
 			ws.par.active = True
 		self._touchSettingsServer()
 		url = f'http://127.0.0.1:{int(ws.par.port.eval())}/'
+		if tab and str(tab) != 'settings':
+			url += '#' + str(tab)
+		self._showUrl(url, panel)
+		return {'ok': True, 'url': url, 'panel': panel}
+
+	def _showUrl(self, url, panel):
+		"""Where a console URL gets displayed: the toolkit root's webBrowser
+		panel when asked for AND present, else the system browser."""
+		if panel:
+			root = getattr(op, 'FNS', None)
+			browser = root.op('webBrowser') if root is not None else None
+			if browser is not None:
+				browser.par.Address = url
+				browser.openViewer()
+				return 'panel'
 		import webbrowser
 		webbrowser.open(url)
-		return {'ok': True, 'url': url}
+		return 'browser'
 
 	def CloseSettingsUI(self):
 		api = self._registryApi()

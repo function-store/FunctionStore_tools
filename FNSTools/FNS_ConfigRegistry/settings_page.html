@@ -402,9 +402,15 @@ function showView(which) {
     const f = document.getElementById('picker');
     if (!f.src) f.src = '/tools';   // lazy: the picker loads on first visit
   }
+  // the tab is the URL fragment, so the root's Pick Tools pulse can deep-link
+  // straight to Install & remove (#tools) and a reload keeps the tab
+  history.replaceState(null, '', settings ? '#settings' : '#tools');
 }
+const viewFromHash = () => showView(location.hash === '#tools' ? 'tools' : 'settings');
 document.getElementById('tab-settings').onclick = () => showView('settings');
 document.getElementById('tab-tools').onclick = () => showView('tools');
+window.addEventListener('hashchange', viewFromHash);
+viewFromHash();
 
 // --- scope ------------------------------------------------------------
 function paintChrome() {

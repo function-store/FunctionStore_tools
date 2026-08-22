@@ -74,9 +74,22 @@ it like any installed package (self-update path included). Deliberately a
 plain container — the dev root's Active/UI parameter surface belongs to a
 populated toolkit, not to the shell the installer fills.
 
+**Three root pulses, three roles.** On the toolkit root's `FNSTools` page:
+**Pick Tools** installs and removes — once `FNS_ConfigRegistry` is
+installed it opens the FNS console on its *Install & remove* tab (in the
+webBrowser panel beside the installer when the root has one), and only
+the bare bootstrap, before core exists, falls back to the installer's own
+served picker; **Open Settings** opens the console on its *Settings* tab
+in the system browser (export/import need a real download and file
+dialog); **Installer Parameters** opens the manual rail — `Selection`,
+`Plan`, `Install`, package-file mode. `EnsureRootEntryPoints(op.FNS)`
+re-applies labels, help and the forwarder DAT after editing them in
+`build_installer.py`.
+
 **The configurator is served, not downloaded.** The installer carries the
 picker page (embedded at build time) and a Web Server DAT, dormant until
-the **Pick Tools** pulse: it serves `http://127.0.0.1:<Port>/` and opens
+the installer's own **Pick Tools (browser)** pulse: it serves
+`http://127.0.0.1:<Port>/` and opens
 it in the sibling webBrowser panel (system browser as fallback). The page
 gets its catalog from `/manifest.js` — the store's manifest, and when the
 store is empty the server kicks the sibling FNS_Updater's **Refresh Store**
@@ -109,7 +122,10 @@ what we develop in, rail for rail. `EnsureDevRails()` in
 installer's two source snapshots (`InstallerExt.py`,
 `configurator/index.html`) in place; `BuildBootstrap()` does the same
 refresh on the staged copy and blanks the installer's per-project state, so
-a shipped installer is never older than the sources. The dist artifacts are
+a shipped installer is never older than the sources. The dev installer is a
+Private Investigator suspect like its siblings; `build_manifest.RAILS`
+keeps rails out of `Packages()`, and the bootstrap build cuts the shipped
+copy's `externaltox` binding. The dist artifacts are
 still BUILD ARTIFACTS: editing either source means re-running the rails
 refresh and rebuilding (the bootstrap also embeds `dist/FNS_Updater.tox`).
 Preflight flags stale rails; how to rebuild — a wizard button or two

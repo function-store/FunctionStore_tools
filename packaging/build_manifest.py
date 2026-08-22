@@ -85,13 +85,20 @@ def _repo(*parts):
     return os.path.join(project.folder, *parts).replace('\\', '/')
 
 
+# Dev-root residents that are RAILS, not packages: they ship inside the
+# bootstrap (build_installer.BOOTSTRAP_KEEP) and are published under the
+# manifest's `rails`, never as installable packages -- even when Private
+# Investigator tracks them like every other dev-root component.
+RAILS = ('FNS_Installer', 'webBrowser')
+
+
 def Packages():
     """Shippable packages = depth-1 COMPs that are tracked suspects with
     their own tox. That is already the project's own unit of distribution,
     so nothing new has to be invented or maintained by hand."""
     out = []
     for c in _root().children:
-        if c.family != 'COMP':
+        if c.family != 'COMP' or c.name in RAILS:
             continue
         p = getattr(c.par, 'externaltox', None)
         if not (p and p.eval() and 'pi_suspect' in c.tags):
