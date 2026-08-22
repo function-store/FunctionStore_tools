@@ -148,8 +148,11 @@ What changed from the palette:
   the panel value `winopen`; *Render Only While Viewer Active* polls the
   node's Viewer Active flag once a frame. Either on = `Active` follows
   visibility (`watch_rules`/`watch_window`/`watch_viewer`/`watch_pars`
-  inside); both off = `Active` is yours. A Web Render cooks a whole
-  browser process otherwise, and this component ships to every user.
+  inside); both off = `Active` is yours. **Viewer Owner** (optional)
+  names the operator whose window/flag the watchers read -- the panel
+  that contains this browser, when that is what the user opens -- and
+  defaults to the component itself. A Web Render cooks a whole browser
+  process otherwise, and this component ships to every user.
 - **Source on the component.** `Source` (URL or File / DAT) and `Source
   DAT` mirror the Web Render TOP's own, so an instance that renders a DAT
   (ColorUI: `webui_html`) configures that on its custom parameters --
