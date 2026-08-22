@@ -32,7 +32,7 @@ and never grows dead entries for ones you removed. Each tool's `Registry`
 page is skipped -- that is registration plumbing, not settings.
 
 A Web Server DAT inside the master serves it on `127.0.0.1`, taking the
-first free port in **9871-9880**. It only runs while you are looking at
+first free port in **36710-36719**. It only runs while you are looking at
 it: `OpenSettingsUI()` starts it and opens your browser, every request
 re-arms an idle timer, and after **10 minutes** of silence it shuts itself
 off. `op.FNS_CONFIGREGISTRY.CloseSettingsUI()` closes it immediately.

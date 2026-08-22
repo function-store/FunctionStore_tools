@@ -670,16 +670,16 @@ class InstallerExt:
 
     def _port(self):
         try:
-            return int(self._par('Port') or 9877)
+            return int(self._par('Port') or 36720)
         except ValueError:
-            return 9877
+            return 36720
 
     PORT_SPAN = 10
 
     def _freePort(self):
         """First free port from Port upward (PORT_SPAN tries). Several
         open projects each carry an installer -- and the FNS console scans
-        9871-9880 the same way -- so a fixed port would make the second
+        36710-36719 the same way -- so a fixed port would make the second
         server fail to bind; a bind test picks a live one instead."""
         import socket
         base = self._port()

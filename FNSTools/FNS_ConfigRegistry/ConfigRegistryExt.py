@@ -686,7 +686,11 @@ class ConfigRegistryExt(RegistryBase):
 	# so the UI is correct for whatever subset is installed and can never
 	# drift -- this is the replacement for hand-authored root control pars.
 
-	UI_PORTS = tuple(range(9871, 9881))
+	# A deliberately uncommon block: the 8xxx/9xxx dev-server range is
+	# crowded, and a bind failure there is hard to tell from a toolkit bug.
+	# The installer's picker sits just above (36720+), so the two never
+	# scan into each other.
+	UI_PORTS = tuple(range(36710, 36720))
 	UI_IDLE_SECONDS = 600
 	UI_TICK_FRAMES = 1800
 
