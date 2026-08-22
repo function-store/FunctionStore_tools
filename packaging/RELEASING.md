@@ -131,6 +131,16 @@ stale embedded copy is self-healing (its live `Pkgversion` is what the
 updater compares, so the first update pass replaces it), but there is no
 reason to ship one knowingly.
 
+## One artifact, two lives
+
+There is deliberately **no standalone release profile**. Every artifact
+ships with console exposure off (`pre_release_common.py` scrubs it on any
+`FNS_Console` host), and the toolkit's install rail flips it on as the
+package lands (`InstallerExt.ExposeConsoleHosts`). The same `.tox` is the
+standalone plugin download (local mode, no console raised) and the
+toolkit package (exposed). Do not hand-edit an artifact for either case;
+`docs/FNS_Console.md` has the rule and the reasoning.
+
 ## Regenerating the manifest
 
 ```python

@@ -63,6 +63,38 @@ for _d in _c0.findChildren(type=DAT):
     except Exception:
         pass
 
+# --- console exposure ships DORMANT; the install rail enables it ----------
+# A tool that contributes an FNS_Console tab carries a console host. A
+# registry host bootstraps its own /sys global in a bare project -- right for
+# a toolbar button (it adds capability), wrong for the console, whose
+# exposure REMOVES a local surface: the host switches the tool's own web
+# render off once the console serves the page. Shipped with Expose on, a
+# standalone ColorUI drop would raise a console nobody asked for and kill
+# its own panel.
+#
+# So every artifact ships with Expose off, and ONE artifact serves both
+# regimes: a standalone drop stays in local mode; a toolkit install flips
+# Expose on as it lands the package (InstallerExt.ExposeConsoleHosts). The
+# flag lives on the tool's Registry page, which the config registry
+# persists, so after that first decision the user's own choice roams and
+# survives updates. Rule, for any future surface with the same property:
+# a host whose exposure takes a local surface away ships dormant and is
+# enabled by the install rail, never by bootstrapping itself.
+for _c in [_c0] + _c0.findChildren(type=COMP):
+    _host = _c.op('FNS_Console') if _c.name != 'FNS_Console' else None
+    if _host is None:
+        continue
+    for _owner, _name in ((_c, 'Csautoregister'), (_host, 'Autoregister')):
+        _p = getattr(_owner.par, _name, None)
+        if _p is None:
+            continue
+        try:
+            if _p.mode != ParMode.CONSTANT:
+                _p.mode = ParMode.CONSTANT
+            _p.val = False
+        except Exception:
+            pass
+
 for _c in [_c0] + _c0.findChildren(type=COMP):
     for _pg in list(_c.customPages):
         if _pg.name != 'Version Ctrl':

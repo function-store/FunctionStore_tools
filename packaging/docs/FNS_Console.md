@@ -73,6 +73,33 @@ link can deep-link to it.
   after a divider, sorted by their declared order; the two built-ins are
   the console's own and always shown.
 
+### Exposure: shipped dormant, enabled by the install
+
+Every tool artifact ships with **Expose to Console off**, and the
+toolkit's installer turns it on as it lands the package. One artifact
+therefore serves two lives:
+
+| How the tool arrived | Console exposure | Its own panel |
+|---|---|---|
+| dropped into a project on its own (a standalone plugin) | off -- nothing raises a console | works as always |
+| installed by `FNS_Installer` (bootstrap, picker, Textport rail) | **on**, flipped once at install | off while exposed -- the console is the UI |
+| updated by `FNS_Updater` | untouched -- your choice persists | follows your choice |
+
+Why not simply ship it on: a registry host bootstraps its own `/sys`
+global when none exists, which is right for a toolbar button (it *adds*
+a capability) and wrong for the console, whose exposure *removes* a local
+surface. A standalone ColorUI shipped exposed would raise a console nobody
+asked for and switch off its own panel. The rule, for any future surface
+with that property: *a host whose exposure takes a local surface away
+ships dormant and is enabled by the install rail, never by bootstrapping
+itself.*
+
+The flag is the tool's own **Expose to Console** parameter (its Registry
+page), which the config registry persists -- so after the install's one
+decision, your choice roams across projects and survives updates. If you
+drag a toolkit package into a project by hand instead of installing it,
+it arrives in local mode: flip Expose on the tool's page.
+
 ### Managing tabs
 
 The **⋯** button at the end of the tab bar lists every contributed tab,

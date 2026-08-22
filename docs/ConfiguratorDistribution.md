@@ -893,6 +893,23 @@ registration, host destroyed via onDestroyTD with the owner invalid).
 ColorUI keeps only what is its own: Open UI routes to the console while
 exposed, and no JS push / reload-kick at a renderer that is off.
 
+**Standalone vs toolkit release — DECIDED: one artifact, the install rail
+decides exposure (2026-08-22).** A standalone ColorUI drop would have
+bootstrapped a console global from its own host, exposed the tab and
+killed its panel. Two options were weighed: (A) fork artifacts by a
+release profile (root par read by the shared `pre_release_common.py`,
+`dist/standalone/` tree) — rejected: two hashes, two publish trees, a
+second identity story; (B) ship every artifact with Expose **off**
+(`pre_release_common.py` scrubs `Csautoregister`/`Autoregister` on any
+console host) and have `InstallerExt.ExposeConsoleHosts` flip it on as
+the package lands — chosen. Updates never touch it; the flag is the
+tool's Registry-page par, persisted by the config registry, so the
+user's choice roams. It is the same principle as §2.4's precedence rule:
+install decides once, config remembers. Written up for users in
+`packaging/docs/FNS_Console.md` ("Exposure: shipped dormant, enabled by
+the install"). General rule recorded there: a host whose exposure takes
+a local surface away ships dormant and is enabled by the install rail.
+
 `FNS_ConfigRegistry` keeps its Ui* API and nothing else of the UI: the
 page, callbacks and server lifecycle are gone; `OpenSettingsUI(tab, panel)`
 is a thin forward to `op.FNS_CONSOLE.Open` so the root pulses and the

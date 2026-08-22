@@ -136,6 +136,15 @@ Textport lines — is in [RELEASING.md](RELEASING.md).
 script wrapper over the same code, so the droppable rails and the headless
 rail cannot drift apart.
 
+## Console exposure ships dormant
+
+Every artifact ships with **Expose to Console off** on any `FNS_Console`
+host it carries (`pre_release_common.py`), and `InstallPlan` flips it on
+as the package lands (`ExposeConsoleHosts`). One artifact serves both a
+standalone drop (local mode, no console raised) and a toolkit install
+(exposed). Updates never touch the flag; the config registry persists the
+user's choice. Full reasoning in `docs/FNS_Console.md`.
+
 ## End to end
 
 1. Drop `dist/FNSTools.tox` (from the bucket) into the

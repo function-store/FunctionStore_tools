@@ -395,6 +395,44 @@ def RemoveTools(plan):
     return {'removed': removed, 'notes': notes}
 
 
+def ExposeConsoleHosts(comp):
+    """Flip Expose on for every FNS_Console host the landed package carries.
+
+    Artifacts ship with console exposure OFF (packaging/pre_release_common.py
+    explains why: a host whose exposure removes a local surface must not
+    bootstrap itself in a bare project). Inside the toolkit, contributors
+    expose by default -- and this is the ONE place that decides it: the
+    install rail, as the package lands. The flag is the tool's own Registry
+    page par, which the config registry persists, so a user who later turns
+    it off keeps that choice across updates (an update pass never calls
+    this; only a fresh install or an explicit Replace does).
+
+    Returns the tool paths it exposed.
+    """
+    exposed = []
+    if comp is None or not getattr(comp, 'valid', False):
+        return exposed
+    for tool in [comp] + comp.findChildren(type=COMP):
+        host = tool.op('FNS_Console') if tool.name != 'FNS_Console' else None
+        if host is None:
+            continue
+        # the tool-page par is the bind MASTER; the host's own par binds to
+        # it once the registry's tool page exists, so write the master first
+        # and the host only where no master is there yet
+        p = getattr(tool.par, 'Csautoregister', None)
+        if p is None:
+            p = getattr(host.par, 'Autoregister', None)
+        if p is None:
+            continue
+        try:
+            if not p.eval():
+                p.val = True
+            exposed.append(tool.path)
+        except Exception as e:
+            debug('FNS_Installer: expose %s: %s' % (tool.path, e))
+    return exposed
+
+
 def RecordInstalled(parent_comp, name, sha256, release=''):
     """Upsert the install record. Written per package as it lands, so an
     interrupted install still leaves a truthful record of what is in the
@@ -525,8 +563,11 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
         except Exception:
             landed = step.get('sha256', '')
         RecordInstalled(parent_comp, name, landed, step.get('release', ''))
+        # inside the toolkit, console contributors expose by default --
+        # decided here, once, as the package lands (artifacts ship dormant)
+        exposed = ExposeConsoleHosts(comp)
         results.append({'name': name, 'action': 'installed', 'bound': bound,
-                        **_verify(comp)})
+                        'exposed': exposed, **_verify(comp)})
     return {'target': tgt,
             'installed': [r['name'] for r in results if r.get('action') == 'installed'],
             'failed': [r['name'] for r in results if not r.get('ok', True)],
