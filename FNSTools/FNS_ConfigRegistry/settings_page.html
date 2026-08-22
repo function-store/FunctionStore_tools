@@ -130,7 +130,7 @@
     position: fixed; bottom: 14px; right: 18px; padding: 7px 14px;
     border-radius: 5px; background: var(--panel2); border: 1px solid var(--line);
     opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 3;
-    max-width: 46ch;
+    max-width: 70ch; word-break: break-all;
   }
   #toast.show { opacity: 1; }
   #toast.ok { border-color: var(--ok); }
@@ -454,17 +454,21 @@ document.getElementById('scope-adopt').onclick = () => {
 // --- export / import --------------------------------------------------
 document.getElementById('export').onclick = async () => {
   try {
-    const r = await fetch('/api/export');
-    const doc = await r.json();
-    const n = Object.keys(doc.tools || {}).length;
-    const blob = new Blob([JSON.stringify(doc, null, 1) + '\n'],
+    const r = await (await fetch('/api/export')).json();
+    if (!r.ok) { toast(r.why || 'export failed', false); return; }
+    // the server already wrote the file (saved_to); the download is a
+    // convenience on top, not what the export depends on
+    const blob = new Blob([JSON.stringify(r.document, null, 1) + '\n'],
                           {type: 'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = 'FNStools_config.json';
     a.click();
     URL.revokeObjectURL(a.href);
-    toast('exported ' + n + ' tool section(s)', true);
+    toast('exported ' + r.tools + ' tool section(s)' +
+          (r.saved_to ? ' → ' + r.saved_to
+                      : r.save_error ? ' (file not written: ' + r.save_error + ')' : ''),
+          !r.save_error);
   } catch (e) { toast(String(e), false); }
 };
 

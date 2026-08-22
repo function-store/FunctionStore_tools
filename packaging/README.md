@@ -80,8 +80,9 @@ installed it opens the FNS console on its *Install & remove* tab (in the
 webBrowser panel beside the installer when the root has one), and only
 the bare bootstrap, before core exists, falls back to the installer's own
 served picker; **Open Settings** opens the console on its *Settings* tab
-in the system browser (export/import need a real download and file
-dialog); **Installer Parameters** opens the manual rail — `Selection`,
+in the same panel (export writes its file server-side as well, so it
+never depends on the browser's download handling); **Installer
+Parameters** opens the manual rail — `Selection`,
 `Plan`, `Install`, package-file mode. `EnsureRootEntryPoints(op.FNS)`
 re-applies labels, help and the forwarder DAT after editing them in
 `build_installer.py`.

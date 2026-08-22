@@ -814,10 +814,16 @@ NOT Embody-externalized: `packaging/InstallerExt.py` and
 `FNSTools` page, three roles: **Pick Tools** → the console's Install &
 remove tab (`#tools`, in the in-TD webBrowser panel when the root has
 one; the installer's own picker only while core is not installed yet);
-**Open Settings** → the console's Settings tab in the system browser
-(export/import want a real download + file dialog); **Installer
+**Open Settings** → the console's Settings tab, same panel; **Installer
 Parameters** → the manual rail. `OpenSettingsUI(tab=, panel=)` grew the
-two knobs; the console reads its tab from the URL fragment.
+two knobs (panel defaults on; a root without the panel opens the system
+browser); the console reads its tab from the URL fragment. Correction
+recorded: Open Settings first shipped to the system browser on the
+unverified assumption that the in-TD panel could not do file dialogs —
+the owner tested it, it can. Export now also writes
+`<config dir>/exports/FNStools_config_<stamp>.json` server-side and the
+page reports the path, so the export never rests on the browser honouring
+a download in the first place.
 
 **The source-checkout lock.** A resident installer's default target is
 the dev root itself, and the picker pre-checks every live child — an

@@ -315,16 +315,19 @@ ROOT_ENTRY_POINTS = (
      'Selection at a selection.json, Plan, Install, and choose where '
      'package files live. Pick Tools is the normal path.'),
     ('Opensettings', 'Open Settings',
-     'The FNS console in your system browser: every installed tool\'s '
-     'settings on one scrollable page, config export/import, and the '
-     'global/project scope switch. Install & remove is its second tab.'),
+     'The FNS console on its Settings tab (in the webBrowser panel beside '
+     'the installer when the root has one, else your system browser): '
+     'every installed tool\'s settings on one scrollable page, config '
+     'export/import, and the global/project scope switch. Install & '
+     'remove is its second tab.'),
 )
 # Three pulses, three distinct roles, and the console is the hub for two of
-# them: Pick Tools deep-links to its Install & remove tab (#tools, shown in
-# the in-TD panel so the bootstrap flow never leaves TD) and falls back to
-# the installer's own picker only while core is not installed yet; Open
-# Settings is the console in the system browser, where export/import have a
-# real download and file dialog; Installer Parameters is the manual rail.
+# them: Pick Tools deep-links to its Install & remove tab (#tools) and Open
+# Settings to its Settings tab -- both in the in-TD webBrowser panel when
+# the root has one, so the whole flow stays inside TD (the panel handles
+# the console fully, file dialog included; export also writes its file
+# server-side). Pick Tools falls back to the installer's own picker only
+# while core is not installed yet; Installer Parameters is the manual rail.
 # Guarded on every side: a root without an installer, or without the config
 # registry, logs and returns rather than raising inside a pulse callback.
 # The registry is resolved the way every cross-tool caller does it -- getattr
@@ -336,7 +339,7 @@ ROOT_PULSE_TEXT = (
     '# edit it there; EnsureRootEntryPoints re-applies it.\n'
     '#   Pick Tools  -> FNS console, Install & remove tab (in-TD panel when\n'
     '#                  present); the installer\'s own picker before core exists\n'
-    '#   Open Settings -> FNS console, Settings tab, system browser\n'
+    '#   Open Settings -> FNS console, Settings tab (in-TD panel when present)\n'
     '#   Installer Parameters -> the manual rail (selection.json / Plan / Install)\n\n'
     'def onPulse(par):\n'
     '\tinst = parent().op(%r)\n'
@@ -345,7 +348,7 @@ ROOT_PULSE_TEXT = (
     '\t\tif reg is None:\n'
     '\t\t\tdebug("FNSTools: no FNS_ConfigRegistry installed yet -- Pick Tools installs core first")\n'
     '\t\t\treturn\n'
-    '\t\tres = reg.OpenSettingsUI(tab="settings")\n'
+    '\t\tres = reg.OpenSettingsUI(tab="settings", panel=True)\n'
     '\t\tif isinstance(res, dict) and not res.get("ok"):\n'
     '\t\t\tdebug("FNSTools: console did not open --", res.get("why"))\n'
     '\telif par.name == "Picktools":\n'

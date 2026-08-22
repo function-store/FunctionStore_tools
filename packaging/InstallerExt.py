@@ -674,6 +674,26 @@ class InstallerExt:
         except ValueError:
             return 9877
 
+    PORT_SPAN = 10
+
+    def _freePort(self):
+        """First free port from Port upward (PORT_SPAN tries). Several
+        open projects each carry an installer -- and the FNS console scans
+        9871-9880 the same way -- so a fixed port would make the second
+        server fail to bind; a bind test picks a live one instead."""
+        import socket
+        base = self._port()
+        for port in range(base, min(base + self.PORT_SPAN, 65535)):
+            s = socket.socket()
+            try:
+                s.bind(('127.0.0.1', port))
+                return port
+            except OSError:
+                continue
+            finally:
+                s.close()
+        return None
+
     def Configure(self):
         """Serve the picker and show it: the sibling webBrowser COMP if
         this installer ships inside the bootstrap root, else the system
@@ -682,9 +702,16 @@ class InstallerExt:
         if ws is None:
             self._status('no webserver DAT -- rebuild the installer')
             return
-        ws.par.port = self._port()
-        ws.par.active = True
-        url = 'http://127.0.0.1:%d/' % self._port()
+        port = ws.par.port.eval() if ws.par.active.eval() else self._freePort()
+        if port is None:
+            self._status('no free port in %d-%d -- close another picker or '
+                         'change Configurator Port'
+                         % (self._port(), self._port() + self.PORT_SPAN - 1))
+            return
+        if not ws.par.active.eval():
+            ws.par.port = int(port)
+            ws.par.active = True
+        url = 'http://127.0.0.1:%d/' % int(port)
         parent = self.ownerComp.parent()
         browser = parent.op('webBrowser') if parent is not None else None
         if browser is not None:

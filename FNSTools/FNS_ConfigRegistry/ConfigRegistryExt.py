@@ -818,15 +818,18 @@ class ConfigRegistryExt(RegistryBase):
 		root = getattr(op, 'FNS', None)
 		return root.op('FNS_Installer') if root is not None else None
 
-	def UiExport(self):
+	def UiExport(self, save=True):
 		"""A portable config document snapshotted from the LIVE tools.
 
 		Same shape as the roaming file, built fresh instead of read from
 		disk so it is correct under project scope too (where the file is
-		deliberately never written)."""
+		deliberately never written). With save=True (the page's default)
+		the document is ALSO written beside the roaming file, under
+		`exports/`, so an export never depends on whatever browser shows
+		the console honouring a download -- the page still offers one."""
 		api = self._registryApi()
 		if api is not self:
-			return api.UiExport()
+			return api.UiExport(save=save)
 		tools = {}
 		for canonical, info in self.stored['PaneRegistry'].items():
 			try:
@@ -836,10 +839,24 @@ class ConfigRegistryExt(RegistryBase):
 				continue
 			if section is not None:
 				tools[canonical] = section
-		return {'schema': self.SCHEMA,
-				'saved': time.strftime('%Y-%m-%dT%H:%M:%S'),
-				'saved_by': {'project': project.name, 'export': True},
-				'tools': tools}
+		doc = {'schema': self.SCHEMA,
+			   'saved': time.strftime('%Y-%m-%dT%H:%M:%S'),
+			   'saved_by': {'project': project.name, 'export': True},
+			   'tools': tools}
+		out = {'ok': True, 'document': doc, 'tools': len(tools)}
+		if save:
+			folder = os.path.join(os.path.dirname(self.ConfigPath), 'exports')
+			path = os.path.join(
+				folder, 'FNStools_config_%s.json' % time.strftime('%Y%m%d-%H%M%S')
+			).replace('\\', '/')
+			try:
+				os.makedirs(folder, exist_ok=True)
+				with open(path, 'w', encoding='utf-8') as f:
+					json.dump(doc, f, indent=1)
+				out['saved_to'] = path
+			except Exception as e:
+				out['save_error'] = str(e)
+		return out
 
 	def UiImport(self, data):
 		"""Apply an exported/roamed config document from the page.
@@ -1009,16 +1026,15 @@ class ConfigRegistryExt(RegistryBase):
 			ws.par.callbacks = cb
 		return ws
 
-	def OpenSettingsUI(self, tab=None, panel=False):
+	def OpenSettingsUI(self, tab=None, panel=True):
 		"""Serve the FNS console and show it.
 
 		tab: 'settings' (default) or 'tools' -- the console opens on that
-		tab via the URL fragment. panel=True shows it in the toolkit root's
-		webBrowser panel when the root has one (the bootstrap's in-TD
-		surface, the same one the installer's Pick Tools uses); otherwise,
-		and by default, the system browser -- the Settings tab's
-		export/import lean on a real download and file-chooser, which is
-		not something to rely on from the in-TD panel."""
+		tab via the URL fragment. panel (default True) shows it in the
+		toolkit root's webBrowser panel when the root has one -- the same
+		in-TD surface the installer's picker uses, and it handles the
+		console fully, file dialog included; a root without the panel, or
+		panel=False, opens the system browser."""
 		api = self._registryApi()
 		if api is not self:
 			return api.OpenSettingsUI(tab=tab, panel=panel)
