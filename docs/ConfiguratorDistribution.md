@@ -1,3 +1,10 @@
+---
+status: in-force
+summary: 'How a user picks and chooses which tools to install: buckets, manifests, Pkgversion-driven updates, and the bootstrap rail.'
+since: 2026-08-13 (buckets + manifests decision)
+skill: fns-packaging
+---
+
 # Configurator Distribution — Design Notes
 
 How a user picks and chooses which FunctionStore tools to install, instead
@@ -484,7 +491,7 @@ Nothing hand-maintains this, so it cannot drift from reality.
 **How updates worked before** (`UPDATER/ExtUpdater.py`): one version for the
 whole toolkit — `Gittag` on the root COMP, currently `v2.11.2` — polled
 against the latest GitHub tag. `Update()` snapshots every tool's settings
-through `op.CONFIGREGISTRY.SaveAll()`, downloads ONE tox, and calls
+through `op.FNS_CONFIGREGISTRY.SaveAll()`, downloads ONE tox, and calls
 `TDF.replaceOp(parent.FNS, newComp)`: the entire
 `FunctionStore_tools_2025` COMP is swapped wholesale. Settings survive
 because each tool's ConfigRegistry host re-loads its own section after the

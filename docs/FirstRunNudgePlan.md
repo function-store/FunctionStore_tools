@@ -1,3 +1,9 @@
+---
+status: open
+summary: P4 — a one-shot post-install dialog pointing the user at the Configurator. Approved in dialog form; not built.
+since: 7842401 2026-08-21 (approved, unbuilt)
+---
+
 # P4 — First-Run Nudge Plan
 
 **Approved 2026-08-21 (owner): dialog form.** After a successful install,

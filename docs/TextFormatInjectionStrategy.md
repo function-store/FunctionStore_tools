@@ -1,3 +1,9 @@
+---
+status: research
+summary: 'Exploration only, nothing decided: whether TD''s text-based project format changes what is possible for getting FNSTools in front of a new user.'
+since: 290f7da 2026-08-21
+---
+
 # Injecting FNSTools via TouchDesigner's Text-Based Project Format — Exploration
 
 Future-work exploration, 2026-08-21. Read-only: no code changed, nothing

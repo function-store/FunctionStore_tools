@@ -1,3 +1,10 @@
+---
+status: research
+summary: Research into shipping tools as uv/PyPI packages. Explicitly NOT the plan — the bucket/manifest rail won.
+since: 2026-08-10
+superseded_by: docs/ConfiguratorDistribution.md
+---
+
 # uv-Packaged TD Tools — Research Notes
 
 Research into whether individual FunctionStore tools could ship as

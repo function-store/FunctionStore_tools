@@ -1,3 +1,9 @@
+---
+status: open
+summary: P1 — plan to rewrite the root README around the v3 product. The README still describes the 2023 monolith.
+since: 7842401 2026-08-21
+---
+
 # P1 — README Rewrite Plan
 
 Rewrite the root `README.md` (untouched since 2025-05, still describes the

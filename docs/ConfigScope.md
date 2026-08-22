@@ -1,3 +1,11 @@
+---
+status: in-force
+summary: 'The Config Scope parameter: whether the toolkit''s persisted settings roam machine-globally or stay pinned to the project.'
+since: 33b955d 2026-08-21
+verified: 2026-08-21 — live gate tests on save/load both directions; cold-boot pass still manual
+skill: fns-config-scope
+---
+
 # Config Scope: Global vs Project
 
 > **STATUS (2026-08-21): LANDED + VERIFIED** (live gate tests on save/load both

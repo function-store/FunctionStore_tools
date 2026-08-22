@@ -1,3 +1,9 @@
+---
+status: landed
+summary: P6 — decision to defer native .exe/.dmg installers; the one-drop FNSTools.tox bootstrapper is the official rail. Includes revisit triggers.
+since: 7842401 2026-08-21
+---
+
 # P6 — Native Installer Decision (+ pip-rail cleanup)
 
 **DECIDED 2026-08-21: Option B — defer.** No `.exe`/`.dmg` installers for

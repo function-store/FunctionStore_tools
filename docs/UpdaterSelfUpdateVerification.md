@@ -1,3 +1,9 @@
+---
+status: open
+summary: P3 — plan to exercise FNS_Updater's self-update end-to-end. The riskiest untested path in the product; never run.
+since: 7842401 2026-08-21
+---
+
 # P3 — Updater Self-Update Live Verification Plan
 
 `FNS_Updater` is `kind: core` and self-update is implemented, but it has

@@ -1,3 +1,9 @@
+---
+status: research
+summary: Research note on what TouchDesigner's text-based project save format actually is, from a live sample.
+since: 290f7da 2026-08-21
+---
+
 # TouchDesigner's Text-Based Project Format — What It Actually Is
 
 Research note, 2026-08-21. Read-only investigation: no code changed. Companion

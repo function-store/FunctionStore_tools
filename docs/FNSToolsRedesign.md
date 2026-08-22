@@ -1,3 +1,9 @@
+---
+status: landed
+summary: Decision record for the pre-release restructure and rename that shipped as v3.0.0. Supersedes naming and core-membership claims elsewhere.
+since: 24ae195 2026-08-15
+---
+
 # FNSTools redesign — the pre-release scorched earth (2026-08-15)
 
 Decision record for the restructure and rename executed before first

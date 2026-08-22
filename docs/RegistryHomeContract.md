@@ -1,3 +1,10 @@
+---
+status: in-force
+summary: Where promoted registry globals live (/sys/FNS_Registries) and the six invariants that govern the home.
+since: a019218 2026-08-21
+skill: fns-registry
+---
+
 # Contract: where promoted registry globals live
 
 **Status:** in force since `a019218` (2026-08-21). Minor architecture change

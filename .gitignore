@@ -62,7 +62,10 @@ CrashAutoSave*
 !.embody/project.json
 .claude/settings.local.json
 .claude/projects/
-/.claude
+/.claude/*
+!/.claude/skills/
+/.claude/skills/*
+!/.claude/skills/fns-*/
 CLAUDE.md
 AGENTS.md
 externalizations.tsv

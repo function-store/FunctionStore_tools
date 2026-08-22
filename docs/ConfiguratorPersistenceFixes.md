@@ -1,3 +1,10 @@
+---
+status: landed
+summary: Spec and verification record for the configurator layout-persistence defects across Toolbar, Navbar and MainMenu.
+since: 61748d9 2026-08-21
+verified: 2026-08-21 — all three surfaces live via MCP, cold-boot checked; §5.3 dormant-group regression still manual
+---
+
 # Configurator Layout Persistence Fixes (Toolbar / Navbar / MainMenu)
 
 > **STATUS (2026-08-21): LANDED + VERIFIED.** All three surfaces, live-tree via

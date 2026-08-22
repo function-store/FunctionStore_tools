@@ -1,7 +1,20 @@
-# Proposal: live state chips for quick-launch commands (registry 1.5.0)
+---
+status: landed
+summary: Design record for live state chips and param prefill on quick-launch commands (registry 1.5.0/1.6.0).
+since: ce7b46e 2026-08-22
+---
 
-For the TDXLPP side (FNS_CommandRegistry + launcher). Self-contained —
-hand this to the agent working in that repo.
+# Live state chips for quick-launch commands (registry 1.5.0/1.6.0)
+
+> **STATUS: LANDED (2026-08-22).** Proposed in `c3c0029`, extended to values +
+> param prefill in `d289c64`, adopted in `ce7b46e` — **24 commands ship live
+> state chips** against registry 1.6.0. This file is kept as the design record:
+> the problem, the query-time evaluation principle, and the rejected
+> alternatives. It is **not** an open proposal; do not "hand it to the agent in
+> that repo" as new work. Authoring guidance for the `state` kwarg lives in
+> [CommandRegistration.md](CommandRegistration.md).
+
+Written for the TDXLPP side (FNS_CommandRegistry + launcher).
 
 ## Problem
 
@@ -94,7 +107,7 @@ Evaluation rules (registry-side, in the `Commands()` item build):
   does not refetch post-run, do so for state-bearing rows — the run
   just changed the thing the chip shows.
 
-## FunctionStore adoption plan (once this lands)
+## FunctionStore adoption (landed — ce7b46e)
 
 - The FNSCommand module master gains the `state` kwarg (additive — the
   attribute contract ignores unknown keys, so mixed versions are safe).

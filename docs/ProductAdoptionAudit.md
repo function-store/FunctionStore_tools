@@ -1,3 +1,9 @@
+---
+status: open
+summary: Audit of product design, adoption, installation, updates and config scoping. The actionable backlog; each item carries its evidence anchors.
+since: 7842401 2026-08-21 (backlog, partly resolved)
+---
+
 # Product Adoption Audit — Findings & Backlog
 
 Audit of FNSTools product design, adoption, installation, updates, and

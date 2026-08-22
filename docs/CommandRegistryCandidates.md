@@ -1,3 +1,9 @@
+---
+status: consumed
+summary: Survey of every tool for actions worth registering as commands. Consumed by the 81-command rollout; kept for the per-tool reasoning, not as a to-do list.
+since: 9eca7cd 2026-08-21
+---
+
 # FNS_CommandRegistry — command candidates survey
 
 Survey of every FunctionStore tool for actions worth registering in the

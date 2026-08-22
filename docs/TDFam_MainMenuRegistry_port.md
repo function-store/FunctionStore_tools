@@ -1,3 +1,9 @@
+---
+status: in-force
+summary: 'Manual port guide handed to the TDFam repo: replacing its fire-and-forget mainmenu copy with a MainMenuRegistry-managed entry. External deliverable.'
+since: 4022dc4 2026-08-13
+---
+
 # TDFam × MainMenuRegistry — manual port guide
 
 Port of the live prototype (verified 2026-08-12 in FunctionStore_tools_2025_DEV)
@@ -186,7 +192,7 @@ Notes on the gate:
    action.
 4. **`/sys` copy shows `Skipped (/sys or /ui)`** in its host's Regstatus —
    expected, not a failure (see §1).
-5. **Registry-less projects**: `op.MAINMENUREGISTRY` missing → gate falls
+5. **Registry-less projects**: `op.FNS_MAINMENUREGISTRY` missing → gate falls
    through → legacy injection exactly as today. Zero behavior change.
 6. Uninstall flow: TDFam's existing uninstall only touches menu_op artifacts
    plus the legacy OpFamUI path. With the registry owning the mirror, the

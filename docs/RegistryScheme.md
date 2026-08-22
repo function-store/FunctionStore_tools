@@ -1,3 +1,10 @@
+---
+status: in-force
+summary: 'The backbone pattern: centralized, self-installing service registries that tools publish into instead of surfaces hardcoding their contents.'
+since: d7ed7e6 2026-08-12 (RegistryBase consolidation)
+skill: fns-registry
+---
+
 # The FNS Registry Scheme
 
 A general pattern for **centralized, self-installing service registries** in
@@ -10,11 +17,19 @@ Current implementations:
 
 | Registry | Global shortcut | Surface it manages | Master (dev) location |
 |---|---|---|---|
-| `PaneTypeRegistry` | `op.PANETYPEREGISTRY` | Panebar pane-type menu (rows, recall, right-click) | `PreviewPanel25/PaneTypeRegistry` |
-| `ToolbarRegistry` | `op.TOOLBARREGISTRY` | Toolbar widgets (mirrors in `/ui/dialogs/bookmark_bar`) | `FNS_Toolbar/ToolbarRegistry` |
-| `NavbarRegistry` | `op.NAVBARREGISTRY` | TD's pane bars (stamped copies in `panebar_default` + every `/ui/panes/panebar/*`) | `FNS_Navbar/NavbarRegistry` |
-| `OpMenuRegistry` | `op.OPMENUREGISTRY` | TD's Insert Operator dialog (`/ui/dialogs/menu_op`) -- search words, row decorations, right-click items | `FNS_OpMenu/OpMenuRegistry` |
-| `ConfigRegistry` | `op.CONFIGREGISTRY` | The aggregated settings file (`userPaletteFolder/FNStools_ext/config/FNStools_config.json`) -- per-tool par + state persistence | `FNS_Config/ConfigRegistry` |
+| `FNS_PaneTypeRegistry` | `op.FNS_PANETYPEREGISTRY` | Panebar pane-type menu (rows, recall, right-click) | `PreviewPanel25/FNS_PaneTypeRegistry` |
+| `FNS_ToolbarRegistry` | `op.FNS_TOOLBARREGISTRY` | Toolbar widgets (mirrors in `/ui/dialogs/bookmark_bar`) | `FNSTools/FNS_ToolbarRegistry` |
+| `FNS_NavbarRegistry` | `op.FNS_NAVBARREGISTRY` | TD's pane bars (stamped copies in `panebar_default` + every `/ui/panes/panebar/*`) | `FNSTools/FNS_NavbarRegistry` |
+| `FNS_OpMenuRegistry` | `op.FNS_OPMENUREGISTRY` | TD's Insert Operator dialog (`/ui/dialogs/menu_op`) -- search words, row decorations, right-click items | `FNSTools/FNS_OpMenuRegistry` |
+| `FNS_MainMenuRegistry` | `op.FNS_MAINMENUREGISTRY` | TD's main menu bar (`/ui/dialogs/mainmenu`) -- ordered entries, left/right justification, anchors | `FNSTools/FNS_MainMenuRegistry` |
+| `FNS_ConfigRegistry` | `op.FNS_CONFIGREGISTRY` | The aggregated settings file (`userPaletteFolder/FNStools_ext/config/FNStools_config.json`) -- per-tool par + state persistence | `FNSTools/FNS_ConfigRegistry` |
+| `FNS_Console` | `op.FNS_CONSOLE` | The toolkit's web front -- one page, a tab per concern; tools publish tabs via `RegisterTab` (see [ConsoleTabContract.md](ConsoleTabContract.md)) | `FNSTools/FNS_Console` |
+
+The table name is the `REGISTRY_NAME` on the master's extension; the shortcut is
+its `SHORTCUT`. Both are `FNS_`-prefixed -- the unprefixed spellings
+(`op.TOOLBARREGISTRY`, …) are pre-v3.0.0 and resolve to `None`. All promoted
+globals live in `/sys/FNS_Registries`; see
+[RegistryHomeContract.md](RegistryHomeContract.md).
 
 ### ConfigRegistry surface specifics (the surface is a FILE)
 
@@ -40,7 +55,7 @@ Current implementations:
   callback behind its own toggle par, `projectpresave` is OFF by
   default); the `Saveall` pulse on any host (forwards to the global);
   the UPDATER right before it replaces the toolkit (guarded
-  `op.CONFIGREGISTRY` call). Writes are read-merge-write: sections of
+  `op.FNS_CONFIGREGISTRY` call). Writes are read-merge-write: sections of
   tools not currently installed are PRESERVED (partial installs), atomic
   same-dir temp + `os.replace`, `schema` gate (mismatched files are
   never merged into and never applied -- moved aside to `.bak`).
@@ -147,7 +162,7 @@ Current implementations:
   check). IOFilter now declares both for itself via `onChainNodes()` /
   `onPanels()`, and reads the toggle in its OWN callbacks -- so whether it
   contributes is IOFilter's decision, not a branch in the installer. A
-  `parexec_active` inside IOFilter calls `op.OPMENUREGISTRY.Resync()` when
+  `parexec_active` inside IOFilter calls `op.FNS_OPMENUREGISTRY.Resync()` when
   the toggle flips. Chain order follows contributor order and the chain
   heals around a removed stage, so install order stops mattering.
   `install.py` is down to ONE executable line (the compat-table patch).
@@ -233,7 +248,7 @@ shortcut.
 Returning `[]` / `{}` WITHDRAWS a contribution -- the registry prunes what
 it injected. That is how a live toggle works: decide it in your callbacks
 (it is your tool's decision, not the registry's) and call
-`op.OPMENUREGISTRY.Resync()` when the condition changes, or let the ~2s
+`op.FNS_OPMENUREGISTRY.Resync()` when the condition changes, or let the ~2s
 healing tick pick it up. `FNS_OpMenu/IOFilter` is the worked example.
 A hook that raises is contained: debug()'d, skipped, dialog keeps working.
 
@@ -560,7 +575,7 @@ Manager API conventions (ToolbarRegistry reference):
 `Widgets` (snapshot property). Surface artifacts the registry creates are
 **tagged and name-prefixed** (`tbmirror_*` + `ToolbarRegistryMirror` tag) so
 pruning touches only what the registry owns. Cross-references resolve
-through the registry (`op.TOOLBARREGISTRY.WidgetTarget('Name')` as a
+through the registry (`op.FNS_TOOLBARREGISTRY.WidgetTarget('Name')` as a
 parameter expression) rather than hard paths — entries heal, references
 follow.
 
@@ -692,92 +707,17 @@ copy/create alone is rarely the whole contract.
   (`ToolbarConfigurator`, `modules/release/ToolbarConfigurator.tox`) ships
   its own gear button + a standard registry host (`Configure`, order 0) —
   the gear only appears where the UI actually exists, so there is never a
-  dead affordance. `op.TOOLBARREGISTRY.OpenConfigurator()` remains as a
+  dead affordance. `op.FNS_TOOLBARREGISTRY.OpenConfigurator()` remains as a
   convenience API, resolving the editor via its `TOOLBARCONFIG` global
   shortcut (toolbar-package child fallback, debug note if absent).
 
-## 7. Known hazards (paid for once — do not rediscover)
+## 7. Known hazards, and 8. adding a new registry
 
-- **CustomParHelper `EXT_SELF` is class-level** — with a shipped host plus a
-  `/sys` copy, callbacks can hit the wrong instance. Always route through
-  `_hostExtFromPar(par)` (resolve the ext from the parameter's owner).
-- **First-compile fragility**: a copy's extension initializes DURING
-  `copy()`, before docked ExtUtils resolves; the CustomParHelper import line
-  needs the `me.parent().op('ExtUtils')` fallback, and promotion needs the
-  reinit retry loop.
-- **Storage pickling**: strings only (see §3).
-- **Par callbacks fire a frame late** — never assert their effects in the
-  same script that set the parameter.
-- **`list.extend()` returns None**; build `panes`-style lists with `+`.
-- **Panebar specifics**: TD's `cellselectid` fires on right-click too — the
-  pane registry rewrites dropdowns to `celllselectid` (left-only); panelexec
-  templates copied into dropdowns lose relative `panels` wiring and must be
-  re-pointed after copy.
-- **`run()` scheduling**: always `delayRef=op.TDResources` so delays survive
-  timeline stops.
-- **Externalizing a DAT that carries a foreign file binding** (tags/file par
-  from another project) can raise a modal that blocks TD's main thread —
-  expect it when adopting components from other projects.
-- **Cook-disabled tools cannot host widgets or registries.** A COMP with
-  `allowCooking=False` (e.g. midiMapper) can't compile extensions and its
-  panels don't render — so its toolbar button must live OUTSIDE it (toolbar
-  chrome, or a small always-cooking wrapper). Check `allowCooking` before
-  moving a widget into a tool.
-- **execute_python rollback restores only ops the script CREATED — not ops
-  it destroyed.** A batch that destroys legacy state and then fails leaves
-  the destroyed ops gone. Destroy last, or keep a restore source (the
-  external .tox) at hand.
-- **Widgets sized by their panel parent** (`me.panelParent(1).height - 5`)
-  break when moved out of the bar into a non-panel tool COMP — constify
-  `w`/`h` on migration.
-- **A copy of a suspect-bound master INHERITS its externaltox binding --
-  and boot reloads the WRONG tox into it.** Copying OpMenuRegistry to seed
-  ConfigRegistry carried `externaltox=.../OpMenuRegistry.tox` +
-  `enableexternaltox=on`; the first cold boot reloaded OpMenu content into
-  every ConfigRegistry copy (master became a hybrid, hosts became pure
-  OpMenu, the removed `pi_suspect` tag came back). EVERY stamp recipe must
-  sever it: `enableexternaltox=False`, `externaltox=''`, strip
-  `pi_suspect` -- and when the master doubles as a bound host, also fall
-  its copied Registration-par BINDs back to CONSTANT before setting values
-  (assigning through a dangling bind raises).
-- **Tools with `enableexternaltox=False` are carried by the ROOT toolkit
-  tox, not their own.** Their own `.tox` saves are dead files at boot; the
-  root `FunctionStore_tools_2025.tox` is their real persistence. Landing
-  discipline: save the ROOT tox too, not just the per-tool suspects
-  (paid for: 4 tools + the root host lost their ConfigRegistry hosts on a
-  cold boot because only per-tool toxes were saved).
-- **Execute DATs gate every callback behind its own toggle par.** A
-  `projectpresave` callback never fires until `par.projectpresave = True`
-  -- writing the function into the DAT is not enough (paid for: the
-  config pre-save hook silently did nothing on the first project save).
-- **Copying ANY COMP whose subtree contains an enabled clone host crashes
-  TD** — not just clone copies inside drop-event stacks. Copying
-  NavbarConfigurator (which ships its clone-bound gear host) via a plain
-  MCP copy hard-crashed TD 2025.33070 (mainmenu port, 2026-08-10). Before
-  copying a configurator or any host-carrying package: set the inner
-  host's `enablecloning=False` (and the source's `initextonstart=False` so
-  the copy's extensions stay quiet), copy, then restore — wrapped in
-  try/finally.
-
-## 8. Adding a new registry — checklist
-
-1. Copy an existing master (ToolbarRegistry is the smaller template); rename
-   COMP + ext DAT to `MyRegistry` / `MyRegistryExt` (names must match
-   `REGISTRY_NAME` / `EXT_NAME`).
-2. Write the subclass: class constants, surface hooks, public API,
-   `_applyHostRegistration` override if the Registration page differs.
-3. Adjust the Registration page pars + help text; set About `Version` to
-   `0.1.0`.
-4. Externalize COMP (tdn) + both `.py` DATs; verify `get_op_errors` clean.
-5. Reinit → confirm `/sys/FNS_Registries/MyRegistry` promotes, shortcut resolves,
-   Registration page stripped on the global.
-6. Pilot: copy the host into one tool, configure, `Autoregister` on; verify
-   the entry + surface artifact + unregister cascade (wait a frame after
-   par changes).
-7. Add `pre_release` scrub hook; `ExportPortableTox` to `modules/release/`;
-   load-test the tox in a scratch COMP.
-8. Cold test: restart TD (or drop the tox in a bare project) and verify the
-   full bootstrap.
+Both moved to `/fns-registry` (the skill), so they load when someone is about
+to build or copy one rather than when someone is reading the model. The skill
+carries the full hazard list (CustomParHelper EXT_SELF, externaltox
+inheritance, the clone-host copy crash, root-tox carriage, Execute DAT toggle
+gating, …) and the eight-step new-registry checklist.
 
 ## 9. Migrating a legacy surface to the registry scheme (lessons from the toolbar port)
 
