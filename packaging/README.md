@@ -117,7 +117,10 @@ sections exactly like the site does, with or without a site to ask.
 
 **The rails live in the dev root.** `FNS_Installer` and `webBrowser` (with
 its `watch_webbrowser` Panel Execute, which keeps the browser's Web Render
-off unless its viewer is open) are
+off unless its viewer is open -- note `packaging/webBrowser.tox` is the
+palette component with ONE patch: its `parexec1` tolerates an empty Info
+DAT, which a dormant Web Render has; re-vendor from the palette and that
+patch is lost) are
 residents of the live `FNSTools` root, beside `FNS_Updater` — the bootstrap
 is that root castrated (tools stripped, rails kept), so what you drop is
 what we develop in, rail for rail. `EnsureDevRails()` in
