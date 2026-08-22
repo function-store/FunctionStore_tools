@@ -567,6 +567,13 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
         # way the website does, including when the picker is served from
         # inside TouchDesigner with no site to fetch it from.
         'category_meta': catalog.get('category_meta', {}),
+        # The picker's Recommended preset: every TOOL whose catalog entry
+        # carries `recommended: true` (the CMS checkbox), in manifest
+        # order. The page hides the preset when the list is empty or the
+        # manifest predates it.
+        'starter': [p['name'] for p in packages
+                    if p['kind'] == 'tool'
+                    and curated.get(p['name'], {}).get('recommended')],
         'packages': packages,
     }
     with open(out_path, 'w', encoding='utf-8') as f:

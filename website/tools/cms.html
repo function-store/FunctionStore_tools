@@ -85,6 +85,9 @@
   .tag { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; letter-spacing: 0.04em; }
   .tag-stub { background: #3b2508; color: #fdba74; }
   .tag-todo { background: var(--bg-3); color: var(--text-faint); }
+  .tag-rec { background: var(--accent-dim, #2a1f08); color: var(--accent, #fbbf24); }
+  label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  label.check input { width: auto; margin: 0; accent-color: var(--accent, #fbbf24); }
 
   /* ───── Editor ───── */
   .pane { padding: 16px 18px 40px; }
@@ -276,6 +279,7 @@ function renderList() {
       const el = document.createElement('div');
       el.className = 'pkg' + (current && current.name === p.name ? ' on' : '');
       el.innerHTML = `<span class="pkg-name"></span>` +
+        (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
         (p.stub ? '<span class="tag tag-stub">STUB</span>'
                 : (p.todos ? `<span class="tag tag-todo">${p.todos} TODO</span>` : ''));
       el.querySelector('.pkg-name').textContent = p.name;
@@ -357,6 +361,11 @@ function renderEditor() {
     </div>
 
     <div class="field">
+      <label class="check"><input type="checkbox" id="recommended" /> Recommended
+        <span class="hint">— part of the picker’s Recommended preset, the starting point the first-run welcome offers. Lives in catalog.json; ships with the next release’s manifest.</span></label>
+    </div>
+
+    <div class="field">
       <label for="summary">Summary <span class="hint">— optional fallback used only if Description is empty</span></label>
       <textarea id="summary" rows="2"></textarea>
     </div>
@@ -400,6 +409,7 @@ function renderEditor() {
   $('.pane-title').textContent = d.name;
   $('#fname').textContent = d.name + '.md';
   $('#description').value = d.description || '';
+  $('#recommended').checked = !!d.recommended;
   $('#summary').value = d.data.summary || '';
   $('#credit-name').value = (d.data.credit && d.data.credit.name) || '';
   $('#credit-url').value = (d.data.credit && d.data.credit.url) || '';
@@ -410,6 +420,7 @@ function renderEditor() {
 
   $('#category').onchange = (e) => { d.category = e.target.value; markDirty(); renderList(); };
   $('#description').oninput = (e) => { d.description = e.target.value; markDirty(); };
+  $('#recommended').onchange = (e) => { d.recommended = e.target.checked; markDirty(); renderList(); };
   $('#summary').oninput = (e) => { setData('summary', e.target.value.trim()); };
   $('#video').oninput = (e) => { setData('video', e.target.value.trim()); };
   $('#platforms').onchange = (e) => {
@@ -614,6 +625,7 @@ async function save() {
       body: JSON.stringify({
         category: draft.category,
         description: draft.description,
+        recommended: !!draft.recommended,
         data: draft.data,
         body: draft.body,
         mtime: current.mtime,

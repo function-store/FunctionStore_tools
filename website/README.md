@@ -87,6 +87,13 @@ It writes **straight to `packaging/catalog.json` and
 `packaging/docs/*.md`** — there is no database and no staging step. Review
 with `git diff`, undo with `git checkout -- packaging/`.
 
+- **Recommended** (checkbox under Description) puts the package in the
+  installer picker's *Recommended* preset — the starting point the
+  first-run welcome offers. It is stored as `recommended: true` on the
+  package's `catalog.json` entry (absent when off, so toggling is a
+  one-line diff) and reaches users as the manifest's `starter` list at
+  the next release; the list shows a `REC` badge. Tools only — core is
+  never part of the offer.
 - **Save** is `⌘S`. The window warns before you navigate away dirty.
 - **Build site** runs `build-site.mjs` and shows its output, including the
   validation failures — so a link to a heading that does not exist surfaces

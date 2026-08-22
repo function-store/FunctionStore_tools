@@ -126,6 +126,7 @@ function loadPackage(cat, name) {
     name,
     category: cat.packages[name].category,
     description: cat.packages[name].description || '',
+    recommended: !!cat.packages[name].recommended,
     data,
     body: content.replace(/^\n+/, ''),
     mtime: mtimeOf(p),
@@ -144,6 +145,7 @@ function state() {
       return p || {
         name: n, category: cat.packages[n].category,
         description: cat.packages[n].description || '',
+        recommended: !!cat.packages[n].recommended,
         data: {}, body: '', mtime: 0, stub: true, todos: 0, words: 0,
         missing: true,
       };
@@ -283,7 +285,8 @@ const server = http.createServer(async (req, res) => {
           });
         }
 
-        if (typeof body.category === 'string' || typeof body.description === 'string') {
+        if (typeof body.category === 'string' || typeof body.description === 'string'
+            || typeof body.recommended === 'boolean') {
           const entry = cat.packages[name];
           if (typeof body.category === 'string') {
             if (!cat.categories.includes(body.category)) {
@@ -293,6 +296,13 @@ const server = http.createServer(async (req, res) => {
           }
           if (typeof body.description === 'string') {
             entry.description = body.description.trim();
+          }
+          // The picker's Recommended preset (the first-run welcome). Stored
+          // as presence, not as `false`: an unflagged package stays a
+          // two-line entry, and the diff of toggling one is one line.
+          if (typeof body.recommended === 'boolean') {
+            if (body.recommended) entry.recommended = true;
+            else delete entry.recommended;
           }
           writeCatalog(cat);
         }

@@ -182,6 +182,51 @@ def SourceLock(target_path):
     return ''
 
 
+def IsDevProject():
+    """True when Private Investigator's DEV toggle says this is the toolkit's
+    own development project. PI is the authoring apparatus (release toxes,
+    the publish rails); the toggle is the owner's explicit declaration, so
+    nothing here infers dev-ness from folder contents. Found by the par,
+    not by a path: PI carries no shortcut and a root-level name is not a
+    contract."""
+    for c in op('/').children:
+        if c.family != 'COMP':
+            continue
+        p = getattr(c.par, 'Dev', None)
+        if p is not None:
+            try:
+                return bool(p.eval())
+            except Exception:
+                return False
+    return False
+
+
+def FolderLock(folder):
+    """Why package files may not be written to `folder`, or ''.
+
+    'project' mode copies artifacts into <project folder>/FNStools by
+    default. In the toolkit's own development project that folder IS the
+    externalized source tree (Embody writes every authored extension
+    there -- and Windows does not distinguish FNStools from FNSTools), so
+    a test install with the wrong menu value would bury generated .tox
+    files among tracked sources. Gated on PI's DEV toggle; an explicit
+    Package Folder OUTSIDE the project folder stays allowed."""
+    if not folder or folder == 'shared':
+        return ''
+    if not IsDevProject():
+        return ''
+    root = os.path.normcase(os.path.abspath(project.folder))
+    dest = os.path.normcase(os.path.abspath(folder if os.path.isabs(folder)
+                                            else RepoPath(folder)))
+    if dest == root or dest.startswith(root + os.sep):
+        return ("Package Files 'project' would write into %s, inside the "
+                "toolkit's development project (Private Investigator: DEV "
+                "on) -- its source tree. Choose Embedded or Shared, or point "
+                "Package Folder outside the project folder."
+                % folder.replace('\\', '/'))
+    return ''
+
+
 def _artifactPath(art, name, manifest_path):
     """Where this artifact actually is.
 
@@ -462,6 +507,43 @@ def RecordInstalled(parent_comp, name, sha256, release=''):
 SYS_REGISTRY_HOME = '/sys/FNS_Registries'
 
 
+# The roaming config the toolkit root's own host (canonical `FNS`) writes
+# into on every SaveAll -- its `last_install` state entry is what lets a
+# fresh bootstrap offer "Set up like last time". Read here DIRECTLY, because
+# a bare root has no registry yet to ask; the path is the registry's own
+# default (ConfigRegistryExt.SUBFOLDER / FILE_NAME). A master's Configfile
+# override cannot be known on a bare root and is not honoured here.
+CONFIG_SUBPATH = 'FNStools_ext/config/FNStools_config.json'
+ROOT_CANONICAL = 'FNS'
+
+
+def LastInstall(root=None, path=None):
+    """The machine's last recorded install -- {'packages', 'project', 'when',
+    'bind'?} -- or None. None under project scope (the roaming file is never
+    read there; the authored scope record is the root's Configscope, and a
+    missing par reads as global), when there is no file, or when the file
+    is unreadable or of another schema. Never raises."""
+    scope = getattr(root.par, 'Configscope', None) if root is not None else None
+    if scope is not None:
+        try:
+            if str(scope.eval()) == 'project':
+                return None
+        except Exception:
+            pass
+    path = path or (app.userPaletteFolder + '/' + CONFIG_SUBPATH)
+    try:
+        with open(path.replace('\\', '/'), 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        if not isinstance(data, dict) or data.get('schema') != 1:
+            return None
+        rec = data.get('tools', {}).get(ROOT_CANONICAL, {}).get('state', {}).get('last_install')
+        if not isinstance(rec, dict) or not rec.get('packages'):
+            return None
+        return rec
+    except Exception:
+        return None
+
+
 def PromotedRegistries():
     """The global registries live in this TD process, newest state first-hand.
 
@@ -627,6 +709,12 @@ class InstallerExt:
         except Exception as e:
             self._status('Plan failed: %s' % e)
             return None
+        # a refused package folder locks the plan like a refused target, so
+        # every consumer -- Install, the served picker -- sees one answer
+        if not plan.get('locked'):
+            why = FolderLock(self._bindChoice())
+            if why:
+                plan['locked'] = why
         self._writePlan(plan)
         if plan.get('locked'):
             self._status('LOCKED -- ' + plan['locked'])
@@ -837,6 +925,35 @@ class InstallerExt:
             lines.append('%.1f MB to download' % (fetch_bytes / 1048576.0))
         return '\n'.join(lines)
 
+    # The bootstrap's own residents: a root holding nothing but these has
+    # never been installed into, and the page runs its guided first run.
+    RAILS = ('FNS_Installer', 'FNS_Updater', 'webBrowser')
+
+    def _isFirstRun(self, tgt):
+        """True when the target holds no package yet (rails aside)."""
+        if tgt is None:
+            return False
+        return not any(c.family == 'COMP' and c.name not in self.RAILS
+                       for c in tgt.children)
+
+    def _openSettings(self):
+        """Hand the panel over to the FNS console's Settings tab -- the
+        root's own Open Settings pulse, so the routing (console, or an
+        older registry's forward, in-TD panel or system browser) stays in
+        one place. Returns an error string, '' on success."""
+        root = self.ownerComp.parent()
+        par = getattr(root.par, 'Opensettings', None) if root else None
+        if par is None:
+            return 'this installer is not inside a toolkit root -- use the ' \
+                   'FNS console directly'
+        if getattr(op, 'FNS_CONSOLE', None) is None \
+                and getattr(op, 'FNS_CONFIGREGISTRY', None) is None:
+            return 'no FNS console installed yet'
+        # deferred: the pulse navigates the very panel this request came
+        # from, and the response must leave first
+        run("op(%r).par.Opensettings.pulse()" % root.path, delayFrames=2)
+        return ''
+
     def ServeRequest(self, request, response):
         """onHTTPRequest for the embedded Web Server DAT."""
         uri = request.get('uri', '/')
@@ -851,6 +968,8 @@ class InstallerExt:
                 response['Content-Type'] = 'text/javascript; charset=utf-8'
                 path = self._par('Manifestfile') or DefaultManifest()
                 full = path if os.path.isabs(path) else RepoPath(path)
+                tgt = op(self._par('Target') or DefaultTarget(self.ownerComp))
+                firstrun = self._isFirstRun(tgt)
                 # the picker needs only the MANIFEST -- artifacts download
                 # per-selection at install time, so a lightweight drop
                 # stays lightweight until the user actually picks
@@ -859,26 +978,46 @@ class InstallerExt:
                     # so unchecking an installed tool reads as removal --
                     # the machine-wide selection.json is scratch, not truth
                     installed, locked = [], ''
-                    tgt = op(self._par('Target')
-                             or DefaultTarget(self.ownerComp))
                     if tgt is not None:
                         installed = sorted(c.name for c in tgt.children
                                            if c.family == 'COMP')
                         # the page disables Apply up front rather than
                         # letting the user pick and then get refused
                         locked = SourceLock(tgt.path)
+                    # the machine's last install, for the first run's
+                    # "Set up like last time" -- only offered on a bare
+                    # root, so only read there
+                    last = LastInstall(tgt) if firstrun else None
                     with open(full, 'r', encoding='utf-8') as f:
                         response['data'] = ('window.FNS_SERVED = true;\n'
+                                            'window.FNS_FIRSTRUN = %s;\n'
+                                            'window.FNS_LAST = %s;\n'
                                             'window.FNS_INSTALLED = %s;\n'
                                             'window.FNS_LOCKED = %s;\n'
                                             'window.FNS_MANIFEST = %s;\n'
-                                            % (json.dumps(installed),
+                                            % (json.dumps(firstrun),
+                                               json.dumps(last),
+                                               json.dumps(installed),
                                                json.dumps(locked), f.read()))
                 else:
                     why = '' if self._refreshActive() \
                         else self._refreshStore(names=[])
-                    response['data'] = ('window.FNS_REFRESHING = true;%s\n'
-                                        % (' // ' + why if why else ''))
+                    response['data'] = ('window.FNS_REFRESHING = true;\n'
+                                        'window.FNS_FIRSTRUN = %s;%s\n'
+                                        % (json.dumps(firstrun),
+                                           ' // ' + why if why else ''))
+            elif method == 'POST' and uri == '/settings':
+                # the page's "Open Settings" after an install: the console
+                # takes the panel over, and this server has nothing left
+                # to serve
+                why = self._openSettings()
+                response['Content-Type'] = 'application/json'
+                response['data'] = json.dumps({'ok': not why, 'text': why})
+                if not why:
+                    ws = self.ownerComp.op('webserver')
+                    if ws is not None:
+                        run("op(%r).par.active = False" % ws.path,
+                            delayMilliSeconds=1500)
             elif method == 'POST' and uri == '/selection':
                 sel_dir = ('%s/FNStools_ext' % app.userPaletteFolder).replace('\\', '/')
                 os.makedirs(sel_dir, exist_ok=True)
@@ -886,10 +1025,16 @@ class InstallerExt:
                 data = request.get('data', '')
                 if isinstance(data, bytes):
                     data = data.decode('utf-8')
-                json.loads(data)          # refuse to write junk
+                sel = json.loads(data)    # refuse to write junk
                 with open(sel_path, 'w', encoding='utf-8') as f:
                     f.write(data)
                 self.ownerComp.par.Selectionfile = sel_path
+                # "Set up like last time" carries the bind mode the last
+                # install used; an ordinary selection leaves the par alone
+                bind = sel.get('bind') if isinstance(sel, dict) else None
+                pf = getattr(self.ownerComp.par, 'Packagefiles', None)
+                if bind and pf is not None and bind in pf.menuNames:
+                    pf.val = bind
                 plan = self.Plan()
                 response['Content-Type'] = 'application/json'
                 if (plan is None or plan.get('locked')
@@ -963,11 +1108,14 @@ class InstallerExt:
                     if not res['failed']:
                         # Done: stop serving, AFTER this response has gone
                         # out. Otherwise the server stays on forever and
-                        # gets saved into the .toe still listening.
+                        # gets saved into the .toe still listening. A
+                        # minute, not seconds: the page's done step offers
+                        # Open Settings (POST /settings), which needs a
+                        # server to answer.
                         ws = self.ownerComp.op('webserver')
                         if ws is not None:
                             run("op(%r).par.active = False" % ws.path,
-                                delayMilliSeconds=3000)
+                                delayMilliSeconds=60000)
             else:
                 response['statusCode'], response['statusReason'] = 404, 'Not Found'
                 response['data'] = 'not found'

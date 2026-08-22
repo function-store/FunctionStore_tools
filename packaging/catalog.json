@@ -4,6 +4,8 @@
   "categories is the canonical ORDERED list -- its order drives section order",
   "on the website and in the installer picker. category_meta carries the",
   "website's glyph and one-line pitch per category; packaging ignores it.",
+  "A package's `recommended: true` puts it in the picker's Recommended preset (the",
+  "first-run welcome); the CMS checkbox sets it, build_manifest.py derives `starter`.",
   "Everything else in the manifest is derived live from the project -- this file",
   "holds only what a machine cannot know: category and human description.",
   "Descriptions were seeded by inspection and NEED OWNER REVIEW; correct them here",
@@ -65,7 +67,8 @@
   },
   "AutoRes": {
    "category": "Media & Output",
-   "description": "Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes."
+   "description": "Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes.",
+   "recommended": true
   },
   "BorderlessTD": {
    "category": "Surfaces",
@@ -77,7 +80,8 @@
   },
   "CustomParTools": {
    "category": "Parameters",
-   "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion."
+   "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion.",
+   "recommended": true
   },
   "ExprHotStrings": {
    "category": "Parameters",
@@ -93,7 +97,8 @@
   },
   "FNS_HotkeyManager": {
    "category": "Workflow",
-   "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit."
+   "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit.",
+   "recommended": true
   },
   "FNS_MainMenu": {
    "category": "Surfaces",
@@ -105,7 +110,8 @@
   },
   "FNS_Navbar": {
    "category": "Surfaces",
-   "description": "Pane-bar extras: parent-hierarchy navigation, path injection and drag-drop hijack, plus the navbar Configurator."
+   "description": "Pane-bar extras: parent-hierarchy navigation, path injection and drag-drop hijack, plus the navbar Configurator.",
+   "recommended": true
   },
   "FNS_NavbarRegistry": {
    "category": "Core",
@@ -113,7 +119,8 @@
   },
   "FNS_OpMenu": {
    "category": "Surfaces",
-   "description": "OP Create dialog extras: the IO filter, operator search words and script injection."
+   "description": "OP Create dialog extras: the IO filter, operator search words and script injection.",
+   "recommended": true
   },
   "FNS_OpMenuRegistry": {
    "category": "Core",
@@ -125,7 +132,8 @@
   },
   "FNS_Toolbar": {
    "category": "Surfaces",
-   "description": "Toolbar extras: the Configurator UI for ordering, grouping and hiding bar widgets, plus stock widgets."
+   "description": "Toolbar extras: the Configurator UI for ordering, grouping and hiding bar widgets, plus stock widgets.",
+   "recommended": true
   },
   "FNS_ToolbarRegistry": {
    "category": "Core",
@@ -169,7 +177,8 @@
   },
   "OpToClipboard": {
    "category": "Network",
-   "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression."
+   "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression.",
+   "recommended": true
   },
   "oscMapper": {
    "category": "Control",
@@ -181,7 +190,8 @@
   },
   "ParOPDrop": {
    "category": "Parameters",
-   "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey."
+   "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey.",
+   "recommended": true
   },
   "ParRandomizer": {
    "category": "Parameters",
@@ -193,7 +203,8 @@
   },
   "QuickCollapse": {
    "category": "Network",
-   "description": "Collapse a selection into a component, with an optional customize dialog."
+   "description": "Collapse a selection into a component, with an optional customize dialog.",
+   "recommended": true
   },
   "QuickMarks": {
    "category": "Network",
@@ -201,7 +212,8 @@
   },
   "QuickPane": {
    "category": "Workflow",
-   "description": "Pane layout shortcuts."
+   "description": "Pane layout shortcuts.",
+   "recommended": true
   },
   "QuickParCustom": {
    "category": "Parameters",
@@ -221,7 +233,8 @@
   },
   "SwapOps": {
    "category": "Network",
-   "description": "Swap one operator for another while keeping connections intact."
+   "description": "Swap one operator for another while keeping connections intact.",
+   "recommended": true
   },
   "SwitchOPs": {
    "category": "Network",
@@ -229,7 +242,8 @@
   },
   "TDX_SearchPalette": {
    "category": "Workflow",
-   "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen."
+   "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
+   "recommended": true
   },
   "tools_ui": {
    "category": "Surfaces",

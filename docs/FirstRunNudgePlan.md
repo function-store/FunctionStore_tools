@@ -1,10 +1,25 @@
 ---
 status: open
-summary: P4 — a one-shot post-install dialog pointing the user at the Configurator. Approved in dialog form; not built.
+summary: P4 — a one-shot post-install dialog pointing the user at the Configurator. Approved in dialog form; not built. The drop-time welcome (bootstrap opens the picker on first drop, guided first run in the page) landed separately on 2026-08-22.
 since: 7842401 2026-08-21 (approved, unbuilt)
 ---
 
 # P4 — First-Run Nudge Plan
+
+> **2026-08-22 — adjacent work landed, this plan still open.** The
+> bootstrap's *first drop* now opens the picker by itself
+> (`exec_root_welcome`, a storage-flagged `onCreate`), and the served
+> picker runs a guided first run -- welcome presets, step strip, a done
+> step ending on **Open Settings**. See `packaging/README.md`, "The first
+> drop opens the picker by itself". That covers the install-time gap;
+> what remains here is the *next-boot* nudge after an install made
+> without the picker (paste rail, manual rail), and the machine-global
+> seen-flag design below is unchanged. One thing it assumed is now true:
+> the root host (`FNS_ConfigHost`, canonical `FNS`) **ships in the
+> bootstrap** since 2026-08-22 -- before that a user's root had no section
+> in the roaming config at all. Its `config_callbacks` DAT already carries
+> one state entry (`last_install`, `docs/LastInstallRecord.md`); the
+> seen-flag belongs beside it.
 
 **Approved 2026-08-21 (owner): dialog form.** After a successful install,
 nothing currently points the user at the configurator. Add a one-shot

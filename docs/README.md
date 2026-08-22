@@ -33,6 +33,7 @@ Normative. Conform to these; they describe how the toolkit works today.
 | [ConfiguratorDistribution.md](ConfiguratorDistribution.md) | How a user picks and chooses which tools to install: buckets, manifests, Pkgversion-driven updates, and the bootstrap rail. | 2026-08-13 (buckets + manifests decision) | `/fns-packaging` |
 | [ConsoleTabContract.md](ConsoleTabContract.md) | What a tool must do to publish a tab into the FNS_Console web front -- RegisterTab, the api DAT contract, and the rejection rules. | 53eb4ed 2026-08-22 | `/fns-registry` |
 | [HotkeyManagerConformance.md](HotkeyManagerConformance.md) | Why FNS_HotkeyManager persists only declared sources and reads defaults off the parameter -- the reasoning behind the conformance rules. | 97bda12 2026-08-21 | `/fns-hotkey-conformance` |
+| [LastInstallRecord.md](LastInstallRecord.md) | "Set up like last time" — the machine's last install roams as state on the toolkit root's own config host; a fresh bootstrap offers it, never applies it. | unreleased 2026-08-22 (landed with the first-run welcome; root host now ships in the bootstrap) | — |
 | [PackagingScheme.md](PackagingScheme.md) | The packaging and update scheme in one page -- buckets and manifests, Pkgversion as the governed version, derived dependencies, and the traps already paid for. | 2026-08-13 (consolidated from three sessions) | `/fns-packaging` |
 | [RegistryHomeContract.md](RegistryHomeContract.md) | Where promoted registry globals live (/sys/FNS_Registries) and the six invariants that govern the home. | a019218 2026-08-21 | `/fns-registry` |
 | [RegistryScheme.md](RegistryScheme.md) | The backbone pattern: centralized, self-installing service registries that tools publish into instead of surfaces hardcoding their contents. | d7ed7e6 2026-08-12 (RegistryBase consolidation) | `/fns-registry` |
@@ -55,7 +56,8 @@ Planned or approved work that has not been built. Actionable.
 
 | Document | Summary | Since | Skill |
 |---|---|---|---|
-| [FirstRunNudgePlan.md](FirstRunNudgePlan.md) | P4 — a one-shot post-install dialog pointing the user at the Configurator. Approved in dialog form; not built. | 7842401 2026-08-21 (approved, unbuilt) | — |
+| [FirstRunNudgePlan.md](FirstRunNudgePlan.md) | P4 — a one-shot post-install dialog pointing the user at the Configurator. Approved in dialog form; not built. The drop-time welcome (bootstrap opens the picker on first drop, guided first run in the page) landed separately on 2026-08-22. | 7842401 2026-08-21 (approved, unbuilt) | — |
+| [FirstRunTestPlan.md](FirstRunTestPlan.md) | Manual end-to-end test plan for the first-run experience — drop welcome, guided picker, "Set up like last time", CMS Recommended, dev-folder guard. Run on a clean TD before the next release. | unreleased 2026-08-22 (covers work landed that day; automated checks passed, the cold user-path runs below are still pending) | — |
 | [ProductAdoptionAudit.md](ProductAdoptionAudit.md) | Audit of product design, adoption, installation, updates and config scoping. The actionable backlog; each item carries its evidence anchors. | 7842401 2026-08-21 (backlog, partly resolved) | — |
 | [ReadmeRewritePlan.md](ReadmeRewritePlan.md) | P1 — plan to rewrite the root README around the v3 product. The README still describes the 2023 monolith. | 7842401 2026-08-21 | — |
 | [UpdaterSelfUpdateVerification.md](UpdaterSelfUpdateVerification.md) | P3 — plan to exercise FNS_Updater's self-update end-to-end. The riskiest untested path in the product; never run. | 7842401 2026-08-21 | — |
