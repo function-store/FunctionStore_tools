@@ -921,6 +921,24 @@ and the destroy hand-back both route through it), so the renderer has
 exactly one owner. A viewer shown any way other than a floating window
 is outside `winopen` and stays off -- documented, accepted.
 
+**The FNS webBrowser (owner ask, 2026-08-22).** The palette webBrowser
+became ours: the visibility policy moved INSIDE it (`Watchwindow` ->
+panel value `winopen`, event-driven; `Watchviewer` -> the node's Viewer
+Active flag, polled once a frame -- the flag has no callback; one
+`watch_rules.sync()` behind both, compare-before-set; both off = Active
+is manual), and the Web Render's Source/DAT are mirrored on the
+component's custom pars. That second part is what makes it clonable:
+clone sync replaces the children, so per-instance configuration must
+live on the clone COMP's own parameters. `/FNSTools/webBrowser` is the
+master; ColorUI's panel browser clones it (guarded
+`op.FNS.op('webBrowser')` expression, Source=DAT `webui_html`, watchers
+off because ColorUI's own rule owns Active); the shipped rail is cut
+loose from cloning at build time and `packaging/webBrowser.tox` is
+saved from the master. The root-level watcher and the owner's eval/datexec
+scaffold were retired once the policy moved in. Verified: ColorUI renders
+"connected" through the clone; master follows both the window and the
+flag in both directions.
+
 `FNS_ConfigRegistry` keeps its Ui* API and nothing else of the UI: the
 page, callbacks and server lifecycle are gone; `OpenSettingsUI(tab, panel)`
 is a thin forward to `op.FNS_CONSOLE.Open` so the root pulses and the

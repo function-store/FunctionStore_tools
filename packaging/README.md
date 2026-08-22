@@ -115,12 +115,7 @@ pitches come off `category_meta` on the manifest — curated in
 `catalog.json`, edited in the website CMS — so the picker heads its
 sections exactly like the site does, with or without a site to ask.
 
-**The rails live in the dev root.** `FNS_Installer` and `webBrowser` (with
-its `watch_webbrowser` Panel Execute, which keeps the browser's Web Render
-off unless its viewer is open -- note `packaging/webBrowser.tox` is the
-palette component with ONE patch: its `parexec1` tolerates an empty Info
-DAT, which a dormant Web Render has; re-vendor from the palette and that
-patch is lost) are
+**The rails live in the dev root.** `FNS_Installer` and `webBrowser` are
 residents of the live `FNSTools` root, beside `FNS_Updater` — the bootstrap
 is that root castrated (tools stripped, rails kept), so what you drop is
 what we develop in, rail for rail. `EnsureDevRails()` in
@@ -140,6 +135,29 @@ Textport lines — is in [RELEASING.md](RELEASING.md).
 `InstallerExt.py` is the single implementation; `install.py` is a thin
 script wrapper over the same code, so the droppable rails and the headless
 rail cannot drift apart.
+
+## The FNS webBrowser
+
+`packaging/webBrowser.tox` is TD's palette webBrowser made ours, and
+`/FNSTools/webBrowser` is its master -- the rail instance and ColorUI's
+panel browser both **clone** it (guarded `op.FNS.op('webBrowser')`
+expression; the shipped rail is cut loose from cloning at build time).
+What changed from the palette:
+
+- **Visibility policy inside.** *Render Only While Window Open* follows
+  the panel value `winopen`; *Render Only While Viewer Active* polls the
+  node's Viewer Active flag once a frame. Either on = `Active` follows
+  visibility (`watch_rules`/`watch_window`/`watch_viewer`/`watch_pars`
+  inside); both off = `Active` is yours. A Web Render cooks a whole
+  browser process otherwise, and this component ships to every user.
+- **Source on the component.** `Source` (URL or File / DAT) and `Source
+  DAT` mirror the Web Render TOP's own, so an instance that renders a DAT
+  (ColorUI: `webui_html`) configures that on its custom parameters --
+  which is what lets it stay a clone: clone sync replaces the children,
+  and per-instance configuration must not live there.
+- **One robustness patch** in the palette's `parexec1`: it tolerates an
+  empty Info DAT, which a dormant Web Render has. Re-vendoring from the
+  palette loses all three; edit the master instead.
 
 ## Console exposure ships dormant
 
