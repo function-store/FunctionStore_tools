@@ -12,4 +12,4 @@ Below is the description of the tools from left to right found in the toolbar.
 
 > The primary way to customize the bar today is the **Toolbar Configurator**: click the gear button it adds to the bar to reorder, group, hide/show and add dividers between widgets (drag rows in the list, right-click a name for its docs), and drag any panel COMP onto the gear to register it as a toolbar package. This layout is saved and synced across project files.
 >
-> A legacy, lower-level option still exists: pulsing the custom parameter `Open Definition` (which links to the table `/FNSTools/FNS_Toolbar/ToolbarDef` where you can define these --- be sure to save after) lets you redefine the button set directly, but this table is not synced globally between project files.
+> The old lower-level route -- an `Open Definition` pulse onto a `ToolbarDef` table -- is gone: the registry is the definition now, and the Configurator edits it.

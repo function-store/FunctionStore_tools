@@ -12,8 +12,6 @@ features:
     anchor: custom-search-keywords
   - name: Dotsimulate's OpType acronyms
     anchor: dotsimulates-optype-acronyms
-  - name: QuickOp
-    anchor: quickop
 ---
 
 ## Custom OpMenu Search Keywords
@@ -22,7 +20,17 @@ This is a table to define custom search keywords for each OpType for the **OpMen
 
 ## OpMenu Mods
 
+FNS_OpMenu is a set of mods to TouchDesigner's **OP Create dialog**
+(`/ui/dialogs/menu_op`). They are applied through
+[FNS_OpMenuRegistry](/docs/fns-opmenuregistry/), so several tools can decorate
+the same dialog without fighting over it -- and so the dialog goes back to
+stock the moment you remove them.
 
+The mods this package ships are below: Greg Hermanovic's IO filters, custom
+search keywords, and Dotsimulate's OpType acronyms. Other installed tools add
+their own decorations through the same registry -- for instance
+[OpTemplates](/docs/optemplates/) marks every operator type you have a template
+for with a `>>>`.
 
 ## Greg's IO Filters
 
@@ -38,8 +46,3 @@ For each OP Type you can define custom search keywords. For example you can find
 
 Thanks to [Dotsimulate](https://www.patreon.com/dotsimulate/), you can also list OpTypes based on their acronym. Meaning you can find `Movie File Out` by typing `m f o`, and so on.
 
-## QuickOp
-
-This is an alternative and quicker way of adding new operators, and was suggested by [Greg Hermanovic](https://derivative.ca) to be implemented, which I happily obliged to.
-`Ctrl-Dragging` and operator somewhere will pop the OP create dialog, and the selected operator will be placed in the position of the previous drag.
-Similarly, `Shift-Dragging` will **Insert** a new operator between two operators.
