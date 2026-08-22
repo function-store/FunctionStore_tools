@@ -796,7 +796,21 @@ installer's two source snapshots in place; `BuildBootstrap()` runs the
 same refresh on its staged copy and blanks per-project installer state
 (selection, status, server). `FNS_Updater` stays a build-time injection
 from the dist artifact on purpose — the dev copy is an Embody-tracked
-master with file bindings. Known gap surfaced while doing this: the
+master with file bindings.
+
+**The source-checkout lock.** A resident installer's default target is
+the dev root itself, and the picker pre-checks every live child — an
+Apply there would remove authored masters. `SourceLock(target)` in
+`InstallerExt.py` mirrors the updater's `_refuseReason` layer for layer:
+the target is the container `build_manifest.py`'s `TOOLKIT` exports from
+(source checkout + exporting root, both required), or Embody tracks rows
+under it. `ResolvePlan` carries the reason as `plan['locked']`;
+`InstallPlan` and `RemoveTools` refuse, the Plan/Install pulses report it,
+the served `/selection` and `/install` answer REFUSED, and `/manifest.js`
+hands the picker `FNS_LOCKED` so Apply is disabled up front with the
+reason shown. A scratch container elsewhere in the source project stays
+installable — that is still how installs are tested. Known gap surfaced
+while doing this: the
 published `v2.11.2` has no `rails` (no bootstrap was ever built after the
 castration rework), so the website's paste-script rail asserts against it
 until the next publish.

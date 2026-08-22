@@ -320,6 +320,9 @@ function fnsBoot() {
     return;
   }
   var served = !!window.FNS_SERVED;
+  // Served from a target the installer refuses to touch (the toolkit's own
+  // source root): say why, and never offer Apply -- see SourceLock.
+  var locked = String(window.FNS_LOCKED || '');
   if (!M) {
     listEl.innerHTML = '<div class="empty">No <code>manifest.js</code> found.<br>' +
       'Regenerate it from TouchDesigner:<br><br>' +
@@ -385,6 +388,16 @@ function fnsBoot() {
     'tool keeps its settings for the next install. '));
   note.appendChild(docsLink(FNS_DOCS + '/docs/fns-configregistry/',
                             'How settings persistence works ↗'));
+  if (locked) {
+    var lockEl = document.createElement('div');
+    lockEl.className = 'note';
+    lockEl.style.borderColor = 'rgba(253,186,116,0.5)';
+    var lb = document.createElement('b');
+    lb.textContent = 'Installing is locked here. ';
+    lockEl.appendChild(lb);
+    lockEl.appendChild(document.createTextNode(locked));
+    note.parentNode.insertBefore(lockEl, note);
+  }
 
   // who lights up when this package is present (reverse integrations)
   var enhances = {};
@@ -576,7 +589,10 @@ function fnsBoot() {
           ' they need (already included)' : '') +
       (removals ? (need.size ? ' · ' : '') + removals + ' will be removed' : '');
     var save = document.getElementById('save');
-    if (served) {
+    if (served && locked) {
+      save.textContent = 'Locked (source checkout)';
+      save.disabled = true;
+    } else if (served) {
       save.textContent = removals ? 'Apply changes…' : 'Review install…';
       // removals alone are actionable even with nothing picked
       save.disabled = picked.size === 0 && removals === 0;

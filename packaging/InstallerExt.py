@@ -120,6 +120,68 @@ def _inStore(path):
             == os.path.normcase(os.path.abspath(StoreFolder())))
 
 
+# --- the source-checkout lock ------------------------------------------
+# The toolkit's own dev project carries an FNS_Installer too (the bootstrap
+# is that root castrated), and the picker pre-checks every live child of
+# its target -- so an Apply there would REMOVE authored masters. This
+# mirrors the updater's _refuseReason, layer for layer: the source tree is
+# detected by the packaging generator beside the .toe (no install has one)
+# AND the target being the container it exports from; Embody-tracked rows
+# under the target are the finer second lock. A scratch container elsewhere
+# in the source project stays installable -- that is how installs are
+# tested (ConfiguratorDistribution 4.1).
+
+def _sourceHome():
+    """The container the source checkout exports from, read off
+    build_manifest.py's TOOLKIT constant; '' when this is not a source
+    checkout."""
+    gen = os.path.join(project.folder, 'packaging', 'build_manifest.py')
+    if not os.path.exists(gen):
+        return ''
+    try:
+        with open(gen, encoding='utf-8') as f:
+            for line in f:
+                if line.startswith('TOOLKIT'):
+                    return line.split('=', 1)[1].strip().strip('\'"')
+    except Exception:
+        pass
+    return ''
+
+
+def _embodyRows(comp_path):
+    """Externalization rows Embody tracks at or under this path."""
+    tsv = os.path.join(project.folder, 'externalizations.tsv')
+    if not os.path.exists(tsv):
+        return []
+    prefix = comp_path + '/'
+    hits = []
+    try:
+        with open(tsv, 'r', encoding='utf-8') as f:
+            for line in f:
+                path = line.split('\t', 1)[0]
+                if path == comp_path or path.startswith(prefix):
+                    hits.append(path)
+    except Exception:
+        pass
+    return hits
+
+
+def SourceLock(target_path):
+    """Why nothing may be installed into or removed from `target_path`,
+    or '' when it is an ordinary install target."""
+    home = _sourceHome()
+    if home and target_path == home:
+        return ('%s is the toolkit SOURCE root: its components are authored '
+                'here, not installed, and the published .tox files are its '
+                'output. Point Install Into at a scratch container instead.'
+                % target_path)
+    rows = _embodyRows(target_path)
+    if rows:
+        return ('Embody authors %d tracked file(s) under %s; installing or '
+                'removing here would destroy work.' % (len(rows), target_path))
+    return ''
+
+
 def _artifactPath(art, name, manifest_path):
     """Where this artifact actually is.
 
@@ -200,6 +262,8 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
                       'have': have, 'stale': stale,
                       'present': op(tgt + '/' + name) is not None})
     return {'target': tgt, 'steps': steps, 'order': [s['name'] for s in steps],
+            # non-empty = every executor refuses; the reason is shown as-is
+            'locked': SourceLock(tgt),
             'already_present': [s['name'] for s in steps if s['present']],
             # stale store copies re-download even when the package is
             # already present: Replace installs from the file, and healing
@@ -289,6 +353,8 @@ def RemoveTools(plan):
         config survives so preferences roam across remove/reinstall and
         across the user's other projects.
     """
+    if plan.get('locked'):
+        return {'removed': [], 'notes': ['REFUSED: ' + plan['locked']]}
     parent_comp = op(plan['target'])
     if parent_comp is None:
         return {'removed': [], 'notes': []}
@@ -391,6 +457,9 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
     which is how a large install is batched under the MCP timeout. `bind`
     decides where the package files live -- see _bindPackage."""
     tgt = plan['target']
+    if plan.get('locked'):
+        return {'target': tgt, 'installed': [], 'failed': [], 'results': [],
+                'locked': plan['locked'], 'registries': PromotedRegistries()}
     parent_comp = op(tgt)
     if parent_comp is None:
         home = op(tgt.rsplit('/', 1)[0] or '/')
@@ -488,6 +557,8 @@ class InstallerExt:
             return
         t.clear()
         t.appendRow(['package', 'kind', 'state', 'MB', 'artifact'])
+        if plan.get('locked'):
+            t.appendRow(['(target)', '', 'LOCKED', '', plan['locked']])
         for s in plan['steps']:
             state = ('stale cache -> re-download' if s.get('stale')
                      else 'present' if s['present']
@@ -516,6 +587,9 @@ class InstallerExt:
             self._status('Plan failed: %s' % e)
             return None
         self._writePlan(plan)
+        if plan.get('locked'):
+            self._status('LOCKED -- ' + plan['locked'])
+            return plan
         note = ''
         other = op('/' + ROOT_NAME)
         if other is not None and other.path != plan['target'] \
@@ -557,6 +631,9 @@ class InstallerExt:
         selection no longer includes -- the picker's apply semantics."""
         plan = self.Plan()
         if plan is None:
+            return None
+        if plan.get('locked'):
+            self._status('REFUSED -- ' + plan['locked'])
             return None
         replace = bool(getattr(self.ownerComp.par, 'Replace', None)
                        and self.ownerComp.par.Replace.eval())
@@ -656,6 +733,8 @@ class InstallerExt:
 
     def _planText(self, plan):
         lines = ['install into %s' % plan['target'], '']
+        if plan.get('locked'):
+            lines = ['REFUSED -- ' + plan['locked'], ''] + lines
         fetch_bytes = 0
         for s in plan['steps']:
             if s.get('stale'):
@@ -703,17 +782,22 @@ class InstallerExt:
                     # the page pre-checks what THIS PROJECT actually has,
                     # so unchecking an installed tool reads as removal --
                     # the machine-wide selection.json is scratch, not truth
-                    installed = []
+                    installed, locked = [], ''
                     tgt = op(self._par('Target')
                              or DefaultTarget(self.ownerComp))
                     if tgt is not None:
                         installed = sorted(c.name for c in tgt.children
                                            if c.family == 'COMP')
+                        # the page disables Apply up front rather than
+                        # letting the user pick and then get refused
+                        locked = SourceLock(tgt.path)
                     with open(full, 'r', encoding='utf-8') as f:
                         response['data'] = ('window.FNS_SERVED = true;\n'
                                             'window.FNS_INSTALLED = %s;\n'
+                                            'window.FNS_LOCKED = %s;\n'
                                             'window.FNS_MANIFEST = %s;\n'
-                                            % (json.dumps(installed), f.read()))
+                                            % (json.dumps(installed),
+                                               json.dumps(locked), f.read()))
                 else:
                     why = '' if self._refreshActive() \
                         else self._refreshStore(names=[])
@@ -732,7 +816,8 @@ class InstallerExt:
                 self.ownerComp.par.Selectionfile = sel_path
                 plan = self.Plan()
                 response['Content-Type'] = 'application/json'
-                if plan is None or plan['missing_artifact'] or not plan['steps']:
+                if (plan is None or plan.get('locked')
+                        or plan['missing_artifact'] or not plan['steps']):
                     text = (self._planText(plan) if plan
                             else self._par('Status') or 'plan failed')
                     response['data'] = json.dumps({'ok': False, 'text': text})
@@ -767,6 +852,11 @@ class InstallerExt:
                                    self._par('Manifestfile') or DefaultManifest(),
                                    self._par('Target')
                                    or DefaultTarget(self.ownerComp))
+                if plan.get('locked'):
+                    response['Content-Type'] = 'application/json'
+                    response['data'] = json.dumps(
+                        {'ok': False, 'text': 'REFUSED -- ' + plan['locked']})
+                    return response
                 if plan['to_fetch']:
                     # download exactly the selection, then the page polls
                     # /status and re-posts /install once it is all here
