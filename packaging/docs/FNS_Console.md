@@ -133,6 +133,11 @@ like the toolbar, navbar and config registries):
   contributed the tab. Without the config package the Settings tab says
   so; without an installer the Install tab says so.
 - Everything is `127.0.0.1` only.
+- The root's `webBrowser` panel (where the console and the picker show
+  in TD) renders **only while its floating viewer is open**: a
+  `watch_webbrowser` Panel Execute beside it follows the `winopen` panel
+  value, and the console and installer switch it on as they open it.
+  Closed, its Web Render cooks nothing.
 
 ## Contributing a tab
 

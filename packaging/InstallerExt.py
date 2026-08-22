@@ -759,6 +759,11 @@ class InstallerExt:
         parent = self.ownerComp.parent()
         browser = parent.op('webBrowser') if parent is not None else None
         if browser is not None:
+            # dormant until opened (winopen watcher); on first so the page
+            # loads as the viewer appears
+            act = getattr(browser.par, 'Active', None)
+            if act is not None and not act.eval():
+                act.val = True
             browser.par.Address = url
             browser.openViewer()
         else:

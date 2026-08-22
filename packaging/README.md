@@ -115,7 +115,9 @@ pitches come off `category_meta` on the manifest — curated in
 `catalog.json`, edited in the website CMS — so the picker heads its
 sections exactly like the site does, with or without a site to ask.
 
-**The rails live in the dev root.** `FNS_Installer` and `webBrowser` are
+**The rails live in the dev root.** `FNS_Installer` and `webBrowser` (with
+its `watch_webbrowser` Panel Execute, which keeps the browser's Web Render
+off unless its viewer is open) are
 residents of the live `FNSTools` root, beside `FNS_Updater` — the bootstrap
 is that root castrated (tools stripped, rails kept), so what you drop is
 what we develop in, rail for rail. `EnsureDevRails()` in

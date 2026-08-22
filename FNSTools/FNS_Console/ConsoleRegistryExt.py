@@ -564,6 +564,12 @@ class ConsoleRegistryExt(RegistryBase):
 			root = getattr(op, 'FNS', None)
 			browser = root.op('webBrowser') if root is not None else None
 			if browser is not None:
+				# the rail's browser is dormant until opened (its winopen
+				# watcher keeps it that way); switch it on first so the page
+				# starts loading as the viewer appears
+				act = getattr(browser.par, 'Active', None)
+				if act is not None and not act.eval():
+					act.val = True
 				browser.par.Address = url
 				browser.openViewer()
 				return 'panel'
