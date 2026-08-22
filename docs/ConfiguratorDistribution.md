@@ -842,6 +842,40 @@ published `v2.11.2` has no `rails` (no bootstrap was ever built after the
 castration rework), so the website's paste-script rail asserts against it
 until the next publish.
 
+## 4.5 FNS_Console: the web front as its own /sys service (2026-08-22)
+
+Owner decision, same day: "the console stopped being a ConfigRegistry
+feature the moment it grew an install tab." Extracted on branch
+`fns-console` (brief: `briefs/2026-08-22-fns-console.md`).
+
+`FNS_Console` is a RegistryBase registry (`ConsoleRegistryExt`, shortcut
+`FNS_CONSOLE`, master `/FNSTools/FNS_Console`, global
+`/sys/FNS_Registries/FNS_Console`). Its **surface is the server**: the
+global owns the ephemeral Web Server DAT (ports 36710-36759, idle-stop),
+serves `console_page`, and routes — `/api/*` to `FNS_CONFIGREGISTRY`'s
+Ui* (paths unchanged on purpose; TDXLPP reads `/api/state` + `/api/set`),
+`/tools` + picker URIs to `FNS_Installer.ServeRequest`, `/t/<tab>/` to a
+contributed tab. Its **hosts are tab contributors**: a stamped host's
+Registration pars name a page DAT and an optional api DAT
+(`onConsoleRequest(action, method, body)`), and `RegisterTab` publishes
+them; Settings and Install & remove are built in. See
+`packaging/docs/FNS_Console.md` for the contract.
+
+`FNS_ConfigRegistry` keeps its Ui* API and nothing else of the UI: the
+page, callbacks and server lifecycle are gone; `OpenSettingsUI(tab, panel)`
+is a thin forward to `op.FNS_CONSOLE.Open` so the root pulses and the
+launcher keep working. The root pulses prefer the console and fall back to
+the forward. `FNS_Console` is core in the manifest (`CORE`,
+`REGISTRY_OWNER`) and a PI suspect like its siblings.
+
+**Paid for on the way:** a TD crash + relaunch reverted `/FNSTools` to its
+last PI-saved tox (02:11) — every live structural change made since
+(rails, pulse revision, installer PI row) vanished while files and commits
+stayed intact. `save_project` writes the `.toe`; the root reloads from
+`modules/suspects/FNSTools.tox`, which only `pi.Save(op.FNS)` rewrites.
+Rule: after structural changes under the root, `pi.Add` new comps,
+`pi.Save` changed suspects, `pi.Save(op.FNS)` LAST, then `save_project`.
+
 ## 5. Open questions
 
 - [ ] Does TDPyEnvManager offer any shared/global (non-per-project)

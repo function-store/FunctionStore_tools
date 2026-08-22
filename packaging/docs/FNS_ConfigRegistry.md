@@ -31,16 +31,16 @@ why it is always correct for the subset of tools you actually installed
 and never grows dead entries for ones you removed. Each tool's `Registry`
 page is skipped -- that is registration plumbing, not settings.
 
-A Web Server DAT inside the master serves it on `127.0.0.1`, taking the
-first free port in **36710-36759**. It only runs while you are looking at
-it: `OpenSettingsUI()` starts it and opens your browser, every request
-re-arms an idle timer, and after **10 minutes** of silence it shuts itself
-off. `op.FNS_CONFIGREGISTRY.CloseSettingsUI()` closes it immediately.
+The page is served by **FNS_Console** — the toolkit's web front, a core
+package of its own — on `127.0.0.1`, first free port in **36710-36759**,
+only while you are looking at it (see `FNS_Console.md`). This registry
+only answers the console's `/api/*` calls: `UiState`, `UiSet`,
+`UiExport`, `UiImport`, `UiScope`. `op.FNS_CONFIGREGISTRY.OpenSettingsUI()`
+still works — it forwards to `op.FNS_CONSOLE.Open()`.
 
-> Only the master serves the page. Tools carry a host copy of the registry,
-> but calling `OpenSettingsUI()` on one forwards to the promoted `/sys`
-> master, so there is exactly one server and one page however many tools
-> you have installed.
+> Tools carry a host copy of the registry, but every host forwards to the
+> promoted `/sys` global, so there is exactly one source of settings
+> however many tools you have installed.
 
 ## Syncing/Externalizing
 

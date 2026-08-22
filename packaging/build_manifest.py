@@ -59,6 +59,7 @@ REGISTRY_OWNER = {
     'FNS_MainMenuRegistry': 'FNS_MainMenuRegistry',
     'FNS_OpMenuRegistry': 'FNS_OpMenuRegistry',
     'FNS_PaneTypeRegistry': 'FNS_PaneTypeRegistry',
+    'FNS_Console': 'FNS_Console',
 }
 SURFACE_OF = {
     'FNS_ToolbarRegistry': 'toolbar',
@@ -74,7 +75,7 @@ SURFACE_OF = {
 # one a user can accidentally decline.
 CORE = ('FNS_ConfigRegistry', 'FNS_ToolbarRegistry', 'FNS_NavbarRegistry',
         'FNS_MainMenuRegistry', 'FNS_OpMenuRegistry', 'FNS_PaneTypeRegistry',
-        'FNS_Updater')
+        'FNS_Console', 'FNS_Updater')
 
 
 def _root():

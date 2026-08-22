@@ -679,7 +679,7 @@ class ConfigRegistryExt(RegistryBase):
 		return True
 
 	# --- Settings UI: a JSON API over the registrations -------------------
-	# The HTML page (settings_page, served by settings_server) is a DUMB
+	# The console page (FNS_Console's console_page, served by its server) is a DUMB
 	# CLIENT of UiState/UiSet: everything it lists, renders, or writes flows
 	# through the same filters and persistence the registry already
 	# enforces. There is deliberately no list of tools or pars in the page,
@@ -692,9 +692,6 @@ class ConfigRegistryExt(RegistryBase):
 	# scan into each other. Fifty wide, not ten: Windows reserves ~16-port
 	# blocks for Hyper-V/WSL at semi-random places, and a narrow scan that
 	# starts inside one reports "no free port" on an idle machine.
-	UI_PORTS = tuple(range(36710, 36760))
-	UI_IDLE_SECONDS = 600
-	UI_TICK_FRAMES = 1800
 
 	def UiState(self):
 		"""Everything the settings page needs, in one call."""
@@ -960,169 +957,26 @@ class ConfigRegistryExt(RegistryBase):
 		return {'ok': bool(ok),
 				'scope': 'project' if self._scopeIsProject() else 'global'}
 
-	# --- Settings UI: ephemeral server lifecycle --------------------------
-	# The server exists only while the page is in use: OpenSettingsUI
-	# activates it on the first free UI_PORT, every request re-arms an idle
-	# timer, and the timer deactivates it after UI_IDLE_SECONDS of silence.
-	# Nothing listens when nobody is looking.
-
-	SETTINGS_ASSETS = ('settings_page', 'settings_server_callbacks')
-
-	def _ensureSettingsServer(self):
-		"""The Web Server DAT that serves the settings page, created if absent.
-
-		It lives HERE, on whichever copy owns the API -- in practice the
-		/sys global, which `_registryApi()` has already routed us to. Not
-		on the in-project master: hosts clone the master
-		(`enablecloning`, see StampHost), so a server op there would
-		replicate into every tool's host copy, and one settings page would
-		become seven listening sockets. The global sheds its clone binding
-		on promotion and owns itself, which is exactly the singleton this
-		wants.
-
-		Built in code, like _ensurePresaveHealPar, because it was not: an
-		install carried the page and the callbacks with nothing to serve
-		them, so OpenSettingsUI answered "no settings_server" and the
-		settings UI was unreachable. A hand-made op can go missing again;
-		one the registry re-creates on demand cannot -- and because it is
-		re-created per session it never has to be saved into a package.
-
-		A global promoted BEFORE the page existed carries no assets to
-		serve (promotion is a comp copy, so a fresh one would have them);
-		they are pulled from the master here rather than leaving the UI
-		dead until the next promotion. Returns None when neither copy has
-		a page."""
-		comp = self.ownerComp
-		master = self._masterComp()
-		ws = comp.op('settings_server')
-		if ws is None:
-			ws = comp.create(webserverDAT, 'settings_server')
-			ws.par.active = False        # OpenSettingsUI turns it on
-			# create() spawns its OWN empty callbacks DAT, named for the
-			# server. Destroy it before the assets land: left alone it
-			# squats on settings_server_callbacks, and the copy below --
-			# which only fills in what is missing -- would then leave the
-			# server wired to an empty stub that answers nothing.
-			auto = ws.par.callbacks.eval()
-			if auto is not None and auto is not master:
-				try:
-					if auto.name.startswith('settings_server_callbacks'):
-						auto.destroy()
-				except Exception:
-					pass
-		# Pull the assets, replacing anything empty: a stub left by an
-		# earlier run must not win over the real page or callbacks.
-		for name in self.SETTINGS_ASSETS:
-			src = master.op(name) if (master is not None and master.valid) else None
-			if src is None:
-				continue
-			local = comp.op(name)
-			if local is not None and local.text.strip():
-				continue
-			if local is not None:
-				local.destroy()
-			comp.copy(src, name=name)
-		page = comp.op('settings_page')
-		if page is None:
-			return None
-		if not ws.nodeX and not ws.nodeY:
-			ws.nodeX, ws.nodeY = page.nodeX, page.nodeY - 150
-		cb = comp.op('settings_server_callbacks')
-		if cb is not None:
-			ws.par.callbacks = cb
-		return ws
+	# --- Settings UI: served by FNS_Console -------------------------------
+	# The page, the server and its lifecycle live in the FNS_Console registry
+	# (the toolkit's web front, its own /sys service); this registry keeps
+	# only the Ui* API above. OpenSettingsUI stays as a forward so the root
+	# pulses and the TDXLPP launcher (which reads the URL it returns) keep
+	# working unchanged.
 
 	def OpenSettingsUI(self, tab=None, panel=True):
-		"""Serve the FNS console and show it.
-
-		tab: 'settings' (default) or 'tools' -- the console opens on that
-		tab via the URL fragment. panel (default True) shows it in the
-		toolkit root's webBrowser panel when the root has one -- the same
-		in-TD surface the installer's picker uses, and it handles the
-		console fully, file dialog included; a root without the panel, or
-		panel=False, opens the system browser."""
-		api = self._registryApi()
-		if api is not self:
-			return api.OpenSettingsUI(tab=tab, panel=panel)
-		ws = self._ensureSettingsServer()
-		if ws is None:
+		"""Open the FNS console on its Settings tab (or `tab`). Forwards to
+		op.FNS_CONSOLE; without the console package nothing serves the page,
+		and the answer says so."""
+		con = getattr(op, 'FNS_CONSOLE', None)
+		if con is None or not con.valid:
 			return {'ok': False,
-					'why': f'no settings_page in {self.ownerComp.path}'}
-		if not ws.par.active.eval():
-			port = self._freeUiPort()
-			if port is None:
-				return {'ok': False, 'why': f'no free port in {self.UI_PORTS}'}
-			ws.par.port = port
-			ws.par.active = True
-		self._touchSettingsServer()
-		url = f'http://127.0.0.1:{int(ws.par.port.eval())}/'
-		if tab and str(tab) != 'settings':
-			url += '#' + str(tab)
-		self._showUrl(url, panel)
-		return {'ok': True, 'url': url, 'panel': panel}
-
-	def _showUrl(self, url, panel):
-		"""Where a console URL gets displayed: the toolkit root's webBrowser
-		panel when asked for AND present, else the system browser."""
-		if panel:
-			root = getattr(op, 'FNS', None)
-			browser = root.op('webBrowser') if root is not None else None
-			if browser is not None:
-				browser.par.Address = url
-				browser.openViewer()
-				return 'panel'
-		import webbrowser
-		webbrowser.open(url)
-		return 'browser'
+					'why': 'FNS_Console is not installed -- it serves the settings page now'}
+		return con.Open(tab=tab, panel=panel)
 
 	def CloseSettingsUI(self):
-		api = self._registryApi()
-		if api is not self:
-			return api.CloseSettingsUI()
-		ws = self.ownerComp.op('settings_server')
-		if ws is not None:
-			ws.par.active = False
-		return {'ok': True}
-
-	def _freeUiPort(self):
-		import socket
-		for port in self.UI_PORTS:
-			s = socket.socket()
-			try:
-				s.bind(('127.0.0.1', port))
-				s.close()
-				return port
-			except OSError:
-				s.close()
-		return None
-
-	def _touchSettingsServer(self):
-		self._ui_last_request = absTime.seconds
-		self._armSettingsTick()
-
-	def _armSettingsTick(self):
-		# re-arming must NOT refresh _ui_last_request, or idle never elapses
-		if getattr(self, '_ui_timer_armed', False):
-			return
-		self._ui_timer_armed = True
-		run(
-			"args[0].valid and args[0].extensionsReady and "
-			f"args[0].ext.{self.EXT_NAME}._settingsIdleTick()",
-			self.ownerComp,
-			delayFrames=self.UI_TICK_FRAMES,
-			delayRef=op.TDResources,
-		)
-
-	def _settingsIdleTick(self):
-		self._ui_timer_armed = False
-		ws = self.ownerComp.op('settings_server')
-		if ws is None or not ws.par.active.eval():
-			return
-		if absTime.seconds - getattr(self, '_ui_last_request', 0) >= self.UI_IDLE_SECONDS:
-			ws.par.active = False
-			debug(f'{self.REGISTRY_NAME}: settings server idle, stopped')
-			return
-		self._armSettingsTick()
+		con = getattr(op, 'FNS_CONSOLE', None)
+		return con.Close() if (con is not None and con.valid) else {'ok': True}
 
 	def _queueApply(self, canonical_name):
 		"""Deferred once-per-session apply, scheduled at registration. The
