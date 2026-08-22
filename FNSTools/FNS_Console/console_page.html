@@ -33,7 +33,15 @@
   }
   .tab:hover { color: var(--text); }
   .tab.sel { color: var(--text); border-bottom-color: var(--accent); }
+  /* built-ins | contributions: the divider is the seam between what the
+     console is and what tools add to it */
+  .tabsep { width: 1px; height: 18px; background: var(--line); margin: 0 8px; align-self: center; }
+  .tab.manage { padding: 10px 9px; font-size: 15px; line-height: 1; color: var(--muted); }
+  .tab.manage:hover { color: var(--accent); }
   #topbar .spacer { flex: 1; }
+  #tabsdlg label { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
+  #tabsdlg label .src { color: var(--muted); font-size: 11px; margin-left: auto; }
+  #tabsdlg .none { color: var(--muted); font-style: italic; }
   #topbar .meta { color: var(--muted); font-size: 11px; margin-right: 8px; }
   .act {
     padding: 5px 11px; margin: 6px 0; background: var(--panel2);
@@ -175,6 +183,17 @@
     <iframe data-src="/tools" title="FNS tools picker"></iframe>
   </div>
 </div>
+
+<dialog id="tabsdlg">
+  <h3>Tabs</h3>
+  <p>Settings and Install &amp; remove are the console's own and always
+     shown. Tools contribute the rest; hide any you do not want on the bar —
+     the choice is written back to the tool and follows it.</p>
+  <div id="tabslist"></div>
+  <div class="actions" style="margin-top:14px">
+    <button class="act" id="tabs-close">Close</button>
+  </div>
+</dialog>
 
 <dialog id="scopedlg">
   <h3>Switch config scope to global?</h3>
@@ -405,21 +424,30 @@ document.getElementById('search').oninput = e => {
 // A contributed tab is a page the tool ships, framed under /t/<name>/; the
 // console only knows its label and order. The tab is the URL fragment, so
 // the root's Pick Tools pulse can deep-link (#tools) and a reload keeps it.
-let TABS = [];
+let TABS = [];          // everything /api/tabs knows, hidden ones included
 const viewId = t => 'view-' + (t.builtin ? t.name : 't-' + t.name);
 const hashOf = t => '#' + (t.builtin ? t.name : 't-' + t.name);
+const shownTabs = () => TABS.filter(t => t.builtin || t.displayed);
 
 function buildTabs(tabs) {
   TABS = tabs;
   const bar = document.getElementById('tabs');
   bar.replaceChildren();
   const views = document.getElementById('views');
-  for (const t of tabs) {
+  const addTab = t => {
     const b = $('button', {className: 'tab', textContent: t.label});
     b.dataset.view = viewId(t);
     b.onclick = () => showView(viewId(t));
     bar.append(b);
-    if (!t.builtin && !document.getElementById(viewId(t))) {
+  };
+  for (const t of tabs.filter(t => t.builtin)) addTab(t);
+  const contributed = tabs.filter(t => !t.builtin);
+  if (contributed.some(t => t.displayed)) bar.append($('span', {className: 'tabsep'}));
+  for (const t of contributed) {
+    if (t.displayed) addTab(t);
+    // every contribution keeps a view (hidden tabs just lose their button),
+    // so showing one later is instant
+    if (!document.getElementById(viewId(t))) {
       const v = $('div', {className: 'view frame', id: viewId(t)});
       const f = $('iframe', {title: t.label});
       f.dataset.src = t.url;
@@ -427,7 +455,61 @@ function buildTabs(tabs) {
       views.append(v);
     }
   }
+  const mgr = $('button', {className: 'tab manage', textContent: '⋯',
+                           title: 'Show or hide contributed tabs'});
+  mgr.onclick = openTabManager;
+  bar.append(mgr);
 }
+
+async function loadTabs() {
+  let tabs = [];
+  try {
+    const r = await (await fetch('/api/tabs')).json();
+    tabs = r.tabs || [];
+  } catch (e) { /* the two built-ins below still render */ }
+  if (!tabs.length)
+    tabs = [{name: 'settings', label: 'Settings', builtin: true, order: 0, displayed: true},
+            {name: 'tools', label: 'Install & remove', builtin: true, order: 10, displayed: true}];
+  buildTabs(tabs);
+}
+
+// --- the tab manager: show/hide contributions; written back to the tool ---
+function renderTabManager() {
+  const list = document.getElementById('tabslist');
+  list.replaceChildren();
+  const contributed = TABS.filter(t => !t.builtin);
+  if (!contributed.length) {
+    list.append($('div', {className: 'none'}, 'No tool contributes a tab yet.'));
+    return;
+  }
+  for (const t of contributed) {
+    const cb = $('input', {type: 'checkbox', checked: !!t.displayed});
+    cb.onchange = async () => {
+      cb.disabled = true;
+      try {
+        const r = await (await fetch('/api/tabs/display', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({name: t.name, displayed: cb.checked})})).json();
+        if (!r.ok) { toast(r.why || 'rejected', false); cb.checked = !cb.checked; return; }
+        toast(t.label + (r.displayed ? ' shown' : ' hidden') +
+              (r.persisted ? '' : ' (this session only)'), true);
+        const wasCurrent = document.getElementById(viewId(t)).style.display !== 'none';
+        await loadTabs();
+        renderTabManager();
+        if (wasCurrent && !r.displayed) showView('view-settings');
+      } catch (e) { toast(String(e), false); cb.checked = !cb.checked; }
+      finally { cb.disabled = false; }
+    };
+    list.append($('label', {}, cb, $('span', {}, t.label),
+                  $('span', {className: 'src'}, t.source || '')));
+  }
+}
+function openTabManager() {
+  renderTabManager();
+  document.getElementById('tabsdlg').showModal();
+}
+document.getElementById('tabs-close').onclick =
+  () => document.getElementById('tabsdlg').close();
 
 function showView(id) {
   for (const v of document.querySelectorAll('.view')) {
@@ -446,7 +528,10 @@ function showView(id) {
 
 function viewFromHash() {
   const h = location.hash;
-  const t = TABS.find(t => hashOf(t) === h) || TABS[0];
+  const shown = shownTabs();
+  // a deep link to a hidden tab falls back to Settings rather than
+  // opening a view that has no button
+  const t = shown.find(t => hashOf(t) === h) || shown[0];
   if (t) showView(viewId(t));
 }
 window.addEventListener('hashchange', viewFromHash);
@@ -550,15 +635,7 @@ async function load() {
 }
 
 async function boot() {
-  let tabs = [];
-  try {
-    const r = await (await fetch('/api/tabs')).json();
-    tabs = r.tabs || [];
-  } catch (e) { /* the two built-ins below still render */ }
-  if (!tabs.length)
-    tabs = [{name: 'settings', label: 'Settings', builtin: true, order: 0},
-            {name: 'tools', label: 'Install & remove', builtin: true, order: 10}];
-  buildTabs(tabs);
+  await loadTabs();
   viewFromHash();
   await load();
 }

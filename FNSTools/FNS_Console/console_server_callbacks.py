@@ -112,7 +112,12 @@ def onHTTPRequest(webServerDAT, request, response):
 			page = webServerDAT.parent().op(ext.PAGE_NAME)
 			_html(response, page.text if page else 'console_page missing')
 		elif uri == '/api/tabs':
-			_json(response, {'ok': True, 'tabs': ext.Tabs()})
+			# everything, hidden included: the page's bar shows what is
+			# displayed, its tab manager lists the rest
+			_json(response, {'ok': True, 'tabs': ext.Tabs(include_hidden=True)})
+		elif uri == '/api/tabs/display' and method == 'POST':
+			b = _body(request)
+			_json(response, ext.SetTabDisplayed(b.get('name'), b.get('displayed')))
 		elif uri in CONFIG_URIS:
 			_serveConfig(ext, uri, method, request, response)
 		elif uri == '/tools' or uri in PICKER_URIS:

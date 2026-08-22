@@ -69,8 +69,18 @@ link can deep-link to it.
   for the next install. Installing decides *what is in the project*; the
   config layer always re-applies on top. In the toolkit's own source
   checkout this tab is locked (it would remove authored masters).
-- **Contributed tabs** -- anything a tool registers (below). They sort by
-  their declared order after the two built-ins.
+- **Contributed tabs** -- anything a tool registers (below). They sit
+  after a divider, sorted by their declared order; the two built-ins are
+  the console's own and always shown.
+
+### Managing tabs
+
+The **⋯** button at the end of the tab bar lists every contributed tab,
+hidden ones included, with a show/hide checkbox. The choice is written
+back to the contributing tool's **Shown in Console** parameter, so it
+persists with the tool and roams with its Registry page like any other
+setting -- the console keeps no list of its own. A tool decides its own
+default the same way, and can stay out of the console entirely (below).
 
 ## How it runs
 
@@ -109,8 +119,14 @@ Registration page:
 | **Canonical Name** | URL-safe (letters, digits, `_ -`); the tab lives at `/t/<name>/`. Empty = the tool's name |
 | **Tab Page** | a text DAT holding the tab's HTML. Served **verbatim** in an iframe under `/t/<name>/` |
 | **Tab API** | optional Python DAT defining `onConsoleRequest(action, method, body)` |
-| **Auto-register / Register / Status** | the usual registration controls |
+| **Expose to Console** (Auto-register) | the tool's own decision: on = publish the tab while the component exists; **off = local only** -- the tool keeps its own interface and contributes nothing |
+| **Register / Status** | publish once regardless of Expose; read-only status |
+| **Shown in Console** (Displayed) | on the bar or hidden. The console's tab manager writes here, so a user's show/hide persists with the tool |
 | **Tab Label / Tab Order** | what the tab bar shows, and where. Built-ins sit at 0 and 10; contributions default to 50 and sort by order, then label |
+
+These are mirrored onto the tool's own **Registry** page (prefix `Cs`),
+so a tool like ColorUI exposes, hides or goes local-only from its own
+parameters without anyone opening the host.
 
 Two rules that follow from how it is served:
 
@@ -205,7 +221,8 @@ All on the console's port, `127.0.0.1` only.
 | Route | Method | Answers with |
 |---|---|---|
 | `/` | GET | the console page |
-| `/api/tabs` | GET | `{ok, tabs:[{name, label, order, builtin, url?, api?}]}` |
+| `/api/tabs` | GET | `{ok, tabs:[{name, label, order, builtin, displayed, url?, api?, source?}]}` -- hidden contributions included |
+| `/api/tabs/display` | POST `{name, displayed}` | `{ok, name, displayed, persisted}`; built-ins refuse |
 | `/api/state` | GET | every registered tool with its exposed parameters (+ `scope`, `project`, `installer`) |
 | `/api/set` | POST `{tool, par, value}` | `{ok, val}` -- validated against what `/api/state` exposes |
 | `/api/export` | GET | `{ok, document, tools, saved_to}` -- the document is also written to `<config dir>/exports/` |
@@ -224,8 +241,9 @@ On `op.FNS_CONSOLE` (any host or the master forwards):
 | `Open(tab=None, panel=True)` | serve + show; returns `{ok, url, shown}` |
 | `Close()` | stop serving now |
 | `Url()` | the URL while serving, else `None` |
-| `Tabs()` | the ordered tab list the page shows |
-| `RegisterTab(comp, name, page=, api_dat=, label=, order=)` / `UnregisterTab(name)` | contributions without a host |
+| `Tabs(include_hidden=False)` | the ordered tab list; hidden contributions only when asked |
+| `SetTabDisplayed(name, bool)` | show/hide a contribution, written back to its host's Displayed par |
+| `RegisterTab(comp, name, page=, api_dat=, label=, order=, displayed=True)` / `UnregisterTab(name)` | contributions without a host |
 | `ServeTab(name, subpath, method, body)` | what the dispatcher calls for `/t/...` |
 
 `op.FNS_CONFIGREGISTRY.OpenSettingsUI(tab, panel)` still works -- it

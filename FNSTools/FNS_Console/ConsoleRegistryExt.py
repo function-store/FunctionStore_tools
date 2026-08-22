@@ -39,7 +39,12 @@ class ConsoleRegistryExt(RegistryBase):
 	# Standardized 'Registry' page on the parent tool (see RegistryBase).
 	TOOL_PAGE_PREFIX = 'Cs'
 	TOOL_PAGE_LABEL = 'Console'
-	TOOL_PAGE_PARS = ('Autoregister', 'Register', 'Regstatus', 'Tablabel', 'Taborder')
+	# Autoregister is this registry's "expose to the console" switch (off =
+	# the tool runs only its own local interface); Displayed is the console-
+	# side show/hide the tab manager writes back to, so it persists with the
+	# tool and roams with its Registry page.
+	TOOL_PAGE_PARS = ('Autoregister', 'Register', 'Regstatus', 'Displayed',
+					  'Tablabel', 'Taborder')
 
 	# Location-independent: resolves through the toolkit root's global
 	# shortcut, evaluates to None (no clone, no warning) where it is absent.
@@ -178,6 +183,7 @@ class ConsoleRegistryExt(RegistryBase):
 			comp, canonical, page=page, api_dat=api_dat,
 			label=self._parStr('Tablabel') or canonical,
 			order=self._parInt('Taborder', 50),
+			displayed=self._parBool('Displayed', True),
 			source_registry=self.ownerComp,
 		)
 		self.stored['HostCanonical'] = canonical
@@ -187,15 +193,17 @@ class ConsoleRegistryExt(RegistryBase):
 	# --- public API (global only; hosts forward) ---
 
 	def RegisterTab(self, comp, canonical, page=None, api_dat=None, label='',
-					order=50, source_registry=None):
+					order=50, displayed=True, source_registry=None):
 		"""Publish a tab: `page` (text DAT) is served as-is under
 		/t/<canonical>/; `api_dat` (optional) answers /t/<canonical>/api/*
-		through its onConsoleRequest(action, method, body)."""
+		through its onConsoleRequest(action, method, body). `displayed`
+		False registers the tab hidden -- it stays in the tab manager,
+		off the bar -- until someone shows it."""
 		if not self._is_sys_global():
 			api = self._registryApi()
 			if api is not self:
 				return api.RegisterTab(comp, canonical, page=page, api_dat=api_dat,
-									   label=label, order=order,
+									   label=label, order=order, displayed=displayed,
 									   source_registry=source_registry)
 			debug(f'{self.REGISTRY_NAME}: RegisterTab ignored on {self.ownerComp.path}'
 				  f' -- no global /sys registry ready')
@@ -211,6 +219,7 @@ class ConsoleRegistryExt(RegistryBase):
 			'page_id': int(page.id),
 			'label': str(label or canonical),
 			'order': str(int(order)),
+			'displayed': '1' if displayed else '0',
 		}
 		if api_dat is not None:
 			entry['api_path'] = api_dat.path
@@ -234,30 +243,70 @@ class ConsoleRegistryExt(RegistryBase):
 	# RegistryBase's host teardown calls this name on the API owner.
 	UnregisterPanel = UnregisterTab
 
-	def Tabs(self):
-		"""Every tab the page should show, in order: the built-ins, then the
+	def Tabs(self, include_hidden=False):
+		"""Every tab, in order: the built-ins (always displayed), then the
 		live contributions (a registration whose page DAT is gone is
-		skipped, never shown broken)."""
+		skipped, never shown broken). Hidden contributions are left out
+		unless include_hidden -- the tab manager asks for everything, the
+		bar for what to show."""
 		api = self._registryApi()
 		if api is not self:
-			return api.Tabs()
-		out = [dict(t) for t in self.BUILTIN_TABS]
+			return api.Tabs(include_hidden=include_hidden)
+		out = [dict(t, displayed=True) for t in self.BUILTIN_TABS]
 		for canonical, info in self.stored['PaneRegistry'].items():
 			info = dict(info)
 			page = self._resolveByIdOrPath(info.get('page_id'), info.get('page_path'))
 			if page is None:
+				continue
+			displayed = str(info.get('displayed', '1')) != '0'
+			if not displayed and not include_hidden:
 				continue
 			out.append({
 				'name': canonical,
 				'label': info.get('label') or canonical,
 				'order': int(info.get('order', 50)),
 				'builtin': False,
+				'displayed': displayed,
 				'url': f'/t/{canonical}/',
 				'api': bool(info.get('api_path')),
 				'source': info.get('panel_path'),
 			})
 		out.sort(key=lambda t: (t['order'], str(t['label']).lower()))
 		return out
+
+	def SetTabDisplayed(self, canonical, displayed):
+		"""Show or hide a contributed tab. The entry flips now, and the
+		decision is written back to the contributing host's Displayed par
+		(compare-before-set, so no callback storm) -- that par is what
+		persists with the tool and roams with its Registry page, exactly
+		like a toolbar widget's Displayed. Built-ins cannot be hidden."""
+		api = self._registryApi()
+		if api is not self:
+			return api.SetTabDisplayed(canonical, displayed)
+		if canonical in {t['name'] for t in self.BUILTIN_TABS}:
+			return {'ok': False, 'why': f'{canonical!r} is a built-in tab'}
+		info = self.stored['PaneRegistry'].get(canonical)
+		if not info:
+			return {'ok': False, 'why': f'no tab: {canonical}'}
+		displayed = bool(displayed)
+		entry = dict(info)
+		entry['displayed'] = '1' if displayed else '0'
+		self.stored['PaneRegistry'][canonical] = entry
+		wrote_host = False
+		src = self._resolveSourceRegistry(entry)
+		if src is not None:
+			p = getattr(src.par, 'Displayed', None)
+			if p is not None:
+				try:
+					if bool(p.eval()) != displayed:
+						p.val = displayed
+					wrote_host = True
+				except Exception as e:
+					debug(f'{self.REGISTRY_NAME}: Displayed write-back {src.path}: {e}')
+		self.fnsLog(f'{self.REGISTRY_NAME}: tab "{canonical}" '
+					f'{"shown" if displayed else "hidden"}')
+		return {'ok': True, 'name': canonical, 'displayed': displayed,
+				'persisted': wrote_host}
 
 	def ServeTab(self, canonical, subpath='', method='GET', body=None):
 		"""Answer one request under /t/<canonical>/: '' -> the page,
@@ -494,6 +543,9 @@ class ConsoleRegistryExt(RegistryBase):
 		self._reapply(_par)
 
 	def onParTaborder(self, _par, _val, _prev):
+		self._reapply(_par)
+
+	def onParDisplayed(self, _par, _val, _prev):
 		self._reapply(_par)
 
 	def onParOpen(self, _par):

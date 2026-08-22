@@ -872,6 +872,17 @@ in the console: tab, framed page "connected", 626 colors, command
 round-trip. Lesson: parameter-execute callbacks fire at frame end —
 never read a pulse's effect in the same call.
 
+**Tab visibility (owner ask, same day).** Built-ins sit before a divider,
+contributions after; a ⋯ tab manager shows/hides contributions. The
+decision is written back to the host's new `Displayed` par
+(compare-before-set) -- the toolbar's pattern: the host par is the durable
+record, mirrored onto the tool's Registry page, so it roams through the
+config registry and the console keeps no list. Auto-register is relabelled
+**Expose to Console** on this registry: off = the tool runs only its own
+local interface. Verified: API and UI round-trips flip the host par and
+the bar. Lesson: reinitializing a host fires `onDestroyTD` and unregisters
+it -- re-register explicitly after any host reinit.
+
 `FNS_ConfigRegistry` keeps its Ui* API and nothing else of the UI: the
 page, callbacks and server lifecycle are gone; `OpenSettingsUI(tab, panel)`
 is a thin forward to `op.FNS_CONSOLE.Open` so the root pulses and the
