@@ -59,3 +59,8 @@ Matching goes beyond the original module's prefix search:
 
 The list stops at 200 rows, so a one-character query returns the 200
 best-ranked components rather than the whole palette.
+
+Clicking a folder in the tree clears the search, so the list falls back to
+that folder's own contents instead of leaving a stale query in front of
+what you just picked. The **X** button next to the field still clears it
+without changing folder.
