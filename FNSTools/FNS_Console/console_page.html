@@ -43,6 +43,10 @@
   .act:hover { border-color: var(--accent); color: var(--accent); }
 
   /* ── views ── */
+  /* #views must itself be a flex column, or the views' flex:1 has nothing
+     to stretch against and every framed tab collapses to the iframe
+     default height (~150px) */
+  #views { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   .view { flex: 1; min-height: 0; display: none; }
   #view-settings { grid-template-columns: 220px 1fr; }
   .view.frame { flex-direction: column; }
