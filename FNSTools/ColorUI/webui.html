@@ -234,7 +234,65 @@ footer{
 <script>
 'use strict';
 /* ================================================================ bridge */
-const Bridge = (() => {
+/* Two transports, one page. Inside ColorUI's own webrender the page talks
+   through document.title rewrites (TitleBridge, below) and TD answers via
+   executeJavaScript into window.FNS. Served by FNS_Console under /t/ColorUI/
+   it is plain http: commands POST to api/cmd and get the fresh state back,
+   and a light poll keeps the view current when the in-TD panel changes
+   colors. Everything above the bridge is identical in both modes. */
+const SERVED = /^https?:$/.test(location.protocol);
+
+const HttpBridge = (() => {
+  let queue = [], previewSlot = null, inflight = false, pollTimer = 0;
+  const API = 'api/';   // relative: resolves under /t/ColorUI/
+  function post(msg, retriable) {
+    if (msg.cmd === 'preview') { previewSlot = msg; pump(); return; }
+    queue.push(msg);
+    pump();
+  }
+  function take() {
+    if (queue.length) return queue.shift();
+    if (previewSlot) { const m = previewSlot; previewSlot = null; return m; }
+    return null;
+  }
+  function absorb(d) {
+    if (!d) return;
+    (d.toasts || []).forEach(t => FNS.toast(t));
+    if (d.state) FNS.setState(d.state);
+    else if (d.ok === false && d.why) FNS.toast(d.why);
+  }
+  async function pump() {
+    if (inflight) return;
+    const msg = take();
+    if (!msg) return;
+    inflight = true;
+    try {
+      const r = await fetch(API + 'cmd', {method: 'POST',
+        headers: {'Content-Type': 'application/json'}, body: JSON.stringify(msg)});
+      absorb(await r.json());
+    } catch (e) {
+      FNS.toast('TouchDesigner not responding');
+    } finally {
+      inflight = false;
+      if (queue.length || previewSlot) pump();
+    }
+  }
+  async function poll() {
+    if (document.hidden || inflight) return;
+    try {
+      const r = await fetch(API + 'state');
+      if (r.ok) absorb(await r.json());
+    } catch (e) { /* next tick */ }
+  }
+  function start() {
+    post({cmd: 'ready'});
+    clearInterval(pollTimer);
+    pollTimer = setInterval(poll, 2000);
+  }
+  return {post, ack() {}, start};
+})();
+
+const TitleBridge = (() => {
   const CHUNK = 800;
   // per-load prefix so nonces never collide across page reloads
   const SESS = Math.random().toString(36).slice(2, 7);
@@ -295,6 +353,8 @@ const Bridge = (() => {
   }
   return {post, ack};
 })();
+
+const Bridge = SERVED ? HttpBridge : TitleBridge;
 
 /* ================================================================= model */
 const S = {
@@ -816,7 +876,7 @@ function toast(t) {
   toastTimer = setTimeout(() => el.style.opacity = 0, 2600);
 }
 $('nearsw').style.background = css(near.rgb);
-Bridge.post({cmd: 'ready'});
+if (SERVED) Bridge.start(); else Bridge.post({cmd: 'ready'});
 </script>
 </body>
 </html>

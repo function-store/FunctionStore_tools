@@ -69,7 +69,9 @@ class ConsoleRegistryExt(RegistryBase):
 
 	def _preInit(self):
 		self._ui_timer_armed = False
-		self._ui_last_request = 0
+		# A reinit counts as activity: a zero stamp here made the first idle
+		# tick after a hot-reload read "idle for ages" and stop a live server.
+		self._ui_last_request = absTime.seconds
 
 	def _syncSurface(self, attempts=40):
 		"""Keep one dormant server on the global, and retire the one the
@@ -77,8 +79,12 @@ class ConsoleRegistryExt(RegistryBase):
 		self._pane_sync_queued = False
 		if not self._is_sys_global():
 			return
-		self._ensureServer()
+		ws = self._ensureServer()
 		self._retireLegacyServer()
+		# a reinit dropped the armed tick; a server left serving must get
+		# its idle watchdog back or it never stops
+		if ws is not None and ws.par.active.eval():
+			self._armTick()
 
 	def _retireLegacyServer(self):
 		"""FNS_ConfigRegistry used to serve the settings page from its own
@@ -457,13 +463,38 @@ class ConsoleRegistryExt(RegistryBase):
 			return
 		self._armTick()
 
-	# --- host par callbacks (CustomParHelper) ---
+	# --- host par callbacks (CustomParHelper: pulses get (_par), values
+	# get (_par, _val, _prev); the owner is resolved THROUGH the par because
+	# a shipped host plus the /sys global share one class-level EXT_SELF) ---
 
-	def onParRegister(self):
-		self._applyHostRegistration(force=True)
+	def _reapply(self, _par):
+		ext = self._hostExtFromPar(_par)
+		if ext._isAutoRegister():
+			ext._applyHostRegistration()
 
-	def onParAutoregister(self):
-		self._applyHostRegistration()
+	def onParRegister(self, _par):
+		self._hostExtFromPar(_par)._applyHostRegistration(force=True)
 
-	def onParOpen(self):
-		self.Open()
+	def onParAutoregister(self, _par, _val, _prev):
+		self._hostExtFromPar(_par)._applyHostRegistration()
+
+	def onParCanonicalname(self, _par, _val, _prev):
+		self._reapply(_par)
+
+	def onParComp(self, _par, _val, _prev):
+		self._reapply(_par)
+
+	def onParTabpage(self, _par, _val, _prev):
+		self._reapply(_par)
+
+	def onParTabapi(self, _par, _val, _prev):
+		self._reapply(_par)
+
+	def onParTablabel(self, _par, _val, _prev):
+		self._reapply(_par)
+
+	def onParTaborder(self, _par, _val, _prev):
+		self._reapply(_par)
+
+	def onParOpen(self, _par):
+		self._hostExtFromPar(_par).Open()

@@ -146,12 +146,14 @@ class ExtColorUI:
 		run(f"op('{self.ownerComp.path}').ext.ExtColorUI._Kick({tries - 1})",
 			delayFrames=180, fromOP=self.ownerComp)
 
-	def SendState(self):
+	def _statePayload(self):
+		"""Everything the page renders from, one dict -- pushed into the
+		in-TD browser by SendState, handed back over HTTP by ConsoleState."""
 		if not self.defaults:
 			# ext was reinitialized mid-session; treat the live palette as baseline
 			self._snapshotDefaults()
 		rnd = lambda v: [round(float(c), 4) for c in v[:3]]
-		payload = {
+		return {
 			'families': self.families,
 			'colors': {k: rnd(ui.colors[k]) for k in ui.colors},
 			'defaults': {k: rnd(v) for k, v in self.defaults.items()},
@@ -161,10 +163,41 @@ class ExtColorUI:
 			'randomized': self._randomized,
 			'version': self.ownerComp.par.Pkgversion.eval(),
 		}
-		self._sendCall('setState', payload)
+
+	def SendState(self):
+		self._sendCall('setState', self._statePayload())
 
 	def Toast(self, text):
+		# a console request in flight collects its toasts for the HTTP answer;
+		# the in-TD browser gets them regardless
+		sink = getattr(self, '_toast_sink', None)
+		if sink is not None:
+			sink.append(str(text))
 		self._js('window.FNS && FNS.toast(' + json.dumps(str(text)) + ')')
+
+	# --------------------------------------------------------- console tab
+	# The same webui.html, served by FNS_Console under /t/ColorUI/, talks
+	# over HTTP instead of the title/executeJavaScript bridge: commands POST
+	# here and get the fresh state back; a light poll keeps it current when
+	# the in-TD panel (or TD itself) changes colors.
+
+	def ConsoleState(self):
+		return {'ok': True, 'state': self._statePayload()}
+
+	def ConsoleCommand(self, msg):
+		"""One page->TD message, same vocabulary as the title bridge
+		(_dispatch), answered with the resulting state plus any toasts the
+		command raised."""
+		if not isinstance(msg, dict):
+			return {'ok': False, 'why': 'command must be a JSON object'}
+		self._toast_sink = []
+		try:
+			self._dispatch(msg)
+		except Exception as e:
+			toasts, self._toast_sink = self._toast_sink, None
+			return {'ok': False, 'why': str(e), 'toasts': toasts}
+		toasts, self._toast_sink = self._toast_sink, None
+		return {'ok': True, 'state': self._statePayload(), 'toasts': toasts}
 
 	# -------------------------------------------------------------- page -> TD
 

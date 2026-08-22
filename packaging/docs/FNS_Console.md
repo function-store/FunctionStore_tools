@@ -49,3 +49,17 @@ TouchDesigner panel itself cannot be embedded in a browser page.
 From Python: `op.FNS_CONSOLE.RegisterTab(comp, name, page=dat, api_dat=dat,
 label=..., order=...)`, `UnregisterTab(name)`, `Tabs()`, `Open(tab=,
 panel=)`, `Close()`, `Url()`.
+
+### Worked example: ColorUI
+
+ColorUI's panel already *is* a web page (`webui_html`, rendered in its own
+Web Render browser, talking to TD through `document.title` rewrites and
+`executeJavaScript`). Its console tab is **the same page** with a second
+transport: when served over http it POSTs its commands to
+`/t/ColorUI/api/cmd` and polls `/t/ColorUI/api/state` every two seconds;
+inside the panel nothing changed. The host's pars: `Tab Page` =
+`webui_html`, `Tab API` = `console_api` (a 12-line DAT that hands `state`
+and `cmd` to `ExtColorUI.ConsoleState` / `ConsoleCommand`), label
+`ColorUI`, order 20. Note the DAT paths are **bare sibling names** — an OP
+parameter resolves from the host's parent network, so `../webui_html`
+would look one level too high.

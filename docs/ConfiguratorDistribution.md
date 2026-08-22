@@ -861,6 +861,17 @@ Registration pars name a page DAT and an optional api DAT
 them; Settings and Install & remove are built in. See
 `packaging/docs/FNS_Console.md` for the contract.
 
+**First contributor: ColorUI (same day).** Its panel was already a web
+page with a title/executeJavaScript bridge, so the tab is the same
+`webui_html` with an HTTP transport chosen at load (`SERVED`): commands
+POST to `/t/ColorUI/api/cmd`, state polls every 2 s; `ExtColorUI` grew
+`ConsoleState`/`ConsoleCommand` (toasts captured into the HTTP answer)
+and a 12-line `console_api` DAT names the actions. Stamped via
+`StampHost(par_values={...})`; DAT pars are bare sibling names. Verified
+in the console: tab, framed page "connected", 626 colors, command
+round-trip. Lesson: parameter-execute callbacks fire at frame end —
+never read a pulse's effect in the same call.
+
 `FNS_ConfigRegistry` keeps its Ui* API and nothing else of the UI: the
 page, callbacks and server lifecycle are gone; `OpenSettingsUI(tab, panel)`
 is a thin forward to `op.FNS_CONSOLE.Open` so the root pulses and the
