@@ -99,7 +99,37 @@ class ExtColorUI:
 	def _wr(self):
 		return self.ownerComp.op('webBrowser/webrender1')
 
+	# ------------------------------------------------------------ exposure
+	# When the FNS_Console host exposes this tool, the console serves the
+	# page and switches the local Web Render off itself (the host's Local
+	# Browser par names it) -- that policy lives in the console so every
+	# contributor gets it. What is ColorUI's own: exposed = the console IS
+	# the UI, so Open UI goes there, and nothing is pushed at or kicked on a
+	# renderer that is off.
+
+	def _exposed(self):
+		p = getattr(self.ownerComp.par, 'Csautoregister', None)
+		if p is None:
+			return False   # no console host on this tool: local is all there is
+		try:
+			return bool(p.eval())
+		except Exception:
+			return False
+
+	def _localActivePar(self):
+		wb = self.ownerComp.op('webBrowser')
+		return getattr(wb.par, 'Active', None) if wb is not None else None
+
+	def _localActive(self):
+		p = self._localActivePar()
+		try:
+			return bool(p.eval()) if p is not None else False
+		except Exception:
+			return False
+
 	def _js(self, code):
+		if not self._localActive():
+			return   # exposed: the console page polls; there is nothing to push at
 		try:
 			self._wr.executeJavaScript(code)
 		except Exception as e:
@@ -135,7 +165,7 @@ class ExtColorUI:
 
 	def _Kick(self, tries):
 		"""Reload the page source until it phones home with 'ready'."""
-		if self._gotReady or tries <= 0:
+		if self._gotReady or tries <= 0 or not self._localActive():
 			return
 		wr = self._wr
 		if wr is not None:
@@ -352,6 +382,23 @@ class ExtColorUI:
 		self.Toast(f'Exported {len(ov)} changed colors')
 
 	def OpenUI(self):
+		"""Exposed: the console is the UI, open its ColorUI tab. Local (or
+		no console to go to): the in-TD panel, renderer on."""
+		if self._exposed():
+			con = getattr(op, 'FNS_CONSOLE', None)
+			if con is not None and con.valid:
+				res = con.Open(tab='ColorUI')
+				if isinstance(res, dict) and res.get('ok'):
+					return
+				fnsLog(f'ColorUI: console did not open ({res}); falling back to the panel',
+					   level='WARNING')
+			else:
+				fnsLog('ColorUI: exposed but no FNS_Console -- opening the panel', level='WARNING')
+			p = self._localActivePar()
+			if p is not None and not p.eval():
+				p.val = True
+				self._gotReady = False
+				self._Kick(4)
 		self.ownerComp.openViewer()
 
 	# ------------------------------------------------------------ par callbacks

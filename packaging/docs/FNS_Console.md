@@ -119,6 +119,7 @@ Registration page:
 | **Canonical Name** | URL-safe (letters, digits, `_ -`); the tab lives at `/t/<name>/`. Empty = the tool's name |
 | **Tab Page** | a text DAT holding the tab's HTML. Served **verbatim** in an iframe under `/t/<name>/` |
 | **Tab API** | optional Python DAT defining `onConsoleRequest(action, method, body)` |
+| **Local Browser** | optional: the tool's own web browser panel rendering the same page. While the tab is exposed the console serves the page and **switches that browser's `Active` off** -- a renderer nobody looks at would keep a CEF process and a texture alive -- and switches it back on when exposure ends (Expose off, a failed registration, the host removed) |
 | **Expose to Console** (Auto-register) | the tool's own decision: on = publish the tab while the component exists; **off = local only** -- the tool keeps its own interface and contributes nothing |
 | **Register / Status** | publish once regardless of Expose; read-only status |
 | **Shown in Console** (Displayed) | on the bar or hidden. The console's tab manager writes here, so a user's show/hide persists with the tool |
@@ -211,8 +212,12 @@ def onConsoleRequest(action, method, body):
     return {'ok': False, 'why': 'unknown action: %s %s' % (method, action)}
 ```
 
-Host pars: Tab Page `webui_html`, Tab API `console_api`, label `ColorUI`,
-order 20.
+Host pars: Tab Page `webui_html`, Tab API `console_api`, Local Browser
+`webBrowser`, label `ColorUI`, order 20. While exposed, ColorUI's own
+panel renderer is off (the console owns that switch) and ColorUI's *Open
+UI* pulse opens the console's ColorUI tab instead of the panel; it also
+skips pushing JavaScript at, or reload-kicking, a renderer that is off.
+Expose off brings the panel back exactly as it was.
 
 ## HTTP API
 

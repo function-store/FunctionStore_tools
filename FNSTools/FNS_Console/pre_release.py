@@ -30,6 +30,7 @@ p.Regstatus.val = ''
 p.Comp = '..'
 p.Tabpage = ''
 p.Tabapi = ''
+p.Localbrowser = ''
 p.Tablabel = ''
 p.Taborder = 50
 p.Promotepars = False

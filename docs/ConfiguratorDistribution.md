@@ -883,6 +883,16 @@ local interface. Verified: API and UI round-trips flip the host par and
 the bar. Lesson: reinitializing a host fires `onDestroyTD` and unregisters
 it -- re-register explicitly after any host reinit.
 
+**Local renderer off while exposed (owner ask, same day).** A contributor
+whose panel is a Web Render of the same page must not keep a CEF process
+and a texture alive for a page the console now serves. Owner's call: the
+console handles it, not each tool -- a `Local Browser` COMP par on the
+host names the tool's webBrowser panel, and the host switches its `Active`
+off when it publishes and back on when exposure ends (Expose off, failed
+registration, host destroyed via onDestroyTD with the owner invalid).
+ColorUI keeps only what is its own: Open UI routes to the console while
+exposed, and no JS push / reload-kick at a renderer that is off.
+
 `FNS_ConfigRegistry` keeps its Ui* API and nothing else of the UI: the
 page, callbacks and server lifecycle are gone; `OpenSettingsUI(tab, panel)`
 is a thin forward to `op.FNS_CONSOLE.Open` so the root pulses and the

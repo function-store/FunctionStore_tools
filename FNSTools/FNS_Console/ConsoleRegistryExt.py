@@ -153,6 +153,56 @@ class ConsoleRegistryExt(RegistryBase):
 			return 'tab page is not a text DAT'
 		return ''
 
+	# --- the tool's own browser: off while the console serves the page ---
+	# A tool whose panel is a Web Render of the same page (ColorUI) names it
+	# on the host's Local Browser par. Exposed = the console is the UI, so
+	# that renderer would burn a CEF process and a texture for nobody; the
+	# host switches its Active off when it publishes and back on when the
+	# exposure ends -- Expose off, a failed registration, or the host going
+	# away. Compare-before-set, so nothing flickers on a plain re-apply.
+
+	def _localBrowserActivePar(self):
+		p = getattr(self.ownerComp.par, 'Localbrowser', None)
+		if p is None:
+			return None
+		try:
+			comp = p.eval()
+		except Exception:
+			return None
+		if comp is None or not getattr(comp, 'valid', False):
+			return None
+		return getattr(comp.par, 'Active', None)
+
+	def _setLocalBrowser(self, on):
+		p = self._localBrowserActivePar()
+		if p is None:
+			return
+		try:
+			if bool(p.eval()) != bool(on):
+				p.val = bool(on)
+				self.fnsLog(f'{self.REGISTRY_NAME}: {self._hostCanonicalName()!r} local '
+							f'browser {"on (local mode)" if on else "off (served by the console)"}')
+			# remembered by path so a destroyed host can still hand the
+			# browser back to the tool
+			self._local_browser_owner = p.owner.path
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: local browser switch: {e}')
+
+	def onDestroyTD(self):
+		super().onDestroyTD()
+		# onDestroyTD also fires on a plain reinit, where the owner is still
+		# valid and postInit will re-apply -- only a real destruction hands
+		# the browser back here
+		if not self.ownerComp.valid:
+			path = getattr(self, '_local_browser_owner', None)
+			comp = op(path) if path else None
+			p = getattr(comp.par, 'Active', None) if comp is not None else None
+			if p is not None:
+				try:
+					p.val = True
+				except Exception:
+					pass
+
 	def _applyHostRegistration(self, force=False):
 		if self._is_sys_global():
 			self._setRegStatus('Idle (global)')
@@ -163,6 +213,7 @@ class ConsoleRegistryExt(RegistryBase):
 			return
 		if not force and not self._isAutoRegister():
 			self._clearHostRegistration()
+			self._setLocalBrowser(True)
 			self._setRegStatus('Idle')
 			return
 		comp = self._hostComp()
@@ -173,6 +224,7 @@ class ConsoleRegistryExt(RegistryBase):
 		if err:
 			if not force:
 				self._clearHostRegistration()
+			self._setLocalBrowser(True)   # not served: the tool keeps its own UI
 			self._setRegStatus(f'Error: {err}')
 			return
 		prev = self.stored['HostCanonical']
@@ -187,6 +239,7 @@ class ConsoleRegistryExt(RegistryBase):
 			source_registry=self.ownerComp,
 		)
 		self.stored['HostCanonical'] = canonical
+		self._setLocalBrowser(False)      # the console serves it from here on
 		self._setRegStatus(f'Registered: {canonical} -> {page.path}')
 		self._ensureToolRegistryPage()
 
