@@ -102,6 +102,19 @@ def render(docs):
 		'document keeps the reasoning -- load the skill before acting, read the',
 		'document to understand why it is shaped that way.',
 		'',
+		'## Where a contract lives',
+		'',
+		'**A contract graduates out of a brief when the work lands.** `briefs/` is',
+		'gitignored, so an API, invariant or conformance rule left in one is invisible',
+		'to git and to every other machine -- and drifts from the code unnoticed (the',
+		"console's `RegisterTab` signature sketched in a brief never matched what",
+		"shipped). When a brief's work lands, move its normative parts here with a",
+		'`status:` header and let the brief stand as the historical record.',
+		'',
+		'The same applies to `CLAUDE.md` and `.claude/rules/`: those are Embody/Envoy',
+		'deployment artifacts, regenerated per machine and per version. They may point',
+		'at a rule; they must never be its only home.',
+		'',
 	]
 	for status in ORDER:
 		group = [(n, m) for n, m in docs if m.get('status') == status]
