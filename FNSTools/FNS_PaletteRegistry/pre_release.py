@@ -34,6 +34,21 @@ p.Tablabel = ''
 p.Taborder = 50
 p.Displayed = True
 p.Promotepars = False
+
+# extra tabs are the DEV's configuration, never the shipped default. TD keeps
+# a minimum of one block, so reset to a single empty one (empty Canonical
+# Name = no tab).
+try:
+	_seq = comp.seq.Tab
+	_seq.numBlocks = 1
+	_b = _seq[0]
+	_b.par.Name = ''
+	_b.par.Source = ''
+	_b.par.Label = ''
+	_b.par.Order = 50
+	_b.par.Shown = True
+except Exception:
+	pass
 p.opshortcut = ''
 p.clone = ''  # never ship with in-project cloning on
 

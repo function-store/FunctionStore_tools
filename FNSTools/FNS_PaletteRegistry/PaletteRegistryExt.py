@@ -205,6 +205,95 @@ class PaletteRegistryExt(RegistryBase):
 			return 'tab panel must live in the project, not under /sys or /ui'
 		return ''
 
+	SEQ_NAME = 'Tab'
+
+	def _seqTabSpecs(self):
+		"""One spec per NON-EMPTY block of the Tab sequence. TD forces a
+		sequence to keep at least one block, so an empty Canonical Name is how
+		a host says 'no extra tab here' -- never an error."""
+		specs = []
+		try:
+			seq = self.ownerComp.seq[self.SEQ_NAME]
+		except Exception:
+			return specs
+		if seq is None:
+			return specs
+		for block in seq:
+			try:
+				name = str(block.par.Name.eval()).strip()
+			except Exception:
+				continue
+			if not name:
+				continue
+			try:
+				source = block.par.Source.eval()
+				source = source if (source is not None and getattr(source, 'valid', False)) else None
+				specs.append({
+					'canonical': name,
+					'panel': source,          # None = fall back to the primary panel
+					'label': str(block.par.Label.eval()).strip() or name,
+					'order': int(block.par.Order.eval()),
+					'displayed': bool(block.par.Shown.eval()),
+				})
+			except Exception as e:
+				debug(f'{self.REGISTRY_NAME}: bad Tab block {name!r}: {e}')
+		return specs
+
+	def _hostTabSpecs(self):
+		"""Every tab this host publishes: the Registration pars are the FIRST
+		tab, each sequence block adds one more. A block with no panel of its
+		own reuses the primary panel -- that is how one panel serves several
+		tabs, routed by onPaletteTab."""
+		comp = self._hostComp()
+		primary_panel = self._parOp('Panel') or comp
+		specs = [{
+			'canonical': self._hostCanonicalName(),
+			'panel': primary_panel,
+			'label': self._parStr('Tablabel') or self._hostCanonicalName(),
+			'order': self._parInt('Taborder', 50),
+			'displayed': self._parBool('Displayed', True),
+		}]
+		seen = {specs[0]['canonical']}
+		for spec in self._seqTabSpecs():
+			if spec['canonical'] in seen:
+				debug(f'{self.REGISTRY_NAME}: duplicate tab name '
+					  f'{spec["canonical"]!r} on {self.ownerComp.path}, skipped')
+				continue
+			seen.add(spec['canonical'])
+			if spec['panel'] is None:
+				spec['panel'] = primary_panel
+			specs.append(spec)
+		return comp, specs
+
+	def _ownedCanonicals(self, api=None):
+		"""Canonicals in the global registry published BY this host. Derived,
+		never stored: a renamed or deleted block leaves no trace in the pars,
+		so the global's own source_registry stamp is the only honest record."""
+		api = api or self._registryApi()
+		if api is None:
+			return []
+		try:
+			names = list(api.stored['PaneRegistry'].keys())
+		except Exception:
+			return []
+		return [n for n in names if self._ownsGlobalMenuName(n, api=api)]
+
+	def _dropOwnedExcept(self, keep, api=None):
+		"""Unregister every tab this host owns that is not in `keep`."""
+		api = api or self._registryApi()
+		dropped = []
+		for name in self._ownedCanonicals(api=api):
+			if name not in keep:
+				self._unregisterOwnedMenuName(name, api=api)
+				dropped.append(name)
+		return dropped
+
+	def _clearHostRegistration(self):
+		"""Base clears the single HostCanonical; a host here may own several."""
+		api = self._registryApi()
+		self._dropOwnedExcept(set(), api=api)
+		self.stored['HostCanonical'] = ''
+
 	def _applyHostRegistration(self, force=False):
 		if self._is_sys_global():
 			self._setRegStatus('Idle (global)')
@@ -217,30 +306,39 @@ class PaletteRegistryExt(RegistryBase):
 			self._clearHostRegistration()
 			self._setRegStatus('Idle')
 			return
-		comp = self._hostComp()
-		canonical = self._hostCanonicalName()
-		panel = self._parOp('Panel') or comp
+		comp, specs = self._hostTabSpecs()
 		callback = self._hostCallbackDat()
-		err = self._validateTab(comp, canonical, panel)
+		# The PRIMARY tab decides whether the host is configured at all; a bad
+		# extra block must never cost the tool its main tab.
+		err = self._validateTab(comp, specs[0]['canonical'], specs[0]['panel'])
 		if err:
 			if not force:
 				self._clearHostRegistration()
 			self._setRegStatus(f'Error: {err}')
 			return
-		prev = self.stored['HostCanonical']
 		api = self._registryApi()
-		if prev and prev != canonical:
-			self._unregisterOwnedMenuName(prev, api=api)
-		api.RegisterTab(
-			comp, canonical, panel=panel,
-			label=self._parStr('Tablabel') or canonical,
-			order=self._parInt('Taborder', 50),
-			displayed=self._parBool('Displayed', True),
-			callback=callback,
-			source_registry=self.ownerComp,
-		)
-		self.stored['HostCanonical'] = canonical
-		self._setRegStatus(f'Registered: {canonical} -> {panel.path}')
+		registered, rejected = [], []
+		for spec in specs:
+			bad = self._validateTab(comp, spec['canonical'], spec['panel'])
+			if bad:
+				rejected.append(f'{spec["canonical"] or "?"} ({bad})')
+				continue
+			api.RegisterTab(
+				comp, spec['canonical'], panel=spec['panel'],
+				label=spec['label'] or spec['canonical'],
+				order=spec['order'],
+				displayed=spec['displayed'],
+				callback=callback,
+				source_registry=self.ownerComp,
+			)
+			registered.append(spec['canonical'])
+		# renames, deleted blocks and a shrunk sequence all land here
+		self._dropOwnedExcept(set(registered), api=api)
+		self.stored['HostCanonical'] = registered[0] if registered else ''
+		status = f'Registered: {", ".join(registered)}' if registered else 'Error: nothing registered'
+		if rejected:
+			status += f' -- skipped: {"; ".join(rejected)}'
+		self._setRegStatus(status)
 		self._ensureToolRegistryPage()
 
 	# --- public API (global only; hosts forward) ---
@@ -698,4 +796,25 @@ class PaletteRegistryExt(RegistryBase):
 		self._reapply(_par)
 
 	def onParDisplayed(self, _par, _val, _prev):
+		self._reapply(_par)
+
+	# --- Tab sequence callbacks (CustomParHelper: onSeq<Seq>N<parname>) ---
+
+	def onSeqTabN(self, idx):
+		"""A block was added or removed."""
+		self._applyHostRegistration()
+
+	def onSeqTabNname(self, _par, idx, _val, _prev):
+		self._reapply(_par)
+
+	def onSeqTabNsource(self, _par, idx, _val, _prev):
+		self._reapply(_par)
+
+	def onSeqTabNlabel(self, _par, idx, _val, _prev):
+		self._reapply(_par)
+
+	def onSeqTabNorder(self, _par, idx, _val, _prev):
+		self._reapply(_par)
+
+	def onSeqTabNshown(self, _par, idx, _val, _prev):
 		self._reapply(_par)
