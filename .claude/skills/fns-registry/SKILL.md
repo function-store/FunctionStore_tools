@@ -144,8 +144,13 @@ if reg is not None and hasattr(reg, 'Register'):
   is invalid.
 - **A deferred retry loop that gives up must clear its "queued" flag**, or
   nothing can ever re-arm the sync (paid for in HubRegistry).
-- **Folder-tab widget labels cannot contain spaces** (`masterFolderTabs`
-  splits `Menulabels` on whitespace -- `Main Menu` became two tabs).
+- **TD's parameter-expression evaluator mangles the `-(-n // c)` ceil idiom**
+  (evaluates to 1 on a par where `evalExpression` gives the right answer);
+  write `(n + c - 1) // c`. Also: a par expression is NOT re-evaluated when a
+  DAT's row count changes -- route counts through a custom par.
+- **A COMP's size expression must not read its own width** (stale mid-layout);
+  read `parent().width`. TD's Grid Rows alignment scales cells to fit rather
+  than wrapping -- the hub's tab bar lays its cells out by expression instead.
 - **A Select mirror draws its source at the SOURCE's size; `fill` on a source
   with no panel parent collapses to nothing.** Size the source with
   `w`/`h` expressions on the container it is mirrored into.

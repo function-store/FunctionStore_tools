@@ -96,11 +96,89 @@ class HubExt:
 	def _tabsContainer(self):
 		return self.ownerComp.op('panel/tabs')
 
+	def _tabBar(self):
+		return self.ownerComp.op('panel/tabbar')
+
 	def _folderTabs(self):
 		return self.ownerComp.op('panel/masterFolderTabs')
 
+	def _barStyle(self):
+		"""'rows' (the hub's wrapping bar) or 'strip' (TD's folder-tabs
+		widget: one row, scroll arrows, drag-to-reorder) -- the Tab Bar par."""
+		p = getattr(self.ownerComp.par, 'Tabbar', None)
+		return str(p.eval()) if p is not None else 'rows'
+
 	def _window(self):
 		return self.ownerComp.op('window')
+
+	# --- the tab bar: hub-owned, wraps into rows ---------------------------
+	# One textCOMP per shown tab, copied from tab_template, laid out by the
+	# bar's Grid Rows alignment (alignmax follows the bar width, the bar's
+	# height follows the row count), so a long tab set wraps instead of
+	# shrinking. Active = brighter label + accent underline. No close button:
+	# hiding is the tool's `Shown in Hub` par or SetTabDisplayed, and every
+	# hidden tab is offered back in the right-click menu.
+
+	TAB_ACTIVE = {'bg': (0.25, 0.25, 0.25), 'font': (0.96, 0.96, 0.96), 'border': 'borderb'}
+	TAB_IDLE = {'bg': (0.17, 0.17, 0.17), 'font': (0.62, 0.62, 0.62), 'border': 'off'}
+	TAB_TILE_STEP = 400
+
+	def _rebuildTabBar(self, tabs):
+		bar = self._tabBar()
+		if bar is None:
+			return
+		tpl = bar.op('tab_template')
+		tbl = bar.op('tabs_table')
+		if tbl is not None:
+			tbl.clear()
+			tbl.appendRow(['name', 'label', 'tool'])
+			for t in tabs:
+				tbl.appendRow([t['name'], t['label'], t['tool']])
+		# the bar's height expression follows this par (a DAT's row count
+		# would not re-trigger a parameter expression; a par does)
+		tc = getattr(bar.par, 'Tabcount', None)
+		if tc is not None and int(tc.eval()) != len(tabs):
+			tc.val = len(tabs)
+		want = {}
+		for i, t in enumerate(tabs):
+			nm = 'tab_' + tdu.legalName(t['name'])
+			want[nm] = (i, t)
+		for c in list(bar.children):
+			if c.name.startswith('tab_') and c.name != 'tab_template' and c.name not in want:
+				c.destroy()
+		for nm, (i, t) in want.items():
+			c = bar.op(nm)
+			if c is None:
+				if tpl is None:
+					return
+				c = bar.copy(tpl, name=nm)
+				c.nodeY = -800
+			c.nodeX = i * self.TAB_TILE_STEP
+			if c.par.text.eval() != t['label']:
+				c.par.text = t['label']
+			if c.par.alignorder.eval() != i:
+				c.par.alignorder = i
+			if c.fetch('canonical', '') != t['name']:
+				c.store('canonical', t['name'])
+			if not c.par.display.eval():
+				c.par.display = True
+
+	def _styleTabs(self, active_name):
+		bar = self._tabBar()
+		if bar is None:
+			return
+		for c in bar.children:
+			if not c.name.startswith('tab_') or c.name == 'tab_template':
+				continue
+			st = self.TAB_ACTIVE if c.fetch('canonical', '') == active_name else self.TAB_IDLE
+			r, g, b = st['bg']
+			if (c.par.bgcolorr.eval(), c.par.bgcolorg.eval(), c.par.bgcolorb.eval()) != (r, g, b):
+				c.par.bgcolorr, c.par.bgcolorg, c.par.bgcolorb = r, g, b
+			r, g, b = st['font']
+			if (c.par.fontcolorr.eval(), c.par.fontcolorg.eval(), c.par.fontcolorb.eval()) != (r, g, b):
+				c.par.fontcolorr, c.par.fontcolorg, c.par.fontcolorb = r, g, b
+			if c.par.bottomborder.eval() != st['border']:
+				c.par.bottomborder = st['border']
 
 	@staticmethod
 	def _setConst(par, value):
@@ -132,10 +210,17 @@ class HubExt:
 		tab. Called by the registry after every surface sync; idempotent."""
 		tabs = self._orderedTabs()
 		names = [t['name'] for t in tabs]
-		mft = self._folderTabs()
-		if mft is not None:
+		style = self._barStyle()
+		bar, mft = self._tabBar(), self._folderTabs()
+		if bar is not None and bool(bar.par.display.eval()) != (style == 'rows'):
+			bar.par.display = (style == 'rows')
+		if mft is not None and bool(mft.par.display.eval()) != (style == 'strip'):
+			mft.par.display = (style == 'strip')
+		if style == 'strip' and mft is not None:
 			self._setConst(mft.par.Menunames, '\n'.join(names))
 			self._setConst(mft.par.Menulabels, '\n'.join(t['label'] for t in tabs))
+		else:
+			self._rebuildTabBar(tabs)
 		hint = self.ownerComp.op('panel/tabs/hint')
 		if hint is not None:
 			hint.par.display = not names
@@ -162,9 +247,12 @@ class HubExt:
 		for t in tabs:
 			self._expose(t, live and t is active)
 		self._setConst(self.ownerComp.par.Activetab, name)
-		mft = self._folderTabs()
-		if mft is not None and name and mft.par.Value0.eval() != name:
-			mft.par.Value0 = name
+		if self._barStyle() == 'strip':
+			mft = self._folderTabs()
+			if mft is not None and name and mft.par.Value0.eval() != name:
+				mft.par.Value0 = name
+		else:
+			self._styleTabs(name)
 
 	def _windowOpen(self):
 		if self._opening:
@@ -209,7 +297,7 @@ class HubExt:
 			self._exposed.discard(key)
 
 	def OnTabSelected(self, name):
-		"""The folder-tab bar picked a tab (parexec_tabs)."""
+		"""A tab on the bar was clicked (tabbar/tabs_exec)."""
 		if name:
 			self._showTab(name)
 
@@ -244,7 +332,7 @@ class HubExt:
 		return ''
 
 	def OnTabReorder(self, fromIndex, toIndex):
-		"""Drag-reorder on the bar: the order persists on Tab User Order."""
+		"""Move a tab on the bar: the order persists on Tab User Order."""
 		names = [t['name'] for t in self._orderedTabs()]
 		if not (0 <= fromIndex < len(names)):
 			return
@@ -253,12 +341,9 @@ class HubExt:
 		self.ownerComp.par.Tabuserorder = ' '.join(names)
 		self.RefreshTabs()
 
-	def OnTabDelete(self, index):
-		"""The bar's close button hides the tab (the registry writes the
-		decision back to the contributing host, so it roams)."""
-		names = [t['name'] for t in self._orderedTabs()]
-		if 0 <= index < len(names):
-			self.ShowTab(names[index], False)
+	def HiddenTabs(self):
+		"""Registered tabs currently hidden (the right-click menu offers them back)."""
+		return [t for t in self._orderedTabs(include_hidden=True) if not t['displayed']]
 
 	def ShowTab(self, name, displayed=True):
 		reg = self._registry()
@@ -324,13 +409,22 @@ class HubExt:
 		of the console's pages."""
 		tabs = self._orderedTabs()
 		labels = [t['label'] for t in tabs]
-		items = labels + [lbl for lbl, _ in CONSOLE_ITEMS]
+		console = [lbl for lbl, _ in CONSOLE_ITEMS]
+		hidden = self.HiddenTabs()
+		show_items = ['Show ' + t['label'] for t in hidden]
+		items = labels + console + show_items
 		if not items:
 			return
-		details = {'tabs': {t['label']: t['name'] for t in tabs}}
+		dividers = []
+		if labels and (console or show_items):
+			dividers.append(labels[-1])
+		if console and show_items:
+			dividers.append(console[-1])
+		details = {'tabs': {t['label']: t['name'] for t in tabs},
+				   'show': {'Show ' + t['label']: t['name'] for t in hidden}}
 		op.TDResources.op('popMenu').Open(
 			items=items, callback=self._onMenu, callbackDetails=details,
-			dividersAfterItems=[labels[-1]] if labels else [], autoClose=True)
+			dividersAfterItems=dividers, autoClose=True)
 
 	def _onMenu(self, info):
 		item = info.get('item')
@@ -338,6 +432,10 @@ class HubExt:
 		name = details.get('tabs', {}).get(item)
 		if name:
 			self.Open(tab=name)
+			return
+		name = details.get('show', {}).get(item)
+		if name:
+			self.Open(tab=name)       # a hidden tab is shown again, then opened
 			return
 		page = dict(CONSOLE_ITEMS).get(item)
 		con = getattr(op, 'FNS_CONSOLE', None)
@@ -428,3 +526,5 @@ class HubExt:
 	def OnParChange(self, name, value):
 		if name == 'Activetab':
 			self.OnActivetabChanged(str(value))
+		elif name == 'Tabbar':
+			self.RefreshTabs()

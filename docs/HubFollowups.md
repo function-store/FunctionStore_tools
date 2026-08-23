@@ -44,6 +44,14 @@ handling, built-in adoption) would land the same way RegistryBase did. Do it
 after #2 so the fourth copy never exists. Their DATs are live -- externalize
 the base as a shared `.py` when extracting.
 
+## 3b. Tab bar: drag-to-reorder in Rows style
+
+The hub's `Rows` tab bar (hub-owned, wraps, unmistakable active tab) has no
+drag-to-reorder; the `Strip` style (TD's folder-tabs widget, selectable on
+the hub's `Tab Bar` par) has it. `OnTabReorder(fromIndex, toIndex)` and the
+roaming `Tab User Order` par serve both, only the Rows gesture is missing --
+drag/drop callbacks on the tab textCOMPs would close it.
+
 ## 4. Hand tests still outstanding
 
 - Real right-click and real drag-drop on the **FNS** main-menu button (its
