@@ -66,6 +66,31 @@ Stamp an `FNS_PaletteRegistry` host into the tool and set its Registration page:
 `Promotepars` mirrors the key pars onto the parent tool as a bound **Registry**
 page with the `Pl` prefix, so registration is configured on the tool itself.
 
+### Several tabs from one host
+
+The Registration pars define the **first** tab. The **Tab sequence** on the same
+page adds one more per block:
+
+| Block par | Meaning |
+|---|---|
+| `Name` | canonical name of this tab. **Empty = no tab** — TD forces a sequence to keep at least one block, so an empty block is how a host says it contributes nothing extra |
+| `Source` | panel COMP for this tab. **Empty = reuse the primary `Panel`** — this is how one panel serves several tabs, routed by `onPaletteTab` |
+| `Label` / `Order` | strip label and position, same meaning as the flat pars |
+| `Shown` | on the strip, or registered-but-hidden |
+
+The split is deliberate rather than historical: the tool-facing **Registry** page
+proxies flat pars onto the parent tool, and a sequence cannot be proxied that
+way — so the common single-tab case keeps its one-line setup on the tool itself,
+and only genuinely multi-tab tools touch the sequence.
+
+A block with a bad or duplicate name is reported in `Regstatus` and skipped; it
+never costs the tool its primary tab.
+
+**Which tabs a host owns is derived, not stored.** A renamed block, a deleted
+block or a shrunk sequence leaves no trace in the parameters, so the host
+reconciles against the global's own `source_registry` stamp after every apply.
+Do not add a "my tabs" list to host storage — it will drift.
+
 ### The API way
 
 ```python
@@ -160,18 +185,14 @@ duplication.
 ### The generalization gap
 
 Migrating TDXLU onto the registry is the right end state, and it is **not yet
-done**. Two things are in the way:
+done**. Only one thing is still in the way:
 
 1. **The launcher is a different product.** `/TDXLauncherUtility` persists to
    `../TDXLPP/release/TDXLauncherUtility.tox`, outside this repo. The change
    belongs to that product's tree, not this one.
-2. **One host publishes one tab.** `_applyHostRegistration` registers a single
-   canonical and `stored['HostCanonical']` holds a single name, so TDXLU's two
-   tabs over one shared panel need either two stamped hosts or two direct
-   `RegisterTab` calls with an `onPaletteTab` router. The `RegisterTab` API
-   already supports the second shape; the *host par surface* does not. If
-   multi-tab tools become common, the host should grow a tab sequence rather
-   than every such tool dropping to the raw API.
+2. ~~One host publishes one tab.~~ **Closed** — the Tab sequence above lets one
+   host publish TDXLU's two tabs over a shared panel, with `Source` left empty
+   on the second block. Nothing on the registry side blocks the migration now.
 
 Until then, treat the two as mutually exclusive: whichever installs owns the
 free row.
@@ -188,3 +209,18 @@ every touch) and `RegistryBase` was an unbound, 1.1 KB-stale fork of
 par before externalizing.** Externalizing a DAT that carries a foreign file
 binding can raise a modal that blocks TD's main thread. Clear the binding first,
 then let Embody resolve the path.
+
+## Two silent TD behaviours around sequences
+
+Both cost real time here; neither raises:
+
+- **A block par whose base name collides with an existing flat par is silently
+  dropped** — no error, no parameter, `blockSize` simply does not grow. Block
+  base names must be distinct from *every* flat par on the COMP (which is why
+  they are `Name`/`Source`/`Label`/`Order`/`Shown` and not `Panel`/`Displayed`).
+- **Setting the sequence header's `order` makes TD swallow whatever follows it
+  into the block.** Moving the header to sit after `Taborder` absorbed
+  `Helpurl`, `Promotepars` and `Presaveheal` into `Tab0*` and took `blockSize`
+  from 5 to 8. Moving the header back released them — but `Presaveheal` could
+  not reclaim its name and returned as a duplicate `Presaveheal2` that had to
+  be destroyed. Append the sequence LAST and leave its order alone.
