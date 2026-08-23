@@ -34,15 +34,21 @@ Build it as a fourth configurator inside the hub -- copy NavbarConfigurator
 as tab `opmenu`, order 40, own PI suspect tox under
 `modules/suspects/FNSTools/FNS_Hub/`.
 
-## 3. `ConfiguratorBase` extraction
+## 3. `ConfiguratorBase` extraction -- DONE 2026-08-23
 
-Three `ConfiguratorExt` DATs (~1150 lines each) share an identical public
-method surface; line-level similarity is ~50 % Toolbar/Navbar and ~88 %
-Navbar/MainMenu. A base class (state table, tree lister, groups, restore,
-drop routing) with a thin per-surface subclass (BAR_PATH, columns, side
-handling, built-in adoption) would land the same way RegistryBase did. Do it
-after #2 so the fourth copy never exists. Their DATs are live -- externalize
-the base as a shared `.py` when extracting.
+[FNSTools/FNS_Hub/ConfiguratorBase.py](../FNSTools/FNS_Hub/ConfiguratorBase.py)
+is the one implementation (state table, adoption, groups, tree lister,
+restore, drop-to-register); each configurator's `ConfiguratorExt` is a thin
+subclass next to it (`mod('../ConfiguratorBase')`) -- a surface description
+in class attributes (`HAS_SIDES`, `HAS_KINDS`, `HAS_DIVIDERS`, `HAS_WIDTH`,
+`HAS_GROUPS`, `SUPPORTS_DROP`, `ADOPTS_BUILTINS`, adoption filter flags,
+`STAMP_EXTRA_PARS`, `DEFAULT_STATE`) plus the adoption hooks
+(`_adoptCandidates` / `_adoptCall` / `_seedFirstAdoption`; MainMenu overrides
+`_adoptBuiltins` for its position snapshot). All four DATs are externalized.
+Verified live on all three: tree tables row-identical before/after, reorder
+through the tree path, show toggle, Snapshot/Restore round trip. One
+deliberate change: the hidden flat `entries` table no longer pre-lists
+un-adopted stock items (the tree does, after the managed run).
 
 ## 3b. Tab bar: drag-to-reorder in Rows style -- DONE 2026-08-23
 

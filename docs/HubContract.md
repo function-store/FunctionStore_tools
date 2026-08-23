@@ -139,6 +139,20 @@ belongs on two surfaces is dropped twice.
   configurators' drop-to-register had been dead since the `FNS_` rename;
   the port to `StampHost` fixed it and removed the dormant template hosts.
 
+## 6b. The configurators share one implementation
+
+Since 2026-08-23 every configurator tab is a thin subclass of
+[FNSTools/FNS_Hub/ConfiguratorBase.py](../FNSTools/FNS_Hub/ConfiguratorBase.py)
+(a DAT next to the configurators; subclasses import it with
+`mod('../ConfiguratorBase')`). A new surface configurator is a class-attribute
+description (registry shortcut/ext/name, bar path, `HAS_SIDES` / `HAS_KINDS` /
+`HAS_DIVIDERS` / `HAS_WIDTH` / `HAS_GROUPS` / `SUPPORTS_DROP` /
+`ADOPTS_BUILTINS`, adoption flags, `STAMP_EXTRA_PARS`) plus the adoption
+hooks -- the registry API it expects is the RegistryBase widget model
+(`Widgets`, `WidgetSequence`, `SetWidgetSequence`, `SetWidgetDisplay`,
+groups). A registry with a different model (the OP menu's contributions)
+adapts itself to that shape rather than forking the base.
+
 ## 7. Persistence of the configurators
 
 The three configurators are PI suspects of their own
