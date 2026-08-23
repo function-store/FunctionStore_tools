@@ -1176,6 +1176,122 @@ class RegistryBase:
 
 	# --- host stamping (the ONE blessed copy recipe) ---
 
+	# --- drop-to-register (opt-in, per registry) --------------------------
+	#
+	# A registry that sets DROP_LABEL becomes a target in FNS_Hub's
+	# drop-to-register menu: drop a panel COMP on the FNS button and this
+	# surface is offered under that label. It is opt-in on purpose -- most
+	# registries have no sensible answer to "register this panel into me"
+	# (ConfigRegistry, Console), and the four surfaces that ship a
+	# configurator tab are offered through that tab instead.
+	DROP_LABEL = None
+	# Registration pars to set on a host stamped by a drop.
+	DROP_PAR_VALUES = {}
+
+	def _dropReady(self):
+		"""Only a package MASTER can stamp -- the /sys global cannot."""
+		return bool(self.DROP_LABEL) and not self._is_sys_global() 			and not self._isUnderSysOrUi()
+
+	def _isDroppableComp(self, comp):
+		"""A drop candidate: a live panel COMP that can host an extension,
+		is not part of this registry, and does not live in the rebuilt-on-open
+		/sys or /ui trees."""
+		if comp is None or not getattr(comp, 'valid', False) or comp.family != 'COMP':
+			return False
+		if not getattr(comp, 'isPanel', False):
+			return False
+		if not comp.allowCooking:      # a host extension cannot compile there
+			return False
+		me_ = self.ownerComp
+		if comp is me_ or comp.path.startswith(me_.path + '/') 				or me_.path.startswith(comp.path + '/'):
+			return False
+		if comp.path.startswith('/sys') or comp.path.startswith('/ui'):
+			return False
+		return True
+
+	def AcceptsDrop(self, items):
+		"""True when at least one dropped item could become a host here.
+		Same signature the configurators expose, so FNS_Hub treats a registry
+		master and a configurator tab identically."""
+		if not self._dropReady():
+			return False
+		try:
+			return any(self._isDroppableComp(i) for i in (items or []))
+		except Exception:
+			return False
+
+	def PackageDrop(self, comp):
+		"""Turn a dropped panel COMP into a self-registering host of this
+		surface. Returns the accepted COMP. The stamp itself is deferred --
+		copying a clone-bound COMP inside the drop-event stack has crashed
+		TD, so it never runs inline."""
+		if not self._dropReady() or not self._isDroppableComp(comp):
+			return None
+		run('args[0](args[1])', self._stampDropped, comp.path,
+			delayFrames=3, delayRef=op.TDResources)
+		return comp
+
+	def _isClonedByOthers(self, comp):
+		"""True when something else in the project clones this COMP.
+
+		Stamping a host into a clone master replicates it into every clone,
+		and the clone's copy can win the registration -- paid for once with
+		/FNSTools/webBrowser, which ColorUI/webBrowser clones. Checked at
+		STAMP time, not on hover: it walks the project, and hover runs on
+		every mouse move over the target.
+		"""
+		try:
+			target_id = int(comp.id)
+		except Exception:
+			return False
+		roots = [c for c in op('/').children
+				 if c.isCOMP and c.name not in ('sys', 'ui', 'local')]
+		for r in roots:
+			try:
+				kids = r.findChildren(type=COMP)
+			except Exception:
+				continue
+			for k in kids:
+				if k is comp:
+					continue
+				par = getattr(k.par, 'clone', None)
+				if par is None:
+					continue
+				try:
+					src = par.eval()
+				except Exception:
+					continue
+				if src is not None and getattr(src, 'valid', False) 						and int(src.id) == target_id:
+					return True
+		return False
+
+	def _stampDropped(self, comp_path):
+		"""Deferred worker for PackageDrop. Idempotent: a COMP that already
+		carries a host of this registry is re-registered, never re-stamped."""
+		comp = op(comp_path)
+		if comp is None or not comp.valid or not self._isDroppableComp(comp):
+			return
+		if self._isClonedByOthers(comp):
+			debug(f'{self.REGISTRY_NAME}: {comp.path} is a clone MASTER -- '
+				  f'refusing to stamp (the host would replicate into every '
+				  f'clone and the clone could win the registration)')
+			return
+		host = comp.op(self.REGISTRY_NAME)
+		fresh = host is None
+		if fresh:
+			host = self.StampHost(comp, canonical_name=comp.name, autoregister=True,
+								  par_values=dict(self.DROP_PAR_VALUES))
+			if host is None:
+				return
+		else:
+			try:
+				host.par.Autoregister = True
+			except Exception as e:
+				debug(f'{self.REGISTRY_NAME}: re-register {host.path}: {e}')
+				return
+		self.fnsLog(f'{self.REGISTRY_NAME}: '
+					f'{"packaged" if fresh else "re-registered"} {comp.path} by drop')
+
 	def StampHost(self, target_comp, canonical_name=None, autoregister=True,
 				  promote_pars=True, par_values=None):
 		"""Copy THIS master into `target_comp` as a configured host.

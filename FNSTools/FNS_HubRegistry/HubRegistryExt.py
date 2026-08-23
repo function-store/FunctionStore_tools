@@ -31,6 +31,8 @@ class HubRegistryExt(RegistryBase):
 	entries, and the sync simply waits for the surface to exist.
 	"""
 
+	# Offered when a panel COMP is dropped on the FNS button (RegistryBase).
+	DROP_LABEL = 'Hub tab'
 	SHORTCUT = 'FNS_HUBREGISTRY'
 	EXT_NAME = 'HubRegistryExt'
 	REGISTRY_NAME = 'FNS_HubRegistry'

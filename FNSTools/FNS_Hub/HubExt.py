@@ -492,8 +492,36 @@ class HubExt:
 			return False
 		return True
 
+	def _registryDropTargets(self):
+		"""Registry MASTERS that opt into drop-to-register via DROP_LABEL.
+
+		These are surfaces with no configurator tab of their own -- the hub's
+		tab bar and TD's palette browser -- so they would otherwise never be
+		offered. Discovered by capability, exactly like the configurator tabs:
+		nothing here names Hub or Palette, so a future registry joins the menu
+		by setting DROP_LABEL and nothing else.
+		"""
+		out = []
+		root = getattr(op, 'FNS', None)
+		if root is None:
+			return out
+		for child in root.children:
+			if not child.isCOMP or not child.valid or not child.extensionsReady:
+				continue
+			try:
+				exts = child.extensions or []
+			except Exception:
+				continue
+			for ext in exts:
+				label = getattr(ext, 'DROP_LABEL', None)
+				if label and callable(getattr(ext, 'PackageDrop', None)) 						and callable(getattr(ext, 'AcceptsDrop', None)):
+					out.append((label, child))
+					break
+		return out
+
 	def _dropTargets(self):
-		"""Every tab whose component can package a drop (the configurators)."""
+		"""Every surface that can package a drop: the configurator tabs, plus
+		the registry masters that opt in (Hub tab, Palette tab)."""
 		out = []
 		for t in self._orderedTabs(include_hidden=True):
 			comp = op(t['tool'])
@@ -507,6 +535,11 @@ class HubExt:
 				if callable(getattr(ext, 'PackageDrop', None)) and callable(getattr(ext, 'AcceptsDrop', None)):
 					out.append((t['label'], comp))
 					break
+		seen = {comp.path for _, comp in out}
+		for label, comp in self._registryDropTargets():
+			if comp.path not in seen:
+				out.append((label, comp))
+				seen.add(comp.path)
 		return out
 
 	def RouteDrop(self, items):

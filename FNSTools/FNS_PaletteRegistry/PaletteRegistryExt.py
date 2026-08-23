@@ -43,6 +43,8 @@ class PaletteRegistryExt(RegistryBase):
 	global re-injects on promotion, registration and heal.
 	"""
 
+	# Offered when a panel COMP is dropped on the FNS button (RegistryBase).
+	DROP_LABEL = 'Palette tab'
 	SHORTCUT = 'FNS_PALETTEREGISTRY'
 	EXT_NAME = 'PaletteRegistryExt'
 	REGISTRY_NAME = 'FNS_PaletteRegistry'
