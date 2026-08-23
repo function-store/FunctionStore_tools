@@ -87,6 +87,14 @@
    "category": "Parameters",
    "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field."
   },
+  "FNS_CommandKit": {
+   "category": "Developer",
+   "description": "Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette — decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors."
+  },
+  "FNS_ConfigHost": {
+   "category": "Developer",
+   "description": "A standalone FNS_ConfigRegistry host. Drop it into a component to give it roaming settings — its parameters save and reload with your config, with per-parameter and per-page exclusions."
+  },
   "FNS_ConfigRegistry": {
    "category": "Core",
    "description": "Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys."
