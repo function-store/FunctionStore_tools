@@ -373,7 +373,13 @@ class NavbarRegistryExt(RegistryBase):
 
 	def _pruneItems(self, bar):
 		"""Drop managed items whose canonical is no longer registered."""
-		live = {self._itemName(c) for c in self.stored['PaneRegistry']}
+		# Keep only entries that STILL RESOLVE (virtual entries -- dividers and
+		# group markers -- have no backing op and are always kept). Keying off
+		# raw stored keys let a DEAD entry shield its own mirror: TD does not
+		# call onDestroyTD when a host dies inside its parent's subtree, so the
+		# entry outlives the COMP and _syncSurface could never clear it.
+		live = {self._itemName(c) for c, info in self.stored['PaneRegistry'].items()
+				if str(info.get('virtual', '')) == '1' or self._resolvePanelOp(info) is not None}
 		for inst in bar.ops(self.ITEM_PREFIX + '*'):
 			if self.ITEM_TAG in inst.tags and inst.name not in live:
 				inst.destroy()

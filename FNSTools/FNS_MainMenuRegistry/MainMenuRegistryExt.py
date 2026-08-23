@@ -381,7 +381,13 @@ class MainMenuRegistryExt(RegistryBase):
 		bar = self._bar()
 		if not bar:
 			return
-		live = {self._mirrorName(c) for c in self.stored['PaneRegistry']}
+		# Keep only entries that STILL RESOLVE (virtual entries -- dividers and
+		# group markers -- have no backing op and are always kept). Keying off
+		# raw stored keys let a DEAD entry shield its own mirror: TD does not
+		# call onDestroyTD when a host dies inside its parent's subtree, so the
+		# entry outlives the COMP and _syncSurface could never clear it.
+		live = {self._mirrorName(c) for c, info in self.stored['PaneRegistry'].items()
+				if str(info.get('virtual', '')) == '1' or self._resolvePanelOp(info) is not None}
 		for mirror in bar.ops(self.MIRROR_PREFIX + '*'):
 			if self.MIRROR_TAG in mirror.tags and mirror.name not in live:
 				mirror.destroy()
