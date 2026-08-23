@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- MY_HOTKEYS -- **retired.** Its four stock-TouchDesigner shortcuts (open parameters / open the COMP editor, for the selected operator or the current network's COMP) and their four quick-launch commands moved into CustomParTools; `ctrl+shift+f` moved into TDX_SearchPalette, and `ctrl+0` had already moved into ResetPLS1. Nothing was lost, but the four command ids are now owned by CustomParTools, so launcher history and presets keyed on `MY_HOTKEYS#<id>` need re-pointing once.
+- CustomParTools -- gains those four shortcuts, as hotkeys and as palette commands sharing one implementation.
 - FNS_Hub 0.2.0 -- New core package: the FNS button in the main-menu bar is now the one stop shop. Left-click opens a window with the Toolbar, Navbar, MainMenu and OpMenu configurators as tabs plus the console and the larger tool UIs; right-click jumps to any of them; drop a panel COMP on the button to register it into a surface. Two tab-bar styles (wrapping rows, or the classic single strip), drag to reorder, no close buttons (hidden tabs come back from the right-click menu). Tab order and the last tab roam with your settings. The OpMenu tab is new: reorder what tools contribute to the OP Create dialog, or switch a contribution off without uninstalling its tool.
 - FNS_HubRegistry 0.1.0 -- New core registry behind the hub's tab bar: any tool can contribute a native panel, a viewer or a parameter page as a tab by carrying a host, and it appears the moment the tool exists.
 - FNS_Toolbar 1.1.0 -- The Configurator moved into the hub; the gear button is gone from the bar. Drop-to-register, which had silently stopped working after the v3 rename, works again from the FNS button.

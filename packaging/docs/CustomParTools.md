@@ -13,6 +13,8 @@ features:
     anchor: customparhelper
   - name: NoNode
     anchor: nonode
+  - name: TouchDesigner shortcuts
+    anchor: touchdesigner-shortcuts
 ---
 
 ## CustomPar Tools
@@ -305,3 +307,28 @@ NoNode is a versatile utility class that centralizes the management of various t
 
 
 To demo all the features you can download [QuickExtTest.tox](https://github.com/function-store/FunctionStore_tools/blob/main/modules/suspects/FunctionStore_tools_2023/QuickExtTest.tox) and run it or just check its [extension code](https://github.com/function-store/FunctionStore_tools/blob/main/scripts/QuickExt/templates/ExtUtils/ExtTest.py).
+
+## TouchDesigner shortcuts
+
+Four conveniences over TouchDesigner's own UI, by keyboard or from the command
+palette:
+
+| Shortcut | Action |
+|---|---|
+| **Shift+Alt+Q** | Open the parameter dialog for the **selected** operator |
+| **Ctrl+Alt+Q** | Open the parameter dialog for the **current network's** COMP |
+| **Shift+Alt+W** | Open the component editor for the **selected** operator |
+| **Ctrl+Alt+W** | Open the component editor for the **current network's** COMP |
+
+(On macOS, Alt is Option.)
+
+They call nothing but TouchDesigner itself, so they work regardless of which
+other packages are installed, and each is rebindable in FNS_HotkeyManager.
+Keyboard and palette share one implementation: the keyboardin callbacks invoke
+the same promoted methods the commands do.
+
+These arrived from the retired **MY_HOTKEYS** package. Their command ids are
+unchanged (`opencurrentparameters`, `openparentparameters`,
+`customizecurrentcomp`, `customizeparentcomp`) but the owning tool is now
+CustomParTools — so launcher history, curation and presets that referenced
+`MY_HOTKEYS#…` need re-pointing once.

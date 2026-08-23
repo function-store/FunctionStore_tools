@@ -80,7 +80,7 @@
   },
   "CustomParTools": {
    "category": "Parameters",
-   "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion.",
+   "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion. Also carries four stock-TouchDesigner shortcuts for opening parameters and the COMP editor.",
    "recommended": true
   },
   "ExprHotStrings": {
@@ -170,10 +170,6 @@
   "MISC": {
    "category": "Workflow",
    "description": "Assorted small utilities that ship together (hog CHOP, mouse input and friends)."
-  },
-  "MY_HOTKEYS": {
-   "category": "Workflow",
-   "description": "Convenience hotkeys over stock TouchDesigner actions: open parameters, open the COMP editor, focus the palette search."
   },
   "OpenExt": {
    "category": "Developer",
