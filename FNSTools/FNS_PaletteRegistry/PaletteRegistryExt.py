@@ -461,11 +461,27 @@ class PaletteRegistryExt(RegistryBase):
 		self._syncSurface()
 		return {'ok': True, 'name': canonical, 'displayed': displayed, 'persisted': wrote_host}
 
+	def _hasStaleEntry(self):
+		"""Any registered entry whose panel is gone. One op() lookup per entry,
+		so it can gate the heal rather than healing on every click."""
+		for info in list(self.stored['PaneRegistry'].values()):
+			if self._resolvePanelOp(info) is None:
+				return True
+		return False
+
 	def ShowTab(self, canonical):
-		"""Select a tab: TD's own ('palette') or a registered canonical."""
+		"""Select a tab: TD's own ('palette') or a registered canonical.
+
+		Reconciles first when something has gone stale. There is no delete
+		event to hook and no watchdog by design, so the moment a human looks
+		at the strip is the cheapest honest place to notice a contributing
+		COMP has been deleted.
+		"""
 		api = self._registryApi()
 		if api is not self:
 			return api.ShowTab(canonical)
+		if self._hasStaleEntry():
+			self._healRegistryEntries()
 		pal = self._palette()
 		if pal is None:
 			return False
@@ -663,7 +679,12 @@ class PaletteRegistryExt(RegistryBase):
 		self._setConst(mirror.par.display, 1 if canonical == self._current else 0)
 
 	def _pruneMirrors(self, pal):
-		live = {self._mirrorName(c) for c in self.stored['PaneRegistry']}
+		# Keep only mirrors whose entry STILL RESOLVES. Keying off raw stored
+		# keys let a dead entry protect its own mirror from pruning -- and
+		# entries do go stale on their own: TD does NOT call onDestroyTD when a
+		# host dies as part of its parent's subtree (measured), which is exactly
+		# what happens when someone deletes a registered tool.
+		live = {self._mirrorName(c) for c in self._orderedNames(include_hidden=True)}
 		for o in list(pal.ops(self.MIRROR_PREFIX + '*')):
 			if o.name in (self.STRIP_NAME, self.STRIP_EXEC_NAME):
 				continue
