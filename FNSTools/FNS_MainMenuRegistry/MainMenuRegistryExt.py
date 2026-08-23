@@ -280,6 +280,7 @@ class MainMenuRegistryExt(RegistryBase):
 			self._setExpr(mirror.par.w, self.MIRROR_WIDTH_EXPR.format(canonical=canonical))
 		self._setConst(mirror.par.h, self.BAR_ICON_HEIGHT)
 		self._anchorMirror(mirror, bar)
+		self._mirrorDragDrop(mirror, widget)
 		self._setConst(mirror.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)
 		ao = layout.get(canonical)
 		if ao is not None:

@@ -107,7 +107,12 @@ either on, its per-frame `sync()` fights the hub.
 ## 5. Drop-to-register
 
 `panel/drop_callbacks` serves both the hub window and `select1` (the FNS
-button; its main-menu Select mirror forwards drops -- verified). Nothing runs
+button). **A Select mirror does NOT forward drops by itself** -- the mirror's
+own Drag/Drop pars decide, and registry-made mirrors defaulted to the bar's
+legacy `dropparent`; `RegistryBase._mirrorDragDrop` now copies a source
+widget's callback-mode settings onto its mirror on every inject (MainMenu and
+Toolbar registries), which is what makes the FNS button a drop target in the
+bar (verified by hand 2026-08-23). Nothing runs
 in the drop-event stack: `RouteDrop` records paths and defers a frame; every
 tab whose component promotes `AcceptsDrop` + `PackageDrop` is a target; one
 target stamps directly, several open a `popMenu`; the configurator's

@@ -162,6 +162,7 @@ class ToolbarRegistryExt(RegistryBase):
 			self._setExpr(mirror.par.w, self.MIRROR_WIDTH_EXPR.format(canonical=canonical))
 		self._setConst(mirror.par.h, self.BAR_ICON_HEIGHT)
 		self._anchorMirror(mirror, bar)
+		self._mirrorDragDrop(mirror, widget)
 		# The registry is the manager: order and visibility come from the
 		# central entry, not from any table.
 		self._setConst(mirror.par.display, 1 if self._effectiveDisplay(info, ancestors) else 0)

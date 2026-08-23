@@ -1298,6 +1298,32 @@ class RegistryBase:
 		if par.mode != ParMode.EXPRESSION or par.expr != expr:
 			par.expr = expr
 
+	def _mirrorDragDrop(self, mirror, source):
+		"""A Select mirror forwards clicks but NOT drops: the mirror's own
+		Drag/Drop pars decide, and they default to the bar's legacy inheritance
+		(`dropparent`). Copy the source widget's callback-mode settings onto
+		the mirror, so a widget that accepts drops through Drag/Drop callbacks
+		(the FNS hub button) accepts them through its mirror too. Called from
+		every mirror inject, compare-before-set; a source in legacy mode leaves
+		the mirror alone."""
+		try:
+			cb = source.par.dragdropcallbacks.eval()
+			src_drop = str(source.par.drop.eval())
+			src_drag = str(source.par.drag.eval())
+		except Exception:
+			return
+		if cb is None or not getattr(cb, 'valid', False):
+			return
+		if src_drop != 'usecallbacks' and src_drag != 'usecallbacks':
+			return
+		cur = mirror.par.dragdropcallbacks.eval()
+		if cur is None or not getattr(cur, 'valid', False) or cur.path != cb.path:
+			mirror.par.dragdropcallbacks = cb.path
+		if src_drop == 'usecallbacks':
+			self._setConst(mirror.par.drop, 'usecallbacks')
+		if src_drag == 'usecallbacks':
+			self._setConst(mirror.par.drag, 'usecallbacks')
+
 	# --- hideable entry groups (bracket pairs, nestable) ---
 	#
 	# A group is a PAIR of virtual entries in the sequence -- a start switch

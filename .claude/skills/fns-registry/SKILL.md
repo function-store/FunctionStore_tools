@@ -151,6 +151,11 @@ if reg is not None and hasattr(reg, 'Register'):
 - **A COMP's size expression must not read its own width** (stale mid-layout);
   read `parent().width`. TD's Grid Rows alignment scales cells to fit rather
   than wrapping -- the hub's tab bar lays its cells out by expression instead.
+- **A Select mirror forwards clicks but NOT drag/drop** -- the mirror's own
+  Drag/Drop pars decide. `RegistryBase._mirrorDragDrop(mirror, source)` copies
+  a source's callback-mode settings onto its mirror; call it from every
+  mirror inject (Toolbar/MainMenu do). `onDragStartGetItems` must return a
+  plain LIST; a textCOMP needs `dragdropmode='panel'`.
 - **A Select mirror draws its source at the SOURCE's size; `fill` on a source
   with no panel parent collapses to nothing.** Size the source with
   `w`/`h` expressions on the container it is mirrored into.
