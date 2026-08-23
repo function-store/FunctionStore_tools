@@ -25,6 +25,7 @@ Current implementations:
 | `FNS_ConfigRegistry` | `op.FNS_CONFIGREGISTRY` | The aggregated settings file (`userPaletteFolder/FNStools_ext/config/FNStools_config.json`) -- per-tool par + state persistence | `FNSTools/FNS_ConfigRegistry` |
 | `FNS_Console` | `op.FNS_CONSOLE` | The toolkit's web front -- one page, a tab per concern; tools publish tabs via `RegisterTab` (see [ConsoleTabContract.md](ConsoleTabContract.md)) | `FNSTools/FNS_Console` |
 | `FNS_HubRegistry` | `op.FNS_HUBREGISTRY` | FNS_Hub's tab bar -- native panels, viewers and parameter pages tools contribute as tabs (mirrors/viewers injected into `FNSTools/FNS_Hub/panel/tabs`; see [HubContract.md](HubContract.md)) | `FNSTools/FNS_HubRegistry` |
+| `FNS_PaletteRegistry` | `op.FNS_PALETTEREGISTRY` | TD's Palette Browser (`/ui/dialogs/palette/palette`) -- tools contribute native panel COMPs as tabs beside the stock Palette tab (see [PaletteTabContract.md](PaletteTabContract.md)) | `FNSTools/FNS_PaletteRegistry` |
 
 The table name is the `REGISTRY_NAME` on the master's extension; the shortcut is
 its `SHORTCUT`. Both are `FNS_`-prefixed -- the unprefixed spellings

@@ -13,11 +13,17 @@ packaging, migration lessons) is in
 [docs/RegistryHomeContract.md](../../../docs/RegistryHomeContract.md); publishing a
 console tab in [docs/ConsoleTabContract.md](../../../docs/ConsoleTabContract.md).
 
-## The eight registries
+## The nine registries
 
 `FNS_PaneTypeRegistry`, `FNS_ToolbarRegistry`, `FNS_NavbarRegistry`,
 `FNS_OpMenuRegistry`, `FNS_MainMenuRegistry`, `FNS_ConfigRegistry`, `FNS_Console`,
-`FNS_HubRegistry` — each reached as `op.FNS_<NAME>` / `op.FNS_<NAME>REGISTRY`.
+`FNS_HubRegistry`, `FNS_PaletteRegistry` — each reached as `op.FNS_<NAME>` /
+`op.FNS_<NAME>REGISTRY`.
+
+`FNS_PaletteRegistry` manages TD's Palette Browser; tools contribute native
+panel COMPs as tabs. Contract in
+[docs/PaletteTabContract.md](../../../docs/PaletteTabContract.md) — read it before
+touching that surface: TDXLU's legacy injector claims the very same slots.
 
 **Management UI = `FNSTools/FNS_Hub`** (core; the FNS main-menu button + a
 tabbed window). The Toolbar/Navbar/MainMenu configurators are its tabs and
@@ -159,6 +165,13 @@ if reg is not None and hasattr(reg, 'Register'):
 - **A Select mirror draws its source at the SOURCE's size; `fill` on a source
   with no panel parent collapses to nothing.** Size the source with
   `w`/`h` expressions on the container it is mirrored into.
+- **An empty registry must claim no surface.** A registry that injects its
+  chrome with zero contributions is noise at best and a collision at worst —
+  FNS_PaletteRegistry stacked a second folder-tab strip on TDXLU's in the same
+  26 px row. Build the surface on the first registration, tear it down on the
+  last, and restore shared surface state only when YOU changed it (track
+  ownership in a flag; do not infer it from the current selection — teardown
+  often runs after that state was already reset).
 - **Copying ANY COMP whose subtree contains an enabled clone host crashes
   TD** — not just clone copies inside drop-event stacks. Copying
   NavbarConfigurator (which ships its clone-bound gear host) via a plain
