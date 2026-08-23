@@ -33,6 +33,41 @@ A custom par qualifies only if **all** of these hold:
 So `Hotkey`, `Togglekey`, `Menushortcut` are found; `Enablekeyboardshortcuts` (toggle)
 and `Opshortcut` are not.
 
+## 1a. Promote the binding to the tool's own parameter
+
+**A hotkey belongs on a custom parameter of the tool, not buried on the
+Keyboard In inside it.** Put a `Shortcut*` / `Keys` Str par on the tool's
+top-level Custom page and have the keyboardin follow it:
+
+```python
+# on the tool COMP, Custom page
+p = page.appendStr('Shortcutpromote', label='Promote')[0]
+p.val = p.default = 'alt.x'          # or defaultExpr + defaultMode for an OS switch
+p.help = 'Hotkey that ...'
+
+# on the keyboardin inside it
+k.par.shortcuts.expr = 'parent().par.Shortcutpromote'
+```
+
+Why it matters mechanically:
+
+- **The user can find and change it** without opening the tool's network.
+- **It gets a real default.** `default`/`defaultExpr` are settable on custom
+  pars only; a keyboardin's factory default is the empty string, so
+  `ResetToDefault` on a raw keyboardin *unbinds* the hotkey (see 7).
+- **One row, one source of truth.** The follower expression deliberately
+  contains no `app.osName`, so the manager stores the PAR and ignores the
+  keyboardin -- the tool shows up once, not twice.
+- **It survives moves.** A default authored on the par follows the op through
+  renames and reparenting; a default-table row keyed by path does not.
+
+Several hotkeys, one keyboardin: join the pars in the expression and dispatch
+on `shortcutName` (ParRandomizer). One keyboardin each: point each at its own
+par (CustomParTools). Either is fine; a raw constant on the keyboardin is not.
+
+Names are semi-public: FNS_ConfigRegistry persists by par name and the manager
+stores by path + par, so renaming one later drops a user's binding.
+
 ## 2. Things that silently exclude you
 
 - **Path contains** `popMenu`, `popDialog`, `KeyModifiers`, or `FNS_HotkeyManager`.
@@ -127,6 +162,8 @@ table; note that `Load Default` also **overwrites** the gathered table with it.
 
 ## Quick checklist
 
+- [ ] **Binding promoted to a custom par on the TOOL**, keyboardin following it
+      by expression (see 1a) -- not left as a raw constant on the keyboardin
 - [ ] Binding lives on a Keyboard In CHOP/DAT (`keys`/`modifiers`/`shortcuts`) or a
       `Str`/`StrMenu`/`Menu` custom par named `*key*`/`*shortcut*`/`*hotkey*`
 - [ ] Par mode is Constant, Bind, or an `app.osName` expression
