@@ -112,7 +112,18 @@ belongs on two surfaces is dropped twice.
   configurators' drop-to-register had been dead since the `FNS_` rename;
   the port to `StampHost` fixed it and removed the dormant template hosts.
 
-## 7. Nothing here is durable
+## 7. Persistence of the configurators
+
+The three configurators are PI suspects of their own
+(`modules/suspects/FNSTools/FNS_Hub/<Name>Configurator.tox`, `enableexternaltox`
+on) nested under the hub's tox -- individually tracked and releasable.
+Their `ConfiguratorExt` DATs are live, so that tox is the sole carrier of
+the code. **Save order: configurator toxes, then `FNS_Hub`, then the root.**
+A released configurator is a hub contribution (its `FNS_HubRegistry` host
+stays live in the artifact, cloning off); dropped into a project with the
+hub it registers its tab, alone it has no window.
+
+## 8. Nothing here is durable
 
 `/sys` is rebuilt every open: hosts re-register on init. The hub's tab order
 and active tab roam as plain pars on its Hub page (config host canonical
