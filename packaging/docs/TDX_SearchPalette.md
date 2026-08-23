@@ -21,9 +21,11 @@ The component installs itself into the palette on project start while
 installed or removed at any time with the **Install** / **Uninstall**
 pulses on its parameters.
 
-With [MY_HOTKEYS](/docs/my-hotkeys/) installed, `ctrl+shift+f` focuses the
-palette search field directly. The hotkey feature-detects the installed
-field, so it simply stays quiet when TDX_SearchPalette is absent.
+With [MY_HOTKEYS](/docs/my-hotkeys/) installed, `ctrl+shift+f` opens the
+Palette Browser, brings TD's own tab to the front (the search field lives in
+the stock palette list, which a contributed tab hides) and focuses the search
+field. The hotkey feature-detects the installed field, so it still opens the
+palette — just without focusing anything — when TDX_SearchPalette is absent.
 
 ## Search behavior
 

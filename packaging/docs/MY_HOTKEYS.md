@@ -20,4 +20,8 @@ There's a ton of hotkeys documented on each tool's own doc page, but here are so
 
 ## TDX_SearchPalette
 
-`ctrl+shift+F` focuses the search field that [TDX_SearchPalette](/docs/tdx-searchpalette/) installs into the Palette browser — an optional package, vendored from [Yea Chen's TD-SearchPalette](https://github.com/yeataro/TD-SearchPalette). The hotkey feature-detects the installed field, so it stays quiet if TDX_SearchPalette isn't installed.
+`ctrl+shift+F` opens TouchDesigner's Palette Browser, brings its own tab to the front, and focuses the search field that [TDX_SearchPalette](/docs/tdx-searchpalette/) installs there — an optional package, vendored from [Yea Chen's TD-SearchPalette](https://github.com/yeataro/TD-SearchPalette).
+
+All three steps matter: focusing a field inside a closed browser puts the caret where you cannot see it, and the search field lives inside the *stock* palette list, which any contributed tab hides. So the hotkey opens the browser, asks whichever palette-tab owner is installed ([FNS_PaletteRegistry](/docs/fns-paletteregistry/) and TDXLU's own injector are both feature-detected) to show TD's tab again, and only then takes focus — one frame later, since a browser opened this frame has not laid itself out yet.
+
+The field itself is feature-detected too: without TDX_SearchPalette the hotkey still opens the palette, and says so in the textport rather than failing silently.

@@ -272,7 +272,7 @@ Six active hotkeys, and only ONE touches a tool:
 | `ctrl+alt+q` | `ui.panes.current.owner.openParameters()` |
 | `shift+alt+w` | `ui.openCOMPEditor(selectedChildren[0])` |
 | `ctrl+alt+w` | `ui.openCOMPEditor(owner)` |
-| `ctrl+shift+f` | focus TD's palette search field |
+| `ctrl+shift+f` | open TD's Palette Browser, show its own tab, focus the search field |
 
 Move `keyboardin_resetpls` + its callback into ResetPLS1 (where the call
 becomes local — `parent().par.Reset.pulse()`, no global shortcut at all) and
