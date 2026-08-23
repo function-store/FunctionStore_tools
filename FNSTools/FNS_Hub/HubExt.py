@@ -121,6 +121,13 @@ class HubExt:
 
 	TAB_ACTIVE = {'bg': (0.25, 0.25, 0.25), 'font': (0.96, 0.96, 0.96), 'border': 'borderb'}
 	TAB_IDLE = {'bg': (0.17, 0.17, 0.17), 'font': (0.62, 0.62, 0.62), 'border': 'off'}
+	# per-tab tints (canonical -> (active, idle)); the console is the toolkit's
+	# own page and reads differently from the tool tabs (Rows style only --
+	# TD's strip widget has one look for every tab)
+	TAB_TINTS = {
+		'console': ({'bg': (0.36, 0.26, 0.12), 'font': (1.0, 0.92, 0.72), 'border': 'borderb'},
+					{'bg': (0.23, 0.18, 0.11), 'font': (0.93, 0.72, 0.40), 'border': 'off'}),
+	}
 	TAB_TILE_STEP = 400
 
 	def _rebuildTabBar(self, tabs):
@@ -170,7 +177,9 @@ class HubExt:
 		for c in bar.children:
 			if not c.name.startswith('tab_') or c.name == 'tab_template':
 				continue
-			st = self.TAB_ACTIVE if c.fetch('canonical', '') == active_name else self.TAB_IDLE
+			canonical = c.fetch('canonical', '')
+			active, idle = self.TAB_TINTS.get(canonical, (self.TAB_ACTIVE, self.TAB_IDLE))
+			st = active if canonical == active_name else idle
 			r, g, b = st['bg']
 			if (c.par.bgcolorr.eval(), c.par.bgcolorg.eval(), c.par.bgcolorb.eval()) != (r, g, b):
 				c.par.bgcolorr, c.par.bgcolorg, c.par.bgcolorb = r, g, b
@@ -277,6 +286,8 @@ class HubExt:
 		except Exception:
 			hook = None
 		try:
+			if on and tab.get('name') == 'console':
+				self._serveConsole(comp)
 			if hook is not None:
 				hook(on)
 			elif getattr(comp.par, 'Address', None) is not None:
@@ -295,6 +306,29 @@ class HubExt:
 			self._exposed.add(key)
 		else:
 			self._exposed.discard(key)
+
+	def _serveConsole(self, browser):
+		"""The Console tab is a viewer on FNS_Console's server, which only
+		runs on demand and stops when idle: picking the tab must (re)start
+		it, or the browser lands on a dead 127.0.0.1. Keeps the page's
+		fragment (the console's own tab) when the address already points
+		at the live server."""
+		con = getattr(op, 'FNS_CONSOLE', None)
+		if con is None or not hasattr(con, 'Serve'):
+			return
+		url = con.Serve()
+		if not url:
+			return
+		addr = getattr(browser.par, 'Address', None)
+		if addr is None:
+			return
+		cur = str(addr.eval())
+		if not cur.startswith(url):
+			addr.val = url
+		else:
+			rp = getattr(browser.par, 'Reload', None)   # same server: just make sure it is loaded
+			if rp is not None and rp.style == 'Pulse':
+				rp.pulse()
 
 	def OnTabSelected(self, name):
 		"""A tab on the bar was clicked (tabbar/tabs_exec)."""

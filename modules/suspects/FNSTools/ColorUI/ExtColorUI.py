@@ -42,6 +42,7 @@ class ExtColorUI:
 		self._lastNonce = None
 		self._gotReady = False
 		self._randomized = False
+		self._hubExposed = False     # FNS_Hub shows our panel in its OpColor tab
 		fnsLog('ColorUI: init')
 
 	# ------------------------------------------------------------------ state
@@ -140,16 +141,24 @@ class ExtColorUI:
 		p = self._localActivePar()
 		if p is None:
 			return
-		want = self._viewerOpen() and not self._servedByConsole()
+		# the hub's tab is a viewer too: while it shows us, render regardless
+		# of the console serving the same page to browsers
+		want = self._hubExposed or (self._viewerOpen() and not self._servedByConsole())
 		if bool(p.eval()) == want:
 			return
 		p.val = want
 		fnsLog(f'ColorUI: local web render {"on" if want else "off"} '
-			   f'(viewer {"open" if self._viewerOpen() else "closed"}, '
+			   f'(hub {"shown" if self._hubExposed else "hidden"}, viewer {"open" if self._viewerOpen() else "closed"}, '
 			   f'{"served by the console" if self._servedByConsole() else "local"})')
 		if want:
 			self._gotReady = False
 			self._Kick(4)
+
+	def OnHubExposure(self, exposed):
+		"""FNS_Hub hand-off: our panel is the hub's OpColor tab; the hub calls
+		this as the tab is shown/hidden. Feeds the one renderer rule above."""
+		self._hubExposed = bool(exposed)
+		self.SyncLocalBrowser()
 
 	def OnConsoleExposure(self, exposed):
 		"""FNS_Console hand-off: the host calls this instead of flipping the

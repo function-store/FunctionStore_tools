@@ -538,6 +538,33 @@ class ConsoleRegistryExt(RegistryBase):
 		shown = self._showUrl(url, panel)
 		return {'ok': True, 'url': url, 'shown': shown}
 
+	def Serve(self, tab=None):
+		"""Make sure the console is being served and return its URL (with
+		the tab fragment when given) -- WITHOUT showing it anywhere. The hub
+		calls this as its Console tab is exposed, so picking the tab never
+		lands on a dead 127.0.0.1. None when no server can be started."""
+		api = self._registryApi()
+		if api is not self:
+			return api.Serve(tab=tab)
+		ws = self._ensureServer()
+		if ws is None:
+			return None
+		if not ws.par.active.eval():
+			port = self._freeUiPort()
+			if port is None:
+				return None
+			ws.par.port = port
+			ws.par.active = True
+		self._touchServer()
+		url = f'http://127.0.0.1:{int(ws.par.port.eval())}/'
+		if tab:
+			tab = str(tab)
+			if tab in ('tools',):
+				url += '#tools'
+			elif tab != 'settings':
+				url += '#t-' + tab
+		return url
+
 	def Close(self):
 		api = self._registryApi()
 		if api is not self:

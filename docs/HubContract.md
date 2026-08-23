@@ -81,7 +81,13 @@ content neither a panel nor a viewable operator; content gone.
 Only the shown tab's component is "live". When a tab is shown or hidden the hub
 calls `OnHubExposure(exposed)` on the component's extension if it defines one;
 otherwise, a component with `Active` and `Address` pars (a palette Web Browser)
-has its `Active` switched directly. A component carrying a `Refresh` pulse par
+has its `Active` switched directly. **A tool whose own visibility rule
+governs a renderer must implement the hook** -- a palette browser nested
+inside a tool is invisible to the hub's fallback, and the tool's own watchers
+(`Render Only While Viewer Active`) or the console host's "local browser off
+while served" rule would otherwise keep it dark in the hub. ColorUI is the
+worked example: `ExtColorUI.OnHubExposure` feeds `_hubExposed` into its one
+`SyncLocalBrowser` rule (`hub shown OR (viewer open AND not served)`). A component carrying a `Refresh` pulse par
 is pulsed each time its tab is shown (the old tools_ui convention). Right-click
 on a tab opens the owning tool's parameter window
 (`HubExt.OpenTabParameters(index)`).
