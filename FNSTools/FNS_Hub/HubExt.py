@@ -151,7 +151,7 @@ class HubExt:
 			nm = 'tab_' + tdu.legalName(t['name'])
 			want[nm] = (i, t)
 		for c in list(bar.children):
-			if c.name.startswith('tab_') and c.name != 'tab_template' and c.name not in want:
+			if c.OPType == 'textCOMP' and c.name.startswith('tab_') and c.name != 'tab_template' and c.name not in want:
 				c.destroy()
 		for nm, (i, t) in want.items():
 			c = bar.op(nm)

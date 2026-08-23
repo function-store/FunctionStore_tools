@@ -27,7 +27,8 @@ two styles, the hub's `Tab Bar` par (`Tabbar`: `rows` | `strip`, roams):
 `rows` is the hub-owned `tabbar` -- one textCOMP per shown tab copied from
 `tab_template`, laid out by expressions so it wraps into rows, active =
 brighter label + accent underline, drag a tab onto another to reorder
-(`tab_dragdrop`); `strip` is TD's `masterFolderTabs` widget -- one row, scroll
+(`dragdrop_callbacks`; a textCOMP needs `dragdropmode=panel` for panel
+drag/drop -- its default `textinsert` is text-field semantics); `strip` is TD's `masterFolderTabs` widget -- one row, scroll
 arrows, dropdown, the widget's own drag-to-reorder. Both land on
 `OnTabReorder` and the roaming `Tab User Order` par. Neither has a close
 button: hidden tabs come back through the right-click menu. **The hub

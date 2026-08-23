@@ -47,7 +47,7 @@ the base as a shared `.py` when extracting.
 ## 3b. Tab bar: drag-to-reorder in Rows style -- DONE 2026-08-23
 
 Both styles reorder by drag now: the Strip through TD's widget, the Rows bar
-through `tabbar/tab_dragdrop` (modern Drag/Drop callbacks on every tab
+through `tabbar/dragdrop_callbacks` (modern Drag/Drop callbacks on every tab
 textCOMP -- drag a tab onto another tab to move it there). Both land on
 `OnTabReorder(fromIndex, toIndex)` and the roaming `Tab User Order` par.
 
