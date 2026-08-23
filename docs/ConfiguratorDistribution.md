@@ -170,6 +170,52 @@ alone:
   invisible to a text/expression scan.** Any remaining "already clean" verdict
   reached that way is worth re-checking by hand.
 
+### 1.2c Re-audited by hand, 2026-08-24
+
+Three scans, because **each reference class is invisible to the others**:
+
+| Class | Found by | Result |
+|---|---|---|
+| DAT text | shortcut substring | 76 hits, mostly noise |
+| DAT text | code-shaped + word-bounded, tables excluded | 4 real tool->tool |
+| **Parameter expressions** | `Par.expr` sweep | **8 live, 34 dead** |
+
+The 76 collapsed for two reasons worth remembering: `FNS_TOOLBAR` is a
+**substring of** `FNS_TOOLBARREGISTRY`, so every stamped core registry host
+read as a dependency on the Toolbar package; and the largest "edges" were
+**table DATs** (`GlobalOutSelect/treePanel`, `fastOpFind`) that catalogue every
+tool's shortcut and path as DATA. Any future scan must use word boundaries and
+skip `isTable` DATs.
+
+**`OpTemplates -> AutoRes` is real, and lived where no text scan looks** -- in
+parameter expressions on 8 TOPs. It was also broken:
+
+```
+tdu.tryExcept(lambda: parent.Project.width, op.AUTO_RES.par.Resolutionw)
+```
+
+`tryExcept`'s fallback is lazy **only when it is a function**. As a bare value,
+`op.AUTO_RES` is evaluated eagerly as an argument, so the expression raised
+whenever AutoRes was absent *even though the primary path succeeded* -- verified
+empirically, not inferred. Fixed with a lambda plus a `hasattr` fallback.
+
+**The 34 toolbar "edges" were corpses.** Every toolbar-button tool stored
+`tdu.tryExcept(lambda: op.FNS_TOOLBAR.par.Layoutstart.eval(), 666)
++float(op.FNS_TOOLBAR.op('ToolbarDef').cell(...))` on `alignorder`/`display` --
+but those pars are in **CONSTANT mode**, so the text was dormant, and
+`ToolbarDef` no longer exists on the Toolbar package at all. Bar order is
+governed by ToolbarRegistry/the configurator, which assigns `alignorder` to the
+**mirrors in `/ui/dialogs/bookmark_bar`**, not to the source buttons inside
+tools (which all sit at 0.0). The dead text is cleared; values untouched.
+
+**Rule this establishes: a stored expression on a CONSTANT-mode par is not an
+edge.** Mode has to be read, or an audit counts dormant legacy as live coupling
+-- here it would have inflated the graph by 34.
+
+Also fixed: `/FNSTools/parexec1` called `op.FNS_COLOR_UI.openParameters()`
+unguarded on the toolkit root; ColorUI is optional, so it is feature-detected
+now.
+
 Effect on §1.1's graph: **14 edges → 8.** Four CustomParPromoter edges become
 internal calls, and `FNS_Navbar → CustomParPromoter` + `→ iopPromoter`
 collapse into one. Remaining after this plus the MY_HOTKEYS move and the dead
