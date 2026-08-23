@@ -60,6 +60,7 @@ REGISTRY_OWNER = {
     'FNS_OpMenuRegistry': 'FNS_OpMenuRegistry',
     'FNS_PaneTypeRegistry': 'FNS_PaneTypeRegistry',
     'FNS_Console': 'FNS_Console',
+    'FNS_HubRegistry': 'FNS_HubRegistry',
 }
 SURFACE_OF = {
     'FNS_ToolbarRegistry': 'toolbar',
@@ -67,15 +68,18 @@ SURFACE_OF = {
     'FNS_MainMenuRegistry': 'mainmenu',
     'FNS_OpMenuRegistry': 'opmenu',
     'FNS_PaneTypeRegistry': 'panebar',
+    'FNS_HubRegistry': 'hub',
 }
 # Packages that ARE the infrastructure; always installed, never optional.
-# Core = the raw registries plus FNS_Updater -- the one non-registry
-# exception, because it is how an install ever becomes a newer install:
-# leaving it optional means the one package that can fetch updates is the
-# one a user can accidentally decline.
+# Core = the raw registries plus two non-registry exceptions: FNS_Updater,
+# because it is how an install ever becomes a newer install (leaving it
+# optional means the one package that can fetch updates is the one a user
+# can accidentally decline), and FNS_Hub, the FNS button + manager window
+# that is the ONE affordance for every registry -- the surface configurators
+# are its tabs, so a root without it has no way to manage its bars.
 CORE = ('FNS_ConfigRegistry', 'FNS_ToolbarRegistry', 'FNS_NavbarRegistry',
         'FNS_MainMenuRegistry', 'FNS_OpMenuRegistry', 'FNS_PaneTypeRegistry',
-        'FNS_Console', 'FNS_Updater')
+        'FNS_Console', 'FNS_HubRegistry', 'FNS_Hub', 'FNS_Updater')
 
 
 def _root():
@@ -246,7 +250,7 @@ def _shortcutOwners():
     return owners
 
 
-_REGHOST_RE = re.compile(r'/FNS_(Toolbar|Navbar|Config|OpMenu|MainMenu|PaneType)Registry(/|$)')
+_REGHOST_RE = re.compile(r'/FNS_(Toolbar|Navbar|Config|OpMenu|MainMenu|PaneType|Hub)Registry(/|$)')
 # Both reference forms must be caught. `op.X` is the bare (raising) one;
 # `getattr(op, 'X', ...)` is the GUARDED one an optional integration is
 # supposed to use -- miss it and the manifest under-reports precisely the

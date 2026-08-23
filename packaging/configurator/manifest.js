@@ -2,16 +2,19 @@
 window.FNS_MANIFEST = {
  "schema": 1,
  "release": "v3.0.1",
- "notes": "tools_ui: The tabbed panel builds itself from the tools you actually have installed instead of a fixed list, so a partial install no longer shows tabs that lead nowhere, and the panel refreshes itself on start and every time it opens. Drag the tabs to reorder them, close one with its X to hide it (turn it back on from that tool's own UI Tab parameters), and both the order and the tab you were last on come back with your settings.\nTDX_SearchPalette: New package, vendored from Yea Chen's TD-SearchPalette: a search field inside TouchDesigner's palette browser. Matching is case-insensitive and looks anywhere in the name rather than only at the start, several words narrow the result together, a word containing a slash matches the palette folder instead (`gen/ noise`), and numbered copies of one component collapse to the most recently modified. The last two are toggles on the package, and `ctrl+shift+f` jumps straight to the field when MY_HOTKEYS is installed.\nColorUI: Its tab in the tools panel is now the palette editor itself, with families, colours and search inline, instead of a button that opened a parameter window.\nFNS_OpMenu: Carries the search-keywords tab in the tools panel now. It used to be loose glue sitting in the toolkit root that no package owned, which meant it simply went missing unless you had installed everything.\noscMapper: Contributes its tools panel tab through the new UI Tab parameters, so the tab travels with the package and can be reordered or hidden.\nmidiMapper: Contributes its tools panel tab through the new UI Tab parameters, so the tab travels with the package and can be reordered or hidden.\nExprHotStrings: Contributes its tools panel tab through the new UI Tab parameters, so the tab travels with the package and can be reordered or hidden.\nGlobalOutSelect: Contributes its tools panel tab through the new UI Tab parameters, and still refreshes itself whenever the tab is shown.\nMY_HOTKEYS: The palette search hotkey now checks that TDX_SearchPalette is actually installed rather than doing nothing when it is not.\nFNS_Updater: Fixed a dead reference to a component that left the toolkit long ago, which made one node inside the updater throw an error on every cook.\n\nInstalling from the website is now one line. Pick the tools you want on\nthe site, press Copy install script, and paste the single line into the\nTextport: it fetches the bootstrap and your selection straight from this\nrelease, checks every hash before writing anything to disk, and installs.\n\nPartial installs are the theme of this drop. Tools that reach for each\nother now look first and stay quiet when the other side is absent, so a\nsubset behaves like a deliberate configuration rather than a broken one.\nPackages have also stopped assuming the toolkit root is there at all --\neach one resolves through its own global shortcut, so a single dropped\ntox works standalone.\n\nEvery package page was re-read against the components themselves.\nTwenty-six of forty-six had something stale -- paths left over from the\nrename, wrong key combinations, descriptions of how things worked before\nthe redesign -- and the worst of them were rewritten outright. ClearPars\nlost its own page, because it lives inside CustomParTools now.\n\nDownloads are a little leaner too: artifacts had been carrying log data\nbaked in from an old project, and that no longer rides along.",
+ "notes": "Documentation, and the settings page you could not reach.\n\nEvery package's docs were checked against what its code actually does\nrather than what the old wiki said. Twenty-six were wrong: hotkeys that\nhad drifted to different modifiers, features nobody had written down,\npaths still naming the pre-3.0 layout, and a few descriptions that\ndescribed the wrong behaviour entirely. ClearPars turned out to have\nmerged into CustomParTools during the redesign and is gone as a separate\npackage; its docs live there now.\n\nFNS_ConfigRegistry ships a settings page -- every installed tool's\nparameters on one page in your browser, served from inside TouchDesigner\non 127.0.0.1 and shut down again when you stop looking at it. It has been\nin the code for a while, unreachable: the web server op it looks for was\nnever created. It builds itself on demand now, and the toolkit root grew\nan **Open Settings** parameter to reach it, alongside Pick Tools and Open\nInstaller.\n\nThe one-drop bundle is now built as a copy of the development root with\nthe developer-only parts removed, rather than assembled separately, so the\ntwo cannot drift apart in what they offer at the top level.\n\nFNS_ConfigRegistry: the settings page is reachable at last -- the web\nserver that serves it is created on demand instead of being expected to\nalready exist, and a promoted copy missing the page pulls it from the\nmaster rather than failing.",
  "channel": "stable",
  "base_url": "https://storage.functionstr.com/fnstools",
  "toolkit": {
   "name": "FNSTools",
   "td_build": "099",
-  "project": "FunctionStore_tools_2025_DEV.57.toe"
+  "project": "FunctionStore_tools_2025_DEV.69.toe"
  },
  "core": [
   "FNS_ConfigRegistry",
+  "FNS_Console",
+  "FNS_Hub",
+  "FNS_HubRegistry",
   "FNS_MainMenuRegistry",
   "FNS_NavbarRegistry",
   "FNS_OpMenuRegistry",
@@ -63,6 +66,20 @@ window.FNS_MANIFEST = {
    "pitch": "Extensions, stubs and the editor you actually write them in."
   }
  },
+ "starter": [
+  "AutoRes",
+  "CustomParTools",
+  "FNS_HotkeyManager",
+  "FNS_Navbar",
+  "FNS_OpMenu",
+  "FNS_Toolbar",
+  "OpToClipboard",
+  "ParOPDrop",
+  "QuickCollapse",
+  "QuickPane",
+  "SwapOps",
+  "TDX_SearchPalette"
+ ],
  "packages": [
   {
    "name": "AltSelect",
@@ -73,7 +90,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/altselect/",
    "surfaces": [],
    "shortcut": "ALT_SELECT",
-   "ops": 97,
+   "ops": 147,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -83,8 +100,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/AltSelect.tox",
-    "bytes": 68470,
-    "sha256": "bd4259afd8af33e6cac2949af9a72b42dea112c55039db56c3964bda19bc1889",
+    "bytes": 66414,
+    "sha256": "a0c3c0f071efc0c258d13dded6e9338760c577417e839ed9dfd3717efaceefeb",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/AltSelect.tox"
    }
   },
@@ -97,7 +114,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/autocombine/",
    "surfaces": [],
    "shortcut": "AUTO_COMBINE",
-   "ops": 124,
+   "ops": 174,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -107,8 +124,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/AutoCombine.tox",
-    "bytes": 81318,
-    "sha256": "21becf12d5a02c53d1bb8029a493e37968b3c53cb87c517bfd80e1ebf5c3ce6e",
+    "bytes": 80198,
+    "sha256": "d2e76a3763af164e8b841fe4cc98c813679f567dbb8387e310bd7b378963fadb",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/AutoCombine.tox"
    }
   },
@@ -121,7 +138,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/autores/",
    "surfaces": [],
    "shortcut": "AUTO_RES",
-   "ops": 124,
+   "ops": 174,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -131,8 +148,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/AutoRes.tox",
-    "bytes": 81070,
-    "sha256": "ef6fd2490a4390db5aaee27684c5a853ed209127ff6e919401292ddbe029e656",
+    "bytes": 79870,
+    "sha256": "734f62f541e07be59ebc4e4c1d370efb09dd760dbf4ef6ae2bc5b08a23730add",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/AutoRes.tox"
    }
   },
@@ -147,7 +164,7 @@ window.FNS_MANIFEST = {
     "mainmenu"
    ],
    "shortcut": "FNS_BORDERLESS_TD",
-   "ops": 369,
+   "ops": 386,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_MainMenuRegistry"
@@ -158,8 +175,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/BorderlessTD.tox",
-    "bytes": 228438,
-    "sha256": "9c74cb9c90d3d116de18a7381ec933001dcdc78447b94225a7d0ed5789ef3257",
+    "bytes": 228710,
+    "sha256": "3aad72550c01a52767b360c2bd2a40394a2e6ed69dcfb390db7f6bdfeefb7596",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/BorderlessTD.tox"
    }
   },
@@ -168,24 +185,33 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "Operator and family colour palettes, with the active palette roaming through config.",
-   "version": "1.0.2",
+   "version": "1.1.0",
    "help_url": "https://tools.functionstore.xyz/docs/colorui/",
    "surfaces": [
     "tools_ui"
    ],
    "shortcut": "FNS_COLOR_UI",
-   "ops": 165,
+   "ops": 224,
    "requires": [
-    "FNS_ConfigRegistry"
+    "FNS_ConfigRegistry",
+    "FNS_Console"
    ],
    "integrates_with": [],
    "tox_carrier": "own",
    "cooking": true,
+   "portability": [
+    {
+     "op": "webBrowser",
+     "par": "externaltox",
+     "kind": "project",
+     "path": "<repo>/modules/suspects/FNSTools/../Downloads/webBrowser.tox"
+    }
+   ],
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ColorUI.tox",
-    "bytes": 102702,
-    "sha256": "e62e7133efa0950ca4406442af734be780867ddfdc5a2563970f4699a56826a2",
+    "bytes": 101102,
+    "sha256": "150b5e3e8a18e2f8c8a55016b0b38a194ee196e9dfc49fa475a3ce6927a0e412",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/ColorUI.tox"
    }
   },
@@ -201,7 +227,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_CPP",
-   "ops": 938,
+   "ops": 1102,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_NavbarRegistry",
@@ -215,8 +241,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/CustomParTools.tox",
-    "bytes": 548680,
-    "sha256": "36413aa1d3710128430f48ce30c8347226b40cec599180c659271c94244e4819",
+    "bytes": 541944,
+    "sha256": "7a13b6eeb1961bbb4e6bb33742d2966dc82537c17bebbd8d1d11f6cd7c87647f",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/CustomParTools.tox"
    }
   },
@@ -231,7 +257,7 @@ window.FNS_MANIFEST = {
     "tools_ui"
    ],
    "shortcut": "HOTSTRINGS",
-   "ops": 114,
+   "ops": 164,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -251,10 +277,42 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ExprHotStrings.tox",
-    "bytes": 77558,
-    "sha256": "215205c81bde7f8d17dae2d526a33533e272bcb98858432e1f28cc21c127a038",
+    "bytes": 75806,
+    "sha256": "7b0e5b634f7e1df6e25af678e5875defbbc89c088019a3b84d2b4a02afa531de",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/ExprHotStrings.tox"
    }
+  },
+  {
+   "name": "FNS_CommandKit",
+   "kind": "tool",
+   "category": "Uncategorized",
+   "description": "",
+   "version": "",
+   "help_url": "",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 7,
+   "requires": [],
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
+  },
+  {
+   "name": "FNS_ConfigHost",
+   "kind": "tool",
+   "category": "Uncategorized",
+   "description": "",
+   "version": "",
+   "help_url": "",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 35,
+   "requires": [],
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
   },
   {
    "name": "FNS_ConfigRegistry",
@@ -279,6 +337,22 @@ window.FNS_MANIFEST = {
    }
   },
   {
+   "name": "FNS_Console",
+   "kind": "core",
+   "category": "Core",
+   "description": "The toolkit's web front, served from inside your project: every tool's settings on one page, the install picker, and any tab a tool contributes. The raw master, promoted to /sys.",
+   "version": "0.2.0",
+   "help_url": "https://tools.functionstore.xyz/docs/fns-console/",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 35,
+   "requires": [],
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
+  },
+  {
    "name": "FNS_HotkeyManager",
    "kind": "tool",
    "category": "Workflow",
@@ -287,7 +361,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/fns-hotkeymanager/",
    "surfaces": [],
    "shortcut": "FNS_HOTKEY_MANAGER",
-   "ops": 198,
+   "ops": 202,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -311,37 +385,55 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
-    "bytes": 143926,
-    "sha256": "b85f2b52a53ab416b6953fee2da785cb86fea3383fe66162d1760f9ee71286e4",
+    "bytes": 141470,
+    "sha256": "6c0dfd5d13e5a1cab44cdb2477ea910f84688658aa6ef48de1641d4c76a94a91",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/FNS_HotkeyManager.tox"
    }
   },
   {
-   "name": "FNS_MainMenu",
-   "kind": "tool",
-   "category": "Surfaces",
-   "description": "Main-menu extras: the menu Configurator UI.",
-   "version": "1.0.1",
-   "help_url": "https://tools.functionstore.xyz/docs/fns-mainmenu/",
+   "name": "FNS_Hub",
+   "kind": "core",
+   "category": "Core",
+   "description": "The FNS button in TouchDesigner's main-menu bar and the one-stop manager window behind it: the Toolbar, Navbar and Main Menu configurators as tabs, the console, and any tab a tool contributes. Drop a panel COMP on the button to register it into a surface.",
+   "version": "0.1.0",
+   "help_url": "https://tools.functionstore.xyz/docs/fns-hub/",
    "surfaces": [
+    "hub",
     "mainmenu"
    ],
-   "shortcut": "FNS_MAINMENU",
-   "ops": 337,
-   "requires": [
-    "FNS_ConfigRegistry",
-    "FNS_MainMenuRegistry"
+   "shortcut": "",
+   "ops": 1250,
+   "requires": [],
+   "integrates_with": [
+    "tools_ui"
    ],
-   "integrates_with": [],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
-   "whatsnew": "",
-   "artifact": {
-    "path": "packaging/dist/FNS_MainMenu.tox",
-    "bytes": 223438,
-    "sha256": "d05818f90c579caff293ff35eeb25075403e528c6e08ea7a06bfbbadc289e988",
-    "url": "https://storage.functionstr.com/fnstools/v3.0.1/FNS_MainMenu.tox"
-   }
+   "portability": [
+    {
+     "op": "FNS_MainMenuRegistry",
+     "par": "externaltox",
+     "kind": "project",
+     "path": "<repo>/modules/suspects/FNSTools/../../FunctionStore_tools_PUB/modules/release/FNS_MainMenuRegistry.tox"
+    }
+   ],
+   "whatsnew": ""
+  },
+  {
+   "name": "FNS_HubRegistry",
+   "kind": "core",
+   "category": "Core",
+   "description": "The registry behind FNS_Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys.",
+   "version": "0.1.0",
+   "help_url": "https://tools.functionstore.xyz/docs/fns-hubregistry/",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 33,
+   "requires": [],
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "whatsnew": ""
   },
   {
    "name": "FNS_MainMenuRegistry",
@@ -352,10 +444,10 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/fns-mainmenuregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 33,
+   "ops": 34,
    "requires": [],
    "integrates_with": [
-    "FNS_MainMenu"
+    "FNS_Hub"
    ],
    "tox_carrier": "own",
    "cooking": true,
@@ -372,13 +464,13 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "Pane-bar extras: parent-hierarchy navigation, path injection and drag-drop hijack, plus the navbar Configurator.",
-   "version": "1.0.3",
+   "version": "1.1.0",
    "help_url": "https://tools.functionstore.xyz/docs/fns-navbar/",
    "surfaces": [
     "navbar"
    ],
    "shortcut": "FNS_NAVBAR",
-   "ops": 1516,
+   "ops": 1268,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_NavbarRegistry"
@@ -388,11 +480,11 @@ window.FNS_MANIFEST = {
    ],
    "tox_carrier": "own",
    "cooking": true,
-   "whatsnew": "the drag-drop hijack guards against panenav not existing yet on first load into a bare project, retrying briefly instead of erroring the install.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Navbar.tox",
-    "bytes": 594352,
-    "sha256": "8964eb3df37be52f1f188a3670953f06223017b74b85f0e6d341a7dc9663c837",
+    "bytes": 633336,
+    "sha256": "a70480cf295e6b9dea52678f2822c132ff0797a72c4280d192c7e215ef18d02d",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/FNS_Navbar.tox"
    }
   },
@@ -405,9 +497,10 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/fns-navbarregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 33,
+   "ops": 34,
    "requires": [],
    "integrates_with": [
+    "FNS_Hub",
     "FNS_Navbar",
     "FNS_Toolbar"
    ],
@@ -433,7 +526,7 @@ window.FNS_MANIFEST = {
     "tools_ui"
    ],
    "shortcut": "FNS_OPMOD",
-   "ops": 291,
+   "ops": 344,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_OpMenuRegistry"
@@ -452,8 +545,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_OpMenu.tox",
-    "bytes": 181694,
-    "sha256": "25546aff24176debb85387d2c7a3e1e76e034dbbb98de96de4e0bdfd1646eae1",
+    "bytes": 178334,
+    "sha256": "55b9cc9d39468c150b9dd1ccecc93b4a38fec8887d9ad8bac4ee4559a014ec21",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/FNS_OpMenu.tox"
    }
   },
@@ -466,7 +559,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/fns-opmenuregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 34,
+   "ops": 35,
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -488,7 +581,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/fns-panetyperegistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 227,
+   "ops": 232,
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -514,13 +607,13 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "Toolbar extras: the Configurator UI for ordering, grouping and hiding bar widgets, plus stock widgets.",
-   "version": "1.0.5",
+   "version": "1.1.0",
    "help_url": "https://tools.functionstore.xyz/docs/fns-toolbar/",
    "surfaces": [
     "toolbar"
    ],
    "shortcut": "FNS_TOOLBAR",
-   "ops": 564,
+   "ops": 300,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -533,8 +626,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Toolbar.tox",
-    "bytes": 332566,
-    "sha256": "f935673254cdc631cc2a8dfffa174df3d3b3db016dedf3683c4f8877dba863f5",
+    "bytes": 365726,
+    "sha256": "62e67944986ba8485412244317a0986c4c343fe66b038a6f576983233f11d5d1",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/FNS_Toolbar.tox"
    }
   },
@@ -547,9 +640,10 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/fns-toolbarregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 32,
+   "ops": 33,
    "requires": [],
    "integrates_with": [
+    "FNS_Hub",
     "FNS_Toolbar"
    ],
    "tox_carrier": "own",
@@ -573,7 +667,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_UPDATER",
-   "ops": 183,
+   "ops": 234,
    "requires": [],
    "integrates_with": [],
    "tox_carrier": "own",
@@ -581,8 +675,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Updater.tox",
-    "bytes": 138334,
-    "sha256": "13512593b0e92762d9626080f1b08c11b8a35fbaff09aa577ac0c6580f3cbb4d",
+    "bytes": 174222,
+    "sha256": "35e8515e1a9908763278dd2596d9b6f677986d535f0e92c19c8bb3cb20c2884d",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/FNS_Updater.tox"
    }
   },
@@ -597,7 +691,7 @@ window.FNS_MANIFEST = {
     "tools_ui"
    ],
    "shortcut": "GLOBAL_OUT_SEL",
-   "ops": 750,
+   "ops": 754,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -607,8 +701,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/GlobalOutSelect.tox",
-    "bytes": 183742,
-    "sha256": "63d846faa13055b95f3ca26adcf567fb9a4033e8e7f17b17b9d108fa486339d8",
+    "bytes": 182278,
+    "sha256": "8655c349617183290010bf73c09c87757d4feaf0fdfb732a62fbc11a29877fd5",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/GlobalOutSelect.tox"
    }
   },
@@ -623,7 +717,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_VolControl",
-   "ops": 229,
+   "ops": 282,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -634,8 +728,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/GlobalVolControl.tox",
-    "bytes": 165278,
-    "sha256": "0f9712e305f42c7d344d8e66c191f7c41f38ff4ae13d4e4c61cc1fdf05556a29",
+    "bytes": 161982,
+    "sha256": "bf4306055a7c1da07d384ac55ad383a71253f14afcd8bc9665256ccb19e28214",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/GlobalVolControl.tox"
    }
   },
@@ -650,7 +744,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_HYDROHOMIE",
-   "ops": 203,
+   "ops": 208,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -661,8 +755,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/HydroHomie.tox",
-    "bytes": 122934,
-    "sha256": "9900e4b659bc0b81ce6cd8ab976f814a17efb9b6869840e72de8b0c6046dd74b",
+    "bytes": 120358,
+    "sha256": "60339e5d88d1f5ba1d33a4880013f9367109d5b4daaef31eeb04fbcb681cf736",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/HydroHomie.tox"
    }
   },
@@ -678,19 +772,19 @@ window.FNS_MANIFEST = {
     "tools_ui"
    ],
    "shortcut": "FNS_MULTIMIDI",
-   "ops": 389,
+   "ops": 394,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
    ],
    "integrates_with": [],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/midiMapper.tox",
-    "bytes": 203046,
-    "sha256": "4405bf6b3751b6c443c66007ea0d0078400801819da6a4bde0882176a1c177a7",
+    "bytes": 198526,
+    "sha256": "f39459456fdb736b439ebb9d60c3be92b8a8ecb1264a9964fb0576c26ebd1539",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/midiMapper.tox"
    }
   },
@@ -705,7 +799,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_MISC",
-   "ops": 153,
+   "ops": 203,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -716,8 +810,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/MISC.tox",
-    "bytes": 126806,
-    "sha256": "bb0b2fe5c20f60fec186220cab5955466d9132e5597886c2c8f2231ae38ff489",
+    "bytes": 122710,
+    "sha256": "d197636b7077018b2873c8ef53d664d1f693a81e27f1f05cea2e952fb4d0e3fb",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/MISC.tox"
    }
   },
@@ -730,7 +824,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/my-hotkeys/",
    "surfaces": [],
    "shortcut": "FNS_HOTKEYS",
-   "ops": 95,
+   "ops": 146,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -740,8 +834,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/MY_HOTKEYS.tox",
-    "bytes": 67294,
-    "sha256": "a8a69aeefe7cdc92c571b38e7bcb3a288291e13ff0821ce7751bd8d10d35bd5c",
+    "bytes": 65334,
+    "sha256": "95fbb5fd3cbf0916779847d4fe334ce343b7451ed61f798538d5cc5574b23a18",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/MY_HOTKEYS.tox"
    }
   },
@@ -754,7 +848,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/openext/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 89,
+   "ops": 139,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -764,8 +858,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OpenExt.tox",
-    "bytes": 67534,
-    "sha256": "499c9265efe0f3281dfbf8f48ea13b9bb45e24842d0816f75400d8eba34abd07",
+    "bytes": 65590,
+    "sha256": "7dff3bcddd8c3a69022c861c75e857e0a732b07141cadfa2cf1148ac180ad526",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/OpenExt.tox"
    }
   },
@@ -781,7 +875,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_OPTEMPLATES",
-   "ops": 588,
+   "ops": 640,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_OpMenuRegistry",
@@ -803,44 +897,44 @@ window.FNS_MANIFEST = {
      "op": "OPTemplates1/renderTOP/renderTOP/cam1/file1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defcam.geo"
+     "path": "<td>/Samples/Geo/defcam.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP/null1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defnull.geo"
+     "path": "<td>/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP/light1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defnull.geo"
+     "path": "<td>/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/cam1/file1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defcam.geo"
+     "path": "<td>/Samples/Geo/defcam.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/null1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defnull.geo"
+     "path": "<td>/Samples/Geo/defnull.geo"
     },
     {
      "op": "OPTemplates1/renderTOP/renderTOP_ortho/light1/cross1",
      "par": "file",
      "kind": "tdinstall",
-     "path": "<td>/Contents/Resources/tfs/Samples/Geo/defnull.geo"
+     "path": "<td>/Samples/Geo/defnull.geo"
     }
    ],
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OpTemplates.tox",
-    "bytes": 275288,
-    "sha256": "962d9f6956cd11cbf4d421c189ebccfd1695d552c3b509865a98d8126e55e55e",
+    "bytes": 272840,
+    "sha256": "3094d7e44c9437a784de608eb6da82ee6e906d79591b682eaf3d08023a73047b",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/OpTemplates.tox"
    }
   },
@@ -853,7 +947,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/optoclipboard/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 102,
+   "ops": 152,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -863,8 +957,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OpToClipboard.tox",
-    "bytes": 69158,
-    "sha256": "a5998371ae9d22c556e64d68d8c2528952e9d0fac620604ddb701f1620dfccb2",
+    "bytes": 67390,
+    "sha256": "68d747182e56d2f62c1ecd2d44e4383e016818cceb3d98e70d4f4281010bb937",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/OpToClipboard.tox"
    }
   },
@@ -879,7 +973,7 @@ window.FNS_MANIFEST = {
     "tools_ui"
    ],
    "shortcut": "AMB_OSC_MAPPER",
-   "ops": 257,
+   "ops": 258,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -889,8 +983,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/oscMapper.tox",
-    "bytes": 126838,
-    "sha256": "97904d3b4c1fafb23b3002f6ba01c3b4172adea115d0a4b986c5745d3d489de8",
+    "bytes": 124894,
+    "sha256": "b3d0f64a452b481317366c362700040848be378be4c230490e2765143fc8096e",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/oscMapper.tox"
    }
   },
@@ -905,7 +999,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_OUTPUT",
-   "ops": 111,
+   "ops": 160,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -916,8 +1010,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OUTPUT.tox",
-    "bytes": 98414,
-    "sha256": "31cb08c1ca6b1c625cbfba43fe3df0bc134c6311115877f770cb38b6e735658c",
+    "bytes": 95814,
+    "sha256": "dd9863776048d9227c5697045445805818d80fa065e0da100809b1ed38f4c5b9",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/OUTPUT.tox"
    }
   },
@@ -932,7 +1026,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_POP",
-   "ops": 154,
+   "ops": 205,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -943,8 +1037,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ParOPDrop.tox",
-    "bytes": 110598,
-    "sha256": "b98abd6dfbdfcc4cfd63e716be807c4ca47de35e505e191f7632ab43ceaeebe3",
+    "bytes": 108654,
+    "sha256": "a84b1083ef65d1dc9752ab32a41a4d1cfb7f309eaff1354c90ea940257bc773f",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/ParOPDrop.tox"
    }
   },
@@ -959,7 +1053,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_PARRANDOM",
-   "ops": 152,
+   "ops": 203,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -970,8 +1064,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ParRandomizer.tox",
-    "bytes": 111774,
-    "sha256": "26de2576e4c2d9e06d568b27373d7135b7d463c2ae60528349c3fc6bd05b6f61",
+    "bytes": 109286,
+    "sha256": "cd166239767f1788e983dac912a1d5a8e3861a275b04fcb3edfabc8271ee0f5c",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/ParRandomizer.tox"
    }
   },
@@ -984,18 +1078,18 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/paste-from-clipboard/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 204,
+   "ops": 251,
    "requires": [
     "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/paste_from_clipboard.tox",
-    "bytes": 131542,
-    "sha256": "c66e71f06931e85b01e3cd7f46423da397c4300f77d2c93b0f07a8b17780f2a7",
+    "bytes": 127758,
+    "sha256": "c11e609dbe657756cf9c45dabe4e556cd91db1d2ca855ba5974e39e344344901",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/paste_from_clipboard.tox"
    }
   },
@@ -1008,7 +1102,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/quickcollapse/",
    "surfaces": [],
    "shortcut": "FNS_QUICKCOLLAPSE",
-   "ops": 189,
+   "ops": 196,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1018,8 +1112,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickCollapse.tox",
-    "bytes": 101038,
-    "sha256": "b9ee99542c4ad00a009a86d58cd6a664696f4d8c05329df286919eb8f7327373",
+    "bytes": 100278,
+    "sha256": "7aeebf50d24bb19936a00dbbf2561a6ad74e84d4043b122494a68e93cb6e02ff",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/QuickCollapse.tox"
    }
   },
@@ -1032,18 +1126,18 @@ window.FNS_MANIFEST = {
    "help_url": "https://alex-guevara.com",
    "surfaces": [],
    "shortcut": "",
-   "ops": 44,
+   "ops": 91,
    "requires": [
     "FNS_ConfigRegistry"
    ],
    "integrates_with": [],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickMarks.tox",
-    "bytes": 48054,
-    "sha256": "2c226f5f33cc8455a31513ba803975d19593a2df9369e23b821008eecd6820db",
+    "bytes": 44550,
+    "sha256": "91fdf2ee0c9f11c9884a0f78f7791f33b4878dc53d861078574e2daa708d49a9",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/QuickMarks.tox"
    }
   },
@@ -1056,7 +1150,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/quickpane/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 120,
+   "ops": 170,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1066,8 +1160,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickPane.tox",
-    "bytes": 70478,
-    "sha256": "0ed8cf98976baa13d9da2b0828f053f8287f80c8b7fa467af0b114f266d74108",
+    "bytes": 68406,
+    "sha256": "b79e7b20624b4a21534f773d4433321397da4290c2a1e37cecb284ba16c8292f",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/QuickPane.tox"
    }
   },
@@ -1080,20 +1174,20 @@ window.FNS_MANIFEST = {
    "help_url": "https://github.com/function-store/FunctionStore_tools/wiki/03.-Miscellaneous#quickparcustom",
    "surfaces": [],
    "shortcut": "",
-   "ops": 138,
+   "ops": 145,
    "requires": [
     "FNS_ConfigRegistry"
    ],
    "integrates_with": [
     "CustomParTools"
    ],
-   "tox_carrier": "root",
+   "tox_carrier": "own",
    "cooking": true,
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickParCustom.tox",
-    "bytes": 89846,
-    "sha256": "1c2facc959d63061e3a4e32c620e544a9a519cf8d9130dffd1ecb1501f04583b",
+    "bytes": 86126,
+    "sha256": "3d85ba7e215b37f0f8346bb0cec20d2abf4c579f40b906ef8bf125bdfcfd9009",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/QuickParCustom.tox"
    }
   },
@@ -1108,7 +1202,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_QUICKTIME",
-   "ops": 148,
+   "ops": 200,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1119,8 +1213,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickTime.tox",
-    "bytes": 107966,
-    "sha256": "1061567f171b3ce598c6365afff1c1bd76ffd382cba54544651ef03e8cd7c7a3",
+    "bytes": 105814,
+    "sha256": "331618d1cb06a88b61bc844e9e801165ec3a43de1b2cb007639b02d69a4c4351",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/QuickTime.tox"
    }
   },
@@ -1135,7 +1229,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_RPLS",
-   "ops": 218,
+   "ops": 270,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1160,8 +1254,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ResetPLS1.tox",
-    "bytes": 126702,
-    "sha256": "3a8fe81d57679b006d6904334c7d424737c18e2fa36e1871941ecaaf2b94be02",
+    "bytes": 125366,
+    "sha256": "ffa40344a1f3bdba83e74a6c492d5abdf6f67ba47f34ac21694598a2f1739bc6",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/ResetPLS1.tox"
    }
   },
@@ -1176,7 +1270,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "SMOOTHNESS_SET",
-   "ops": 250,
+   "ops": 301,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1187,8 +1281,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/SetSmoothness.tox",
-    "bytes": 166182,
-    "sha256": "d70b8ec5056004c9ee325ade959cae63932ed281a94ae20ab4749cc01f5a2510",
+    "bytes": 162982,
+    "sha256": "5c59a46e32d6a651b3676bac4ed311d9226bace64d5cf64d43bf7e47b060105d",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/SetSmoothness.tox"
    }
   },
@@ -1203,7 +1297,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "SWAP_OPS",
-   "ops": 134,
+   "ops": 185,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1214,8 +1308,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/SwapOps.tox",
-    "bytes": 109022,
-    "sha256": "c391ca338cfadb5bb4c31b7ba47b4a518371e1a3a1382d3e8e9f826a3df52500",
+    "bytes": 106174,
+    "sha256": "7b1ff02431e2f9a8a3520afb7795657870909c7724889775c0b21705f3e34a3b",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/SwapOps.tox"
    }
   },
@@ -1228,7 +1322,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://tools.functionstore.xyz/docs/switchops/",
    "surfaces": [],
    "shortcut": "FNS_SWITCHOP",
-   "ops": 95,
+   "ops": 145,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1238,8 +1332,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/SwitchOPs.tox",
-    "bytes": 67982,
-    "sha256": "a257dec81367124cc63ba183ba856bf092688e205de9abb738db4c3b95ecff17",
+    "bytes": 66190,
+    "sha256": "b9bf8f245c5fc194d96ac3ab31d8e681682455ba987afb2e869530864d039b56",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/SwitchOPs.tox"
    }
   },
@@ -1248,7 +1342,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
-   "version": "1.1.0",
+   "version": "1.2.0",
    "help_url": "https://tools.functionstore.xyz/docs/tdx-searchpalette/",
    "surfaces": [],
    "shortcut": "TDX_SEARCH_PALETTE",
@@ -1278,7 +1372,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "MY_UI",
-   "ops": 284,
+   "ops": 285,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1289,8 +1383,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/tools_ui.tox",
-    "bytes": 117758,
-    "sha256": "f133285f534c7ce6865b6e60cd36ae8fca309d83a159fe8fe0aa149b2db52aa8",
+    "bytes": 119694,
+    "sha256": "06ca341da1ce3c462b8d59d8dc8843d4da58f77eb307518c7a8a194a99e3c44d",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/tools_ui.tox"
    }
   },
@@ -1305,7 +1399,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_VSCODETOOLS",
-   "ops": 389,
+   "ops": 450,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1316,8 +1410,8 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/VSCodeTools.tox",
-    "bytes": 630560,
-    "sha256": "2c42f95cc52d90cabf3b28e2305bd53b5e70c14b7cba98a33bfc0b95e2379d46",
+    "bytes": 631488,
+    "sha256": "dddd9deb6bc96754725139f12c11c060e90a86b8a632634d90b1b0a557aabf70",
     "url": "https://storage.functionstr.com/fnstools/v3.0.1/VSCodeTools.tox"
    }
   }

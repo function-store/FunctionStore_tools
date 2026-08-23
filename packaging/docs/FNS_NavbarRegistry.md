@@ -22,13 +22,13 @@ up in every pane and in panes you open later.
 It ships as its own core package -- always installed, never optional --
 promoted to `/sys` with the global shortcut `op.FNS_NAVBARREGISTRY`.
 
-As a user you interact with the **Navbar Configurator**: the gear button it adds
-to the pane bar, where you reorder items, flip one between the left and right
-side, and show or hide it. The layout roams with your config through
-[FNS_ConfigRegistry](/docs/fns-configregistry/).
+As a user you interact with the **Navbar** tab of [FNS_Hub](/docs/fns-hub/)
+(the FNS button in the main-menu bar), where you reorder items, flip one
+between the left and right side, and show or hide it. The layout roams with
+your config through [FNS_ConfigRegistry](/docs/fns-configregistry/).
 
 ## For tool authors
 
 A tool that wants a pane-bar widget ships a host copy of this registry and
-registers on load. Dragging any panel COMP onto the Configurator's gear
-registers it as its own self-installing navbar package.
+registers on load. Dropping any panel COMP on the FNS button registers it as
+its own self-installing navbar package.

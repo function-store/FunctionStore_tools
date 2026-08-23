@@ -13,11 +13,19 @@ packaging, migration lessons) is in
 [docs/RegistryHomeContract.md](../../../docs/RegistryHomeContract.md); publishing a
 console tab in [docs/ConsoleTabContract.md](../../../docs/ConsoleTabContract.md).
 
-## The seven registries
+## The eight registries
 
 `FNS_PaneTypeRegistry`, `FNS_ToolbarRegistry`, `FNS_NavbarRegistry`,
-`FNS_OpMenuRegistry`, `FNS_MainMenuRegistry`, `FNS_ConfigRegistry`, `FNS_Console`
-— each reached as `op.FNS_<NAME>` / `op.FNS_<NAME>REGISTRY`.
+`FNS_OpMenuRegistry`, `FNS_MainMenuRegistry`, `FNS_ConfigRegistry`, `FNS_Console`,
+`FNS_HubRegistry` — each reached as `op.FNS_<NAME>` / `op.FNS_<NAME>REGISTRY`.
+
+**Management UI = `FNSTools/FNS_Hub`** (core; the FNS main-menu button + a
+tabbed window). The Toolbar/Navbar/MainMenu configurators are its tabs and
+there are NO per-bar gear buttons. Tabs come only from `FNS_HubRegistry`
+hosts -- never by scanning; contract in
+[docs/HubContract.md](../../../docs/HubContract.md). Drop-to-register is the
+hub's (drop on the FNS button or the window) and stamps through the
+master's `StampHost`.
 
 ## Consuming a registry
 
@@ -124,6 +132,23 @@ if reg is not None and hasattr(reg, 'Register'):
   `projectpresave` callback never fires until `par.projectpresave = True`
   -- writing the function into the DAT is not enough (paid for: the
   config pre-save hook silently did nothing on the first project save).
+- **Never stamp a host into a clone MASTER** -- `/FNSTools/webBrowser` is
+  cloned by `ColorUI/webBrowser`; a host stamped into it replicated into the
+  clone and the clone's copy won the registration. Hosts for shared chrome
+  live in the hub (`FNS_Hub/FNS_HubRegistry`, `Comp='../webBrowser'`).
+- **The /sys global runs a COPY of the registry ext DAT with NO file sync.**
+  Editing `<X>RegistryExt.py` reaches the master only -- push the master's
+  DAT text into the global and reinit (or re-promote) before testing.
+- **OP-reference par VALUES on a COMP owner resolve sibling-relative**
+  (`Comp='select1'`), while `'..'` still means the parent -- `'../select1'`
+  is invalid.
+- **A deferred retry loop that gives up must clear its "queued" flag**, or
+  nothing can ever re-arm the sync (paid for in HubRegistry).
+- **Folder-tab widget labels cannot contain spaces** (`masterFolderTabs`
+  splits `Menulabels` on whitespace -- `Main Menu` became two tabs).
+- **A Select mirror draws its source at the SOURCE's size; `fill` on a source
+  with no panel parent collapses to nothing.** Size the source with
+  `w`/`h` expressions on the container it is mirrored into.
 - **Copying ANY COMP whose subtree contains an enabled clone host crashes
   TD** — not just clone copies inside drop-event stacks. Copying
   NavbarConfigurator (which ships its clone-bound gear host) via a plain

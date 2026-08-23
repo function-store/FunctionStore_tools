@@ -120,7 +120,7 @@ memory (`? rec 1`), so bikeshed them here, not after shipping.
 | | FNS_Config (global) | Open settings UI | `OpenSettingsUI` | |
 | | FNS_Toolbar | Open toolbar configurator | `Open` pulse / `OpenConfigurator` | |
 | | FNS_Navbar | Open navbar configurator | `OpenConfigurator` (registry ext) | Owner should be the tool, not the /sys registry |
-| | FNS_MainMenu | Open mainmenu configurator | `OpenConfigurator` | |
+| | FNS_Hub | Open FNS Hub / Open mainmenu configurator | `OpenHub` / `OpenMainMenuConfigurator` | FNS_MainMenu dissolved 2026-08-23; its command moved to the hub |
 | | FNS_OpMenu | Resync op menu | `Resync` (OpMenuRegistryExt) | |
 | | ExprHotStrings | Open hot-strings editor | `Open` pulse | |
 | | OpTemplates | Open templates | `Opentemplates` / `OpenTemplatesFloating` | |

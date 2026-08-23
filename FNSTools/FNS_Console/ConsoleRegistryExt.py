@@ -558,12 +558,26 @@ class ConsoleRegistryExt(RegistryBase):
 		return f'http://127.0.0.1:{int(ws.par.port.eval())}/'
 
 	def _showUrl(self, url, panel):
-		"""Where a console URL gets displayed: the toolkit root's webBrowser
-		panel when asked for AND present, else the system browser."""
+		"""Where a console URL gets displayed: the hub's Console tab when
+		FNS_Hub is installed (the root's webBrowser registered as a hub tab),
+		else the root's webBrowser viewer when asked for AND present, else
+		the system browser."""
 		if panel:
 			root = getattr(op, 'FNS', None)
 			browser = root.op('webBrowser') if root is not None else None
 			if browser is not None:
+				hubreg = getattr(op, 'FNS_HUBREGISTRY', None)
+				try:
+					in_hub = hubreg is not None and any(
+						t.get('name') == 'console' for t in hubreg.Tabs(include_hidden=True))
+				except Exception:
+					in_hub = False
+				if in_hub:
+					# the hub switches the renderer on as the tab is shown
+					browser.par.Address = url
+					res = hubreg.Open(tab='console')
+					if isinstance(res, dict) and res.get('ok'):
+						return 'hub'
 				# the rail's browser is dormant until opened (its winopen
 				# watcher keeps it that way); switch it on first so the page
 				# starts loading as the viewer appears

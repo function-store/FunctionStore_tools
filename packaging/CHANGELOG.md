@@ -1,5 +1,14 @@
 # FNS tools changelog
 
+## Unreleased
+
+- FNS_Hub 0.1.0 -- New core package: the FNS button in the main-menu bar is now the one stop shop. Left-click opens a window with the Toolbar, Navbar and MainMenu configurators as tabs plus the console; right-click jumps to any of them; drop a panel COMP on the button to register it into a surface. Tab order and the last tab roam with your settings.
+- FNS_HubRegistry 0.1.0 -- New core registry behind the hub's tab bar: any tool can contribute a native panel, a viewer or a parameter page as a tab by carrying a host, and it appears the moment the tool exists.
+- FNS_Toolbar 1.1.0 -- The Configurator moved into the hub; the gear button is gone from the bar. Drop-to-register, which had silently stopped working after the v3 rename, works again from the FNS button.
+- FNS_Navbar 1.1.0 -- Same: the Configurator is the hub's Navbar tab, no gear on the pane bars.
+- FNS_MainMenu -- Removed. It carried nothing but the Main Menu configurator, which is the hub's MainMenu tab now; its quick-launch command moved to FNS_Hub.
+- FNS_Console 0.2.0 -- Opens inside the hub's Console tab when the hub is installed (the root's web browser viewer is the fallback); its browser only renders while that tab is shown.
+
 ## v3.0.1 -- 2026-08-16
 
 - ColorUI 1.0.2 -- Its tab in the tools panel is now the palette editor itself, with families, colours and search inline, instead of a button that opened a parameter window.

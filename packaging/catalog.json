@@ -100,9 +100,13 @@
    "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit.",
    "recommended": true
   },
-  "FNS_MainMenu": {
-   "category": "Surfaces",
-   "description": "Main-menu extras: the menu Configurator UI."
+  "FNS_Hub": {
+   "category": "Core",
+   "description": "The FNS button in TouchDesigner's main-menu bar and the one-stop manager window behind it: the Toolbar, Navbar and Main Menu configurators as tabs, the console, and any tab a tool contributes. Drop a panel COMP on the button to register it into a surface."
+  },
+  "FNS_HubRegistry": {
+   "category": "Core",
+   "description": "The registry behind FNS_Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys."
   },
   "FNS_MainMenuRegistry": {
    "category": "Core",

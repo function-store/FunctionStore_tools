@@ -24,6 +24,7 @@ Current implementations:
 | `FNS_MainMenuRegistry` | `op.FNS_MAINMENUREGISTRY` | TD's main menu bar (`/ui/dialogs/mainmenu`) -- ordered entries, left/right justification, anchors | `FNSTools/FNS_MainMenuRegistry` |
 | `FNS_ConfigRegistry` | `op.FNS_CONFIGREGISTRY` | The aggregated settings file (`userPaletteFolder/FNStools_ext/config/FNStools_config.json`) -- per-tool par + state persistence | `FNSTools/FNS_ConfigRegistry` |
 | `FNS_Console` | `op.FNS_CONSOLE` | The toolkit's web front -- one page, a tab per concern; tools publish tabs via `RegisterTab` (see [ConsoleTabContract.md](ConsoleTabContract.md)) | `FNSTools/FNS_Console` |
+| `FNS_HubRegistry` | `op.FNS_HUBREGISTRY` | FNS_Hub's tab bar -- native panels, viewers and parameter pages tools contribute as tabs (mirrors/viewers injected into `FNSTools/FNS_Hub/panel/tabs`; see [HubContract.md](HubContract.md)) | `FNSTools/FNS_HubRegistry` |
 
 The table name is the `REGISTRY_NAME` on the master's extension; the shortcut is
 its `SHORTCUT`. Both are `FNS_`-prefixed -- the unprefixed spellings
@@ -80,9 +81,10 @@ globals live in `/sys/FNS_Registries`; see
   Each configurator owns a private `state` table -- dividers, the
   hideable-group brackets, and the adopted built-ins' order/display/width
   plus their original `td_order`. That table is the only part of a bar
-  layout no host publisher persists, so each surface package's host ships a
-  `config_callbacks` that saves it whole and restores it whole (one coherent
-  per-user layout, never a row-wise merge). The header row travels with the
+  layout no host publisher persists, so the hub -- where the three
+  configurators live since 2026-08-23 -- ships ONE `config_callbacks` that
+  saves every configurator's table whole and restores it whole, keyed by
+  configurator name (one coherent per-user layout, never a row-wise merge). The header row travels with the
   payload, so a table written under a different column set still migrates on
   restore.
   **Restore must republish, not just rewrite.** The payload lands ~30 frames
@@ -675,24 +677,29 @@ copy/create alone is rarely the whole contract.
   CustomParHelper touches the pars at init, falling dangling BINDs back to
   CONSTANT (detected via `bindMaster is None` -- a dangling PULSE bind does
   not raise on eval).
-- **Management UI is a SEPARATE package -- and the system's bootstrap
-  seed.** The Toolbar Configurator ships ONE ToolbarRegistry host that
-  plays three roles: bootstrap (alone in a fresh project it promotes the
-  /sys global and self-installs the gear), gear publisher (the gear's
-  order/display/width persist on that host's Registration pars like any
-  tool), and drop-to-register template. **Drop-to-register:** drop any
-  panel COMP onto the gear (modern Drag/Drop callbacks on btn_config:
-  `onHoverStartGetAccept` filters to panel COMPs, `onDropGetResults` ->
-  `PackageDrop`) and the Configurator copies its shipped host inside the
-  dropped COMP (`Comp='..'`, canonical = comp name, order = max+1) and
-  registers it -- the COMP becomes a portable self-registering package.
-  Stamping is DEFERRED a few frames and the template's `enablecloning`
-  is off during the copy: copying a clone-bound COMP inside the
-  drop-event stack has crashed TD. Scrub the copy's storage via its
-  StorageManager CONTAINER key (`ToolbarRegistryExtStored`) -- the
-  per-item keys are not top-level storage entries. Without any registry
-  the Configurator still degrades to standalone mode (built-in bar icons
-  only). 
+- **Management UI is the HUB (2026-08-23).** The per-surface Configurators
+  (Toolbar / Navbar / MainMenu) are TABS of `FNSTools/FNS_Hub`, the core
+  package behind the FNS main-menu button; the per-bar gear buttons are gone.
+  Each configurator still owns its `state` table (roamed by the hub's one
+  `config_callbacks`, keyed by configurator name) and its lister UI, and
+  sizes itself to the hub's tab area (`w`/`h` expressions on
+  `parent.Hub.op('panel/tabs')` -- a Select mirror draws its source at the
+  source's own size, so a fixed-size source stays small, and `fill` with no
+  panel parent collapses to nothing). The bootstrap role the gear host used
+  to play is moot: promotion runs from ANY host at init and the registry
+  masters are core at the root. **Drop-to-register is the hub's:** drop a
+  panel COMP on the FNS button (its main-menu Select mirror forwards drops)
+  or on the hub window; `HubExt.RouteDrop` defers a frame, offers every tab
+  whose component implements `AcceptsDrop`/`PackageDrop` in a popMenu (a
+  single target skips the menu), and the chosen configurator's
+  `_stampPackage` stamps the registry MASTER's host through
+  `StampHost(comp, canonical_name=comp.name, par_values={'Menuorder':
+  max+1, ...})`. The configurators carry no template host of their own any
+  more -- they did, dormant, and addressed it by its pre-v3 name
+  (`op('ToolbarRegistry')`), so drop-to-register had been silently dead
+  since the `FNS_` rename. Everything the hub renders comes from
+  `FNS_HubRegistry`; the hub itself holds no tab knowledge (see
+  [HubContract.md](HubContract.md)).
 - **Entries carry the tool's wiki page (`help_url`, 0.6.0).** On
   registration the host resolves it from its `Helpurl` par when set,
   else auto-discovers from the registered panel or its parent: a
@@ -703,13 +710,12 @@ copy/create alone is rarely the whole contract.
   Configurator surface: right-click the Name cell.
  With
   host cloning, anything inside the registry replicates into every host and
-  every tool's tox — so the registry ships NO widgets at all. The editor
-  (`ToolbarConfigurator`, `modules/release/ToolbarConfigurator.tox`) ships
-  its own gear button + a standard registry host (`Configure`, order 0) —
-  the gear only appears where the UI actually exists, so there is never a
-  dead affordance. `op.FNS_TOOLBARREGISTRY.OpenConfigurator()` remains as a
-  convenience API, resolving the editor via its `TOOLBARCONFIG` global
-  shortcut (toolbar-package child fallback, debug note if absent).
+  every tool's tox -- so the registry ships NO widgets at all, and no
+  management UI: the editor is the hub's tab.
+  `op.FNS_TOOLBARREGISTRY.OpenConfigurator()` remains as a convenience API,
+  resolving the editor via its `TOOLBARCONFIG` global shortcut (now
+  `FNSTools/FNS_Hub/ToolbarConfigurator`), whose `Open()` opens the hub on
+  the Toolbar tab.
 
 ## 7. Known hazards, and 8. adding a new registry
 
@@ -807,8 +813,7 @@ mirrors. The order below is the one that worked; the lessons were paid for.
   bindings and survive, which is what makes recovery cheap: recreate the
   operators, rebind them to the surviving files, re-register.
 - **Then save the ROOT tox, every landing.** The sweep above finds only
-  suspects whose `externaltox` is ON. Four tools (`FNS_MainMenu`,
-  `QuickMarks`, `QuickParCustom`, `paste_from_clipboard`) have
+  suspects whose `externaltox` is ON. Three tools (`QuickMarks`, `QuickParCustom`, `paste_from_clipboard`) have
   `enableexternaltox=False` — their own `.tox` files are dead at boot and
   their content is CARRIED BY `modules/suspects/FunctionStore_tools_2025.tox`.
   So a landing is: nested suspects deepest-first, then the root tox, then
