@@ -154,8 +154,21 @@ user-facing surface. They are method libraries that were packaged as tools.
 alone:
 - **QuickCollapse** (`ctrl+w`, `ctrl+shift+w`) — also on the hub's
   middle-click, so that one branch becomes an optional feature-detect.
-- **QuickParCustom** (`alt+x`, `shift+alt+x`, `alt+\`, `ctrl+alt+\`) — no
-  cross-tool edges at all; already clean.
+- ~~**QuickParCustom**~~ — **this call was wrong, and merged 2026-08-24.**
+  "No cross-tool edges at all" was false: its extension resolved
+  `getattr(op, 'FNS_CPP', None)` and drove promotion through CustomParTools'
+  promoter. The scan missed it because a guarded `getattr` on `op` does not
+  read as a reference — the same class that hid `hijack_dragdrop`. Installing
+  it without CustomParTools gave hotkeys that could not promote.
+  The other half of the reason ("has real global invocation hotkeys, so it
+  stands alone") also stopped distinguishing anything once CustomParTools
+  itself took on four global hotkeys from the MY_HOTKEYS retirement: owning
+  hotkeys is not a reason to be a separate package. Folded in as a child,
+  keeping its ConfigRegistry canonical and its Active toggle as the off-switch.
+
+  **Lesson for the rest of the audit: a `getattr(op, 'SHORTCUT', None)` edge is
+  invisible to a text/expression scan.** Any remaining "already clean" verdict
+  reached that way is worth re-checking by hand.
 
 Effect on §1.1's graph: **14 edges → 8.** Four CustomParPromoter edges become
 internal calls, and `FNS_Navbar → CustomParPromoter` + `→ iopPromoter`

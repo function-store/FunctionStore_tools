@@ -30,8 +30,20 @@ class QuickParCustomExt:
 		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
 		self.ownerComp : baseCOMP = ownerComp
 		self.compEditor = op('/sys/TDDialogs/CompEditor')
-		self.customParPromoter : customParPromoterExt = getattr(op, 'FNS_CPP', None)
 		fnsLog('QuickParCustom: init')
+
+	@property
+	def customParPromoter(self):
+		"""CustomParTools, which carries customParPromoterExt -- we are its child.
+
+		Was `getattr(op, 'FNS_CPP', None)`: a tool->tool edge the packaging audit
+		believed this tool did not have (it reads as a guarded getattr, not a
+		literal reference, so the text scan missed it). Folding this COMP into
+		CustomParTools turns it into a plain parent reference.
+
+		Resolved lazily: the parent's extensions are not guaranteed ready while
+		this one is still constructing."""
+		return self.ownerComp.parent()
 
 	@property
 	def rolloverPar(self):

@@ -219,10 +219,6 @@
    "description": "Pane layout shortcuts.",
    "recommended": true
   },
-  "QuickParCustom": {
-   "category": "Parameters",
-   "description": "Fast custom-parameter editing on the focused operator."
-  },
   "QuickTime": {
    "category": "Workflow",
    "description": "Timeline and time-related shortcuts."

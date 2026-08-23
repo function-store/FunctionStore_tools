@@ -13,6 +13,8 @@ features:
     anchor: customparhelper
   - name: NoNode
     anchor: nonode
+  - name: QuickParCustom
+    anchor: quickparcustom
   - name: TouchDesigner shortcuts
     anchor: touchdesigner-shortcuts
 ---
@@ -332,3 +334,23 @@ unchanged (`opencurrentparameters`, `openparentparameters`,
 `customizecurrentcomp`, `customizeparentcomp`) but the owning tool is now
 CustomParTools — so launcher history, curation and presets that referenced
 `MY_HOTKEYS#…` need re-pointing once.
+
+## QuickParCustom
+
+Promote and customize the parameter **under the cursor**, without selecting
+anything. Its **Active** toggle turns the whole feature off.
+
+| Shortcut | On the hovered parameter |
+|---|---|
+| `alt+x` | Promote to parent (Bind). If it is already promoted, opens the promoted parameter's customization instead |
+| `shift+alt+x` | Same, but promotes with an Expression rather than a Bind |
+| `alt+\` | Customize the parameter (a custom par customizes its owner COMP; otherwise the promoted owner) |
+| `ctrl+alt+\` | Toggle that parameter between Bind and Expression |
+
+All four are rebindable on the **Custom** page of QuickParCustom, and listed
+in FNS_HotkeyManager.
+
+It was a separate package until 2026-08-24. It never really was one: it drove
+promotion by calling this package's promoter through the `FNS_CPP` global, so
+installing it without CustomParTools gave you hotkeys that could not promote.
+As a child it calls its parent directly.
