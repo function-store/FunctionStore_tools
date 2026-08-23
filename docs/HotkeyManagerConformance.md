@@ -76,9 +76,32 @@ The cost is that par names become semi-public: ConfigRegistry persists by par
 name and the manager stores by path + par, so a later rename silently drops a
 user's saved binding. Name them once, carefully.
 
-**State (2026-08-23):** 34 of 45 discovered bindings are promoted; 11 are
-still raw constants on their keyboardin -- OpToClipboard, ParOPDrop,
-QuickMarks, QuickPane's pane-layout keyboardin, ResetPLS1, SetSmoothness,
-SwitchOPs, VSCodeTools/ScriptSyncFile, and the two FNS_Navbar
-`parent_hierarchy` keyboardins (whose parent COMPs already carry a promoted
-`Keys` par the keyboardin does not follow, so the combo is stored twice).
+**State (2026-08-24): swept -- 43 of 44 promoted.**
+
+Eight tools gained a hotkey par and their keyboardin now follows it:
+OpToClipboard `Shortcut`, ParOPDrop `Keys`, QuickMarks `Shortcuts`, QuickPane
+`Shortcuts` (its existing `Keys` is the held-modifier set, a different thing),
+ResetPLS1 `Shortcut`, SetSmoothness `Keys`, SwitchOPs `Shortcut`,
+VSCodeTools/ScriptSyncFile `Shortcut`. Values are byte-identical before and
+after; only the location changed.
+
+The two FNS_Navbar `parent_hierarchy` keyboardins were **not** what the earlier
+note claimed. They already followed their parent's `Keys` -- but through
+`parent().par.Keys.eval() if app.osName == 'Windows' else ...`, and because
+that expression contains `app.osName` the parameter-mode contract stores it,
+so BOTH the par and its follower were listed. The OS switch moved onto the par
+(where it is editable) and the follower is now plain, collapsing two rows into
+one. Discovery went 46 -> 44 for exactly that reason.
+
+**This is a caveat on the recipe in the skill's 7:** the
+`app.osName`-in-the-follower form does put a keyboardin on the `.default` path,
+but it also makes the follower visible. Prefer the OS switch on the par and a
+plain `parent().par.X` follower.
+
+The single remaining raw row is `ParOPDrop/keyboardin1 [modifiers]`, a CHOP
+menu par whose value is `ignore` -- it carries no binding, so there is nothing
+to promote.
+
+Side benefit: the long-standing `ctrl.0` conflict now reports as
+`ResetPLS1.Shortcut` vs `QuickMarks.Shortcuts` instead of naming two
+keyboardins, so it points at something the manager can actually rebind.
