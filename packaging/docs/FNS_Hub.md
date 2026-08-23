@@ -40,6 +40,9 @@ Hub* and *Open main-menu configurator*.
   right side, show/hide, group.
 - **MainMenu** -- the main-menu bar, TD's own items included, so your entries
   can sit between them; the *TD* button restores TD's original order.
+- **OpMenu** -- what the tools contribute to TD's OP Create dialog (search
+  words, row decorations, right-click items, filters): reorder them, switch
+  a contribution off without uninstalling its tool.
 - **Console** -- the toolkit's web front (settings, install & remove, tabs
   tools contribute) rendered inside the hub; its browser only runs while
   this tab is shown.

@@ -24,15 +24,18 @@ tab opens the owning tool's parameters (`HubExt.OpenTabParameters`), and a
 tool carrying a `Refresh` pulse is pulsed on show. One bar of ten tabs, by
 inspection, is fine.
 
-## 2. An OpMenu configurator tab
+## 2. An OpMenu configurator tab -- DONE 2026-08-23
 
-`RegistryScheme.md` has called it "a natural next step" since the OpMenu port:
-enable/disable and reorder contributions (`Contributors`,
-`SetContributorOrder`, `SetContributorDisplay` already exist on the manager).
-Build it as a fourth configurator inside the hub -- copy NavbarConfigurator
-(the closest: side-less, no dividers), strip to Name / Show / Origin, register
-as tab `opmenu`, order 40, own PI suspect tox under
-`modules/suspects/FNSTools/FNS_Hub/`.
+`FNS_Hub/OpMenuConfigurator` (shortcut `OPMENUCONFIG`, tab `opmenu`, order 40,
+own PI suspect tox): Name / Show / Origin over `FNS_OpMenuRegistry`'s
+contributions -- reorder by drag, show/hide per contribution, right-click a
+name for its docs, click Origin for the owning tool. It is a ConfiguratorBase
+subclass whose `_api()` wraps the OpMenu manager in a small adapter
+(`_OpMenuApi`: `Contributors` -> `Widgets`, order -> `SetContributorOrder`,
+display -> `SetContributorDisplay`, `Resync` after each edit) so the base runs
+unchanged. No groups, no drop-to-register (a contribution needs a callbacks
+DAT to contribute anything), empty state table (every contribution has a host
+publisher). Verified live: toggle and reorder round trips against the registry.
 
 ## 3. `ConfiguratorBase` extraction -- DONE 2026-08-23
 
