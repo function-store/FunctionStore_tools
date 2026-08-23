@@ -108,7 +108,7 @@ There is a `FNS_TDDefault_2023.toe` project file for you to quickly test the too
 
 - [FNS_Toolbar](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/main.png)
     - [wiki](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-wiki) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Wiki.png)
-    - [tools_ui](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#-tools_ui) ![](https://github.com/function-store/FunctionStore_tools/blob/main/icons/Fx.png)
+    - FNS_Hub (the **FNS** button in the main-menu bar -- the tabbed home of the tools below, and of the Toolbar / Navbar / MainMenu configurators)
       - [op_store](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#op_store) 
       - [GlobalOutSelect](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#globaloutselect)
       - [ExprHotStrings](https://github.com/function-store/FunctionStore_tools/wiki/02.-FNS_Toolbar#exprhotstrings)

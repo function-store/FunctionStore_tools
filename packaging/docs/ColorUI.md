@@ -11,7 +11,7 @@ features:
 ## ColorUI
 
 ColorUI: Recolor any TouchDesigner UI element, create presets, import/export, and share!  
-   - Available as a tab in **tools_ui** (the `Fx` toolbar button 🎛️)  
+   - Available as the **OpColor** tab of [FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar)  
    - Includes recoloring **OP Families** (looking at you, POPs)  
    - Or any UI element by choosing from the dropdown  
    - **Saving colors locally** saves them to the component and can be auto-loaded on startup  

@@ -484,14 +484,10 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             # each other in a way the picker should surface
             requires = []
 
+        # A hub tab is an FNS_HubRegistry host like any other surface
+        # (SURFACE_OF -> 'hub'); the old tools_ui 'UI Tab' par sweep retired
+        # with tools_ui on 2026-08-23.
         surfaces = {SURFACE_OF[h] for h in hosts if h in SURFACE_OF}
-        # The 'UI Tab' capability section (Uitab* pars on the Registry
-        # page) marks a tool that contributes a tab to the tools_ui panel
-        # (tools_ui sweeps for it). Presence of the par, not its current
-        # toggle state: the toggle is user preference that roams via
-        # config, the capability is what the package ships.
-        if getattr(comp.par, 'Uitab', None) is not None:
-            surfaces.add('tools_ui')
 
         entry = {
             'name': name,

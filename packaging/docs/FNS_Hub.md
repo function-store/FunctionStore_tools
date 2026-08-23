@@ -43,12 +43,19 @@ Hub* and *Open main-menu configurator*.
 - **Console** -- the toolkit's web front (settings, install & remove, tabs
   tools contribute) rendered inside the hub; its browser only runs while
   this tab is shown.
+- **Tool tabs** -- the larger tool UIs that used to live in the `Fx`
+  tools panel: oscMapper, ExprHotStrings, GlobalOutSelect, SearchWords
+  (FNS_OpMenu's keyword table), midiMapper and OpColor (ColorUI's palette
+  editor). Exactly the ones you have installed.
 
-Drag the tabs to reorder them; close one with its **x** to hide it (it stays
-registered and comes back from the contributing tool's *Shown in Hub*
-parameter). The order and the active tab roam with your settings through
+**Right-click a tab** to open the owning tool's parameters -- that is where
+the mappers are configured. Drag the tabs to reorder them; close one with its
+**x** to hide it (it stays registered and comes back from the contributing
+tool's *Shown in Hub* parameter on its Registry page). The order and the
+active tab roam with your settings through
 [FNS_ConfigRegistry](/docs/fns-configregistry/), as do the three
-configurators' layouts.
+configurators' layouts. A tool carrying a *Refresh* pulse is refreshed every
+time its tab is shown.
 
 ## Drop to register
 

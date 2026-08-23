@@ -8,7 +8,7 @@ features:
 
 ## GlobalOutSelect
 
-Available as a tab in the `tools_ui` (`Fx`) panel.
+Available as a tab of [FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
 
 This component shows you your **Global OP Shortcuts **in a tree list view, as well as any `out` operators found in them.
 Similarly to `op_store` you can drag and drop a row your network editor to place a **Select OP **if the row references an operator, as well as open a viewer, open parameters, open a floating network at the referenced location.

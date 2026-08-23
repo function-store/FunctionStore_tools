@@ -195,6 +195,12 @@ class HubExt:
 				p = getattr(comp.par, 'Active', None)
 				if p is not None and bool(p.eval()) != on:
 					p.val = on
+			# refresh-on-show, by capability (the tools_ui convention): a tool
+			# carrying a Refresh pulse is pulsed as its tab becomes visible
+			if on:
+				r = getattr(comp.par, 'Refresh', None)
+				if r is not None and r.style == 'Pulse':
+					r.pulse()
 		except Exception as e:
 			debug(f'FNS_Hub: exposure hook on {comp.path}: {e}')
 		if on:
@@ -206,6 +212,19 @@ class HubExt:
 		"""The folder-tab bar picked a tab (parexec_tabs)."""
 		if name:
 			self._showTab(name)
+
+	def OpenTabParameters(self, index):
+		"""Right-click on a tab: the owning tool's parameter window (the
+		mappers are configured there). `index` = position on the bar."""
+		tabs = self._orderedTabs()
+		try:
+			tool = op(tabs[int(index)]['tool'])
+		except (IndexError, ValueError, TypeError):
+			tool = None
+		if tool is not None and tool.valid:
+			tool.openParameters()
+			return True
+		return False
 
 	def OnActivetabChanged(self, name):
 		"""The Active Tab par changed from outside (a roamed value landing

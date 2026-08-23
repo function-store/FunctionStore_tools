@@ -8,6 +8,8 @@
 - FNS_Navbar 1.1.0 -- Same: the Configurator is the hub's Navbar tab, no gear on the pane bars.
 - FNS_MainMenu -- Removed. It carried nothing but the Main Menu configurator, which is the hub's MainMenu tab now; its quick-launch command moved to FNS_Hub.
 - FNS_Console 0.2.0 -- Opens inside the hub's Console tab when the hub is installed (the root's web browser viewer is the fallback); its browser only renders while that tab is shown.
+- tools_ui -- Removed. The `Fx` toolbar panel's tabs live in FNS_Hub now, with the same right-click-for-parameters gesture and drag-to-reorder; the hub's tab order and last tab roam with your settings as before.
+- oscMapper 1.1.0, ExprHotStrings 1.2.0, GlobalOutSelect 1.1.0, FNS_OpMenu 1.1.0, midiMapper 1.1.0, ColorUI 1.2.0 -- Each carries an FNS_Hub tab host instead of the old UI Tab parameters; the tab appears the moment the tool is installed, and *Shown in Hub* on the tool's Registry page is the new way to hide it.
 
 ## v3.0.1 -- 2026-08-16
 

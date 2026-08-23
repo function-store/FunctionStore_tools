@@ -249,10 +249,6 @@
    "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
    "recommended": true
   },
-  "tools_ui": {
-   "category": "Surfaces",
-   "description": "The tabbed panel that hosts the toolkit's larger tool UIs."
-  },
   "VSCodeTools": {
    "category": "Developer",
    "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs."

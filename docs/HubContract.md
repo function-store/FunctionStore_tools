@@ -75,7 +75,14 @@ content neither a panel nor a viewable operator; content gone.
 Only the shown tab's component is "live". When a tab is shown or hidden the hub
 calls `OnHubExposure(exposed)` on the component's extension if it defines one;
 otherwise, a component with `Active` and `Address` pars (a palette Web Browser)
-has its `Active` switched directly. Every tab is un-exposed when the window
+has its `Active` switched directly. A component carrying a `Refresh` pulse par
+is pulsed each time its tab is shown (the old tools_ui convention). Right-click
+on a tab opens the owning tool's parameter window
+(`HubExt.OpenTabParameters(index)`).
+
+A mirrored root panel has no panel parent, so it must have a **fixed size**:
+the tool tabs bind `w`/`h` to `op.FNS.op('FNS_Hub/panel/tabs')` with their old
+standalone size as the fallback when no hub exists. Every tab is un-exposed when the window
 closes: a windowCOMP has no close callback and the panel's `winopen` value
 stays 0 under a windowCOMP, so `HubExt` runs a once-a-second `isOpen` check
 **only while the window is open** (`_armCloseWatch`). The root `webBrowser`'s

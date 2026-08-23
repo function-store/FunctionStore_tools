@@ -16,7 +16,7 @@ features:
 
 ## Custom OpMenu Search Keywords
 
-This is a table to define custom search keywords for each OpType for the **OpMenu / OP Create Dialog**. Read more [here](/docs/fns-opmenu/#opmenu-mods). It is also reachable as the **SearchWords** tab in the [tools_ui](/docs/tools-ui/) (`Fx`) panel.
+This is a table to define custom search keywords for each OpType for the **OpMenu / OP Create Dialog**. Read more [here](/docs/fns-opmenu/#opmenu-mods). It is also reachable as the **SearchWords** tab of [FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
 
 ## OpMenu Mods
 

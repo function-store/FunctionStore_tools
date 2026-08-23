@@ -206,7 +206,16 @@ Assessed all three before touching them; they do not resolve the same way.
   Now `.par.Resetall.pulse()`. Invisible until now because the button
   could not reach a non-cooking tool at all.
 
-### 1.2c tools_ui tabs — discovered, not hardcoded (2026-08-16)
+### 1.2c tools_ui tabs — discovered, not hardcoded (2026-08-16) — SUPERSEDED
+
+> **2026-08-23:** `tools_ui` was retired. Its tabs are `FNS_HubRegistry`
+> contributions in `FNS_Hub` (registration, not a sweep -- see
+> [HubContract.md](HubContract.md), [HubFollowups.md](HubFollowups.md) §1);
+> the `Uitab` pars and the manifest's `tools_ui` surface are gone. The
+> rendering lesson below still holds for panel *children*; a Select COMP
+> does render a root-level panel that is not displayed anywhere else (the
+> hub relies on it), provided the source has a fixed size -- `fill` with no
+> panel parent collapses to nothing.
 
 The tab panel was the last structural coupling: a static six-name list
 (`switch_hack` DAT + `Menunames`) naming sibling COMPs, sibling panels
