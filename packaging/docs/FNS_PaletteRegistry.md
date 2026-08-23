@@ -74,7 +74,7 @@ skipped; it never costs the tool its first tab.
 
 ## Hotkey
 
-With [MY_HOTKEYS](/docs/my-hotkeys/) installed, `ctrl+shift+f` opens the Palette
-Browser and brings TD's own tab back to the front before focusing the
-[TDX_SearchPalette](/docs/tdx-searchpalette/) field — the search field lives in
-the stock list, which a contributed tab hides.
+[TDX_SearchPalette](/docs/tdx-searchpalette/)'s `ctrl+shift+f` calls
+`ShowTab('palette')` on this registry before focusing its search field — that
+field lives in the stock palette list, which a contributed tab hides. Any tool
+whose UI is hidden by a contributed tab can do the same.

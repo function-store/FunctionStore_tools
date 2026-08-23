@@ -4,6 +4,8 @@ summary: Search field for TouchDesigner's palette browser, installed into the pa
 features:
   - name: TDX_SearchPalette
     anchor: tdx-searchpalette
+  - name: Search hotkey
+    anchor: search-hotkey
 credit:
   name: Yea Chen
   url: 'https://github.com/yeataro/TD-SearchPalette'
@@ -21,11 +23,28 @@ The component installs itself into the palette on project start while
 installed or removed at any time with the **Install** / **Uninstall**
 pulses on its parameters.
 
-With [MY_HOTKEYS](/docs/my-hotkeys/) installed, `ctrl+shift+f` opens the
-Palette Browser, brings TD's own tab to the front (the search field lives in
-the stock palette list, which a contributed tab hides) and focuses the search
-field. The hotkey feature-detects the installed field, so it still opens the
-palette — just without focusing anything — when TDX_SearchPalette is absent.
+## Search hotkey
+
+`ctrl+shift+f` (`cmd+shift+f` on macOS) brings TD's own palette tab to the
+front and focuses the search field, ready to type.
+
+It acts on the palette **in place**. It deliberately does not call
+`ui.openPaletteBrowser()`, which pops the palette out into a floating window
+— so if the browser is closed, the hotkey does nothing rather than rearranging
+your workspace.
+
+The tab step matters because the search field lives inside the *stock* palette
+list, and any contributed tab hides that list. The hotkey asks whichever
+palette-tab owner is installed to show TD's own tab again
+([FNS_PaletteRegistry](/docs/fns-paletteregistry/) and TDXLU's own injector are
+both feature-detected, neither required), then takes focus one frame later —
+a tab switched back this frame is still hidden.
+
+**Rebindable.** The combo lives on this package's own **Search Hotkey**
+parameter, so it is listed under TDX_SearchPalette in FNS_HotkeyManager and can
+be changed there or on the parameter directly; *Reset to Default* restores
+`ctrl+shift+f`. It used to live in MY_HOTKEYS; keeping it with the tool that
+owns the field means uninstalling this package takes its hotkey with it.
 
 ## Search behavior
 

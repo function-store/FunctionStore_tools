@@ -272,13 +272,28 @@ Six active hotkeys, and only ONE touches a tool:
 | `ctrl+alt+q` | `ui.panes.current.owner.openParameters()` |
 | `shift+alt+w` | `ui.openCOMPEditor(selectedChildren[0])` |
 | `ctrl+alt+w` | `ui.openCOMPEditor(owner)` |
-| `ctrl+shift+f` | open TD's Palette Browser, show its own tab, focus the search field |
+| `ctrl+shift+f` | show TD's own palette tab, focus the search field |
 
 Move `keyboardin_resetpls` + its callback into ResetPLS1 (where the call
 becomes local — `parent().par.Reset.pulse()`, no global shortcut at all) and
 MY_HOTKEYS becomes a dependency-free "TD conveniences" package. HotkeyManager
 already discovers per-tool hotkeys, so no new mechanism is needed. This also
 deletes the audit's only `try: … except: pass`.
+
+**Done (2026-08-23).** Both tool-touching hotkeys have moved out:
+`ctrl+0` to `ResetPLS1/keyboardin_reset`, and `ctrl+shift+f` to
+`TDX_SearchPalette/keyboardin_searchhotkey` — which also removed MY_HOTKEYS'
+second, undocumented tool reference (it hardcoded the SearchPalette field
+path). MY_HOTKEYS is now four keyboardins that call nothing but
+`openParameters()` / `openCOMPEditor()`; its only remaining `op.FNS_` reference
+is its stamped ConfigRegistry host, which is infrastructure, not a tool
+dependency.
+
+The move also demonstrates the customization shape worth copying: the combo
+lives on the TOOL's own `Shortcuts` par as an `app.osName` OS-switch
+expression, with `defaultExpr`/`defaultMode` authored so `Par.reset()` restores
+it; the keyboardin follows that par by a plain expression, which HotkeyManager
+deliberately ignores — so the tool shows up as exactly one rebindable row.
 
 ## 2. The layers
 
