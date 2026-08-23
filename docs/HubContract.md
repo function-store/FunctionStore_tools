@@ -26,9 +26,11 @@ window (`panel`: a tab bar on top and a `tabs` container below). The bar has
 two styles, the hub's `Tab Bar` par (`Tabbar`: `rows` | `strip`, roams):
 `rows` is the hub-owned `tabbar` -- one textCOMP per shown tab copied from
 `tab_template`, laid out by expressions so it wraps into rows, active =
-brighter label + accent underline; `strip` is TD's `masterFolderTabs` widget
--- one row, scroll arrows, dropdown, drag-to-reorder (`OnTabReorder`). Neither
-has a close button: hidden tabs come back through the right-click menu. **The hub
+brighter label + accent underline, drag a tab onto another to reorder
+(`tab_dragdrop`); `strip` is TD's `masterFolderTabs` widget -- one row, scroll
+arrows, dropdown, the widget's own drag-to-reorder. Both land on
+`OnTabReorder` and the roaming `Tab User Order` par. Neither has a close
+button: hidden tabs come back through the right-click menu. **The hub
 holds no tab knowledge.** `FNS_HubRegistry` -- the eighth registry, promoted to
 `/sys/FNS_Registries`, shortcut `op.FNS_HUBREGISTRY` -- owns the entries, and
 its `_syncSurface` injects one rendering op per entry into `panel/tabs`

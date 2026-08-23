@@ -52,8 +52,8 @@ Hub* and *Open main-menu configurator*.
 the mappers are configured. The bar comes in two styles (*Tab Bar* on the
 hub's Hub page, roams with your settings): **Rows** wraps fixed-width tabs
 into as many rows as needed; **Strip** is TouchDesigner's single-row folder
-tabs with scroll arrows, a dropdown and drag-to-reorder. There is no close
-button in either: hide a tab from the contributing tool's *Shown in Hub*
+tabs with scroll arrows and a dropdown. Drag a tab onto another tab to reorder
+in either style. There is no close button in either: hide a tab from the contributing tool's *Shown in Hub*
 parameter on its Registry page, and bring any hidden tab back from the FNS
 button's right-click menu ("Show …"). Tab order and the active tab roam with
 your settings through [FNS_ConfigRegistry](/docs/fns-configregistry/), as do
