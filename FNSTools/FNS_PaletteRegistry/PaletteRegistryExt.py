@@ -744,6 +744,26 @@ class PaletteRegistryExt(RegistryBase):
 
 	# --- sizing the contributed panel to the slot ---
 
+	def _entriesSharingPanel(self, panel, exclude=None):
+		"""Every registered canonical whose panel resolves to this same op."""
+		out = []
+		for name, info in dict(self.stored['PaneRegistry']).items():
+			if name == exclude or not isinstance(info, dict):
+				continue
+			if self._resolvePanelOp(info) is panel:
+				out.append((name, info))
+		return out
+
+	def _origSizeForPanel(self, panel, exclude=None):
+		"""A sibling tab's stored original size for this panel, if one holds it."""
+		for _, info in self._entriesSharingPanel(panel, exclude):
+			if info.get('orig_size'):
+				return info['orig_size']
+		return None
+
+	def _panelUsedByOther(self, panel, exclude=None):
+		return bool(self._entriesSharingPanel(panel, exclude))
+
 	def _sizePanel(self, canonical):
 		info = self.stored['PaneRegistry'].get(canonical)
 		panel = self._resolvePanelOp(info) if info else None
@@ -751,11 +771,18 @@ class PaletteRegistryExt(RegistryBase):
 			return
 		entry = dict(info)
 		if not entry.get('orig_size'):
-			orig = {}
-			for axis in ('w', 'h'):
-				p = getattr(panel.par, axis)
-				orig[axis] = {'mode': str(p.mode), 'expr': p.expr or '', 'val': int(p.val or 0)}
-			entry['orig_size'] = json.dumps(orig)
+			# Several tabs may share one panel. Whoever sized it first holds the
+			# TRUE original -- snapshotting again here would capture our own slot
+			# expressions and restore the panel to them on unregister.
+			shared = self._origSizeForPanel(panel, exclude=canonical)
+			if shared:
+				entry['orig_size'] = shared
+			else:
+				orig = {}
+				for axis in ('w', 'h'):
+					p = getattr(panel.par, axis)
+					orig[axis] = {'mode': str(p.mode), 'expr': p.expr or '', 'val': int(p.val or 0)}
+				entry['orig_size'] = json.dumps(orig)
 			self.stored['PaneRegistry'][canonical] = entry
 		orig = json.loads(entry['orig_size'])
 		for axis, template in (('w', self.SLOT_W_EXPR), ('h', self.SLOT_H_EXPR)):
@@ -770,6 +797,8 @@ class PaletteRegistryExt(RegistryBase):
 		panel = self._resolvePanelOp(info) if info else None
 		if panel is None or not info.get('orig_size'):
 			return
+		if self._panelUsedByOther(panel, exclude=canonical):
+			return      # a sibling tab still shows it; it must stay slot-sized
 		try:
 			orig = json.loads(info['orig_size'])
 		except Exception:

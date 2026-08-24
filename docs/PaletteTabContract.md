@@ -115,6 +115,24 @@ under `orig_size` and restored on unregister.
 **Consequence for tool authors:** do not expect to control the tab panel's size
 while it is registered, and do not re-point `w`/`h` behind the registry's back.
 
+### When several tabs share one panel
+
+`orig_size` is per-entry, but the panel is not — so the sizing is refcounted
+across every entry that resolves to the same panel op
+(`_entriesSharingPanel`):
+
+- **Snapshotting** asks `_origSizeForPanel` for a sibling's stored original
+  first. Without that, the second tab to register snapshots the panel *as the
+  first tab already rewrote it*, and "restore" later means restoring the slot
+  expressions — the panel is never given its own size back.
+- **Restoring** is skipped while `_panelUsedByOther` is true. Only the last tab
+  off the panel restores it; otherwise unregistering one of two shared tabs
+  un-sizes a panel the surviving tab is still showing.
+
+Verified end-to-end 2026-08-24: two tabs over one panel, unregistered one at a
+time — the panel stays slot-sized after the first and returns to its authored
+`300x200` constant after the second.
+
 ## Tab-change callbacks
 
 The optional Callbacks DAT receives every tab change, for **every** registered
