@@ -742,30 +742,20 @@ class RegistryBase:
 			getattr(target_registry.ext, self.EXT_NAME)._merge_pane_registry_from(source_registry)
 
 	def _compare_versions(self, comp_a, comp_b):
+		"""Whichever of the two should own the shortcut.
+
+		Newest wins, always -- and silently. Ties go to the incumbent. This is
+		never allowed to ask: it runs during project load, once per registry copy,
+		so a prompt here is a stack of modal dialogs across startup."""
 		ver_a = self._parse_version(self._get_version(comp_a))
 		ver_b = self._parse_version(self._get_version(comp_b))
-
 		if ver_a is None and ver_b is None:
 			return comp_b if self._is_in_sys(comp_b) else comp_a
 		if ver_a is None:
 			return comp_b
 		if ver_b is None:
 			return comp_a
-
-		if ver_a[0] != ver_b[0]:
-			a_str = '.'.join(str(x) for x in ver_a)
-			b_str = '.'.join(str(x) for x in ver_b)
-			choice = ui.messageBox(
-				f'{self.REGISTRY_NAME} Version Conflict',
-				f'Multiple {self.REGISTRY_NAME} versions detected.\n\n'
-				f'Existing: v{b_str} at {comp_b.path}\n'
-				f'New: v{a_str} at {comp_a.path}\n\n'
-				f'Which version should be used?',
-				buttons=['Use New', 'Keep Existing']
-			)
-			return comp_b if choice != 0 else comp_a
-
-		return comp_b if ver_b >= ver_a else comp_a
+		return comp_a if ver_a > ver_b else comp_b
 
 	def _promote_to_global(self, registry_comp):
 		if not registry_comp or not registry_comp.valid:
@@ -925,42 +915,39 @@ class RegistryBase:
 		return dict(registry_comp.fetch('PaneRegistry', {}))
 
 	def _check_version_against(self, other_registry):
+		"""True when the OTHER registry should keep the shortcut.
+
+		Compares the WHOLE version, not just the major: gating on the major alone
+		let an older copy of the same major (1.0.0 dropped into a session already
+		running 1.2.0) win silently. Newest wins, ties go to the incumbent, and
+		nothing here ever prompts -- see _compare_versions."""
 		our_version = self._parse_version(self._get_version(self.ownerComp))
 		their_version = self._parse_version(self._get_version(other_registry))
-
 		if our_version is None:
 			return True
 		if their_version is None:
 			return False
-
-		if our_version[0] != their_version[0]:
-			our_str = '.'.join(str(x) for x in our_version)
-			their_str = '.'.join(str(x) for x in their_version)
-			choice = ui.messageBox(
-				f'{self.REGISTRY_NAME} Version Conflict',
-				f'Multiple {self.REGISTRY_NAME} versions detected.\n\n'
-				f'Existing: v{their_str} at {other_registry.path}\n'
-				f'New: v{our_str} at {self.ownerComp.path}\n\n'
-				f'Which version should be used?',
-				buttons=['Use New', 'Keep Existing']
-			)
-			return choice != 0
-
-		return their_version >= our_version
+		return our_version <= their_version
 
 	def _get_version(self, comp):
 		if comp and hasattr(comp.par, 'Version'):
 			return str(comp.par.Version.eval())
 		return None
 
+	VERSION_PARTS = 3   # versions normalize to this many components
+
 	def _parse_version(self, ver_string):
+		"""Normalized version tuple, so '1.0' and '1.0.0' compare EQUAL rather
+		than the first sorting below the second as raw tuples would."""
 		if not ver_string:
 			return None
 		try:
-			ver_string = ver_string.lstrip('vV')
-			return tuple(int(x) for x in ver_string.split('.'))
-		except:
+			parts = [int(x) for x in str(ver_string).strip().lstrip('vV').split('.')]
+		except Exception:
 			return None
+		if not parts:
+			return None
+		return tuple((parts + [0] * self.VERSION_PARTS)[:self.VERSION_PARTS])
 
 	# --- entry resolution ---
 
