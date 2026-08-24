@@ -432,8 +432,10 @@ On extension init (`postInit`), an instance that is NOT the sys-global runs:
    - A global still sitting **directly in `/sys`** predates the
      `FNS_Registries` home → relocated whatever its version (merge, destroy,
      re-promote into the home), so the two spots never both hold a live one.
-   - **Major**-version mismatch → `ui.messageBox` chooser; minor/patch
-     resolve silently, ties favor the incumbent.
+   - **Version mismatch → resolved silently, newest wins.** The whole
+     version is compared (`_parse_version` normalizes to three components,
+     so `1.0` == `1.0.0`) and ties favor the incumbent. This path must
+     never prompt — see *Never ask during promotion* below.
 2. `_release_shipped_shortcut()` — a host never keeps the global shortcut.
 3. `_applyHostRegistration()` — publish if `Autoregister` is on.
 4. `_ensureSelectionExecuteRole()` — host disables any surface-handling ops
@@ -443,6 +445,27 @@ The sys-global branch instead: drains `post_update`, sanitizes stored
 entries, re-asserts the shortcut, **neutralizes the Registration page**
 (`_neutralizeHostParameters` — pars kept, values reset), syncs the surface,
 and arms the healing watch.
+
+### Never ask during promotion
+
+Promotion runs **during project load, once per registry copy** — nine
+registries with dozens of hosts between them. A blocking call in that path is
+therefore not one dialog, it is a queue of them, and TouchDesigner is trying to
+initialize extensions the whole time.
+
+`_compare_versions` and `_check_version_against` used to raise a
+`ui.messageBox` chooser on a major-version mismatch. On 2026-08-24 that
+deadlocked the session outright: `FNS_ToolbarRegistry` came up with **0 of 20**
+hosts `extensionsReady`, the master would not initialize even when asked
+directly, and every Envoy read answered *"Cannot use an extension during its
+initialization."* It reproduced from a cold boot — a fresh TD process spinning a
+full CPU core with Envoy never binding its port, so the session could not even
+be inspected. Removing the dialog restored all 20 hosts on the next reinit.
+
+So: **the version comparison resolves silently, newest wins, ties go to the
+incumbent.** No `ui.messageBox`, no `input`, no modal, no wait — anywhere the
+promotion path can reach. A version conflict interesting enough to report gets
+reported *after* load, through `Regstatus` or the log, never through a dialog.
 
 ## 3. Entry data model and persistence
 

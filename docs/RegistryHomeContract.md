@@ -79,9 +79,14 @@ already in the home.
 ## What this does NOT give you
 
 - **Equal versions: the incumbent wins.** `_check_version_against` stands
-  down on `their_version >= our_version`. A same-version reinstall leaves the
-  old global live *inside the home*. Only the bare-`/sys` case is
-  unconditional (C6).
+  down on `our_version <= their_version` — the whole version, not just the
+  major. A same-version reinstall leaves the old global live *inside the
+  home*. Only the bare-`/sys` case is unconditional (C6).
+- **A choice about which version to promote.** There is none to make: newest
+  wins, silently. The comparison used to raise a `ui.messageBox` on a major
+  mismatch; because promotion runs during project load once per registry
+  copy, that surfaced as a stack of modal dialogs and wedged extension init
+  (2026-08-24). Nothing in this path may prompt.
 - **The installer reports, it does not force.**
   `InstallerExt.PromotedRegistries()` — exported from `install.py`, and on
   every `InstallPlan` result under the `registries` key — returns

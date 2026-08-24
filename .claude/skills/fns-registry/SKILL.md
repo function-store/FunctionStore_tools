@@ -61,8 +61,14 @@ if reg is not None and hasattr(reg, 'Register'):
 4. **Per-process state.** `/sys` never saves with the `.toe`; the home is rebuilt
    on every project open. Never treat a global as durable storage — re-register
    on init.
-5. **Equal versions: the incumbent wins.** A same-version reinstall leaves the
-   old global live. Only a bare-`/sys` legacy copy is relocated unconditionally.
+5. **Newest wins, ties keep the incumbent, and it NEVER prompts.** The whole
+   version is compared, not just the major, and `1.0` normalizes to `1.0.0` so
+   the two are equal rather than the shorter sorting lower. A same-version
+   reinstall leaves the old global live; only a bare-`/sys` legacy copy is
+   relocated unconditionally. **Do not put a `ui.messageBox` in this path** —
+   it runs during project load, once per registry copy, so a prompt arrives as
+   a stack of modals and wedges extension init outright (measured: 0/20
+   toolbar hosts ready, and a cold boot spinning a core with Envoy never up).
 
 ## Adding a new registry — checklist
 
