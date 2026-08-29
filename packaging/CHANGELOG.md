@@ -1,5 +1,83 @@
 # FNS tools changelog
 
+## v3.0.4 -- 2026-08-29
+
+- AltSelect 3.0.0 -> 3.0.1
+- AutoCombine 3.0.0 -> 3.0.1
+- AutoRes 3.0.0 -> 3.0.1
+- BorderlessTD 3.0.0 -> 3.0.1
+- ColorUI 3.0.0 -> 3.0.1
+- CustomParTools 3.0.0 -> 3.0.1
+- ExprHotStrings 3.0.0 -> 3.0.1
+- FNS_CommandKit 3.0.0 -> 3.0.1
+- FNS_ConfigHost 3.0.0 -> 3.0.1
+- FNS_ConfigRegistry 3.0.0 -> 3.0.1 -- the settings page is reachable at last -- the web
+- FNS_Console 3.0.0 -> 3.0.1
+- FNS_HotkeyManager 3.0.0 -> 3.0.1
+- FNS_Hub 3.0.0 -> 3.0.1
+- FNS_HubRegistry 3.0.0 -> 3.0.1
+- FNS_MainMenuRegistry 3.0.0 -> 3.0.1
+- FNS_Navbar 3.0.0 -> 3.0.1
+- FNS_NavbarRegistry 3.0.0 -> 3.0.1
+- FNS_OpMenu 3.0.0 -> 3.0.1
+- FNS_OpMenuRegistry 3.0.0 -> 3.0.1
+- FNS_PaletteRegistry 3.0.0 -> 3.0.1
+- FNS_PaneTypeRegistry 3.0.0 -> 3.0.1
+- FNS_TimelineRegistry 3.0.0 -> 3.0.1
+- FNS_TimelineTools 3.0.2 -> 3.0.3
+- FNS_Toolbar 3.0.0 -> 3.0.1
+- FNS_ToolbarRegistry 3.0.0 -> 3.0.1
+- FNS_Updater 3.0.1 -> 3.0.2
+- GlobalOutSelect 3.0.0 -> 3.0.1
+- GlobalVolControl 3.0.0 -> 3.0.1
+- HydroHomie 3.0.0 -> 3.0.1
+- MISC 3.0.0 -> 3.0.1
+- OUTPUT 3.0.0 -> 3.0.1
+- OpTemplates 3.0.0 -> 3.0.1
+- OpToClipboard 3.0.0 -> 3.0.1
+- OpenExt 3.0.0 -> 3.0.1
+- ParOPDrop 3.0.0 -> 3.0.1
+- ParRandomizer 3.0.0 -> 3.0.1
+- QuickCollapse 3.0.0 -> 3.0.1
+- QuickMarks 3.0.0 -> 3.0.1
+- QuickPane 3.0.0 -> 3.0.1
+- QuickTime 3.0.0 -> 3.0.1
+- ResetPLS1 3.0.0 -> 3.0.1
+- SetSmoothness 3.0.0 -> 3.0.1
+- SwapOps 3.0.0 -> 3.0.1
+- SwitchOPs 3.0.0 -> 3.0.1
+- TDX_SearchPalette 3.0.0 -> 3.0.1
+- VSCodeTools 3.0.0 -> 3.0.1
+- midiMapper 3.0.0 -> 3.0.1
+- oscMapper 3.0.0 -> 3.0.1
+- paste_from_clipboard 1.0.0 -> 1.0.6
+
+Documentation, and the settings page you could not reach.
+
+Every package's docs were checked against what its code actually does
+rather than what the old wiki said. Twenty-six were wrong: hotkeys that
+had drifted to different modifiers, features nobody had written down,
+paths still naming the pre-3.0 layout, and a few descriptions that
+described the wrong behaviour entirely. ClearPars turned out to have
+merged into CustomParTools during the redesign and is gone as a separate
+package; its docs live there now.
+
+FNS_ConfigRegistry ships a settings page -- every installed tool's
+parameters on one page in your browser, served from inside TouchDesigner
+on 127.0.0.1 and shut down again when you stop looking at it. It has been
+in the code for a while, unreachable: the web server op it looks for was
+never created. It builds itself on demand now, and the toolkit root grew
+an **Open Settings** parameter to reach it, alongside Pick Tools and Open
+Installer.
+
+The one-drop bundle is now built as a copy of the development root with
+the developer-only parts removed, rather than assembled separately, so the
+two cannot drift apart in what they offer at the top level.
+
+server that serves it is created on demand instead of being expected to
+already exist, and a promoted copy missing the page pulls it from the
+master rather than failing.
+
 ## Unreleased
 
 - QuickParCustom -- **folded into CustomParTools** as a child, joining ClearPars, QuickExt, QuickParent and iopPromoter. It always depended on CustomParTools (it promoted through the `FNS_CPP` global), so on its own its hotkeys could not promote. Your settings carry over -- the config section keeps its name -- and the **Active** toggle still turns it off. Two notes: a custom rebinding of its hotkeys resets to default once, and the `QuickParCustom#toggleactive` command is now `CustomParTools/QuickParCustom#toggleactive`.

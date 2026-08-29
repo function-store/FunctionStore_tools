@@ -154,9 +154,10 @@
   "FNS_TimelineTools": {
    "category": "Media & Output",
    "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip and a waveform.",
-   "access": "PLACEHOLDER_TIER",
+   "access": "8323905",
    "license": "",
-   "seats": null
+   "seats": null,
+   "recommended": true
   },
   "FNS_Toolbar": {
    "category": "Surfaces",

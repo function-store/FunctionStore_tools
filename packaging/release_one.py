@@ -59,14 +59,74 @@ def _bumpedVersion(ver, kind):
     return '.'.join(str(x) for x in parts)
 
 
-def _publishedVersions():
-    """name -> version from the last built manifest (what the world has)."""
+def _storeManifest():
+    """The last manifest the updater FETCHED from the bucket.
+
+    The only local file that reflects what the world actually has: the
+    updater writes it into its store on every refresh. Absent on a
+    machine that has never refreshed, which the caller handles.
+    """
+    folder = ''
     try:
-        with open(_repo(PKG_DIR, 'manifest.json'), 'r', encoding='utf-8') as f:
-            return {p['name']: p.get('version', '')
+        upd = op.FNS.op('FNS_Updater')
+        if upd is not None:
+            folder = str(upd.par.Storefolder.eval() or '')
+    except Exception:
+        pass
+    if not folder:
+        try:
+            folder = '%s/FNStools_ext/store' % app.userPaletteFolder
+        except Exception:
+            return None
+    return os.path.join(folder, 'manifest.json').replace('\\', '/')
+
+
+def _versionsIn(path):
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return {p['name']: str(p.get('version', '') or '')
                     for p in json.load(f).get('packages', [])}
     except Exception:
         return {}
+
+
+def _publishedVersions():
+    """name -> the HIGHEST version any source says is already published.
+
+    Do not read the repo manifest alone. Build() regenerates it FROM the
+    live Pkgversion pars, so it reports the versions we are about to
+    publish -- comparing a release against itself, which made auto-bump
+    fire on every package unconditionally and would have shipped a
+    deliberate 3.0.0 baseline as 3.0.1.
+
+    Three sources, highest wins:
+      store cache   what the updater last fetched from the bucket -- the
+                    truth, when the machine has ever refreshed
+      publish/      the last tree Stage() laid out
+
+    The repo manifest is deliberately NOT consulted, not even as a last
+    resort: it describes the versions this release is about to publish,
+    so including it makes every comparison self-referential again. When
+    neither real source exists we do not know what is published, and an
+    empty answer says so honestly.
+
+    Highest-wins is the safe direction between the two that remain.
+    Over-reporting costs a needless patch bump; UNDER-reporting
+    republishes a version the field already has, which reads as current
+    everywhere and updates nobody.
+    """
+    out = {}
+    paths = [_storeManifest(),
+             _repo(PKG_DIR, 'publish', 'manifest.json')]
+    for path in paths:
+        if not path:
+            continue
+        for name, ver in _versionsIn(path).items():
+            if not ver:
+                continue
+            if name not in out or _verTuple(ver) > _verTuple(out[name]):
+                out[name] = ver
+    return out
 
 
 def _setReleaseLabel(label=None):
@@ -128,13 +188,52 @@ def _clearReleaseNotes():
         f.write(NOTES_TEMPLATE)
 
 
+def _shellPython():
+    """A python that actually RUNS. NOT sys.executable (inside TD that is
+    TouchDesigner.exe), and never trusted from which() alone: Windows
+    plants App-Store stub aliases named python/python3 on PATH that print
+    an install nag and exit -- measured: which() found the stub and the
+    upload log held only the nag. A stub cannot print 1, so candidates
+    are validated by running them. FNS_PYTHON overrides everything."""
+    import shutil
+    flags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
+    cand, tried = [], []
+    if os.environ.get('FNS_PYTHON'):
+        cand.append([os.environ['FNS_PYTHON']])
+    if shutil.which('py'):
+        cand.append([shutil.which('py'), '-3'])
+    for name in ('python3', 'python'):
+        p = shutil.which(name)
+        if p:
+            cand.append([p])
+    for c in cand:
+        try:
+            r = subprocess.run(c + ['-c', 'print(1)'], capture_output=True,
+                               timeout=10, creationflags=flags)
+            if r.returncode == 0 and r.stdout.strip() == b'1':
+                return c
+        except Exception:
+            pass
+        tried.append(' '.join(c))
+    raise RuntimeError(
+        'no working python for the upload subprocess (tried: %s) -- '
+        'install python.org Python or set FNS_PYTHON to a real python.exe'
+        % (', '.join(tried) or 'nothing on PATH'))
+
+
 def StartUpload():
-    """Kick the bucket sync as a detached process. Returns (proc, log)."""
+    """Kick the bucket sync as a detached process. Returns (proc, log).
+
+    Everything is pinned utf-8: wrangler prints characters the Windows
+    locale codec cannot represent, and an unpinned child stdout (or log
+    handle) turns a healthy upload into a stream of charmap errors."""
+    py = _shellPython()
     log = _repo(PKG_DIR, 'publish', '.upload.log')
+    env = dict(os.environ, PYTHONIOENCODING='utf-8')
     proc = subprocess.Popen(
-        ['python3', _repo(PKG_DIR, 'upload.py')],
-        stdout=open(log, 'w'), stderr=subprocess.STDOUT,
-        cwd=project.folder)
+        py + [_repo(PKG_DIR, 'upload.py')],
+        stdout=open(log, 'w', encoding='utf-8', errors='replace'),
+        stderr=subprocess.STDOUT, cwd=project.folder, env=env)
     return proc, log
 
 
@@ -173,6 +272,7 @@ def ReleaseMany(names, bump='auto', label=None, upload=True):
 
     published = _publishedVersions()
     versions = {}
+    bumped_live = []          # packages whose LIVE par this call rewrote
     for n in todo:
         comp = by_name[n]
         p = _versionWritePar(comp)                 # write target: the child
@@ -197,6 +297,7 @@ def ReleaseMany(names, bump='auto', label=None, upload=True):
         if new_v != old_v:
             p.val = new_v
             p.default = new_v
+            bumped_live.append(n)
         versions[n] = (f'{old_v} -> {new_v}' if new_v != old_v else new_v)
 
     rel = _setReleaseLabel(label)
@@ -214,8 +315,35 @@ def ReleaseMany(names, bump='auto', label=None, upload=True):
     _writeChangelog(r2['release'], versions, per_tool, general)
     _clearReleaseNotes()
 
+    # Land the bump where git can see it. The bump rewrote a LIVE par;
+    # the tracked source is the suspect tox, and unsaved the repo still
+    # claims the old version while the bump dies with the session --
+    # observed as "where are my .tox diffs?" after a real release. Same
+    # pi-save discipline as every live par write. Saved only AFTER a
+    # successful stage: a refused release must not land its bump. PI
+    # absent (headless) degrades to reporting via pi_unsaved, never to
+    # silence.
+    pi_saved, pi_unsaved = [], []
+    if bumped_live:
+        pi_comp = op('/private_investigator1')
+        pi = (pi_comp.extensions[0]
+              if pi_comp is not None and pi_comp.extensions else None)
+        for n in bumped_live:
+            try:
+                if pi is None:
+                    raise RuntimeError('Private Investigator not found')
+                pi.Save(by_name[n])
+                pi_saved.append(n)
+            except Exception as e:
+                pi_unsaved.append('%s (%s)' % (n, e))
+    if pi_unsaved:
+        print('WARNING: bumped versions NOT saved to their suspect tox: '
+              + ', '.join(pi_unsaved) + ' -- Save these in PI before '
+              'closing, or the repo keeps the old version')
+
     result = {'ok': True, 'packages': versions, 'release': r2['release'],
               'bumped': r2['bumped'], 'skipped': skipped,
+              'pi_saved': pi_saved, 'pi_unsaved': pi_unsaved,
               'notes': bool(per_tool or general), 'uploading': False}
     if upload:
         _proc, log = StartUpload()

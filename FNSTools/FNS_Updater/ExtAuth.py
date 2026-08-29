@@ -69,7 +69,47 @@ class ExtAuth:
 		self._download_token = ''
 		self._download_expires = 0.0
 		self._signin = None          # in-flight sign-in, or None
+		# Entitlement as something a PARAMETER EXPRESSION can depend on.
+		# A plain attribute cannot serve that: an expression reading it
+		# evaluates once and never hears about the change. Reading a
+		# tdu.Dependency's .val registers the dependency, so assigning it
+		# later invalidates every expression that read it -- which is how
+		# a UI can reflect sign-in by REFERENCE instead of being written
+		# to by this extension reaching across the network.
+		self._plus = tdu.Dependency(False)
+		self._refreshPlus()
 		fnsLog('AUTH: init')
+
+	# ------------------------------------------------------------------
+	# entitlement as a dependency
+	# ------------------------------------------------------------------
+
+	@property
+	def Plusactive(self):
+		"""True when this install holds at least one entitled package.
+
+		Read it from a parameter expression -- e.g. a colour that is
+		yellow for a supporter and red otherwise:
+
+			1 if getattr(op.FNS.op('FNS_Updater'), 'Plusactive', 0) else 0
+
+		getattr's default covers both the updater being absent (it is a
+		separate rail and may not be installed) and extensions not yet
+		initialised, which is the same guard `extensionsReady` gives.
+		"""
+		return bool(self._plus.val)
+
+	def _refreshPlus(self):
+		"""Re-read entitlement into the dependency. Cheap, main-thread.
+
+		Called from _setStatus, which is the single funnel every state
+		change already passes through -- sign-in, sign-out, licence
+		accepted -- so no caller has to remember this exists.
+		"""
+		try:
+			self._plus.val = bool(self.Entitlements())
+		except Exception:
+			self._plus.val = False
 
 	# ------------------------------------------------------------------
 	# where things live
@@ -181,6 +221,59 @@ class ExtAuth:
 		wc.request('%s/token/download' % self.GateUrl(), 'POST',
 				   header={'content-type': 'application/json'}, data='{}')
 		return {'ok': True, 'why': 'requesting (async)'}
+
+	def Recheck(self, callback=None):
+		"""Ask the gate to re-read entitlement from Patreon RIGHT NOW.
+
+		The automatic path caches the Patreon call for six hours, which is
+		correct for an install that is merely running and wrong for the one
+		moment that decides whether someone stays a customer: they have
+		just pledged and are waiting to see it. Without this they would be
+		told "your tier does not include this" for the rest of the day and
+		reasonably conclude it is broken.
+
+		ASYNC -- `callback(ok, message)` on a later frame.
+		"""
+		acct = self.Account()
+		if acct is None:
+			if callback:
+				callback(False, 'signed out')
+			return {'ok': False, 'why': 'signed out'}
+		wc = self._client()
+		if wc is None:
+			if callback:
+				callback(False, 'no auth client')
+			return {'ok': False, 'why': 'no auth client'}
+		self._recheck_cb = callback
+		self._setStatus('checking your membership...')
+		wc.par.authtype = 'oauth2'
+		wc.par.token = acct['device_token']
+		wc.request('%s/session/recheck' % self.GateUrl(), 'POST',
+				   header={'content-type': 'application/json'}, data='{}')
+		return {'ok': True, 'why': 'checking (async)'}
+
+	def OnRecheckResponse(self, statusCode, data):
+		"""Web Client DAT callback for /session/recheck."""
+		cb, self._recheck_cb = getattr(self, '_recheck_cb', None), None
+		ok, payload = self._readJson(statusCode, data)
+		if not ok:
+			self._setStatus(str(payload))
+			if cb:
+				cb(False, payload)
+			return
+		products = payload.get('products') or []
+		self._rememberProducts(products)
+		if products:
+			msg = self.AuthStatus()
+		elif payload.get('tiers'):
+			# Patreon says they ARE a patron, but of a tier that grants
+			# nothing here. Say which of the two it is: the remedies differ.
+			msg = 'membership found, but it does not include any packages yet'
+		else:
+			msg = 'no active membership found on this Patreon account'
+		self._setStatus(msg)
+		if cb:
+			cb(bool(products), msg)
 
 	def OnTokenResponse(self, statusCode, data):
 		"""Web Client DAT callback for /token/download."""
@@ -317,7 +410,10 @@ class ExtAuth:
 			fnsLog('AUTH: no OS keystore; cannot stay signed in', level='ERROR')
 			return False
 		s.Store(self._storageDir(), token)
-		self._setStatus('signed in')
+		# the rich line, not a bare "signed in": AuthStatus() names the
+		# account and counts what it unlocked, which is the only place a
+		# supporter can currently SEE that paying did something
+		self._setStatus(self.AuthStatus())
 		fnsLog('AUTH: signed in')
 		# Entitlements arrive with the first token request, not here.
 		self.RequestToken()
@@ -409,7 +505,7 @@ class ExtAuth:
 				products=payload.get('products'),
 				tiers=prior.get('tiers'), label=prior.get('label', ''))
 		self._download_token, self._download_expires = '', 0.0
-		self._setStatus('licence accepted')
+		self._setStatus(self.AuthStatus())
 		fnsLog('AUTH: licence redeemed (%d package(s))'
 			   % len(payload.get('products') or []))
 
@@ -503,3 +599,6 @@ class ExtAuth:
 		p = getattr(self.ownerComp.par, 'Authstatus', None)
 		if p is not None:
 			p.val = text
+		# every state change passes through here, so this is the one place
+		# entitlement has to be re-read for the dependency to stay true
+		self._refreshPlus()

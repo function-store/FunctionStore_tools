@@ -2060,12 +2060,21 @@ class ExtUpdater:
 
 		done = [r['package'] for r in job.get('results', []) if r.get('ok')]
 		bad = [r for r in job.get('results', []) if not r.get('ok')]
-		self._status('updated %d package(s)%s'
+		# Gated packages that were skipped are NOT failures, and must not
+		# read as silence either: say which, and why, in the words the auth
+		# extension already wrote for exactly this moment.
+		gated = sorted(set(job.get('gated') or []))
+		_a = self._auth()
+		why_gated = ([_a.MissingFor(n) for n in gated] if _a
+					 else ['%s needs a supporter account.' % n for n in gated])
+		self._status('updated %d package(s)%s%s'
 					 % (len(done),
 						'; FAILED: ' + ', '.join('%s (%s)' % (r['package'], r.get('why', ''))
-												 for r in bad) if bad else ''))
+												 for r in bad) if bad else '',
+						'; ' + ' '.join(why_gated) if why_gated else ''))
 		return {'ok': not bad and not job.get('failed'), 'updated': done,
 				'failed': bad + [{'why': f} for f in job.get('failed', [])],
+				'gated': gated, 'gated_why': why_gated,
 				'remaining': cmp_['updates']}
 
 	# ------------------------------------------------------------------

@@ -5,6 +5,9 @@ features:
   - name: Swap OPs
     anchor: swap-ops
     icon: SwapOPs.png
+hotkeys:
+  - keys: alt.shift.s
+    does: Swap the two selected operators in place
 ---
 
 ## Swap OPs

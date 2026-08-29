@@ -49,11 +49,17 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# On Windows npx is npx.cmd: CreateProcess cannot resolve the bare name
+# (the shell can, which is why the same command works in a terminal), so
+# every subprocess call uses the which()-resolved path.
+NPX = shutil.which('npx') or 'npx'
 
 BUCKET = 'fnstools'
 PREFIX = 'fnstools'
@@ -145,10 +151,10 @@ def _remoteShaAuth(key):
     """SHA-256 of a gated object via authenticated wrangler get, or None."""
     tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        '.gated-readback.tmp')
-    cmd = ['npx', '--yes', 'wrangler', 'r2', 'object', 'get',
+    cmd = [NPX, '--yes', 'wrangler', 'r2', 'object', 'get',
            f'{BUCKET}/{key}', '--file', tmp, '--remote']
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
         if r.returncode != 0 or not os.path.exists(tmp):
             return None
         return _sha256(tmp)
@@ -206,9 +212,9 @@ def verifyPlusPrivate(base):
     with open(tmp, 'w', encoding='utf-8') as f:
         f.write('fnstools gated-prefix canary -- if you can read this over the '
                 'public rail, the plus/ prefix is misconfigured as public\n')
-    cmd = ['npx', '--yes', 'wrangler', 'r2', 'object', 'put',
+    cmd = [NPX, '--yes', 'wrangler', 'r2', 'object', 'put',
            f'{BUCKET}/{CANARY_KEY}', '--file', tmp, '--remote']
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
     os.remove(tmp)
     if r.returncode != 0:
         return ('could not place the plus/ privacy canary: '
@@ -249,11 +255,11 @@ def _uploadOne(job, base, skip_existing=True):
         return '-- ', key, ''
     if skip_existing and gated and _remoteShaAuth(key) == _sha256(full):
         return '-- ', key, ''      # verified by hash, not mere existence
-    cmd = ['npx', '--yes', 'wrangler', 'r2', 'object', 'put',
+    cmd = [NPX, '--yes', 'wrangler', 'r2', 'object', 'put',
            f'{BUCKET}/{key}', '--file', full, '--remote',
            '--cache-control', cache, '--content-type', ctype]
     for attempt in range(RETRIES):
-        r = subprocess.run(cmd, capture_output=True, text=True)
+        r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
         if r.returncode == 0:
             if not base:
                 return 'ok ', key, ''      # no public base known: nothing to read back
@@ -401,9 +407,9 @@ def _changelogReleases():
 
 
 def _deleteOne(key):
-    cmd = ['npx', '--yes', 'wrangler', 'r2', 'object', 'delete',
+    cmd = [NPX, '--yes', 'wrangler', 'r2', 'object', 'delete',
            f'{BUCKET}/{key}', '--remote']
-    r = subprocess.run(cmd, capture_output=True, text=True)
+    r = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
     return ('ok ' if r.returncode == 0 else 'gone'), key
 
 

@@ -50,6 +50,43 @@ function slugify(text) {
     .replace(/^-+|-+$/g, '');
 }
 
+/** A binding's identity, for matching a hand-written sentence to the key
+ *  the manager actually reports. The two spellings drift by nature --
+ *  'alt.F7' from TD, 'Alt+F7 (Opt+F7 on Mac)' from a human -- so compare
+ *  the modifier set, not the text: lowercase, drop any parenthetical, and
+ *  treat . + - and space as the same separator. */
+function keyId(raw) {
+  return String(raw).toLowerCase().replace(/\([^)]*\)/g, '')
+    .split(/[.+\-\s]+/).filter(Boolean).sort().join('+');
+}
+
+/** TouchDesigner stores a binding as `ctrl.alt.q`, and one par can hold
+ *  several separated by spaces. Readers know it as Ctrl+Alt+Q. */
+function prettyKeys(raw) {
+  return String(raw).trim().split(/\s+/).map((combo) => combo.split('.')
+    .map((k) => (k.length === 1 ? k.toUpperCase()
+      : k.charAt(0).toUpperCase() + k.slice(1)))
+    .join('+')).join('  /  ');
+}
+
+/** Hotkeys per package, from the REPO manifest -- the one
+ *  build_manifest just wrote from FNS_HotkeyManager. Not the published
+ *  manifest fetched later for /get/: that one is a release behind by
+ *  definition, and a docs page should describe the toolkit as it is. */
+const HOTKEYS = (() => {
+  try {
+    const doc = JSON.parse(fs.readFileSync(
+      path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+    const out = {};
+    for (const pkg of doc.packages || []) {
+      if ((pkg.hotkeys || []).length) out[pkg.name] = pkg.hotkeys;
+    }
+    return out;
+  } catch {
+    return {};   // no manifest yet: pages build without a shortcuts block
+  }
+})();
+
 /** URL slug for a package. Must match _helpUrl() in build_manifest.py. */
 const packageSlug = (name) => name.toLowerCase().replace(/_/g, '-');
 
@@ -380,10 +417,58 @@ for (const p of pages) {
     <p><a href="/plus/">How Plus works →</a></p>
   </div>` : '';
 
-  const onThisPage = (p.meta.features || []).length > 1
-    ? `<nav class="toc"><span>On this page</span><ul>${(p.meta.features || [])
-        .map((f) => `<li><a href="#${esc(f.anchor)}">${esc(f.name)}</a></li>`).join('')}</ul></nav>`
+  const features = p.meta.features || [];
+  const featIcon = (f) => (f.icon
+    ? `<img class="feat-icon" src="/docs/assets/icons/${esc(f.icon)}" alt="" `
+      + `width="18" height="18" decoding="async" />` : '');
+
+  const onThisPage = features.length > 1
+    ? `<nav class="toc"><span>On this page</span><ul>${features
+        .map((f) => `<li><a href="#${esc(f.anchor)}">${featIcon(f)}${esc(f.name)}</a></li>`).join('')}</ul></nav>`
     : '';
+
+  // The icon and the hotkeys are authored per feature in the CMS and used
+  // to reach nothing. Inject them into the rendered body by anchor, so the
+  // markdown stays plain markdown and no doc has to be re-authored.
+  let body = p.html;
+  for (const f of features) {
+    if (!f.icon) continue;
+    // markdown-it-anchor emits <h2 id="anchor">Name</h2>
+    const re = new RegExp(`(<h2 id="${f.anchor}"[^>]*>)([\\s\\S]*?)(</h2>)`);
+    body = body.replace(re, (m, open, text, close) =>
+      `${open}${featIcon(f)}${text}${close}`);
+  }
+
+  // Shortcuts: the KEYS come from the manifest, which build_manifest
+  // fills from FNS_HotkeyManager on every build, so a rebound key
+  // reaches the site with no prose edited. The sentence comes from the
+  // doc, because nothing in the project knows what a shortcut MEANS.
+  // A key with no sentence is still listed: knowing one exists beats
+  // not knowing.
+  const said = new Map();
+  // Top-level `hotkeys:` is where the CMS writes now -- the keys belong to
+  // the PACKAGE, not to whichever heading someone once attached them to.
+  for (const h of (p.meta.hotkeys || [])) {
+    if (h && h.keys && h.does) said.set(keyId(h.keys), h.does);
+  }
+  for (const f of features) {
+    for (const h of (f.hotkeys || [])) {
+      const k = typeof h === 'string' ? h.split('=')[0] : (h.keys || '');
+      const v = typeof h === 'string'
+        ? h.split('=').slice(1).join('=').trim() : (h.does || '');
+      if (String(k).trim() && v) said.set(keyId(k), v);
+    }
+  }
+  const bound = HOTKEYS[p.name] || [];
+  const shortcuts = bound.length ? `<section class="shortcuts">
+    <h2 id="shortcuts">Shortcuts</h2>
+    <p class="hint-line">Global — they fire anywhere in TouchDesigner. Shortcuts scoped to a single panel are a local control scheme and are not listed here.</p>
+    <ul class="feat-keys">${bound.map((h) => {
+      const what = said.get(keyId(h.keys)) || '';
+      return `<li><kbd>${esc(prettyKeys(h.keys))}</kbd>${
+        what ? md.renderInline(what) : ''}</li>`;
+    }).join('')}</ul>
+  </section>` : '';
 
   const html = `${head(`${p.name} — FNSTools docs`, p.description || `${p.name} documentation.`, `${SITE}/docs/${p.slug}/`)}
 ${header('/docs/')}
@@ -397,8 +482,9 @@ ${sidebar(p.slug)}
   ${plusNote}
   ${video}
   ${onThisPage}
+  ${shortcuts}
   <div class="docs-body">
-${p.html}
+${body}
   </div>
   <p class="edit-page"><a href="${EDIT_BASE}/${p.file}" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
 </main>

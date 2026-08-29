@@ -262,7 +262,7 @@ async function overLimit(env, bucket, id) {
 /** Currently-entitled tier ids for an access token. Empty for a free
  *  follower and for a former patron -- entitlement is TIER-BASED, never
  *  "has a membership", which is how a lapsed supporter keeps access. */
-async function patreonTiers(accessToken) {
+async function patreonTiers(env, accessToken) {
   const r = await fetch(PATREON_IDENTITY, {
     headers: { authorization: 'Bearer ' + accessToken },
   });
@@ -275,6 +275,18 @@ async function patreonTiers(accessToken) {
     if ((item.attributes || {}).patron_status !== 'active_patron') continue;
     const rel = ((item.relationships || {}).currently_entitled_tiers || {}).data || [];
     for (const t of rel) tiers.push(String(t.id));
+  }
+  // The creator cannot pledge to their own campaign, so without this they
+  // could never exercise their own gate end to end -- and an untested gate
+  // is discovered by the first paying customer. Granting the TOP tier
+  // rather than a bypass keeps them on the ordinary mapping: every gated
+  // package is granted from its entry tier upward, so the top tier is in
+  // every grant list by construction.
+  const me = String(((doc.data || {}).id) || '');
+  const creator = String(env.PATREON_CREATOR_USER_ID || '');
+  const topTier = String(env.CREATOR_TIER || '');
+  if (creator && topTier && me === creator && !tiers.includes(topTier)) {
+    tiers.push(topTier);
   }
   return { ok: true, tiers: [...new Set(tiers)] };
 }
@@ -341,7 +353,7 @@ async function refreshEntitlement(env, token, session) {
       refresh_token: session.patreon_refresh_token,
     });
     if (ex.ok && ex.tok.access_token) {
-      const res = await patreonTiers(ex.tok.access_token);
+      const res = await patreonTiers(env, ex.tok.access_token);
       if (res.ok) {
         session.patreon_tiers = res.tiers;
         session.verified_at = now;
@@ -439,7 +451,7 @@ async function handlePatreonCallback(env, url) {
       { status: 502, headers: TEXT });
   }
   const now = Math.floor(Date.now() / 1000);
-  const res = await patreonTiers(ex.tok.access_token);
+  const res = await patreonTiers(env, ex.tok.access_token);
   const device = randomToken();
   const session = {
     kind: 'patreon',
@@ -596,6 +608,35 @@ async function handleGumroadRedeem(env, request) {
 }
 
 /** device token -> a short-lived, signed download token. */
+/** POST /session/recheck -- forced entitlement re-check, throttled.
+ *
+ *  Same refresh the automatic path uses; only the cache is skipped. The
+ *  answer is deliberately the WHOLE picture (products and tiers), because
+ *  the caller is a human asking "did my pledge land?" and an empty
+ *  products list with a populated tiers list is a different story from
+ *  both lists being empty -- the first means the tier is not mapped, the
+ *  second means Patreon reports no membership at all.
+ */
+async function handleSessionRecheck(env, request) {
+  const device = bearer(request);
+  let session = await loadSession(env, device);
+  if (!session) {
+    return refuse(401, 'signed_out', 'This install is not signed in. Sign in again.');
+  }
+  if (await overLimit(env, 'recheck', await sha256hex(device))) {
+    return refuse(429, 'rate_limited',
+      'Too many checks. Give Patreon a minute, then try again.');
+  }
+  session.checked_at = 0;          // the only thing refreshEntitlement caches on
+  session = await refreshEntitlement(env, device, session);
+  await saveSession(env, device, session);
+  return json({
+    ok: true,
+    products: session.products || [],
+    tiers: session.patreon_tiers || [],
+  });
+}
+
 async function handleTokenDownload(env, request) {
   const device = bearer(request);
   let session = await loadSession(env, device);
@@ -676,6 +717,9 @@ export default {
 
     try {
       if (pathname === '/health') return json({ ok: true });
+      if (request.method === 'POST' && pathname === '/session/recheck') {
+        return handleSessionRecheck(env, request);
+      }
       if (pathname === '/patreon/start') return handlePatreonStart(env, url);
       if (pathname === '/patreon/callback') return handlePatreonCallback(env, url);
       if (pathname === '/gumroad/redeem' && request.method === 'POST') {

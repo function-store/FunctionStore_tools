@@ -328,6 +328,23 @@ details.fold > summary:focus-visible { outline: 2px solid var(--accent); outline
   font-size: 24px; font-weight: 650; letter-spacing: -0.015em;
   margin: 52px 0 14px; padding-top: 4px;
 }
+/* Feature metadata authored in the CMS: the icon rides its heading and the
+   table of contents; hotkeys list under the feature they belong to. */
+.feat-icon { vertical-align: -3px; margin-right: 7px; border-radius: 3px; }
+.shortcuts .hint-line {
+  margin: -4px 0 10px; font-size: 12.5px; color: var(--text-faint);
+  max-width: 62ch;
+}
+.feat-keys { list-style: none; margin: 6px 0 14px; padding: 0; display: flex;
+  flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--text-dim); }
+.feat-keys kbd {
+  background: var(--bg-3); border: 1px solid var(--border-strong);
+  border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px;
+  font: 500 12px/1.5 var(--mono, ui-monospace, monospace); color: var(--text);
+  margin-right: 6px;
+}
+.toc .feat-icon { width: 14px; height: 14px; }
+
 .plus-page h3 {
   font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
   margin: 30px 0 10px;

@@ -11,7 +11,7 @@
 // local server that POSTs back. Deliberately bound to 127.0.0.1 — this
 // process writes to the repo, so it must not be reachable from the network.
 
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -24,6 +24,9 @@ const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.dirname(HERE);
 const REPO = path.dirname(WEB);
 const DOCS = path.join(REPO, 'packaging', 'docs');
+const GATE_PY = path.join(REPO, 'packaging', 'gate_package.py');
+// python for the packaging CLIs; override when it is not on PATH
+const PYTHON = process.env.FNS_PYTHON || 'python';
 const CATALOG = path.join(REPO, 'packaging', 'catalog.json');
 const RECOMMENDS = path.join(REPO, 'packaging', 'recommendations.json');
 const ICONS = path.join(REPO, 'icons');
@@ -179,6 +182,34 @@ function orderedData(data) {
   return out;
 }
 
+/** The campaign's tiers, from gate_package -- the one place that knows
+ *  them. Cached for the process: they change when the campaign does,
+ *  which is not mid-session. */
+let LADDER = null;
+function tierLadder() {
+  if (LADDER) return LADDER;
+  try {
+    const r = spawnSync(PYTHON, [GATE_PY, '--ladder'], { encoding: 'utf8' });
+    LADDER = JSON.parse(r.stdout);
+  } catch {
+    LADDER = [];
+  }
+  return LADDER;
+}
+
+/** Gate or ungate through gate_package.py, never by editing catalog.json
+ *  here: it writes catalog.json AND wrangler.toml together, and a package
+ *  gated in one but not the other is a customer paying for a 403. */
+function setAccess(name, tier) {
+  const args = [GATE_PY, name];
+  if (tier) args.push('--tier', tier); else args.push('--free');
+  const r = spawnSync(PYTHON, args, { encoding: 'utf8' });
+  if (r.status !== 0) {
+    throw new Error((r.stderr || r.stdout || 'gate_package failed').trim());
+  }
+  return (r.stdout || '').trim();
+}
+
 function loadPackage(cat, name) {
   const p = docPath(cat, name);
   if (!p || !fs.existsSync(p)) return null;
@@ -189,10 +220,10 @@ function loadPackage(cat, name) {
     category: cat.packages[name].category,
     description: cat.packages[name].description || '',
     recommended: !!cat.packages[name].recommended,
-    // Read-only here. `access` names a tier and gating a package is a
-    // packaging decision (catalog.json + the gate's tier map, which is
-    // server-side) -- the CMS shows it so a curator can see which pages are
-    // gated, and does not offer to invent a tier id.
+    // `access` is the ENTRY tier id, or absent for a free package.
+    // Editable here now: the ladder supplies real named tiers, so nothing
+    // is invented, and gate_package keeps the two files in step.
+    access: String(cat.packages[name].access || ''),
     plus: Boolean(cat.packages[name].access) && cat.packages[name].access !== 'free',
     data,
     body: content.replace(/^\n+/, ''),
@@ -205,6 +236,7 @@ function loadPackage(cat, name) {
 
 function state() {
   const cat = readCatalog();
+  const ladder = tierLadder();
   const packages = Object.keys(cat.packages)
     .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
     .map((n) => {
@@ -213,6 +245,7 @@ function state() {
         name: n, category: cat.packages[n].category,
         description: cat.packages[n].description || '',
         recommended: !!cat.packages[n].recommended,
+        access: String(cat.packages[n].access || ''),
         plus: Boolean(cat.packages[n].access) && cat.packages[n].access !== 'free',
         data: {}, body: '', mtime: 0, stub: true, todos: 0, words: 0,
         missing: true,
@@ -230,8 +263,39 @@ function state() {
       count: counts[c] || 0,
     })),
     icons: fs.readdirSync(ICONS).filter((f) => /\.(png|jpg)$/i.test(f)).sort(),
+    // the campaign's tiers, so the UI can offer names while writing ids
+    ladder,
     packages,
   };
+}
+
+// --- the TouchDesigner release console -------------------------------
+// FNS_CMS answers only what a running TD can: PI dirty/save, live
+// Pkgversion, Preflight, Stage, the FNS_About.Helpurl override.
+const TD_PORTS = Array.from({ length: 10 }, (_, i) => 36770 + i);
+const TD_TTL = 10000;
+let tdCache = { at: 0, base: null };
+
+/** Base URL of the release console, or null. Identified by its /api/ping
+ *  marker rather than by an open port: FNS_CMS walks the range when its
+ *  default is taken, and something else answering on a port it might have
+ *  used must not be mistaken for it. */
+async function tdBase() {
+  if (tdCache.base !== null && Date.now() - tdCache.at < TD_TTL) return tdCache.base;
+  let found = null;
+  for (const port of TD_PORTS) {
+    try {
+      const r = await fetch(`http://127.0.0.1:${port}/api/ping`,
+                            { signal: AbortSignal.timeout(250) });
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d && d.service === 'fns-release') { found = `http://127.0.0.1:${port}`; break; }
+    } catch {
+      // nothing listening, or not ours -- keep walking
+    }
+  }
+  tdCache = { at: Date.now(), base: found };
+  return found;
 }
 
 function runBuild() {
@@ -382,8 +446,31 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, await runBuild());
     }
 
+    // Everything under /api/td/ belongs to the live project, and is
+    // forwarded verbatim. Deliberately a dumb pipe: the release logic
+    // lives in TD, where the project is, and duplicating any of it here
+    // is how the two surfaces drifted apart in the first place.
+    if (p.startsWith('/api/td/')) {
+      const base = await tdBase();
+      if (!base) {
+        return json(res, 503, {
+          error: 'TouchDesigner is not running, or its release console is '
+               + 'closed (pulse Open on /FNS_CMS).',
+        });
+      }
+      const init = { method: req.method };
+      if (req.method === 'POST') {
+        init.headers = { 'content-type': 'application/json' };
+        init.body = JSON.stringify(await readBody(req));
+      }
+      const r = await fetch(base + '/api/' + p.slice('/api/td/'.length), init);
+      const text = await r.text();
+      res.writeHead(r.status, { 'content-type': 'application/json' });
+      return res.end(text);
+    }
+
     if (p.startsWith('/api/package/')) {
-      const cat = readCatalog();
+      let cat = readCatalog();
       const name = decodeURIComponent(p.slice('/api/package/'.length));
       const file = docPath(cat, name);
       if (!file) return json(res, 404, { error: `unknown package "${name}"` });
@@ -402,6 +489,20 @@ const server = http.createServer(async (req, res) => {
           return json(res, 409, {
             error: 'This file changed on disk since you opened it. Reload before saving.',
           });
+        }
+
+        // Gating goes through gate_package -- it writes catalog.json AND
+        // wrangler.toml together, and a package gated in one but not the
+        // other is a customer paying for a 403. It runs FIRST and the
+        // catalogue is re-read after, because that call rewrites the file
+        // this handler is holding in memory.
+        if (typeof body.access === 'string') {
+          try {
+            setAccess(name, body.access.trim());
+          } catch (e) {
+            return json(res, 400, { error: String(e.message || e) });
+          }
+          cat = readCatalog();
         }
 
         if (typeof body.category === 'string' || typeof body.description === 'string'

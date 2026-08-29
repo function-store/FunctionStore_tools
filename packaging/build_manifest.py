@@ -165,6 +165,62 @@ def _docsSlug(name):
     return name.lower().replace('_', '-')
 
 
+def Hotkeys(comp):
+    """The package's real hotkeys, asked of FNS_HotkeyManager.
+
+    Returns [{keys, op, par}] sorted for a stable manifest -- the keys as
+    bound RIGHT NOW, never as someone remembered them. The manager owns
+    discovery (which pars count, which ops are excluded); reimplementing
+    that here would be a second rule to keep in step with the first.
+
+    Deliberately no description: a HotkeyRecord carries (owner, par, val)
+    and the par's label is TD's generic "Keys". Nothing in the project
+    knows what a shortcut MEANS, so that sentence stays with the docs.
+    """
+    mgr = _root().op('FNS_HotkeyManager')
+    if mgr is None or not mgr.extensions:
+        return []
+    try:
+        records = mgr.extensions[0].Discover()
+    except Exception:
+        return []
+    prefix = comp.path + '/'
+    out = []
+    for r in records:
+        owner = getattr(r, 'owner', None)
+        if owner is None:
+            continue
+        path = owner.path
+        if path != comp.path and not path.startswith(prefix):
+            continue
+        par = str(getattr(r, 'par_name', ''))
+        # A CHOP hotkey is a keys par PLUS a modifiers par; the modifiers
+        # value ('ignore', 'shift'...) is not a shortcut and reads as
+        # nonsense on a docs page.
+        if par.lower().endswith('modifiers'):
+            continue
+        keys = str(getattr(r, 'val', '') or '').strip()
+        if not keys:
+            continue          # an unbound par documents nothing
+        out.append({
+            'keys': keys,
+            # relative, because the absolute path is this project's
+            # business and the manifest is public
+            'op': path[len(comp.path) + 1:] or comp.name,
+            'par': par,
+        })
+    # One shortcut, one row. A tool typically binds its own par AND an
+    # internal keyboardin that mirrors it, which is one key to a reader.
+    # Keep the shallowest op: that is the tool's own surface, and the
+    # internal mirror is an implementation detail.
+    best = {}
+    for h in out:
+        prev = best.get(h['keys'])
+        if prev is None or h['op'].count('/') < prev['op'].count('/'):
+            best[h['keys']] = h
+    return sorted(best.values(), key=lambda h: (h['keys'], h['op']))
+
+
 def _minTdBuild(comp):
     """The TD build this package needs, read off FNS_About.Touchbuild.
 
@@ -384,7 +440,17 @@ def PortabilityWarnings(comp):
             else:
                 kind = 'absolute'
                 home = os.path.expanduser('~').replace('\\', '/')
-                shown = '~' + v[len(home):] if home and v.startswith(home) else v
+                if home and v.startswith(home):
+                    shown = '~' + v[len(home):]
+                else:
+                    # Outside every known root. manifest.json is PUBLISHED, and
+                    # this field only has to say THAT a parameter points
+                    # somewhere machine-specific -- never where. Keep the
+                    # filename (it names the reference) and drop the directory
+                    # (it names only this disk). The pre_release hook cannot
+                    # cover this: it runs on the staged copy during export,
+                    # and these warnings are read off the LIVE comp before it.
+                    shown = '<abs>/' + v.rsplit('/', 1)[-1]
             hits.append({'op': o.path[len(comp.path) + 1:] or o.name,
                          'par': pname, 'kind': kind, 'path': shown})
     return hits
@@ -598,6 +664,9 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             # already destroyed the installed copy. Per package, not per
             # release: a package re-exported later has a later floor.
             'min_td_build': _minTdBuild(comp),
+            # asked of the hotkey manager on every build, so a rebound key
+            # reaches the docs without anyone editing prose
+            'hotkeys': Hotkeys(comp),
         }
         warn = PortabilityWarnings(comp)
         if warn:

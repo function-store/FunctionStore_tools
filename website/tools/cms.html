@@ -54,6 +54,17 @@
   .cols { flex: 1; display: grid; grid-template-columns: 250px minmax(0,1fr) minmax(0,1fr); min-height: 0; }
   .col { min-height: 0; overflow-y: auto; }
   .col + .col { border-left: 1px solid var(--border); }
+  /* The release view is a wide table with actions on its right edge, and
+     the preview column has nothing to preview while it is open -- it would
+     sit there showing whichever package was last selected, clipping the
+     buttons that matter. Give the table the room. */
+  body.mode-release .cols { grid-template-columns: 250px minmax(0,1fr); }
+  body.mode-release .col:last-child { display: none; }
+  /* and when the window is still too narrow, the table scrolls rather than
+     hiding the action at its right edge -- a PI Save you cannot reach is
+     worse than one you have to scroll to */
+  body.mode-release .col:nth-child(2) { overflow-x: auto; }
+  table.rel { min-width: 640px; }
 
   /* ───── Package list ───── */
   .side-top { position: sticky; top: 0; background: var(--bg); padding: 12px; border-bottom: 1px solid var(--border); z-index: 2; }
@@ -87,7 +98,54 @@
   .tag-todo { background: var(--bg-3); color: var(--text-faint); }
   .tag-rec { background: var(--accent-dim, #2a1f08); color: var(--accent, #fbbf24); }
   /* Read-only: gating is set in catalog.json, not here. */
-  .tag-plus { background: var(--accent-dim, #2a1f08); color: var(--accent, #fbbf24); border: 1px solid rgba(251,191,36,0.35); }
+  .tag-plus {
+    background: hsl(var(--tier-hue, 38) 70% 12%);
+    color: hsl(var(--tier-hue, 38) 85% 62%);
+    border: 1px solid hsl(var(--tier-hue, 38) 70% 32%);
+  }
+  /* the row itself carries the tier, so a scan down the list reads access
+     without reading badges */
+  /* the release button carries the live-project state */
+  .btn.live::before {
+    content: ''; display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; background: #4ade80; margin-right: 7px;
+    vertical-align: 1px;
+  }
+  .btn.off { opacity: 0.55; }
+  .btn.off::before {
+    content: ''; display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; background: #666; margin-right: 7px;
+    vertical-align: 1px;
+  }
+
+  /* discovered shortcut: the key is a fact, the sentence is the work */
+  .hk-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px;
+    align-items: center; padding: 4px 0; }
+  .hk-row kbd {
+    background: var(--panel, #1f2226); border: 1px solid var(--line, #31353b);
+    border-bottom-width: 2px; border-radius: 4px; padding: 2px 7px;
+    font: 500 12px/1.6 ui-monospace, monospace; color: var(--ink, #e8e6e1);
+    white-space: nowrap;
+  }
+  .hk-row .hint { font-size: 11px; opacity: .7; }
+
+  .feat-row.feat-quiet { padding: 4px 0; border-bottom: 1px solid transparent; }
+  .feat-row.feat-quiet .feat-name { font-weight: 500; }
+  .feat-add {
+    background: none; border: 1px dashed var(--line, #333); color: var(--mut, #8b9096);
+    border-radius: 5px; padding: 2px 8px; font-size: 12px; cursor: pointer;
+  }
+  .feat-add:hover { color: var(--ink, #e8e6e1); border-color: var(--mut, #8b9096); }
+
+  .pkg-plus {
+    border-left: 3px solid hsl(var(--tier-hue, 38) 75% 48%);
+    background: linear-gradient(90deg,
+      hsl(var(--tier-hue, 38) 60% 16% / 0.55), transparent 62%);
+  }
+  .pkg-plus .pkg-name { color: hsl(var(--tier-hue, 38) 80% 70%); font-weight: 600; }
+  .pkg-plus:hover { background: linear-gradient(90deg,
+    hsl(var(--tier-hue, 38) 60% 22% / 0.7), transparent 62%); }
+  .pkg-plus.on { background: hsl(var(--tier-hue, 38) 55% 20%); }
   label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
   label.check input { width: auto; margin: 0; accent-color: var(--accent, #fbbf24); }
 
@@ -198,6 +256,7 @@
   <div class="spacer"></div>
   <button class="btn" id="cats">Categories</button>
   <button class="btn" id="community">Community</button>
+  <button class="btn" id="release">Release</button>
   <button class="btn" id="revert" disabled>Discard changes</button>
   <button class="btn" id="build">Build site</button>
   <button class="btn btn-primary" id="save" disabled>Save <kbd style="opacity:.6">⌘S</kbd></button>
@@ -211,6 +270,8 @@
         <button class="chip on" data-f="all">All</button>
         <button class="chip" data-f="stub">Stubs</button>
         <button class="chip" data-f="todo">TODO</button>
+        <button class="chip" data-f="plus" title="Gated: needs a supporter tier">Plus</button>
+        <button class="chip" data-f="free" title="Installs for anyone">Free</button>
       </div>
     </div>
     <div id="list"></div>
@@ -262,12 +323,32 @@ function toast(msg, kind) {
 
 // ───── package list ─────
 
+/** The ladder entry a package unlocks from, or null when it is free (or
+ *  carries an access value the ladder does not know -- which is a state
+ *  worth SEEING rather than smoothing over). */
+function tierOf(p) {
+  if (!p.access) return null;
+  return ((STATE && STATE.ladder) || []).find((t) => t.id === p.access) || null;
+}
+
+/** Hue by POSITION in the ladder, not by a hardcoded colour per tier, so
+ *  adding a rung does not mean editing a palette. Amber at the entry,
+ *  walking toward magenta at the top. */
+function tierHue(tier) {
+  const ladder = (STATE && STATE.ladder) || [];
+  const i = ladder.findIndex((t) => t.id === tier.id);
+  if (i < 0 || ladder.length < 2) return '38';
+  return String(Math.round(38 + (i / (ladder.length - 1)) * 262));
+}
+
 function matchesFilter(p) {
   const q = $('#filter').value.trim().toLowerCase();
   if (q && !p.name.toLowerCase().includes(q) &&
       !(p.description || '').toLowerCase().includes(q)) return false;
   if (filterMode === 'stub') return p.stub;
   if (filterMode === 'todo') return p.todos > 0;
+  if (filterMode === 'plus') return !!p.plus;
+  if (filterMode === 'free') return !p.plus;
   return true;
 }
 
@@ -283,9 +364,16 @@ function renderList() {
     list.appendChild(h);
     for (const p of items) {
       const el = document.createElement('div');
-      el.className = 'pkg' + (current && current.name === p.name ? ' on' : '');
+      // Access earns a row modifier, not just a badge: it decides who can
+      // install, unlike STUB and TODO which are doc-completeness states.
+      const tier = tierOf(p);
+      el.className = 'pkg' + (current && current.name === p.name ? ' on' : '')
+        + (p.plus ? ' pkg-plus' : '');
+      if (tier) el.style.setProperty('--tier-hue', tierHue(tier));
       el.innerHTML = `<span class="pkg-name"></span>` +
-        (p.plus ? '<span class="tag tag-plus" title="Gated: catalog.json gives this package a non-free access tier">PLUS</span>' : '') +
+        (p.plus ? `<span class="tag tag-plus" title="Unlocks from ${
+          tier ? tier.label : p.access}">${
+          tier ? tier.label.toUpperCase() : 'PLUS'}</span>` : '') +
         (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
         (p.stub ? '<span class="tag tag-stub">STUB</span>'
                 : (p.todos ? `<span class="tag tag-todo">${p.todos} TODO</span>` : ''));
@@ -363,6 +451,12 @@ function renderEditor() {
     </div>
 
     <div class="field">
+      <label for="access">Access <span class="hint">— free, or the tier a supporter needs. Saves immediately: it writes catalog.json and the gate's tier map together, so it is not a draft edit.</span></label>
+      <select id="access"></select>
+      <div class="hint" id="accessNote"></div>
+    </div>
+
+    <div class="field">
       <label for="description">Description <span class="hint">— the curated one-liner. Lives in catalog.json; feeds the picker, the site and the docs lede.</span></label>
       <textarea id="description" rows="2"></textarea>
     </div>
@@ -404,7 +498,11 @@ function renderEditor() {
     </div>
 
     <div class="field">
-      <label>Features <span class="hint">— derived from the <code>##</code> headings below; add an icon or hotkeys per feature</span></label>
+      <div id="hotkeysBox"></div>
+    </div>
+
+    <div class="field">
+      <label>Headings <span class="hint">— the <code>##</code> headings in the documentation below, which become the page's table of contents. Optionally give one an icon or the keys it documents. Stored as <code>features:</code>.</span></label>
       <div id="features"></div>
     </div>
 
@@ -416,6 +514,39 @@ function renderEditor() {
   $('.pane-title').textContent = d.name;
   $('#fname').textContent = d.name + '.md';
   $('#description').value = d.description || '';
+  // Access: options come from the campaign's ladder, so the UI never
+  // invents a tier id -- it offers names and the CLI writes the numbers.
+  const acc = $('#access');
+  if (acc) {
+    const ladder = (STATE && STATE.ladder) || [];
+    acc.innerHTML = '<option value="">Free</option>' + ladder.map((t) =>
+      `<option value="${t.id}">${t.label} and above</option>`).join('') +
+      (d.access && !ladder.some((t) => t.id === d.access)
+        ? `<option value="${d.access}">${d.access} (not in the ladder)</option>` : '');
+    acc.value = d.access || '';
+    $('#accessNote').textContent = d.access
+      ? 'Gated. Run wrangler deploy for the map to take effect.' : '';
+    acc.onchange = async (e) => {
+      const value = e.target.value;
+      try {
+        await api(`/api/package/${encodeURIComponent(d.name)}`, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ access: value }),
+        });
+      } catch (err) {
+        toast(err.message, 'err');
+        acc.value = d.access || '';
+        return;
+      }
+      d.access = value;
+      $('#accessNote').textContent = value
+        ? 'Gated. Run wrangler deploy for the map to take effect.' : '';
+      toast(value ? 'Gated — wrangler deploy to apply' : 'Now free', 'ok');
+      STATE = await api('/api/state');
+      renderList();
+    };
+  }
   $('#recommended').checked = !!d.recommended;
   $('#summary').value = d.data.summary || '';
   $('#credit-name').value = (d.data.credit && d.data.credit.name) || '';
@@ -452,6 +583,8 @@ function renderEditor() {
   };
 
   renderFeatures();
+  renderHotkeys();
+  loadHotkeys().then(renderHotkeys);   // fills in once TD answers
   renderPreview();
   markDirty();
 
@@ -461,6 +594,84 @@ function renderEditor() {
     else d.data[key] = value;
     markDirty();
   }
+}
+
+// Features opened by hand on the CURRENT package. Cleared when another is
+// selected, so a row opened here does not follow you to the next doc.
+let featOpen = new Set();
+
+/** Bindings per package, discovered by FNS_HotkeyManager. Fetched once
+ *  and only when TouchDesigner is reachable; without it the section says
+ *  so rather than offering a box to type keys into. */
+let HOTKEYS = null;
+
+async function loadHotkeys() {
+  if (HOTKEYS) return HOTKEYS;
+  try {
+    const d = await api('/api/td/hotkeys');
+    HOTKEYS = d.packages || {};
+  } catch (e) {
+    HOTKEYS = {};
+  }
+  return HOTKEYS;
+}
+
+function renderHotkeys() {
+  const box = $('#hotkeysBox');
+  if (!box || !draft) return;
+  const bound = (HOTKEYS || {})[draft.name] || [];
+  const said = new Map((draft.data.hotkeys || []).map((h) => [keyId(h.keys), h.does || '']));
+  // legacy: sentences that were attached to a heading before the keys
+  // became a package-level, derived fact
+  for (const f of (draft.data.features || [])) {
+    for (const h of (f.hotkeys || [])) {
+      if (h && h.keys && !said.has(keyId(h.keys))) said.set(keyId(h.keys), h.does || '');
+    }
+  }
+  if (!HOTKEYS || !Object.keys(HOTKEYS).length) {
+    box.innerHTML = '<label>Shortcuts <span class="hint">— discovered from '
+      + 'FNS_HotkeyManager. Start TouchDesigner and open the release server '
+      + 'on <code>/FNS_CMS</code> to see them.</span></label>';
+    return;
+  }
+  if (!bound.length) {
+    box.innerHTML = '<label>Shortcuts <span class="hint">— this package '
+      + 'binds none.</span></label>';
+    return;
+  }
+  box.innerHTML = '<label>Shortcuts <span class="hint">— the keys '
+    + 'TouchDesigner reports for this package, and they are GLOBAL -- '
+    + 'panel-scoped bindings are a local control scheme and are not '
+    + 'discovered. Read-only: rebind them in the tool. Say what each '
+    + 'one does.</span></label>'
+    + bound.map((h) => `<div class="hk-row">
+        <kbd>${prettyKeys(h.keys)}</kbd>
+        <input class="hk-does" data-keys="${String(h.keys).replace(/"/g, '&quot;')}"
+          placeholder="what this shortcut does" />
+        <span class="hint mono" title="the parameter this binding lives on">${h.op}<br>${h.par}</span>
+      </div>`).join('');
+  box.querySelectorAll('.hk-does').forEach((i) => {
+    i.value = said.get(keyId(i.dataset.keys)) || '';
+    i.oninput = () => {
+      const rows = (draft.data.hotkeys || []).filter((h) => keyId(h.keys) !== keyId(i.dataset.keys));
+      if (i.value.trim()) rows.push({ keys: i.dataset.keys, does: i.value.trim() });
+      if (rows.length) draft.data.hotkeys = rows; else delete draft.data.hotkeys;
+      markDirty();
+    };
+  });
+}
+
+/** Same identity rule the site build uses, so a sentence written against
+ *  one spelling still finds a key reported in another. */
+function keyId(raw) {
+  return String(raw).toLowerCase().replace(/\([^)]*\)/g, '')
+    .split(/[.+\-\s]+/).filter(Boolean).sort().join('+');
+}
+
+function prettyKeys(raw) {
+  return String(raw).trim().split(/\s+/).map((c) => c.split('.')
+    .map((k) => (k.length === 1 ? k.toUpperCase()
+      : k.charAt(0).toUpperCase() + k.slice(1))).join('+')).join('  /  ');
 }
 
 function renderFeatures() {
@@ -474,17 +685,27 @@ function renderFeatures() {
   wrap.innerHTML = '';
   feats.forEach((f, i) => {
     const row = document.createElement('div');
-    row.className = 'feat-row';
+    const has = !!f.icon;
+    // Open only where there is something to see. Everything else stays a
+    // line until asked: 16 of 96 feature entries across the docs carry
+    // any of this, and an empty dropdown per heading is not information.
+    const open = has || featOpen.has(f.anchor);
+    row.className = 'feat-row' + (open ? '' : ' feat-quiet');
     row.innerHTML = `
       <div>
         <div class="feat-name"></div>
         <div class="feat-anchor mono"></div>
-        <textarea class="feat-hk" rows="1" placeholder="Ctrl+0 = what it does (one per line)"></textarea>
+
       </div>
-      <select class="feat-icon"></select>
-      <button class="icon-x" title="Clear icon and hotkeys">×</button>`;
+      <select class="feat-icon"${open ? '' : ' hidden'}></select>
+      <button class="feat-add"${open ? ' hidden' : ''} title="Give this heading an icon">+ icon</button>
+      <button class="icon-x"${open ? '' : ' hidden'} title="Clear the icon">×</button>`;
     row.querySelector('.feat-name').textContent = f.name;
     row.querySelector('.feat-anchor').textContent = '#' + f.anchor;
+    row.querySelector('.feat-add').onclick = () => {
+      featOpen.add(f.anchor);
+      renderFeatures();
+    };
     const sel = row.querySelector('.feat-icon');
     sel.innerHTML = ['<option value="">— no icon —</option>']
       .concat(STATE.icons.map((ic) => `<option value="${ic}">${ic}</option>`)).join('');
@@ -493,15 +714,10 @@ function renderFeatures() {
       if (sel.value) f.icon = sel.value; else delete f.icon;
       markDirty();
     };
-    const hk = row.querySelector('.feat-hk');
-    hk.value = hotkeysToText(f.hotkeys);
-    hk.oninput = () => {
-      const parsed = textToHotkeys(hk.value);
-      if (parsed.length) f.hotkeys = parsed; else delete f.hotkeys;
-      markDirty();
-    };
     row.querySelector('.icon-x').onclick = () => {
-      delete f.icon; delete f.hotkeys; renderFeatures(); markDirty();
+      delete f.icon;
+      featOpen.delete(f.anchor);      // clearing closes it again
+      renderFeatures(); markDirty();
     };
     wrap.appendChild(row);
   });
@@ -528,7 +744,263 @@ let recDraft = null;
  *  `python packaging/upload.py --recommendations` -- deliberately NOT with a
  *  release, so that REMOVING a recommendation reaches every install in
  *  minutes rather than waiting for one. */
+// --- release console (lives in TouchDesigner, shown here) -------------
+// Everything below reads /api/td/*, which the server forwards to FNS_CMS
+// on loopback. It answers only what a running project can: PI dirty and
+// Save, the live Pkgversion against what the world has, Preflight, Stage,
+// and the one FNS_About.Helpurl override.
+let relRows = null;
+// selection survives a re-render, so ticking a box does not reset the list
+let relPicked = new Set();
+
+async function openRelease() {
+  document.body.classList.add('mode-release');
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  draft = current = null;
+  relRows = null;
+  renderRelease('Looking for TouchDesigner...');
+  renderList();
+  await loadRelease();
+}
+
+async function loadRelease() {
+  try {
+    const d = await api('/api/td/dirty');
+    relRows = d.rows || [];
+    renderRelease();
+  } catch (e) {
+    relRows = null;
+    renderRelease(e.message);
+  }
+}
+
+function renderRelease(problem) {
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  if (problem || !relRows) {
+    $('#editor').innerHTML = `<div class="pane-head"><h2>Release</h2></div>
+      <p class="empty">${at(problem || 'No release data.')}</p>
+      <p class="empty">The release view needs the project open in
+      TouchDesigner, with <code>Open</code> pulsed on <code>/FNS_CMS</code>.</p>`;
+    return;
+  }
+  const unshipped = relRows.filter((r) => r.unshipped).length;
+  const dirty = relRows.filter((r) => r.dirty).length;
+  $('#editor').innerHTML = `
+    <div class="pane-head">
+      <h2>Release</h2>
+      <span class="hint">${unshipped} unshipped &middot; ${dirty} unsaved in PI</span>
+    </div>
+    <div class="field">
+      <button class="btn" id="relRefresh">Refresh</button>
+      <button class="btn" id="relPre">Preflight</button>
+      <button class="btn" id="relStage">Stage only</button>
+      <span class="sep"></span>
+      <button class="btn" id="relPickUnshipped">Select unshipped</button>
+      <button class="btn" id="relPickNone">Clear</button>
+      <select id="relBump" title="How the version moves. Auto only bumps a package the world already has at this version.">
+        <option value="auto">bump: auto</option>
+        <option value="patch">bump: patch</option>
+        <option value="minor">bump: minor</option>
+        <option value="major">bump: major</option>
+        <option value="none">bump: none</option>
+      </select>
+      <button class="btn btn-primary" id="relPublish">Release &amp; stage selected</button>
+      <span class="sep"></span>
+      <button class="btn" id="relSaveDirty">PI Save unsaved</button>
+      <button class="btn" id="relUpload">Upload to bucket</button>
+    </div>
+    <p class="hint">Release &amp; stage bumps, exports, rebuilds the manifest
+      and stages — it ends at <code>packaging/publish/</code>, nothing is
+      uploaded. <b>TouchDesigner is frozen while it exports</b> — seconds for
+      one package, minutes for many. Shipping lives elsewhere:
+      <b>Publish Selected to Bucket</b> on PI's Publish page, or
+      <code>python packaging/upload.py</code>, then
+      <code>python packaging/check_pins.py</code>.</p>
+    <pre class="log" id="relOut" hidden></pre>
+    <table class="rel"><tr><th></th><th>Package</th><th>PI</th><th>Version</th>
+      <th>Published</th><th>Help override</th><th></th></tr>` +
+    relRows.map((r) => `<tr>
+      <td><input type="checkbox" class="relpick" data-name="${at(r.name)}"
+        ${relPicked.has(r.name) ? 'checked' : ''} /></td>
+      <td>${at(r.name)}</td>
+      <td class="${r.dirty ? 'warn' : ''}">${r.dirty ? 'unsaved' : 'clean'}</td>
+      <td title="PI build ${at(r.build)}">${at(r.version)}</td>
+      <td class="${r.unshipped ? 'warn' : ''}">${at(r.published) || '&mdash;'}</td>
+      <td><input class="relhelp" data-name="${at(r.name)}"
+        value="${at(r.help_override)}" placeholder="${at(r.help_derived)}" /></td>
+      <td><button class="btn relsave" data-name="${at(r.name)}">PI Save</button></td>
+    </tr>`).join('') + '</table>';
+
+  document.querySelectorAll('.relpick').forEach((b) => {
+    b.onchange = () => {
+      if (b.checked) relPicked.add(b.dataset.name);
+      else relPicked.delete(b.dataset.name);
+      renderRelease();
+    };
+  });
+  $('#relPickUnshipped').onclick = () => {
+    relRows.filter((r) => r.unshipped).forEach((r) => relPicked.add(r.name));
+    renderRelease();
+  };
+  $('#relPickNone').onclick = () => { relPicked.clear(); renderRelease(); };
+  $('#relPublish').onclick = relPublish;
+  $('#relRefresh').onclick = loadRelease;
+  $('#relPre').onclick = () => relRun('/api/td/preflight', 'GET');
+  $('#relStage').onclick = () => relRun('/api/td/stage', 'POST');
+  $('#relSaveDirty').onclick = relSaveDirty;
+  $('#relUpload').onclick = relUpload;
+  document.querySelectorAll('.relsave').forEach((b) => {
+    b.onclick = async () => {
+      b.disabled = true;
+      try {
+        await api('/api/td/save', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: b.dataset.name }),
+        });
+        toast('PI saved ' + b.dataset.name, 'ok');
+        await loadRelease();
+      } catch (e) { toast(e.message, 'err'); b.disabled = false; }
+    };
+  });
+  document.querySelectorAll('.relhelp').forEach((i) => {
+    i.onchange = async () => {
+      try {
+        const r = await api('/api/td/helpurl', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: i.dataset.name, url: i.value.trim() }),
+        });
+        toast(i.dataset.name + ' help: ' + (r.effective || 'derived'), 'ok');
+        await loadRelease();
+      } catch (e) { toast(e.message, 'err'); }
+    };
+  });
+}
+
+async function relSaveDirty() {
+  // The release lands its own bumps now (release_one PI-saves what it
+  // bumped), so this exists for hand-edits and for releases that ran
+  // before that fix -- every row PI still marks unsaved, in one press.
+  const dirty = relRows.filter((r) => r.dirty);
+  if (!dirty.length) { toast('Nothing unsaved in PI', 'ok'); return; }
+  if (!confirm(`PI Save ${dirty.length} package(s)?\n\n`
+      + dirty.map((r) => r.name).join(', '))) return;
+  let saved = 0;
+  for (const r of dirty) {
+    try {
+      await api('/api/td/save', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: r.name }),
+      });
+      saved += 1;
+    } catch (e) {
+      toast(`${r.name}: ${e.message} (${saved} saved before it)`, 'err');
+      await loadRelease();
+      return;
+    }
+  }
+  toast('PI saved ' + saved + ' package(s)', 'ok');
+  await loadRelease();
+}
+
+let upPoll = null;
+async function relUpload() {
+  if (!confirm('Upload packaging/publish/ to the bucket?\n\n'
+      + 'This SHIPS the staged release. It runs detached; the log streams '
+      + 'below. The uploader verifies what the bucket actually serves and '
+      + 'fails the run if the plus/ prefix is publicly readable.')) return;
+  const out = $('#relOut');
+  out.hidden = false;
+  out.className = 'log';
+  try {
+    const d = await api('/api/td/upload', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+    });
+    out.textContent = 'Upload started — ' + (d.log || '');
+    toast('Upload started', 'ok');
+    pollUploadLog();
+  } catch (e) {
+    out.className = 'log err';
+    out.textContent = e.message;
+    toast(e.message, 'err');
+  }
+}
+
+function pollUploadLog() {
+  clearInterval(upPoll);
+  let quiet = 0;
+  upPoll = setInterval(async () => {
+    const out = $('#relOut');
+    if (!out) { clearInterval(upPoll); return; }
+    try {
+      const d = await api('/api/td/uploadlog');
+      if (d.exists) {
+        out.hidden = false;
+        out.textContent = d.tail;
+        out.scrollTop = out.scrollHeight;
+      }
+      // the log going quiet is the only end-of-run signal a detached
+      // process leaves; two quiet reads = done (or wedged -- same view)
+      quiet = d.age_s !== null && d.age_s > 20 ? quiet + 1 : 0;
+      if (quiet >= 2) { clearInterval(upPoll); toast('Upload log settled', 'ok'); }
+    } catch (e) { clearInterval(upPoll); }
+  }, 2000);
+}
+
+async function relPublish() {
+  const names = [...relPicked];
+  if (!names.length) { toast('Nothing selected', 'err'); return; }
+  const bump = $('#relBump').value;
+  if (!confirm(`Release & stage ${names.length} package(s) with bump "${bump}"?\n\n`
+      + names.join(', ') + '\n\nTouchDesigner will be frozen while it '
+      + 'exports. Nothing is uploaded.')) return;
+  const out = $('#relOut');
+  out.hidden = false;
+  out.className = 'log';
+  out.textContent = 'Releasing ' + names.length + ' package(s)...';
+  try {
+    const d = await api('/api/td/release', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ names, bump }),
+    });
+    out.textContent = JSON.stringify(d, null, 1);
+    out.className = 'log ' + (d.ok ? 'ok' : 'err');
+    if (d.ok) {
+      toast('Released ' + (d.release || ''), 'ok');
+      relPicked.clear();
+    } else {
+      toast(d.why || 'Release refused', 'err');
+    }
+    await loadRelease();
+  } catch (e) {
+    out.textContent = e.message;
+    out.className = 'log err';
+    toast(e.message, 'err');
+  }
+}
+
+async function relRun(url, method) {
+  const out = $('#relOut');
+  out.hidden = false;
+  out.textContent = 'Working...';
+  try {
+    const d = await api(url, method === 'POST' ? { method: 'POST' } : undefined);
+    out.textContent = JSON.stringify(d, null, 1);
+    out.className = 'log ' + (d.error || (d.blockers || []).length ? 'err' : 'ok');
+  } catch (e) {
+    out.textContent = e.message;
+    out.className = 'log err';
+  }
+}
+
 function openCommunity() {
+  document.body.classList.remove('mode-release');
   if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
       !confirm('Discard unsaved changes to ' + current.name + '?')) return;
   draft = current = null;
@@ -673,6 +1145,7 @@ async function saveCommunity() {
 }
 
 function openCategories() {
+  document.body.classList.remove('mode-release');
   if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
       !confirm('Discard unsaved changes to ' + current.name + '?')) return;
   draft = current = null;
@@ -763,7 +1236,9 @@ async function saveCategories() {
 // ───── actions ─────
 
 async function select(name) {
+  document.body.classList.remove('mode-release');
   catDraft = null;
+  featOpen = new Set();   // a row opened by hand belongs to one package
   if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
       !confirm('Discard unsaved changes to ' + current.name + '?')) return;
   current = await api('/api/package/' + encodeURIComponent(name));
@@ -846,6 +1321,26 @@ document.querySelectorAll('.chip').forEach((c) => {
 $('#filter').oninput = renderList;
 $('#cats').onclick = openCategories;
 $('#community').onclick = openCommunity;
+$('#release').onclick = openRelease;
+
+// Say up front whether TouchDesigner is there. The release view is the one
+// part of this CMS that depends on something outside it, and a button that
+// looks identical either way is how you end up staring at an empty pane
+// wondering which half is broken.
+(async () => {
+  const btn = $('#release');
+  try {
+    const d = await api('/api/td/ping');
+    if (d && d.ok) {
+      btn.classList.add('live');
+      btn.title = 'TouchDesigner connected on port ' + d.port;
+      return;
+    }
+  } catch (e) { /* not running, or console closed */ }
+  btn.classList.add('off');
+  btn.title = 'TouchDesigner is not running, or /FNS_CMS is closed. '
+    + 'Open it there to enable PI save, Preflight and Stage.';
+})();
 $('#save').onclick = save;
 $('#build').onclick = build;
 $('#revert').onclick = () => {

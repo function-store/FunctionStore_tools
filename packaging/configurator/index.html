@@ -199,6 +199,16 @@
   }
   a.chip.plus:hover { border-color: var(--accent); }
   .card.plus { border-color: rgba(251,191,36,0.22); }
+  /* Entitlement, served flavor only. Unlocked reads as filled (a state you
+     HAVE); locked stays outlined and dimmed (a state you could have). The
+     published /get/ page never sets these classes. */
+  .chip.plus.own {
+    background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+  }
+  .chip.plus.locked { opacity: 0.6; }
+  .card.plus.own { border-color: rgba(251,191,36,0.55); }
+  .acct { color: var(--text-dim); font-size: 12.5px; }
+  .acct b { color: var(--accent); font-weight: 600; }
   .plus-hint {
     margin-top: 10px; font-size: 12.5px; color: var(--text-dim);
   }
@@ -334,6 +344,10 @@
   <div class="sum">
     <span class="sum-count"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span></span>
     <span class="muted" id="deps"></span>
+    <span class="acct" id="acct"></span>
+    <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Become a supporter ↗</a>
+    <button class="btn btn-quiet" id="recheck" hidden>Check again</button>
+    <button class="btn btn-quiet" id="signin" hidden>Sign in</button>
     <span class="spacer"></span>
     <button class="btn btn-quiet" id="copy">Copy list</button>
     <button class="btn btn-secondary" id="script">Copy install script</button>
@@ -418,6 +432,18 @@ function fnsBoot() {
   // Served from a target the installer refuses to touch (the toolkit's own
   // source root): say why, and never offer Apply -- see SourceLock.
   var locked = String(window.FNS_LOCKED || '');
+  // Entitlement, injected by the installer when IT serves this page.
+  //   undefined -> no FNS_Updater beside the installer (a separate rail)
+  //   null      -> updater present, signed out
+  //   object    -> {label, products, checked_at}
+  // The published /get/ page gets none of these, and every account branch
+  // below is written to be a no-op when the global is absent.
+  var account = (typeof window.FNS_ACCOUNT !== 'undefined')
+    ? window.FNS_ACCOUNT : undefined;
+  var hasAuthRail = (typeof account !== 'undefined');
+  function entitled(p) {
+    return !!(account && (account.products || []).indexOf(p.name) >= 0);
+  }
   if (!M) {
     listEl.innerHTML = '<div class="empty">No <code>manifest.js</code> found.<br>' +
       'Regenerate it from TouchDesigner:<br><br>' +
@@ -539,7 +565,8 @@ function fnsBoot() {
   function card(p) {
     var on = picked.has(p.name);
     var el = document.createElement('label');
-    el.className = 'card' + (on ? ' on' : '') + (isPlus(p) ? ' plus' : '');
+    el.className = 'card' + (on ? ' on' : '') + (isPlus(p) ? ' plus' : '')
+      + (isPlus(p) && entitled(p) ? ' own' : '');
     el.setAttribute('data-name', p.name);
 
     var cb = document.createElement('input');
@@ -573,7 +600,13 @@ function fnsBoot() {
     var chips = document.createElement('div');
     chips.className = 'chips';
     if (isPlus(p)) {
-      var pl = docsLink(FNS_DOCS + '/plus/', 'Plus', 'chip plus');
+      // Without an account the chip says only what the package IS, which is
+      // all the public page can honestly claim.
+      var own = entitled(p);
+      var label = !account ? 'Plus'
+        : (own ? 'Plus · unlocked' : 'Plus · locked');
+      var extra = !account ? '' : (own ? ' own' : ' locked');
+      var pl = docsLink(FNS_DOCS + '/plus/', label, 'chip plus' + extra);
       pl.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pl);
     }
@@ -999,13 +1032,26 @@ function fnsBoot() {
   // One line, because the Textport executes pasted text line by line.
   function installScript() {
     var rolling = String(M.base_url || '').replace(/\/+$/, '') + '/manifest.json';
+    // Gated picks are separated HERE, where `access` is known, because the
+    // pasted script fetches with bare requests and no token: a gated URL
+    // answers 401, the error body fails the sha256 check, and the assert
+    // would abort the entire install over a package that was never
+    // downloadable this way.
+    var allPicked = Array.from(picked).sort();
+    var plusPicks = allPicked.filter(function (n) {
+      return byName[n] && isPlus(byName[n]);
+    });
+    var freePicks = allPicked.filter(function (n) {
+      return !(byName[n] && isPlus(byName[n]));
+    });
     return [
       "import requests, hashlib, os, json, tempfile",
       "H = {'User-Agent': 'FNSTools-Install'}",
-      "SEL = " + JSON.stringify(Array.from(picked).sort()),
+      "SEL = " + JSON.stringify(freePicks),
+      "PLUS = " + JSON.stringify(plusPicks),
       "m = requests.get('" + rolling + "', headers=H, timeout=30).json()",
       "idx = {p['name']: p for p in m['packages']}",
-      "miss = [t for t in SEL if t not in idx]",
+      "miss = [t for t in SEL + PLUS if t not in idx]",
       "assert not miss, 'not in release %s: %s' % (m['release'], ', '.join(miss))",
       "rail = m.get('rails', {}).get('FNSTools.tox')",
       "assert rail, 'release %s publishes no bootstrap' % m['release']",
@@ -1019,7 +1065,7 @@ function fnsBoot() {
       "_ = [open(os.path.join(st, t + '.tox'), 'wb').write(blobs[t]) for t in names]",
       "_ = open(os.path.join(st, 'manifest.json'), 'w').write(json.dumps(m, indent=1))",
       "sp = os.path.join(st, 'selection.json').replace(chr(92), '/')",
-      "_ = open(sp, 'w').write(json.dumps({'schema': 1, 'toolkit': m['toolkit']['name'], 'core': m['core'], 'tools': SEL, 'install': names}, indent=1))",
+      "_ = open(sp, 'w').write(json.dumps({'schema': 1, 'toolkit': m['toolkit']['name'], 'core': m['core'], 'tools': SEL + PLUS, 'install': names}, indent=1))",
       "f = os.path.join(tempfile.gettempdir(), 'FNSTools.tox')",
       "_ = open(f, 'wb').write(boot)",
       "pn = ui.panes.current",
@@ -1027,7 +1073,8 @@ function fnsBoot() {
       "root = pn.owner.loadTox(f)",
       "root.store('FNS_welcomed', 'paste')",
       "r_ = run(\"i = op('%s/FNS_Installer'); i.par.Selectionfile = '%s'; i.par.Install.pulse()\" % (root.path, sp), delayFrames=90)",
-      "print('FNSTools', m['release'], '--', len(names), 'packages verified; installing into', root.path)"
+      "print('FNSTools', m['release'], '--', len(names), 'packages verified; installing into', root.path)",
+      "_ = PLUS and print('Needs a supporter account:', ', '.join(PLUS) + '.', 'On the FNSTools root, hit Pick Tools and click Sign in.')"
     ].join('; ');
   }
 
@@ -1070,6 +1117,60 @@ function fnsBoot() {
     toClipboard(document.getElementById('out').textContent,
                 document.getElementById('docopy'));
   });
+  // The account line, once: it changes only across a sign-in, which ends in
+  // a page reload anyway.
+  (function () {
+    var el = document.getElementById('acct');
+    var btn = document.getElementById('signin');
+    if (!el || !hasAuthRail) { return; }
+    var support = document.getElementById('support');
+    var recheck = document.getElementById('recheck');
+    // Where to actually become one. From the manifest when it says, so a
+    // campaign move is a manifest change rather than a reshipped page.
+    var join = ((M.toolkit || {}).support_url) || (FNS_DOCS + '/plus/');
+    if (support) { support.href = join; }
+    if (account) {
+      var n = (account.products || []).length;
+      // DOM nodes, not innerHTML: the label comes from an account record
+      // and this page has no escaping helper to lean on.
+      var b = document.createElement('b');
+      b.textContent = account.label;
+      el.textContent = '';
+      el.appendChild(b);
+      el.appendChild(document.createTextNode(
+        ' — ' + n + ' package' + (n === 1 ? '' : 's') + ' unlocked'));
+      if (account.checked_at) {
+        // an entitlement is only as fresh as its last check, and the
+        // download is the real authority -- so say when, rather than imply
+        // this is live truth
+        el.title = 'as of the last entitlement check';
+      }
+      // Signed in and entitled to nothing is the case that decides whether
+      // someone becomes a customer, so it gets BOTH doors: join, and -- for
+      // anyone who already did -- a check that skips the gate's cache.
+      if (!n && support) { support.hidden = false; }
+      if (recheck) {
+        recheck.hidden = false;
+        recheck.addEventListener('click', function () {
+          post('/auth/recheck', '{}', function (res) {
+            showDialog(res.text, !!res.ok);
+          });
+        });
+      }
+    } else {
+      el.textContent = 'Not signed in';
+      if (support) { support.hidden = false; }
+      if (btn) {
+        btn.hidden = false;
+        btn.addEventListener('click', function () {
+          post('/auth/signin', '{}', function (res) {
+            showDialog(res.text, !!res.ok);
+          });
+        });
+      }
+    }
+  })();
+
   function post(uri, body, onDone) {
     fetch(uri, {method: 'POST',
                 headers: {'Content-Type': 'application/json'},

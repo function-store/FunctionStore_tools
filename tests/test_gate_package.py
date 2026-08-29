@@ -91,6 +91,35 @@ check('license/seats untouched (hand-curated)',
       and cat['packages']['PaidTool'].get('seats') is None)
 check('no grants left', not tiers and not gum, (tiers, gum))
 
+print('6. --tier is the ENTRY tier: every tier above it is granted too')
+base, pro, coach = (t for t, _ in gp.TIER_LADDER)
+check('ladder expands upward from Base', gp.LadderFrom(base) == [base, pro, coach],
+      gp.LadderFrom(base))
+check('  from Pro, Base is NOT included', gp.LadderFrom(pro) == [pro, coach],
+      gp.LadderFrom(pro))
+check('  the top tier grants only itself', gp.LadderFrom(coach) == [coach],
+      gp.LadderFrom(coach))
+check('  an id outside the ladder grants only itself',
+      gp.LadderFrom('55555') == ['55555'])
+
+gp.Gate('PaidTool', tier=pro)
+cat = json.load(open(cat_path, encoding='utf-8'))
+toml = open(toml_path, encoding='utf-8').read()
+tiers = json.loads(toml.split('TIERS = \"\"\"')[1].split('\"\"\"')[0])
+check('access records the ENTRY tier, not the expansion',
+      cat['packages']['PaidTool'].get('access') == pro,
+      cat['packages']['PaidTool'].get('access'))
+check('Pro grants it', 'PaidTool' in tiers.get(pro, []), tiers)
+check('Coaching grants it too -- nobody pays more for less',
+      'PaidTool' in tiers.get(coach, []), tiers)
+check('Base does NOT grant it', 'PaidTool' not in tiers.get(base, []), tiers)
+
+gp.Free('PaidTool')
+tiers = json.loads(open(toml_path, encoding='utf-8').read()
+                   .split('TIERS = \"\"\"')[1].split('\"\"\"')[0])
+check('ungating clears EVERY tier in the expansion, not just the entry',
+      not any('PaidTool' in v for v in tiers.values()), tiers)
+
 shutil.rmtree(tmp, ignore_errors=True)
 print()
 if FAILS:

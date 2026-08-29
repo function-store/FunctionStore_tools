@@ -42,6 +42,16 @@ id = "000a93cbf1dd432c8714d8c330da894c"
 [vars]
 PATREON_REDIRECT_URI = "https://gate.functionstore.tools/patreon/callback"
 
+# The creator cannot pledge to their own campaign, so without these the
+# gate could never be exercised end to end by the person who owns it --
+# and an untested gate is discovered by the first paying customer.
+# CREATOR_TIER is the TOP of the ladder: every gated package is granted
+# from its entry tier upward, so the top tier grants everything through
+# the ordinary map instead of a bypass that could drift from it.
+# Neither value is secret -- a Patreon user id and a tier id are public.
+PATREON_CREATOR_USER_ID = "34633089"
+CREATOR_TIER = "9796651"
+
 # WHICH TIER INCLUDES WHAT. Version-controlled and reviewable in a diff,
 # deliberately not KV: a KV entry changes with no record of who changed it
 # or why, and this is the map that decides who gets what.
@@ -55,7 +65,15 @@ PATREON_REDIRECT_URI = "https://gate.functionstore.tools/patreon/callback"
 # `tiers` array a refusal returns, or query the campaigns endpoint.
 TIERS = """
 {
-  "REPLACE_WITH_TIER_ID": ["FNS_TimelineTools"]
+  "8323905": [
+    "FNS_TimelineTools"
+  ],
+  "8291595": [
+    "FNS_TimelineTools"
+  ],
+  "9796651": [
+    "FNS_TimelineTools"
+  ]
 }
 """
 
@@ -63,7 +81,6 @@ TIERS = """
 # tool by decision, so this is one-to-one rather than one-to-many.
 GUMROAD_PRODUCTS = """
 {
-  "REPLACE_WITH_GUMROAD_PRODUCT_ID": "FNS_TimelineTools"
 }
 """
 

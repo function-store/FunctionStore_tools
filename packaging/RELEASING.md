@@ -85,6 +85,11 @@ The same steps the wizard walks, by hand:
    Upload runs detached into `packaging/publish/.upload.log`.
 
 5. **Commit** the re-exported toxes, `manifest.json` and `CHANGELOG.md`.
+   The publish PI-saves the packages whose version it bumped (`pi_saved`
+   in the result; `pi_unsaved` when PI is missing or a save fails), so
+   the version bump reaches the tracked suspect toxes without a manual
+   pass. Work you edited yourself still lands in step 1, and the project
+   (`.toe`) save stays yours.
 
 Two PI buttons sound alike and are not. **Publish** (☁) is the rail
 above: bump → build → stage → upload. **Release** is PI's own apparatus —

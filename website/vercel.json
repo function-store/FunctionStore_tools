@@ -8,27 +8,6 @@
   "trailingSlash": true,
   "rewrites": [
     {
-      "_comment": [
-        "DISCOVERY PIN 2. Every shipped FNS_Updater hardcodes three URLs and",
-        "nothing else; this is the second of them. It is a REWRITE (a 200",
-        "proxy), deliberately NOT a static copy committed here: a hand-kept",
-        "copy someone forgot to redeploy would serve a wrong endpoint forever",
-        "and look perfectly healthy, which is the exact failure the pin list",
-        "exists to survive. Proxying means this pin can only ever be stale in",
-        "the same way pin 1 is -- i.e. not at all.",
-        "",
-        "Do NOT rename this path, remove this rule, or point it anywhere else.",
-        "Copies of the updater already in the field cannot be told about a",
-        "change here; editing the pin list mints a new generation of the",
-        "component, it does not fix installs that already shipped.",
-        "See docs/RailHardening.md section 2.1.",
-        "",
-        "This rule only serves the pin if functionstore.tools is attached to",
-        "THIS Vercel project. Until 2026-08-28 the pin named the apex",
-        "functionstore.xyz, which belongs to a different project and 308s to",
-        "www, so the rewrite never fired and the pin 404'd like a merely",
-        "unpublished file. check_pins.py is what proves the difference."
-      ],
       "source": "/.well-known/fnstools.json",
       "destination": "https://storage.functionstore.tools/fnstools/.well-known/fnstools.json"
     }

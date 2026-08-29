@@ -2,6 +2,10 @@
 
     python packaging/gate_package.py --status
     python packaging/gate_package.py FNS_TimelineTools --tier 1234567
+
+`--tier` is the ENTRY tier: the package is granted to that tier and every
+tier above it in TIER_LADDER, because Patreon memberships carry only
+their own tier id.
     python packaging/gate_package.py FNS_TimelineTools --gumroad abc123xyz
     python packaging/gate_package.py FNS_TimelineTools --free
 
@@ -28,6 +32,35 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG = os.path.join(REPO, 'packaging', 'catalog.json')
 WRANGLER = os.path.join(REPO, 'worker', 'wrangler.toml')
 
+# The campaign's tiers, CHEAPEST FIRST. Patreon memberships are not
+# hierarchical -- a Pro patron carries the Pro id only, never Base's --
+# so "unlocks at Base and above" means every id from Base upward has to
+# grant the package. --tier names the ENTRY tier and the rest is derived,
+# because hand-listing three ids per package is how the maps drift.
+#
+# Which tier a given tool enters at is a per-tool decision; the ORDER is
+# campaign-wide and belongs here.
+TIER_LADDER = (
+    ('8323905', 'Base'),
+    ('8291595', 'Pro'),
+    ('9796651', 'Coaching'),
+)
+
+
+def LadderFrom(tier):
+    """`tier` and every tier above it. Unknown ids grant only themselves."""
+    ids = [t for t, _ in TIER_LADDER]
+    if tier not in ids:
+        return [tier]
+    return ids[ids.index(tier):]
+
+
+def TierName(tier):
+    for t, label in TIER_LADDER:
+        if t == tier:
+            return label
+    return tier
+
 
 def _is_placeholder(s):
     return 'PLACEHOLDER' in s.upper() or 'REPLACE' in s.upper()
@@ -40,7 +73,11 @@ def _load_catalog():
 
 def _save_catalog(doc):
     with open(CATALOG, 'w', encoding='utf-8', newline='\n') as f:
-        json.dump(doc, f, indent=1)
+        # ensure_ascii=False keeps the catalogue's glyphs literal.
+        # Without it every run rewrites 20-odd lines into escape
+        # sequences -- a diff full of noise hiding the one line that
+        # actually changed.
+        json.dump(doc, f, indent=1, ensure_ascii=False)
         f.write('\n')
 
 
@@ -130,19 +167,28 @@ def Gate(name, tier=None, gumroad_id=None):
                  'the tiers array it saw.' % tier)
     src, tiers, _, gumroad, _ = _maps()
     _prune(tiers, gumroad, name)
+    granted = []
     if tier:
+        # access records the ENTRY tier -- the meaningful, stable fact
+        # ("unlocks from Base up"). The grants below carry the rest.
         cat['packages'][name]['access'] = tier
-        tiers.setdefault(tier, [])
-        if name not in tiers[tier]:
-            tiers[tier].append(name)
+        for t in LadderFrom(tier):
+            tiers.setdefault(t, [])
+            if name not in tiers[t]:
+                tiers[t].append(name)
+            granted.append(t)
     if gumroad_id:
         gumroad[gumroad_id] = name
         cat['packages'][name].setdefault('access', tier or 'gumroad')
     _save_catalog(cat)
     _save_maps(src, tiers, gumroad)
+    if granted:
+        shown = ', '.join('%s (%s)' % (t, TierName(t)) for t in granted)
+        entry = ' from %s up: %s' % (TierName(tier), shown)
+    else:
+        entry = ''
     print('gated %s%s%s -- remember: `wrangler deploy` for the map to take '
-          'effect' % (name,
-                      ' -> tier %s' % tier if tier else '',
+          'effect' % (name, entry,
                       ' + gumroad %s' % gumroad_id if gumroad_id else ''))
     return Status()
 
@@ -165,11 +211,20 @@ def Free(name):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
     ap.add_argument('package', nargs='?')
-    ap.add_argument('--tier', help='numeric Patreon tier ID')
+    ap.add_argument('--tier', help='numeric Patreon tier ID of the ENTRY '
+                                   'tier -- every tier above it is granted '
+                                   'too')
     ap.add_argument('--gumroad', help='Gumroad product id (per-tool key)')
     ap.add_argument('--free', action='store_true', help='ungate the package')
     ap.add_argument('--status', action='store_true')
+    ap.add_argument('--ladder', action='store_true',
+                    help='print the tier ladder as JSON (cheapest way for '
+                         'another tool to offer NAMES while writing ids)')
     a = ap.parse_args()
+    if a.ladder:
+        print(json.dumps([{'id': t, 'label': label}
+                          for t, label in TIER_LADDER]))
+        sys.exit(0)
     if a.status or not a.package:
         sys.exit(Status())
     if a.free:

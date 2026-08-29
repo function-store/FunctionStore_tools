@@ -27,6 +27,8 @@ def _route(webClientDAT, statusCode, data):
         _ext().OnRevokeResponse(statusCode, data)
     elif url.endswith('/session/claim'):
         _ext().OnClaimResponse(statusCode, data)
+    elif url.endswith('/session/recheck'):
+        _ext().OnRecheckResponse(statusCode, data)
     else:
         return False
     return True

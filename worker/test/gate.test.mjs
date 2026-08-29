@@ -473,6 +473,116 @@ console.log('\n11. a dead grant is not an outage');
 }
 
 console.log();
+// --- creator short-circuit ------------------------------------------------
+console.log('\n12. the creator can exercise their own gate');
+{
+  const CREATOR = '34633089';
+  const TOP = '9796651';
+
+  const signIn = async (env, identityId, entitled) => {
+    const r = await call(env, '/patreon/start?port=9871');
+    const state = new URL(r.headers.get('location')).searchParams.get('state');
+    stubFetch([
+      ['https://www.patreon.com/api/oauth2/token',
+        () => jsonRes({ access_token: 'at', refresh_token: 'rt' })],
+      ['https://www.patreon.com/api/oauth2/v2/identity',
+        () => jsonRes({
+          data: { id: identityId },
+          included: entitled.map((id) => ({
+            type: 'member',
+            attributes: { patron_status: 'active_patron' },
+            relationships: { currently_entitled_tiers: { data: [{ id }] } },
+          })),
+        })],
+    ]);
+    const cb = await call(env, `/patreon/callback?code=abc&state=${state}`);
+    globalThis.fetch = realFetch;
+    const grant = new URL(cb.headers.get('location')).searchParams.get('code');
+    const claim = await call(env, '/session/claim', {
+      method: 'POST', body: JSON.stringify({ code: grant }),
+    });
+    return (await claim.json()).device_token;
+  };
+
+  // the creator, pledged to nothing at all
+  const env = makeEnv();
+  env.PATREON_CREATOR_USER_ID = CREATOR;
+  env.CREATOR_TIER = TOP;
+  const dev = await signIn(env, CREATOR, []);
+  const sess = lastSession(env, dev);
+  check('creator with no pledge is granted the top tier',
+    sess.patreon_tiers.includes(TOP), JSON.stringify(sess.patreon_tiers));
+
+  // a stranger with the same empty membership gets nothing
+  const env2 = makeEnv();
+  env2.PATREON_CREATOR_USER_ID = CREATOR;
+  env2.CREATOR_TIER = TOP;
+  const dev2 = await signIn(env2, '99999999', []);
+  const sess2 = lastSession(env2, dev2);
+  check('  a different user is NOT granted it',
+    !sess2.patreon_tiers.includes(TOP), JSON.stringify(sess2.patreon_tiers));
+
+  // unconfigured: no accidental grant when the vars are absent
+  const env3 = makeEnv();
+  const dev3 = await signIn(env3, CREATOR, []);
+  const sess3 = lastSession(env3, dev3);
+  check('  unconfigured gate grants nothing to anyone',
+    sess3.patreon_tiers.length === 0, JSON.stringify(sess3.patreon_tiers));
+}
+
+// --- forced re-check ------------------------------------------------------
+console.log('\n13. a pledge made after sign-in can be noticed now');
+{
+  const env = makeEnv();
+  const device = 'dev_recheck';
+  // signed in six seconds ago with nothing: inside the 6h cache window,
+  // so the automatic path would keep answering "no entitlement"
+  const now = Math.floor(Date.now() / 1000);
+  await env.SESSIONS.put('session:' + device, JSON.stringify({
+    kind: 'patreon', patreon_tiers: [], gumroad_products: [], products: [],
+    patreon_refresh_token: 'rt', checked_at: now - 6, verified_at: now - 6,
+  }));
+
+  const auth = { authorization: 'Bearer ' + device };
+  stubFetch([
+    ['https://www.patreon.com/api/oauth2/token',
+      () => jsonRes({ access_token: 'at', refresh_token: 'rt2' })],
+    ['https://www.patreon.com/api/oauth2/v2/identity',
+      () => jsonRes({ included: [{ type: 'member',
+        attributes: { patron_status: 'active_patron' },
+        relationships: { currently_entitled_tiers: { data: [{ id: '111' }] } } }] })],
+  ]);
+  const r = await call(env, '/session/recheck', { method: 'POST', headers: auth });
+  const body = await r.json();
+  globalThis.fetch = realFetch;
+
+  check('the fresh pledge is seen despite the cache window',
+    r.status === 200 && body.products.includes('FNS_TimelineTools'),
+    JSON.stringify(body));
+  check('  and the session keeps it',
+    lastSession(env, device).products.includes('FNS_TimelineTools'));
+
+  // a token now works, which is the whole point
+  const t = await call(env, '/token/download', { method: 'POST', headers: auth });
+  check('  a download token follows', t.status === 200, String(t.status));
+
+  const anon = await call(env, '/session/recheck', { method: 'POST' });
+  check('no session -> 401', anon.status === 401, String(anon.status));
+
+  // the upstream call is not free: pressing the button in a loop is capped
+  const env2 = makeEnv();
+  await env2.SESSIONS.put('session:' + device, JSON.stringify({
+    kind: 'patreon', patreon_tiers: [], gumroad_products: [], products: [],
+    checked_at: 0,
+  }));
+  let limited = 0;
+  for (let i = 0; i < 12; i++) {
+    const rr = await call(env2, '/session/recheck', { method: 'POST', headers: auth });
+    if (rr.status === 429) limited++;
+  }
+  check('  repeated checks are throttled', limited > 0, 'never rate-limited');
+}
+
 if (FAILS.length) {
   console.log(FAILS.length + ' FAILED: ' + FAILS.join(', '));
   process.exit(1);

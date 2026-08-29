@@ -984,6 +984,33 @@ class InstallerExt:
         run("op(%r).par.Opensettings.pulse()" % root.path, delayFrames=2)
         return ''
 
+    def _accountGlobal(self):
+        """`window.FNS_ACCOUNT = ...;` for the served page, or ''.
+
+        Omitted entirely when there is no updater beside us, so the page
+        can tell "no auth rail here" from "signed out" -- the first has
+        no sign-in to offer, the second does.
+
+        Derived facts only. The device token and the download token stay
+        in the updater: this page is rendered, not trusted.
+        """
+        upd = self._updaterComp()
+        if upd is None:
+            return ''
+        acct = None
+        try:
+            a = upd.ext.ExtAuth
+            if a is not None:
+                rec = a.Account()
+                if rec:
+                    acct = {'label': rec.get('label') or 'supporter',
+                            'products': sorted(rec.get('products') or []),
+                            'checked_at': rec.get('checked_at') or 0}
+        except Exception:
+            # never let an auth problem stop the picker from being served
+            acct = None
+        return 'window.FNS_ACCOUNT = %s;\n' % json.dumps(acct)
+
     def ServeRequest(self, request, response):
         """onHTTPRequest for the embedded Web Server DAT."""
         uri = request.get('uri', '/')
@@ -1024,11 +1051,13 @@ class InstallerExt:
                                             'window.FNS_LAST = %s;\n'
                                             'window.FNS_INSTALLED = %s;\n'
                                             'window.FNS_LOCKED = %s;\n'
+                                            '%s'
                                             'window.FNS_MANIFEST = %s;\n'
                                             % (json.dumps(firstrun),
                                                json.dumps(last),
                                                json.dumps(installed),
-                                               json.dumps(locked), f.read()))
+                                               json.dumps(locked),
+                                               self._accountGlobal(), f.read()))
                 else:
                     why = '' if self._refreshActive() \
                         else self._refreshStore(names=[])
@@ -1036,6 +1065,42 @@ class InstallerExt:
                                         'window.FNS_FIRSTRUN = %s;%s\n'
                                         % (json.dumps(firstrun),
                                            ' // ' + why if why else ''))
+            elif method == 'POST' and uri == '/auth/recheck':
+                # "I just pledged" -- forces the gate past its six-hour
+                # entitlement cache. The page reloads itself afterwards.
+                upd = self._updaterComp()
+                why = ''
+                if upd is None:
+                    why = 'no FNS_Updater next to the installer'
+                else:
+                    try:
+                        upd.ext.ExtAuth.Recheck()
+                    except Exception as e:
+                        why = str(e)
+                response['Content-Type'] = 'application/json'
+                response['data'] = json.dumps(
+                    {'ok': not why,
+                     'text': why or 'Checking with Patreon — reload this page '
+                                    'in a moment.'})
+            elif method == 'POST' and uri == '/auth/signin':
+                # the picker is where someone MEETS a Plus tool, so it is
+                # where they will want to sign in. Starting it is all this
+                # does: the updater owns the browser round trip, and the
+                # page learns the outcome on its next load.
+                upd = self._updaterComp()
+                why = ''
+                if upd is None:
+                    why = 'no FNS_Updater next to the installer'
+                else:
+                    try:
+                        upd.ext.ExtAuth.SignIn()
+                    except Exception as e:
+                        why = str(e)
+                response['Content-Type'] = 'application/json'
+                response['data'] = json.dumps(
+                    {'ok': not why,
+                     'text': why or 'Check your browser to finish signing in, '
+                                    'then reload this page.'})
             elif method == 'POST' and uri == '/settings':
                 # the page's "Open Settings" after an install: the console
                 # takes the panel over, and this server has nothing left
