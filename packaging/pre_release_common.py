@@ -45,6 +45,23 @@ for _c in [_c0] + _c0.findChildren(type=COMP):
         except Exception:
             pass
 
+# --- no shipped web server listens beyond loopback ------------------------
+# A Web Server DAT with a BLANK Local Address listens on EVERY interface
+# (Derivative: "When left blank, the Web Server DAT will listen on all
+# interfaces"). Every server in this toolkit builds 127.0.0.1 URLs and has no
+# authentication, so a blank value shipped an unauthenticated surface to the
+# whole LAN. The owning extensions now re-assert this at ensure/Configure
+# time; this is the backstop that makes it true of the ARTIFACT regardless of
+# which code path created the DAT, or how old the staged copy's server is.
+for _ws in _c0.findChildren(type=webserverDAT):
+    try:
+        _p = _ws.par.localaddress
+        if _p.mode != ParMode.CONSTANT:
+            _p.mode = ParMode.CONSTANT
+        _p.val = '127.0.0.1'
+    except Exception:
+        pass
+
 for _t in _c0.findChildren(name='vc_data', type=tableDAT):
     try:
         _t.destroy()

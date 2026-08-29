@@ -2,7 +2,7 @@
   "name": "fnstools-website",
   "version": "1.0.0",
   "private": true,
-  "description": "tools.functionstore.xyz — landing page and generated docs for FNSTools",
+  "description": "functionstore.tools — landing page and generated docs for FNSTools",
   "type": "module",
   "scripts": {
     "build": "node tools/build-site.mjs && npm run search",

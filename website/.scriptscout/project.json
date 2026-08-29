@@ -11,16 +11,18 @@
   "ignore": [],
   "runGroups": [],
   "comments": {
-    "npm:build": "The one to use. Generates website/docs/ from packaging/docs/*.md + packaging/catalog.json, restamps the download links in index.html from the published manifest, then rebuilds the pagefind search index. The build validates as it goes and REFUSES to produce a site on a package with no docs, a docs file with no catalog entry, a frontmatter/filename mismatch, or an internal /docs/ link to a page or heading that does not exist. Generated output is committed (Vercel runs no build step), so commit what this writes.",
-    "npm:pages": "Pages only -- leaves the existing pagefind index alone. Fast loop while editing prose; the search index goes stale until the next full build.",
-    "npm:search": "Re-index only: wipes docs/pagefind and reruns pagefind over docs/. Use after `pages` if you need search to match.",
     "npm:serve": "Static preview of the built site on http://localhost:3000 (npx serve). Serves what is on disk -- build first, this does not.",
     "npm:cms": "Internal editor for the two curated sources, http://127.0.0.1:8787 (override with CMS_PORT). Writes STRAIGHT to packaging/catalog.json and packaging/docs/*.md -- no database, no staging layer, so git diff is the review and git checkout is the undo. Bound to 127.0.0.1 on purpose: it writes to the repo and must not be reachable from the network.",
-    "python:tools/make-brand-assets.py": "One-shot PLACEHOLDER generator: draws website/favicon.png and og-image.png because no square FNSTools mark exists (icons/main.png is a toolbar strip). Needs Pillow. Delete the script and these assets once a real mark lands -- re-running it overwrites whatever is there.",
+    "npm:pages": "Pages only -- leaves the existing pagefind index alone. Fast loop while editing prose; the search index goes stale until the next full build.",
+    "node:tools/cms.mjs": "Hidden: this is what `npm run cms` runs. Use the npm script -- launching both would fight over port 8787.",
     "node:tools/build-site.mjs": "Hidden: this is what `npm run pages` runs. Use the npm script so the search index stays in the same rail.",
-    "node:tools/cms.mjs": "Hidden: this is what `npm run cms` runs. Use the npm script -- launching both would fight over port 8787."
+    "python:tools/make-brand-assets.py": "One-shot PLACEHOLDER generator: draws website/favicon.png and og-image.png because no square FNSTools mark exists (icons/main.png is a toolbar strip). Needs Pillow. Delete the script and these assets once a real mark lands -- re-running it overwrites whatever is there.",
+    "npm:build": "The one to use. Generates website/docs/ from packaging/docs/*.md + packaging/catalog.json, restamps the download links in index.html from the published manifest, then rebuilds the pagefind search index. The build validates as it goes and REFUSES to produce a site on a package with no docs, a docs file with no catalog entry, a frontmatter/filename mismatch, or an internal /docs/ link to a page or heading that does not exist. Generated output is committed (Vercel runs no build step), so commit what this writes.",
+    "npm:search": "Re-index only: wipes docs/pagefind and reruns pagefind over docs/. Use after `pages` if you need search to match."
   },
-  "arguments": {},
+  "arguments": {
+    "npm:cms": "PORT=11111"
+  },
   "variants": [],
   "loadEnv": true
 }

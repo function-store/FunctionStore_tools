@@ -1,4 +1,4 @@
-"""Brand assets for tools.functionstore.xyz, built from the real FNSTools
+"""Brand assets for functionstore.tools, built from the real FNSTools
 mark in icons/FNSLogo*.png (flat monogram + the feedback-pinwheel variant).
 Recolors the source art to the site's own token palette (see the :root
 block in website/index.html / docs.css) rather than shipping a second,
@@ -107,7 +107,7 @@ def og(w=1200, h=630):
     d.text((216, 160), 'by Function Store', font=font(24), fill=TEXT_DIM)
     d.text((80, 300), 'TouchDesigner,', font=font(76), fill=TEXT)
     d.text((80, 386), 'minus the busywork.', font=font(76), fill=ACCENT)
-    d.text((80, 520), 'tools.functionstore.xyz  ·  free & open source',
+    d.text((80, 520), 'functionstore.tools  ·  free & open source',
            font=font(26), fill=TEXT_DIM)
     d.rectangle([0, h - 6, w, h], fill=ACCENT)
     return img

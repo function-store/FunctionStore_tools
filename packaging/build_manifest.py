@@ -44,8 +44,15 @@ TOOLKIT = '/FNSTools'
 # was built from. Never point an installer at a mutable "latest/" path --
 # unreproducible installs make bug reports uncorrelatable (§3).
 # Custom domain over the R2 bucket (objects under the fnstools/ prefix).
-# The r2.dev dev URL keeps serving the same bucket as a fallback.
-BASE_URL = 'https://storage.functionstr.com/fnstools'
+# The bucket's r2.dev development URL must stay DISABLED: it serves the
+# whole bucket publicly and would hand out the gated plus/ prefix behind
+# the Worker's back. upload.py's canary fails the release if it is on.
+BASE_URL = 'https://storage.functionstore.tools/fnstools'
+# Gated artifacts live under this prefix on the SAME host. The prefix is
+# not publicly readable: a Worker in front of it checks entitlement and
+# streams from the bucket. Free artifacts keep the plain release path and
+# are served straight off the CDN, so nothing about the free rail changes.
+PLUS_PREFIX = 'plus'
 
 # Registry host name -> the core package that owns that registry's master.
 # Every registry package IS its master -- the raw registry, promoted to
@@ -147,7 +154,7 @@ def _hostedRegistries(comp):
     return sorted(found)
 
 
-DOCS_SITE = 'https://tools.functionstore.xyz/docs'
+DOCS_SITE = 'https://functionstore.tools/docs'
 
 
 def _docsSlug(name):
@@ -158,43 +165,50 @@ def _docsSlug(name):
     return name.lower().replace('_', '-')
 
 
-def _helpUrl(comp):
-    """Discovery, not migration: read the conventions already in use.
+def _minTdBuild(comp):
+    """The TD build this package needs, read off FNS_About.Touchbuild.
 
-    Falls back to the package's own page on the docs site when
-    packaging/docs/<Name>.md exists. That file is the source the site is
-    generated from, so a package with docs always has a working help URL
-    without anyone hand-entering one; a component that declares its own
-    URL still wins."""
+    The stamp lives ON THE COMPONENT rather than being computed here, so the
+    floor travels INSIDE the .tox: an installer handed a raw artifact, with
+    no manifest anywhere, can still refuse a build that cannot load it. It is
+    read-only in the UI because it is a stamp, not a setting.
+
+    Falls back to the build doing the export, which is the same answer for
+    anything exported from this session and the right answer for a component
+    that predates the stamp.
+    """
+    fa = comp.op('FNS_About')
+    if fa is not None:
+        p = getattr(fa.par, 'Touchbuild', None)
+        if p is not None and str(p.eval()).strip():
+            return str(p.eval()).strip()
+    return app.build
+
+
+def _helpUrl(comp):
+    """The package's docs page: FNS_About.Helpurl, else derived from the name.
+
+    DERIVATION IS THE NORMAL PATH, not the fallback. Measured across the
+    fleet on 2026-08-26: every override tier was empty on every package --
+    FNS_About.Helpurl (0 of 27), the component's own Helpurl/Url/Wikipage
+    (0), a docsHelper (0). The derived URL was doing 100% of the work, so
+    the ladder those tiers formed was speculative generality that had never
+    once fired, and three of its four rungs are gone.
+
+    Derivation is safe because it is gated on the page existing:
+    packaging/docs/<Name>.md is the source the site is generated from, so a
+    package with docs always has a working help URL with nobody entering
+    one, and a package without docs gets '' rather than a 404.
+
+    FNS_About.Helpurl stays as the ONE override, for the case derivation
+    cannot serve: a page whose slug is not the package name, or docs hosted
+    somewhere other than our site.
+    """
     fa = comp.op('FNS_About')
     if fa is not None:
         p = getattr(fa.par, 'Helpurl', None)
         if p is not None and str(p.eval()).strip():
             return str(p.eval()).strip()
-    for pn in ('Helpurl', 'Url', 'Wikipage'):
-        p = getattr(comp.par, pn, None)
-        if p is not None and str(p.eval()).strip():
-            return str(p.eval()).strip()
-    dh = comp.op('docsHelper')
-    if dh is not None:
-        p = getattr(dh.par, 'Url', None)
-        if p is not None and str(p.eval()).strip():
-            return str(p.eval()).strip()
-    # last resort: a registry entry published by this package carries one
-    for regname in ('FNS_TOOLBARREGISTRY', 'FNS_NAVBARREGISTRY', 'FNS_MAINMENUREGISTRY'):
-        g = getattr(op, regname, None)
-        if g is None or not g.valid:
-            continue
-        ext = getattr(g.ext, regname.title().replace('registry', 'RegistryExt'), None)
-        try:
-            widgets = g.ext.__getattr__(
-                [a for a in dir(g.ext) if a.endswith('RegistryExt')][0]).Widgets
-        except Exception:
-            continue
-        for info in widgets.values():
-            path = info.get('panel_path', '')
-            if path.startswith(comp.path + '/') and info.get('help_url'):
-                return info['help_url']
     if os.path.exists(_repo(PKG_DIR, 'docs', '%s.md' % comp.name)):
         return '%s/%s/' % (DOCS_SITE, _docsSlug(comp.name))
     return ''
@@ -446,6 +460,66 @@ def _channel():
     return 'stable'
 
 
+def _minimumUpdater():
+    """The oldest FNS_Updater Pkgversion still allowed to run, from
+    release.json. '' means no floor.
+
+    This is the KILL SWITCH. It rides in the discovery document, which is
+    the one thing every install re-reads from a pinned URL, so a known-bad
+    updater in the field can be stopped with a data edit and no component
+    update. Raise it only when a shipped updater is actually dangerous:
+    every install below the floor stops updating and says why.
+    """
+    path = _repo(PKG_DIR, 'release.json')
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                return str(json.load(f).get('minimum_updater', '')).strip()
+        except Exception as e:
+            debug('packaging: release.json minimum_updater unreadable (%s)' % e)
+    return ''
+
+
+def _notices():
+    """Messages every install should see, from release.json. Normally []."""
+    path = _repo(PKG_DIR, 'release.json')
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                v = json.load(f).get('notices', [])
+            if isinstance(v, list):
+                return [str(n) for n in v if str(n).strip()]
+        except Exception as e:
+            debug('packaging: release.json notices unreadable (%s)' % e)
+    return []
+
+
+def _retired():
+    """Packages this release DELIBERATELY drops, declared in release.json.
+
+    The manifest is regenerated wholesale from whatever the live project
+    holds, so a package that is simply not loaded -- or whose pi_suspect
+    tracking lapsed -- vanishes from it silently, and every install stops
+    being offered it. publish.py refuses that (its `removed` guard); this
+    list is how a real retirement says so out loud.
+
+    It rides into the published manifest rather than staying local: a
+    client can eventually tell "retired upstream" apart from "your install
+    is broken", which is exactly the distinction Compare()'s `missing`
+    state cannot make today.
+    """
+    path = _repo(PKG_DIR, 'release.json')
+    if os.path.exists(path):
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                v = json.load(f).get('retired', [])
+            if isinstance(v, list):
+                return sorted({str(n).strip() for n in v if str(n).strip()})
+        except Exception as e:
+            debug('packaging: release.json retired list unreadable (%s)' % e)
+    return []
+
+
 def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
     """Write packaging/manifest.json. `export` may be False, True, or a
     list of package names to (re-)export artifacts for."""
@@ -500,9 +574,30 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             'shortcut': str(comp.par.opshortcut.eval()),
             'ops': len(comp.findChildren()),
             'requires': requires,
+            # Entitlement, curated in catalog.json. `access` NAMES A TIER
+            # ('free', or a tier id); it is not a flag, because the gate is
+            # multi-tier. The tier -> packages map is NOT here and never
+            # will be: it lives in the Worker, so there is exactly one
+            # place that decides, and a client cannot be edited into
+            # granting itself something.
+            #
+            # This field is safe to publish. It says a package is paid and
+            # which tier covers it -- both of which the picker has to show
+            # anyway to be honest about what the toolkit contains. What is
+            # NOT here is any means of getting the bytes.
+            'access': str(meta.get('access', 'free')) or 'free',
+            'license': str(meta.get('license', '')),
+            'seats': meta.get('seats', None),
             'integrates_with': integrations.get(name, []),
             'tox_carrier': 'root' if not comp.par.enableexternaltox.eval() else 'own',
             'cooking': bool(comp.allowCooking),
+            # The TD build this artifact was exported from, and therefore the
+            # floor for installing it. An OLDER TD loading a newer-build tox
+            # returns nothing SILENTLY -- no exception, no error flag -- so
+            # without this the failure only surfaces after the updater has
+            # already destroyed the installed copy. Per package, not per
+            # release: a package re-exported later has a later floor.
+            'min_td_build': _minTdBuild(comp),
         }
         warn = PortabilityWarnings(comp)
         if warn:
@@ -546,7 +641,18 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
         if art:
             # Pinned per release. The sha256 already in `art` is what an
             # updater compares against; the URL is just where to get it.
-            art['url'] = '%s/%s/%s.tox' % (base_url.rstrip('/'), rel, entry['name'])
+            #
+            # A gated package goes under the PLUS prefix on the SAME host.
+            # Same host is load-bearing: ExtUpdater._artifactRel() derives
+            # an artifact's path by stripping the manifest's base_url off
+            # this URL, and re-bases everything onto the CONFIGURED base --
+            # which is what makes the file:// and mirror rails work. A
+            # second host would break that stripping for gated rows only,
+            # which is the worst possible place for it to break.
+            gated = entry.get('access', 'free') != 'free'
+            prefix = ('%s/%s' % (base_url.rstrip('/'), PLUS_PREFIX)
+                      if gated else base_url.rstrip('/'))
+            art['url'] = '%s/%s/%s.tox' % (prefix, rel, entry['name'])
 
     doc = {
         'schema': MANIFEST_SCHEMA,
@@ -556,10 +662,24 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
         'base_url': base_url.rstrip('/'),
         'toolkit': {
             'name': _root().name,
-            'td_build': app.version,
+            # app.build ('2025.33070'), NOT app.version -- which is the
+            # version SERIES ('099') and says nothing about compatibility.
+            # Every entry written before 2026-08-26 carries '099' here.
+            'td_build': app.build,
             'project': project.name,
         },
         'core': [p['name'] for p in packages if p['kind'] == 'core'],
+        # Deliberate retirements for this release -- see _retired(). Empty
+        # is the normal case; publish.py compares it against what actually
+        # disappeared between the last staged manifest and this one.
+        'retired': _retired(),
+        # Field-reach controls. They live here so publish.py can build the
+        # discovery document from the manifest alone, but they belong to
+        # the DISCOVERY document, not to the manifest -- a client that can
+        # already read the manifest has, by definition, resolved an
+        # endpoint and does not need them.
+        'minimum_updater': _minimumUpdater(),
+        'notices': _notices(),
         'categories': catalog.get('categories', []),
         # Presentation per category -- the glyph and the one-line pitch the
         # CMS curates beside the category list. Packaging does not read it;

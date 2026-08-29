@@ -826,6 +826,35 @@ class InstallerExt:
                 s.close()
         return None
 
+    BIND_ADDRESS = '127.0.0.1'
+
+    def _bindLoopback(self, ws):
+        """Pin the picker's Web Server DAT to loopback.
+
+        A BLANK Local Address makes a Web Server DAT listen on EVERY
+        interface (Derivative: "When left blank, the Web Server DAT will
+        listen on all interfaces"). The bind test in _freePort above uses
+        127.0.0.1 and reads like the thing that keeps this private -- it is
+        not; that socket is closed again and constrains nothing. Left blank,
+        /selection and /install were drivable by anyone on the same network.
+
+        Applied on every Configure(), not once at build time: installers
+        already in the field carry the old blank value, and re-asserting is
+        the only thing that repairs them. Restart if it was already serving
+        -- the DAT reads this at bind time, not per request.
+        """
+        if ws is None:
+            return
+        try:
+            if str(ws.par.localaddress.eval()) == self.BIND_ADDRESS:
+                return
+            ws.par.localaddress = self.BIND_ADDRESS
+            if ws.par.active.eval():
+                ws.par.restart.pulse()
+        except Exception as e:
+            debug('INSTALLER: could not pin %s to %s (%s) -- it may be '
+                  'reachable from the network' % (ws.path, self.BIND_ADDRESS, e))
+
     def Configure(self):
         """Serve the picker and show it: the sibling webBrowser COMP if
         this installer ships inside the bootstrap root, else the system
@@ -834,6 +863,7 @@ class InstallerExt:
         if ws is None:
             self._status('no webserver DAT -- rebuild the installer')
             return
+        self._bindLoopback(ws)
         port = ws.par.port.eval() if ws.par.active.eval() else self._freePort()
         if port is None:
             self._status('no free port in %d-%d -- close another picker or '

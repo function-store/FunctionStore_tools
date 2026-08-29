@@ -5,61 +5,9 @@ CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in 
 
 from TDStoreTools import StorageManager
 
-class RegistryBase:
-	EXT_NAME = 'RegistryBase'
-	SHORTCUT = None
-	REGISTRY_NAME = 'Registry'
-	HOST_PAGE_NAME = 'Registration'
-
-	def fnsLog(self, *args, level='INFO'):
-		"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op
-		when the logger is absent (standalone installs) or its Active par is off."""
-		try:
-			_logger = op.FNS.op('logger')
-			if _logger and _logger.par.Active.eval():
-				_logger.Log(*args, level=level)
-		except Exception:
-			pass
-
-	def __init__(self, ownerComp):
-		self.ownerComp = ownerComp
-		# BEFORE CustomParHelper touches the pars: a dangling BIND (tool
-		# Registry page gone) raises on any access and would kill init
-		self._repairDanglingHostBinds()
-		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
-		self._preInit()
-		storedItems = [
-			{'name': 'PaneRegistry', 'default': {}, 'property': True, 'readOnly': True},
-			{'name': 'HostCanonical', 'default': '', 'property': True, 'readOnly': True},
-			{'name': 'GroupVisibility', 'default': {}, 'property': True, 'readOnly': True},
-		]
-		self.stored = StorageManager(self, ownerComp, storedItems)
-		self._pane_sync_queued = False
-		self._registry_watch_armed = False
-		self.postInit()
-
-	def onDestroyTD(self):
-		"""Unregister host entry when this registry COMP is deleted.
-
-		The /sys global registry does not own a host entry; it only stops
-		arming further watch ticks (in-flight run() no-ops on invalid owner).
-		"""
-		self._registry_watch_armed = False
-		if self._is_sys_global():
-			return
-		try:
-			# onDestroyTD ALSO fires on extension REINIT -- removing the tool
-			# page then would orphan the host's bound Registration pars and
-			# kill the next init. Only clean up on real COMP destruction.
-			if not self.ownerComp.valid:
-				self._removeToolRegistryPage()
-		except Exception as e:
-			debug(f'{self.REGISTRY_NAME} onDestroyTD page cleanup: {e}')
-		try:
-			self._clearHostRegistration()
-		except Exception as e:
-			debug(f'{self.REGISTRY_NAME} onDestroyTD: {e}')
-
+class _RegistryToolPageMixin:
+	"""The tool-facing 'Registry' page: bound proxy pars on the parent tool,
+	bind repair, and the host-cloning contract attrs (CLONE_EXPR)."""
 	# --- tool-facing 'Registry' page (bound proxy pars on the parent tool) ---
 
 	TOOL_PAGE_NAME = 'Registry'
@@ -118,7 +66,7 @@ class RegistryBase:
 		appenders = {'Toggle': page.appendToggle, 'Pulse': page.appendPulse,
 					 'Str': page.appendStr, 'Int': page.appendInt,
 					 'Float': page.appendFloat, 'Menu': page.appendMenu}
-		for name in self.TOOL_PAGE_PARS:
+		for name in self._toolPageParNames():
 			src = getattr(self.ownerComp.par, name, None)
 			if src is None:
 				continue
@@ -194,9 +142,25 @@ class RegistryBase:
 		except Exception as e:
 			debug(f'{self.REGISTRY_NAME}: reclaim {tpar.name}: {e}')
 
+	def _toolPageParNames(self):
+		"""TOOL_PAGE_PARS with Unregister slotted in beside Register.
+
+		Deliberately NOT added to each subclass's tuple: the registry ext file
+		is copied per tool (~15 of them on disk), while RegistryBase is synced
+		from ONE shared file by 100 of the 102 live hosts. Adding it here is a
+		single edit that reaches the whole fleet. Slotted next to Register
+		rather than appended so _orderToolSection puts the two buttons side by
+		side instead of stranding Unregister at the end of the section.
+		"""
+		names = list(self.TOOL_PAGE_PARS)
+		if self.UNREGISTER_PAR in names or 'Register' not in names:
+			return names
+		names.insert(names.index('Register') + 1, self.UNREGISTER_PAR)
+		return names
+
 	def _sectionParNames(self):
 		return ([self.TOOL_PAGE_PREFIX + 'section'] +
-				[self.TOOL_PAGE_PREFIX + n.lower() for n in self.TOOL_PAGE_PARS])
+				[self.TOOL_PAGE_PREFIX + n.lower() for n in self._toolPageParNames()])
 
 	def _orderToolSection(self, tool):
 		"""Keep this registry's section contiguous and in declared order on
@@ -304,69 +268,9 @@ class RegistryBase:
 				except Exception:
 					pass
 
-	# --- surface hooks (overridden by surface-specific subclasses) ---
-
-	def _preInit(self):
-		pass
-
-	def _syncSurface(self, attempts=40):
-		pass
-
-	def _sanitizeStoredRegistry(self):
-		pass
-
-	def _ensureSelectionExecuteRole(self):
-		pass
-
-	def _resyncRegisteredMenuRows(self):
-		self._syncSurface()
-
-	def _normalize_action(self, value):
-		return value
-
-	def postInit(self):
-		if self._is_sys_global():
-			if self.ownerComp.fetch('post_update', False):
-				for name, info in self.ownerComp.fetch('PaneRegistry', {}).items():
-					if name not in self.stored['PaneRegistry']:
-						self.stored['PaneRegistry'][name] = info
-				self.ownerComp.unstore('post_update')
-			self._sanitizeStoredRegistry()
-			self.ownerComp.par.opshortcut = self.SHORTCUT
-			self._neutralizeHostParameters()
-			self._syncSurface()
-			self._armRegistryWatch()
-			self._ensureSelectionExecuteRole()
-			return
-
-		self._sanitizeStoredRegistry()
-		self._installGlobalRegistry()
-		self._release_shipped_shortcut()
-		self._applyHostRegistration()
-		self._ensureSelectionExecuteRole()
-		self._ensurePresaveHealPar()
-
-	def _neutralizeHostParameters(self):
-		"""The global /sys instance is pure infrastructure -- host-publisher
-		parameters (Registration page) are meaningless on it. Keep the page
-		(copies stay structurally identical to hosts) but reset every par to
-		its inert default so no stale host state rides on the global."""
-		for page in list(self.ownerComp.customPages):
-			if page.name != self.HOST_PAGE_NAME:
-				continue
-			for p in page.pars:
-				try:
-					if p.style == 'Pulse':
-						continue
-					# a promoted host copy may carry Registration pars BOUND
-					# to a tool's Registry page that does not exist up here
-					if p.mode != ParMode.CONSTANT:
-						p.mode = ParMode.CONSTANT
-					p.val = p.default
-				except Exception:
-					pass
-		self._setRegStatus('Idle (global)')
-
+class _RegistryHostMixin:
+	"""Host auto-registration: the Registration page, register/unregister,
+	status, and the host-side parameter surface."""
 	# --- host auto-registration (Registration page) ---
 
 	def _isUnderSysOrUi(self):
@@ -425,6 +329,44 @@ class RegistryBase:
 		host = self._hostComp()
 		return host.name if host else ''
 
+	# The docs site. MUST match build_manifest.DOCS_SITE: packaging derives
+	# the manifest's help_url with the same rule, and the two cannot import
+	# each other (this ships inside tools; that runs at release). Change
+	# both or neither.
+	HELP_SITE = 'https://functionstore.tools/docs'
+
+	def _packageHelpUrl(self, comp):
+		"""The docs page for the package enclosing `comp`, or ''.
+
+		The manifest's landed rule (build_manifest._helpUrl, measured
+		2026-08-26: derivation from the package name did 100% of the work
+		fleet-wide): FNS_About.Helpurl on the package is the ONE override,
+		else derive HELP_SITE/<name lowercased, _ -> ->/. Shipped tools
+		derive unconditionally -- the site build refuses a catalogued
+		package without a docs page, so every shipped package has one."""
+		pkg = self._enclosingPackage(comp)
+		if pkg is None:
+			return ''
+		fa = pkg.op('FNS_About')
+		if fa is not None:
+			p = getattr(fa.par, 'Helpurl', None)
+			if p is not None and str(p.eval()).strip():
+				return str(p.eval()).strip()
+		return '%s/%s/' % (self.HELP_SITE, pkg.name.lower().replace('_', '-'))
+
+	def _enclosingPackage(self, comp):
+		"""The depth-1 toolkit package holding `comp`, or None."""
+		root = getattr(op, 'FNS', None)
+		if root is None or comp is None:
+			return None
+		c = comp
+		while c is not None:
+			parent = c.parent()
+			if parent is root:
+				return c
+			c = parent
+		return None
+
 	def _registryApi(self):
 		"""Live registry that owns the panebar menu (prefer global /sys copy)."""
 		if self._is_sys_global():
@@ -434,6 +376,78 @@ class RegistryBase:
 			if hasattr(global_reg.ext, self.EXT_NAME):
 				return getattr(global_reg.ext, self.EXT_NAME)
 		return self
+
+	UNREGISTER_PAR = 'Unregister'
+
+	def _ensureUnregisterPar(self):
+		"""Give every host an Unregister button, next to Register.
+
+		Registration was only reversible by turning Autoregister OFF, which is
+		a setting rather than an action -- nothing on the page said "take this
+		back out", so the way to undo a registration was undiscoverable.
+
+		Created in code because the Registration page is authored per COMP and
+		there are 102 hosts, while this file is shared. It lands on whatever
+		page Register lives on and takes the slot right after it, so it heals
+		into the correct place no matter how a given registry ordered its page.
+		"""
+		if self._is_sys_global():
+			return
+		if getattr(self.ownerComp.par, self.UNREGISTER_PAR, None) is not None:
+			return
+		reg = getattr(self.ownerComp.par, 'Register', None)
+		if reg is None:
+			return                      # not a host-publisher layout
+		try:
+			par = reg.page.appendPulse(self.UNREGISTER_PAR, label='Unregister')[0]
+			par.order = reg.order + 0.5      # between Register and Regstatus
+			par.help = ("Take this tool's contribution back out of the registry "
+						"and turn Autoregister off, so it stays out. Register "
+						"puts it back.")
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: could not create {self.UNREGISTER_PAR}: {e}')
+
+	def onParUnregister(self, _par):
+		self._hostExtFromPar(_par)._unregisterHost()
+
+	def _unregisterHost(self):
+		"""Withdraw this host's contribution and keep it withdrawn.
+
+		Autoregister goes off as PART of the action, not as a side effect worth
+		hiding: without it the next heal tick calls _applyHostRegistration and
+		puts the entry straight back, so the button would flicker and read as
+		doing nothing at all.
+		"""
+		par = getattr(self.ownerComp.par, 'Autoregister', None)
+		if par is not None:
+			try:
+				# may be BOUND to the tool's Registry page -- writing through is
+				# correct (the tool par is the master and must agree), but a
+				# dangling bind raises, so it must not take the unregister down
+				par.val = False
+			except Exception as e:
+				debug(f'{self.REGISTRY_NAME}: clearing Autoregister: {e}')
+		# NOT _clearHostRegistration: that trusts stored['HostCanonical'], which
+		# is local bookkeeping and drifts. Force-registering (the Register pulse)
+		# with Autoregister off leaves a live entry while a later
+		# _applyHostRegistration blanks the stored name, so the clear returns
+		# early and removes NOTHING -- measured: entry live, host owns it, and
+		# the button still reported "Unregistered" with the widget on screen.
+		# An explicit user action asks what this host actually owns instead.
+		api = self._registryApi()
+		removed = []
+		for name in (self.stored['HostCanonical'], self._hostCanonicalName()):
+			if not name or name in removed:
+				continue
+			if self._unregisterOwnedMenuName(name, api=api):
+				removed.append(name)
+		self.stored['HostCanonical'] = ''
+		# 'Idle' is what _applyHostRegistration writes a frame later when the
+		# Autoregister callback lands, and it is accurate -- not registered,
+		# autoregister off. An earlier attempt to re-assert 'Unregistered' after
+		# that callback via a delayed run() dropped the project from 60fps to 2,
+		# so the status is left to settle on its own.
+		self._setRegStatus('Unregistered' if removed else 'Not registered')
 
 	PRESAVE_HEAL_PAR = 'Presaveheal'
 
@@ -596,6 +610,9 @@ class RegistryBase:
 				return getattr(owner.ext, self.EXT_NAME)
 		return self
 
+class _RegistryGlobalMixin:
+	"""Global registry lifecycle: /sys promotion, version arbitration,
+	merge and destroy. Pkgversion governs; Version is the fallback."""
 	# --- global registry lifecycle ---
 
 	SYS_HOME = 'FNS_Registries'
@@ -930,8 +947,18 @@ class RegistryBase:
 		return our_version <= their_version
 
 	def _get_version(self, comp):
-		if comp and hasattr(comp.par, 'Version'):
-			return str(comp.par.Version.eval())
+		"""Pkgversion governs; Version is only a FALLBACK for components
+		that predate the Pkgversion convention (owner decision 2026-08-28
+		-- the two must never be maintained as separate numbers). On FNS
+		packages Version is an expression mirroring FNS_About/Pkgversion,
+		so both branches agree there; the fallback exists for third-party
+		comps carrying only a Version par."""
+		if comp is None:
+			return None
+		for name in ('Pkgversion', 'Version'):
+			p = getattr(comp.par, name, None)
+			if p is not None:
+				return str(p.eval())
 		return None
 
 	VERSION_PARTS = 3   # versions normalize to this many components
@@ -949,6 +976,9 @@ class RegistryBase:
 			return None
 		return tuple((parts + [0] * self.VERSION_PARTS)[:self.VERSION_PARTS])
 
+class _RegistryHealMixin:
+	"""Entry resolution and the watch/heal passes, including host-clone
+	healing off CLONE_EXPR."""
 	# --- entry resolution ---
 
 	def _resolveByIdOrPath(self, op_id, path):
@@ -1161,6 +1191,8 @@ class RegistryBase:
 			except Exception:
 				pass
 
+class _RegistryStampMixin:
+	"""Host stamping (the ONE blessed copy recipe) and drop-to-register."""
 	# --- host stamping (the ONE blessed copy recipe) ---
 
 	# --- drop-to-register (opt-in, per registry) --------------------------
@@ -1427,6 +1459,9 @@ class RegistryBase:
 		if src_drag == 'usecallbacks':
 			self._setConst(mirror.par.drag, 'usecallbacks')
 
+class _RegistryGroupsMixin:
+	"""Hideable entry groups: bracket pairs, visibility, structure,
+	create/dissolve/rename."""
 	# --- hideable entry groups (bracket pairs, nestable) ---
 	#
 	# A group is a PAIR of virtual entries in the sequence -- a start switch
@@ -1690,6 +1725,9 @@ class RegistryBase:
 		self._syncSurface()
 		return True
 
+class _RegistryGroupWidgetMixin:
+	"""The group-toggle widget: callback template, icons, look, builder."""
+
 	GROUP_TOGGLE_CALLBACK_TEMPLATE = (
 		"def onOffToOn(panelValue):\n"
 		"\tif hasattr(op, {shortcut!r}):\n"
@@ -1801,3 +1839,148 @@ class RegistryBase:
 			panelexec.text = self._groupToggleCallbackText(gid)
 		self._setConst(inst.par.value0, 1 if visible else 0)
 		return inst
+
+class RegistryBase(_RegistryToolPageMixin,
+		_RegistryHostMixin,
+		_RegistryGlobalMixin,
+		_RegistryHealMixin,
+		_RegistryStampMixin,
+		_RegistryGroupsMixin,
+		_RegistryGroupWidgetMixin):
+	"""One registry, seven jobs -- each job lives in the mixin named for
+	it; this class holds the identity, the lifecycle (__init__ /
+	onDestroyTD), and the surface hooks subclasses override. The split is
+	organizational only: the runtime surface is the flattened MRO, and
+	subclasses keep deriving from RegistryBase alone."""
+	EXT_NAME = 'RegistryBase'
+	SHORTCUT = None
+	REGISTRY_NAME = 'Registry'
+	HOST_PAGE_NAME = 'Registration'
+
+	def fnsLog(self, *args, level='INFO'):
+		"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op
+		when the logger is absent (standalone installs) or its Active par is off."""
+		try:
+			_logger = op.FNS.op('logger')
+			if _logger and _logger.par.Active.eval():
+				_logger.Log(*args, level=level)
+		except Exception:
+			pass
+
+	def __init__(self, ownerComp):
+		self.ownerComp = ownerComp
+		# BEFORE CustomParHelper touches the pars: a dangling BIND (tool
+		# Registry page gone) raises on any access and would kill init
+		self._repairDanglingHostBinds()
+		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
+		self._preInit()
+		storedItems = [
+			{'name': 'PaneRegistry', 'default': {}, 'property': True, 'readOnly': True},
+			{'name': 'HostCanonical', 'default': '', 'property': True, 'readOnly': True},
+			{'name': 'GroupVisibility', 'default': {}, 'property': True, 'readOnly': True},
+		]
+		self.stored = StorageManager(self, ownerComp, storedItems)
+		self._pane_sync_queued = False
+		self._registry_watch_armed = False
+		self.postInit()
+
+	def onDestroyTD(self):
+		"""Unregister host entry when this registry COMP is deleted.
+
+		The /sys global registry does not own a host entry; it only stops
+		arming further watch ticks (in-flight run() no-ops on invalid owner).
+		"""
+		self._registry_watch_armed = False
+		if self._is_sys_global():
+			return
+		try:
+			# onDestroyTD ALSO fires on extension REINIT -- removing the tool
+			# page then would orphan the host's bound Registration pars and
+			# kill the next init. Only clean up on real COMP destruction.
+			if not self.ownerComp.valid:
+				self._removeToolRegistryPage()
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME} onDestroyTD page cleanup: {e}')
+		try:
+			# Same rule as the page cleanup above, which this call was missing:
+			# onDestroyTD fires on REINIT too, and _clearHostRegistration is a
+			# real unregister -- _unregisterOwnedMenuName -> UnregisterPanel ->
+			# UnregisterWidget. For the navbar that destroys this entry's
+			# instance in EVERY pane bar; the new extension then re-registers
+			# and rebuilds them all. Opening TD's Component Editor on a COMP
+			# re-instantiates the extensions inside it, so every such open threw
+			# away and rebuilt the whole navbar surface, dragging other
+			# registries' hosts through a reinit with it. A reinit is not a
+			# removal: the COMP is still there, only the Python object changed.
+			#
+			# Nothing leaks by skipping it. The prune/heal passes already key off
+			# whether an entry still RESOLVES -- which is how a host that dies
+			# inside its parent's subtree gets collected, since TD does not call
+			# onDestroyTD for those at all.
+			if not self.ownerComp.valid:
+				self._clearHostRegistration()
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME} onDestroyTD: {e}')
+	# --- surface hooks (overridden by surface-specific subclasses) ---
+
+	def _preInit(self):
+		pass
+
+	def _syncSurface(self, attempts=40):
+		pass
+
+	def _sanitizeStoredRegistry(self):
+		pass
+
+	def _ensureSelectionExecuteRole(self):
+		pass
+
+	def _resyncRegisteredMenuRows(self):
+		self._syncSurface()
+
+	def _normalize_action(self, value):
+		return value
+
+	def postInit(self):
+		if self._is_sys_global():
+			if self.ownerComp.fetch('post_update', False):
+				for name, info in self.ownerComp.fetch('PaneRegistry', {}).items():
+					if name not in self.stored['PaneRegistry']:
+						self.stored['PaneRegistry'][name] = info
+				self.ownerComp.unstore('post_update')
+			self._sanitizeStoredRegistry()
+			self.ownerComp.par.opshortcut = self.SHORTCUT
+			self._neutralizeHostParameters()
+			self._syncSurface()
+			self._armRegistryWatch()
+			self._ensureSelectionExecuteRole()
+			return
+
+		self._sanitizeStoredRegistry()
+		self._installGlobalRegistry()
+		self._release_shipped_shortcut()
+		self._applyHostRegistration()
+		self._ensureSelectionExecuteRole()
+		self._ensurePresaveHealPar()
+		self._ensureUnregisterPar()
+
+	def _neutralizeHostParameters(self):
+		"""The global /sys instance is pure infrastructure -- host-publisher
+		parameters (Registration page) are meaningless on it. Keep the page
+		(copies stay structurally identical to hosts) but reset every par to
+		its inert default so no stale host state rides on the global."""
+		for page in list(self.ownerComp.customPages):
+			if page.name != self.HOST_PAGE_NAME:
+				continue
+			for p in page.pars:
+				try:
+					if p.style == 'Pulse':
+						continue
+					# a promoted host copy may carry Registration pars BOUND
+					# to a tool's Registry page that does not exist up here
+					if p.mode != ParMode.CONSTANT:
+						p.mode = ParMode.CONSTANT
+					p.val = p.default
+				except Exception:
+					pass
+		self._setRegStatus('Idle (global)')

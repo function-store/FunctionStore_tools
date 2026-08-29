@@ -1,0 +1,82 @@
+name = "fnstools-gate"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+# TWO routes, one Worker. The auth endpoints live on their own hostname,
+# but the gated DOWNLOADS must stay on the storage host: ExtUpdater derives
+# an artifact's path by stripping the manifest's base_url off its pinned
+# URL and re-bases onto the CONFIGURED base, which is what makes the
+# file:// and mirror rails work. Serving gated bytes from a different
+# hostname would break that stripping for gated rows only -- the worst
+# possible place for it to break. So the prefix is gated, not the host.
+routes = [
+  # A plain route, NOT custom_domain: the hostname already carries a
+  # proxied DNS record on the zone, and a custom domain refuses to take
+  # over a hostname with "externally managed DNS records" (code 100117).
+  # The proxied record is all a route needs -- the Worker intercepts
+  # before the origin is ever reached.
+  { pattern = "gate.functionstore.tools/*", zone_name = "functionstore.tools" },
+  { pattern = "storage.functionstore.tools/fnstools/plus/*", zone_name = "functionstore.tools" },
+]
+
+# The private prefix. The bucket is the SAME one the free rail uses --
+# the gated prefix simply is not publicly readable, so this Worker is the
+# only way to read it. Free artifacts never come through here.
+#
+# The full path is fnstools/plus/ (bucket key AND URL path), because
+# build_manifest.py writes gated URLs as <base_url>/plus/... and base_url
+# carries the fnstools/ prefix -- and it MUST: ExtUpdater derives every
+# artifact path by stripping base_url off the pinned URL, which only
+# works when gated URLs live under it. A host-root /plus/ route here
+# (which this file had until 2026-08-28) would 404 every gated download
+# on launch day while every test passed.
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "fnstools"
+
+# Device tokens (opaque, revocable) and short-lived OAuth nonces.
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "000a93cbf1dd432c8714d8c330da894c"
+
+[vars]
+PATREON_REDIRECT_URI = "https://gate.functionstore.tools/patreon/callback"
+
+# WHICH TIER INCLUDES WHAT. Version-controlled and reviewable in a diff,
+# deliberately not KV: a KV entry changes with no record of who changed it
+# or why, and this is the map that decides who gets what.
+#
+# Keys are PATREON TIER IDs (numeric strings, from the Patreon API -- not
+# the tier's display name, which you can rename at any time and which is
+# not unique). Values are package names exactly as they appear in
+# manifest.json.
+#
+# To find your tier ids: sign in once through /patreon/start and read the
+# `tiers` array a refusal returns, or query the campaigns endpoint.
+TIERS = """
+{
+  "REPLACE_WITH_TIER_ID": ["FNS_TimelineTools"]
+}
+"""
+
+# GUMROAD product id -> the ONE package that key unlocks. Keys are per
+# tool by decision, so this is one-to-one rather than one-to-many.
+GUMROAD_PRODUCTS = """
+{
+  "REPLACE_WITH_GUMROAD_PRODUCT_ID": "FNS_TimelineTools"
+}
+"""
+
+# SECRETS -- never in this file. Set with `wrangler secret put <NAME>`:
+#
+#   PATREON_CLIENT_ID       from the Patreon client you register
+#   PATREON_CLIENT_SECRET   ditto. This is the reason the broker exists at
+#                           all: Patreon's token exchange requires it and
+#                           has no PKCE, so it can never ship in a .tox.
+#   JWT_PRIVATE_KEY         base64 PKCS#8 Ed25519 private key
+#   JWT_PUBLIC_KEY          base64 SPKI Ed25519 public key
+#
+# Generate the pair with:
+#   openssl genpkey -algorithm ed25519 -out fns.pem
+#   openssl pkey -in fns.pem     -outform DER          | base64 -w0   # PRIVATE
+#   openssl pkey -in fns.pem -pubout -outform DER      | base64 -w0   # PUBLIC

@@ -1,0 +1,12 @@
+{
+  "name": "fnstools-gate",
+  "private": true,
+  "type": "module",
+  "description": "Entitlement gate for paid FNSTools packages (Cloudflare Worker).",
+  "scripts": {
+    "check": "node --check src/index.js || node -e \"import(process.argv[1])\" src/index.js",
+    "test": "node test/gate.test.mjs",
+    "dev": "npx wrangler dev",
+    "deploy": "npx wrangler deploy"
+  }
+}

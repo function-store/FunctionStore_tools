@@ -175,6 +175,16 @@ Do not re-propose these without new information:
 
 ## 7. What is left
 
+> **Three holes found 2026-08-26** by comparison against a shipping rail
+> ([DistributionComparison.md](DistributionComparison.md)); the work plan is
+> [RailHardening.md](RailHardening.md). All present in the code today:
+> `publish.py` computes `bumped`/`added` but never **`removed`**, so a package
+> can silently vanish from a release and the bump guard still passes;
+> `upload.py` never re-fetches after upload, so a truncated object is
+> discovered by a user; and `Baseurl` is a single value with no fallback and no
+> way to reach the field, so a moved bucket strands every install. The last one
+> cannot be repaired after the fact.
+
 - Swap `BASE_URL` in `build_manifest.py` and the `Baseurl` par default when the bucket is real. **Nothing else changes** — both rails were built and verified against a local tree precisely so this is a one-constant swap. Assume public-read; a token must never ship inside a distributed tox.
 - Set `Cache-Control` on the rolling `manifest.json` at upload time. A CDN-cached root manifest would silently pin users to an old release; deliberately not worked around client-side.
 - Exercise self-update once against a real bucket install (§4).

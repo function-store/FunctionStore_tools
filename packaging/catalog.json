@@ -10,7 +10,8 @@
   "holds only what a machine cannot know: category and human description.",
   "Descriptions were seeded by inspection and NEED OWNER REVIEW; correct them here",
   "and re-run the generator. A package missing from this file still ships, with",
-  "category 'Uncategorized' and an empty description."
+  "category 'Uncategorized' and an empty description.",
+  "access/license/seats are ENTITLEMENT metadata. `access` is 'free' or a Patreon TIER ID -- the NUMERIC STRING from the API, never the display name, which can be renamed at any time and is not unique. It is not a flag, because the gate is multi-tier. The tier -> packages map lives in the Worker, never here and never in any shipped client; publish.Stage() cross-checks every gated row against that map and refuses placeholders, mismatched ids, and packages no tier or Gumroad product grants. `seats` is per-package because seat policy may differ per product; null means unlimited."
  ],
  "categories": [
   "Core",
@@ -146,6 +147,17 @@
    "category": "Core",
    "description": "Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks."
   },
+  "FNS_TimelineRegistry": {
+   "category": "Core",
+   "description": "Publish a widget into TouchDesigner's timeline bar: transport controls beside the stock ones, an entry on the time-properties block, or a full-width strip in the frame-ruler band that gets its own row."
+  },
+  "FNS_TimelineTools": {
+   "category": "Media & Output",
+   "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip and a waveform.",
+   "access": "PLACEHOLDER_TIER",
+   "license": "",
+   "seats": null
+  },
   "FNS_Toolbar": {
    "category": "Surfaces",
    "description": "Toolbar extras: the Configurator UI for ordering, grouping and hiding bar widgets, plus stock widgets.",
@@ -171,17 +183,13 @@
    "category": "Media & Output",
    "description": "A toolbar reminder to drink water at an interval you set. Off by default."
   },
-  "midiMapper": {
-   "category": "Control",
-   "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config."
-  },
   "MISC": {
    "category": "Workflow",
    "description": "Assorted small utilities that ship together (hog CHOP, mouse input and friends)."
   },
-  "OpenExt": {
-   "category": "Developer",
-   "description": "Open an operator's extension source quickly."
+  "OUTPUT": {
+   "category": "Media & Output",
+   "description": "Output window and display routing helpers."
   },
   "OpTemplates": {
    "category": "Network",
@@ -192,13 +200,9 @@
    "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression.",
    "recommended": true
   },
-  "oscMapper": {
-   "category": "Control",
-   "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design."
-  },
-  "OUTPUT": {
-   "category": "Media & Output",
-   "description": "Output window and display routing helpers."
+  "OpenExt": {
+   "category": "Developer",
+   "description": "Open an operator's extension source quickly."
   },
   "ParOPDrop": {
    "category": "Parameters",
@@ -208,10 +212,6 @@
   "ParRandomizer": {
    "category": "Parameters",
    "description": "Randomize parameter values within range, for quick exploration."
-  },
-  "paste_from_clipboard": {
-   "category": "Network",
-   "description": "Paste images and data from the system clipboard into TouchDesigner."
   },
   "QuickCollapse": {
    "category": "Network",
@@ -256,6 +256,18 @@
   "VSCodeTools": {
    "category": "Developer",
    "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs."
+  },
+  "midiMapper": {
+   "category": "Control",
+   "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config."
+  },
+  "oscMapper": {
+   "category": "Control",
+   "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design."
+  },
+  "paste_from_clipboard": {
+   "category": "Network",
+   "description": "Paste images and data from the system clipboard into TouchDesigner."
   }
  }
 }

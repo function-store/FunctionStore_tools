@@ -791,29 +791,20 @@ class MainMenuRegistryExt(RegistryBase):
 		self._ensureToolRegistryPage()
 
 	def _hostHelpUrl(self, widget):
-		"""The tool's self-reported wiki page: the host's Helpurl par when
-		set, else auto-discovered from the registered panel or its parent --
-		either a docsHelper COMP (its Url par) or a Url/Wikipage custom par
-		on the panel itself (both pre-registry self-reporting conventions)."""
+		"""The tool's docs page: the host's Helpurl par is the ONE local
+		override, else derived from the enclosing package -- the same
+		landed rule the manifest publishes (build_manifest._helpUrl). The
+		pre-registry self-reporting ladder that used to live here
+		(docsHelper Url / Url / Helpurl / Wikipage pars on the widget) was
+		measured empty fleet-wide on 2026-08-26 and is retired: it never
+		fired once, and it made every gear menu register no help link at
+		all while the manifest carried a perfect one."""
 		if hasattr(self.ownerComp.par, 'Helpurl'):
 			u = str(self.ownerComp.par.Helpurl.eval()).strip()
 			if u:
 				return u
-		for holder in (widget, widget.parent()):
-			if holder is None:
-				continue
-			dh = holder.op('docsHelper')
-			if dh is not None and hasattr(dh.par, 'Url'):
-				u = str(dh.par.Url.eval()).strip()
-				if u:
-					return u
-			for par_name in ('Url', 'Helpurl', 'Wikipage'):
-				p = getattr(holder.par, par_name, None)
-				if p is not None and p.isCustom:
-					u = str(p.eval()).strip()
-					if u:
-						return u
-		return None
+		return (self._packageHelpUrl(self.ownerComp)
+				or self._packageHelpUrl(widget) or None)
 
 	def OpenDocs(self, canonical_name):
 		"""Open the tool's self-reported wiki/help page, if it has one."""

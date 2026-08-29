@@ -86,6 +86,8 @@
   .tag-stub { background: #3b2508; color: #fdba74; }
   .tag-todo { background: var(--bg-3); color: var(--text-faint); }
   .tag-rec { background: var(--accent-dim, #2a1f08); color: var(--accent, #fbbf24); }
+  /* Read-only: gating is set in catalog.json, not here. */
+  .tag-plus { background: var(--accent-dim, #2a1f08); color: var(--accent, #fbbf24); border: 1px solid rgba(251,191,36,0.35); }
   label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
   label.check input { width: auto; margin: 0; accent-color: var(--accent, #fbbf24); }
 
@@ -119,6 +121,9 @@
   .empty { font-size: 12px; color: var(--text-faint); padding: 10px 0; }
 
   /* ───── Categories panel ───── */
+  .rec-place { display:flex; gap:8px; align-items:center; margin-top:6px; }
+  .rec-place input { flex:1; }
+  .rec-place .hint { white-space:nowrap; font-size:11px; }
   .cat-row {
     display: grid; grid-template-columns: 22px 52px 1fr 44px 26px;
     gap: 8px; align-items: start;
@@ -192,6 +197,7 @@
   <span class="dirty" id="dirty">● unsaved</span>
   <div class="spacer"></div>
   <button class="btn" id="cats">Categories</button>
+  <button class="btn" id="community">Community</button>
   <button class="btn" id="revert" disabled>Discard changes</button>
   <button class="btn" id="build">Build site</button>
   <button class="btn btn-primary" id="save" disabled>Save <kbd style="opacity:.6">⌘S</kbd></button>
@@ -279,6 +285,7 @@ function renderList() {
       const el = document.createElement('div');
       el.className = 'pkg' + (current && current.name === p.name ? ' on' : '');
       el.innerHTML = `<span class="pkg-name"></span>` +
+        (p.plus ? '<span class="tag tag-plus" title="Gated: catalog.json gives this package a non-free access tier">PLUS</span>' : '') +
         (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
         (p.stub ? '<span class="tag tag-stub">STUB</span>'
                 : (p.todos ? `<span class="tag tag-todo">${p.todos} TODO</span>` : ''));
@@ -515,6 +522,156 @@ async function renderPreview() {
 
 let catDraft = null;   // non-null while the categories panel is open
 
+let recDraft = null;
+
+/** Tools by OTHER creators. Edited here, published on its own with
+ *  `python packaging/upload.py --recommendations` -- deliberately NOT with a
+ *  release, so that REMOVING a recommendation reaches every install in
+ *  minutes rather than waiting for one. */
+function openCommunity() {
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  draft = current = null;
+  recDraft = {
+    intro: STATE.recommendations.intro,
+    tools: STATE.recommendations.tools.map((t) => ({ ...t })),
+  };
+  renderCommunity();
+  renderList();
+}
+
+function renderCommunity() {
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  const rows = recDraft.tools.map((t, i) => `
+    <div class="cat-row" data-i="${i}" style="grid-template-columns:auto 1fr auto">
+      <div class="cat-move">
+        <button data-up ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+        <button data-down ${i === recDraft.tools.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+      </div>
+      <div>
+        <input type="text" data-f="name" value="${at(t.name)}" placeholder="Tool name" />
+        <input type="text" data-f="author" value="${at(t.author)}" placeholder="Author" />
+        <input type="text" data-f="url" value="${at(t.url)}" placeholder="https://  where to get it (their page)" />
+        <input type="text" data-f="author_url" value="${at(t.author_url)}" placeholder="https://  the author (optional)" />
+        <textarea class="cat-pitch" data-f="description" rows="2" placeholder="One or two lines. Max 400 characters.">${String(t.description || '').replace(/</g, '&lt;')}</textarea>
+        <div class="rec-place">
+          <input type="text" data-f="tox_url" value="${at(t.tox_url)}" placeholder="https://  direct .tox link (optional — enables Place)" />
+          <button class="btn" data-pin>${t.sha256 ? 'Re-pin' : 'Pin'}</button>
+          <span class="hint">${t.sha256
+            ? 'pinned ' + (t.pinned_at || '') + ' · ' + t.sha256.slice(0, 12) + '… · ' + t.bytes + ' bytes'
+            : 'link only until pinned'}</span>
+        </div>
+      </div>
+      <button class="icon-x" data-del title="Remove">&times;</button>
+    </div>`).join('');
+
+  $('#editor').innerHTML = `
+    <h2 class="pane-title">From other creators</h2>
+    <p class="pane-sub">packaging/<span class="mono">recommendations.json</span> &middot; published on its own with <span class="mono">upload.py --recommendations</span>, not with a release</p>
+    <p class="warn">These are <b>links, not packages</b>. Nothing here is downloaded, hashed, installed or updated by FNSTools &mdash; the button opens the author's own page. Links must be https.</p>
+    <label>Intro <span class="hint">shown above the section</span></label>
+    <textarea class="cat-pitch" id="rec-intro" rows="2">${String(recDraft.intro || '').replace(/</g, '&lt;')}</textarea>
+    <div id="recrows" style="margin-top:14px">${rows || '<p class="empty">No community tools listed yet.</p>'}</div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" id="rec-add">+ Add tool</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="rec-cancel">Cancel</button>
+      <button class="btn btn-primary" id="rec-save">Save community list</button>
+    </div>`;
+
+  $('#rec-intro').oninput = (e) => { recDraft.intro = e.target.value; };
+  $('#recrows').oninput = (e) => {
+    const row = e.target.closest('.cat-row');
+    if (!row || !e.target.dataset.f) return;
+    const t = recDraft.tools[Number(row.dataset.i)];
+    const v = e.target.value;
+    // An empty optional field is DROPPED rather than stored as '' -- the
+    // publisher rejects unknown/blank shapes, and a row full of empty
+    // strings is noise in the diff git is meant to be the audit trail of.
+    const f = e.target.dataset.f;
+    if (v.trim() === '' && ['author_url', 'description', 'tox_url'].includes(f)) {
+      delete t[f];
+    } else {
+      t[f] = v;
+    }
+    // A pin belongs to ONE url. Changing or clearing the url must drop it,
+    // or a row keeps a hash for bytes that are no longer what it points at.
+    if (f === 'tox_url') { delete t.sha256; delete t.bytes; delete t.pinned_at; }
+  };
+  $('#recrows').onclick = (e) => {
+    const row = e.target.closest('.cat-row');
+    if (!row) return;
+    const i = Number(row.dataset.i);
+    if (e.target.hasAttribute('data-up')) swapRec(i, i - 1);
+    else if (e.target.hasAttribute('data-down')) swapRec(i, i + 1);
+    else if (e.target.hasAttribute('data-del')) {
+      if (!confirm('Remove "' + (recDraft.tools[i].name || 'this tool') + '"?')) return;
+      recDraft.tools.splice(i, 1);
+      renderCommunity();
+    } else if (e.target.hasAttribute('data-pin')) {
+      pinTool(i, e.target);
+    }
+  };
+  $('#rec-add').onclick = () => {
+    recDraft.tools.push({ name: '', author: '', url: '' });
+    renderCommunity();
+    const inputs = document.querySelectorAll('[data-f="name"]');
+    inputs[inputs.length - 1].focus();
+  };
+  $('#rec-cancel').onclick = () => {
+    recDraft = null;
+    $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>';
+  };
+  $('#rec-save').onclick = saveCommunity;
+}
+
+/** Fetch the author's .tox once and record exactly what came back.
+ *  Pinning is a deliberate act of vetting -- it is what makes it honest to
+ *  offer Place rather than only a link. */
+async function pinTool(i, btn) {
+  const t = recDraft.tools[i];
+  const url = String(t.tox_url || '').trim();
+  if (!url) { toast('Add a direct .tox link first', 'bad'); return; }
+  const was = btn.textContent;
+  btn.textContent = 'Fetching…';
+  btn.disabled = true;
+  try {
+    const r = await api('/api/pin', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tox_url: url }),
+    });
+    t.sha256 = r.sha256; t.bytes = r.bytes; t.pinned_at = r.pinned_at;
+    renderCommunity();
+    toast('Pinned ' + r.bytes + ' bytes — save to keep it', 'ok');
+  } catch (e) {
+    btn.textContent = was; btn.disabled = false;
+    toast(String(e.message || e), 'bad');
+  }
+}
+
+function swapRec(a, b) {
+  if (b < 0 || b >= recDraft.tools.length) return;
+  [recDraft.tools[a], recDraft.tools[b]] = [recDraft.tools[b], recDraft.tools[a]];
+  renderCommunity();
+}
+
+async function saveCommunity() {
+  try {
+    STATE = await api('/api/recommendations', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(recDraft),
+    });
+    recDraft = null;
+    $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>';
+    renderList();
+    toast('Community list saved — publish it with upload.py --recommendations', 'ok');
+  } catch (e) {
+    toast(String(e.message || e), 'bad');
+  }
+}
+
 function openCategories() {
   if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
       !confirm('Discard unsaved changes to ' + current.name + '?')) return;
@@ -688,6 +845,7 @@ document.querySelectorAll('.chip').forEach((c) => {
 });
 $('#filter').oninput = renderList;
 $('#cats').onclick = openCategories;
+$('#community').onclick = openCommunity;
 $('#save').onclick = save;
 $('#build').onclick = build;
 $('#revert').onclick = () => {

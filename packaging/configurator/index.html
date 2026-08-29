@@ -155,6 +155,10 @@
     border-color: var(--accent);
     background: linear-gradient(135deg, rgba(251,191,36,0.07) 0%, var(--bg-1) 55%);
   }
+  .card.rec { cursor: pointer; text-decoration: none; }
+  .card.rec:hover { border-color: var(--accent); }
+  .rec-by { font-size: 12px; opacity: .75; }
+  .chip.rec { border-style: dashed; }
   .card.core { cursor: default; }
   .card.core:hover { border-color: var(--border); background: var(--bg-1); }
   .card input {
@@ -183,6 +187,22 @@
   .chip.hint {
     background: var(--warn-dim); border-color: rgba(251,146,60,0.3); color: var(--warn);
   }
+  /* Plus: a package the gate serves only to an entitled account. Marked, not
+     hidden -- the decision was "visible and locked", because a picker that
+     hides them lies about what the toolkit is. It is still tickable: this
+     page does not know your entitlement (the server does), and refusing the
+     tick here would be a client-side lock, which is exactly the thing that
+     means nothing. */
+  .chip.plus {
+    background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
+    font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 10px;
+  }
+  a.chip.plus:hover { border-color: var(--accent); }
+  .card.plus { border-color: rgba(251,191,36,0.22); }
+  .plus-hint {
+    margin-top: 10px; font-size: 12.5px; color: var(--text-dim);
+  }
+  .plus-hint a { color: var(--accent); }
 
   .empty { padding: 48px 0; text-align: center; color: var(--text-faint); }
   .empty code {
@@ -363,7 +383,7 @@
 // from it so they resolve identically in all three flavors -- including the
 // one served from inside TouchDesigner, where a root-relative /docs/ would
 // point at the installer's own web server.
-var FNS_DOCS = 'https://tools.functionstore.xyz';
+var FNS_DOCS = 'https://functionstore.tools';
 
 // A freshly dropped bootstrap (served mode, target holds nothing yet) runs
 // the guided first run: the hero speaks to someone who has never seen the
@@ -511,10 +531,15 @@ function fnsBoot() {
       .replace(/^-+|-+$/g, '');
   }
 
+  // `access` NAMES A TIER, so anything that is not the literal 'free' is
+  // gated; absent means free, which is what a manifest published before
+  // gating existed carries.
+  function isPlus(p) { return !!p.access && p.access !== 'free'; }
+
   function card(p) {
     var on = picked.has(p.name);
     var el = document.createElement('label');
-    el.className = 'card' + (on ? ' on' : '');
+    el.className = 'card' + (on ? ' on' : '') + (isPlus(p) ? ' plus' : '');
     el.setAttribute('data-name', p.name);
 
     var cb = document.createElement('input');
@@ -547,6 +572,11 @@ function fnsBoot() {
 
     var chips = document.createElement('div');
     chips.className = 'chips';
+    if (isPlus(p)) {
+      var pl = docsLink(FNS_DOCS + '/plus/', 'Plus', 'chip plus');
+      pl.addEventListener('click', function (e) { e.stopPropagation(); });
+      chips.appendChild(pl);
+    }
     (p.surfaces || []).forEach(function (s) { chips.appendChild(chip(s)); });
     // an integration whose partner is not selected: say so plainly rather
     // than blocking the choice -- these degrade by design
@@ -571,6 +601,63 @@ function fnsBoot() {
     c.className = 'chip' + (cls ? ' ' + cls : '');
     c.textContent = text;
     return c;
+  }
+
+  /** A tool by someone else. Deliberately NOT a .card: no checkbox, no
+   *  selected state, nothing that can end up in the install plan. The
+   *  author is named ON the card because that is the honest framing --
+   *  we are pointing, not shipping. */
+  function recCard(r) {
+    var el = document.createElement('a');
+    el.className = 'card rec';
+    el.href = r.url;
+    el.target = '_blank';
+    el.rel = 'noopener noreferrer';
+    var body = document.createElement('div');
+    body.className = 'body';
+    var n = document.createElement('div');
+    n.className = 'name';
+    n.appendChild(document.createTextNode(r.name));
+    body.appendChild(n);
+    if (r.author) {
+      var by = document.createElement('div');
+      by.className = 'rec-by';
+      by.textContent = 'by ' + r.author;
+      body.appendChild(by);
+    }
+    if (r.description) {
+      var d = document.createElement('div');
+      d.className = 'desc'; d.textContent = r.description;
+      body.appendChild(d);
+    }
+    var chips = document.createElement('div');
+    chips.className = 'chips';
+    chips.appendChild(chip('opens their site ↗', 'rec'));
+    body.appendChild(chips);
+    el.appendChild(body);
+    return el;
+  }
+
+  /** Fetched at RUNTIME, not baked into the manifest: the list publishes on
+   *  its own so that pulling a recommendation reaches everyone in minutes
+   *  without cutting a release. Failure is silent by design -- an offline
+   *  picker simply shows no community section, which costs the user
+   *  nothing, and must never block the packages they came for. */
+  function loadRecommends() {
+    var base = String((window.FNS_MANIFEST || {}).base_url || '').replace(/\/+$/, '');
+    if (!base) return;
+    fetch(base + '/recommendations.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (doc) {
+        if (!doc || !Array.isArray(doc.tools) || !doc.tools.length) return;
+        window.FNS_RECOMMENDS = doc.tools.filter(function (t) {
+          // Belt and braces: never render a row without a name and an
+          // https link, whatever the file says.
+          return t && t.name && String(t.url || '').indexOf('https://') === 0;
+        });
+        render();
+      })
+      .catch(function () { /* offline, or no list published yet */ });
   }
 
   function coreCard(p) {
@@ -659,6 +746,24 @@ function fnsBoot() {
       listEl.appendChild(g);
     });
 
+    // Tools by OTHER creators. Rendered LAST and never selectable: these are
+    // links to someone else's download page, not packages. Nothing here
+    // enters `picked`, so the install plan cannot see them.
+    var recs = (window.FNS_RECOMMENDS || []).filter(function (r) {
+      if (!q) return true;
+      return (r.name + ' ' + (r.author || '') + ' ' + (r.description || ''))
+        .toLowerCase().indexOf(q) !== -1;
+    });
+    if (recs.length) {
+      shown += recs.length;
+      listEl.appendChild(heading('From other creators',
+        recs.length + ' link' + (recs.length === 1 ? '' : 's')));
+      var gr = document.createElement('div');
+      gr.className = 'grid';
+      recs.forEach(function (r) { gr.appendChild(recCard(r)); });
+      listEl.appendChild(gr);
+    }
+
     document.getElementById('empty').hidden = shown > 0 || !q;
     document.getElementById('cnt').textContent = picked.size;
     var need = new Set();
@@ -668,11 +773,20 @@ function fnsBoot() {
     var removals = served ? installedNow.filter(function (n) {
       return !picked.has(n);
     }).length : 0;
+    var plusPicked = Array.from(picked).filter(function (n) {
+      return byName[n] && isPlus(byName[n]);
+    }).length;
     document.getElementById('deps').textContent =
       (need.size
         ? '+ ' + need.size + ' core package' + (need.size === 1 ? '' : 's') +
           ' they need (already included)' : '') +
-      (removals ? (need.size ? ' · ' : '') + removals + ' will be removed' : '');
+      (removals ? (need.size ? ' · ' : '') + removals + ' will be removed' : '') +
+      // Said here rather than by refusing the tick: entitlement is the
+      // server's answer, and this page has not asked it.
+      (plusPicked
+        ? ((need.size || removals) ? ' · ' : '') +
+          plusPicked + ' Plus tool' + (plusPicked === 1 ? '' : 's') +
+          ' — installs once unlocked' : '');
     var save = document.getElementById('save');
     if (served && locked) {
       save.textContent = 'Locked (source checkout)';
@@ -710,7 +824,7 @@ function fnsBoot() {
   }
 
   document.getElementById('alldocs').href = FNS_DOCS + '/docs/';
-  document.getElementById('dlgdocs').href = FNS_DOCS + '/#quickstart';
+  document.getElementById('dlgdocs').href = FNS_DOCS + '/#get';
   document.getElementById('q').addEventListener('input', render);
   document.getElementById('all').addEventListener('click', function () {
     tools.forEach(function (p) { picked.add(p.name); }); save(); render();
@@ -1030,6 +1144,7 @@ function fnsBoot() {
   });
 
   render();
+  loadRecommends();
   if (firstrun) {
     if (sessionFlag('fns.welcomed')) setStep(2); else showWelcome();
   }

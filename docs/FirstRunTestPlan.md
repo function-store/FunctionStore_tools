@@ -119,7 +119,7 @@ flip): **no** "Set up like last time" card.
 
 ## Run 3 — Paste rail does not double-trigger
 
-1. On `tools.functionstore.xyz/get/` pick two tools → **Copy install
+1. On `functionstore.tools/get/` pick two tools → **Copy install
    script**. Paste into the Textport of a bare project.
 2. **Expect:** the bootstrap lands and installs the selection; **no picker
    opens** over it (`root.fetch('FNS_welcomed')` = `'paste'`).

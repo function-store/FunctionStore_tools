@@ -240,7 +240,7 @@ class NavbarRegistryExt(RegistryBase):
 			inst.destroy()
 			inst = None
 		if inst is None:
-			inst = bar.copy(source, name=name)
+			inst = self._copyQuiet(bar, source, name)
 			inst.tags.add(self.ITEM_TAG)
 			inst.store('nbsrc', int(source.id))
 			inst.allowCooking = True
@@ -250,10 +250,23 @@ class NavbarRegistryExt(RegistryBase):
 			# component ships standalone); the bar copy must not -- the
 			# /sys-or-/ui guard would neutralize it anyway, but keep
 			# instances lean
-			embedded = inst.op('NavbarRegistry')
-			if embedded is not None:
-				embedded.par.Autoregister = False
+			# 'NavbarRegistry' is the PRE-v3.0.0 name; hosts are 'FNS_NavbarRegistry'
+			# now, so this looked up nothing and every bar copy kept a live host
+			# inside it -- measured, one per bar across all 7. Strip by the
+			# registry's real name, and keep the legacy spelling so copies made
+			# before the rename are cleaned up on the next inject.
+			for _hname in (self.REGISTRY_NAME, 'NavbarRegistry'):
+				embedded = inst.op(_hname)
+				if embedded is None:
+					continue
+				# destroy it, do NOT touch its parameters first. Writing
+				# Autoregister here fired the par callback, which compiled the
+				# copy's extension -- postInit -> _applyHostRegistration ->
+				# RegisterWidget -> _syncSurface -> _injectItem -> copy() -- the
+				# very loop this strip exists to prevent. A destroy needs no
+				# extension, so the host never gets to speak.
 				embedded.destroy()
+			self._detachInstanceFiles(inst)
 		if kind == 'logic':
 			return  # presence is the whole contract
 		self._anchorItem(inst, bar)
@@ -355,6 +368,79 @@ class NavbarRegistryExt(RegistryBase):
 		stale = bar.op(self._itemName(canonical))
 		if stale is not None and self.ITEM_TAG in stale.tags:
 			stale.destroy()
+
+	# tags that mark an operator as the tracked OWNER of a file on disk; a
+	# runtime copy under /ui is never that owner. TDExtension/TDCode are TD's
+	# own markers and must survive -- stripping TDExtension unloads the
+	# extension.
+	OWNERSHIP_TAGS = ('FNS_externalized', 'pi_suspect')
+
+	def _copyQuiet(self, bar, source, name):
+		"""Copy a source into a bar without letting its embedded host wake up.
+
+		Every source ships its own registry host inside it (each component has to
+		stand alone), and TD initializes a copy's extensions DURING copy(). So the
+		copy's host ran postInit -> _applyHostRegistration -> RegisterWidget ->
+		_syncSurface -> _injectItem -> copy() again. Destroying the host after the
+		copy, which is what this used to rely on, is far too late: it has already
+		registered by then.
+
+		Captured stack from a single middle-click:
+			RegistryBase.__init__ -> postInit -> _applyHostRegistration
+			-> RegisterWidget
+		firing for all four entries, repeatedly, with prev_panel_id=None -- the
+		copy's host has its OWN empty store, so every one of those was a fresh
+		registration. The result was every item in every bar destroyed and
+		rebuilt twice per click, and because RegisterWidget re-enters the shared
+		registry machinery it dragged unrelated registries (the timeline) and
+		other tools' extensions through a reinit at the same time.
+
+		initextonstart=False on the SOURCE host is inherited by the copy, so the
+		copy comes up silent and is destroyed before it can ever speak. Restored
+		in a finally: the source's own host must keep initializing normally.
+		"""
+		hosts = [h for h in (source.op(n) for n in (self.REGISTRY_NAME, 'NavbarRegistry'))
+				 if h is not None and hasattr(h.par, 'initextonstart')]
+		saved = [(h, h.par.initextonstart.eval()) for h in hosts]
+		try:
+			for h, _ in saved:
+				h.par.initextonstart = False
+			self._injecting = True
+			return bar.copy(source, name=name)
+		finally:
+			self._injecting = False
+			for h, v in saved:
+				try:
+					h.par.initextonstart = v
+				except Exception:
+					pass
+
+	def _detachInstanceFiles(self, inst):
+		"""Cut a bar copy loose from the source's externalized files.
+
+		`copy()` brings every DAT's `file` + `syncfile` with it, so each pane bar
+		became another owner of the SAME .py: measured, one master plus one copy
+		per bar all bound to
+		`.../parent_hierarchy/ParentHierarchyExt.py`. Any write to that file --
+		an Embody re-export, a PI save, an edit -- reloads all of them and
+		reinitializes their extensions, which is the `ParentHierarchy: postInit`
+		storm on the pane instances and the frame it costs to rebuild a 300-op
+		widget. They are also all WRITERS, which is exactly the one-owner-per-file
+		rule Embody exists to keep.
+
+		The instance is a runtime artifact: it should hold the text it was copied
+		with and answer to nothing on disk.
+		"""
+		for d in inst.findChildren(type=DAT):
+			try:
+				if d.par.syncfile.eval() or d.par.file.eval():
+					d.par.syncfile = False
+					d.par.file = ''
+			except Exception:
+				pass
+			if d.tags:
+				d.tags -= set(self.OWNERSHIP_TAGS)
+		inst.tags -= set(self.OWNERSHIP_TAGS)
 
 	def _anchorItem(self, inst, bar):
 		"""Wire the instance's panel input to the bar's emptypanel when it is
@@ -499,6 +585,18 @@ class NavbarRegistryExt(RegistryBase):
 		if source_registry is not None:
 			entry['source_registry'] = source_registry.path
 			entry['source_registry_id'] = int(source_registry.id)
+		# A registration arriving while THIS registry is mid-copy can only have
+		# come from the copy's own embedded host. TD compiles a copy's extensions
+		# during copy(), before the COMP is parented, so that host's own
+		# /sys-or-/ui guard sees a temporary path and lets it through -- it then
+		# registers, which destroys and rebuilds every instance in every bar,
+		# which copies again. That is the middle-click storm: every item in all
+		# four bars replaced twice per click, dragging every other registry's
+		# hosts through a reinit with it. Paths are not settled yet at that
+		# point, so the reliable signal is not where the host is but WHEN it
+		# spoke.
+		if getattr(self, '_injecting', False):
+			return
 		prev = self.stored['PaneRegistry'].get(canonical_name)
 		self.stored['PaneRegistry'][canonical_name] = entry
 		self.fnsLog(f'{self.REGISTRY_NAME}: registered {kind} "{canonical_name}" ({widget_op.path}, side={side})')
@@ -706,23 +804,32 @@ class NavbarRegistryExt(RegistryBase):
 			self._clearHostRegistration()
 			self._setRegStatus('Idle')
 			return
+		# A FAILURE TO RESOLVE IS NOT A REQUEST TO UNREGISTER. These three
+		# branches used to call _clearHostRegistration, which unregisters for
+		# real: _unregisterOwnedMenuName -> UnregisterPanel -> UnregisterWidget
+		# -> _destroyInstances, wiping this entry from EVERY bar. That is
+		# catastrophic for a transient, and reinit is exactly when it happens --
+		# opening TD's Component Editor on a COMP re-instantiates the extensions
+		# inside it (measured: 3 of 158 probed extensions reinit, all inside the
+		# opened COMP), so a host mid-rebuild cannot resolve its widget yet,
+		# takes this path, and destroys every instance in every bar. The new
+		# extension then re-registers and rebuilds them: the flicker, the frame,
+		# and the postInit storm on a middle-click, which opens that editor.
+		#
+		# A widget that is genuinely gone is still collected -- _pruneItems and
+		# the heal pass key off whether the entry RESOLVES, not off this call --
+		# so nothing is leaked by leaving the registration alone here.
 		widget = self._hostComp()
 		if not widget:
-			if not force:
-				self._clearHostRegistration()
 			self._setRegStatus('Error: no source COMP')
 			return
 		canonical = self._hostCanonicalName()
 		if not canonical:
-			if not force:
-				self._clearHostRegistration()
 			self._setRegStatus('Error: empty canonical name')
 			return
 		kind = self._hostKind()
 		err = self._validateWidget(widget, kind)
 		if err:
-			if not force:
-				self._clearHostRegistration()
 			self._setRegStatus(f'Error: {err}')
 			return
 		display = self._parBool('Displayed', True)

@@ -13,5 +13,49 @@
   "needs updating is decided by its Pkgversion, not by this."
  ],
  "release": "v3.0.1",
- "channel": "stable"
+ "channel": "stable",
+ "_discovery_comment": [
+  "These two ride into the DISCOVERY document, not the manifest -- they are",
+  "the only two levers that reach an install whose endpoint has moved or",
+  "whose updater is broken.",
+  "",
+  "minimum_updater: the oldest FNS_Updater Pkgversion still allowed to run.",
+  "Empty means no floor, which is the normal state. Raise it ONLY when a",
+  "shipped updater is genuinely dangerous: every install below the floor",
+  "stops updating and tells the user why. It cannot be undone for anyone",
+  "who is offline, so treat it as a recall, not a nudge.",
+  "",
+  "notices: short messages every install sees. Keep them few and true."
+ ],
+ "minimum_updater": "",
+ "notices": [],
+ "_retired_comment": [
+  "Packages this release DELIBERATELY no longer ships. publish.py refuses",
+  "to stage a release that drops a package the previous one published",
+  "unless the name is listed here -- the manifest is regenerated wholesale",
+  "from the live project, so an unloaded package would otherwise vanish",
+  "silently and every install would stop being offered it.",
+  "",
+  "The four below are the 3.0 redesign's renames and dissolutions, which",
+  "happened before the guard existed: FNS_Config -> FNS_ConfigRegistry (+",
+  "FNS_ConfigHost), FNS_MainMenu -> FNS_MainMenuRegistry, UPDATER ->",
+  "FNS_Updater, and tools_ui dissolved into FNS_Hub. They are declared",
+  "here because they are genuinely gone, not because the guard is noisy.",
+  "",
+  "Prune a name once no published manifest still lists it: a stale entry",
+  "pre-authorises a future accidental drop. Stage() reports stale entries.",
+  "",
+  "MY_HOTKEYS (dissolved into CustomParTools + TDX_SearchPalette) and",
+  "QuickParCustom (folded into CustomParTools) retired in the v3.0.x",
+  "cycle -- declared 2026-08-28 ahead of the first v3 Stage(), which",
+  "would otherwise refuse them as undeclared drops."
+ ],
+ "retired": [
+  "FNS_Config",
+  "FNS_MainMenu",
+  "UPDATER",
+  "tools_ui",
+  "MY_HOTKEYS",
+  "QuickParCustom"
+ ]
 }

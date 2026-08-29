@@ -1,4 +1,4 @@
-/* Docs pages for tools.functionstore.xyz.
+/* Docs pages for functionstore.tools.
    Hand-authored and lives at website/ — website/docs/ is generated and
    wiped on every build, so nothing authored may sit inside it.
    Shares the family's token names; only --accent differs per site. */
@@ -254,4 +254,187 @@ footer.site { border-top: 1px solid var(--border); padding: 28px 0; }
     border-bottom: 1px solid var(--border);
   }
   .side-group { margin-bottom: 16px; }
+}
+
+/* ═════ Plus ═════
+   Used by /plus/ (generated from content/plus.html) and by the Plus marker
+   on package pages, the docs index and the sidebar.
+
+   These mirror the same-named rules in index.html's inline <style>, the way
+   the tokens and the header already do: the landing page carries its own
+   copy of the chrome so it loads one stylesheet, docs.css carries the copy
+   every generated page uses. Same names, same values — keep them in step. */
+
+.plus-mark {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 5px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(251,191,36,0.28);
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+a .plus-mark, .side-group .plus-mark { margin-left: 7px; }
+
+/* The unlock callout at the top of a Plus package's page. */
+.plus-note {
+  border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 12px;
+  background:
+    radial-gradient(420px 160px at 100% 0%, rgba(251,191,36,0.07), transparent 70%),
+    var(--bg-1);
+  padding: 18px 20px;
+  margin: 0 0 28px;
+  font-size: 14.5px; color: var(--text-dim);
+}
+.plus-note strong { color: var(--text); }
+.plus-note p { margin: 0 0 10px; }
+.plus-note p:last-child { margin-bottom: 0; }
+
+/* ───── Progressive disclosure ───── */
+details.fold {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-1);
+  margin: 0 0 10px;
+}
+details.fold > summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-size: 14.5px; font-weight: 600;
+  color: var(--text);
+  display: flex; align-items: center; gap: 10px;
+  list-style: none;
+}
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::before {
+  content: '+';
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: var(--accent); font-size: 15px; line-height: 1;
+  width: 12px; text-align: center; flex: none;
+}
+details.fold[open] > summary::before { content: '−'; }
+details.fold > summary:hover { color: var(--accent); }
+details.fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fold-body { padding: 0 16px 16px 38px; font-size: 14.5px; color: var(--text-dim); }
+.fold-body > :first-child { margin-top: 0; }
+.fold-body > :last-child { margin-bottom: 0; }
+.fold-body p { margin: 0 0 10px; }
+
+/* ───── The Plus page ───── */
+.plus-page { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+.plus-page h1 { font-size: clamp(32px, 4.4vw, 44px); font-weight: 700; letter-spacing: -0.025em; margin: 0 0 14px; }
+.plus-page h2 {
+  font-size: 24px; font-weight: 650; letter-spacing: -0.015em;
+  margin: 52px 0 14px; padding-top: 4px;
+}
+.plus-page h3 {
+  font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
+  margin: 30px 0 10px;
+}
+.plus-page > p { color: var(--text-dim); max-width: 68ch; }
+.plus-page .lede { font-size: 18px; max-width: 68ch; margin-bottom: 36px; }
+
+.tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; margin: 22px 0; }
+.tier {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-1);
+  padding: 26px 24px;
+  display: flex; flex-direction: column;
+}
+.tier--plus {
+  border-color: rgba(251,191,36,0.32);
+  background:
+    radial-gradient(520px 200px at 100% 0%, rgba(251,191,36,0.07), transparent 70%),
+    var(--bg-1);
+}
+.tier-tag {
+  display: inline-flex; align-self: flex-start;
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 999px;
+  background: var(--bg-3); color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.tier--plus .tier-tag { background: var(--accent-dim); color: var(--accent); border-color: rgba(251,191,36,0.3); }
+.tier h3 { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; margin: 15px 0 8px; }
+.tier > p { color: var(--text-dim); font-size: 15px; margin: 0 0 18px; }
+.tier ul { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 11px; }
+.tier li { position: relative; padding-left: 24px; font-size: 14.5px; color: var(--text-dim); }
+.tier li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--green); font-size: 13px; font-weight: 700; }
+.tier--plus li::before { content: '◆'; color: var(--accent); font-size: 11px; }
+.tier li strong { color: var(--text); font-weight: 600; }
+.tier-actions { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.plus-tiers { margin-bottom: 8px; }
+
+/* The generated Plus package list. */
+.plus-pkgs { display: grid; gap: 12px; margin: 22px 0; }
+.plus-pkg {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px;
+  border: 1px solid rgba(251,191,36,0.22);
+  border-radius: 12px; background: var(--bg-1);
+  padding: 18px 20px;
+}
+.plus-pkg b { font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; color: var(--text); }
+.plus-pkg span { display: block; font-size: 14px; color: var(--text-dim); margin-top: 5px; }
+.plus-pkg .cat-of { color: var(--text-faint); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 8px; }
+.plus-pkgs-empty { color: var(--text-faint); font-style: italic; }
+
+.plus-steps { counter-reset: step; list-style: none; margin: 22px 0; padding: 0; display: grid; gap: 12px; }
+.plus-steps li {
+  counter-increment: step;
+  position: relative; padding: 16px 20px 16px 58px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--bg-1);
+  color: var(--text-dim); font-size: 15px;
+}
+.plus-steps li::before {
+  content: counter(step);
+  position: absolute; left: 18px; top: 15px;
+  width: 26px; height: 26px; border-radius: 8px;
+  display: grid; place-items: center;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(251,191,36,0.28);
+  font-size: 13px; font-weight: 700;
+}
+.plus-steps strong { color: var(--text); }
+
+.plus-facts { list-style: none; margin: 22px 0; padding: 0; display: grid; gap: 14px; }
+.plus-facts li {
+  position: relative; padding-left: 26px;
+  color: var(--text-dim); font-size: 15px; max-width: 74ch;
+}
+.plus-facts li::before {
+  content: '◆'; position: absolute; left: 0; top: 1px;
+  color: var(--accent); font-size: 11px;
+}
+.plus-facts strong { color: var(--text); }
+
+/* ───── The rest of the family ───── */
+.prod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin: 22px 0; }
+.prod {
+  display: block;
+  border: 1px solid var(--border); border-radius: 14px;
+  background: var(--bg-1); padding: 24px 24px 22px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.prod:hover { border-color: var(--border-strong); background: var(--bg-2); }
+.prod-kind { font-size: 11.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.prod-name { display: block; font-size: 19px; font-weight: 700; letter-spacing: -0.015em; color: var(--text); margin: 8px 0; }
+.prod:hover .prod-name { color: var(--accent); }
+.prod-pitch { display: block; font-size: 14.5px; color: var(--text-dim); margin-bottom: 14px; }
+.prod-access { display: block; font-size: 13px; color: var(--text-faint); border-top: 1px solid var(--border); padding-top: 12px; }
+
+.plus-cta {
+  margin: 64px 0 0; padding: 36px 28px;
+  border: 1px solid var(--border); border-radius: 16px;
+  background: var(--bg-1); text-align: center;
+}
+.plus-cta h2 { margin: 0 0 10px; }
+.plus-cta p { color: var(--text-dim); max-width: 56ch; margin: 0 auto 24px; }
+.hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-lg { padding: 14px 26px; font-size: 15px; }
+
+@media (max-width: 860px) {
+  .tiers, .prod-grid { grid-template-columns: 1fr; }
+  .plus-pkg { grid-template-columns: 1fr; }
 }

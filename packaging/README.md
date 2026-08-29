@@ -153,7 +153,7 @@ the webBrowser panel — Pick Tools opens the system browser.
 **One file, three flavors.** `configurator/index.html` is served here,
 double-clicked as `configurator-standalone.html`, and published as
 `/get/` — so every style it needs is inline and every documentation link
-it builds is absolute (`https://tools.functionstore.xyz/...`). A
+it builds is absolute (`https://functionstore.tools/...`). A
 root-relative `/docs/` would point at the installer's own web server.
 The site build dresses it in the real site header and footer by replacing
 the `<!-- FNS:HEADER -->` and `<!-- FNS:FOOTER -->` markers, and refuses
@@ -245,7 +245,7 @@ exec(open('packaging/install.py').read())
 Install('packaging/example-selection.json')
 ```
 
-**Or the paste rail, no download at all.** `tools.functionstore.xyz/get/`
+**Or the paste rail, no download at all.** `functionstore.tools/get/`
 serves the same picker (emitted by `website/tools/build-site.mjs` from
 `configurator/index.html`, manifest baked in at site build). **Copy
 install script** turns the selection into ONE Textport line that embeds

@@ -60,6 +60,16 @@ class ConsoleRegistryExt(RegistryBase):
 
 	SERVER_NAME = 'console_server'
 	PAGE_NAME = 'console_page'
+
+	# A Web Server DAT with a BLANK Local Address listens on EVERY interface,
+	# not just loopback (Derivative: "When left blank, the Web Server DAT will
+	# listen on all interfaces"). Everything here builds 127.0.0.1 URLs and
+	# reads as private, and _freeUiPort's s.bind(('127.0.0.1', port)) looks
+	# like what makes it so -- but that socket only TESTS the port and is
+	# closed again; it constrains nothing. Left blank, this console served
+	# /api/set, /api/import and /install, unauthenticated, to anyone on the
+	# same network -- and TD users work on venue and festival wifi.
+	BIND_ADDRESS = '127.0.0.1'
 	CALLBACKS_NAME = 'console_server_callbacks'
 	# assets the global must carry to serve anything; pulled from the master
 	# when a promoted copy predates them
@@ -489,7 +499,26 @@ class ConsoleRegistryExt(RegistryBase):
 		cb = comp.op(self.CALLBACKS_NAME)
 		if cb is not None and ws.par.callbacks.eval() is not cb:
 			ws.par.callbacks = cb.name
+		# Set UNCONDITIONALLY, not just on the create branch: a server that
+		# already exists -- in the .toe, or inside a .tox published before
+		# this line -- carries the old blank value, and only re-asserting it
+		# on every ensure repairs those installs. See BIND_ADDRESS.
+		self._bindLoopback(ws)
 		return ws
+
+	def _bindLoopback(self, ws):
+		"""Pin a Web Server DAT to loopback. Idempotent; never raises --
+		a refusal to serve is worse than the thing this guards against
+		only if it also fails to guard, so it logs and lets the caller on."""
+		if ws is None:
+			return
+		try:
+			if str(ws.par.localaddress.eval()) != self.BIND_ADDRESS:
+				ws.par.localaddress = self.BIND_ADDRESS
+		except Exception as e:
+			self.fnsLog(f'{self.REGISTRY_NAME}: could not pin {ws.path} to '
+						f'{self.BIND_ADDRESS} ({e}) -- it may be reachable '
+						f'from the network', level='ERROR')
 
 	def _freeUiPort(self):
 		import socket

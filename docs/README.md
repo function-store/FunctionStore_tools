@@ -32,14 +32,24 @@ Normative. Conform to these; they describe how the toolkit works today.
 | [ConfigScope.md](ConfigScope.md) | The Config Scope parameter: whether the toolkit's persisted settings roam machine-globally or stay pinned to the project. | 33b955d 2026-08-21 | `/fns-config-scope` |
 | [ConfiguratorDistribution.md](ConfiguratorDistribution.md) | How a user picks and chooses which tools to install: buckets, manifests, Pkgversion-driven updates, and the bootstrap rail. | 2026-08-13 (buckets + manifests decision) | `/fns-packaging` |
 | [ConsoleTabContract.md](ConsoleTabContract.md) | What a tool must do to publish a tab into the FNS_Console web front -- RegisterTab, the api DAT contract, and the rejection rules. | 53eb4ed 2026-08-22 | `/fns-registry` |
+| [ExternalizationOwnership.md](ExternalizationOwnership.md) | The ownership rule for the two file-externalization mechanisms — Private Investigator owns externalization and release; Embody is the Envoy/MCP layer, and its file rows are an editing convenience, never a registry of record. | 2026-08-28 (owner decision; audits 2026-08-27 surfaced the ambiguity) | `/externalize-operator` |
 | [HotkeyManagerConformance.md](HotkeyManagerConformance.md) | Why FNS_HotkeyManager persists only declared sources and reads defaults off the parameter -- the reasoning behind the conformance rules. | 97bda12 2026-08-21 | `/fns-hotkey-conformance` |
 | [HubContract.md](HubContract.md) | What a tool must do to show a tab in FNS_Hub -- the FNS_HubRegistry host, RegisterTab, the three tab kinds, exposure, and the hazards the build paid for. | 2026-08-23 (FNS_Hub build, branch uniUI) | `/fns-registry` |
 | [LastInstallRecord.md](LastInstallRecord.md) | "Set up like last time" — the machine's last install roams as state on the toolkit root's own config host; a fresh bootstrap offers it, never applies it. | unreleased 2026-08-22 (landed with the first-run welcome; root host now ships in the bootstrap) | — |
+| [MarkersToolContract.md](MarkersToolContract.md) | FNS_Markers -- imports marker lists from Resolve, Premiere, Audacity and FCPXML and draws them as vertical coloured lines in TD's timeline strip and Animation editor. Lives under FNS_TimelineTools; the third layer of the background composite. | 2026-08-26 | `/fns-registry` |
+| [Overview.md](Overview.md) | One-page map of the schemes in force — what a package is, how it ships, how it updates, where settings live. Orientation only; every detail is owned by the linked document. | 2026-08-26 | — |
 | [PackagingScheme.md](PackagingScheme.md) | The packaging and update scheme in one page -- buckets and manifests, Pkgversion as the governed version, derived dependencies, and the traps already paid for. | 2026-08-13 (consolidated from three sessions) | `/fns-packaging` |
 | [PaletteTabContract.md](PaletteTabContract.md) | How a tool contributes a tab to TouchDesigner's Palette Browser through FNS_PaletteRegistry, and why the TDXLU/Patreon tabs appear without any registration. | 4694cd0 2026-08-23 (registry externalized as the 9th) | `/fns-registry` |
 | [RegistryHomeContract.md](RegistryHomeContract.md) | Where promoted registry globals live (/sys/FNS_Registries) and the six invariants that govern the home. | a019218 2026-08-21 | `/fns-registry` |
 | [RegistryScheme.md](RegistryScheme.md) | The backbone pattern: centralized, self-installing service registries that tools publish into instead of surfaces hardcoding their contents. | d7ed7e6 2026-08-12 (RegistryBase consolidation) | `/fns-registry` |
+| [ReleaseSigning.md](ReleaseSigning.md) | Release signing — a dedicated Ed25519 key signs the manifest and discovery document at Stage time; clients verify against a pinned public key, fail closed on tamper, and allow-but-log unsigned during the transition. | 2026-08-28 (owner decision on key custody: local file outside the repo) | `/fns-packaging` |
+| [ScopeAndPersistence.md](ScopeAndPersistence.md) | Where a tool's settings actually live: the .toe versus the machine-global JSON, the pars and state rails, every per-tool hatch and what it really gates. | 628c523 2026-08-25 (closes ProductAdoptionAudit P5) | `/fns-config-scope` |
 | [TDFam_MainMenuRegistry_port.md](TDFam_MainMenuRegistry_port.md) | Manual port guide handed to the TDFam repo: replacing its fire-and-forget mainmenu copy with a MainMenuRegistry-managed entry. External deliverable. | 4022dc4 2026-08-13 | — |
+| [TimelineBackgroundContract.md](TimelineBackgroundContract.md) | FNS_TimelineBackground -- the single owner of TD's two background surfaces (the timeline strip and the Animation editor), compositing a baked filmstrip, the FNS_Waveform render and the FNS_Markers render as independent layers. | 2026-08-24 (branch cook-diet) | `/fns-registry` |
+| [TimelineRegistryContract.md](TimelineRegistryContract.md) | FNS_TimelineRegistry -- the tenth registry. Publishes tool-owned panels into TD's timeline dialog, in two zones, without disturbing the native transport controls. | 2026-08-24 (branch cook-diet) | `/fns-registry` |
+| [TimelineToolsContract.md](TimelineToolsContract.md) | FNS_TimelineTools -- media load, timeline<->media sync, drag-and-drop scope select and outputs, working against ANY of TD's timelines rather than assuming the global one. | 2026-08-24 (branch cook-diet) | `/fns-registry` |
+| [UpdaterHardening.md](UpdaterHardening.md) | Measured semantics of an in-place external-tox reload, the two apply-path holes it closed, and why most of Embody's updater port turned out to be unnecessary. | 09cbc80 2026-08-26 (branch dev25-updater-hardening) | `/fns-packaging` |
+| [WaveformToolContract.md](WaveformToolContract.md) | FNS_Waveform -- draws an audio file as a waveform into TD's Animation editor (interactive, pinned between the range markers while you zoom) and/or the timeline background. Lives under FNS_TimelineTools, which owns the media. | 2026-08-24 (branch cook-diet) | `/fns-registry` |
 
 ## Landed
 
@@ -47,6 +57,7 @@ Decision and verification records. Historical, but authoritative on *why*.
 
 | Document | Summary | Since | Skill |
 |---|---|---|---|
+| [CmsResearch.md](CmsResearch.md) | The two-CMS contract — website/tools/cms.mjs owns CONTENT (docs, descriptions, recommendations); the FNS_CMS component owns what needs the live project (PI publishing, Preflight, Stage, Helpurl override) plus entitlement. v1 landed 2026-08-28. | 2026-08-28 (owner idea, sketched in session; decisions NOT taken) | `/fns-packaging` |
 | [CommandStateProposal.md](CommandStateProposal.md) | Design record for live state chips and param prefill on quick-launch commands (registry 1.5.0/1.6.0). | ce7b46e 2026-08-22 | — |
 | [ConfiguratorPersistenceFixes.md](ConfiguratorPersistenceFixes.md) | Spec and verification record for the configurator layout-persistence defects across Toolbar, Navbar and MainMenu. | 61748d9 2026-08-21 | — |
 | [FNSToolsRedesign.md](FNSToolsRedesign.md) | Decision record for the pre-release restructure and rename that shipped as v3.0.0. Supersedes naming and core-membership claims elsewhere. | 24ae195 2026-08-15 | — |
@@ -58,10 +69,14 @@ Planned or approved work that has not been built. Actionable.
 
 | Document | Summary | Since | Skill |
 |---|---|---|---|
+| [EntitlementLifecycle.md](EntitlementLifecycle.md) | How an entitlement begins, is re-checked and ends — the Gumroad perpetual-licence decision, revocation, session lifetime, and the failure-kind split. The §4–§5 work is built and offline-tested; §2.2 and §3.1 stay open. | 2026-08-27 (audit of the undeployed gate); §4–§5 built 2026-08-28 | `/fns-packaging` |
 | [FirstRunNudgePlan.md](FirstRunNudgePlan.md) | P4 — a one-shot post-install dialog pointing the user at the Configurator. Approved in dialog form; not built. The drop-time welcome (bootstrap opens the picker on first drop, guided first run in the page) landed separately on 2026-08-22. | 7842401 2026-08-21 (approved, unbuilt) | — |
 | [FirstRunTestPlan.md](FirstRunTestPlan.md) | Manual end-to-end test plan for the first-run experience — drop welcome, guided picker, "Set up like last time", CMS Recommended, dev-folder guard. Run on a clean TD before the next release. | unreleased 2026-08-22 (covers work landed that day; automated checks passed, the cold user-path runs below are still pending) | — |
 | [HubFollowups.md](HubFollowups.md) | Follow-ups the FNS_Hub build left open -- retire tools_ui (the last scanner) into hub tabs, an OpMenu configurator tab, a ConfiguratorBase extraction, and two hand tests. | 2026-08-23 (FNS_Hub landed; see HubContract.md) | `/fns-registry` |
+| [NavbarCookDiet.md](NavbarCookDiet.md) | What the navbar/HydroHomie cook audit landed, why the containers/* freeze was reverted (it cost the navbar its whole installation for 2 operators), and parent_hierarchy's always-cook hover chain -- awaiting a hand test against a live control. | 2026-08-24 (branch cook-diet) | `/fns-registry` |
 | [ProductAdoptionAudit.md](ProductAdoptionAudit.md) | Audit of product design, adoption, installation, updates and config scoping. The actionable backlog; each item carries its evidence anchors. | 7842401 2026-08-21 (backlog, partly resolved) | — |
+| [ProjectStateAcrossUpdates.md](ProjectStateAcrossUpdates.md) | An in-place update keeps a tool's custom pars (reloadcustom off) but rebuilds its children, so internal readers come back blank. Fix is split: retire the tool's duplicate streaming readers in favour of FNS_MEDIA's, and self-heal the two analysis readers that must stay. | 2026-08-26 (branch dev25-private) | `/fns-packaging` |
+| [RailHardening.md](RailHardening.md) | Six adopted ideas and three closed holes for the public distribution rail — a discovery document with pinned fallbacks, a kill switch, publish-time guards. None of it depends on gating anything. | 2026-08-26 | `/fns-packaging` |
 | [ReadmeRewritePlan.md](ReadmeRewritePlan.md) | P1 — plan to rewrite the root README around the v3 product. The README still describes the 2023 monolith. | 7842401 2026-08-21 | — |
 | [UpdaterSelfUpdateVerification.md](UpdaterSelfUpdateVerification.md) | P3 — plan to exercise FNS_Updater's self-update end-to-end. The riskiest untested path in the product; never run. | 7842401 2026-08-21 | — |
 
@@ -72,6 +87,7 @@ Surveys and candidate lists whose work has been done. Kept for the reasoning.
 | Document | Summary | Since | Skill |
 |---|---|---|---|
 | [CommandRegistryCandidates.md](CommandRegistryCandidates.md) | Survey of every tool for actions worth registering as commands. Consumed by the 81-command rollout; kept for the per-tool reasoning, not as a to-do list. | 9eca7cd 2026-08-21 | — |
+| [NavbarColdBootCheck.md](NavbarColdBootCheck.md) | The navbar-registry supervised cold-boot check — inherited from the root recovery note, PASSED 2026-08-28 on a supervised restart (two checklist items had gone stale since 2026-08-09; recorded below). | 2026-08-28 (checklist inherited from RECOVERY_NavbarRegistry.md, incident resolved 2026-08-09; verified 2026-08-28) | `/fns-registry` |
 
 ## Research
 
@@ -79,6 +95,9 @@ Exploration only. Nothing here is a commitment; check `superseded_by`.
 
 | Document | Summary | Since | Skill |
 |---|---|---|---|
+| [DistributionComparison.md](DistributionComparison.md) | FNSTools' distribution rail compared against DOTsimulate's shipping LOPs rail — what converges, what they have that we lack, and three unguarded holes the comparison exposed in our own code. | 2026-08-26 | `/fns-packaging` |
+| [GatedDeliveryResearch.md](GatedDeliveryResearch.md) | Gating some R2-bucket packages behind Patreon membership or a Gumroad license key. Worker built and tested; not deployed, TD client side not started. | 2026-08-26 | `/fns-packaging` |
 | [TextFormatInjectionStrategy.md](TextFormatInjectionStrategy.md) | Exploration only, nothing decided: whether TD's text-based project format changes what is possible for getting FNSTools in front of a new user. | 290f7da 2026-08-21 | — |
 | [TextFormatProjectFiles.md](TextFormatProjectFiles.md) | Research note on what TouchDesigner's text-based project save format actually is, from a live sample. | 290f7da 2026-08-21 | — |
+| [UpdaterRegistryResearch.md](UpdaterRegistryResearch.md) | Whether the updater should become the 11th registry, so tools carry their own update capability and hand it to a /sys global when one exists. Research only — nothing here is built. | 2026-08-26 | `/fns-packaging` |
 | [UvPackagingResearch.md](UvPackagingResearch.md) | Research into shipping tools as uv/PyPI packages. Explicitly NOT the plan — the bucket/manifest rail won. | 2026-08-10 | — |

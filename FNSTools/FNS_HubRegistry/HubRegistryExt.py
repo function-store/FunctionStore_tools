@@ -307,7 +307,14 @@ class HubRegistryExt(RegistryBase):
 			label=self._parStr('Tablabel') or canonical,
 			order=self._parInt('Taborder', 50),
 			displayed=self._parBool('Displayed', True),
-			help_url=self._parStr('Helpurl'),
+			# The host par is the ONE local override; otherwise derived
+			# from the REGISTRANT's package first (the host's -- a tab
+			# whose content lives in a rail, like the console driving the
+			# webBrowser panel, still documents as its registrant's tool),
+			# then the content's. Same rule the manifest publishes.
+			help_url=(self._parStr('Helpurl')
+					  or self._packageHelpUrl(self.ownerComp)
+					  or self._packageHelpUrl(content)),
 			source_registry=self.ownerComp,
 		)
 		self.stored['HostCanonical'] = canonical

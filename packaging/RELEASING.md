@@ -177,6 +177,15 @@ python3 packaging/upload.py
 `publish.py` refuses to stage a new release that bumps nothing, which
 catches the forgotten-`Pkgversion` case.
 
+**Signing happens inside `Stage()`** and needs no extra step: the
+manifest and the discovery document (every staged copy) get sidecar
+`.sig` files from the Ed25519 key at
+`%USERPROFILE%/.fnstools-release/signing.key`. A machine without that
+key **cannot stage a release** (`FNS_ALLOW_UNSIGNED=1` is the
+offline-test hatch, never the release path). First-time setup and the
+full contract — key custody, what clients verify, the transition flag —
+live in [docs/ReleaseSigning.md](../docs/ReleaseSigning.md).
+
 ## Release notes
 
 Write the prose **before** releasing, in `release_notes.md`. A line that

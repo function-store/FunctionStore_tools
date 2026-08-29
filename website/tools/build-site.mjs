@@ -27,10 +27,10 @@ const CATALOG = path.join(REPO, 'packaging', 'catalog.json');
 const ICONS = path.join(REPO, 'icons');
 const OUT = path.join(WEB, 'docs');
 
-const SITE = 'https://tools.functionstore.xyz';
+const SITE = 'https://functionstore.tools';
 const GH = 'https://github.com/function-store/FunctionStore_tools';
 // Rolling pointer published by packaging/publish.py; base_url in manifest.json.
-const BUCKET = 'https://storage.functionstr.com/fnstools';
+const BUCKET = 'https://storage.functionstore.tools/fnstools';
 const EDIT_BASE = `${GH}/blob/main/packaging/docs`;
 
 const problems = [];
@@ -73,6 +73,29 @@ const GLYPH = Object.fromEntries(
   categories.map((c) => [c, (catMeta[c] && catMeta[c].glyph) || '·']));
 const CATEGORY_PITCH = Object.fromEntries(
   categories.map((c) => [c, (catMeta[c] && catMeta[c].pitch) || '']));
+
+// Entitlement. `access` in catalog.json NAMES A TIER (docs/GatedDeliveryResearch
+// §9.3), so anything that is not the literal 'free' is gated. The site says
+// "Plus" and stops there on purpose: which tier covers which package is a
+// SERVER-side map, and a copy of it here would be the second place that
+// answer lives. Absent means free, so a catalog written before gating
+// existed reads correctly.
+const isPlus = (name) => {
+  const a = curated[name] && curated[name].access;
+  return Boolean(a) && a !== 'free';
+};
+const PLUS_MARK = '<span class="plus-mark">Plus</span>';
+
+// Curated site content: the other Function Store products. Site-only —
+// packaging/ never reads it. One source, injected into both the landing page
+// and /plus/, because two hand-kept copies of the same two cards drift.
+const FAMILY = path.join(WEB, 'content', 'family.json');
+const family = fs.existsSync(FAMILY)
+  ? (JSON.parse(fs.readFileSync(FAMILY, 'utf8')).products || [])
+  : [];
+if (!family.length) {
+  console.warn('note: website/content/family.json missing or empty — the "More from Function Store" blocks will be empty');
+}
 
 if (!fs.existsSync(SRC)) {
   console.error(`missing ${path.relative(REPO, SRC)} — run packaging/docs_seed_from_wiki.py first`);
@@ -182,12 +205,14 @@ if (problems.length) {
 
 // ------------------------------------------------------------ chrome
 
+// Kept in step with the hand-written nav in index.html — the header markup
+// is duplicated the same way the tokens are, and a visitor moving between
+// the landing page and a docs page should not see the links change.
 const navLinks = [
   ['/#get', 'Install'],
-  ['/get/', 'Configurator'],
   ['/#tools', 'Tools'],
+  ['/plus/', 'Plus'],
   ['/docs/', 'Docs'],
-  ['/#credits', 'Credits'],
   ['https://patreon.com/function_store', 'Patreon'],
 ];
 
@@ -253,6 +278,9 @@ const FOOTER = `<footer class="site">
     <div>© 2026 FNSTools · Built for TouchDesigner</div>
     <div class="footer-links">
       <a href="/docs/">Docs</a>
+      <a href="/plus/">Plus</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
       <a href="${GH}" target="_blank" rel="noopener">GitHub</a>
       <a href="https://discord.gg/b4CaCP3g3K" target="_blank" rel="noopener">Discord</a>
       <a href="https://derivative.ca" target="_blank" rel="noopener">TouchDesigner</a>
@@ -284,7 +312,7 @@ function sidebar(currentSlug) {
     const items = pages
       .filter((p) => p.category === cat)
       .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
-      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.name)}</a></li>`)
+      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.name)}${isPlus(p.name) ? PLUS_MARK : ''}</a></li>`)
       .join('\n');
     if (!items) return '';
     return `  <div class="side-group">
@@ -326,6 +354,10 @@ for (const p of pages) {
   const badges = [
     `<span class="badge badge-cat">${GLYPH[p.category] || '·'} ${esc(p.category)}</span>`,
   ];
+  // A Plus package is documented exactly like a free one — the decision was
+  // "visible and locked", so the page is public and complete. What differs is
+  // one badge and one callout saying how to get it.
+  if (isPlus(p.name)) badges.push(`<a class="badge badge-cat" href="/plus/">◆ Plus</a>`);
   const plats = p.meta.platforms;
   if (Array.isArray(plats) && plats.length && plats.length < 2) {
     badges.push(`<span class="badge badge-warn">${esc(plats.join(', '))} only</span>`);
@@ -341,6 +373,13 @@ for (const p of pages) {
     ? `<div class="embed-video"><iframe src="https://www.youtube.com/embed/${esc(String(p.meta.video).split(/[/=]/).pop())}" title="${esc(p.name)} walkthrough" loading="lazy" allowfullscreen></iframe></div>`
     : '';
 
+  const plusNote = isPlus(p.name) ? `<div class="plus-note">
+    <p><strong>This one is a Plus tool.</strong> It installs through the same picker as
+    everything else, and unlocks with a Patreon membership or a licence key redeemed inside
+    TouchDesigner. Everything else in the toolkit stays free and MIT.</p>
+    <p><a href="/plus/">How Plus works →</a></p>
+  </div>` : '';
+
   const onThisPage = (p.meta.features || []).length > 1
     ? `<nav class="toc"><span>On this page</span><ul>${(p.meta.features || [])
         .map((f) => `<li><a href="#${esc(f.anchor)}">${esc(f.name)}</a></li>`).join('')}</ul></nav>`
@@ -355,6 +394,7 @@ ${sidebar(p.slug)}
   <h1>${esc(p.name)}</h1>
   ${p.description ? `<p class="lede">${esc(p.description)}</p>` : ''}
   <p class="badges">${badges.join(' ')}</p>
+  ${plusNote}
   ${video}
   ${onThisPage}
   <div class="docs-body">
@@ -373,7 +413,7 @@ const indexGroups = categories.map((cat) => {
     .filter((p) => p.category === cat)
     .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
     .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/">
-        <strong>${esc(p.name)}</strong>
+        <strong>${esc(p.name)}${isPlus(p.name) ? PLUS_MARK : ''}</strong>
         <span>${esc(p.description || p.meta.summary)}</span>
       </a>`).join('\n');
   if (!items) return '';
@@ -402,25 +442,47 @@ ${FOOT}`);
 
 // ------------------------------- tool catalogue injected into index.html
 
+// One fold per category. 49 packages listed flat is a wall nobody reads, and
+// the landing page's job is to say what KIND of thing is in here — so the
+// category, its pitch and its count stay in the open and the list opens on
+// demand. <details> keeps it working with JS off and findable by Ctrl+F.
+//
+// Core is open by default: it is the shortest way to answer "what is this
+// thing actually made of" for someone who just arrived.
 const grid = categories.map((cat) => {
-  const items = pages
+  const inCat = pages
     .filter((p) => p.category === cat)
-    .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
-    .map((p) => `        <div class="feat">
-          <div class="feat-icon" aria-hidden="true">${GLYPH[cat] || '·'}</div>
-          <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.name)}</a></strong><span>${esc(p.description || p.meta.summary)}</span></div>
-        </div>`).join('\n');
+    .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+  const items = inCat.map((p) => `          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">${GLYPH[cat] || '·'}</div>
+            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.name)}</a>${isPlus(p.name) ? PLUS_MARK : ''}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
+          </div>`).join('\n');
   if (!items) return '';
-  return `      <div class="feature-cat">
-        <div class="feature-cat-head">
-          <h3>${esc(cat)}</h3>
-          <p>${esc(CATEGORY_PITCH[cat] || '')}</p>
-        </div>
-        <div class="feature-cat-list">
+  const plusHere = inCat.filter((p) => isPlus(p.name)).length;
+  const count = `${inCat.length} tool${inCat.length === 1 ? '' : 's'}`
+    + (plusHere ? ` · ${plusHere} Plus` : '');
+  return `      <details class="cat"${cat === 'Core' ? ' open' : ''}>
+        <summary>
+          <span class="cat-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>
+          <span>
+            <span class="cat-name">${esc(cat)}</span>
+            <span class="cat-pitch">${esc(CATEGORY_PITCH[cat] || '')}</span>
+          </span>
+          <span class="cat-count">${count}</span>
+        </summary>
+        <div class="cat-list">
 ${items}
         </div>
-      </div>`;
+      </details>`;
 }).filter(Boolean).join('\n');
+
+// ------------------------------- the rest of the family, from family.json
+const familyBlock = family.map((p) => `      <a class="prod" href="${esc(p.url)}" target="_blank" rel="noopener">
+        <span class="prod-kind">${esc(p.kind || '')}</span>
+        <span class="prod-name">${esc(p.name)} ↗</span>
+        <span class="prod-pitch">${esc(p.pitch || '')}</span>
+        <span class="prod-access">${esc(p.access || '')}</span>
+      </a>`).join('\n');
 
 // ------------------------------- picker preview injected into index.html
 //
@@ -516,6 +578,14 @@ if (fs.existsSync(landing)) {
   }
   out = out.replace(previewRe, (_m, a, b) => `${a}\n${preview}\n        ${b}`);
 
+  const familyRe = /(<!-- FAMILY:START -->)[\s\S]*?(<!-- FAMILY:END -->)/;
+  if (!familyRe.test(out)) {
+    console.error('index.html is missing the <!-- FAMILY:START --> / <!-- FAMILY:END --> markers');
+    process.exit(1);
+  }
+  out = out.replace(familyRe, (_m, a, b) =>
+    `${a}\n    <div class="prod-grid">\n${familyBlock}\n    </div>\n    ${b}`);
+
   // "N tools" always matches the catalogue this build actually rendered.
   out = out.replace(/(<span class="js-fns-count">)[^<]*(<\/span>)/g,
     `$1${pages.length}$2`);
@@ -534,6 +604,112 @@ if (fs.existsSync(landing)) {
   fs.writeFileSync(landing, out);
 } else {
   console.warn('note: website/index.html does not exist yet — tool catalogue not injected');
+}
+
+// ------------------------------------------------------ /plus/ — the gate
+//
+// Prose is hand-written in website/content/plus.html and is only a fragment:
+// this wraps it in the same head, header and footer every other generated
+// page gets, so the Plus page cannot drift out of the site's chrome. The
+// output is generated and gitignored, exactly like docs/ and get/.
+//
+// Two blocks are injected. The package list comes from catalog.json, so the
+// page cannot advertise a Plus tool that does not ship (or miss one that
+// does); the family cards come from content/family.json, the same source the
+// landing page uses.
+const plusSrc = path.join(WEB, 'content', 'plus.html');
+if (fs.existsSync(plusSrc)) {
+  let body = fs.readFileSync(plusSrc, 'utf8');
+
+  const plusPages = pages
+    .filter((p) => isPlus(p.name))
+    .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+
+  const plusList = plusPages.length
+    ? `<div class="plus-pkgs">\n` + plusPages.map((p) => `  <a class="plus-pkg" href="/docs/${p.slug}/">
+    <span>
+      <b>${esc(p.name)}</b>
+      <span>${esc(p.description || p.meta.summary || '')}</span>
+      <span class="cat-of">${GLYPH[p.category] || '·'} ${esc(p.category)}</span>
+    </span>
+    <span class="btn btn-secondary">Read the docs →</span>
+  </a>`).join('\n') + `\n</div>`
+    // Not an error: a catalog with nothing gated is a legitimate state, and
+    // the page still has to explain what Plus is for when the first one lands.
+    : `<p class="plus-pkgs-empty">Nothing is gated in the current catalogue — every package on this site installs free.</p>`;
+
+  for (const [marker, markup] of [
+    ['PLUSPKGS', plusList],
+    ['FAMILY', `<div class="prod-grid">\n${familyBlock}\n</div>`],
+  ]) {
+    const re = new RegExp(`(<!-- ${marker}:START -->)[\\s\\S]*?(<!-- ${marker}:END -->)`);
+    if (!re.test(body)) {
+      console.error(`website/content/plus.html is missing its <!-- ${marker}:START --> / `
+        + `<!-- ${marker}:END --> markers — /plus/ would ship without that block`);
+      process.exit(1);
+    }
+    body = body.replace(re, (_m, a, b) => `${a}\n${markup}\n${b}`);
+  }
+
+  checkLinks(body, 'content/plus.html', null);
+  if (problems.length) {
+    console.error('build refused — unresolved internal links:\n' +
+      problems.map((p) => `  - ${p}`).join('\n'));
+    process.exit(1);
+  }
+
+  fs.mkdirSync(path.join(WEB, 'plus'), { recursive: true });
+  fs.writeFileSync(path.join(WEB, 'plus', 'index.html'),
+    `${head('FNSTools Plus — supporter tools, and what stays free',
+      'Nearly all of FNSTools is free and MIT. A few tools unlock with a Patreon membership or a licence key, redeemed inside TouchDesigner — here is exactly how that works.',
+      `${SITE}/plus/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/plus.html — do not edit here -->
+${header('/plus/')}
+<main class="plus-page">
+${body}
+</main>
+${FOOT}`);
+  console.log(`built /plus/ (${plusPages.length} Plus package${plusPages.length === 1 ? '' : 's'}, ${family.length} family cards)`);
+} else {
+  console.warn('note: website/content/plus.html missing — /plus/ not built, and every link to it 404s');
+}
+
+// ------------------------------------------- /privacy/ and /terms/ — legal
+//
+// Two hand-written fragments in website/content/, wrapped in the same chrome
+// as every other page. They exist because registering an OAuth client (the
+// Patreon one the gate depends on) requires public policy URLs -- and because
+// keeping the privacy claims HERE means they change in the same commit as
+// worker/src/index.js, the code they describe. A policy hosted anywhere else
+// is one that silently stops being true.
+for (const [slug, title, desc] of [
+  ['privacy', 'Privacy — FNSTools',
+    'What FNSTools collects: nothing at all in the free toolkit, and the least the supporter gate can store and still know that a membership is live.'],
+  ['terms', 'Terms — FNSTools',
+    'The free packages are MIT and stay that way; Plus packages are licensed to you while your membership or licence key is live. Everything ships as-is.'],
+]) {
+  const src = path.join(WEB, 'content', `${slug}.html`);
+  if (!fs.existsSync(src)) {
+    console.warn(`note: website/content/${slug}.html missing — /${slug}/ not built, and every link to it 404s`);
+    continue;
+  }
+  const body = fs.readFileSync(src, 'utf8');
+  checkLinks(body, `content/${slug}.html`, null);
+  if (problems.length) {
+    console.error('build refused — unresolved internal links:\n' +
+      problems.map((x) => `  - ${x}`).join('\n'));
+    process.exit(1);
+  }
+  fs.mkdirSync(path.join(WEB, slug), { recursive: true });
+  fs.writeFileSync(path.join(WEB, slug, 'index.html'),
+    `${head(title, desc, `${SITE}/${slug}/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/${slug}.html — do not edit here -->
+${header(`/${slug}/`)}
+<main class="plus-page">
+${body}
+</main>
+${FOOT}`);
+  console.log(`built /${slug}/`);
 }
 
 // ------------------------------------------------- /get/ — online picker

@@ -28,7 +28,7 @@ dormant-group manual pass remains.
 - 46 packages: 7 core (FNS_ConfigRegistry, FNS_MainMenuRegistry,
   FNS_NavbarRegistry, FNS_OpMenuRegistry, FNS_PaneTypeRegistry,
   FNS_ToolbarRegistry, FNS_Updater) + 39 tools. Stable v3.0.1, live bucket
-  `https://storage.functionstr.com/fnstools`.
+  `https://storage.functionstore.tools/fnstools`.
 - Update decisions are governed by the `Pkgversion` custom par (read live
   off the installed COMP); sha256 verifies downloads only. `.tox` export is
   not byte-reproducible, so hash-based update detection was tried and
@@ -102,7 +102,14 @@ the toolbar. **Action:** execute `docs/FirstRunNudgePlan.md` (dialog form
 approved 2026-08-21; machine-global seen-flag; boot-window trigger; root
 ext home).
 
-### P5 — Scope & Persistence doc
+### P5 — Scope & Persistence doc — DONE 2026-08-25
+
+**Resolved:** [ScopeAndPersistence.md](ScopeAndPersistence.md) covers all of
+it, plus the per-tool hatch matrix. It also surfaced four *mechanism* defects
+the audit had not seen — `Autoload` off still writes to the shared file, the
+`state` rail has no exclusion hatch, `_applyPars` ignores exclusion patterns,
+and there is no per-tool scope. Those are §10 of that document and are now the
+open items; the writing action below is closed.
 
 The scope model is coherent but **undocumented**, and it has sharp edges a
 user will hit:
@@ -114,9 +121,10 @@ user will hit:
 - Schema-mismatch sections are silently discarded on load.
 - Project-local exceptions: QuickMarks, oscMapper stay project-local.
 
-**Action:** write `docs/ScopeAndPersistence.md` covering: what roams
+~~**Action:** write `docs/ScopeAndPersistence.md` covering: what roams
 (machine-global) vs. what stays in the `.toe`, per-tool `pars` vs. `state`
-rails, the REPLACE semantics, `FNS_persist`, and the exceptions list.
+rails, the REPLACE semantics, `FNS_persist`, and the exceptions list.~~
+Written 2026-08-25. Remaining action: decide the §10 gaps.
 
 ### P6 — Native installer decision
 

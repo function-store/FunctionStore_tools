@@ -138,6 +138,30 @@ def StartUpload():
     return proc, log
 
 
+def _versionWritePar(comp):
+    """The par a bump must WRITE, which is not the one everything READS.
+
+    The version lives on the FNS_About child (docs/UpdaterHardening.md §4):
+    a child is rebuilt by an update reload, so the version follows the
+    artifact, which is what let `reloadcustom` go off fleet-wide. The tool's
+    own Pkgversion mirrors it -- as an EXPRESSION on most packages, and on
+    the registries as a BIND to their own Version par which is itself the
+    expression.
+
+    Reading is unaffected: `comp.par.Pkgversion.eval()` resolves through
+    either. WRITING is not. Assigning `.val` to an expression par sets the
+    constant underneath and leaves the expression in charge, so a bump aimed
+    at the tool would appear to succeed, ship the OLD version, and every
+    install would read "current" forever. Aim at the child.
+    """
+    fa = comp.op('FNS_About')
+    if fa is not None:
+        p = getattr(fa.par, 'Pkgversion', None)
+        if p is not None:
+            return p
+    return comp.par.Pkgversion      # pre-migration component
+
+
 def ReleaseMany(names, bump='auto', label=None, upload=True):
     names = [n.name if isinstance(n, OP) else str(n) for n in names]
     by_name = {c.name: c for c in Packages()}
@@ -150,8 +174,9 @@ def ReleaseMany(names, bump='auto', label=None, upload=True):
     published = _publishedVersions()
     versions = {}
     for n in todo:
-        p = by_name[n].par.Pkgversion
-        old_v = str(p.eval()).strip()
+        comp = by_name[n]
+        p = _versionWritePar(comp)                 # write target: the child
+        old_v = str(comp.par.Pkgversion.eval()).strip()   # read: through the mirror
         pub = published.get(n, '')
         if bump == 'auto':
             if pub and _verTuple(old_v) <= _verTuple(pub):

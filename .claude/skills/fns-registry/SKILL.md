@@ -13,12 +13,25 @@ packaging, migration lessons) is in
 [docs/RegistryHomeContract.md](../../../docs/RegistryHomeContract.md); publishing a
 console tab in [docs/ConsoleTabContract.md](../../../docs/ConsoleTabContract.md).
 
-## The nine registries
+## The ten registries
 
 `FNS_PaneTypeRegistry`, `FNS_ToolbarRegistry`, `FNS_NavbarRegistry`,
 `FNS_OpMenuRegistry`, `FNS_MainMenuRegistry`, `FNS_ConfigRegistry`, `FNS_Console`,
-`FNS_HubRegistry`, `FNS_PaletteRegistry` — each reached as `op.FNS_<NAME>` /
-`op.FNS_<NAME>REGISTRY`.
+`FNS_HubRegistry`, `FNS_PaletteRegistry`, `FNS_TimelineRegistry` — each reached as
+`op.FNS_<NAME>` / `op.FNS_<NAME>REGISTRY`.
+
+`/sys/FNS_Registries` also holds `FNS_CommandRegistry`, which is NOT one of
+these: it carries no `RegistryBase`, has no master in `FNSTools`, and belongs to
+the quick-launch command system (`/fns-command-registration`). It shares the
+container, not the scheme -- so expect one more child there than this list has
+names.
+
+`FNS_TimelineRegistry` publishes panels into TD's timeline dialog (a singleton,
+so mirrors like the toolbar — not per-pane copies like the navbar), in two
+zones: the `transport` control row and the left `properties` block. Contract in
+[docs/TimelineRegistryContract.md](../../../docs/TimelineRegistryContract.md) —
+read it before touching that surface: TD's native transport owns alignorder
+0..12 and adopted native controls are managed in place, not mirrored.
 
 `FNS_PaletteRegistry` manages TD's Palette Browser; tools contribute native
 panel COMPs as tabs. Contract in
@@ -68,7 +81,13 @@ if reg is not None and hasattr(reg, 'Register'):
    relocated unconditionally. **Do not put a `ui.messageBox` in this path** —
    it runs during project load, once per registry copy, so a prompt arrives as
    a stack of modals and wedges extension init outright (measured: 0/20
-   toolbar hosts ready, and a cold boot spinning a core with Envoy never up).
+   toolbar hosts ready, and a cold boot spinning a core with Envoy never up). **And the fix is not done when the file is clean** — every
+   host carries its own `RegistryBase` DAT, so sweep the LIVE network after
+   touching that path (`findChildren(name='RegistryBase', maxDepth=99)`;
+   `depth=` matches one exact level and returns an empty, innocent-looking
+   list). Copies go stale two ways: file-bound with `syncfile` off, and
+   vendored inside another package's tox (self-contained by design, so no file
+   edit ever reaches them — those prompt precisely when they LOSE).
 
 ## Adding a new registry — checklist
 
@@ -92,6 +111,44 @@ if reg is not None and hasattr(reg, 'Register'):
 
 ## Hazards — paid for once, do not rediscover
 
+- **A REINIT IS NOT A REMOVAL.** `onDestroyTD` fires on extension reinit, not
+  just destruction, so it must never unregister. `_clearHostRegistration` is a
+  real unregister (`_unregisterOwnedMenuName` → `UnregisterPanel` →
+  `UnregisterWidget` → destroy instances) — unguarded, every reinit wiped the
+  entry from every surface and the new extension rebuilt it. Guard it with
+  `if not self.ownerComp.valid:`. Nothing leaks: prune/heal collect entries by
+  whether they still RESOLVE, which is already how a host that dies inside its
+  parent's subtree is collected, since TD never calls `onDestroyTD` for those.
+  Same rule for the error branches of `_applyHostRegistration` — a failure to
+  resolve is not a request to be removed, and reinit is exactly when it happens.
+- **Opening TD's Component Editor reinitializes externalized extensions.**
+  Measured with one variable changed: an ext DAT that is not file-synced
+  SURVIVES the editor opening on its COMP; the same DAT with `syncfile = True`
+  REINITS. So it is not about having an extension (a COMP with an inline
+  extension is untouched) and it is not FNS-specific — it is that Embody
+  externalizes our extensions, so opening the editor on a tool reinits it, and
+  opening it on `/FNSTools` reinits the whole toolkit. Expect a burst of
+  `init` + `registered` logs; that is normal. Any `unregistered` in that burst
+  is the bug above.
+- **A host that cannot receive base fixes is a silent liability.** `RegistryBase`
+  reaches hosts two ways: `syncfile` from `scripts/shared/RegistryBase.py`, or
+  cloning from the in-project master. A host with neither (cloning off, no file
+  binding) is frozen on whatever it was stamped with, and a shared fix simply
+  never arrives — found when 2 of 102 hosts kept misbehaving after a base fix.
+  Clone propagation is also pull-based: it lands when the clone COOKS, so a host
+  in an undemanded panel can lag until project load (`cook(force=True)` does not
+  drive it).
+
+- **`StampHost` leaves `Promotepars` OFF, so a fresh host has no visible UI.**
+  The master's own `Promotepars` is `False` (it does not promote to itself) and
+  `StampHost` copies the master, so a newly stamped host inherits `False`. It
+  registers, its `Excludepars` apply, `Regstatus` says *Registered* — and the
+  TOOL gets no `Registry` page and no `Cf*` pars, so from the parameter dialog
+  the stamp looks like it never happened. Every existing host has it on because
+  someone turned it on afterwards. **Set `Promotepars = True` after stamping**,
+  and verify on the TOOL (`Registry` page + `Cfexcludepars`), not on the host —
+  checking the host alone reports success for a half-applied stamp.
+  (`FNS_Hub` is the one deliberate exception.)
 - **CustomParHelper `EXT_SELF` is class-level** — with a shipped host plus a
   `/sys` copy, callbacks can hit the wrong instance. Always route through
   `_hostExtFromPar(par)` (resolve the ext from the parameter's owner).
@@ -134,6 +191,13 @@ if reg is not None and hasattr(reg, 'Register'):
   `pi_suspect` -- and when the master doubles as a bound host, also fall
   its copied Registration-par BINDs back to CONSTANT before setting values
   (assigning through a dangling bind raises).
+- **A copied master also inherits its DATs' `file`/`syncfile` bindings.** The
+  externaltox hazard above has a twin one level down: writing new code into a
+  copied registry's ext DAT writes THROUGH to the source registry's `.py`, and
+  the source -- `syncfile=True` -- reloads it. Copying ToolbarRegistry to seed
+  TimelineRegistry turned the live ToolbarRegistry into a TimelineRegistryExt
+  this way. Sever `file`/`syncfile` on every copied DAT BEFORE writing to it;
+  leave `RegistryBase` bound (it is genuinely shared) and never write to it.
 - **Tools with `enableexternaltox=False` are carried by the ROOT toolkit
   tox, not their own.** Their own `.tox` saves are dead files at boot; the
   root `FunctionStore_tools_2025.tox` is their real persistence. Landing
@@ -168,6 +232,16 @@ if reg is not None and hasattr(reg, 'Register'):
   a source's callback-mode settings onto its mirror; call it from every
   mirror inject (Toolbar/MainMenu do). `onDragStartGetItems` must return a
   plain LIST; a textCOMP needs `dragdropmode='panel'`.
+- **An aligned container OVERRIDES a child's `x` -- `align='none'` does not
+  exempt it.** In a `horizlr`/`verttb` parent every child is positioned by the
+  flow; the `x` par keeps whatever you wrote and is ignored (measured: par read
+  2275, panel sat at 772). To right-align a contribution, insert a zero-opacity
+  spacer just BEFORE the mirror, sized
+  `max(0, parent().width - <mirror w> - pad - me.x)` -- `me.x` depends only on
+  the siblings before the spacer, so it is not circular. **The spacer's
+  `alignorder` must TRACK the mirror's by EXPRESSION, never copy its value**:
+  the geometry pass runs before order assignment, so a copied value reads `0`,
+  puts the spacer first, and shoves the host's native row off the end.
 - **A Select mirror draws its source at the SOURCE's size; `fill` on a source
   with no panel parent collapses to nothing.** Size the source with
   `w`/`h` expressions on the container it is mirrored into.

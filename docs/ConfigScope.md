@@ -69,10 +69,18 @@ back to its own constant par (`_scopeIsProject` tries own par, then
 
 ## Per-tool escape hatches (unchanged)
 
-`Autoload` off (tool ignores the roamed section), `Excludepars` /
-`Excludepages` (pars that never roam — e.g. excluding the `Registry` page
-keeps a tool's bar position out of the file while its settings still roam).
-Under project scope these are moot (nothing loads).
+`Autoload` off (tool ignores the roamed section), `Persistpars` off (its
+pars neither roam nor load), `Excludepars` / `Excludepages` (pars that
+never roam — e.g. excluding the `Registry` page keeps a tool's bar
+position out of the file while its settings still roam). Under project
+scope these are moot (nothing loads).
+
+**`Autoload` off is not "do not sync".** `SaveAll` checks no autoload
+flag, so an autoload-off tool still writes its section and still clobbers
+the shared layout for every other project. The symmetric hatch is
+`Persistpars` off. Full matrix of what each hatch gates, in both
+directions, and the exceptions list of tools that stay project-local:
+[ScopeAndPersistence.md](ScopeAndPersistence.md).
 
 ## Updater rework note (IMPORTANT)
 

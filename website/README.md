@@ -1,4 +1,4 @@
-# tools.functionstore.xyz
+# functionstore.tools
 
 The FNSTools site: a hand-written landing page plus generated docs.
 Static files, no framework, deployed on Vercel with **root directory =
@@ -7,11 +7,14 @@ Static files, no framework, deployed on Vercel with **root directory =
 ## Where the content actually lives
 
 ```
-packaging/catalog.json     category + description per package  (curated)
+packaging/catalog.json     category + description + access per package (curated)
 packaging/docs/<Name>.md   prose + frontmatter per package     (curated)
 website/index.html         landing page                        (hand-written)
+website/content/plus.html  /plus/ prose, a fragment            (hand-written)
+website/content/family.json the other Function Store products  (curated)
 website/docs/              GENERATED — gitignored, built on every deploy
 website/get/               GENERATED — gitignored, the online configurator
+website/plus/              GENERATED — gitignored, from content/plus.html
 ```
 
 `/get/` is emitted from `packaging/configurator/index.html` with the
@@ -51,6 +54,63 @@ package with no `.md`, a frontmatter `package` that does not match its
 filename, or an internal `/docs/` link pointing at a page or heading that
 does not exist.
 
+## Free and Plus
+
+The site has two audiences at once: someone who has never heard of any of
+this, and someone deciding whether to pay for part of it. The shape that
+serves both is **progressive disclosure** — the landing page answers the
+common question in the open and keeps the precise answer one `<details>`
+away. `<details>` rather than script: it works with JS off, it is focusable
+and announced, and Chrome's Ctrl+F finds closed content.
+
+That is why the landing page has one three-step install section instead of
+the previous two (a "paths" row and a quickstart saying the same thing), and
+why the tool catalogue is one fold per category rather than 49 rows in a
+column. Nothing was deleted; the caveats moved into the fold under the step
+they belong to.
+
+**A package is Plus when `catalog.json` gives it an `access` that is not the
+literal `free`.** `access` NAMES A TIER (`docs/GatedDeliveryResearch.md`
+§9.3), and which tier covers which package is a **server-side** map — so
+this build says "Plus" and stops. A copy of the tier→packages map here would
+be the second place that answer lives, which is the failure LOPs shipped.
+Absent `access` means free, so a catalog written before gating existed reads
+correctly.
+
+Plus surfaces in five places, all generated from that one field:
+
+| Surface | What it shows |
+| --- | --- |
+| landing catalogue | a `Plus` marker on the row, and `· N Plus` in the category count |
+| `/plus/` | the generated list of gated packages, with the whole story around it |
+| docs page | a `◆ Plus` badge and an unlock callout above the prose |
+| docs index + sidebar | the same marker beside the name |
+| `/get/` picker | a `Plus` chip, a tinted card, and a line in the summary |
+
+**Plus packages are visible and tickable everywhere, never hidden.** That is
+the decision from GatedDeliveryResearch §9.2 — a picker that hides them lies
+about what the toolkit is — and the picker cannot refuse the tick anyway:
+entitlement is the server's answer and no page here has asked it. The real
+lock is R2 refusing to serve the object.
+
+`content/family.json` holds the other Function Store products. It is
+site-only content — `packaging/` never reads it — injected into the `FAMILY`
+markers on **both** the landing page and `/plus/`, because two hand-kept
+copies of the same two cards drift.
+
+`/plus/` is generated the way `/get/` is: `content/plus.html` is a fragment
+of prose with `PLUSPKGS` and `FAMILY` markers, and the build wraps it in the
+shared head, header and footer. Edit the fragment, not `website/plus/`. The
+build **refuses to run** if either marker pair is gone — the failure mode
+otherwise is a Plus page that quietly lists nothing.
+
+> **Before this ships:** the page describes signing in and unlocking as
+> something that works today. It does not yet — the Worker is written but
+> undeployed, `catalog.json` carries `PLACEHOLDER_TIER`, and `Gateurl`
+> defaults to a hostname that does not resolve. Deploy the gate, swap the
+> tier id, and confirm an unauthenticated GET of `plus/` is refused before
+> the copy on `/plus/` is true. See `docs/GatedDeliveryResearch.md` §10.
+
 ## Build
 
 ```bash
@@ -66,7 +126,8 @@ npm run serve     # http://localhost:3000
 | `npm run pages` | pages only — leaves the existing search index alone |
 | `npm run search` | re-index only |
 
-**Do not commit `website/docs/` or `website/get/`** — both are gitignored.
+**Do not commit `website/docs/`, `website/get/` or `website/plus/`** — all
+three are gitignored.
 Vercel runs this same build on every deploy, so the generated tree exists
 only on your machine (for preview) and on the deploy. Build output in git
 is what used to let the site drift from its sources, and it needed a CI
@@ -161,8 +222,14 @@ edits packages; it does not invent them.
 The landing page's tool catalogue is generated too, between the
 `<!-- TOOLS:START -->` / `<!-- TOOLS:END -->` markers in `index.html`, as
 is the picker preview in the configurator band, between
-`<!-- CONFIGURATOR:START -->` / `<!-- CONFIGURATOR:END -->`. Everything
-outside those markers is hand-written — edit it freely.
+`<!-- CONFIGURATOR:START -->` / `<!-- CONFIGURATOR:END -->`, and the product
+cards between `<!-- FAMILY:START -->` / `<!-- FAMILY:END -->`. Everything
+outside those markers is hand-written — edit it freely. The build exits on a
+missing marker pair rather than silently dropping the block.
+
+The nav is duplicated: hand-written in `index.html`, and `navLinks` in
+`build-site.mjs` for every generated page. Change both, or a visitor sees
+the links move when they open a docs page.
 
 The preview is a depiction of `/get/` built from the same catalogue the
 picker itself lists, so it cannot end up advertising a tool that no longer
@@ -246,13 +313,13 @@ resolves every artifact and hash from that. A `/get/` page built months ago
 still installs the current release; only the picker's package list can lag.
 
 The page also refreshes hrefs at runtime, and **that fetch now works**: the
-bucket sends `Access-Control-Allow-Origin` for `tools.functionstore.xyz`.
+bucket sends `Access-Control-Allow-Origin` for `functionstore.tools`.
 The browser upgrades hrefs from `latest/` to the pinned release, so
 visitors get reproducible URLs, and `/get/`'s picker list stays current
 between deploys. If the fetch ever fails the static `latest/` hrefs still
 resolve.
 
-Everything is served from the custom domain `storage.functionstr.com`, not
+Everything is served from the custom domain `storage.functionstore.tools`, not
 the `pub-*.r2.dev` development endpoint — the latter is rate-limited, not
 intended for production, and can be switched off in the bucket settings.
 

@@ -1,0 +1,28 @@
+{
+  "_comment": [
+    "Curated site content: the other Function Store products, and the one-line",
+    "pitch for each. Site-only — packaging/ never reads this. It lives here",
+    "rather than being typed twice because the same three cards appear on the",
+    "landing page and on /plus/, and two copies would drift.",
+    "",
+    "Injected into the FAMILY markers on index.html and plus/index.html by",
+    "tools/build-site.mjs. `access` is the same vocabulary catalog.json uses:",
+    "what it costs to get the whole thing."
+  ],
+  "products": [
+    {
+      "name": "TDX Launcher Ultra",
+      "kind": "Desktop app · Windows & macOS",
+      "pitch": "Find the project, get the build it needs, go. Global quick-launch palette, phone remote over QR, git and backup panels, and a companion COMP inside TouchDesigner.",
+      "url": "https://launcher.functionstore.xyz",
+      "access": "Free core · Pro with a membership or a licence key"
+    },
+    {
+      "name": "TDXMap",
+      "kind": "TouchDesigner component",
+      "pitch": "MIDI controller mapping without the wiring: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode and easing curves.",
+      "url": "https://tdxmap.functionstore.xyz",
+      "access": "14-day Pro trial · Base and Pro with a membership or a licence key"
+    }
+  ]
+}

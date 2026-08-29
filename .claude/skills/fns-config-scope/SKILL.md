@@ -49,10 +49,30 @@ script is the failure this default exists to prevent.
 
 ## Per-tool escape hatches
 
-| Hatch | Effect |
-|---|---|
-| `Autoload` off | the tool ignores its roamed section entirely |
-| `Excludepars` / `Excludepages` | named pars/pages never roam — e.g. excluding the `Registry` page keeps a tool's bar position out of the file while its settings still roam |
+Two of these do not mean what their names suggest. Read the columns, not the
+name. (Model and reasoning: [docs/ScopeAndPersistence.md](../../../docs/ScopeAndPersistence.md).)
+
+| Hatch | `pars` written | `pars` applied | `state` written | `state` applied |
+|---|---|---|---|---|
+| *(defaults)* | yes | yes | yes | yes |
+| `Persistpars` off | **no** | **no** | yes | yes |
+| `Excludepars` / `Excludepages` | **no** (matched) | *unfiltered* | yes | yes |
+| `Autoload` off | **yes** | **no** | **yes** | **no** |
+
+- **`Autoload` off is NOT "do not sync."** `SaveAll` checks no autoload flag —
+  the tool ignores the shared file while still overwriting it for every other
+  project on the machine. It means *publish but never adopt*. **To stop a
+  tool's parameters roaming, use `Persistpars` off** (symmetric, gates
+  snapshot and apply through the same flag), or `Excludepars = '*'` if its
+  `state` must keep roaming.
+- **`Excludepars`/`Excludepages` filter the snapshot only.** `_applyPars`
+  iterates the stored section with no pattern check, so a par written before
+  the exclusion keeps being applied until that project saves again.
+- **The `state` rail has no exclusion hatch at all.** Nothing filters what
+  `onConfigSave()` returns. Keep project-specific data (op paths, machine
+  paths, bookmarks) out of the returned dict and in the `.toe`.
+- **Genuinely project-local tools are not registered at all** — QuickMarks,
+  midiMapper/oscMapper, ResetPLS1. Do not "fix" that by adding callbacks.
 
 All moot under project scope: nothing loads.
 

@@ -12,6 +12,7 @@
 // process writes to the repo, so it must not be reachable from the network.
 
 import { spawn } from 'node:child_process';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -24,6 +25,7 @@ const WEB = path.dirname(HERE);
 const REPO = path.dirname(WEB);
 const DOCS = path.join(REPO, 'packaging', 'docs');
 const CATALOG = path.join(REPO, 'packaging', 'catalog.json');
+const RECOMMENDS = path.join(REPO, 'packaging', 'recommendations.json');
 const ICONS = path.join(REPO, 'icons');
 
 const PORT = Number(process.env.CMS_PORT || 8787);
@@ -34,6 +36,66 @@ const md = new MarkdownIt({ html: true, linkify: true });
 // ------------------------------------------------------------ helpers
 
 const readCatalog = () => JSON.parse(fs.readFileSync(CATALOG, 'utf8'));
+
+const readRecommends = () => JSON.parse(fs.readFileSync(RECOMMENDS, 'utf8'));
+
+/** Tools by OTHER creators that we link to. Deliberately a separate file
+ *  from catalog.json, and separate from anything the manifest carries: a
+ *  row here is a link, not a package, and it publishes on its own so that
+ *  REMOVING one never waits for a release. */
+function writeRecommends(doc) {
+  fs.writeFileSync(RECOMMENDS, JSON.stringify(doc, null, 1) + '\n');
+}
+
+const REC_FIELDS = ['name', 'author', 'author_url', 'url', 'description',
+                    'category', 'note',
+                    'tox_url', 'sha256', 'bytes', 'pinned_at'];
+const HEX64 = /^[0-9a-f]{64}$/;
+
+/** Mirror of packaging/recommendations.py validate(). Kept in step by the
+ *  test, not by hope -- the CMS must refuse the same rows the publisher
+ *  would, or a save looks fine and the upload fails hours later. */
+function validateRecommends(doc) {
+  const bad = [];
+  const tools = (doc && doc.tools) || [];
+  if (!Array.isArray(tools)) return ['`tools` must be a list'];
+  const seen = new Map();
+  tools.forEach((row, i) => {
+    const where = row && row.name ? `tools[${i}] (${row.name})` : `tools[${i}]`;
+    if (!row || typeof row !== 'object') { bad.push(`${where} is not an object`); return; }
+    for (const f of ['name', 'author', 'url']) {
+      if (!String(row[f] || '').trim()) bad.push(`${where}: ${f} is required`);
+    }
+    for (const f of Object.keys(row)) {
+      if (!REC_FIELDS.includes(f)) bad.push(`${where}: unknown field \`${f}\``);
+    }
+    for (const f of ['url', 'author_url']) {
+      const v = String(row[f] || '').trim();
+      if (v && !v.startsWith('https://')) bad.push(`${where}: ${f} must be https`);
+    }
+    // Placement fields travel together -- a tox_url with no pinned hash
+    // would install unverified bytes, and a hash with no url is inert.
+    const tox = String(row.tox_url || '').trim();
+    const sha = String(row.sha256 || '').trim().toLowerCase();
+    if (tox || sha || row.bytes != null) {
+      if (!tox) bad.push(`${where}: sha256/bytes given without tox_url`);
+      else if (!tox.startsWith('https://')) bad.push(`${where}: tox_url must be https`);
+      else if (!tox.toLowerCase().endsWith('.tox')) bad.push(`${where}: tox_url must point at a .tox file`);
+      if (!sha) bad.push(`${where}: tox_url needs a pinned sha256 — use Pin`);
+      else if (!HEX64.test(sha)) bad.push(`${where}: sha256 must be 64 lowercase hex characters`);
+      if (!Number.isInteger(row.bytes) || row.bytes <= 0) bad.push(`${where}: bytes must be a positive integer`);
+    }
+    if (String(row.description || '').length > 400) {
+      bad.push(`${where}: description is over 400 characters`);
+    }
+    const k = String(row.name || '').toLowerCase();
+    if (k) {
+      if (seen.has(k)) bad.push(`${where}: duplicate name`);
+      else seen.set(k, i);
+    }
+  });
+  return bad;
+}
 
 /** Byte-identical to how catalog.json is already formatted, so saving a
  *  description produces a one-line diff rather than reformatting the file. */
@@ -127,6 +189,11 @@ function loadPackage(cat, name) {
     category: cat.packages[name].category,
     description: cat.packages[name].description || '',
     recommended: !!cat.packages[name].recommended,
+    // Read-only here. `access` names a tier and gating a package is a
+    // packaging decision (catalog.json + the gate's tier map, which is
+    // server-side) -- the CMS shows it so a curator can see which pages are
+    // gated, and does not offer to invent a tier id.
+    plus: Boolean(cat.packages[name].access) && cat.packages[name].access !== 'free',
     data,
     body: content.replace(/^\n+/, ''),
     mtime: mtimeOf(p),
@@ -146,12 +213,15 @@ function state() {
         name: n, category: cat.packages[n].category,
         description: cat.packages[n].description || '',
         recommended: !!cat.packages[n].recommended,
+        plus: Boolean(cat.packages[n].access) && cat.packages[n].access !== 'free',
         data: {}, body: '', mtime: 0, stub: true, todos: 0, words: 0,
         missing: true,
       };
     });
   const counts = countByCategory(cat);
+  const rec = readRecommends();
   return {
+    recommendations: { intro: rec.intro || '', tools: rec.tools || [] },
     categories: cat.categories,
     categoryMeta: cat.categories.map((c) => ({
       name: c,
@@ -251,6 +321,55 @@ const server = http.createServer(async (req, res) => {
       } catch (e) {
         return json(res, 400, { error: e.message });
       }
+      return json(res, 200, state());
+    }
+
+    if (p === '/api/pin' && req.method === 'POST') {
+      // Download a community tool ONCE, here, and record what we got.
+      // The pin is the whole safety argument for placing someone else's
+      // code: it promises the bytes a user installs are the bytes a
+      // curator looked at. If the author republishes, the hash stops
+      // matching and the row degrades to a link rather than silently
+      // installing something nobody checked.
+      const { tox_url: toxUrl } = await readBody(req);
+      const u = String(toxUrl || '').trim();
+      if (!u.startsWith('https://') || !u.toLowerCase().endsWith('.tox')) {
+        return json(res, 400, { error: 'tox_url must be an https link to a .tox file' });
+      }
+      try {
+        const r = await fetch(u, { redirect: 'follow' });
+        if (!r.ok) return json(res, 400, { error: `the author's server said ${r.status}` });
+        const buf = Buffer.from(await r.arrayBuffer());
+        if (!buf.length) return json(res, 400, { error: 'that URL returned an empty file' });
+        // A .tox is a container; an HTML error page served with a 200 is
+        // the common failure and would otherwise be pinned as if it were
+        // the tool.
+        if (buf.slice(0, 64).toString('latin1').trim().toLowerCase().startsWith('<')) {
+          return json(res, 400, {
+            error: 'that URL returned a web page, not a .tox -- link directly to the file',
+          });
+        }
+        const sha = crypto.createHash('sha256').update(buf).digest('hex');
+        return json(res, 200, {
+          sha256: sha, bytes: buf.length,
+          pinned_at: new Date().toISOString().slice(0, 10),
+        });
+      } catch (e) {
+        return json(res, 400, { error: `could not fetch it: ${e.message}` });
+      }
+    }
+
+    if (p === '/api/recommendations' && req.method === 'PUT') {
+      const body = await readBody(req);
+      const doc = readRecommends();
+      const next = {
+        ...doc,
+        intro: String(body.intro ?? doc.intro ?? ''),
+        tools: Array.isArray(body.tools) ? body.tools : doc.tools,
+      };
+      const bad = validateRecommends(next);
+      if (bad.length) return json(res, 400, { error: bad.join('; ') });
+      writeRecommends(next);
       return json(res, 200, state());
     }
 

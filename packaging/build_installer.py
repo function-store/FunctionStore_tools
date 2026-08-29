@@ -26,6 +26,7 @@ must have run first; a stale copy is self-healing (its live Pkgversion is
 what the updater compares, so the first update pass replaces it).
 """
 
+import json
 import os
 
 STAGING = '/sys/quiet'          # ephemeral: never saved with the project
@@ -34,6 +35,20 @@ ROOT_NAME = 'FNSTools'
 OUT = 'packaging/dist/FNS_Installer.tox'
 OUT_BOOTSTRAP = 'packaging/dist/%s.tox' % ROOT_NAME
 UPDATER_TOX = 'packaging/dist/FNS_Updater.tox'
+
+# The installer's version. Packages carry their hand-maintained Pkgversion
+# on the live component; the bare installer rail is CODE-BUILT, so its one
+# governed field lives here instead -- bump it on any installer change.
+# Both rails are stamped from this constant at build time (the bootstrap's
+# installer is a copy of the live dev comp, re-stamped so the two rails
+# can never ship different answers), which also makes the live dev comp's
+# own Pkgversion a mirror of this value, not a second source.
+INSTALLER_VERSION = '3.0.0'
+# publish.Stage() runs on the shell with no TD, so the version each rail
+# was built at rides this sidecar from the build to the staged manifest's
+# `rails` block. Without it a rail is recallable only by hash, which no
+# human can read back to "which installer is that?".
+RAILS_VERSIONS = 'packaging/dist/rails_versions.json'
 
 WEBBROWSER_TOX = 'packaging/webBrowser.tox'
 
@@ -58,10 +73,40 @@ def _repo(*parts):
     return os.path.join(project.folder, *parts).replace('\\', '/')
 
 
+def _stampInstallerVersion(comp):
+    """Ensure `comp` carries Pkgversion = INSTALLER_VERSION, same shape as
+    every package's (About page, read-only in the dialog -- edits go
+    through this constant, and scripts still write through readOnly)."""
+    p = getattr(comp.par, 'Pkgversion', None)
+    if p is None:
+        about = next((pg for pg in comp.customPages if pg.name == 'About'),
+                     None)
+        if about is None:
+            about = comp.appendCustomPage('About')
+        p = about.appendStr('Pkgversion', label='Package Version')[0]
+        p.readOnly = True
+    p.default = p.val = INSTALLER_VERSION
+
+
+def _recordRailVersion(rail_filename):
+    """Merge one rail's build version into the sidecar publish.Stage reads."""
+    path = _repo(RAILS_VERSIONS)
+    try:
+        with open(path, encoding='utf-8') as f:
+            doc = json.load(f)
+    except Exception:
+        doc = {}
+    doc[rail_filename] = INSTALLER_VERSION
+    with open(path, 'w', encoding='utf-8') as f:
+        json.dump(doc, f, indent=1)
+        f.write('\n')
+
+
 def _installerComp(parent):
     """Create the FNS_Installer COMP inside `parent` and return it."""
     comp = parent.create(baseCOMP, COMP_NAME)
     comp.nodeX, comp.nodeY = 0, 0
+    _stampInstallerVersion(comp)
 
     pg = comp.appendCustomPage('Install')
     p = pg.appendPulse('Configure', label='Pick Tools (browser)')[0]
@@ -152,6 +197,11 @@ def _installerComp(parent):
     ws = comp.create(webserverDAT, 'webserver')
     ws.par.active = False
     ws.par.port = 36760
+    # Blank = every interface (Derivative). The picker drives /selection and
+    # /install with no authentication, so it is loopback-only. InstallerExt
+    # re-asserts this on every Configure() to repair installers built before
+    # this line; setting it here means a fresh build is never wrong even once.
+    ws.par.localaddress = '127.0.0.1'
     ws.par.callbacks = 'webserver_callbacks'
     ws.nodeX, ws.nodeY = 200, -500
     _refreshInstallerSources(comp)
@@ -310,7 +360,11 @@ def BuildInstaller(out_path=OUT):
     """The bare installer COMP, for a project that already has the root."""
     stage = _stage('installer_build')
     comp = _installerComp(stage)
-    return _export(comp, out_path, stage)
+    info = _export(comp, out_path, stage)
+    if info.get('exported'):
+        _recordRailVersion(os.path.basename(out_path))
+        info['version'] = INSTALLER_VERSION
+    return info
 
 
 # The toolkit root's entry points. ONE definition, used by both roots --
@@ -751,6 +805,10 @@ def BuildBootstrap(out_path=OUT_BOOTSTRAP):
         inst.nodeX, inst.nodeY = 0, 0
     else:
         _refreshInstallerSources(inst)
+    # Copied from the live dev comp, so re-stamp from the constant: the
+    # bare rail and the bootstrap's installer must never ship different
+    # version answers.
+    _stampInstallerVersion(inst)
     _resetInstallerState(inst)
     host = root.op(ROOT_HOST)
     if host is None:
@@ -794,4 +852,8 @@ def BuildBootstrap(out_path=OUT_BOOTSTRAP):
 
     EnsureRootEntryPoints(root)
 
-    return _export(root, out_path, stage)
+    info = _export(root, out_path, stage)
+    if info.get('exported'):
+        _recordRailVersion(os.path.basename(out_path))
+        info['version'] = INSTALLER_VERSION
+    return info

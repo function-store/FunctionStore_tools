@@ -1,0 +1,31 @@
+{
+ "_comment": [
+  "TOOLS BY OTHER CREATORS that we point at. Curated in the CMS; git is the",
+  "audit trail.",
+  "",
+  "THESE ARE NOT PACKAGES, and they must never appear in manifest.json's",
+  "`packages` array. A row there is assumed by everything downstream to be",
+  "ours: Compare() versions it, the updater fetches it, InstallerExt installs",
+  "it, `requires` is derived for it, and the removed-guard would demand you",
+  "declare it retired the day the author's link dies.",
+  "",
+  "WE LINK, WE DO NOT HOST. `url` opens the author's own page in a browser.",
+  "Nothing is fetched, nothing is hashed, nothing enters the store. We cannot",
+  "pin bytes we do not control -- the file behind someone else's URL can",
+  "change whenever they like -- and putting one in the store would enrol it",
+  "in the update rail, which is exactly what this list promises not to do.",
+  "",
+  "This file publishes on its own, not with a release: edit, run",
+  "`python packaging/upload.py --recommendations`, and it reaches every",
+  "install within minutes. That independence is the safety valve -- pulling a",
+  "recommendation must never wait for a release.",
+  "",
+  "Per row: name, author, author_url, url (all required except author_url),",
+  "description, and an optional free-form category for grouping. Version,",
+  "sha256 and requires are REFUSED by the validator, so this list cannot",
+  "drift into looking like a package list."
+ ],
+ "schema": 1,
+ "intro": "Tools by other creators in the TouchDesigner community. These are not part of FNSTools — they are downloaded from, and maintained by, their authors.",
+ "tools": []
+}

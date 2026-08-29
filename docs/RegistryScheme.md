@@ -35,6 +35,9 @@ globals live in `/sys/FNS_Registries`; see
 
 ### ConfigRegistry surface specifics (the surface is a FILE)
 
+Scope, the two rails, and what each per-tool hatch really gates:
+[ScopeAndPersistence.md](ScopeAndPersistence.md).
+
 - **What it manages**: ONE aggregated JSON in the user palette
   (`app.userPaletteFolder/FNStools_ext/config/FNStools_config.json`,
   override via the master's Config-page `Configfile` par). Per-tool
@@ -467,6 +470,31 @@ incumbent.** No `ui.messageBox`, no `input`, no modal, no wait — anywhere the
 promotion path can reach. A version conflict interesting enough to report gets
 reported *after* load, through `Regstatus` or the log, never through a dialog.
 
+### The fix lives in 102 places, not one
+
+Removing the dialog from `scripts/shared/RegistryBase.py` does **not** finish
+the job. Every registry host carries its own `RegistryBase` DAT, and on
+2026-08-24 a cold boot raised the chooser again with every file on disk clean.
+
+Two of 102 live copies still held pre-fix text:
+
+| Copy | Why it was stale |
+|---|---|
+| `FNS_Hub/OpMenuConfigurator/FNS_HubRegistry/RegistryBase` | bound to the shared master but `syncfile` **off**, so it never reloaded (99 of the other copies have it on) |
+| `TDXLauncherUtility/ui_mod/FNS_MainMenuRegistry/RegistryBase` | v0.2.1 embedded in another package's release tox — self-contained by design, so no file edit ever reaches it |
+
+The second is the general case: **a package that vendors a registry ships its
+own frozen copy of this code.** Old vendored copies keep prompting forever, and
+they prompt precisely when they LOSE (v0.2.1 against the live v1.0.0) — so the
+dialog shows up in projects where nothing is wrong.
+
+After changing anything on the promotion path, sweep the live network, not the
+repo: find every `RegistryBase`, check the text, repair by restoring `syncfile`
+where the copy is file-bound and by pushing the current text where it is
+deliberately self-contained. Write the sweep with `maxDepth`, never `depth` —
+`findChildren(depth=99)` returns an empty list and reads as "all clean"
+(see `.claude/rules/td-python.md`).
+
 ## 3. Entry data model and persistence
 
 Entries live in the global's `StorageManager` store (`PaneRegistry` key —
@@ -498,6 +526,14 @@ targets, drop entries whose host died, and (surface hook) re-inject anything
 the surface lost — this is also what makes a late-arriving surface work.
 
 ## 4. RegistryBase contract (building a new registry)
+
+> **Internal layout (2026-08-28):** the base is organized as seven job
+> mixins (`_RegistryToolPageMixin`, `_RegistryHostMixin`,
+> `_RegistryGlobalMixin`, `_RegistryHealMixin`, `_RegistryStampMixin`,
+> `_RegistryGroupsMixin`, `_RegistryGroupWidgetMixin`) flattened into
+> `RegistryBase`, which keeps the identity, lifecycle, and the surface
+> hooks. **The subclass contract below is unchanged** — subclasses derive
+> from `RegistryBase` alone; the mixins are organization, not API.
 
 `RegistryBase` (a textDAT module inside every registry COMP; subclass
 imports it with `RegistryBase = mod('RegistryBase').RegistryBase`) owns
@@ -614,6 +650,36 @@ panel input wired to the bar's `emptypanel` (`_anchorMirror`, mirroring the
 original FNS_Toolbar installer) or they drop out of the bar's layout flow.
 When adopting a surface, read its original installer for wiring like this —
 copy/create alone is rarely the whole contract.
+
+### The one deliberate exception: FNS_CommandRegistry
+
+`FNS_CommandRegistry` breaks the pattern on purpose, and an auditor will
+flag it every time unless this paragraph is read first: it has **no master
+under `/FNSTools` and no `Version` parameter** — it exists only as the
+`/sys` copy, carrying just *Rescan* and *Status*.
+
+That is because it is a **pure aggregator, not a publisher target**. Every
+other registry holds a central store that stamped hosts publish into; the
+command registry holds nothing — it discovers `fnscommands`-tagged tools
+(42 at last count) by scanning, so there is no entry data to own, no host
+to stamp, and no state whose version could drift. The costs are accepted:
+it cannot be version-checked and cannot ship through the update rail as a
+package. **This is an exception for this one registry, not a statement
+about registries** — the ten versioned registries are ordinary packages
+and update standalone through the rail (subject to the version-arbitration
+caveat in §2: an update only takes over the `/sys` global when its version
+is bumped past the incumbent's — arbitration reads `Pkgversion` first,
+falling back to `Version` only for components that predate it; the two are
+never maintained as separate numbers).
+
+Its code does not even live on the FNS side: the `/sys/FNS_CommandRegistry`
+copy is promoted from **TDXLauncherUtility** (TDXL), so updating the
+registry's behaviour means shipping a new TDXL launcher. What FNS ships is
+`FNS_CommandKit` — the drop-in *publisher* kit — which is itself a normal,
+rail-updatable package. If the registry ever grows owned state (an entry
+store, per-command overrides), that is the moment it must be brought into
+the full pattern — master, `Pkgversion`, stamped hosts — not patched
+around.
 
 ## 6. Packaging and distribution
 

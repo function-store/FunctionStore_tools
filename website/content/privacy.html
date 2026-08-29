@@ -1,0 +1,101 @@
+<!-- Source for /privacy/. Hand-written prose; tools/build-site.mjs wraps this
+     in the site head, header and footer and writes website/privacy/index.html
+     (generated, gitignored — like docs/, get/ and plus/).
+
+     KEEP THIS TRUE TO THE CODE. Every claim below is checkable:
+       worker/src/index.js   what the gate requests from Patreon and what the
+                             session record actually holds (no name, no email,
+                             no user id — a refresh token, tier ids, stamps)
+       docs/EntitlementLifecycle.md   the retention windows quoted here -->
+
+<h1>Privacy</h1>
+<p class="lede">
+  FNSTools is a TouchDesigner toolkit, not a service that wants your data. The free toolkit
+  collects nothing at all. The supporter gate collects the least it can and still know that a
+  membership is live. This page says exactly what that means, in the same detail the code does.
+</p>
+
+<h2>The toolkit</h2>
+<ul class="plus-facts">
+  <li><strong>No account, no telemetry.</strong> Installing and using the free packages sends us
+    nothing. There is no analytics inside TouchDesigner, no usage reporting, and no phone-home.</li>
+  <li><strong>Update checks are anonymous.</strong> The updater fetches a public manifest and the
+    package files it names. Those are ordinary file downloads; we do not tie them to a person.</li>
+  <li><strong>Your settings stay on your machine.</strong> Tool configuration is written to your own
+    disk and never leaves it.</li>
+</ul>
+
+<h2>This website</h2>
+<p>
+  The site is static and sets no cookies. It uses Vercel's privacy-friendly analytics, which counts
+  page views in aggregate without cookies and without profiling visitors. Documentation search runs
+  entirely in your browser.
+</p>
+
+<h2>The supporter gate</h2>
+<p>
+  Unlocking a Plus package means proving an entitlement. Two ways in, and each stores something
+  different.
+</p>
+
+<h3>Signing in with Patreon</h3>
+<p>
+  You are sent to Patreon to approve the connection; we never see your Patreon password. We request
+  the <code>identity</code> and <code>identity.memberships</code> scopes and read only which tiers
+  you are currently entitled to, plus whether the membership is active.
+</p>
+<p>What the gate stores for that session, and nothing else:</p>
+<ul class="plus-facts">
+  <li>a Patreon refresh token, so entitlement can be re-checked without sending you back through
+    sign-in;</li>
+  <li>the numeric tier ids your membership entitles you to, and the package names they unlock;</li>
+  <li>timestamps for when it was created and last verified.</li>
+</ul>
+<p>
+  It does <strong>not</strong> store your name, your email address, your Patreon profile, your
+  pledge amount, or your payment details. The record is keyed by an opaque random token held by your
+  copy of TouchDesigner — not by an account we could look you up in.
+</p>
+
+<h3>Redeeming a licence key</h3>
+<p>
+  The key is sent to Gumroad for verification. If it is valid, the gate stores the product id it
+  unlocks and the same timestamps. Your purchase details stay with Gumroad.
+</p>
+
+<h3>Downloads</h3>
+<p>
+  Gated files are served from Cloudflare R2 through a Cloudflare Worker, which checks a short-lived
+  download token. Cloudflare handles these requests as any CDN does, with the usual transient server
+  logs; we do not build profiles from them.
+</p>
+
+<h2>How long any of it lasts</h2>
+<ul class="plus-facts">
+  <li><strong>Patreon sessions expire after 180 days</strong> without use, then are gone.</li>
+  <li><strong>Licence-key sessions do not expire</strong> — a key bought outright keeps working.</li>
+  <li><strong>Signing out revokes immediately.</strong> Pulse <em>Sign Out</em> in the updater and the
+    token is dead on the server; the revoked record itself is dropped after 30 days.</li>
+</ul>
+
+<h2>Who else is involved</h2>
+<p>
+  Only the services that make the above work: <a href="https://patreon.com/function_store"
+  target="_blank" rel="noopener">Patreon</a> (memberships), Gumroad (licence keys), Cloudflare
+  (storage and the gate), and Vercel (this website). Nothing is sold, rented, or shared with anyone
+  else, and there is no advertising or cross-site tracking anywhere in FNSTools.
+</p>
+
+<h2>Asking for deletion</h2>
+<p>
+  Signing out deletes your session yourself, immediately. If you would rather it be done for you, or
+  you want to know what is held for you, write to
+  <a href="mailto:dan%2Bfnstools@functionstore.xyz?subject=FNSTools%20privacy">dan+fnstools@functionstore.xyz</a>
+  and it will be handled by hand.
+</p>
+
+<h2>Changes</h2>
+<p>
+  If what the gate stores ever changes, this page changes in the same commit as the code — it is kept
+  in the repository beside it, so it cannot quietly fall out of date.
+</p>

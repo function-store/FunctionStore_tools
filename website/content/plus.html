@@ -1,0 +1,223 @@
+<!-- Source for /plus/. Hand-written prose; tools/build-site.mjs wraps this in
+     the site head, header and footer and writes website/plus/index.html
+     (generated, gitignored — like docs/ and get/).
+
+     Two blocks are injected:
+       PLUSPKGS  the packages catalog.json marks with a non-free `access`
+       FAMILY    the cards from content/family.json, same as the landing page
+
+     The build refuses to run if either marker pair is missing, because the
+     failure mode otherwise is a Plus page that quietly lists nothing. -->
+
+<h1>FNSTools Plus</h1>
+<p class="lede">
+  Nearly all of FNSTools is free, MIT, and stays that way. A few tools are how the work gets
+  paid for. This page is the whole story — what is behind the gate, what unlocks it, and what
+  it does to your machine.
+</p>
+
+<div class="tiers plus-tiers">
+  <div class="tier">
+    <span class="tier-tag">Free · MIT</span>
+    <h3>Nearly everything</h3>
+    <p>The core registries and nearly every tool in the catalogue.</p>
+    <ul>
+      <li><strong>No account, no sign-in.</strong> Nothing phones home, and there is no telemetry.</li>
+      <li><strong>Source on GitHub.</strong> Read it, fork it, use it in commercial work.</li>
+      <li><strong>Every machine you own</strong> — and every machine you set up for someone else.</li>
+      <li><strong>Free stays free.</strong> A tool that is free today does not become paid later.</li>
+    </ul>
+    <div class="tier-actions">
+      <a class="btn btn-primary" href="/#get">Get FNSTools →</a>
+    </div>
+  </div>
+  <div class="tier tier--plus">
+    <span class="tier-tag">Plus</span>
+    <h3>A few tools</h3>
+    <p>Ordinary packages in the same catalogue, with one difference: the server checks that you
+      are entitled before it sends the bytes.</p>
+    <ul>
+      <li><strong>Visible, not hidden.</strong> Plus tools sit in the picker and the docs like any other, marked Plus.</li>
+      <li><strong>Two ways in.</strong> A Patreon membership, or a licence key bought outright.</li>
+      <li><strong>Same rails.</strong> One release, one manifest, the same sha256 verification, the same updater.</li>
+    </ul>
+    <div class="tier-actions">
+      <a class="btn btn-primary" href="https://patreon.com/function_store" target="_blank" rel="noopener">See the tiers</a>
+      <a class="btn btn-secondary" href="#unlock">How to unlock →</a>
+    </div>
+  </div>
+</div>
+
+<h2 id="whats-in-plus">What is in Plus right now</h2>
+<p>
+  This list is short on purpose, and it is generated from the same catalogue the installer
+  reads — so it cannot advertise something that does not ship. Every one of these has a full
+  documentation page you can read before deciding anything.
+</p>
+
+<!-- PLUSPKGS:START -->
+<!-- PLUSPKGS:END -->
+
+<h2 id="unlock">Two ways to unlock</h2>
+<div class="tiers">
+  <div class="tier">
+    <span class="tier-tag">Membership</span>
+    <h3>Patreon</h3>
+    <p>Ongoing support. Your tier decides which Plus tools you get, and they stay current for as
+      long as you are a member.</p>
+    <ul>
+      <li>Covers more than the toolkit — the same membership reaches the other Function Store tools.</li>
+      <li>New Plus tools appear as they ship, without buying anything again.</li>
+      <li>Connect once per machine, from inside TouchDesigner.</li>
+    </ul>
+    <div class="tier-actions">
+      <a class="btn btn-primary" href="https://patreon.com/function_store" target="_blank" rel="noopener">Tiers and pricing →</a>
+    </div>
+  </div>
+  <div class="tier">
+    <span class="tier-tag">Licence key</span>
+    <h3>Buy one tool</h3>
+    <p>A one-time purchase for a single tool, redeemed with a key. No membership, no recurring
+      charge.</p>
+    <ul>
+      <li>One key per tool — hold as many as you have bought, and add or remove them individually.</li>
+      <li>How many machines a key covers is stated where you buy it.</li>
+      <li>Redeemed in the same place as the Patreon connection.</li>
+    </ul>
+    <div class="tier-actions">
+      <a class="btn btn-secondary" href="#unlocking-in-touchdesigner">Where to redeem →</a>
+    </div>
+  </div>
+</div>
+
+<h2 id="unlocking-in-touchdesigner">Unlocking, step by step</h2>
+<ol class="plus-steps">
+  <li>
+    <strong>Install the toolkit as usual.</strong> Plus tools need no special installer — they are
+    rows in the same catalogue. <a href="/#get">The three steps are here.</a>
+  </li>
+  <li>
+    <strong>Open <code>FNS_Updater</code></strong> inside the toolkit container. Its sign-in
+    parameters are where all of this happens — there is no separate account tool to install.
+  </li>
+  <li>
+    <strong>Pulse <em>Sign In</em>, or paste a licence key and pulse <em>Redeem</em>.</strong>
+    Signing in opens your normal browser, you approve there, and the tab hands the result back to
+    TouchDesigner by itself.
+  </li>
+  <li>
+    <strong>Pick your tools.</strong> The Plus packages you are entitled to stop being locked in
+    the picker and install like anything else.
+  </li>
+</ol>
+
+<h2 id="what-it-does-to-your-machine">What it does to your machine</h2>
+<p>
+  Worth being precise about, because the answer is short and it is the part people are right to
+  ask about.
+</p>
+<ul class="plus-facts">
+  <li>
+    <strong>The credential never touches your project.</strong> It goes into the Windows
+    Credential Manager or the macOS Keychain, under your user account. It is not in the
+    <code>.toe</code>, not in a <code>.tox</code>, and not in a file beside them — so a project
+    you hand to a collaborator carries no key of yours.
+  </li>
+  <li>
+    <strong>TouchDesigner never holds a Patreon token.</strong> It holds an opaque token that
+    means nothing anywhere else, and that can be revoked.
+  </li>
+  <li>
+    <strong>The check is on the bytes, not the buttons.</strong> Entitlement is decided by the
+    server before a file is served. Nothing is "unlocked" by editing a parameter, which is also
+    why a locked tool in your picker is a real lock rather than a grey button.
+  </li>
+  <li>
+    <strong>Sign out whenever.</strong> One button; the credential is deleted from the keystore.
+  </li>
+</ul>
+
+<h2 id="questions">The questions people actually ask</h2>
+
+<details class="fold">
+  <summary>What happens if my membership lapses?</summary>
+  <div class="fold-body">
+    <p>Tools already installed in your project keep working. They are files in your
+      <code>.toe</code> like any other component — nothing calls home to check on them, and
+      nothing expires.</p>
+    <p>What you lose is the ability to download them again: updates to Plus tools, and installing
+      them on a new machine or into a new project. Rejoin and both come back.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>Does any of this change the free toolkit?</summary>
+  <div class="fold-body">
+    <p>No. The free packages are served publicly and unauthenticated exactly as they were, the
+      source stays on GitHub under MIT, and the installer does not ask you to sign in to use
+      them. If you never unlock anything, you will not notice the gate exists beyond a few
+      cards marked Plus.</p>
+    <p>Nothing that is free today becomes paid later. Plus grows by new tools arriving in it.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>Can I still read the source of a Plus tool?</summary>
+  <div class="fold-body">
+    <p>Plus packages are not published to the public GitHub repository, and they are not MIT.
+      Once installed they are ordinary TouchDesigner components in your project — you can open
+      them, read the Python inside, and see exactly what they do. What you may not do is
+      redistribute them.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>I work on several machines — studio, laptop, a show box.</summary>
+  <div class="fold-body">
+    <p>Connect each one. A membership is checked per machine against your account, so signing in
+      on a new box is the whole procedure.</p>
+    <p>Licence keys are per tool, and how many machines one key covers is stated where you buy
+      it.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>Does the toolkit need internet to run?</summary>
+  <div class="fold-body">
+    <p>Only to install and to update. Once packages are in your project, TouchDesigner runs them
+      offline — which matters on a show machine, and is why the entitlement check sits on the
+      download rather than on startup.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>Why gate anything at all?</summary>
+  <div class="fold-body">
+    <p>Because the free part is large, actively maintained, and takes real time. The honest
+      version: a handful of the more involved tools pay for the rest of it staying free and
+      moving. If the free toolkit is all you ever use, that is a completely fine outcome — it is
+      MIT for a reason.</p>
+  </div>
+</details>
+
+<h2 id="more">More from Function Store</h2>
+<p>
+  The same shape elsewhere: a free core, more with support. One membership reaches these too —
+  each product's own page states which tier it needs.
+</p>
+
+<!-- FAMILY:START -->
+<!-- FAMILY:END -->
+
+<div class="plus-cta">
+  <h2>Start with the free toolkit</h2>
+  <p>
+    It is the honest way round: install it, use it for a week, and decide afterwards whether any
+    of this is worth supporting.
+  </p>
+  <div class="hero-cta">
+    <a class="btn btn-primary btn-lg js-fns-download" href="https://storage.functionstore.tools/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
+    <a class="btn btn-secondary btn-lg" href="/get/">Pick your tools →</a>
+    <a class="btn btn-secondary btn-lg" href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+  </div>
+</div>
