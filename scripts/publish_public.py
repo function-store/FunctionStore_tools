@@ -50,7 +50,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG = os.path.join(REPO, 'packaging', 'catalog.json')
 
 DEFAULT_TARGET = os.path.normpath(
-    os.path.join(REPO, '..', 'FunctionStore_tools_public'))
+    os.path.join(REPO, '..', 'FNSTools_PUB'))
 BRANCH = 'dev25'
 # The mirror's identity. A target whose origin does not match this is
 # refused: publishing into the wrong checkout is unrecoverable.
@@ -405,12 +405,15 @@ def main(argv=None):
         return 2
 
     written, removed = _materialize(args.rev, plan['published'], args.target)
+    # Stage FIRST: `git ls-files` reads the INDEX, so a file deleted from
+    # the working tree still lists until that deletion is staged.
+    # Asserting before this reports every correct removal as a leak.
+    _git('add', '-A', cwd=args.target)
     bad = _assertClean(args.target, gated)
     if bad:
         print('\nREFUSED -- withheld paths reached the mirror: %s' % bad)
         return 2
 
-    _git('add', '-A', cwd=args.target)
     status = _git('status', '--porcelain', cwd=args.target).strip()
     if not status:
         print('\nmirror already matches %s -- nothing to commit'
