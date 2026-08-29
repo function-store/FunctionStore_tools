@@ -1108,13 +1108,12 @@ function fnsBoot() {
       "_ = open(sp, 'w').write(json.dumps({'schema': 1, 'toolkit': m['toolkit']['name'], 'core': m['core'], 'tools': SEL + PLUS, 'install': names}, indent=1))",
       "f = os.path.join(tempfile.gettempdir(), 'FNSTools.tox')",
       "_ = open(f, 'wb').write(boot)",
-      "pn = ui.panes.current",
-      "pn = pn if pn.type == PaneType.NETWORKEDITOR else next(x for x in ui.panes if x.type == PaneType.NETWORKEDITOR)",
-      "root = pn.owner.loadTox(f)",
+      "root = op('/').loadTox(f)",
       "root.store('FNS_welcomed', 'paste')",
       "r_ = run(\"i = op('%s/FNS_Installer'); i.par.Selectionfile = '%s'; i.par.Install.pulse()\" % (root.path, sp), delayFrames=90)",
+      "_ = PLUS and run(\"op('%s/FNS_Installer').par.Configure.pulse()\" % root.path, delayFrames=150)",
       "print('FNSTools', m['release'], '--', len(names), 'packages verified; installing into', root.path)",
-      "_ = PLUS and print('Needs a supporter account:', ', '.join(PLUS) + '.', 'On the FNSTools root, hit Pick Tools and click Sign in.')"
+      "_ = PLUS and print('Needs a supporter account:', ', '.join(PLUS) + '.', 'The picker will open by itself -- your picks are waiting there; click Sign in.')"
     ].join('; ');
   }
 
@@ -1373,7 +1372,12 @@ function fnsBoot() {
         var gatedNote = (st.gated_why && st.gated_why.length)
           ? '\n' + st.gated_why.join('\n') : '';
         if (st.fetching) {
-          showDialog('Downloading… ' + st.fetched + ' done, ' + st.togo + ' to go', false);
+          // the updater's own narration names the hop (authorising,
+          // fetching, verifying) -- the bare counter said "Downloading"
+          // even while the pass was authorising, which is how a wedge
+          // looked like a slow download instead of naming itself
+          showDialog((st.detail || 'Downloading…')
+            + '\n' + st.fetched + ' done, ' + st.togo + ' to go', false);
           installOrPoll({fetching: true, text: ''});
         } else if (st.ready) {
           showDialog('Installing…' + gatedNote, false);

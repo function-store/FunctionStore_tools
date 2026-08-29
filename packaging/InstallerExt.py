@@ -877,11 +877,17 @@ class InstallerExt:
         parent = self.ownerComp.parent()
         browser = parent.op('webBrowser') if parent is not None else None
         if browser is not None:
-            # dormant until opened (winopen watcher); on first so the page
-            # loads as the viewer appears
             act = getattr(browser.par, 'Active', None)
             if act is not None and not act.eval():
                 act.val = True
+            # Declare the serve: an openViewer window satisfies NONE of
+            # the browser's visibility watchers (measured -- not winopen,
+            # not viewer-active, not a pane), so without the hold the
+            # watchers switch the render back off one frame after this
+            # method turns it on, and Pick Tools opens a blank panel.
+            # Released by _serverOff when the picker server stops.
+            if hasattr(browser.par, 'Holdactive'):
+                browser.par.Holdactive = True
             browser.par.Address = url
             browser.openViewer()
         else:
@@ -983,6 +989,20 @@ class InstallerExt:
         # from, and the response must leave first
         run("op(%r).par.Opensettings.pulse()" % root.path, delayFrames=2)
         return ''
+
+    def _serverOff(self, delay_ms):
+        """Deactivate the picker server later -- and release the browser
+        hold with it: Holdactive means "being served", and a stopped
+        server is the definition of not being served."""
+        ws = self.ownerComp.op('webserver')
+        parent = self.ownerComp.parent()
+        browser = parent.op('webBrowser') if parent is not None else None
+        if ws is not None:
+            run("op(%r).par.active = False" % ws.path,
+                delayMilliSeconds=delay_ms)
+        if browser is not None and hasattr(browser.par, 'Holdactive'):
+            run("op(%r).par.Holdactive = False" % browser.path,
+                delayMilliSeconds=delay_ms)
 
     def _accountGlobal(self):
         """`window.FNS_ACCOUNT = ...;` for the served page, or ''.
@@ -1192,12 +1212,14 @@ class InstallerExt:
                 # to serve
                 why = self._openSettings()
                 response['Content-Type'] = 'application/json'
-                response['data'] = json.dumps({'ok': not why, 'text': why})
+                # A real sentence on success: the page falls back to
+                # "could not open the console" for EMPTY text, so the old
+                # '' success read as a failure in the field.
+                response['data'] = json.dumps(
+                    {'ok': not why,
+                     'text': why or 'Opening the FNS console…'})
                 if not why:
-                    ws = self.ownerComp.op('webserver')
-                    if ws is not None:
-                        run("op(%r).par.active = False" % ws.path,
-                            delayMilliSeconds=1500)
+                    self._serverOff(1500)
             elif method == 'POST' and uri == '/selection':
                 sel_dir = ('%s/FNStools_ext' % app.userPaletteFolder).replace('\\', '/')
                 os.makedirs(sel_dir, exist_ok=True)
@@ -1268,10 +1290,23 @@ class InstallerExt:
                                      if n not in set(gated)]
                     except Exception:
                         ready = False
+                # The updater's own Status par narrates the pass hop by hop
+                # ("refresh: authorising...", "fetching 3 artifact(s)...").
+                # Relaying it means a wedge NAMES ITS HOP in the page dialog
+                # instead of looping a counter that says "Downloading" even
+                # while the pass is authorising (0.5's observability half).
+                detail = ''
+                try:
+                    upd2 = self._updaterComp()
+                    if upd2 is not None:
+                        detail = str(upd2.par.Status.eval())
+                except Exception:
+                    detail = ''
                 response['data'] = json.dumps(
                     {'fetching': fetching, 'fetched': done, 'togo': togo,
                      'ready': ready, 'failed': failed[:4],
-                     'gated': gated[:8], 'gated_why': gated_why[:4]})
+                     'gated': gated[:8], 'gated_why': gated_why[:4],
+                     'detail': detail[:200]})
             elif method == 'POST' and uri == '/install':
                 plan = ResolvePlan(self._par('Selectionfile'),
                                    self._par('Manifestfile') or DefaultManifest(),
@@ -1316,10 +1351,7 @@ class InstallerExt:
                         # minute, not seconds: the page's done step offers
                         # Open Settings (POST /settings), which needs a
                         # server to answer.
-                        ws = self.ownerComp.op('webserver')
-                        if ws is not None:
-                            run("op(%r).par.active = False" % ws.path,
-                                delayMilliSeconds=60000)
+                        self._serverOff(60000)
             else:
                 response['statusCode'], response['statusReason'] = 404, 'Not Found'
                 response['data'] = 'not found'

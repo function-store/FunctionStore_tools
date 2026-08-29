@@ -151,6 +151,46 @@ suspect PI-saved, vendored tox re-exported, `_ensureBrowserPolicy`
 ships `Watchpane` on, rails rebuilt clean. The pane signal is
 wiki-verified (`Pane.open`, `Pane.owner`, `PaneType.PANEL`).*
 
+### 0.5 BLOCKER — the bootstrap instance's in-pass download wedge
+
+Not an asterisk: a LAUNCH BLOCKER, because the rescue that saved the
+first walk (a dev-side pull seeding the shared store) does not exist
+on a customer machine. Observed once: fresh bootstrap project,
+entitled, gated pick → "Downloading… 0 done, 1 to go" forever. What
+is EXCLUDED by measurement: the shipped code (the identical sequence
+— token-less scoped refresh → in-pass authorise → gated download →
+verify — completes cleanly BOTH in the dev updater and on a live
+copy of the shipped v3.0.5 bootstrap loaded into `/sys/quiet`), the
+gate, the artifact, and the store. What remains: something about the
+instance/process environment of a standalone TD running the
+bootstrap. The wedged job's memory was lost to the successful retry,
+so the next occurrence must be captured live — repro protocol:
+delete `FNS_TimelineTools.tox` from the palette store, fresh (or the
+existing test) project, pick it, Install; on wedge, drop
+Embody/Envoy into that project and autopsy `_job`
+(stage/queue/inflight), the auth client, and
+`fileDownloader.stateDict`. Ship-with observability rides the same
+fix: `/status` must expose the pass STAGE (authorising is not
+"Downloading") and per-item downloader state, so a customer's wedge
+names its own hop instead of looping a counter.
+
+*Field batch, 2026-08-29 evening (`0e81f94`) — four findings from the
+first customer-shaped install, all landed and live-verified in BOTH
+the dev project and the FNSTest2 test install (hot-patched): the
+browser's visibility watchers cannot see an openViewer window at all
+(measured — Active flipped off one frame after Pick Tools, the
+console, or the viewer toggle turned it on), so serving flows now
+declare a `Holdactive` that the installer's Configure and the
+console's panel-open set and their server shutdowns release; the
+paste script lands the bootstrap at `/` always instead of the current
+pane's owner; a Plus pick makes the script open the picker BY ITSELF
+150 frames in (the Textport line is a signpost, not the funnel); and
+Open Settings answers a real sentence instead of the empty string the
+page renders as "could not open the console". Rails rebuilt; ships
+with the next release. 0.5's wedge stays open — the wedged pass this
+morning eventually completed (likely un-stuck by this session's store
+seeding), so the corpse was never captured.*
+
 After 0.1–0.3: run `wrangler deploy` (source `TIERS` is already real —
 `8323905`/`8291595`/`9796651` in `worker/wrangler.toml`; only the
 *deployed* state is unverified), then walk the paid path with the
@@ -176,6 +216,25 @@ defaults off, `AbortAll` closes it, late disconnects guarded —
 open to close the milestone: `wrangler deploy` (the live worker
 predates `/session/recheck`), then the ENTITLED walk — sign in as
 creator, watch the gated tox arrive and install.*
+
+*MILESTONE WALKED, 2026-08-29 evening: v3.0.5 released (updater
+3.0.3), uploaded (plus/ canary private), worker deployed, site
+production-deployed — and the full customer path ran: /get/ → paste
+rail → bootstrap into a fresh project → picker → sign-in (three
+measured client bugs fixed on the way: Web Server DAT query params
+live in request['pars'] not the uri; Web Client request() neither
+writes par.url nor honours the auth pars — bearer must ride kwargs)
+→ entitled → gated FNS_TimelineTools downloaded sha-true through the
+token rail and installed. One asterisk, launch-blocking: the fresh
+instance's OWN in-pass download wedged at "0 done, 1 to go" and was
+rescued by a dev-side pull into the shared store + retry; the exact
+sequence reproduces CLEANLY in the dev instance (token-less scoped
+refresh → in-pass authorise → download → verify), so the wedge is
+environmental to the bootstrap instance and needs a live autopsy
+(drop Envoy into the wedged project; inspect _job stage/queue/
+inflight and the auth client). Also: /status says "Downloading" while
+the pass is authorising — conflates two states; give authorising its
+own words.*
 
 *Phase 0 status, night of 2026-08-29 (branch `dev25-entitlement-funnel`):
 ALL LANDED. 0.1 `e2a9a84` — selection() splits gated picks in every

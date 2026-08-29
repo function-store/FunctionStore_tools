@@ -634,12 +634,17 @@ class ConsoleRegistryExt(RegistryBase):
 					res = hubreg.Open(tab='console')
 					if isinstance(res, dict) and res.get('ok'):
 						return 'hub'
-				# the rail's browser is dormant until opened (its winopen
-				# watcher keeps it that way); switch it on first so the page
-				# starts loading as the viewer appears
+				# Declare the serve: an openViewer window satisfies NONE
+				# of the browser's visibility watchers (measured -- not
+				# winopen, not viewer-active, not a pane), so without the
+				# hold they switch the render back off one frame later
+				# and the console opens blank. Released by _idleTick when
+				# this server stops.
 				act = getattr(browser.par, 'Active', None)
 				if act is not None and not act.eval():
 					act.val = True
+				if hasattr(browser.par, 'Holdactive'):
+					browser.par.Holdactive = True
 				browser.par.Address = url
 				browser.openViewer()
 				return 'panel'
@@ -671,6 +676,12 @@ class ConsoleRegistryExt(RegistryBase):
 			return
 		if absTime.seconds - getattr(self, '_ui_last_request', 0) >= self.UI_IDLE_SECONDS:
 			ws.par.active = False
+			# the serve is over: release the browser hold set by _openPanel
+			# so the render watchers own visibility again
+			root = getattr(op, 'FNS', None)
+			browser = root.op('webBrowser') if root is not None else None
+			if browser is not None and hasattr(browser.par, 'Holdactive'):
+				browser.par.Holdactive = False
 			debug(f'{self.REGISTRY_NAME}: console idle, server stopped')
 			return
 		self._armTick()
