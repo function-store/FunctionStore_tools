@@ -78,6 +78,19 @@ DECLARED_PRIVATE = (
     'tests/fixtures/markers/resolve_markers.edl',
 )
 
+# Whole private subtrees. DECLARED_PRIVATE is exact paths on purpose (a
+# doc is one file); these are CONTAINERS whose future contents must stay
+# withheld without anyone re-listing them file by file. PreviewPanel25 is
+# a root-level dev container (the network FNS_PaneTypeRegistry was
+# authored in) -- _packageish() only recognises package shapes under
+# FNSTools/ and modules/suspects/FNSTools/, so root-level suspects like
+# this passed the fail-closed sweep unexamined and published by accident.
+DECLARED_PRIVATE_PREFIXES = (
+    'PreviewPanel25/',
+    'modules/suspects/PreviewPanel25.tox',
+    'modules/suspects/PreviewPanel25/',
+)
+
 # Paths that legitimately carry a gated package's name and still publish:
 # the public catalogue and the tool's own user-facing doc page (the site
 # build hard-fails without it, and a Plus tool having a docs page is the
@@ -167,6 +180,9 @@ def Rule(path, gated):
     if path.lower().endswith('.toe'):
         return 'toe'
     if path in DECLARED_PRIVATE:
+        return 'declared'
+    if any(path == p.rstrip('/') or path.startswith(p)
+           for p in DECLARED_PRIVATE_PREFIXES):
         return 'declared'
     for name in gated:
         prefixes, exacts = _gatedPrefixes(name)
