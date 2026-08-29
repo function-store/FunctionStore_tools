@@ -52,6 +52,9 @@ Log/OrbbecSDK.log.txt
 /clipboard_images
 !FunctionStore_tools_2023_DEV.toe
 !FunctionStore_tools_2025_DEV.toe
+# renamed 2026-08-29 when the repo folder became FNSTools_PRIV. The
+# exception list is by NAME, so a rename silently untracks the project.
+!FNSTools_PRIV.toe
 
 # Embody / Envoy (auto-managed)
 logs/

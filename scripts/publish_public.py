@@ -33,7 +33,8 @@ publish normally. Only paths that ARE the tool are withheld.
 
     python scripts/publish_public.py                   # dry run (default)
     python scripts/publish_public.py --target ../DIR   # explicit checkout
-    python scripts/publish_public.py --push            # actually publish
+    python scripts/publish_public.py --local           # commit locally only
+    python scripts/publish_public.py --push            # commit and publish
 
 Dry run is the default and prints every exclusion with the rule that
 produced it. Nothing is written without --push.
@@ -334,7 +335,11 @@ def main(argv=None):
                     help='commit to publish (default: HEAD -- committed '
                          'state only, never the dirty working tree)')
     ap.add_argument('--push', action='store_true',
-                    help='write, commit and push. Without it: dry run.')
+                    help='write, commit AND push. Without it: dry run.')
+    ap.add_argument('--local', action='store_true',
+                    help='write and commit into the mirror checkout, but do '
+                         'NOT push -- so the commit can be inspected before '
+                         'it reaches the world. Push it yourself afterwards.')
     ap.add_argument('--check-rev', metavar='REV',
                     help='exit non-zero when the tree at REV holds ANY '
                          'withheld path. This is what the pre-push hook '
@@ -378,8 +383,9 @@ def main(argv=None):
         return 2
 
     problem = _targetOk(args.target)
+    writing = args.push or args.local
 
-    if not args.push:
+    if not writing:
         print()
         if problem:
             print('target not ready (%s)' % problem)
@@ -397,11 +403,25 @@ def main(argv=None):
                     print('    %-8s ... and %d more'
                           % (label, len(d[label]) - 20))
         print()
-        print('dry run -- nothing written. Re-run with --push to publish.')
+        print('dry run -- nothing written. --local to commit into the '
+              'mirror, --push to commit and publish.')
         return 0
 
     if problem:
         print('\nREFUSED -- %s' % problem)
+        return 2
+
+    # The mirror can move without us -- a merged PR, a publish from
+    # another machine. Catch that BEFORE rewriting files, not at push
+    # time when the working tree is already replaced.
+    try:
+        _git('pull', '--ff-only', 'origin', BRANCH, cwd=args.target)
+    except subprocess.CalledProcessError:
+        print('\nREFUSED -- %s/%s has moved and this checkout cannot '
+              'fast-forward to it.' % (args.target, BRANCH))
+        print('Someone merged into the mirror, or it was published from '
+              'elsewhere. Reconcile that checkout (or re-clone) first --'
+              ' publishing over it would silently revert their change.')
         return 2
 
     written, removed = _materialize(args.rev, plan['published'], args.target)
@@ -423,6 +443,13 @@ def main(argv=None):
            'private tree.\nWithheld: %d paths (see the script for the '
            'rules).\n' % (plan['rev'][:12], len(plan['withheld'])))
     _git('commit', '-m', msg, cwd=args.target)
+    if not args.push:
+        sha = _git('rev-parse', '--short', 'HEAD', cwd=args.target).strip()
+        print('\ncommitted LOCALLY as %s: %d files written, %d removed. '
+              'Nothing has left this machine.' % (sha, written, len(removed)))
+        print('Inspect:  git -C %s show --stat' % args.target)
+        print('Publish:  git -C %s push origin %s' % (args.target, BRANCH))
+        return 0
     _git('push', 'origin', BRANCH, cwd=args.target)
     print('\npublished: %d files written, %d removed, pushed to %s/%s'
           % (written, len(removed), PUBLIC_SLUG, BRANCH))
