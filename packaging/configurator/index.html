@@ -348,6 +348,7 @@
     <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Become a supporter ↗</a>
     <button class="btn btn-quiet" id="recheck" hidden>Check again</button>
     <button class="btn btn-quiet" id="signin" hidden>Sign in</button>
+    <button class="btn btn-quiet" id="redeem" hidden>Redeem key</button>
     <span class="spacer"></span>
     <button class="btn btn-quiet" id="copy">Copy list</button>
     <button class="btn btn-secondary" id="script">Copy install script</button>
@@ -444,6 +445,15 @@ function fnsBoot() {
   function entitled(p) {
     return !!(account && (account.products || []).indexOf(p.name) >= 0);
   }
+  function tierLabel(access) {
+    // the manifest's routes projection: tier id -> human label, absent
+    // on manifests that predate it (the chip then names no tier)
+    var ts = (M && M.toolkit && M.toolkit.tiers) || [];
+    for (var i = 0; i < ts.length; i++) {
+      if (String(ts[i].id) === String(access)) return ts[i].label;
+    }
+    return '';
+  }
   if (!M) {
     listEl.innerHTML = '<div class="empty">No <code>manifest.js</code> found.<br>' +
       'Regenerate it from TouchDesigner:<br><br>' +
@@ -485,8 +495,16 @@ function fnsBoot() {
   }) : [];
   if (last && !lastNames.length) last = null;   // nothing the catalog still knows
   var wantBind = null;   // rides on the selection only when "like last time" was chosen
+  // Plus picks recorded as wanted-but-not-installable (selection.json
+  // `tools` minus `install`): pre-check them too, so the wish is waiting
+  // after sign-in instead of having evaporated. Entitled now -> they
+  // install; still locked -> selection() keeps them out of the plan and
+  // the chip says why. Absent on the site flavor by construction.
+  var wantedStill = (window.FNS_WANTED || []).filter(function (n) {
+    return byName[n] && byName[n].kind === 'tool';
+  });
   var picked = served
-    ? new Set(last ? lastNames : installedNow)
+    ? new Set((last ? lastNames : installedNow).concat(wantedStill))
     : new Set(JSON.parse(stored('fns.pick', null) || '[]')
                .filter(function (n) { return byName[n]; }));
 
@@ -607,6 +625,13 @@ function fnsBoot() {
         : (own ? 'Plus · unlocked' : 'Plus · locked');
       var extra = !account ? '' : (own ? ' own' : ' locked');
       var pl = docsLink(FNS_DOCS + '/plus/', label, 'chip plus' + extra);
+      // the ROUTE, not just the state: which tier unlocks it (the
+      // ladder grants upward), and the key when a Gumroad row exists
+      var tierName = tierLabel(p.access);
+      if (tierName && !own) {
+        pl.title = 'unlocks at the ' + tierName + ' tier or higher'
+          + (p.key_available ? ', or with a lifetime key' : '');
+      }
       pl.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pl);
     }
@@ -839,6 +864,21 @@ function fnsBoot() {
     } catch (e) { /* unavailable: selection simply is not remembered */ }
   }
 
+  function installable(n) {
+    var p = byName[n];
+    if (!p || !isPlus(p)) return true;
+    // A Plus pick enters the INSTALL plan only when this account is
+    // entitled to it -- the same split installScript() makes. Anything
+    // else keeps the pick in `tools` (recorded as wanted) and out of
+    // `install`: an unentitled gated name in the plan sends the whole
+    // install into the updater's gated-skip, and the page waits forever
+    // for an artifact that can never arrive. Applies to every flavor --
+    // on the site (no account) and signed out (null), no Plus pick is
+    // installable, which also keeps the downloaded selection.json
+    // consistent with the paste script instead of contradicting it.
+    return entitled(p);
+  }
+
   function selection() {
     var chosen = Array.from(picked).sort();
     var need = new Set(M.core);
@@ -850,7 +890,7 @@ function fnsBoot() {
       toolkit: M.toolkit.name,
       core: Array.from(need).sort(),
       tools: chosen,
-      install: Array.from(need).sort().concat(chosen)
+      install: Array.from(need).sort().concat(chosen.filter(installable))
     };
     if (wantBind) sel.bind = wantBind;
     return sel;
@@ -1125,10 +1165,75 @@ function fnsBoot() {
     if (!el || !hasAuthRail) { return; }
     var support = document.getElementById('support');
     var recheck = document.getElementById('recheck');
+    // The lifetime-key door, beside Sign in -- /plus/ promises keys are
+    // redeemed "in the same place as the Patreon connection", and until
+    // this control that place was a parameter page the funnel never
+    // pointed at. Offered whenever a key could unlock something the
+    // account does not already hold; the buyer picks the TOOL, the gate
+    // resolves Gumroad's product id through its own map.
+    var redeemBtn = document.getElementById('redeem');
+    var keyable = M.packages.filter(function (p) {
+      return isPlus(p) && p.key_available && !entitled(p);
+    });
+    if (redeemBtn && keyable.length) {
+      redeemBtn.hidden = false;
+      var redeemRow = null;
+      redeemBtn.addEventListener('click', function () {
+        if (redeemRow) {
+          redeemRow.hidden = !redeemRow.hidden;
+          return;
+        }
+        // built in DOM on first use -- no prompt(): the embedded web
+        // render is not guaranteed to show native JS dialogs at all
+        redeemRow = document.createElement('div');
+        redeemRow.className = 'sum';
+        var sel = document.createElement('select');
+        keyable.forEach(function (p) {
+          var o = document.createElement('option');
+          o.value = p.name;
+          o.textContent = p.name;
+          sel.appendChild(o);
+        });
+        var pickedLocked = keyable.filter(function (p) {
+          return picked.has(p.name);
+        })[0];
+        if (pickedLocked) { sel.value = pickedLocked.name; }
+        var inp = document.createElement('input');
+        inp.type = 'text';
+        inp.placeholder = 'paste the licence key';
+        inp.style.flex = '1';
+        var go = document.createElement('button');
+        go.className = 'btn btn-secondary';
+        go.textContent = 'Redeem';
+        go.addEventListener('click', function () {
+          var key = (inp.value || '').trim();
+          if (!key) { showDialog('Paste the licence key first.', false); return; }
+          post('/auth/redeem',
+            JSON.stringify({ key: key, package: sel.value }),
+            function (res) {
+              showDialog(res.text, false);
+              if (res.ok) { inp.value = ''; watchAuth(); }
+            });
+        });
+        redeemRow.appendChild(sel);
+        redeemRow.appendChild(inp);
+        redeemRow.appendChild(go);
+        var host = redeemBtn.closest('.sum');
+        host.parentNode.insertBefore(redeemRow, host.nextSibling);
+      });
+    }
     // Where to actually become one. From the manifest when it says, so a
     // campaign move is a manifest change rather than a reshipped page.
     var join = ((M.toolkit || {}).support_url) || (FNS_DOCS + '/plus/');
-    if (support) { support.href = join; }
+    if (support) {
+      support.href = join;
+      // Someone already paying is not asked to "become" anything: a
+      // held tier that grants nothing here means the remedy is a HIGHER
+      // tier, and the button should say so.
+      if (account && account.tier && !(account.products || []).length) {
+        support.textContent = 'Upgrade your tier ↗';
+      }
+    }
     if (account) {
       var n = (account.products || []).length;
       // DOM nodes, not innerHTML: the label comes from an account record
@@ -1141,9 +1246,14 @@ function fnsBoot() {
         ' — ' + n + ' package' + (n === 1 ? '' : 's') + ' unlocked'));
       if (account.checked_at) {
         // an entitlement is only as fresh as its last check, and the
-        // download is the real authority -- so say when, rather than imply
-        // this is live truth
-        el.title = 'as of the last entitlement check';
+        // download is the real authority -- so say HOW OLD, rather than
+        // imply this is live truth
+        var ageS = Math.max(0, (Date.now() / 1000) - account.checked_at);
+        var age = ageS < 90 ? 'moments ago'
+          : ageS < 5400 ? Math.round(ageS / 60) + ' minutes ago'
+          : ageS < 129600 ? Math.round(ageS / 3600) + ' hours ago'
+          : Math.round(ageS / 86400) + ' days ago';
+        el.title = 'entitlement last confirmed by the gate ' + age;
       }
       // Signed in and entitled to nothing is the case that decides whether
       // someone becomes a customer, so it gets BOTH doors: join, and -- for
@@ -1153,7 +1263,10 @@ function fnsBoot() {
         recheck.hidden = false;
         recheck.addEventListener('click', function () {
           post('/auth/recheck', '{}', function (res) {
-            showDialog(res.text, !!res.ok);
+            // second arg false ON PURPOSE: true unhides the Install
+            // button, and a recheck acknowledgment is not an install
+            showDialog(res.text, false);
+            if (res.ok) watchAuth();
           });
         });
       }
@@ -1164,10 +1277,43 @@ function fnsBoot() {
         btn.hidden = false;
         btn.addEventListener('click', function () {
           post('/auth/signin', '{}', function (res) {
-            showDialog(res.text, !!res.ok);
+            showDialog(res.text, false);
+            if (res.ok) watchAuth();
           });
         });
       }
+    }
+
+    // After a recheck or sign-in the OUTCOME lands asynchronously on the
+    // updater's Authstatus, and the account may gain products. Poll it
+    // into the dialog, and when the products actually changed, reload --
+    // the chips are rendered from FNS_ACCOUNT at load, so a reload is
+    // the honest refresh (previously the dialog said "reload in a
+    // moment" and nothing ever did).
+    var before = JSON.stringify((account && account.products) || null);
+    var authPolls = 0;
+    function watchAuth() {
+      if (++authPolls > 40) { return; }        // ~60s, then give up quietly
+      setTimeout(function () {
+        fetch('/auth/status').then(function (r) { return r.json(); })
+          .then(function (st) {
+            if (JSON.stringify(st.products || null) !== before) {
+              showDialog((st.status || 'Done.') + '\nRefreshing the picker…', false);
+              setTimeout(function () { location.reload(); }, 900);
+              return;
+            }
+            // keep watching through every TRANSITIONAL status -- the
+            // flow narrates itself as waiting/finishing/checking, and
+            // stopping on the first of those froze the dialog there
+            // while the sign-in completed behind it
+            if (st.status && !/checking|waiting|finishing/i.test(st.status)) {
+              showDialog(st.status, false);
+              return;
+            }
+            watchAuth();
+          })
+          .catch(function () { watchAuth(); });
+      }, 1500);
     }
   })();
 
@@ -1177,7 +1323,15 @@ function fnsBoot() {
                 body: body})
       .then(function (r) { return r.json(); })
       .then(onDone)
-      .catch(function (e) { showDialog('Request failed: ' + e, false); });
+      .catch(function (e) {
+        // The one way this fails wholesale is the server being gone --
+        // it shuts itself down after an install, and a browser panel can
+        // outlive it by days showing a page whose every click would
+        // otherwise land in the void. Name the remedy, not the error.
+        showDialog('Could not reach the picker’s server — it may have '
+          + 'closed since this page loaded.\nPress Pick Tools on the '
+          + 'FNSTools root to reopen it.\n\n(' + e + ')', false);
+      });
   }
   document.getElementById('save').addEventListener('click', function () {
     if (served) {
@@ -1213,15 +1367,23 @@ function fnsBoot() {
     }
     setTimeout(function () {
       fetch('/status').then(function (r) { return r.json(); }).then(function (st) {
+        // A gated refusal is not a download failure: it arrives with its
+        // own sentence (sign in / your tier / gate unreachable) and the
+        // free picks still install. Speak it wherever it appears.
+        var gatedNote = (st.gated_why && st.gated_why.length)
+          ? '\n' + st.gated_why.join('\n') : '';
         if (st.fetching) {
           showDialog('Downloading… ' + st.fetched + ' done, ' + st.togo + ' to go', false);
           installOrPoll({fetching: true, text: ''});
         } else if (st.ready) {
-          showDialog('Installing…', false);
+          showDialog('Installing…' + gatedNote, false);
           post('/install', '{}', installOrPoll);
+        } else if (gatedNote && !(st.failed && st.failed.length)) {
+          showDialog('Not downloaded:' + gatedNote, false);
         } else {
           showDialog('Download failed: ' +
             ((st.failed && st.failed.join('; ')) || 'unknown -- see UPDATER status') +
+            gatedNote +
             '\nClose and try Install again to retry.', false);
         }
       }).catch(function (e) { showDialog('Status check failed: ' + e, false); });

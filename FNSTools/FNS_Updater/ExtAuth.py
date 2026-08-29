@@ -124,6 +124,26 @@ class ExtAuth:
 	def GateUrl(self):
 		return self._par('Gateurl', DEFAULT_GATE).rstrip('/')
 
+	def _gateRequest(self, wc, url, data='{}', token=None):
+		"""POST to the gate. Two measured truths (2026-08-29) live here:
+
+		request() does not write par.url -- after every call it still
+		held the DAT's factory default -- and auth_client_callbacks
+		routes an arriving response BY that par, so the URL is recorded
+		first or every response drops as 'unexpected'.
+
+		And the DAT's auth PARS are ignored by scripted request():
+		authtype 'oauth2' + a token par sent NO Authorization header at
+		all (captured on a local listener), while the authType/
+		oauth2Token KWARGS send the bearer. Auth therefore rides the
+		call, never the pars."""
+		wc.par.url = url
+		kw = {'header': {'content-type': 'application/json'}, 'data': data}
+		if token:
+			kw['authType'] = 'oauth2'
+			kw['oauth2Token'] = token
+		wc.request(url, 'POST', **kw)
+
 	def _storageDir(self):
 		"""Machine-local, beside the package store. Only the macOS backend
 		ignores it; on Windows this is where the DPAPI blob sits."""
@@ -166,11 +186,42 @@ class ExtAuth:
 	def IsEntitled(self, package):
 		return package in self.Entitlements()
 
+	def _routesFor(self, package):
+		"""(tier_label, key_available) for a gated package, read from the
+		store manifest's routes projection (build_manifest ships the tier
+		ladder's labels and the key flag). Empty when the manifest
+		predates the projection -- the sentence degrades to generic, it
+		never breaks."""
+		try:
+			man = self.ownerComp.ext.ExtUpdater.StoreManifest() or {}
+			pkg = next((p for p in man.get('packages', [])
+						if p.get('name') == package), {})
+			access = str(pkg.get('access', 'free') or 'free')
+			label = ''
+			for t in (man.get('toolkit') or {}).get('tiers') or []:
+				if str(t.get('id')) == access:
+					label = str(t.get('label') or '')
+					break
+			return label, bool(pkg.get('key_available'))
+		except Exception:
+			return '', False
+
 	def MissingFor(self, package):
-		"""What to TELL someone who cannot have this package. The client
-		reads its claim only for this."""
+		"""What to TELL someone who cannot have this package -- naming
+		the ROUTES, not just the refusal: the tier it unlocks at (or
+		higher; the ladder grants upward) and, where a Gumroad row
+		exists, the lifetime key. The client reads its claim only for
+		this."""
+		label, key = self._routesFor(package)
+		at = (' — it unlocks at the %s tier or higher' % label) if label else ''
+		buy = ', or with a lifetime key' if key else ''
 		if not self.IsSignedIn():
-			return 'Sign in to download %s.' % package
+			return 'Sign in to download %s%s%s.' % (package, at, buy)
+		if label:
+			return ('Your current tier does not include %s — upgrade to '
+					'the %s tier or higher%s.'
+					% (package, label,
+					   buy.replace(', or', ', or unlock it') if key else ''))
 		return ('Your current tier does not include %s.' % package)
 
 	def AuthStatus(self):
@@ -216,10 +267,8 @@ class ExtAuth:
 				callback(False, 'no auth client')
 			return {'ok': False, 'why': 'no auth client'}
 		self._token_cb = callback
-		wc.par.authtype = 'oauth2'
-		wc.par.token = acct['device_token']
-		wc.request('%s/token/download' % self.GateUrl(), 'POST',
-				   header={'content-type': 'application/json'}, data='{}')
+		self._gateRequest(wc, '%s/token/download' % self.GateUrl(),
+						  token=acct['device_token'])
 		return {'ok': True, 'why': 'requesting (async)'}
 
 	def Recheck(self, callback=None):
@@ -246,10 +295,8 @@ class ExtAuth:
 			return {'ok': False, 'why': 'no auth client'}
 		self._recheck_cb = callback
 		self._setStatus('checking your membership...')
-		wc.par.authtype = 'oauth2'
-		wc.par.token = acct['device_token']
-		wc.request('%s/session/recheck' % self.GateUrl(), 'POST',
-				   header={'content-type': 'application/json'}, data='{}')
+		self._gateRequest(wc, '%s/session/recheck' % self.GateUrl(),
+						  token=acct['device_token'])
 		return {'ok': True, 'why': 'checking (async)'}
 
 	def OnRecheckResponse(self, statusCode, data):
@@ -258,13 +305,24 @@ class ExtAuth:
 		ok, payload = self._readJson(statusCode, data)
 		if not ok:
 			self._setStatus(str(payload))
+			self._actOnRefusal()
 			if cb:
 				cb(False, payload)
 			return
 		products = payload.get('products') or []
-		self._rememberProducts(products)
-		if products:
+		self._rememberProducts(products, tiers=payload.get('tiers'))
+		# The answer's structure decides the sentence -- each state has a
+		# DIFFERENT remedy, and collapsing them is how "check again"
+		# becomes a silent forever-no (the gate now says which it is).
+		if payload.get('connected') is False:
+			# the grant is dead; rechecking can never see anything again
+			msg = str(payload.get('message')
+					  or 'your Patreon link is no longer active -- sign in again')
+		elif products:
 			msg = self.AuthStatus()
+		elif payload.get('stale'):
+			msg = ('could not reach Patreon just now -- showing the last '
+				   'known answer; try again in a minute')
 		elif payload.get('tiers'):
 			# Patreon says they ARE a patron, but of a tier that grants
 			# nothing here. Say which of the two it is: the remedies differ.
@@ -281,6 +339,7 @@ class ExtAuth:
 		ok, payload = self._readJson(statusCode, data)
 		if not ok:
 			fnsLog('AUTH: token refused (%s)' % payload, level='WARNING')
+			self._actOnRefusal()
 			if cb:
 				cb(False, payload)
 			return
@@ -295,17 +354,64 @@ class ExtAuth:
 
 	def _readJson(self, statusCode, data):
 		"""(ok, payload-or-message). A gate refusal carries a human
-		sentence; anything else must not be shown raw."""
+		sentence; anything else must not be shown raw. The parsed body
+		and code also land on _last_gate_body/_last_gate_code, because a
+		refusal's STRUCTURE is authoritative too -- a 403 carries the
+		products truth, a 401 declares the session dead -- and reducing
+		it to a message string was how a lapsed supporter's picker said
+		N-unlocked forever."""
+		self._last_gate_body, self._last_gate_code = {}, 0
 		try:
 			body = json.loads(data.decode('utf-8') if isinstance(data, bytes) else str(data))
 		except Exception:
 			return False, 'the gate returned something unreadable'
 		code = int((statusCode or {}).get('code', 0) or 0) if isinstance(statusCode, dict) else int(statusCode or 0)
+		self._last_gate_body, self._last_gate_code = body, code
 		if code == 200 and body.get('ok'):
 			return True, body
 		return False, str(body.get('message') or 'request failed (%s)' % code)
 
-	def _rememberProducts(self, products):
+	def _actOnRefusal(self):
+		"""Act on the STRUCTURE of a gate refusal (_readJson stashed it).
+
+		403 no_entitlement deliberately carries the merged products list
+		(Patreon + Gumroad, possibly empty) -- remember it, or a lapsed
+		supporter's picker claims N-unlocked forever, since a successful
+		token response can never arrive for that account again. 401
+		means THIS DEVICE TOKEN is dead: clear the local record so every
+		surface stops presenting a session that cannot act, instead of
+		hiding Sign in behind a stale account."""
+		body = getattr(self, '_last_gate_body', {}) or {}
+		code = getattr(self, '_last_gate_code', 0)
+		if code == 403 and 'products' in body:
+			self._rememberProducts(body.get('products') or [])
+		elif code == 401:
+			self._sessionDied()
+
+	def _sessionDied(self):
+		"""The gate answered 401: this device token is revoked, aged out,
+		or lost server-side. Local clear only -- no gate revoke, the gate
+		just said the token is already dead. The picker's account global
+		goes null and its rail re-offers the ways back in; both routes
+		are named because both exist, and re-redeeming a held key spends
+		no activation by design."""
+		s = self._storage()
+		if s is not None:
+			try:
+				s.Clear(self._storageDir())
+			except Exception as e:
+				fnsLog('AUTH: could not clear the dead session (%s)' % e,
+					   level='WARNING')
+		self._download_token, self._download_expires = '', 0.0
+		self._setStatus('session expired -- sign in again, or redeem your '
+						'licence key again')
+		fnsLog('AUTH: gate reported the session dead (401) -- local record '
+			   'cleared', level='WARNING')
+
+	def _rememberProducts(self, products, tiers=None):
+		"""tiers: pass the response's own list when it carries one -- the
+		gate's answer is fresher than the stored copy, and persisting the
+		stale local tiers next to fresh products was a quiet drift."""
 		if products is None:
 			return
 		acct = self.Account()
@@ -314,7 +420,8 @@ class ExtAuth:
 		s = self._storage()
 		try:
 			s.Store(self._storageDir(), acct['device_token'],
-					products=products, tiers=acct.get('tiers'),
+					products=products,
+					tiers=acct.get('tiers') if tiers is None else tiers,
 					label=acct.get('label', ''))
 		except Exception as e:
 			fnsLog('AUTH: could not update entitlements (%s)' % e, level='WARNING')
@@ -335,11 +442,32 @@ class ExtAuth:
 		ws = self._ensureServer()
 		if ws is None:
 			return {'ok': False, 'why': 'could not create the callback listener'}
-		port = self._freePort()
+		# Bind-test, start, then VERIFY the start. The test socket closing
+		# opens a race any other process can win, and the Web Server DAT
+		# accepts active=True silently while failing to start (measured
+		# 2026-08-29: the op carried "Failed to start server" and nothing
+		# raised). Without the check, losing the race means a browser
+		# pointed at a port nobody serves; with it, one more walk step.
+		import socket
+		port = None
+		for cand in CALLBACK_PORTS:
+			probe = socket.socket()
+			try:
+				probe.bind(('127.0.0.1', cand))
+			except OSError:
+				continue
+			finally:
+				probe.close()
+			ws.par.active = False
+			ws.par.port = cand
+			ws.par.active = True
+			if not ws.errors():
+				port = cand
+				break
+			ws.par.active = False
 		if port is None:
-			return {'ok': False, 'why': 'no free loopback port in %s' % (CALLBACK_PORTS,)}
-		ws.par.port = port
-		ws.par.active = True
+			return {'ok': False, 'why': 'could not start the callback '
+					'listener on any port in %s' % (CALLBACK_PORTS,)}
 		# The nonce rides to the gate, through the OAuth exchange, and back
 		# to the loopback listener -- which accepts a token only when it
 		# returns matching. The gate's own `state` nonce protects the gate;
@@ -380,10 +508,8 @@ class ExtAuth:
 			if wc is None:
 				self._setStatus('sign-in failed (no auth client)')
 				return False
-			wc.par.authtype = 'none'
-			wc.request('%s/session/claim' % self.GateUrl(), 'POST',
-					   header={'content-type': 'application/json'},
-					   data=json.dumps({'code': code}))
+			self._gateRequest(wc, '%s/session/claim' % self.GateUrl(),
+							  data=json.dumps({'code': code}))
 			self._setStatus('finishing sign-in...')
 			return True
 		if not token:
@@ -430,10 +556,8 @@ class ExtAuth:
 		wc = self._client()
 		if wc is not None and acct and acct.get('device_token'):
 			try:
-				wc.par.authtype = 'oauth2'
-				wc.par.token = acct['device_token']
-				wc.request('%s/session/revoke' % self.GateUrl(), 'POST',
-						   header={'content-type': 'application/json'}, data='{}')
+				self._gateRequest(wc, '%s/session/revoke' % self.GateUrl(),
+								  token=acct['device_token'])
 			except Exception as e:
 				fnsLog('AUTH: revoke request failed to start (%s)' % e,
 					   level='WARNING')
@@ -454,30 +578,38 @@ class ExtAuth:
 		fnsLog('AUTH: gate revoke %s' % ('confirmed' if ok else 'not confirmed (%s)' % why),
 			   level='INFO' if ok else 'WARNING')
 
-	def RedeemKey(self, key=None, product=None):
+	def RedeemKey(self, key=None, product=None, package=None):
 		"""Redeem one Gumroad licence key.
 
 		Keys are PER TOOL by decision, so redeeming EXTENDS the account
 		rather than replacing it -- five tools means five keys on one
-		install, and the gate merges them onto one device token."""
+		install, and the gate merges them onto one device token.
+
+		`package` is the buyer-friendly address: they know the TOOL they
+		bought, not Gumroad's product id, and the gate resolves the name
+		through its own one-to-one map. `product` (the raw id) keeps
+		working for the pars and for scripts."""
 		key = (key or self._par('Licensekey')).strip()
 		product = (product or self._par('Licenseproduct')).strip()
+		package = str(package or '').strip()
 		if not key:
 			return {'ok': False, 'why': 'no licence key given'}
-		if not product:
-			return {'ok': False, 'why': 'no product id given'}
+		if not product and not package:
+			return {'ok': False, 'why': 'no product id or package name given'}
 		wc = self._client()
 		if wc is None:
 			return {'ok': False, 'why': 'no auth client'}
 		acct = self.Account() or {}
-		wc.par.authtype = 'none'
-		body = {'license_key': key, 'product_id': product}
+		body = {'license_key': key}
+		if product:
+			body['product_id'] = product
+		else:
+			body['package'] = package
 		if acct.get('device_token'):
 			body['device_token'] = acct['device_token']
 		self._redeem_pending = True
-		wc.request('%s/gumroad/redeem' % self.GateUrl(), 'POST',
-				   header={'content-type': 'application/json'},
-				   data=json.dumps(body))
+		self._gateRequest(wc, '%s/gumroad/redeem' % self.GateUrl(),
+						  data=json.dumps(body))
 		self._setStatus('checking licence...')
 		return {'ok': True, 'why': 'checking (async)'}
 

@@ -260,8 +260,12 @@ def _resetInstallerState(comp):
 # /FNSTools/webBrowser is that master.
 def _ensureBrowserPolicy(web):
     """A rail instance renders only while someone can see it; the
-    component's own watchers do the work, so there is nothing beside it."""
-    for n, v in (('Watchwindow', True), ('Watchviewer', True)):
+    component's own watchers do the work, so there is nothing beside it.
+    Watchpane covers the case the first two cannot: shown in a PANEL
+    pane via a Select COMP mirror (a Hub/Console tab), where the
+    browser is in nobody's window and nobody's viewer."""
+    for n, v in (('Watchwindow', True), ('Watchviewer', True),
+                 ('Watchpane', True)):
         p = getattr(web.par, n, None)
         if p is not None:
             p.val = v

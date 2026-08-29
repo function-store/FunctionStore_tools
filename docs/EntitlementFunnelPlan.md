@@ -75,6 +75,10 @@ node across all four account states, assert gated picks never enter
 split, which is currently untested (it was verified once with an ad-hoc
 node + `ast.parse` one-liner and never again).
 
+*Field-confirmed 2026-08-29, first real walk: picking
+FNS_TimelineTools produced a refusal visible only in the Textport —
+exactly this defect. No longer theoretical.*
+
 Live check: signed-out mixed pick in TD → free tools install, Plus tool
 named with the sign-in sentence.
 
@@ -113,7 +117,39 @@ fixes:
 
 Verify: stub the three deny causes, read `_report()` output for each.
 
-### Milestone gate: the first true end-to-end walk
+### 0.4 The picker's display surface must know when it is visible
+
+Found on the first real walk (2026-08-29): FNS_Hub / FNS_Console show
+nothing — the picker page never renders — until the browser's
+render-gating is switched off by hand. Mechanism
+(`/FNSTools/webBrowser/watch_rules`): `Active` follows
+`(Watchwindow AND panel.winopen) OR (Watchviewer AND activeViewer)`.
+Embedded in a Hub/Console PANE, neither is ever true, so the sign-in
+surface — the funnel's front door in TD — is dark by default and only
+an operator who knows the toggles can open it. The component
+anticipated half the fix: `Windowowner` exists so an embedder points
+the watcher at ITS window — the Hub must set it. The pane case needs a
+visibility signal the watcher does not have yet; verify the right one
+against the TD wiki (panel values / pane state) rather than guessing,
+then add it as a third opt-in watcher. Interim: rail instances keep
+the watchers ON only where a window/viewer actually hosts them; a
+Hub-embedded instance must not ship dark. Fix belongs to the vendored
+webBrowser master + `_ensureBrowserPolicy` in `build_installer.py`
+(rails rebuild follows, per 0-milestone mechanics).
+
+*Status 2026-08-29: LANDED. Third watcher `Watchpane` ("Render Only
+While Shown In Pane") + `Paneowner` on the master; the rule counts
+only open `PaneType.PANEL` panes (a network editor's owner is a plain
+COMP — often `/` — and counting those would mean always-on) and
+matches owner by path prefix either direction. The Hub case is wired
+by pointing the master's `Paneowner` at `FNS_Hub`, because the Select
+COMP mirror means the browser is not in the Hub's hierarchy. Verified
+live: dark with no pane, lit by a floating PANEL pane owning FNS_Hub,
+dark one frame after close (the existing per-frame poll's cadence);
+ColorUI's clone gained the pars and kept its own all-off values. Root
+suspect PI-saved, vendored tox re-exported, `_ensureBrowserPolicy`
+ships `Watchpane` on, rails rebuilt clean. The pane signal is
+wiki-verified (`Pane.open`, `Pane.owner`, `PaneType.PANEL`).*
 
 After 0.1–0.3: run `wrangler deploy` (source `TIERS` is already real —
 `8323905`/`8291595`/`9796651` in `worker/wrangler.toml`; only the
@@ -125,6 +161,33 @@ and install.
 **Coordinate first:** the ledger's in-flight domain-migration task
 (functionstr.com → functionstore.tools) holds scopes over `worker/`,
 `website/`, and `packaging/`. Land after it, or rebase onto it.
+
+*Status 2026-08-29, end of day: the release is REAL. v3.0.4 staged
+complete (49 packages, TimelineTools on the plus rail, rails rebuilt),
+uploaded — the bucket serves the v3.0.4 rolling manifest with
+TimelineTools' gated URL (verified live). Getting there burned through
+three Windows layers in the upload chain (see the CMS section) and
+surfaced the version-persistence gap (Phase 3, PI dirt). The walk
+itself is PART-DONE: the signed-out lanes were exercised for real and
+paid immediately — three field defects found, two fixed same-day (0.4
+the dark front door; the stranded download window: `Showprogress` now
+defaults off, `AbortAll` closes it, late disconnects guarded —
+`3d1b97c`) and one confirmed (0.1's Textport-only refusal). Still
+open to close the milestone: `wrangler deploy` (the live worker
+predates `/session/recheck`), then the ENTITLED walk — sign in as
+creator, watch the gated tox arrive and install.*
+
+*Phase 0 status, night of 2026-08-29 (branch `dev25-entitlement-funnel`):
+ALL LANDED. 0.1 `e2a9a84` — selection() splits gated picks in every
+flavor, /status reports gated + gated_why and `ready` stops waiting,
+the page speaks the sentence; pinned across all four account states,
+and the paste script's SEL/PLUS split is pinned for the first time.
+0.2 `0abf563` — the rotated refresh token persists on exchange
+success; tested through the full half-outage round trip. 0.3
+`9bf0908` — stamped drop reasons speak verbatim, gated names filtered
+from the apply plan at consumption; verified live. 0.4 was landed
+earlier (`ed6a37b`). Still open in this section: the milestone walk
+(deploy + entitled sign-in — the user's morning).*
 
 ## Phase 1 — Honest degraded states (no more dead ends)
 
@@ -171,6 +234,21 @@ and install.
   unconditional "Checking with Patreon…", and stop the success dialog
   unhiding a spurious Install button (`showDialog(res.text, false)`).
 
+*Phase 1 status, same night: ALL LANDED. 1.1+1.2 `9b670e9` — a gate
+refusal is data: the 403 body's merged products list corrects the
+local record, a 401 clears the dead session locally and re-offers
+both ways back in. 1.3+1.6(worker+client) `8574a64` — recheck answers
+carry `connected` / `stale` / `verified_at`, the client picks the
+sentence by structure, and recheck persists the response's own tiers.
+1.4 `0b2e17b` — a gated item with no valid token is dropped with an
+auth sentence before it can go out bare. 1.5 `e55e225` — the
+refresh-kind report speaks gated reasons via the shared `_gatedWhy`,
+and StoreStatus gives gated-not-entitled absences their own bucket.
+1.6(picker) `fc41e05` — `/auth/status` serves the outcome, the page
+polls it and reloads itself on product changes, and the spurious
+Install button is gone. Every worker change is tested in
+`gate.test.mjs`; every client change verified live in TD.*
+
 ## Phase 2 — Conversion polish (the funnel's missing rungs)
 
 - **2.1 Name the routes, not just the tier.** The data exists — `access`
@@ -211,6 +289,41 @@ and install.
   the flavors test's hidden-on-site checks to cover it. Keys are
   per-tool: the control should pre-fill `product` from the locked pick
   where possible instead of asking the user to type a product id.
+- **2.6 The storefront must deploy when the mirror publishes.** Found
+  live: `functionstore.tools/get/` served a months-old build — no Plus
+  chips, download buttons pinned to a release the bucket never held —
+  while every push and CLI deploy landed as a Vercel PREVIEW, because
+  the project's production branch is `main` and the mirror pushes
+  `dev25`. "Push didn't do anything" must be impossible to repeat: set
+  the Vercel production branch to `dev25` (Settings → Git) so every
+  `publish_public.py --push` IS a production deploy, built from the
+  full checkout — which also lets `build-site.mjs` regenerate `/get/`
+  from `packaging/configurator/` instead of warning "/get/ not built"
+  and shipping the committed copy (the CLI-deploy payload cannot see
+  `packaging/`). `vercel --prod` from `website/` is the interim
+  lever only. Bonus riding on any deploy: pin 2 comes alive
+  (`vercel.json` rewrites `/.well-known/fnstools.json` to the
+  bucket's). Pin 3 still needs its `fnstools-links` repo pushed.
+
+*Phase 2 status, same night: CODE-COMPLETE except 2.6's dashboard
+half. 2.1 `718743c` — the manifest's toolkit block carries the routes
+projection (SUPPORT_URL owned here; the tier ladder's labels from
+gate_package; per-package `key_available` from GUMROAD_PRODUCTS),
+MissingFor and the locked chip name the entry tier ("or higher") and
+the key where one exists, and a tier-holding unentitled account is
+offered Upgrade, not Become a supporter. 2.2 `5aaf5aa` — FNS_WANTED
+resurfaces wanted-but-locked picks. 2.3 `7832228` — checked_at is
+written on every gate answer and rendered as an age. 2.4 `14a2f7e` —
+refusals show TRUSTED tiers; a half-failed sign-in stamps no
+verification and retries soon (tested through recovery). 2.5
+`128e3af` — Redeem key on the picker rail: inline DOM form, buyer
+names the tool, the gate resolves the product id through its own
+one-to-one map; dormant until GUMROAD_PRODUCTS gains rows. 2.6
+remains: flip the Vercel production branch to dev25 (dashboard) —
+plus one wording fix here: the committed-copy claim below predates
+learning that generated pages are untracked; the CLI payload ships
+the on-disk BUILD output, not a committed copy. All nine test suites
+pass; every hot-synced client edit verified live in TD.*
 
 ## The trial lane (settle before the first trial tool ships)
 
@@ -401,11 +514,17 @@ right side of that split, with these specifics:
   domain-migration task's claimed scopes — land through or after it.)
   `check_pins.py` stays a shell step. *Status 2026-08-29: LANDED —
   `/api/upload` + `/api/uploadlog` on FNS_CMS, Upload-to-bucket +
-  log-tail + PI-Save-unsaved on the release view, interpreter
-  discovery fixed, endpoint verified live. The release also now
-  PI-saves the packages it bumps (`release_one.py`), closing the
-  where-are-my-tox-diffs gap. UI edits ride uncommitted with the CMS
-  session's in-flight work.*
+  log-tail + PI-Save-unsaved on the release view, endpoint verified
+  live. The release also now PI-saves the packages it bumps
+  (`release_one.py`), closing the where-are-my-tox-diffs gap. The
+  first REAL upload then peeled three Windows layers off the chain,
+  each found only by running it: `which()` trusted the App-Store stub
+  aliases, so candidates are now validated by execution — a python is
+  real only if it prints 1 (`f789b4c`); bare `npx` is `npx.cmd`,
+  which the shell resolves and CreateProcess does not (`a790066`);
+  and `text=True` decoded wrangler's UTF-8 with cp1252, shredding a
+  healthy run — encoding pinned end to end (`17b2f78`). UI edits ride
+  uncommitted with the CMS session's in-flight work.*
 - **Coordination:** the CMS is under active development in a parallel
   session (uncommitted `CmsExt.py` / `cms.html` / `cms.mjs` work in
   the tree at the time of writing) — land CMS-side amendments through
@@ -429,8 +548,32 @@ right side of that split, with these specifics:
   dirt. Either teach PI's dirt to see par writes, or teach the CMS
   release view to flag rows whose live version disagrees with the
   committed suspect (it has both numbers).
-- **Cosmetics:** the false "page reloads itself" comment in
-  `InstallerExt.py`; `slow_down` vs `rate_limited` unification; the
+- **The dev installer does not hot-sync, and testing forgets it** (paid
+  for on the walk, twice-shaped like 0.4's dark door): the live
+  FNS_Installer's `InstallerExt` and `configurator_html` are embedded
+  SNAPSHOTS by design — what ships is what they hold — so editing
+  `packaging/InstallerExt.py` or the configurator changes nothing live
+  until `EnsureDevRails()` re-embeds them, and the browser panel
+  additionally holds the old DOM until reloaded. The walk hit a server
+  without `/auth/*` answering an empty dialog. Candidate fix: the
+  preflight (or a test) compares the LIVE installer's snapshot against
+  the repo file the way `_staleRails` compares the rails, so a stale
+  dev installer blocks a release instead of confusing a walk.
+- **A browser address outlives its server** (third walk finding, same
+  family as the dark front door): the shared webBrowser keeps whatever
+  `Address` the last serving flow wrote — the walk found it holding a
+  long-dead Console port (36710) with the picker's server not running
+  at all, every click landing in the void as an empty dialog. The
+  ports themselves are fine (installer 36760 + bind-walk, console
+  36710–59, CMS 36770–79 — multiple open projects are designed for).
+  Landed: the page's `post()` failure now names the remedy ("press
+  Pick Tools") instead of showing a raw or empty error. Still open:
+  the Hub's tabs could pulse their flow's serve on tab focus, so a
+  stale address self-heals instead of relying on the user knowing
+  the front door.
+- **Cosmetics:** the "page reloads itself" comment in
+  `InstallerExt.py` (made TRUE by 1.6 rather than deleted);
+  `slow_down` vs `rate_limited` unification; the
   three `/session/*` routes missing from `worker/README.md`'s route
   table; the stray `NoneType` third entry in `FNS_Updater.extensions`;
   recheck's redundant double-hash and double-save; recheck persisting

@@ -1005,7 +1005,12 @@ class InstallerExt:
                 if rec:
                     acct = {'label': rec.get('label') or 'supporter',
                             'products': sorted(rec.get('products') or []),
-                            'checked_at': rec.get('checked_at') or 0}
+                            'checked_at': rec.get('checked_at') or 0,
+                            # a BOOLEAN on purpose -- whether they hold
+                            # any Patreon tier at all decides the button
+                            # copy (Upgrade vs Become a supporter); the
+                            # ids themselves stay in the keystore
+                            'tier': bool(rec.get('tiers'))}
         except Exception:
             # never let an auth problem stop the picker from being served
             acct = None
@@ -1045,17 +1050,36 @@ class InstallerExt:
                     # "Set up like last time" -- only offered on a bare
                     # root, so only read there
                     last = LastInstall(tgt) if firstrun else None
+                    # Plus picks the user WANTED but could not install --
+                    # every selection writer records them in `tools` while
+                    # keeping them out of `install`. Resurfacing them here
+                    # is what makes the wish survive sign-in, instead of
+                    # living exactly one Textport line and evaporating.
+                    wanted = []
+                    try:
+                        selp = ('%s/FNStools_ext/selection.json'
+                                % app.userPaletteFolder).replace('\\', '/')
+                        if os.path.exists(selp):
+                            with open(selp, 'r', encoding='utf-8') as sf:
+                                seldoc = json.load(sf)
+                            wanted = sorted(set(seldoc.get('tools') or [])
+                                            - set(seldoc.get('install') or [])
+                                            - set(installed))
+                    except Exception:
+                        wanted = []
                     with open(full, 'r', encoding='utf-8') as f:
                         response['data'] = ('window.FNS_SERVED = true;\n'
                                             'window.FNS_FIRSTRUN = %s;\n'
                                             'window.FNS_LAST = %s;\n'
                                             'window.FNS_INSTALLED = %s;\n'
+                                            'window.FNS_WANTED = %s;\n'
                                             'window.FNS_LOCKED = %s;\n'
                                             '%s'
                                             'window.FNS_MANIFEST = %s;\n'
                                             % (json.dumps(firstrun),
                                                json.dumps(last),
                                                json.dumps(installed),
+                                               json.dumps(wanted),
                                                json.dumps(locked),
                                                self._accountGlobal(), f.read()))
                 else:
@@ -1067,7 +1091,10 @@ class InstallerExt:
                                            ' // ' + why if why else ''))
             elif method == 'POST' and uri == '/auth/recheck':
                 # "I just pledged" -- forces the gate past its six-hour
-                # entitlement cache. The page reloads itself afterwards.
+                # entitlement cache. The outcome arrives asynchronously:
+                # the page polls /auth/status for the sentence and reloads
+                # ITSELF when the products change (it does now -- this
+                # comment used to promise that falsely).
                 upd = self._updaterComp()
                 why = ''
                 if upd is None:
@@ -1080,8 +1107,7 @@ class InstallerExt:
                 response['Content-Type'] = 'application/json'
                 response['data'] = json.dumps(
                     {'ok': not why,
-                     'text': why or 'Checking with Patreon — reload this page '
-                                    'in a moment.'})
+                     'text': why or 'Checking with Patreon…'})
             elif method == 'POST' and uri == '/auth/signin':
                 # the picker is where someone MEETS a Plus tool, so it is
                 # where they will want to sign in. Starting it is all this
@@ -1101,6 +1127,65 @@ class InstallerExt:
                     {'ok': not why,
                      'text': why or 'Check your browser to finish signing in, '
                                     'then reload this page.'})
+            elif method == 'POST' and uri == '/auth/redeem':
+                # The lifetime-key door, on the same rail as Sign in: the
+                # /plus/ page promises keys are redeemed "in the same
+                # place as the Patreon connection", and before this route
+                # that place was a parameter page the funnel never
+                # pointed at. The page sends the PACKAGE name (a buyer
+                # knows the tool, not Gumroad's product id); the gate
+                # resolves it through its own map. Outcome is async --
+                # the page's /auth/status watcher shows it and reloads
+                # on product changes, same as sign-in.
+                upd = self._updaterComp()
+                why = ''
+                raw = request.get('data', b'')
+                try:
+                    doc = json.loads(raw.decode('utf-8')
+                                     if isinstance(raw, bytes) else str(raw))
+                except Exception:
+                    doc = {}
+                if upd is None:
+                    why = 'no FNS_Updater next to the installer'
+                else:
+                    try:
+                        r = upd.ext.ExtAuth.RedeemKey(
+                            key=str(doc.get('key') or ''),
+                            package=str(doc.get('package') or ''))
+                        if not r.get('ok'):
+                            why = r.get('why', 'redeem refused')
+                    except Exception as e:
+                        why = str(e)
+                response['Content-Type'] = 'application/json'
+                response['data'] = json.dumps(
+                    {'ok': not why, 'text': why or 'Checking your licence…'})
+            elif method == 'GET' and uri == '/auth/status':
+                # The sign-in/recheck OUTCOME, readable by the page. The
+                # auth extension writes its result to Authstatus
+                # asynchronously, and before this route the sentence
+                # landed on a par nobody rendered while the dialog said
+                # only "reload in a moment" -- a throttled user reloaded,
+                # saw an unchanged chip, and concluded it was broken. The
+                # page polls this after a recheck/sign-in, shows the
+                # sentence, and reloads itself when products changed.
+                upd = self._updaterComp()
+                status_txt, products = '', None
+                if upd is not None:
+                    try:
+                        p = getattr(upd.par, 'Authstatus', None)
+                        status_txt = str(p.eval()) if p is not None else ''
+                    except Exception:
+                        status_txt = ''
+                    try:
+                        a = upd.ext.ExtAuth
+                        rec = a.Account() if a is not None else None
+                        if rec:
+                            products = sorted(rec.get('products') or [])
+                    except Exception:
+                        products = None
+                response['Content-Type'] = 'application/json'
+                response['data'] = json.dumps(
+                    {'ok': True, 'status': status_txt, 'products': products})
             elif method == 'POST' and uri == '/settings':
                 # the page's "Open Settings" after an install: the console
                 # takes the panel over, and this server has nothing left
@@ -1150,6 +1235,28 @@ class InstallerExt:
                 togo = (len(job.get('queue', [])) + len(job.get('inflight', {}))
                         if job else 0)
                 ready, failed = False, []
+                # A gated skip is a REFUSAL with a sentence, not a download
+                # failure -- and its artifact will never arrive, so `ready`
+                # must stop waiting for it or the page reports the refusal
+                # as an unknown failure forever (field-confirmed on the
+                # first real walk). Stamped reasons (gate unreachable,
+                # session expired) speak verbatim; the local entitlement
+                # skip falls back to MissingFor.
+                gated, gated_why = [], []
+                if job:
+                    gated = sorted(set(job.get('gated') or []))
+                    reasons = job.get('gated_reasons') or {}
+                    aut = None
+                    try:
+                        upd = self._updaterComp()
+                        aut = upd.ext.ExtAuth if upd is not None else None
+                    except Exception:
+                        aut = None
+                    for n in gated:
+                        gated_why.append(
+                            reasons.get(n)
+                            or (aut.MissingFor(n) if aut
+                                else '%s needs a supporter account.' % n))
                 if not fetching:
                     failed = list(job.get('failed', [])) if job else []
                     try:
@@ -1157,12 +1264,14 @@ class InstallerExt:
                                            self._par('Manifestfile') or DefaultManifest(),
                                            self._par('Target')
                                            or DefaultTarget(self.ownerComp))
-                        ready = not plan['to_fetch']
+                        ready = not [n for n in plan['to_fetch']
+                                     if n not in set(gated)]
                     except Exception:
                         ready = False
                 response['data'] = json.dumps(
                     {'fetching': fetching, 'fetched': done, 'togo': togo,
-                     'ready': ready, 'failed': failed[:4]})
+                     'ready': ready, 'failed': failed[:4],
+                     'gated': gated[:8], 'gated_why': gated_why[:4]})
             elif method == 'POST' and uri == '/install':
                 plan = ResolvePlan(self._par('Selectionfile'),
                                    self._par('Manifestfile') or DefaultManifest(),

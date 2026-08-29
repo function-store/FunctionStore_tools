@@ -365,6 +365,23 @@ console.log('\n8. gumroad redeem: an activation is spent once, then never again'
   const put = env.SESSIONS._puts.find(([k]) => k === 'session:' + b1.device_token);
   check('  gumroad session never expires (a perpetual licence)',
     !!put && put[1] === null, JSON.stringify(put && put[1]));
+
+  // A buyer knows the TOOL, not Gumroad's product id: the map is
+  // one-to-one, so a package name resolves here, where the map lives.
+  const r3 = await call(env, '/gumroad/redeem', {
+    method: 'POST', headers: { ...H, 'cf-connecting-ip': '2.2.2.2' },
+    body: JSON.stringify({ license_key: 'K-2', package: 'FNS_TimelineTools' }),
+  });
+  const b3 = await r3.json();
+  check('redeem by package name resolves the product id',
+    r3.status === 200 && (b3.products || []).includes('FNS_TimelineTools'),
+    JSON.stringify(b3));
+  const r4 = await call(env, '/gumroad/redeem', {
+    method: 'POST', headers: { ...H, 'cf-connecting-ip': '2.2.2.2' },
+    body: JSON.stringify({ license_key: 'K-2', package: 'NoSuchTool' }),
+  });
+  check('  a package with no licence product is refused, not guessed',
+    r4.status === 400, String(r4.status));
   globalThis.fetch = realFetch;
 }
 
@@ -460,6 +477,49 @@ console.log('\n11. a dead grant is not an outage');
   check('  but the retry comes sooner than the full window',
     now - st.checked_at > 4 * HOUR, String(now - st.checked_at));
 
+  // ROTATION SURVIVES A HALF-OUTAGE: the exchange succeeds (and rotates
+  // the refresh token) but the identity lookup 500s. The rotated token
+  // must be persisted anyway -- Patreon rotates on use, so keeping the
+  // old one would present a rotated-away grant next window and launder
+  // this transient blip into the permanent invalid_grant path.
+  const env4 = makeEnv();
+  await env4.SESSIONS.put('session:dev_r', staleSession());
+  stubFetch([
+    ['https://www.patreon.com/api/oauth2/token',
+      () => jsonRes({ access_token: 'at', refresh_token: 'rt2' })],
+    ['https://www.patreon.com/api/oauth2/v2/identity', () => jsonRes({}, 500)],
+  ]);
+  const r1 = await download(env4, 'dev_r');
+  const r1b = await r1.json();
+  check('half-outage (identity 500) keeps the supporter entitled',
+    r1.status === 200 && !!r1b.token, String(r1.status));
+  const sr = lastSession(env4, 'dev_r');
+  check('  and the ROTATED refresh token is persisted',
+    sr.patreon_refresh_token === 'rt2', sr.patreon_refresh_token);
+  // Next window: only the rotated token exchanges; the old one is dead.
+  // Continuity proves the fix -- before it, this second refresh returned
+  // invalid_grant and stripped the tiers.
+  await env4.SESSIONS.put('session:dev_r', JSON.stringify({
+    ...JSON.parse(await env4.SESSIONS.get('session:dev_r')),
+    checked_at: now - 7 * HOUR,
+  }));
+  stubFetch([
+    ['https://www.patreon.com/api/oauth2/token',
+      (req) => (String(req.body).includes('rt2')
+        ? jsonRes({ access_token: 'at2', refresh_token: 'rt3' })
+        : jsonRes({ error: 'invalid_grant' }, 400))],
+    ['https://www.patreon.com/api/oauth2/v2/identity',
+      () => jsonRes({ included: [{ type: 'member',
+        attributes: { patron_status: 'active_patron' },
+        relationships: { currently_entitled_tiers: { data: [{ id: '111' }] } } }] })],
+  ]);
+  const r2 = await download(env4, 'dev_r');
+  check('  next window refreshes on the rotated token and re-verifies',
+    r2.status === 200, String(r2.status));
+  const sr2 = lastSession(env4, 'dev_r');
+  check('  tiers intact after the full round trip',
+    JSON.stringify(sr2.patreon_tiers) === '["111"]', JSON.stringify(sr2.patreon_tiers));
+
   // BACKSTOP: transient forgiveness is not forever. A session that has
   // not actually verified in 30 days stops being trusted.
   const env3 = makeEnv();
@@ -469,6 +529,9 @@ console.log('\n11. a dead grant is not an outage');
   }));
   const s = await download(env3, 'dev_s');
   check('31 days unverified -> no longer trusted', s.status === 403, String(s.status));
+  const sbdy = await s.json();
+  check('  and the refusal shows TRUSTED tiers (none), not the stale list',
+    JSON.stringify(sbdy.tiers) === '[]', JSON.stringify(sbdy.tiers));
   globalThis.fetch = realFetch;
 }
 
@@ -561,6 +624,8 @@ console.log('\n13. a pledge made after sign-in can be noticed now');
     JSON.stringify(body));
   check('  and the session keeps it',
     lastSession(env, device).products.includes('FNS_TimelineTools'));
+  check('  a healthy recheck says connected and not stale',
+    body.connected === true && body.stale === false, JSON.stringify(body));
 
   // a token now works, which is the whole point
   const t = await call(env, '/token/download', { method: 'POST', headers: auth });
@@ -581,6 +646,90 @@ console.log('\n13. a pledge made after sign-in can be noticed now');
     if (rr.status === 429) limited++;
   }
   check('  repeated checks are throttled', limited > 0, 'never rate-limited');
+
+  // DEAD GRANT: the refresh token is gone (revoked in Patreon settings,
+  // rotated away). Recheck can never see anything for this session again
+  // -- products:[] alone would read as "no pledge, check again", the
+  // original commercial dead end one layer down. The answer must say the
+  // LINK is dead and name the way back in.
+  const env3 = makeEnv();
+  await env3.SESSIONS.put('session:dev_dead', JSON.stringify({
+    kind: 'patreon', patreon_tiers: [], gumroad_products: [], products: [],
+    patreon_refresh_token: '', checked_at: 0, verified_at: now - 60,
+  }));
+  const d = await call(env3, '/session/recheck',
+    { method: 'POST', headers: { authorization: 'Bearer dev_dead' } });
+  const db = await d.json();
+  check('dead grant -> connected:false with a way back in',
+    d.status === 200 && db.connected === false && /sign in/i.test(db.message || ''),
+    JSON.stringify(db));
+
+  // OUTAGE: Patreon is down; the answer is the last known state and must
+  // SAY SO -- a stale no read as a real no burns throttle slots for
+  // nothing.
+  const env4 = makeEnv();
+  await env4.SESSIONS.put('session:dev_stale', JSON.stringify({
+    kind: 'patreon', patreon_tiers: ['111'], gumroad_products: [], products: [],
+    patreon_refresh_token: 'rt', checked_at: 0, verified_at: now - 3600,
+  }));
+  stubFetch([['https://www.patreon.com/api/oauth2/token', () => jsonRes({}, 500)]]);
+  const s = await call(env4, '/session/recheck',
+    { method: 'POST', headers: { authorization: 'Bearer dev_stale' } });
+  const sb = await s.json();
+  globalThis.fetch = realFetch;
+  check('outage recheck is marked stale and keeps the last answer',
+    s.status === 200 && sb.stale === true && sb.connected === true
+      && sb.products.includes('FNS_TimelineTools'),
+    JSON.stringify(sb));
+  check('  and verified_at says how old the answer is',
+    sb.verified_at > 0 && sb.verified_at <= now - 3600 + 5,
+    String(sb.verified_at));
+}
+
+console.log('\n14. a half-failed sign-in is not a verification');
+{
+  // Token exchange succeeds, identity 500s: the session used to stamp
+  // verified_at anyway (a verification that never happened, weakening
+  // the 30-day backstop) and cache "no entitlement" for six hours.
+  const env = makeEnv();
+  const r = await call(env, '/patreon/start?port=9871');
+  const state = new URL(r.headers.get('location')).searchParams.get('state');
+  stubFetch([
+    ['https://www.patreon.com/api/oauth2/token',
+      () => jsonRes({ access_token: 'at', refresh_token: 'rt' })],
+    ['https://www.patreon.com/api/oauth2/v2/identity', () => jsonRes({}, 500)],
+  ]);
+  const cb = await call(env, `/patreon/callback?code=abc&state=${state}`);
+  const grant = new URL(cb.headers.get('location')).searchParams.get('code');
+  const claim = await call(env, '/session/claim', {
+    method: 'POST', body: JSON.stringify({ code: grant }),
+  });
+  const device = (await claim.json()).device_token;
+  const sess = lastSession(env, device);
+  check('identity outage at sign-in leaves verified_at unstamped',
+    (sess.verified_at || 0) === 0, String(sess.verified_at));
+
+  // and the empty answer is NOT pinned for six hours: the callback
+  // already short-circuited checked_at to the transient-retry window,
+  // so aging the session by ~31 minutes crosses it and the next
+  // attempt re-asks Patreon and sees the pledge.
+  const half = lastSession(env, device);
+  await env.SESSIONS.put('session:' + device, JSON.stringify({
+    ...half, checked_at: (half.checked_at || 0) - 31 * 60,
+  }));
+  stubFetch([
+    ['https://www.patreon.com/api/oauth2/token',
+      () => jsonRes({ access_token: 'at2', refresh_token: 'rt2' })],
+    ['https://www.patreon.com/api/oauth2/v2/identity',
+      () => jsonRes({ included: [{ type: 'member',
+        attributes: { patron_status: 'active_patron' },
+        relationships: { currently_entitled_tiers: { data: [{ id: '111' }] } } }] })],
+  ]);
+  const t = await call(env, '/token/download',
+    { method: 'POST', headers: { authorization: 'Bearer ' + device } });
+  globalThis.fetch = realFetch;
+  check('  and the retry sees the pledge without waiting six hours',
+    t.status === 200, String(t.status));
 }
 
 if (FAILS.length) {

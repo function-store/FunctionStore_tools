@@ -27,6 +27,25 @@ def _page(title, body):
     return _PAGE.format(title=title, body=body)
 
 
+def _param(request, name):
+    """One query parameter, wherever this build of TD put it.
+
+    MEASURED (2026-08-29, build 2025.33070): the Web Server DAT strips
+    the query string from request['uri'] and delivers the parameters as
+    the request['pars'] dict -- parse_qs(urlparse(uri).query) is always
+    empty, which made every sign-in fail its nonce check on the first
+    real walk. The urlparse path is kept as a fallback for any build
+    that leaves the query on the uri."""
+    pars = request.get('pars') or {}
+    v = pars.get(name, '')
+    if isinstance(v, (list, tuple)):
+        v = v[0] if v else ''
+    if v:
+        return str(v)
+    q = parse_qs(urlparse(request.get('uri', '')).query)
+    return q.get(name, [''])[0]
+
+
 def onHTTPRequest(webServerDAT, request, response):
     path = urlparse(request.get('uri', '/')).path
     if path not in ('/fns-auth', '/fns-auth/'):
@@ -34,10 +53,9 @@ def onHTTPRequest(webServerDAT, request, response):
         response['statusReason'] = 'Not Found'
         response['data'] = _page('Not found', 'Nothing to see here.')
     else:
-        q = parse_qs(urlparse(request.get('uri', '')).query)
-        token = q.get('token', [''])[0]
-        cn = q.get('cn', [''])[0]
-        code = q.get('code', [''])[0]
+        token = _param(request, 'token')
+        cn = _param(request, 'cn')
+        code = _param(request, 'code')
         ok = False
         try:
             ok = bool(parent().ext.ExtAuth.OnAuthCallback(token, cn, code))

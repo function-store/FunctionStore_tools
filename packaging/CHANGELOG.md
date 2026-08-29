@@ -1,5 +1,16 @@
 # FNS tools changelog
 
+## v3.0.5 -- 2026-08-29
+
+- FNS_Updater 3.0.2 -> 3.0.3 -- sign-in now completes end to end -- the loopback listener
+
+reads its parameters, gate responses route to their handlers, and
+requests actually carry their bearer token. Refusals name the tier a
+package unlocks at (and the lifetime key where one exists), a dead
+session clears itself and re-offers the way back in, a Patreon outage
+keeps a supporter entitled, and the picker narrates sign-in and
+recheck outcomes and refreshes itself.
+
 ## v3.0.4 -- 2026-08-29
 
 - AltSelect 3.0.0 -> 3.0.1

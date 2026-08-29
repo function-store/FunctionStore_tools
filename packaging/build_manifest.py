@@ -156,6 +156,44 @@ def _hostedRegistries(comp):
 
 DOCS_SITE = 'https://functionstore.tools/docs'
 
+# Where membership is bought -- the manifest's toolkit block carries it so
+# every surface (picker chip, refusal sentences, the Become a supporter /
+# Upgrade button) names the SAME door. This constant is the owner; the
+# /plus/ page holds the human explanation of the same URL.
+SUPPORT_URL = 'https://patreon.com/function_store'
+
+
+def _entitlementRoutes():
+    """(ladder, key_available_names): the tier ladder as [{'id','label'}]
+    and the set of packages a Gumroad key unlocks. Projections of their
+    OWNING files -- gate_package.py's TIER_LADDER and wrangler.toml's
+    GUMROAD_PRODUCTS -- never a second authority; absent or unreadable
+    sources degrade to empty (an old-style manifest, not a failure)."""
+    ladder, keyed = [], set()
+    try:
+        # __name__ set on purpose: without it the exec'd module believes
+        # it is __main__ and runs gate_package's CLI (measured: it did,
+        # and died on TD's CWD being the install directory).
+        ns = {'__name__': 'fns_gate_package'}
+        exec(open(_repo('packaging', 'gate_package.py'),
+                  encoding='utf-8').read(), ns)
+        ladder = [{'id': str(t), 'label': str(l)}
+                  for t, l in ns.get('TIER_LADDER', ())]
+    except Exception as e:
+        debug('packaging: tier ladder unavailable (%s)' % e)
+    try:
+        # gate_package's own readers resolve relative to CWD (a shell at
+        # the repo root); under TD that is the install dir, so the toml
+        # block is read here with an absolute path instead.
+        import re as _re
+        src = open(_repo('worker', 'wrangler.toml'), encoding='utf-8').read()
+        m = _re.search(r'^GUMROAD_PRODUCTS\s*=\s*"""(.*?)"""',
+                       src, _re.M | _re.S)
+        keyed = {str(v) for v in (json.loads(m.group(1)) if m else {}).values()}
+    except Exception as e:
+        debug('packaging: gumroad map unavailable (%s)' % e)
+    return ladder, keyed
+
 
 def _docsSlug(name):
     """URL slug for a package page. Must match packageSlug() in
@@ -610,6 +648,7 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
     want = set(export) if isinstance(export, (list, tuple, set)) else None
     export_failed = []
     attributed, _general_notes = AttributedNotes()
+    tier_ladder, key_unlocks = _entitlementRoutes()
 
     packages = []
     for comp in Packages():
@@ -652,6 +691,10 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             # anyway to be honest about what the toolkit contains. What is
             # NOT here is any means of getting the bytes.
             'access': str(meta.get('access', 'free')) or 'free',
+            # A Gumroad row exists for this package: a lifetime key is a
+            # real second route, and every refusal should say so.
+            # Projection of GUMROAD_PRODUCTS (via _entitlementRoutes).
+            'key_available': comp.name in key_unlocks,
             'license': str(meta.get('license', '')),
             'seats': meta.get('seats', None),
             'integrates_with': integrations.get(name, []),
@@ -736,6 +779,15 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             # Every entry written before 2026-08-26 carries '099' here.
             'td_build': app.build,
             'project': project.name,
+            # The funnel's routes, so every surface NAMES them instead of
+            # a generic join link: where membership is bought, and the
+            # tier ladder in ascending order (a package unlocks at its
+            # `access` tier AND every tier above -- the labels let a
+            # refusal say "unlocks at the Pro tier" instead of an id).
+            # Projections: gate_package.py owns the ladder, this file's
+            # SUPPORT_URL owns the door.
+            'support_url': SUPPORT_URL,
+            'tiers': tier_ladder,
         },
         'core': [p['name'] for p in packages if p['kind'] == 'core'],
         # Deliberate retirements for this release -- see _retired(). Empty

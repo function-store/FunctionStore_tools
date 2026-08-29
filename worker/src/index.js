@@ -353,11 +353,17 @@ async function refreshEntitlement(env, token, session) {
       refresh_token: session.patreon_refresh_token,
     });
     if (ex.ok && ex.tok.access_token) {
+      // The rotated refresh token is kept the moment the EXCHANGE
+      // succeeds. Patreon rotates on use: keeping the old token when
+      // only the identity lookup failed would present a rotated-away
+      // grant next window, and its invalid_grant would launder a
+      // transient outage into the permanent-revocation path -- a paying
+      // supporter stripped by a Patreon blip.
+      if (ex.tok.refresh_token) session.patreon_refresh_token = ex.tok.refresh_token;
       const res = await patreonTiers(env, ex.tok.access_token);
       if (res.ok) {
         session.patreon_tiers = res.tiers;
         session.verified_at = now;
-        if (ex.tok.refresh_token) session.patreon_refresh_token = ex.tok.refresh_token;
       }
       // An identity lookup that fails with a good grant is transient --
       // fall through to the transient handling below via checked_at.
@@ -458,8 +464,14 @@ async function handlePatreonCallback(env, url) {
     patreon_refresh_token: ex.tok.refresh_token || '',
     patreon_tiers: res.tiers,
     gumroad_products: [],
-    checked_at: now,
-    verified_at: now,
+    // A failed identity lookup at sign-in is NOT a verification.
+    // Stamping verified_at anyway recorded a check that never happened
+    // (weakening the 30-day stale-trust backstop) and cached "no
+    // entitlement" for six hours with nothing telling the user their
+    // sign-in half-failed. A short-circuited checked_at retries soon
+    // instead, exactly like any transient refresh failure.
+    checked_at: res.ok ? now : now - ENTITLEMENT_TTL + TRANSIENT_RETRY,
+    verified_at: res.ok ? now : 0,
     created_at: now,
   };
   session.products = productsFor(env, { patreonTiers: res.tiers });
@@ -537,7 +549,21 @@ async function handleGumroadRedeem(env, request) {
     return refuse(400, 'bad_request', 'Expected a JSON body.');
   }
   const key = String(body.license_key || '').trim();
-  const product = String(body.product_id || '').trim();
+  let product = String(body.product_id || '').trim();
+  // A buyer knows the TOOL they bought, not Gumroad's product id -- and
+  // the map is one-to-one by decision, so a package name resolves to
+  // exactly one id here, where the map lives. The picker's Redeem
+  // control sends `package`; the raw id keeps working for scripts.
+  if (!product && body.package) {
+    const byLicence = jsonVar(env, 'GUMROAD_PRODUCTS');
+    for (const [pid, pkg] of Object.entries(byLicence)) {
+      if (pkg === String(body.package).trim()) { product = pid; break; }
+    }
+    if (!product) {
+      return refuse(400, 'bad_request',
+        'No licence product is registered for that package.');
+    }
+  }
   if (!key || !product) {
     return refuse(400, 'bad_request', 'license_key and product_id are required.');
   }
@@ -627,13 +653,33 @@ async function handleSessionRecheck(env, request) {
     return refuse(429, 'rate_limited',
       'Too many checks. Give Patreon a minute, then try again.');
   }
+  const now = Math.floor(Date.now() / 1000);
   session.checked_at = 0;          // the only thing refreshEntitlement caches on
   session = await refreshEntitlement(env, device, session);
   await saveSession(env, device, session);
+  // The STRUCTURE of this answer is funnel surface. A dead grant must
+  // not masquerade as "no pledge" -- products:[] with nothing else says
+  // "check again", and for a session whose refresh token is gone the
+  // answer would be a silent no forever (the original commercial dead
+  // end, one layer down). And an answer served from the last known
+  // state during a Patreon outage must SAY it is stale: the human
+  // asking "did my pledge land?" reads a stale no as a real no and
+  // burns their throttle slots against an outage.
+  const connected = !!(session.patreon_refresh_token
+    || (session.gumroad_products || []).length);
+  const stale = !!session.patreon_refresh_token
+    && (session.verified_at || 0) < now - 2;
   return json({
     ok: true,
     products: session.products || [],
-    tiers: session.patreon_tiers || [],
+    tiers: trustedTiers(session, now),
+    connected,
+    stale,
+    verified_at: session.verified_at || 0,
+    ...(connected ? {} : {
+      message: 'The Patreon link on this install is no longer active -- '
+        + 'sign in again to reconnect.',
+    }),
   });
 }
 
@@ -645,9 +691,14 @@ async function handleTokenDownload(env, request) {
   }
   session = await refreshEntitlement(env, device, session);
   if (!session.products.length) {
+    // TRUSTED tiers, not the raw stored list: entitlement was computed
+    // from trustedTiers, and in the 30-day stale-trust case the raw
+    // list told the client "your tier isn't mapped" when the truth is
+    // "unverifiable for a month -- sign in again".
     return refuse(403, 'no_entitlement',
       'This account does not currently include any paid packages.',
-      { products: [], tiers: session.patreon_tiers || [] });
+      { products: [],
+        tiers: trustedTiers(session, Math.floor(Date.now() / 1000)) });
   }
   const token = await mintJWT(env,
     { sub: await sha256hex(device), products: session.products },

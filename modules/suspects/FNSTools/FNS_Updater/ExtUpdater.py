@@ -1081,6 +1081,21 @@ class ExtUpdater:
 		issued = False
 		while job['queue'] and len(job['inflight']) < cap:
 			item = job['queue'].pop(0)
+			# A gated item with no valid token must not go out bare: the
+			# 401 error body fails the sha check downstream and reads as a
+			# checksum failure -- website defect #4's class, reachable
+			# when the 15-minute token expires mid-pass on a slow
+			# connection. Dropped HERE, before inflight, with an auth
+			# sentence that travels to the report (see _gatedWhy).
+			if item.get('gated') and not self._gatedToken():
+				name = item['file'][:-4]
+				job.setdefault('gated', []).append(name)
+				job.setdefault('gated_reasons', {})[name] = (
+					'%s: download token missing or expired -- run the '
+					'update again to request a fresh one' % name)
+				fnsLog('UPDATER: %s dropped -- gated item with no valid '
+					   'token' % name, level='WARNING')
+				continue
 			job['inflight'][item['file']] = item['sha']
 			self._download(item['url'], item['file'], gated=item.get('gated'))
 			issued = True
@@ -1204,8 +1219,16 @@ class ExtUpdater:
 			return {'ok': False, 'why': 'no job'}
 		dropped = [i['file'][:-4] for i in job['queue'] if i['gated']]
 		job['queue'] = [i for i in job['queue'] if not i['gated']]
+		# The REASON travels with the drop, and the drop is NOT a failure.
+		# Recomputing the reason at report time from local auth state turns
+		# "could not reach the gate" and the gate's own "Sign in again"
+		# into "your tier does not include X" -- the exact inversion
+		# auth_client_callbacks warns must never happen. And routing these
+		# through job['failed'] flipped ok False for what is a refusal,
+		# not a malfunction.
+		reasons = job.setdefault('gated_reasons', {})
 		for name in dropped:
-			job.setdefault('failed', []).append('%s: %s' % (name, why))
+			reasons[name] = '%s: %s' % (name, why)
 		job.setdefault('gated', []).extend(dropped)
 		if dropped:
 			fnsLog('UPDATER: %d gated package(s) skipped -- %s'
@@ -1472,7 +1495,7 @@ class ExtUpdater:
 		man = self.StoreManifest()
 		if not man:
 			return {'ok': False, 'why': 'store has no manifest -- refresh first'}
-		present, missing, mismatched = [], [], []
+		present, missing, mismatched, gated = [], [], [], []
 		total = 0
 		for pkg in man.get('packages', []):
 			art = pkg.get('artifact')
@@ -1480,7 +1503,16 @@ class ExtUpdater:
 				continue
 			path = self._storePath(pkg['name'])
 			if not os.path.exists(path):
-				missing.append(pkg['name'])
+				# A gated package this install is not entitled to was never
+				# fetched -- by design, not breakage. Counting it as missing
+				# made every refresh read as a broken store (ok False, the
+				# package listed missing) for a signed-out user, with no
+				# sentence saying why. Its own bucket keeps the verdict
+				# honest: the store holds everything it is ALLOWED to hold.
+				if self._isGated(pkg) and not self._entitled(pkg['name']):
+					gated.append(pkg['name'])
+				else:
+					missing.append(pkg['name'])
 			elif _sha256(path) != art.get('sha256'):
 				mismatched.append(pkg['name'])
 			else:
@@ -1488,7 +1520,7 @@ class ExtUpdater:
 				total += os.path.getsize(path)
 		return {'ok': not missing and not mismatched, 'release': man.get('release', ''),
 				'folder': self.StoreFolder(), 'verified': len(present),
-				'missing': missing, 'mismatched': mismatched,
+				'missing': missing, 'mismatched': mismatched, 'gated': gated,
 				'total_mb': round(total / 1048576.0, 2)}
 
 	# ------------------------------------------------------------------
@@ -1515,6 +1547,14 @@ class ExtUpdater:
 			names = cmp_['updates']
 			if job.get('names'):
 				names = [n for n in names if n in job['names']]
+		# Gated skips never entered the store; applying them would fail
+		# with "no artifact in the store" beside the entitlement sentence
+		# and flip ok False -- the double report the gated list exists to
+		# prevent. Filtered HERE, at consumption, because the list can
+		# still grow after _needed (a gate denial mid-pass drops more).
+		gated_skips = set(job.get('gated') or [])
+		if gated_skips:
+			names = [n for n in names if n not in gated_skips]
 		man = job['manifest']
 		index = {p['name']: p for p in man.get('packages', [])}
 		steps = []
@@ -2032,6 +2072,21 @@ class ExtUpdater:
 	# reporting
 	# ------------------------------------------------------------------
 
+	def _gatedWhy(self, job):
+		"""The skipped-gated names and their sentences, for any report
+		kind. A drop that carries its own stamped reason (gate
+		unreachable, session expired -- see _onGateDenied) speaks it
+		verbatim; only the local entitlement skip falls back to
+		MissingFor, because there the local auth state IS the reason."""
+		gated = sorted(set(job.get('gated') or []))
+		_a = self._auth()
+		reasons = job.get('gated_reasons') or {}
+		why = [reasons.get(n)
+			   or (_a.MissingFor(n) if _a
+				   else '%s needs a supporter account.' % n)
+			   for n in gated]
+		return gated, why
+
 	def _report(self):
 		job = self._job or {}
 		kind = job.get('kind', 'check')
@@ -2039,13 +2094,16 @@ class ExtUpdater:
 
 		if kind == 'refresh':
 			st = self.StoreStatus()
-			self._status('store %s: %d verified, %d MB%s'
+			gated, why_gated = self._gatedWhy(job)
+			self._status('store %s: %d verified, %d MB%s%s'
 						 % (st.get('release', '?'), st.get('verified', 0),
 							st.get('total_mb', 0),
 							'; FAILED: ' + ', '.join(job.get('failed', []))
-							if job.get('failed') else ''))
+							if job.get('failed') else '',
+							'; ' + ' '.join(why_gated) if why_gated else ''))
 			return {'ok': st.get('ok') and not job.get('failed'), 'store': st,
-					'failed': job.get('failed', [])}
+					'failed': job.get('failed', []),
+					'gated': gated, 'gated_why': why_gated}
 
 		cmp_ = self.Compare(job.get('target'))
 		self._writeUpdates(cmp_['rows'])
@@ -2061,12 +2119,8 @@ class ExtUpdater:
 		done = [r['package'] for r in job.get('results', []) if r.get('ok')]
 		bad = [r for r in job.get('results', []) if not r.get('ok')]
 		# Gated packages that were skipped are NOT failures, and must not
-		# read as silence either: say which, and why, in the words the auth
-		# extension already wrote for exactly this moment.
-		gated = sorted(set(job.get('gated') or []))
-		_a = self._auth()
-		why_gated = ([_a.MissingFor(n) for n in gated] if _a
-					 else ['%s needs a supporter account.' % n for n in gated])
+		# read as silence either: say which, and why (see _gatedWhy).
+		gated, why_gated = self._gatedWhy(job)
 		self._status('updated %d package(s)%s%s'
 					 % (len(done),
 						'; FAILED: ' + ', '.join('%s (%s)' % (r['package'], r.get('why', ''))

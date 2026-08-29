@@ -56,7 +56,8 @@ def available():
     return backend() is not None
 
 
-def Store(storage_dir, device_token, products=None, tiers=None, label=''):
+def Store(storage_dir, device_token, products=None, tiers=None, label='',
+          checked_at=None):
     b = backend()
     if b is None:
         return False
@@ -67,6 +68,13 @@ def Store(storage_dir, device_token, products=None, tiers=None, label=''):
         'tiers': sorted(tiers or []),
         'label': label,
         'stored_at': time.time(),
+        # when the GATE last confirmed this entitlement -- every write
+        # that carries products comes from a gate answer (token, recheck,
+        # redeem), so store-time is that moment unless a caller knows
+        # better. The picker renders freshness from this; it was emitted
+        # as 0 forever because nothing ever wrote it.
+        'checked_at': float(checked_at if checked_at is not None
+                            else time.time()),
     })
     return True
 

@@ -105,12 +105,12 @@ if lines:
     check('the two states are distinguishable', lines[2] != lines[3])
 
 print('4. the remedy controls ship hidden and stay hidden on the site')
-for el in ('support', 'recheck', 'signin'):
+for el in ('support', 'recheck', 'signin', 'redeem'):
     m = re.search(r'id="%s"[^>]*>' % el, src)
     check('%s is hidden in markup' % el, m and 'hidden' in m.group(0),
           m.group(0) if m else 'not found')
 if os.path.exists(BUILT):
-    for el in ('support', 'recheck', 'signin'):
+    for el in ('support', 'recheck', 'signin', 'redeem'):
         m = re.search(r'id="%s"[^>]*>' % el, built)
         check('%s still hidden in the built site page' % el,
               m and 'hidden' in m.group(0), m.group(0) if m else 'not found')
@@ -127,6 +127,114 @@ check('hasAuthRail gates the account line',
       'if (!el || !hasAuthRail) { return; }' in src)
 check('hasAuthRail is a typeof test, not a truthiness test',
       "typeof account !== 'undefined'" in src)
+
+def _lift(pattern, label):
+    """A page function's REAL source, or fail loudly if it moved."""
+    m = re.search(pattern, src, re.S)
+    assert m, 'could not lift %s from the page' % label
+    return m.group(0)
+
+
+print('6. the install plan splits gated picks in every flavor')
+fn_isplus = _lift(r'function isPlus\(p\) \{[^}]*\}', 'isPlus')
+fn_entitled = _lift(r'function entitled\(p\) \{.*?\n  \}', 'entitled')
+fn_installable = _lift(r'function installable\(n\) \{.*?\n  \}', 'installable')
+fn_selection = _lift(r'function selection\(\) \{.*?\n  \}', 'selection')
+
+sel_harness = """
+function run(account) {
+  var M = {core: ['FNS_Updater'], toolkit: {name: 'FNSTools'},
+           base_url: 'https://x/fnstools'};
+  var byName = {
+    AutoRes: {name: 'AutoRes', access: 'free'},
+    FNS_TimelineTools: {name: 'FNS_TimelineTools', access: '8323905'},
+  };
+  var picked = new Set(['AutoRes', 'FNS_TimelineTools']);
+  var wantBind = null;
+  %s
+  %s
+  %s
+  %s
+  var s = selection();
+  return JSON.stringify({install: s.install, tools: s.tools});
+}
+console.log(run(undefined));
+console.log(run(null));
+console.log(run({products: ['FNS_TimelineTools']}));
+console.log(run({products: []}));
+""" % (fn_isplus, fn_entitled, fn_installable, fn_selection)
+
+try:
+    got = subprocess.run([os.environ.get('NODE', 'node'), '-e', sel_harness],
+                         capture_output=True, text=True, timeout=30)
+    sel_lines = [l for l in got.stdout.strip().split('\n') if l]
+    if got.returncode != 0:
+        print('  node stderr: %s' % got.stderr.strip()[:300])
+except Exception as e:
+    sel_lines = []
+    print('  SKIP  node unavailable (%s)' % e)
+
+if len(sel_lines) == 4:
+    import json as _json
+    site, out_, own, other = [_json.loads(l) for l in sel_lines]
+    for label, s in (('site flavor', site), ('signed out', out_),
+                     ('wrong products', other)):
+        check('%s: gated pick stays OUT of install' % label,
+              'FNS_TimelineTools' not in s['install'], s['install'])
+        check('%s: free pick still installs' % label,
+              'AutoRes' in s['install'], s['install'])
+        check('%s: the want is still recorded in tools' % label,
+              'FNS_TimelineTools' in s['tools'], s['tools'])
+    check('entitled: gated pick DOES install',
+          'FNS_TimelineTools' in own['install'], own['install'])
+
+print('7. the paste script splits SEL and PLUS')
+fn_installscript = _lift(r'function installScript\(\) \{.*?\n  \}',
+                         'installScript')
+scr_harness = """
+var M = {core: ['FNS_Updater'], toolkit: {name: 'FNSTools'},
+         base_url: 'https://x/fnstools'};
+var byName = {
+  AutoRes: {name: 'AutoRes', access: 'free'},
+  FNS_TimelineTools: {name: 'FNS_TimelineTools', access: '8323905'},
+};
+var picked = new Set(['AutoRes', 'FNS_TimelineTools']);
+%s
+%s
+console.log(installScript());
+""" % (fn_isplus, fn_installscript)
+
+try:
+    got = subprocess.run([os.environ.get('NODE', 'node'), '-e', scr_harness],
+                         capture_output=True, text=True, timeout=30)
+    script = got.stdout.strip()
+    if got.returncode != 0:
+        print('  node stderr: %s' % got.stderr.strip()[:300])
+except Exception as e:
+    script = ''
+    print('  SKIP  node unavailable (%s)' % e)
+
+if script:
+    import ast
+    import json as _json
+    ok_parse = True
+    try:
+        ast.parse(script)
+    except SyntaxError as e:
+        ok_parse = False
+    check('the generated script is valid Python', ok_parse)
+    m_sel = re.search(r'SEL = (\[[^\]]*\])', script)
+    m_plus = re.search(r'PLUS = (\[[^\]]*\])', script)
+    check('SEL holds only the free pick',
+          m_sel and _json.loads(m_sel.group(1)) == ['AutoRes'],
+          m_sel.group(1) if m_sel else 'no SEL')
+    check('PLUS carries the gated pick to the closing message',
+          m_plus and _json.loads(m_plus.group(1)) == ['FNS_TimelineTools'],
+          m_plus.group(1) if m_plus else 'no PLUS')
+    check('only core + SEL are downloaded',
+          "names = m['core'] + SEL" in script)
+    check('the wanted-but-gated picks are recorded in selection.json tools',
+          "'tools': SEL + PLUS" in script)
 
 print()
 if FAILS:
