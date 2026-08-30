@@ -450,6 +450,11 @@ class _RegistryHostMixin:
 		self._setRegStatus('Unregistered' if removed else 'Not registered')
 
 	PRESAVE_HEAL_PAR = 'Presaveheal'
+	PRESAVE_HEAL_HELP = (
+		'Before each project save, re-check this registry: update entries '
+		'whose component moved, drop entries whose component is gone, and '
+		'republish a host that initialised before the global registry '
+		'existed. Off skips the sweep for this registry only.')
 
 	def _ensurePresaveHealPar(self):
 		"""Surface the pre-save heal switch on the in-project MASTER only.
@@ -459,7 +464,15 @@ class _RegistryHostMixin:
 		decision. Created in code so every install self-heals the par."""
 		if self.ownerComp is not self._masterComp():
 			return
-		if getattr(self.ownerComp.par, self.PRESAVE_HEAL_PAR, None) is not None:
+		existing = getattr(self.ownerComp.par, self.PRESAVE_HEAL_PAR, None)
+		if existing is not None:
+			# Re-asserted rather than skipped. The par shipped before the
+			# help text did, and `help` is not a nicety here: it is the
+			# tooltip AND the description build_manifest.Parameters() puts
+			# on the docs page, so an early return would leave every
+			# already-installed registry permanently undocumented.
+			if not (existing.help or '').strip():
+				existing.help = self.PRESAVE_HEAL_HELP
 			return
 		try:
 			page = next((p for p in self.ownerComp.customPages
@@ -469,6 +482,7 @@ class _RegistryHostMixin:
 			p.startSection = True
 			p.default = True
 			p.val = True
+			p.help = self.PRESAVE_HEAL_HELP
 		except Exception as e:
 			debug(f'{self.REGISTRY_NAME}: could not create {self.PRESAVE_HEAL_PAR}: {e}')
 

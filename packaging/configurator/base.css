@@ -1,0 +1,323 @@
+/* FNSTools UI base -- the ONE source for the family's design tokens and
+   shared components. Both web shells inline a copy of this file between
+   FNS:UIBASE markers (packaging/configurator/index.html and
+   FNSTools/FNS_Console/console_page.html), because each of them must stay a
+   single self-contained file: one is embedded into the installer and served
+   from a Text DAT inside TouchDesigner, the other doubles as a
+   double-clickable standalone. Edit HERE, then run
+
+       python packaging/configurator/sync_base.py --write
+
+   to push the block into both shells (bare run = drift check only;
+   tests/test_ui_base_sync.py refuses a release with a stale copy).
+
+   Token values are kept in lockstep with website/docs.css on purpose: the
+   /get/ flavor loads docs.css for the site chrome AND this block inline, and
+   the two must never disagree (this block wins the cascade, so a drifted
+   value here would restyle the site header). Change a token value in both
+   places or in neither. */
+
+:root {
+  --bg: #0a0a0a;        --bg-1: #111111;      --bg-2: #161616;
+  --bg-3: #1c1c1c;      --bg-deep: #050505;
+  --border: #262626;    --border-strong: #3a3a3a;
+  --text: #f5f5f5;      --text-dim: #a3a3a3;  --text-faint: #737373;
+  --accent: #fbbf24;    --accent-dim: #2a1f08; --accent-bright: #fcd34d;
+  --accent-ink: #0a0a0a;
+  --green: #4ade80;     --warn: #fdba74;      --warn-dim: #2a1408;
+  --err: #f87171;       --err-dim: #2a0f0f;
+  --max-w: 1140px;      --radius: 10px;
+  /* Height of the chrome that sits above a sticky bar. 0 on its own; the
+     site flavor sets it to the site header's height. */
+  --stick: 0px;
+}
+/* Opt-in only, and only where the page is the whole window: the site and
+   TouchDesigner are dark everywhere, so embedded flavors never offer it. */
+:root[data-theme="light"] {
+  --bg: #f7f7f8;        --bg-1: #ffffff;      --bg-2: #f0f1f4;
+  --bg-3: #e9eaee;      --bg-deep: #f2f3f5;
+  --border: #e2e3e7;    --border-strong: #c6c8ce;
+  --text: #16171a;      --text-dim: #5c6069;  --text-faint: #83878f;
+  --accent: #a16207;    --accent-dim: #fdf3d7; --accent-bright: #854d0e;
+  --accent-ink: #ffffff;
+  --green: #16a34a;     --warn: #b45309;      --warn-dim: #fff5e8;
+  --err: #dc2626;       --err-dim: #fdecec;
+}
+
+* { box-sizing: border-box; }
+/* .btn sets display:inline-flex, and an author display beats the UA's
+   [hidden] rule. Served mode hides the paste-rail button that way, and
+   dialogs toggle their buttons the same way, so this has to win. */
+[hidden] { display: none !important; }
+html, body { margin: 0; padding: 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-bright); }
+code, kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.9em; }
+.spacer { flex: 1 1 auto; }
+
+/* ── buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 8px;
+  font: inherit; font-size: 14px; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-bright); color: var(--accent-ink); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; background: var(--accent); }
+.btn-secondary { background: transparent; color: var(--text); border-color: var(--border-strong); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-quiet {
+  background: transparent; color: var(--text-dim);
+  border-color: var(--border); font-weight: 500;
+}
+.btn-quiet:hover { border-color: var(--border-strong); color: var(--text); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── inputs ── */
+input[type=search], input[type=text].fns, select.fns {
+  padding: 9px 13px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-1); color: var(--text); font: inherit; font-size: 14px;
+}
+input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
+  outline: none; border-color: var(--accent); background: var(--bg-2);
+}
+
+/* ── eyebrow / meta ── */
+.eyebrow {
+  display: inline-block; padding: 5px 12px; border-radius: 999px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(251,191,36,0.25);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+}
+
+/* ── notes ── */
+.note {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, var(--bg-1) 60%);
+  border: 1px solid rgba(251,191,36,0.26); border-radius: 12px;
+  font-size: 14px; color: var(--text-dim); line-height: 1.6;
+}
+.note b { color: var(--text); }
+.note a { white-space: nowrap; }
+
+/* ── category sections ── */
+.cat {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 34px 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+}
+.cat-glyph { color: var(--accent); font-size: 15px; font-weight: 400; }
+.cat-count {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.cat-docs { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+.cat-docs:hover { color: var(--accent); }
+.cat-pitch { margin: 0 0 14px; font-size: 13px; color: var(--text-faint); }
+
+/* ── category quick-nav (jump chips under the filter bar) ── */
+.catnav {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  padding: 8px 0 2px;
+}
+.catnav a {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--text-dim);
+  white-space: nowrap;
+}
+.catnav a:hover { border-color: var(--accent); color: var(--accent); }
+.catnav a .g { color: var(--accent); font-size: 11px; }
+.catnav a .n { color: var(--text-faint); font-size: 11px; }
+
+/* ── the grid and cards ── */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.card {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 16px; cursor: pointer;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.card:hover { border-color: var(--border-strong); background: var(--bg-2); }
+.card.on {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(251,191,36,0.07) 0%, var(--bg-1) 55%);
+}
+.card.rec { cursor: pointer; text-decoration: none; }
+.card.rec:hover { border-color: var(--accent); }
+.rec-by { font-size: 12px; opacity: .75; }
+.chip.rec { border-style: dashed; }
+.card.core { cursor: default; }
+.card.core:hover { border-color: var(--border); background: var(--bg-1); }
+.card input {
+  flex: none; margin: 3px 0 0; width: 16px; height: 16px;
+  accent-color: var(--accent); cursor: pointer;
+}
+.body { min-width: 0; flex: 1; }
+.name {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+}
+.desc { margin-top: 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+a.help:hover { color: var(--accent); }
+
+/* ── chips ── */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 500; color: var(--text-dim); white-space: nowrap;
+}
+.chip.core {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
+}
+.chip.hint {
+  background: var(--warn-dim); border-color: rgba(251,146,60,0.3); color: var(--warn);
+}
+/* state chips (the updates list, install reports) */
+.chip.ok { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.3); color: var(--green); }
+.chip.warn { background: var(--warn-dim); border-color: rgba(253,186,116,0.35); color: var(--warn); }
+.chip.err { background: var(--err-dim); border-color: rgba(248,113,113,0.35); color: var(--err); }
+.chip.up {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.4); color: var(--accent);
+  font-weight: 600;
+}
+/* Plus: a package the gate serves only to an entitled account. Marked, not
+   hidden -- the decision was "visible and locked", because a picker that
+   hides them lies about what the toolkit is. It is still tickable: this
+   page does not know your entitlement (the server does), and refusing the
+   tick here would be a client-side lock, which is exactly the thing that
+   means nothing. */
+.chip.plus {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
+  font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 10px;
+}
+a.chip.plus:hover { border-color: var(--accent); }
+.card.plus { border-color: rgba(251,191,36,0.22); }
+/* Entitlement, served flavor only. Unlocked reads as filled (a state you
+   HAVE); locked stays outlined and dimmed (a state you could have). The
+   published /get/ page never sets these classes. */
+.chip.plus.own {
+  background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+}
+.chip.plus.locked { opacity: 0.6; }
+.card.plus.own { border-color: rgba(251,191,36,0.55); }
+.acct { color: var(--text-dim); font-size: 12.5px; }
+.acct b { color: var(--accent); font-weight: 600; }
+.plus-hint { margin-top: 10px; font-size: 12.5px; color: var(--text-dim); }
+.plus-hint a { color: var(--accent); }
+
+/* ── the Plus rail: one understated line, not a storefront banner. The
+   free kit is the toolkit; Plus is named as exactly what it is. ── */
+.plusrail {
+  display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+  margin: 14px 0 0; padding: 10px 16px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-left: 2px solid rgba(251,191,36,0.5); border-radius: 8px;
+  font-size: 13px; color: var(--text-dim);
+}
+.plusrail b { color: var(--text); font-weight: 600; }
+.plusrail .mark { color: var(--accent); font-weight: 700; }
+
+.empty { padding: 48px 0; text-align: center; color: var(--text-faint); }
+.empty code {
+  background: var(--bg-3); border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 4px; color: var(--accent-bright);
+}
+
+/* ── summary rail ──
+   Sticky rather than fixed: it rides the viewport while there is list left
+   to scroll, then settles at the end of the page instead of sitting on top
+   of the footer forever. */
+.sum {
+  position: sticky; bottom: 0; z-index: 7;
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  margin: 40px 0 0; padding: 14px 18px;
+  background: rgba(17,17,17,0.94);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--border); border-radius: 12px 12px 0 0;
+  border-bottom: none;
+}
+:root[data-theme="light"] .sum { background: rgba(255,255,255,0.94); }
+.sum .n { font-size: 15px; font-weight: 700; }
+.sum .muted { font-size: 13px; color: var(--text-faint); }
+.sum-count { display: flex; align-items: baseline; gap: 8px; }
+
+/* ── dialogs ── */
+dialog {
+  max-width: 720px; width: 92vw; padding: 0; color: var(--text);
+  background: var(--bg-1); border: 1px solid var(--border-strong); border-radius: 14px;
+}
+dialog::backdrop { background: rgba(0,0,0,0.7); }
+.dlg { padding: 22px 24px 20px; }
+.dlg h3 { margin: 0 0 8px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.dlg-hint { margin: 0 0 14px; font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
+.dlg pre, pre.out {
+  margin: 0; padding: 14px 16px; max-height: 44vh; overflow: auto;
+  background: var(--bg-deep); border: 1px solid var(--border); border-radius: 10px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px; line-height: 1.6; color: var(--text-dim);
+  white-space: pre-wrap; word-break: break-word;
+}
+.dlg-actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+
+/* ── the guided steps strip ── */
+.steps {
+  display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0 0; padding: 0;
+  list-style: none; font-size: 13px; color: var(--text-faint);
+}
+.steps li { display: flex; align-items: center; gap: 8px; }
+.steps li::before {
+  content: attr(data-n); display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700;
+  background: var(--bg-3); border: 1px solid var(--border-strong); color: var(--text-dim);
+}
+.steps li.now { color: var(--text); }
+.steps li.now::before { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.steps li.done::before {
+  content: '✓'; background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+}
+/* two to four cards, depending on what this machine remembers */
+.presets {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; margin: 6px 0 4px;
+}
+.preset {
+  display: flex; flex-direction: column; gap: 4px; text-align: left; cursor: pointer;
+  padding: 14px; border-radius: var(--radius); color: var(--text);
+  background: var(--bg-2); border: 1px solid var(--border); font: inherit;
+}
+.preset:hover, .preset:focus-visible { border-color: var(--accent); outline: none; }
+.preset b { font-size: 15px; }
+.preset span { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
+.preset .pick { margin-top: 6px; font-size: 12px; color: var(--accent); }
+@media (max-width: 640px) { .presets { grid-template-columns: 1fr; } }
+
+/* ── toast ── */
+.toast {
+  position: fixed; bottom: 14px; right: 18px; padding: 8px 14px;
+  border-radius: 8px; background: var(--bg-2); border: 1px solid var(--border);
+  color: var(--text);
+  opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 30;
+  max-width: 70ch; word-break: break-word; font-size: 13px;
+}
+.toast.show { opacity: 1; }
+.toast.ok { border-color: var(--green); }
+.toast.err { border-color: var(--err); }
+
+/* ── app density: the in-TD manager sets body.app; everything reads a
+   notch tighter without forking any component. ── */
+body.app { font-size: 13px; line-height: 1.5; }
+body.app .btn { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+body.app input[type=search], body.app input[type=text].fns, body.app select.fns {
+  padding: 6px 10px; font-size: 13px; border-radius: 6px;
+}
+body.app .cat { margin: 22px 0 2px; font-size: 16px; }
+body.app .card { padding: 11px 13px; }
+body.app .name { font-size: 14px; }
+body.app .desc { font-size: 12.5px; }
+body.app .dlg h3 { font-size: 16px; }

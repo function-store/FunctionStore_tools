@@ -87,6 +87,35 @@ const HOTKEYS = (() => {
   }
 })();
 
+/** Every package's customization surface, from the REPO's
+ *  packaging/parameters.json -- written by build_manifest.BuildParameters()
+ *  in the same live pass that writes the manifest, so the two can never
+ *  describe different projects.
+ *
+ *  Deliberately NOT part of manifest.json: that file is the rolling pointer
+ *  every installed toolkit re-fetches to ask "is there a newer version",
+ *  and this is ~200 KB of help text no client needs to answer it. The docs
+ *  build reads the repo, so nothing has to be uploaded for it to work. */
+const PARAMS = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(
+      path.join(REPO, 'packaging', 'parameters.json'), 'utf8'));
+  } catch {
+    return { packages: {} };   // pages build without the tables
+  }
+})();
+
+/** What a package GIVES you -- a toolbar button, a Hub tab, a pane type --
+ *  derived in build_manifest from the registries it hosts, with the words
+ *  and the owning registry published alongside so this file keeps no list
+ *  of its own. A package with none is a background behaviour: it changes
+ *  how TouchDesigner acts without putting anything on screen, and saying
+ *  so is as useful as naming a button. */
+const SURFACE_META = () => PARAMS.surface_meta || {};
+const surfacesOf = (name) => ((PARAMS.surfaces || {})[name] || []);
+const surfaceLabel = (id) => (SURFACE_META()[id] || {}).label || id;
+const surfaceRegistry = (id) => (SURFACE_META()[id] || {}).registry || '';
+
 /** URL slug for a package. Must match _helpUrl() in build_manifest.py. */
 const packageSlug = (name) => name.toLowerCase().replace(/_/g, '-');
 
@@ -220,6 +249,12 @@ function checkLinks(html, where, selfSlug) {
   }
 }
 
+// The shared parameter reference is generated rather than authored from a
+// markdown file, but package pages link to it -- so it has to exist as far
+// as checkLinks is concerned.
+const PARAMS_SLUG = 'common-parameters';
+anchorsOf.set(PARAMS_SLUG, new Set(['registry-sections', 'about']));
+
 for (const p of pages) checkLinks(p.html, p.file, p.slug);
 
 const landingPath = path.join(WEB, 'index.html');
@@ -344,6 +379,148 @@ ${ANALYTICS}
 </body>
 </html>`;
 
+// ----------------------------------------------------------- parameters
+
+/** How a control's value type reads to someone who is not sitting in front
+ *  of the TouchDesigner parameter dialog. */
+const STYLE_WORD = {
+  Toggle: 'on / off', Pulse: 'button', Str: 'text', Int: 'number',
+  Float: 'number', Menu: 'menu', StrMenu: 'menu, editable',
+  File: 'file path', FileSave: 'file path', Folder: 'folder path',
+  RGB: 'colour', RGBA: 'colour', WH: 'width, height', XY: 'x, y',
+  XYZ: 'x, y, z', UV: 'u, v', OP: 'operator', COMP: 'operator',
+  TOP: 'operator', CHOP: 'operator', DAT: 'operator', SOP: 'operator',
+  MAT: 'operator', PanelCOMP: 'operator', Header: 'heading',
+};
+const styleWord = (s) => STYLE_WORD[s] || String(s).toLowerCase();
+
+/** The value the tool arrives with. An empty string is SAID rather than
+ *  left blank: a blank cell reads as missing data, and "empty" is often
+ *  the meaningful default (an empty Scope Comp means the root timeline). */
+function defaultCell(row) {
+  if (row.style === 'Pulse' || row.style === 'Header') return '';
+  const d = row.default;
+  if (d === undefined || d === null) return '';
+  if (typeof d === 'boolean') return d ? 'on' : 'off';
+  if (d === '') return 'empty';
+  if (row.style === 'Menu' || row.style === 'StrMenu') {
+    const hit = (row.menu || []).find((m) => m.name === d);
+    return hit ? hit.label : String(d);
+  }
+  return String(d);
+}
+
+/** TD's own separator entries are layout, not choices. */
+function menuLine(row) {
+  const items = (row.menu || []).filter((m) => m.name !== '_separator_');
+  if (!items.length) return '';
+  const shown = items.slice(0, 8).map((m) => `<code>${esc(m.label)}</code>`);
+  const rest = items.length - shown.length;
+  return `<div class="par-menu">Options: ${shown.join(', ')}`
+    + `${rest > 0 ? ` and ${rest} more` : ''}</div>`;
+}
+
+/** One table per parameter page, in dialog order.
+ *
+ *  A control with no help text is still listed, for the same reason an
+ *  unexplained hotkey is: knowing it exists beats not knowing. Saying so in
+ *  the cell is also what keeps the gap visible -- an undocumented control
+ *  that quietly renders as a blank cell is indistinguishable from a
+ *  documented one, and nobody ever goes back to fill those in. */
+function parTable(rows) {
+  const body = rows.map((row) => {
+    if (row.style === 'Header') {
+      return `      <tr class="par-head"><th colspan="3">${esc(row.label)}</th></tr>`;
+    }
+    const def = defaultCell(row);
+    const desc = (row.help
+      ? md.renderInline(row.help)
+      : '<span class="par-todo">Not documented yet.</span>') + menuLine(row);
+    return `      <tr>
+        <td class="par-name"><strong>${esc(row.label || row.name)}</strong>`
+      + `<code>${esc(row.name)}</code>`
+      + `${row.readonly ? '<span class="par-flag">read-only</span>' : ''}</td>
+        <td class="par-type">${esc(styleWord(row.style))}`
+      + `${def ? `<span class="par-def">${esc(def)}</span>` : ''}</td>
+        <td>${desc}</td>
+      </tr>`;
+  }).join('\n');
+  return `<div class="par-wrap"><table class="par-table">
+    <thead><tr><th>Control</th><th>Type / default</th><th>What it does</th></tr></thead>
+    <tbody>
+${body}
+    </tbody>
+  </table></div>`;
+}
+
+/** "This tool also registers with X and Y."
+ *
+ *  A tool's Registry page is NOT listed on its own page: those controls
+ *  belong to the registry that stamps them, are identical on every tool
+ *  that registers, and are documented once on the registry's page.
+ *
+ *  Driven by `registry_pages` (which registries put a section on THIS
+ *  component) rather than by `surfaces` (what the package gives the user).
+ *  They are not the same list: a host nested inside a widget earns the
+ *  package a toolbar button while leaving the package root's Registry page
+ *  empty, which is true of 5 packages. Using surfaces here would point at
+ *  a parameter page that does not exist. */
+function registersWithLine(name) {
+  const owners = (PARAMS.registry_pages || {})[name] || [];
+  if (!owners.length) return '';
+  const links = owners.map((o) =>
+    `<a href="/docs/${packageSlug(o)}/#registry-section">${esc(o)}</a>`);
+  const list = links.length > 1
+    ? links.slice(0, -1).join(', ') + ' and ' + links[links.length - 1]
+    : links[0];
+  return `<p class="hint-line">Its <strong>Registry</strong> page comes from ${list}.</p>`;
+}
+
+/** The section a REGISTRY stamps onto every tool that registers with it.
+ *
+ *  Rendered on the registry's own page, which is where a reader who
+ *  followed "documented on its registry's page" lands. Derived from the
+ *  sections as actually stamped, not from the registry's template. */
+function registrySection(name) {
+  const rows = (PARAMS.registry_sections || {})[name] || [];
+  if (!rows.length) return '';
+  return `<section class="parameters">
+  <h2 id="registry-section">What it adds to a registered tool</h2>
+  <p class="hint-line">Every tool that registers gets these on its own <strong>Registry</strong> page.</p>
+${parTable(rows)}
+</section>`;
+}
+
+/** The package's own controls, grouped by parameter page in dialog order.
+ *
+ *  Derived, never authored here: build_manifest.Parameters() reads the pars
+ *  off the live component and the description IS the parameter's tooltip,
+ *  so a sentence written in TouchDesigner reaches this page at the next
+ *  build with no prose edited anywhere. The controls the toolkit stamps on
+ *  every package are not repeated here -- they are described once, on the
+ *  shared reference. */
+function parametersSection(p) {
+  const rows = (PARAMS.packages || {})[p.name] || [];
+  if (!rows.length) return '';
+  // A doc that already hand-wrote a "Parameters" heading owns that anchor.
+  const anchor = (anchorsOf.get(p.slug) || new Set()).has('parameters')
+    ? 'parameter-reference' : 'parameters';
+  const byPage = [];
+  for (const row of rows) {
+    const last = byPage[byPage.length - 1];
+    if (last && last.page === row.page) last.rows.push(row);
+    else byPage.push({ page: row.page, rows: [row] });
+  }
+  const blocks = byPage.map(({ page, rows: rs }) =>
+    `  <h3 id="${slugify(anchor + '-' + page)}">${esc(page)}</h3>
+${parTable(rs)}`).join('\n');
+  return `<section class="parameters">
+  <h2 id="${anchor}">Parameters</h2>
+  ${registersWithLine(p.name)}
+${blocks}
+</section>`;
+}
+
 function sidebar(currentSlug) {
   const groups = categories.map((cat) => {
     const items = pages
@@ -359,9 +536,17 @@ ${items}
     </ul>
   </div>`;
   }).filter(Boolean).join('\n');
+  // Last, under the packages: it is a reference, not a destination.
+  const reference = `  <div class="side-group">
+    <h3><span class="side-glyph" aria-hidden="true">§</span>Reference</h3>
+    <ul>
+      <li><a href="/docs/${PARAMS_SLUG}/"${currentSlug === PARAMS_SLUG ? ' aria-current="page"' : ''}>Common parameters</a></li>
+    </ul>
+  </div>`;
   return `<aside class="docs-side" id="docs-side">
   <div class="docs-search"><div id="search"></div></div>
 ${groups}
+${reference}
 </aside>`;
 }
 
@@ -395,6 +580,15 @@ for (const p of pages) {
   // "visible and locked", so the page is public and complete. What differs is
   // one badge and one callout saying how to get it.
   if (isPlus(p.name)) badges.push(`<a class="badge badge-cat" href="/plus/">◆ Plus</a>`);
+  // Where it shows up, before anything else about it: this is the question
+  // a reader scanning the docs actually has.
+  for (const sid of surfacesOf(p.name)) {
+    const reg = surfaceRegistry(sid);
+    const label = esc(surfaceLabel(sid));
+    badges.push(reg
+      ? `<a class="badge badge-surface" href="/docs/${packageSlug(reg)}/">${label}</a>`
+      : `<span class="badge badge-surface">${label}</span>`);
+  }
   const plats = p.meta.platforms;
   if (Array.isArray(plats) && plats.length && plats.length < 2) {
     badges.push(`<span class="badge badge-warn">${esc(plats.join(', '))} only</span>`);
@@ -422,9 +616,15 @@ for (const p of pages) {
     ? `<img class="feat-icon" src="/docs/assets/icons/${esc(f.icon)}" alt="" `
       + `width="18" height="18" decoding="async" />` : '');
 
-  const onThisPage = features.length > 1
-    ? `<nav class="toc"><span>On this page</span><ul>${features
-        .map((f) => `<li><a href="#${esc(f.anchor)}">${featIcon(f)}${esc(f.name)}</a></li>`).join('')}</ul></nav>`
+  const parAnchor = (PARAMS.packages || {})[p.name]?.length
+    ? ((anchorsOf.get(p.slug) || new Set()).has('parameters')
+        ? 'parameter-reference' : 'parameters')
+    : '';
+  const tocItems = features
+    .map((f) => `<li><a href="#${esc(f.anchor)}">${featIcon(f)}${esc(f.name)}</a></li>`)
+    .concat(parAnchor ? [`<li><a href="#${parAnchor}">Parameters</a></li>`] : []);
+  const onThisPage = tocItems.length > 1
+    ? `<nav class="toc"><span>On this page</span><ul>${tocItems.join('')}</ul></nav>`
     : '';
 
   // The icon and the hotkeys are authored per feature in the CMS and used
@@ -460,6 +660,10 @@ for (const p of pages) {
     }
   }
   const bound = HOTKEYS[p.name] || [];
+  // Below the prose: the tables are a reference to come back to, and a
+  // 80-row table between the lede and the explanation buries the
+  // explanation. The TOC entry is what makes them reachable from the top.
+  const parSection = parametersSection(p);
   const shortcuts = bound.length ? `<section class="shortcuts">
     <h2 id="shortcuts">Shortcuts</h2>
     <p class="hint-line">Global — they fire anywhere in TouchDesigner. Shortcuts scoped to a single panel are a local control scheme and are not listed here.</p>
@@ -486,6 +690,8 @@ ${sidebar(p.slug)}
   <div class="docs-body">
 ${body}
   </div>
+  ${parSection}
+  ${registrySection(p.name)}
   <p class="edit-page"><a href="${EDIT_BASE}/${p.file}" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
 </main>
 </div>
@@ -493,12 +699,62 @@ ${FOOT}`;
   fs.writeFileSync(path.join(dir, 'index.html'), html);
 }
 
+/** Filter the index by what a package puts on screen.
+ *
+ *  Built from the surfaces actually in use, so a vocabulary entry nothing
+ *  hosts (the pane type, today) never becomes a button that always returns
+ *  nothing. "Nothing on screen" is a real answer and gets its own button:
+ *  those tools change how TouchDesigner behaves rather than adding to it,
+ *  and that is exactly what someone browsing wants to be able to ask for. */
+function surfaceFilter() {
+  const used = new Map();
+  for (const p of pages) {
+    const list = surfacesOf(p.name);
+    if (!list.length) used.set('none', (used.get('none') || 0) + 1);
+    for (const sid of list) used.set(sid, (used.get(sid) || 0) + 1);
+  }
+  if (used.size < 2) return '';
+  const order = [...Object.keys(SURFACE_META()), 'none'].filter((k) => used.has(k));
+  const buttons = order.map((sid) => `<button class="surf-chip" data-surf="${esc(sid)}">${
+    sid === 'none' ? 'Nothing on screen' : esc(surfaceLabel(sid))
+  } <span>${used.get(sid)}</span></button>`).join('');
+  return `  <div class="surf-filter" id="surf-filter">
+    <button class="surf-chip on" data-surf="all">All <span>${pages.length}</span></button>
+    ${buttons}
+  </div>
+  <script>
+  (function () {
+    var bar = document.getElementById('surf-filter');
+    if (!bar) return;
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('.surf-chip');
+      if (!b) return;
+      var want = b.dataset.surf;
+      bar.querySelectorAll('.surf-chip').forEach(function (x) {
+        x.classList.toggle('on', x === b);
+      });
+      document.querySelectorAll('.doc-card').forEach(function (card) {
+        var has = want === 'all'
+          || (card.dataset.surfaces || '').split(' ').indexOf(want) !== -1;
+        card.hidden = !has;
+      });
+      // a category whose every card is hidden is noise, not a heading
+      document.querySelectorAll('.doc-cat').forEach(function (sec) {
+        var any = sec.querySelector('.doc-card:not([hidden])');
+        sec.hidden = !any;
+      });
+    });
+  })();
+  <\/script>`;
+}
+
 // docs index
 const indexGroups = categories.map((cat) => {
   const items = pages
     .filter((p) => p.category === cat)
     .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
-    .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/">
+    .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/" data-surfaces="${
+        esc(surfacesOf(p.name).join(' ')) || 'none'}">
         <strong>${esc(p.name)}${isPlus(p.name) ? PLUS_MARK : ''}</strong>
         <span>${esc(p.description || p.meta.summary)}</span>
       </a>`).join('\n');
@@ -521,10 +777,55 @@ ${sidebar(null)}
 <main class="docs-main docs-index" data-pagefind-body>
   <h1>Documentation</h1>
   <p class="lede">Every package that ships with FNSTools. Each tool installs on its own, so each one is documented on its own.</p>
+  <p class="docs-index-note">Each page lists that tool's own controls. The ones every package shares are described once on the <a href="/docs/${PARAMS_SLUG}/">common parameters</a> page.</p>
+${surfaceFilter()}
 ${indexGroups}
 </main>
 </div>
 ${FOOT}`);
+
+// --------------------------- shared parameter reference (generated page)
+
+// The toolkit stamps the same controls onto every package: one registry
+// section per surface a tool publishes into, and the read-only identity
+// block on its About page. Repeating those on 49 pages would be 49 copies
+// of one explanation to keep in step -- so each package page links here
+// instead, and this is the only place they are described.
+{
+  const aboutRows = PARAMS.about_stamp || [];
+  const registries = Object.entries(PARAMS.registry_sections || {});
+  const registryList = registries.map(([name, rows]) =>
+    `      <li><a href="/docs/${packageSlug(name)}/#registry-section">${esc(name)}</a>`
+    + ` &mdash; ${rows.length} controls</li>`).join('\n');
+  const dir = path.join(OUT, PARAMS_SLUG);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'index.html'), `${head(
+    'Common parameters — FNSTools docs',
+    'The controls every FNSTools package carries: the read-only About block that identifies a version, and the registry sections that decide where a tool appears.',
+    `${SITE}/docs/${PARAMS_SLUG}/`)}
+${header('/docs/')}
+<div class="docs-layout wrap">
+${sidebar(PARAMS_SLUG)}
+<main class="docs-main" data-pagefind-body>
+  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> Reference</p>
+  <h1>Common parameters</h1>
+  <p class="lede">The controls every package carries, whatever the tool does.</p>
+  <section class="parameters">
+  <h2 id="about">About</h2>
+  <p class="hint-line">Read-only, on every package. <code>Pkgversion</code> is what the updater compares.</p>
+${parTable(aboutRows)}
+
+  <h2 id="registry-sections">Registry sections</h2>
+  <p class="hint-line">Registering with a surface adds a section to a tool's <strong>Registry</strong> page. Each registry documents its own:</p>
+  <ul class="par-registry-list">
+${registryList}
+  </ul>
+  </section>
+</main>
+</div>
+${FOOT}`);
+  console.log(`built /docs/${PARAMS_SLUG}/ (${aboutRows.length} identity fields, ${registries.length} registries linked)`);
+}
 
 // ------------------------------- tool catalogue injected into index.html
 

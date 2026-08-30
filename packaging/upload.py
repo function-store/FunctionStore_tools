@@ -5,6 +5,8 @@
     python3 packaging/upload.py --dry      # print the plan, upload nothing
     python3 packaging/upload.py --force    # re-upload even existing objects
     python3 packaging/upload.py --prune 3  # also delete all but newest N releases
+    python3 packaging/upload.py --prune 3 --prune-only        # prune, no sync
+    python3 packaging/upload.py --prune 3 --prune-only --dry  # preview the prune
     python3 packaging/upload.py --recommendations   # just the community list
 
 Immutable (release-pinned) objects already in the bucket are skipped -- a
@@ -413,16 +415,19 @@ def _deleteOne(key):
     return ('ok ' if r.returncode == 0 else 'gone'), key
 
 
-def prune(keep, base):
+def prune(keep, base, dry=False):
     """Delete all but the newest `keep` release directories. Keys come
     from each doomed release's OWN pinned manifest (package names differ
-    across eras), plus the rails and the manifest itself."""
+    across eras), plus the rails and the manifest itself. `dry` prints
+    the full plan -- releases and every key -- and deletes nothing."""
     labels = _changelogReleases()
     current = _currentRelease()
     if current in labels:
         labels.remove(current)
     labels.insert(0, current)
     doomed = labels[keep:]
+    kept = labels[:keep]
+    print('prune: keeping %d release(s): %s' % (len(kept), ', '.join(kept)))
     if not doomed:
         print('prune: nothing to prune')
         return
@@ -447,6 +452,11 @@ def prune(keep, base):
                      'fnstools.json'):
             keys.append(f'{PREFIX}/{rel}/{rail}')
     print(f'prune: {len(doomed)} release(s), {len(keys)} object(s): {", ".join(doomed)}')
+    if dry:
+        for key in keys:
+            print(f'  would delete {key}')
+        print('prune: DRY RUN -- nothing deleted')
+        return
     done = 0
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
         for state, key in pool.map(_deleteOne, keys):
@@ -466,9 +476,17 @@ if __name__ == '__main__':
                          '(no release needed)')
     ap.add_argument('--prune', type=int, metavar='N', default=0,
                     help='after syncing, delete all but the newest N releases')
+    ap.add_argument('--prune-only', action='store_true',
+                    help='skip the sync entirely and just prune (needs '
+                         '--prune N; add --dry to preview the deletions)')
     args = ap.parse_args()
     if args.recommendations:
         sys.exit(uploadRecommendations(dry=args.dry))
+    if args.prune_only:
+        if not args.prune:
+            sys.exit('--prune-only needs --prune N')
+        prune(args.prune, _publicBase(), dry=args.dry)
+        sys.exit(0)
     jobs = plan()
     alias = latestJobs()
     if args.dry:

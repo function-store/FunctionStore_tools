@@ -157,21 +157,135 @@ class ExtAuth:
 		return d.module if d is not None else None
 
 	# ------------------------------------------------------------------
+	# the shared machine session (G7 -- TDXLUGateIntegration.md)
+	#
+	# One sign-in serves every FNS product on this machine. The channel
+	# is a small JSON file BESIDE the config (never under store/ -- the
+	# store is a wipeable mirror): {schema, device_token, written_by,
+	# written_at}. Rules, per the launcher contract's §5: written
+	# atomically on every successful sign-in; adopted by a product
+	# holding no session; deleted when the gate says signed_out; on
+	# sign-out, revoke first and delete only if the file still holds the
+	# token that was just revoked (never clobber a newer sign-in).
+	# The token here is OPAQUE and REVOCABLE -- weaker at rest than the
+	# DPAPI keystore that remains our own copy, and accepted as the
+	# interop cost by decision (both products pre-release, 2026-08-30).
+	# ------------------------------------------------------------------
+
+	def _sharedSessionPath(self):
+		"""ALWAYS the machine's default palette location -- never the
+		Storefolder override. Sharing is a machine-level contract: the
+		launcher derives <user palette>/FNStools_ext independently, so a
+		custom Storefolder here would mean two different files and
+		sharing that silently never happens (launcher review, G7)."""
+		return ('%s/FNStools_ext/config/gate-session.json'
+				% app.userPaletteFolder).replace('\\', '/')
+
+	def _readSharedSession(self):
+		"""The shared file's record, or None -- unreadable is absent."""
+		try:
+			with open(self._sharedSessionPath(), 'r', encoding='utf-8') as f:
+				doc = json.load(f)
+			tok = str(doc.get('device_token') or '')
+			return doc if tok else None
+		except Exception:
+			return None
+
+	def _publishSharedSession(self, token):
+		"""Atomic write on every successful sign-in, so a crash mid-write
+		can never leave a half token for another product to adopt."""
+		import os
+		path = self._sharedSessionPath()
+		try:
+			os.makedirs(os.path.dirname(path), exist_ok=True)
+			tmp = path + '.tmp'
+			with open(tmp, 'w', encoding='utf-8') as f:
+				json.dump({'schema': 1, 'device_token': token,
+						   'written_by': 'FNSTools',
+						   'written_at': time.time()}, f, indent=1)
+			os.replace(tmp, path)
+		except Exception as e:
+			fnsLog('AUTH: could not publish the shared session (%s)' % e,
+				   level='WARNING')
+
+	def _dropSharedSession(self, only_token=None):
+		"""Delete the shared file. With only_token, delete ONLY when the
+		file still holds that token -- a newer sign-in by another product
+		is not ours to destroy."""
+		import os
+		try:
+			if only_token is not None:
+				doc = self._readSharedSession()
+				if doc is None or doc.get('device_token') != only_token:
+					return
+			os.remove(self._sharedSessionPath())
+		except FileNotFoundError:
+			pass
+		except Exception as e:
+			fnsLog('AUTH: could not drop the shared session (%s)' % e,
+				   level='WARNING')
+
+	def _adoptSharedSession(self):
+		"""Holding no session, take the machine's -- once per extension
+		lifetime, so the file read does not ride every Account() call.
+		Products are unknown at adoption; a deferred token request fills
+		them the moment the main loop breathes."""
+		self._shared_checked = True
+		doc = self._readSharedSession()
+		if doc is None:
+			return None
+		s = self._storage()
+		if s is None:
+			return None
+		try:
+			s.Store(self._storageDir(), doc['device_token'],
+					products=[], label='supporter')
+		except Exception as e:
+			fnsLog('AUTH: could not adopt the shared session (%s)' % e,
+				   level='WARNING')
+			return None
+		fnsLog('AUTH: adopted the machine session written by %s'
+			   % (doc.get('written_by') or 'unknown'))
+		run('args[0].ext.ExtAuth.RequestToken()', self.ownerComp,
+			delayFrames=2, delayRef=op.TDResources)
+		try:
+			return s.Load(self._storageDir())
+		except Exception:
+			return None
+
+	# ------------------------------------------------------------------
 	# what this install is entitled to
 	# ------------------------------------------------------------------
 
 	def Account(self):
 		"""The stored account record, or None. Reading it is cheap enough
 		to do per call and avoids a cache that can disagree with the
-		keystore after a Sign Out in another project."""
+		keystore after a Sign Out in another project. Holding nothing,
+		it checks the shared machine session once (G7) -- a sign-in from
+		the launcher serves this product too."""
 		s = self._storage()
 		if s is None:
 			return None
 		try:
-			return s.Load(self._storageDir())
+			rec = s.Load(self._storageDir())
 		except Exception as e:
 			fnsLog('AUTH: keystore unreadable (%s)' % e, level='WARNING')
 			return None
+		if rec is None and not getattr(self, '_shared_checked', False):
+			rec = self._adoptSharedSession()
+		elif rec is not None and not getattr(self, '_shared_backfilled', False):
+			# Backfill (G7): a session signed in BEFORE the shared file
+			# existed never published -- publish fires on sign-in/redeem
+			# events, so a pre-G7 keystore stays invisible to the machine
+			# until the next sign-in. First read with a token in hand and
+			# no shared file on disk closes that gap; checked once per
+			# extension lifetime, like adoption.
+			self._shared_backfilled = True
+			if self._readSharedSession() is None:
+				self._publishSharedSession(rec['device_token'])
+				fnsLog('AUTH: published the held session to the machine '
+					   'file (backfill)')
+		return rec
 
 	def IsSignedIn(self):
 		return self.Account() is not None
@@ -243,6 +357,15 @@ class ExtAuth:
 		if self._download_token and time.time() < self._download_expires - TOKEN_EARLY_REFRESH:
 			return self._download_token
 		return ''
+
+	def DropCachedToken(self):
+		"""Forget the cached download token. The gate can kill the session
+		that minted it mid-window (a sign-out elsewhere on the machine);
+		the token then looks valid here while every download it signs
+		comes back an error body. The updater calls this on a refused
+		gated fetch so the next pass re-requests -- and that request gets
+		the honest 401 that updates the session state."""
+		self._download_token, self._download_expires = '', 0.0
 
 	def RequestToken(self, callback=None):
 		"""Ask the gate for a download token. ASYNC -- `callback` is called
@@ -395,6 +518,8 @@ class ExtAuth:
 		goes null and its rail re-offers the ways back in; both routes
 		are named because both exist, and re-redeeming a held key spends
 		no activation by design."""
+		acct = self.Account() or {}
+		dead = acct.get('device_token')
 		s = self._storage()
 		if s is not None:
 			try:
@@ -402,6 +527,12 @@ class ExtAuth:
 			except Exception as e:
 				fnsLog('AUTH: could not clear the dead session (%s)' % e,
 					   level='WARNING')
+		# the gate declared THIS token dead: drop the shared file too --
+		# but only while it still holds the dead token; a newer sign-in
+		# by another product is not ours to destroy (G7)
+		if dead:
+			self._dropSharedSession(only_token=dead)
+		self._shared_checked = True   # do not re-adopt the corpse
 		self._download_token, self._download_expires = '', 0.0
 		self._setStatus('session expired -- sign in again, or redeem your '
 						'licence key again')
@@ -439,6 +570,19 @@ class ExtAuth:
 		port it was given, so nothing about this flow needs a fixed port."""
 		if self._signin is not None:
 			return {'ok': False, 'why': 'a sign-in is already in progress'}
+		# Adopt-before-browser (launcher review, G7): adoption is checked
+		# once per extension lifetime, so a toolkit that started signed
+		# out never noticed a launcher sign-in made LATER in the same TD
+		# session. The Sign in click is the moment to look again -- when
+		# the machine already holds a session, take it and save the user
+		# the whole browser trip. The launcher does the same.
+		if self.Account() is None:
+			self._shared_checked = False
+			if self.Account() is not None:
+				self._setStatus(self.AuthStatus())
+				fnsLog('AUTH: adopted the machine session instead of a '
+					   'browser sign-in')
+				return {'ok': True, 'why': 'adopted the machine session'}
 		ws = self._ensureServer()
 		if ws is None:
 			return {'ok': False, 'why': 'could not create the callback listener'}
@@ -536,6 +680,8 @@ class ExtAuth:
 			fnsLog('AUTH: no OS keystore; cannot stay signed in', level='ERROR')
 			return False
 		s.Store(self._storageDir(), token)
+		# every successful sign-in serves the whole machine (G7)
+		self._publishSharedSession(token)
 		# the rich line, not a bare "signed in": AuthStatus() names the
 		# account and counts what it unlocked, which is the only place a
 		# supporter can currently SEE that paying did something
@@ -554,16 +700,23 @@ class ExtAuth:
 		# TTL bounds what a missed revoke costs.
 		acct = self.Account()
 		wc = self._client()
-		if wc is not None and acct and acct.get('device_token'):
+		mine = (acct or {}).get('device_token')
+		if wc is not None and mine:
 			try:
 				self._gateRequest(wc, '%s/session/revoke' % self.GateUrl(),
-								  token=acct['device_token'])
+								  token=mine)
 			except Exception as e:
 				fnsLog('AUTH: revoke request failed to start (%s)' % e,
 					   level='WARNING')
 		s = self._storage()
 		if s is not None:
 			s.Clear(self._storageDir())
+		# Sign-out signs the MACHINE out (G7): revoke-then-delete, and
+		# delete only while the shared file still holds the token just
+		# revoked -- a newer sign-in by another product survives.
+		if mine:
+			self._dropSharedSession(only_token=mine)
+		self._shared_checked = True   # a deliberate sign-out is not re-adopted
 		self._download_token, self._download_expires = '', 0.0
 		self._closeServer()
 		self._setStatus('signed out')
@@ -636,6 +789,9 @@ class ExtAuth:
 		s.Store(self._storageDir(), payload['device_token'],
 				products=payload.get('products'),
 				tiers=prior.get('tiers'), label=prior.get('label', ''))
+		# a redeem is a sign-in too: the minted/extended token serves the
+		# whole machine (G7)
+		self._publishSharedSession(payload['device_token'])
 		self._download_token, self._download_expires = '', 0.0
 		self._setStatus(self.AuthStatus())
 		fnsLog('AUTH: licence redeemed (%d package(s))'

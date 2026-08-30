@@ -39,6 +39,7 @@ Never hash the live COMP for anything: a .tox re-saved inside a project no
 longer hashes to what was published.
 """
 
+import glob
 import hashlib
 import json
 import os
@@ -115,6 +116,14 @@ SIG_SUFFIX = '.sig'
 DISCOVERY_SIG = DISCOVERY_NAME + SIG_SUFFIX
 MANIFEST_SIG = MANIFEST_NAME + SIG_SUFFIX
 
+# Artifacts download to a staging name and are promoted onto the store
+# file only after the sha check passes. Without this, a failed fetch --
+# a gate 401 body against a revoked token, a CDN error page -- lands
+# DIRECTLY on the store path, and the hash-mismatch cleanup then deletes
+# what used to be good bytes (seen live: a signed-out install pass
+# destroyed a verified FNS_TimelineTools.tox).
+PART_SUFFIX = '.part'
+
 # The curated list of OTHER PEOPLE'S tools. Fetched and cached under a
 # SUBFOLDER of the store, never beside the packages: every update mechanism
 # reads the store by manifest name, so nothing in there is ever compared,
@@ -160,8 +169,20 @@ else:
 
 
 def _version(comp):
-    """The version a component declares about itself."""
-    p = getattr(comp.par, 'Pkgversion', None) if comp is not None else None
+    """The version a component declares about itself.
+
+    FNS_About first: the child is the authoritative copy (release bumps
+    write it), so reading it directly means a severed comp-level mirror
+    can never invert who wins -- the comp par is display, not truth. A
+    package without the child answers through its own bare Pkgversion."""
+    if comp is None:
+        return ''
+    fa = comp.op('FNS_About')
+    if fa is not None:
+        p = getattr(fa.par, 'Pkgversion', None)
+        if p is not None and str(p.eval()).strip():
+            return str(p.eval()).strip()
+    p = getattr(comp.par, 'Pkgversion', None)
     return str(p.eval()).strip() if p is not None else ''
 
 
@@ -636,6 +657,12 @@ class ExtUpdater:
 		  locked       newer, but this copy must not be touched (see
 		               _refuseReason)
 		  missing      recorded as installed, but the component is gone
+		  component    pane-placed (placement: 'pane'): spawned into the
+		               user's networks, frozen at spawn version; reported,
+		               never updated in place. A spawn on the installer's
+		               doorstep -- in the root, or beside it at the network
+		               root -- is NOT this: it compares and updates like
+		               any root child.
 		"""
 		man = self.StoreManifest()
 		if not man:
@@ -648,7 +675,21 @@ class ExtUpdater:
 		index = {p['name']: p for p in man.get('packages', [])}
 		rows, updates, seen = [], [], set()
 
-		for child in sorted(root.children, key=lambda c: c.name.lower()):
+		# The installer's doorstep, for updates: a pane-placed package
+		# spawned beside the toolkit container (network root -- the
+		# no-editor fallback and a /-showing pane both land there) is in
+		# reachable territory and compares/updates in place like a root
+		# child. Copies anywhere else stay frozen ('component', below).
+		candidates = list(root.children)
+		home = root.parent()
+		if home is not None:
+			for c in home.children:
+				if (c.family == 'COMP' and c.id != root.id
+						and (index.get(c.name) or {}).get('placement') == 'pane'
+						and root.op(c.name) is None):
+					candidates.append(c)
+
+		for child in sorted(candidates, key=lambda c: c.name.lower()):
 			pkg = index.get(child.name) if child.family == 'COMP' else None
 			if pkg is None:
 				continue          # not something the store publishes: say nothing
@@ -685,6 +726,17 @@ class ExtUpdater:
 		# audit trail still tells us that the live network cannot.
 		for name, rec in sorted(self.Installed(target).items()):
 			if name in seen or root.op(name) is not None:
+				continue
+			if (index.get(name) or {}).get('placement') == 'pane':
+				# a pane-placed component lives wherever the user spawned
+				# it -- installed WITHOUT being a root child. Instances are
+				# frozen at their spawn version by design (palette
+				# semantics); never counted missing, never auto-updated.
+				rows.append({'package': name, 'state': 'component',
+							 'installed': rec.get('release', ''),
+							 'available': str((index.get(name) or {}).get('version', '')),
+							 'note': 'spawned into your networks; reinstall '
+									 'from the picker for the newest'})
 				continue
 			rows.append({'package': name, 'state': 'missing', 'installed': rec.get('release', ''),
 						 'available': str((index.get(name) or {}).get('version', '')),
@@ -1012,6 +1064,10 @@ class ExtUpdater:
 		frame later (see _later)."""
 		path = str(callbackInfo.get('path') or '')
 		name = os.path.basename(path)
+		if name.endswith(PART_SUFFIX):
+			# staged artifact: bookkeeping runs under the real name, the
+			# bytes stay at the .part path until _verifyFetched promotes
+			name = name[:-len(PART_SUFFIX)]
 		# Community placement runs OUTSIDE the update job -- it is one
 		# user-initiated file, not a pass -- so it is dispatched first.
 		if getattr(self, '_place', None) and 'community' in path.replace(chr(92), '/'):
@@ -1096,8 +1152,10 @@ class ExtUpdater:
 				fnsLog('UPDATER: %s dropped -- gated item with no valid '
 					   'token' % name, level='WARNING')
 				continue
-			job['inflight'][item['file']] = item['sha']
-			self._download(item['url'], item['file'], gated=item.get('gated'))
+			job['inflight'][item['file']] = {'sha': item['sha'],
+											 'gated': bool(item.get('gated'))}
+			self._download(item['url'], item['file'] + PART_SUFFIX,
+						   gated=item.get('gated'))
 			issued = True
 		if not job['queue'] and not job['inflight']:
 			self._onArtifacts()
@@ -1129,8 +1187,14 @@ class ExtUpdater:
 			return
 		run('args[0]._watchdog()', self, delayFrames=120, delayRef=op.TDResources)
 
-	def _verifyFetched(self, name, want, path):
-		"""Bytes that do not match the manifest never enter the store."""
+	def _verifyFetched(self, name, info, path):
+		"""Bytes that do not match the manifest never enter the store.
+
+		`path` is the .part staging file; the store file is untouched
+		until the digest passes, so a failed fetch can never destroy the
+		good bytes already there."""
+		want = info.get('sha', '') if isinstance(info, dict) else info
+		gated = bool(info.get('gated')) if isinstance(info, dict) else False
 		job = self._job
 		if not os.path.exists(path):
 			job['failed'].append('%s: file missing after download' % name)
@@ -1147,12 +1211,42 @@ class ExtUpdater:
 			return
 		digest = _sha256(path)
 		if digest != want:
+			# A gated fetch that mismatches is usually not corruption: a
+			# revoked session serves a small JSON error body as the
+			# "artifact". Say so, and drop the cached download token --
+			# it outlives the session that minted it, and reusing the
+			# corpse turns every retry in its 15-minute window into the
+			# same silent failure (seen live after a launcher sign-out).
+			refused = False
+			if gated:
+				try:
+					with open(path, 'rb') as f:
+						head = f.read(200).lstrip()
+					refused = head.startswith(b'{') or os.path.getsize(path) < 2048
+				except Exception:
+					pass
 			try:
 				os.remove(path)
 			except Exception:
 				pass
-			job['failed'].append('%s: hash mismatch (deleted)' % name)
+			if refused:
+				a = self._auth()
+				if a is not None:
+					a.DropCachedToken()
+				job['failed'].append(
+					'%s: the gate refused the download (session no longer '
+					'valid?) -- sign in and run the update again' % name)
+			else:
+				job['failed'].append('%s: hash mismatch (deleted)' % name)
 			return
+		final = path[:-len(PART_SUFFIX)] if path.endswith(PART_SUFFIX) else path
+		if final != path:
+			try:
+				os.replace(path, final)
+			except Exception as e:
+				job['failed'].append('%s: verified but could not enter the '
+									 'store (%s)' % (name, e))
+				return
 		job['fetched'].append(name)
 		job['progress_at'] = absTime.seconds
 
@@ -1175,6 +1269,14 @@ class ExtUpdater:
 		if not wanted:
 			return self._onArtifacts()
 		job['stage'] = 'artifacts'
+		# A stalled or aborted earlier pass can leave .part staging files
+		# behind; they are dead weight and must never be mistaken for
+		# store content, so each artifact pass starts clean.
+		try:
+			for stale in glob.glob('%s/*%s' % (self.StoreFolder(), PART_SUFFIX)):
+				os.remove(stale)
+		except Exception:
+			pass
 		self._status('%s: fetching %d artifact(s)...' % (job['kind'], len(wanted)))
 		if job['local'] is not None:
 			for pkg in wanted:
@@ -1563,6 +1665,7 @@ class ExtUpdater:
 			art = (pkg or {}).get('artifact') or {}
 			steps.append({'name': name, 'path': self._storePath(name),
 						  'sha256': art.get('sha256', ''),
+						  'placement': (pkg or {}).get('placement', ''),
 						  'release': man.get('release', '')})
 		if not steps:
 			return self._report()
@@ -1990,6 +2093,13 @@ class ExtUpdater:
 		name = step['name']
 		root = self._root(target)
 		dest = root.op(name)
+		if dest is None and step.get('placement') == 'pane':
+			# the doorstep (see Compare): a pane spawn beside the toolkit
+			# container updates in place like a root child
+			home = root.parent()
+			cand = home.op(name) if home is not None else None
+			if cand is not None and cand.family == 'COMP':
+				dest = cand
 		if dest is None:
 			return {'package': name, 'ok': False, 'why': 'not present in this project'}
 		refuse = self._refuseReason(dest)
@@ -2025,6 +2135,9 @@ class ExtUpdater:
 		# it used to leave the user with the package simply gone and a row in
 		# a table saying so. Export first, restore on either failure.
 		nx, ny, color = dest.nodeX, dest.nodeY, dest.color
+		# the comp's ACTUAL parent, so a doorstep pane spawn reloads where
+		# it lives; for a root child this is the root, as before
+		carrier = dest.parent()
 		backup = self._backupPackage(dest, name)
 		if not backup:
 			# Refusing is the point: without a backup the destroy below is
@@ -2034,20 +2147,20 @@ class ExtUpdater:
 					'why': 'could not back up the installed version -- '
 						   'refusing to replace it (check the store folder is writable)'}
 		dest.destroy()
-		before = {c.id for c in root.children}
+		before = {c.id for c in carrier.children}
 		try:
-			root.loadTox(path)
+			carrier.loadTox(path)
 		except Exception as e:
-			restored = self._restorePackage(root, backup, name, nx, ny, color)
+			restored = self._restorePackage(carrier, backup, name, nx, ny, color)
 			return {'package': name, 'ok': False,
 					'why': 'loadTox failed: %s%s' % (
 						str(e)[:110],
 						' (previous version restored)' if restored
 						else ' AND THE BACKUP COULD NOT BE RESTORED: ' + backup)}
-		fresh = [c for c in root.children if c.id not in before]
-		new = fresh[0] if fresh else root.op(name)
+		fresh = [c for c in carrier.children if c.id not in before]
+		new = fresh[0] if fresh else carrier.op(name)
 		if new is None:
-			restored = self._restorePackage(root, backup, name, nx, ny, color)
+			restored = self._restorePackage(carrier, backup, name, nx, ny, color)
 			return {'package': name, 'ok': False,
 					'why': 'artifact loaded nothing%s' % (
 						' -- previous version restored' if restored

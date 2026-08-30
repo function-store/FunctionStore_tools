@@ -78,6 +78,7 @@ class ConsoleRegistryExt(RegistryBase):
 	BUILTIN_TABS = (
 		{'name': 'settings', 'label': 'Settings', 'order': 0, 'builtin': True},
 		{'name': 'tools', 'label': 'Install & remove', 'order': 10, 'builtin': True},
+		{'name': 'updates', 'label': 'Updates', 'order': 20, 'builtin': True},
 	)
 
 	# --- surface hooks (RegistryBase contract; the surface is the server) ---
@@ -458,6 +459,136 @@ class ConsoleRegistryExt(RegistryBase):
 		if comp is None or not comp.extensionsReady:
 			return None
 		return getattr(comp.ext, 'InstallerExt', None)
+
+	def UiBaseCss(self):
+		"""The shared UI base, served at /base.css for contributed tabs.
+
+		Sliced from the console page's own FNS:UIBASE block rather than
+		carried as a second asset: the page's copy is the one sync_base.py
+		keeps current, so serving a slice of it cannot drift from what the
+		console itself renders. A tab that must also run OUTSIDE the console
+		(ColorUI's own Web Render) inlines its own copy instead -- this
+		route only exists while the console server does."""
+		page = self.ownerComp.op(self.PAGE_NAME)
+		text = page.text if page is not None else ''
+		a = text.find('/* FNS:UIBASE:START')
+		b = text.find('/* FNS:UIBASE:END */')
+		if a < 0 or b < 0 or b < a:
+			return ''
+		return text[a:b + len('/* FNS:UIBASE:END */')]
+
+	def _updaterComp(self):
+		"""The toolkit root's FNS_Updater, or None. Resolved fresh every
+		call, never cached -- extension references go stale on reinit."""
+		root = getattr(op, 'FNS', None)
+		comp = root.op('FNS_Updater') if root is not None else None
+		if comp is None or not comp.extensionsReady:
+			return None
+		return comp
+
+	def _updaterJob(self):
+		"""The updater's current job dict, or None -- the same private-peek
+		the installer's /status route makes (InstallerExt._refreshJob)."""
+		comp = self._updaterComp()
+		try:
+			return getattr(comp.ext.ExtUpdater, '_job', None) if comp else None
+		except Exception:
+			return None
+
+	NO_UPDATER = {'ok': False, 'rows': [], 'updates': [],
+				  'why': 'no FNS_Updater in this project -- updates need the '
+						 'toolkit root with its updater rail'}
+
+	def UiUpdates(self):
+		"""The Updates tab's whole state in one answer: Compare() rows (no
+		network -- the store manifest already on disk), per-package release
+		notes from that manifest, and whether a check/update pass is live."""
+		comp = self._updaterComp()
+		if comp is None:
+			return dict(self.NO_UPDATER)
+		try:
+			upd = comp.ext.ExtUpdater
+			out = upd.Compare()
+		except Exception as e:
+			return {'ok': False, 'rows': [], 'updates': [], 'why': str(e)}
+		# whatsnew rides the manifest per package; Compare's rows carry the
+		# decision, so join them here rather than teaching Compare about prose
+		try:
+			man = upd.StoreManifest() or {}
+			index = {p.get('name'): p for p in man.get('packages', [])}
+			for row in out.get('rows', []):
+				row['whatsnew'] = str(
+					(index.get(row.get('package')) or {}).get('whatsnew', ''))
+		except Exception:
+			pass
+		job = self._updaterJob()
+		live = bool(job) and job.get('stage') not in ('done', 'failed')
+		out['checking'] = live and job.get('kind') in ('check', 'refresh')
+		out['applying'] = live and job.get('kind') == 'update'
+		try:
+			out['detail'] = str(comp.par.Status.eval())[:200]
+		except Exception:
+			out['detail'] = ''
+		return out
+
+	def UiUpdatesCheck(self):
+		"""Kick CheckUpdates() -- manifest only, deliberately cheap. Deferred
+		out of the web server callback: a refresh started inside one was
+		observed finishing 'done' having fetched nothing (the same marshaling
+		cure InstallerExt._refreshStore applies)."""
+		comp = self._updaterComp()
+		if comp is None:
+			return dict(self.NO_UPDATER)
+		job = self._updaterJob()
+		if job and job.get('stage') not in ('done', 'failed'):
+			return {'ok': False,
+					'why': 'an update job is already running (%s)' % job.get('kind')}
+		run('op(%r).CheckUpdates()' % comp.path,
+			delayFrames=1, delayRef=op.TDResources)
+		return {'ok': True, 'text': 'checking the store...'}
+
+	def UiUpdatesApply(self, names=None):
+		"""Kick UpdateProject() for `names` (or everything that differs when
+		empty). The updater does the judging -- Compare() decides what
+		actually differs, gated skips keep their sentences, settings are
+		snapshotted before anything is replaced."""
+		comp = self._updaterComp()
+		if comp is None:
+			return dict(self.NO_UPDATER)
+		job = self._updaterJob()
+		if job and job.get('stage') not in ('done', 'failed'):
+			return {'ok': False,
+					'why': 'an update job is already running (%s)' % job.get('kind')}
+		clean = [str(n) for n in (names or []) if str(n).strip()]
+		run('op(%r).UpdateProject(names=%r)' % (comp.path, clean or None),
+			delayFrames=1, delayRef=op.TDResources)
+		return {'ok': True,
+				'text': 'updating %s...' % (', '.join(clean) if clean
+											else 'everything that differs')}
+
+	def UiUpdatesStatus(self):
+		"""The live pass, for the page's poll: stage, the updater's own
+		narration, and -- once settled -- the per-package results."""
+		comp = self._updaterComp()
+		if comp is None:
+			return dict(self.NO_UPDATER)
+		job = self._updaterJob()
+		detail = ''
+		try:
+			detail = str(comp.par.Status.eval())[:200]
+		except Exception:
+			pass
+		if not job:
+			return {'ok': True, 'settled': True, 'stage': '', 'kind': '',
+					'detail': detail, 'failed': [], 'applied': 0}
+		settled = job.get('stage') in ('done', 'failed')
+		results = job.get('results') or []
+		return {'ok': True, 'settled': settled,
+				'stage': str(job.get('stage', '')),
+				'kind': str(job.get('kind', '')),
+				'detail': detail,
+				'failed': list(job.get('failed') or [])[:8],
+				'applied': len([r for r in results if r.get('ok')])}
 
 	# --- the ephemeral server ---
 

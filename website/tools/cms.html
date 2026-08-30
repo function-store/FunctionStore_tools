@@ -97,6 +97,9 @@
   .tag-stub { background: #3b2508; color: #fdba74; }
   .tag-todo { background: var(--bg-3); color: var(--text-faint); }
   .tag-rec { background: var(--accent-dim, #2a1f08); color: var(--accent, #fbbf24); }
+  .tag-net { background: #0a2a1f; color: #4ade80; }
+  /* the tox changed since it last shipped (PI build moved, version not yet) */
+  .tag-chg { background: #2a1f08; color: #fdba74; }
   /* Read-only: gating is set in catalog.json, not here. */
   .tag-plus {
     background: hsl(var(--tier-hue, 38) 70% 12%);
@@ -246,6 +249,38 @@
   .toast.on { opacity: 1; }
   .toast.ok { border-color: var(--green); color: var(--green); }
   .toast.err { border-color: var(--red); color: var(--red); }
+
+  /* Parameters view: help text is authored ON the parameter, so this is a
+     table of live pars, not a document. */
+  .par-pkg { border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 8px; background: var(--bg-1); }
+  .par-pkg > summary { cursor: pointer; padding: 10px 14px; display: flex;
+    align-items: center; gap: 12px; font-weight: 600; font-size: 14px; }
+  .par-pkg > summary::-webkit-details-marker { display: none; }
+  .par-pkg[open] > summary { border-bottom: 1px solid var(--border); }
+  .par-cov { font-size: 12px; font-weight: 500; color: var(--text-dim);
+    margin-left: auto; }
+  .par-cov.done { color: var(--green); }
+  .par-cov.none { color: var(--red); }
+  .par-body { padding: 10px 14px 14px; }
+  .par-page { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-faint); margin: 14px 0 6px; }
+  .par-row { display: grid; grid-template-columns: 210px minmax(0, 1fr);
+    gap: 10px; align-items: start; margin-bottom: 6px; }
+  .par-row .who { font-size: 13px; padding-top: 6px; }
+  .par-row .who code { display: block; font-size: 11px; color: var(--text-faint); }
+  .par-row .who .sty { font-size: 11px; color: var(--text-faint); }
+  .par-row textarea { width: 100%; min-height: 42px; resize: vertical;
+    font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 6px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    color: var(--text); }
+  .par-row textarea:focus { outline: none; border-color: var(--accent); }
+  .par-row.blank textarea { border-color: var(--border-strong); }
+  .par-row.edited textarea { border-color: var(--accent); }
+  .par-sec { font-size: 12px; color: var(--accent); margin: 12px 0 4px;
+    font-weight: 600; }
+  .par-actions { display: flex; gap: 8px; align-items: center;
+    margin-top: 12px; }
 </style>
 </head>
 <body>
@@ -256,6 +291,7 @@
   <div class="spacer"></div>
   <button class="btn" id="cats">Categories</button>
   <button class="btn" id="community">Community</button>
+  <button class="btn" id="params">Parameters</button>
   <button class="btn" id="release">Release</button>
   <button class="btn" id="revert" disabled>Discard changes</button>
   <button class="btn" id="build">Build site</button>
@@ -375,6 +411,7 @@ function renderList() {
           tier ? tier.label : p.access}">${
           tier ? tier.label.toUpperCase() : 'PLUS'}</span>` : '') +
         (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
+        (p.placement === 'pane' ? '<span class="tag tag-net" title="Installs into the network the user is working in">NET</span>' : '') +
         (p.stub ? '<span class="tag tag-stub">STUB</span>'
                 : (p.todos ? `<span class="tag tag-todo">${p.todos} TODO</span>` : ''));
       el.querySelector('.pkg-name').textContent = p.name;
@@ -467,6 +504,14 @@ function renderEditor() {
     </div>
 
     <div class="field">
+      <label for="placement">Installs into <span class="hint">— where the installer lands it. Toolkit: a child of the toolkit container, update-tracked in place. Current network: a reusable component spawned into the network the user is working in; instances stay at their spawn version. Lives in catalog.json; ships with the next release’s manifest.</span></label>
+      <select id="placement">
+        <option value="">Toolkit container (default)</option>
+        <option value="pane">Current network — spawns where the user is working</option>
+      </select>
+    </div>
+
+    <div class="field">
       <label for="summary">Summary <span class="hint">— optional fallback used only if Description is empty</span></label>
       <textarea id="summary" rows="2"></textarea>
     </div>
@@ -548,6 +593,7 @@ function renderEditor() {
     };
   }
   $('#recommended').checked = !!d.recommended;
+  $('#placement').value = d.placement || '';
   $('#summary').value = d.data.summary || '';
   $('#credit-name').value = (d.data.credit && d.data.credit.name) || '';
   $('#credit-url').value = (d.data.credit && d.data.credit.url) || '';
@@ -559,6 +605,7 @@ function renderEditor() {
   $('#category').onchange = (e) => { d.category = e.target.value; markDirty(); renderList(); };
   $('#description').oninput = (e) => { d.description = e.target.value; markDirty(); };
   $('#recommended').onchange = (e) => { d.recommended = e.target.checked; markDirty(); renderList(); };
+  $('#placement').onchange = (e) => { d.placement = e.target.value; markDirty(); renderList(); };
   $('#summary').oninput = (e) => { setData('summary', e.target.value.trim()); };
   $('#video').oninput = (e) => { setData('video', e.target.value.trim()); };
   $('#platforms').onchange = (e) => {
@@ -752,6 +799,24 @@ let recDraft = null;
 let relRows = null;
 // selection survives a re-render, so ticking a box does not reset the list
 let relPicked = new Set();
+// the install rails: not a package (their dirt lives in repo files PI
+// cannot see) but a first-class release citizen with its own row
+let relRails = null;
+let relRailsPicked = false;
+// the prune rail: vanished (published but gone -- Stage refuses until
+// declared), stale retired (declared but still live), prunable retired
+// (declared, gone, and no published manifest still lists it)
+let relPruning = null;
+// Published-column provenance: it reads the palette STORE CACHE, which
+// lags the bucket until a store refresh -- these two labels let the page
+// say so instead of looking broken right after an upload
+let relPublishedRelease = '';
+let relStagedRelease = '';
+
+// seed the selection from the data once per OPEN of the release view --
+// shippable rows arrive pre-ticked, but a Refresh never re-ticks what the
+// user deliberately unticked
+let relSeedPicks = false;
 
 async function openRelease() {
   document.body.classList.add('mode-release');
@@ -759,6 +824,7 @@ async function openRelease() {
       !confirm('Discard unsaved changes to ' + current.name + '?')) return;
   draft = current = null;
   relRows = null;
+  relSeedPicks = true;
   renderRelease('Looking for TouchDesigner...');
   renderList();
   await loadRelease();
@@ -768,6 +834,26 @@ async function loadRelease() {
   try {
     const d = await api('/api/td/dirty');
     relRows = d.rows || [];
+    relRails = d.rails || null;
+    relPruning = d.pruning || null;
+    relPublishedRelease = d.published_release || '';
+    relStagedRelease = d.staged_release || '';
+    if (relRails && relRails.state !== 'changed') relRailsPicked = false;
+    if (relSeedPicks) {
+      relSeedPicks = false;
+      // UNSHIPPED only: a real version difference is a decision already
+      // made. 'changed since ship' is NOT auto-ticked -- a tox save can
+      // land pure usage dirt (a parameter wiggle marks PI dirty), and
+      // pre-ticking it would patch-bump packages nobody meant to ship.
+      // Rails are not auto-ticked either: they ride into every release
+      // regardless, and the tick asserts they are worth a RAILS-ONLY
+      // release -- a claim a rebuild (whose bytes always differ, tox
+      // exports never repeat) cannot make on its own.
+      // The badges inform; the Select button opts both in.
+      relPicked = new Set(relRows
+        .filter((r) => r.unshipped)
+        .map((r) => r.name));
+    }
     renderRelease();
   } catch (e) {
     relRows = null;
@@ -785,18 +871,27 @@ function renderRelease(problem) {
     return;
   }
   const unshipped = relRows.filter((r) => r.unshipped).length;
-  const dirty = relRows.filter((r) => r.dirty).length;
+  // changed = the tox was saved since it last shipped (PI build moved)
+  // while the version still equals the published one -- the bump has not
+  // happened yet, which is exactly what makes it worth selecting.
+  const changed = relRows.filter((r) => r.build_changed && !r.unshipped).length;
+  // unlanded = source files newer than the suspect tox: a file-synced DAT
+  // edit reloads the live comp without marking PI dirty or moving its
+  // build counter, so these need a PI save before they read as changed.
+  const unlanded = relRows.filter((r) => r.unlanded).length;
+  const dirty = relRows.filter((r) => r.dirty || r.unlanded).length;
   $('#editor').innerHTML = `
     <div class="pane-head">
       <h2>Release</h2>
-      <span class="hint">${unshipped} unshipped &middot; ${dirty} unsaved in PI</span>
+      <span class="hint">${unshipped} unshipped &middot; ${changed} changed since ship &middot; ${dirty} unsaved in PI${unlanded ? ` (${unlanded} unlanded)` : ''}${relPruning && relPruning.vanished && relPruning.vanished.length ? ` &middot; ${relPruning.vanished.length} vanished` : ''}</span>
     </div>
     <div class="field">
       <button class="btn" id="relRefresh">Refresh</button>
       <button class="btn" id="relPre">Preflight</button>
       <button class="btn" id="relStage">Stage only</button>
       <span class="sep"></span>
-      <button class="btn" id="relPickUnshipped">Select unshipped</button>
+      <button class="btn" id="relPickUnshipped"
+        title="Tick every package the world lacks — unshipped versions and toxes changed since their last ship (auto bump handles the version)">Select unshipped + changed</button>
       <button class="btn" id="relPickNone">Clear</button>
       <select id="relBump" title="How the version moves. Auto only bumps a package the world already has at this version.">
         <option value="auto">bump: auto</option>
@@ -809,6 +904,8 @@ function renderRelease(problem) {
       <span class="sep"></span>
       <button class="btn" id="relSaveDirty">PI Save unsaved</button>
       <button class="btn" id="relUpload">Upload to bucket</button>
+      <button class="btn" id="relPruneBucket"
+        title="Delete old release directories from the bucket, keeping the newest N (the current release is always kept). Runs detached; preview first.">Prune bucket…</button>
     </div>
     <p class="hint">Release &amp; stage bumps, exports, rebuilds the manifest
       and stages — it ends at <code>packaging/publish/</code>, nothing is
@@ -817,20 +914,75 @@ function renderRelease(problem) {
       <b>Publish Selected to Bucket</b> on PI's Publish page, or
       <code>python packaging/upload.py</code>, then
       <code>python packaging/check_pins.py</code>.</p>
+    ${relStagedRelease && relPublishedRelease
+       && relStagedRelease !== relPublishedRelease
+      ? `<p class="hint"><b class="warn">Published column may be stale:</b>
+         it reads the store cache (last fetched manifest,
+         <b>${at(relPublishedRelease)}</b>), but the staged release is
+         <b>${at(relStagedRelease)}</b>. If you already uploaded, refresh the
+         store and these rows settle.
+         <button class="btn" id="relRefreshStore">Refresh store</button></p>`
+      : ''}
     <pre class="log" id="relOut" hidden></pre>
     <table class="rel"><tr><th></th><th>Package</th><th>PI</th><th>Version</th>
       <th>Published</th><th>Help override</th><th></th></tr>` +
+    (relRails ? `<tr>
+      <td><input type="checkbox" id="relRailsPick"
+        ${relRailsPicked ? 'checked' : ''}
+        ${relRails.state !== 'changed' ? 'disabled' : ''}
+        title="${relRails.state === 'stale' ? 'rebuild first'
+          : relRails.state === 'current' ? 'nothing to ship'
+          : 'release the new rails'}" /></td>
+      <td><b>Install rails</b> <span class="hint">bootstrap + installer
+        (/get pastes &amp; native installers)</span></td>
+      <td class="${relRails.state === 'stale' ? 'warn' : ''}">${at(relRails.state)}</td>
+      <td colspan="3">${relRails.state === 'stale'
+          ? 'sources newer than the built bytes — rebuild, then release'
+          : relRails.state === 'changed'
+          ? 'built bytes differ from the staged release — tick to ship them'
+          : relRails.state === 'current'
+          ? 'match the staged release'
+          : at(relRails.error || 'state unknown')}</td>
+      <td><button class="btn" id="relRailsBuild">Rebuild</button></td>
+    </tr>` : '') +
     relRows.map((r) => `<tr>
       <td><input type="checkbox" class="relpick" data-name="${at(r.name)}"
         ${relPicked.has(r.name) ? 'checked' : ''} /></td>
       <td>${at(r.name)}</td>
-      <td class="${r.dirty ? 'warn' : ''}">${r.dirty ? 'unsaved' : 'clean'}</td>
-      <td title="PI build ${at(r.build)}">${at(r.version)}</td>
+      <td class="${r.dirty || r.unlanded ? 'warn' : ''}"
+        title="${r.unlanded ? 'source files are newer than the suspect tox — PI Save to land them (a file-synced edit reloads the live comp without marking PI dirty)' : ''}">${r.dirty ? 'unsaved' : r.unlanded ? 'unlanded' : 'clean'}</td>
+      <td title="PI build ${at(r.build)}${r.shipped_build != null
+          ? ', shipped at build ' + at(r.shipped_build) : ' (never recorded shipping)'}">${at(r.version)}${
+        r.build_changed && !r.unshipped
+          ? ' <span class="tag tag-chg" title="The tox was saved since it last shipped (PI build ' + at(r.build) + ' vs ' + at(r.shipped_build) + ' at ship) — select it and auto bump does the rest">changed</span>'
+          : ''}</td>
       <td class="${r.unshipped ? 'warn' : ''}">${at(r.published) || '&mdash;'}</td>
       <td><input class="relhelp" data-name="${at(r.name)}"
         value="${at(r.help_override)}" placeholder="${at(r.help_derived)}" /></td>
       <td><button class="btn relsave" data-name="${at(r.name)}">PI Save</button></td>
-    </tr>`).join('') + '</table>';
+    </tr>`).join('') + '</table>' + (() => {
+      // the prune rail, only when there is something to act on
+      const p = relPruning;
+      if (!p) return '';
+      const van = p.vanished || [], stale = p.stale_retired || [],
+        prune = p.prunable_retired || [];
+      if (!van.length && !stale.length && !prune.length) return '';
+      return `<div class="field" style="margin-top:14px">
+        <label>Pruning</label>` +
+        van.map((n) => `<p class="hint"><b class="warn">${at(n)}</b> is published
+          but no longer a live package — Stage refuses the next release until
+          the drop is declared. Retiring also removes its catalog entry,
+          archives its doc and drops its shipped-builds record.
+          <button class="btn relretire" data-name="${at(n)}">Retire</button></p>`).join('') +
+        stale.map((n) => `<p class="hint"><b class="warn">${at(n)}</b> is declared
+          retired but still LIVE in this project — a standing authorisation for
+          a future accidental drop.
+          <button class="btn relretire" data-name="${at(n)}" data-undo="1">Clear entry</button></p>`).join('') +
+        prune.map((n) => `<p class="hint"><b>${at(n)}</b> is retired, gone, and no
+          published manifest still lists it — the entry has done its job.
+          <button class="btn relretire" data-name="${at(n)}" data-undo="1">Prune entry</button></p>`).join('') +
+        '</div>';
+    })();
 
   document.querySelectorAll('.relpick').forEach((b) => {
     b.onchange = () => {
@@ -839,17 +991,69 @@ function renderRelease(problem) {
       renderRelease();
     };
   });
+  const rs = $('#relRefreshStore');
+  if (rs) {
+    rs.onclick = async () => {
+      rs.disabled = true;
+      rs.textContent = 'Refreshing…';
+      try {
+        await api('/api/td/refreshstore', { method: 'POST', body: '{}' });
+        toast('Store manifest refresh started', 'ok');
+        // the fetch is async in the updater -- give it a beat, then re-read
+        setTimeout(loadRelease, 4000);
+      } catch (e) { toast(e.message, 'err'); rs.disabled = false; }
+    };
+  }
+  document.querySelectorAll('.relretire').forEach((b) => {
+    b.onclick = async () => {
+      const undo = !!b.dataset.undo;
+      if (!undo && !confirm(`Retire ${b.dataset.name}?\n\nDeclares the drop in `
+          + 'release.json, removes its catalog entry, archives its doc and '
+          + 'drops its shipped-builds record.')) return;
+      b.disabled = true;
+      try {
+        const r = await api('/api/td/retire', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: b.dataset.name, undo }),
+        });
+        toast((undo ? 'Cleared ' : 'Retired ') + b.dataset.name
+          + (r.notes && r.notes.length ? ' — ' + r.notes.join('; ') : ''), 'ok');
+        await loadRelease();
+      } catch (e) { toast(e.message, 'err'); b.disabled = false; }
+    };
+  });
+  const railsPick = $('#relRailsPick');
+  if (railsPick) {
+    railsPick.onchange = () => { relRailsPicked = railsPick.checked; };
+  }
+  const railsBuild = $('#relRailsBuild');
+  if (railsBuild) {
+    railsBuild.onclick = async () => {
+      railsBuild.disabled = true;
+      try {
+        await api('/api/td/rebuildrails', { method: 'POST' });
+        toast('Rails rebuilt', 'ok');
+        await loadRelease();
+      } catch (e) { toast(e.message, 'err'); railsBuild.disabled = false; }
+    };
+  }
   $('#relPickUnshipped').onclick = () => {
-    relRows.filter((r) => r.unshipped).forEach((r) => relPicked.add(r.name));
+    relRows.filter((r) => r.unshipped || r.build_changed)
+      .forEach((r) => relPicked.add(r.name));
+    if (relRails && relRails.state === 'changed') relRailsPicked = true;
     renderRelease();
   };
-  $('#relPickNone').onclick = () => { relPicked.clear(); renderRelease(); };
+  $('#relPickNone').onclick = () => {
+    relPicked.clear(); relRailsPicked = false; renderRelease();
+  };
   $('#relPublish').onclick = relPublish;
   $('#relRefresh').onclick = loadRelease;
   $('#relPre').onclick = () => relRun('/api/td/preflight', 'GET');
   $('#relStage').onclick = () => relRun('/api/td/stage', 'POST');
   $('#relSaveDirty').onclick = relSaveDirty;
   $('#relUpload').onclick = relUpload;
+  $('#relPruneBucket').onclick = relPruneBucket;
   document.querySelectorAll('.relsave').forEach((b) => {
     b.onclick = async () => {
       b.disabled = true;
@@ -883,7 +1087,7 @@ async function relSaveDirty() {
   // The release lands its own bumps now (release_one PI-saves what it
   // bumped), so this exists for hand-edits and for releases that ran
   // before that fix -- every row PI still marks unsaved, in one press.
-  const dirty = relRows.filter((r) => r.dirty);
+  const dirty = relRows.filter((r) => r.dirty || r.unlanded);
   if (!dirty.length) { toast('Nothing unsaved in PI', 'ok'); return; }
   if (!confirm(`PI Save ${dirty.length} package(s)?\n\n`
       + dirty.map((r) => r.name).join(', '))) return;
@@ -931,6 +1135,40 @@ async function relUpload() {
   }
 }
 
+async function relPruneBucket() {
+  const keep = parseInt(prompt(
+    'Prune bucket: keep how many newest releases?\n\n'
+    + 'Everything older is deleted from the bucket (the current release is '
+    + 'always kept, and each doomed release is enumerated from its own '
+    + 'pinned manifest). Never prune a release you still want a support '
+    + 'conversation to be able to reproduce.', '3'), 10);
+  if (!keep || keep < 1) return;
+  // Cancel is the safe path by construction: it runs the DRY preview.
+  const dry = !confirm(
+    `Delete all but the newest ${keep} release(s) from the bucket NOW?\n\n`
+    + 'OK deletes for real. Cancel runs a DRY PREVIEW into the log below '
+    + 'instead — nothing deleted.');
+  const out = $('#relOut');
+  out.hidden = false;
+  out.className = 'log';
+  try {
+    const d = await api('/api/td/prunebucket', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ keep, dry }),
+    });
+    out.textContent = (dry ? 'Prune preview started — ' : 'Prune started — ')
+      + (d.log || '');
+    toast(dry ? 'Prune preview started (nothing deleted)' : 'Prune started',
+      'ok');
+    pollUploadLog();
+  } catch (e) {
+    out.className = 'log err';
+    out.textContent = e.message;
+    toast(e.message, 'err');
+  }
+}
+
 function pollUploadLog() {
   clearInterval(upPoll);
   let quiet = 0;
@@ -954,26 +1192,33 @@ function pollUploadLog() {
 
 async function relPublish() {
   const names = [...relPicked];
-  if (!names.length) { toast('Nothing selected', 'err'); return; }
+  const rails = relRailsPicked;
+  if (!names.length && !rails) { toast('Nothing selected', 'err'); return; }
   const bump = $('#relBump').value;
-  if (!confirm(`Release & stage ${names.length} package(s) with bump "${bump}"?\n\n`
-      + names.join(', ') + '\n\nTouchDesigner will be frozen while it '
+  const what = [
+    names.length ? `${names.length} package(s) with bump "${bump}"` : '',
+    rails ? 'the install rails' : '',
+  ].filter(Boolean).join(' + ');
+  if (!confirm(`Release & stage ${what}?\n\n`
+      + (names.join(', ') || '(no package bumps)')
+      + '\n\nTouchDesigner will be frozen while it '
       + 'exports. Nothing is uploaded.')) return;
   const out = $('#relOut');
   out.hidden = false;
   out.className = 'log';
-  out.textContent = 'Releasing ' + names.length + ' package(s)...';
+  out.textContent = 'Releasing ' + what + '...';
   try {
     const d = await api('/api/td/release', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ names, bump }),
+      body: JSON.stringify({ names, bump, rails }),
     });
     out.textContent = JSON.stringify(d, null, 1);
     out.className = 'log ' + (d.ok ? 'ok' : 'err');
     if (d.ok) {
       toast('Released ' + (d.release || ''), 'ok');
       relPicked.clear();
+      relRailsPicked = false;
     } else {
       toast(d.why || 'Release refused', 'err');
     }
@@ -993,9 +1238,201 @@ async function relRun(url, method) {
     const d = await api(url, method === 'POST' ? { method: 'POST' } : undefined);
     out.textContent = JSON.stringify(d, null, 1);
     out.className = 'log ' + (d.error || (d.blockers || []).length ? 'err' : 'ok');
+    if ((d.blockers || []).some((b) => /rails stale/i.test(b))) {
+      out.textContent += '\n\n→ the Install rails row’s Rebuild button'
+        + ' fixes this, then run Preflight again.';
+    }
   } catch (e) {
     out.textContent = e.message;
     out.className = 'log err';
+  }
+}
+
+// ───── parameters view ─────
+//
+// A custom parameter's `help` is its tooltip in TouchDesigner AND its
+// description on the docs page: build_manifest.Parameters() reads the pars
+// live and the site renders that exact string. So this view edits the
+// parameter itself, not a copy of it -- which is why it has to talk to the
+// live project (/api/td/*) rather than to a file in the repo.
+let parData = null;
+const parEdits = new Map();     // "Pkg\u0000Page\u0000Name" -> text
+const parKey = (pkg, page, name) => [pkg, page, name].join('\u0000');
+
+async function openParams() {
+  document.body.classList.add('mode-release');
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  draft = current = null;
+  parData = null;
+  parEdits.clear();
+  renderParams('Looking for TouchDesigner...');
+  renderList();
+  await loadParams();
+}
+
+async function loadParams() {
+  try {
+    parData = await api('/api/td/parameters');
+    renderParams();
+  } catch (e) {
+    parData = null;
+    renderParams(e.message);
+  }
+}
+
+function renderParams(problem) {
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  if (problem || !parData) {
+    $('#editor').innerHTML = `<div class="pane-head"><h2>Parameters</h2></div>
+      <p class="empty">${at(problem || 'No parameter data.')}</p>
+      <p class="empty">This view reads the LIVE parameters, so it needs the
+      project open in TouchDesigner with <code>Open</code> pulsed on
+      <code>/FNS_CMS</code>.</p>`;
+    return;
+  }
+  const pkgs = parData.packages || [];
+  const blank = (parData.controls || 0) - (parData.documented || 0);
+  $('#editor').innerHTML = `
+    <div class="pane-head">
+      <h2>Parameters</h2>
+      <span class="hint">${parData.documented} of ${parData.controls} controls
+        documented &middot; ${blank} still blank</span>
+    </div>
+    <p class="hint">Each description is written onto the parameter's own
+      <code>help</code>, so it becomes the tooltip in TouchDesigner and the
+      description on the docs page at the same time. Saving a package writes
+      its pars and re-saves its suspect tox once.
+      <strong>${at((parData.locked || []).join(', '))}</strong> pages are not
+      editable here: the toolkit stamps them on every package, and they are
+      documented once on their registry's page.</p>
+    <div class="par-actions">
+      <button class="btn" id="parRefresh">Reload from TouchDesigner</button>
+      <button class="btn" id="parExport">Write parameters.json</button>
+      <label class="hint"><input type="checkbox" id="parOnlyBlank" /> only undocumented</label>
+    </div>
+    <div id="parList" style="margin-top:14px"></div>`;
+  $('#parRefresh').onclick = loadParams;
+  $('#parExport').onclick = exportParams;
+  $('#parOnlyBlank').onchange = renderParamList;
+  renderParamList();
+}
+
+function renderParamList() {
+  const onlyBlank = $('#parOnlyBlank')?.checked;
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  const rows = (parData.packages || []).filter((pkg) =>
+    !onlyBlank || pkg.documented < pkg.controls);
+  $('#parList').innerHTML = rows.map((pkg) => {
+    const cls = pkg.controls === 0 ? '' :
+      pkg.documented === pkg.controls ? 'done' : pkg.documented ? '' : 'none';
+    return `<details class="par-pkg" data-pkg="${at(pkg.name)}">
+      <summary>${at(pkg.name)}
+        <span class="par-cov ${cls}">${pkg.documented}/${pkg.controls}</span>
+      </summary>
+      <div class="par-body"></div>
+    </details>`;
+  }).join('') || '<p class="empty">Every control is documented.</p>';
+  // Rendered on open: 558 textareas up front is a wall the browser has to
+  // build for a page you only ever edit one package of.
+  for (const el of document.querySelectorAll('.par-pkg')) {
+    el.ontoggle = () => { if (el.open) renderParamPkg(el); };
+  }
+}
+
+function renderParamPkg(el) {
+  const name = el.dataset.pkg;
+  const pkg = (parData.packages || []).find((x) => x.name === name);
+  const body = el.querySelector('.par-body');
+  if (!pkg || body.dataset.done === '1') return;
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  const onlyBlank = $('#parOnlyBlank')?.checked;
+  let page = null;
+  const parts = [];
+  for (const row of pkg.rows) {
+    if (row.page !== page) { page = row.page; parts.push(`<p class="par-page">${at(page)}</p>`); }
+    if (row.style === 'Header') {
+      parts.push(`<p class="par-sec">${at(row.label)}</p>`);
+      continue;
+    }
+    if (onlyBlank && row.help) continue;
+    const key = parKey(name, row.page, row.name);
+    const val = parEdits.has(key) ? parEdits.get(key) : (row.help || '');
+    parts.push(`<div class="par-row ${row.help ? '' : 'blank'}" data-key="${at(key)}">
+      <div class="who"><strong>${at(row.label || row.name)}</strong>
+        <code>${at(row.name)}</code>
+        <span class="sty">${at(row.style)}${row.readonly ? ' · read-only' : ''}</span></div>
+      <textarea rows="2" placeholder="What does this control do, and what do its values mean?">${at(val).replace(/&quot;/g, '"')}</textarea>
+    </div>`);
+  }
+  parts.push(`<div class="par-actions">
+    <button class="btn btn-primary" data-save="${at(name)}" disabled>Save help text</button>
+    <span class="hint" data-count="${at(name)}"></span>
+  </div>`);
+  body.innerHTML = parts.join('');
+  body.dataset.done = '1';
+
+  const saveBtn = body.querySelector('[data-save]');
+  const counter = body.querySelector('[data-count]');
+  const refresh = () => {
+    const n = [...parEdits.keys()].filter((k) => k.startsWith(name + '\u0000')).length;
+    saveBtn.disabled = n === 0;
+    counter.textContent = n ? `${n} unsaved` : '';
+  };
+  for (const row of body.querySelectorAll('.par-row')) {
+    const ta = row.querySelector('textarea');
+    const key = row.dataset.key;
+    const original = ta.value;
+    ta.oninput = () => {
+      if (ta.value === original) parEdits.delete(key);
+      else parEdits.set(key, ta.value);
+      row.classList.toggle('edited', parEdits.has(key));
+      refresh();
+    };
+  }
+  saveBtn.onclick = () => saveParams(name, body);
+  refresh();
+}
+
+async function saveParams(name, body) {
+  const edits = [...parEdits.entries()]
+    .filter(([k]) => k.startsWith(name + '\u0000'))
+    .map(([k, help]) => {
+      const [, page, par] = k.split('\u0000');
+      return { page, name: par, help };
+    });
+  if (!edits.length) return;
+  try {
+    const d = await api('/api/td/parhelp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name, edits }),
+    });
+    for (const k of [...parEdits.keys()]) {
+      if (k.startsWith(name + '\u0000')) parEdits.delete(k);
+    }
+    const pkg = (parData.packages || []).find((x) => x.name === name);
+    if (pkg) {
+      Object.assign(pkg, { rows: d.rows, documented: d.documented, controls: d.controls });
+      parData.documented = (parData.packages || [])
+        .reduce((a, x) => a + x.documented, 0);
+      parData.controls = (parData.packages || [])
+        .reduce((a, x) => a + x.controls, 0);
+    }
+    if (d.skipped?.length) toast(`saved; skipped ${d.skipped.length}`, 'err');
+    else toast(`${d.written.length} written to ${name}, tox saved`, 'ok');
+    renderParams();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+async function exportParams() {
+  try {
+    const d = await api('/api/td/parexport', { method: 'POST' });
+    toast(`parameters.json: ${d.parameters} controls across ${d.packages} packages`, 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
   }
 }
 
@@ -1258,6 +1695,7 @@ async function save() {
         category: draft.category,
         description: draft.description,
         recommended: !!draft.recommended,
+        placement: draft.placement || '',
         data: draft.data,
         body: draft.body,
         mtime: current.mtime,
@@ -1321,6 +1759,7 @@ document.querySelectorAll('.chip').forEach((c) => {
 $('#filter').oninput = renderList;
 $('#cats').onclick = openCategories;
 $('#community').onclick = openCommunity;
+$('#params').onclick = openParams;
 $('#release').onclick = openRelease;
 
 // Say up front whether TouchDesigner is there. The release view is the one

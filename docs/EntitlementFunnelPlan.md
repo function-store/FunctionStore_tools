@@ -428,7 +428,12 @@ stays out of it.** That fixes what each layer means:
   honest than tool-side clocks but real worker surface (trial claims,
   expiry, one-shot issuance, abuse throttles). Do not build it
   implicitly through any of the above; if wanted, it is its own
-  research doc.
+  research doc. *Update 2026-08-29: wanted — the TDXLU Gate Contract
+  requests exactly this (`/trial/start`, Turnstile-gated, KV anchor
+  written once), and `TDXLUGateIntegration.md` accepts it with
+  conditions. The trial lane therefore FORKS by design: TDXMap holds
+  its own clock, TDXLU uses the gate-minted model; either family
+  product may later converge on `/trial/start` once it exists.*
 
 TDXMap itself stays outside the store either way; this section exists
 so that when a store tool (or a store-distributed TDXMap) wants the
@@ -629,7 +634,51 @@ right side of that split, with these specifics:
   Pick Tools") instead of showing a raw or empty error. Still open:
   the Hub's tabs could pulse their flow's serve on tab focus, so a
   stale address self-heals instead of relying on the user knowing
-  the front door.
+  the front door. *Landed: `HubExt._serveConsole` re-serves on every
+  console-tab expose. A fourth member of this family surfaced and fell
+  2026-08-30 (field report: "the browser does not activate again on the
+  console tab"): a windowCOMP window satisfies NONE of the browser's
+  visibility watchers either — the hub's own comment knew (`winopen`
+  stays 0 under a windowCOMP) — so `_expose`'s direct `Active` write
+  was reverted by `watch_rules` one frame later, measured live. Fix:
+  hub exposure of a Holdactive-bearing browser declares the HOLD (the
+  same contract every serving flow uses) and releases it on tab-leave /
+  window-close; watch_rules owns Active either way.*
+- **Auto-resume deferred Plus picks** *(LANDED `15d0ce5`, 2026-08-30;
+  shipped in v3.0.9's rails and WALKED the same night on customer
+  rails: paste with a Plus pick → adoption → gated download →
+  installed, zero clicks. `tests/test_picker_flavors.py` §8 pins the
+  guards. Post-walk polish `bad7be9`: the auto pass's install report
+  appends "already in the project: …" so the one-line Plus report
+  does not read as the whole install)*:
+  a paste with a Plus item checked defers it into `FNS_WANTED` — by
+  design, since the paste script can never carry a token — but today
+  the funnel stops at a pre-ticked picker and the user must still
+  click Review install → Install. The consent is already given (they
+  checked the item on /get), so the picker page should finish the
+  pick itself: on load — and again whenever `watchAuth` reloads after
+  a sign-in/adoption — if every `FNS_WANTED` item is entitled and
+  installable, plan and install straight through, no countdown
+  (operator decision 2026-08-30: the free picks in the same paste
+  installed without ceremony; the Plus pick was deferred for token
+  reasons, never consent — the dialog narrates every hop instead). This covers BOTH
+  store states with one rule: bytes present → install-only; bytes
+  absent → the same POST /install path downloads them over the
+  authenticated rail first (progress visible in the page — never a
+  silent background install, per the 0.5 wedge class). Any partial
+  state (an item the tier doesn't cover, a failed download) drops
+  back to the manual picker with the honest per-item labels. Two
+  timelines, same rule: entitled-at-paste-time (adopted machine
+  session) auto-completes immediately; sign-in-later completes the
+  moment products change. Only ever auto-installs what the user
+  explicitly checked.
+- **The install plan should admit an update exists** (operator
+  finding, 2026-08-30): a row reading "present, kept" while the store
+  holds a newer version reads as nothing-to-do — the plan dialog is
+  where the eyes are, and it should annotate
+  "present — 3.0.3 → 3.0.4 available (updates run from the console)"
+  in `_planText`. Install and update stay separate MOTIONS; only the
+  sentence gets honest.
 - **Cosmetics:** the "page reloads itself" comment in
   `InstallerExt.py` (made TRUE by 1.6 rather than deleted);
   `slow_down` vs `rate_limited` unification; the

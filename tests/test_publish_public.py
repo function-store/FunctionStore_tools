@@ -139,6 +139,60 @@ check('no gated path survives into the published set',
 check('the mirror is not empty', len(plan['published']) > 400,
       len(plan['published']))
 
+print('12. the root-tox embedding guard')
+# The path rules cannot withhold modules/suspects/FNSTools.tox, and it
+# EMBEDS every child with enableexternaltox off -- so a gated package in
+# that state must refuse the whole run.
+emb, unk = pp.EmbeddedGated()
+check('the real state is publishable (gated packages externally carried)',
+      emb == [] and unk == [], (emb, unk))
+_man = json.load(io.open(os.path.join(_ROOT, 'packaging', 'manifest.json'),
+                         encoding='utf-8'))
+_root_carried = [p['name'] for p in _man['packages']
+                 if p.get('tox_carrier') == 'root']
+_orig_gated = pp.GatedPackages
+if _root_carried:
+    pp.GatedPackages = lambda: [_root_carried[0]]
+    emb2, _ = pp.EmbeddedGated()
+    check('gating a root-carried package is caught',
+          emb2 == [_root_carried[0]], emb2)
+else:
+    print('  SKIP  no root-carried package in the manifest to simulate with')
+pp.GatedPackages = lambda: ['NotInTheManifest']
+_, unk2 = pp.EmbeddedGated()
+check('a gated package the manifest does not know is caught (fail closed)',
+      unk2 == ['NotInTheManifest'], unk2)
+# savebackup (Save Backup of External, TD default ON) embeds a full
+# backup on every parent save even with the external binding intact --
+# a gated package carrying that flag must refuse too
+tmp2 = tempfile.mkdtemp(prefix='fns_pub_sb_')
+os.makedirs(os.path.join(tmp2, 'packaging'))
+with io.open(os.path.join(tmp2, 'packaging', 'manifest.json'), 'w',
+             encoding='utf-8') as f:
+    json.dump({'packages': [
+        {'name': 'FakeGated', 'tox_carrier': 'own', 'save_backup': True},
+        {'name': 'FakeClean', 'tox_carrier': 'own'}]}, f)
+_orig_repo = pp.REPO
+pp.REPO = tmp2
+pp.GatedPackages = lambda: ['FakeGated', 'FakeClean']
+emb3, unk3 = pp.EmbeddedGated()
+check('a backup-embedding gated package is caught',
+      emb3 == ['FakeGated'] and unk3 == [], (emb3, unk3))
+pp.REPO = _orig_repo
+pp.GatedPackages = _orig_gated
+shutil.rmtree(tmp2, ignore_errors=True)
+check('release exports are withheld (the 9MB root embeds the gated tool)',
+      pp.Rule('modules/release/FNSTools.tox', real) == 'declared'
+      and pp.Rule('modules/release/AltSelect.tox', real) == 'declared')
+# ... and the flag flips back ON for the USER: a bound install re-enables
+# savebackup so their .toe self-heals if the bound file vanishes -- there
+# the user owns both files and nothing is being smuggled anywhere
+_inst = io.open(os.path.join(_ROOT, 'packaging', 'InstallerExt.py'),
+                encoding='utf-8').read()
+check('the installer re-enables savebackup on bound installs',
+      "getattr(comp.par, 'savebackup', None)" in _inst
+      and _inst.find('savebackup') > _inst.find('comp.par.enableexternaltox = True'))
+
 shutil.rmtree(tmp, ignore_errors=True)
 print()
 if FAILS:

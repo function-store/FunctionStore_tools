@@ -732,6 +732,77 @@ console.log('\n14. a half-failed sign-in is not a verification');
     t.status === 200, String(t.status));
 }
 
+console.log('\n15. /entitlement -- the signed claim, per-kind lifetime (G1)');
+{
+  const { verify } = await import('node:crypto');
+  const now = Math.floor(Date.now() / 1000);
+  const HOUR = 3600, DAY = 24 * 3600;
+  const decode = (jwt) => {
+    const [h, p, s] = jwt.split('.');
+    return { payload: JSON.parse(Buffer.from(p, 'base64url').toString()),
+             ok: verify(null, Buffer.from(h + '.' + p),
+                        kp.publicKey, Buffer.from(s, 'base64url')) };
+  };
+  const ent = (env, dev, body) => call(env, '/entitlement', {
+    method: 'POST', headers: { authorization: 'Bearer ' + dev },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  // entitled patreon: claim verifies, carries machine + products, and
+  // lives as long as the session (an install in use never expires)
+  const env = makeEnv();
+  await env.SESSIONS.put('session:dev_e', JSON.stringify({
+    kind: 'patreon', patreon_tiers: ['111'], gumroad_products: [], products: [],
+    patreon_refresh_token: 'rt', checked_at: now - 60, verified_at: now - 60,
+  }));
+  const r = await ent(env, 'dev_e', { machine: 'mach123' });
+  const b = await r.json();
+  check('entitled patreon -> a claim', r.status === 200 && !!b.claim && b.kind === 'patreon',
+    JSON.stringify(b).slice(0, 120));
+  const d = decode(b.claim);
+  check('  the claim VERIFIES against the public key', d.ok === true);
+  check('  and carries products + the opaque machine binding',
+    d.payload.products.includes('FNS_TimelineTools') && d.payload.machine === 'mach123',
+    JSON.stringify(d.payload));
+  check('  patreon exp matches the session TTL (180 d)',
+    Math.abs((d.payload.exp - d.payload.iat) - 180 * DAY) < HOUR,
+    String(d.payload.exp - d.payload.iat));
+
+  // lapsed: /token/download refuses, /entitlement must NOT -- a lapsed
+  // session has to be able to learn that it has lapsed
+  await env.SESSIONS.put('session:dev_l', JSON.stringify({
+    kind: 'patreon', patreon_tiers: [], gumroad_products: [], products: [],
+    checked_at: now - 60, verified_at: now - 60,
+  }));
+  const l = await ent(env, 'dev_l');
+  const lb = await l.json();
+  check('lapsed -> 200 with empty products, never a refusal',
+    l.status === 200 && (lb.products || []).length === 0, String(l.status));
+
+  // gumroad: perpetual by decision -- the claim must verify offline forever
+  await env.SESSIONS.put('session:dev_g', JSON.stringify({
+    kind: 'gumroad', patreon_tiers: [], gumroad_products: ['gum_tl'], products: [],
+    checked_at: now - 60,
+  }));
+  const g = await ent(env, 'dev_g');
+  const gb = await g.json();
+  const gd = decode(gb.claim);
+  check('gumroad claim is perpetual (10 y) and kind-tagged',
+    gb.kind === 'gumroad' && (gd.payload.exp - gd.payload.iat) > 9 * 365 * DAY,
+    String(gd.payload.exp - gd.payload.iat));
+
+  const anon = await call(env, '/entitlement', { method: 'POST' });
+  check('no bearer -> 401', anon.status === 401, String(anon.status));
+
+  // /pubkey serves the verification half -- one authoritative place to
+  // pin GATE_PUBLIC_KEY from
+  const pk = await call(env, '/pubkey');
+  const pkb = await pk.json();
+  check('/pubkey serves the SPKI the claims verify against',
+    pk.status === 200 && pkb.alg === 'EdDSA' && pkb.spki === env.JWT_PUBLIC_KEY,
+    JSON.stringify(pkb).slice(0, 80));
+}
+
 if (FAILS.length) {
   console.log(FAILS.length + ' FAILED: ' + FAILS.join(', '));
   process.exit(1);

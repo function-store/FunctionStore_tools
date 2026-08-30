@@ -11,9 +11,9 @@
   "ignore": [],
   "runGroups": [],
   "comments": {
-    "python:packaging/upload.py": "The ONLY shell-side script in this repo's release flow (step 4 of packaging/README). Syncs packaging/publish/ to the R2 bucket via wrangler, setting Cache-Control per file: release-pinned objects immutable, the rolling manifest.json no-cache. Already-uploaded pinned objects are skipped, so re-running after a flaky connection touches only what failed. Needs wrangler installed and authenticated, and a staged packaging/publish/ (Stage() runs inside TD). Run the --dry variant first. Everything else in packaging/ -- build_manifest, publish, release_one, build_installer, install -- runs INSIDE TouchDesigner and is not launchable from here.",
     "python:.embody/envoy-bridge.py": "Not a dev script. Embody's STDIO<->HTTP bridge to the Envoy MCP server inside TD; regenerated on every Envoy start and launched by the MCP client. Hidden because running it by hand does nothing useful.",
-    "python:.embody/tdn_textconv.py": "Not a dev script. The git textconv driver that strips volatile header churn from .tdn diffs; git invokes it during diff/log/show. Hidden because it only makes sense with a file argument from git."
+    "python:.embody/tdn_textconv.py": "Not a dev script. The git textconv driver that strips volatile header churn from .tdn diffs; git invokes it during diff/log/show. Hidden because it only makes sense with a file argument from git.",
+    "python:packaging/upload.py": "The ONLY shell-side script in this repo's release flow (step 4 of packaging/README). Syncs packaging/publish/ to the R2 bucket via wrangler, setting Cache-Control per file: release-pinned objects immutable, the rolling manifest.json no-cache. Already-uploaded pinned objects are skipped, so re-running after a flaky connection touches only what failed. Needs wrangler installed and authenticated, and a staged packaging/publish/ (Stage() runs inside TD). Run the --dry variant first. Everything else in packaging/ -- build_manifest, publish, release_one, build_installer, install -- runs INSIDE TouchDesigner and is not launchable from here."
   },
   "arguments": {},
   "variants": [

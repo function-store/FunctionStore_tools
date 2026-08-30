@@ -225,6 +225,9 @@ function loadPackage(cat, name) {
     // is invented, and gate_package keeps the two files in step.
     access: String(cat.packages[name].access || ''),
     plus: Boolean(cat.packages[name].access) && cat.packages[name].access !== 'free',
+    // '' = toolkit container (default); 'pane' = the installer spawns it
+    // into the network the user is working in.
+    placement: String(cat.packages[name].placement || ''),
     data,
     body: content.replace(/^\n+/, ''),
     mtime: mtimeOf(p),
@@ -247,6 +250,7 @@ function state() {
         recommended: !!cat.packages[n].recommended,
         access: String(cat.packages[n].access || ''),
         plus: Boolean(cat.packages[n].access) && cat.packages[n].access !== 'free',
+        placement: String(cat.packages[n].placement || ''),
         data: {}, body: '', mtime: 0, stub: true, todos: 0, words: 0,
         missing: true,
       };
@@ -506,7 +510,8 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (typeof body.category === 'string' || typeof body.description === 'string'
-            || typeof body.recommended === 'boolean') {
+            || typeof body.recommended === 'boolean'
+            || typeof body.placement === 'string') {
           const entry = cat.packages[name];
           if (typeof body.category === 'string') {
             if (!cat.categories.includes(body.category)) {
@@ -523,6 +528,16 @@ const server = http.createServer(async (req, res) => {
           if (typeof body.recommended === 'boolean') {
             if (body.recommended) entry.recommended = true;
             else delete entry.recommended;
+          }
+          // Where the installer lands the package. Stored as presence:
+          // the default (toolkit container) stays a two-line entry.
+          if (typeof body.placement === 'string') {
+            const pl = body.placement.trim();
+            if (pl && pl !== 'pane') {
+              return json(res, 400, { error: `unknown placement "${pl}"` });
+            }
+            if (pl === 'pane') entry.placement = 'pane';
+            else delete entry.placement;
           }
           writeCatalog(cat);
         }

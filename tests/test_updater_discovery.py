@@ -83,7 +83,8 @@ def make_ext(store, baseurl='', pkgversion='3.0.0', usediscovery=True):
     pars = types.SimpleNamespace(
         Storefolder=FakePar(store), Baseurl=FakePar(baseurl),
         Pkgversion=FakePar(pkgversion), Usediscovery=FakePar(usediscovery))
-    ext.ownerComp = types.SimpleNamespace(par=pars)
+    # _version is child-first (FNS_About wins); the fake has no children
+    ext.ownerComp = types.SimpleNamespace(par=pars, op=lambda _name: None)
     return ext
 
 

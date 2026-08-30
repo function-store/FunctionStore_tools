@@ -66,13 +66,16 @@ CREATOR_TIER = "9796651"
 TIERS = """
 {
   "8323905": [
-    "FNS_TimelineTools"
+    "FNS_TimelineTools",
+    "TDXLU_Pro"
   ],
   "8291595": [
-    "FNS_TimelineTools"
+    "FNS_TimelineTools",
+    "TDXLU_Pro"
   ],
   "9796651": [
-    "FNS_TimelineTools"
+    "FNS_TimelineTools",
+    "TDXLU_Pro"
   ]
 }
 """

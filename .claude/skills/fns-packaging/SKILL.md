@@ -10,6 +10,12 @@ description: "MUST READ before releasing, versioning, or changing how an FNS too
 regenerating the manifest, staging/uploading, release notes, and testing an
 install without the bucket. Follow it; do not improvise a release.
 
+**Creating a NEW package is [packaging/CREATING.md](../../../packaging/CREATING.md)**
+— the identity test (depth-1 suspect-tracked COMP with its own tox), the three
+author-maintained pieces (`Pkgversion`, catalog entry, user-facing doc), what is
+derived and must not be declared, and the FNS_About-vs-bare-Pkgversion shapes
+(bare par is the supported minimum; the child adds `Touchbuild` + `Helpurl`).
+
 The distribution *model* — why buckets and manifests, what the layers are, what
 was superseded — is in
 [docs/ConfiguratorDistribution.md](../../../docs/ConfiguratorDistribution.md).

@@ -31,6 +31,12 @@ Mentioning a gated tool is not leaking it: catalog.json, manifest.json,
 packaging/docs/<Name>.md and the design docs that reference the gate all
 publish normally. Only paths that ARE the tool are withheld.
 
+One leak no path rule can catch: the root suspect tox publishes, and it
+EMBEDS every child whose enableexternaltox is off. EmbeddedGated() reads
+each gated package's carrier off the manifest and refuses the run (every
+mode, the pre-push hook included) while any gated package is root-carried
+or unknown to the manifest.
+
     python scripts/publish_public.py                   # dry run (default)
     python scripts/publish_public.py --target ../DIR   # explicit checkout
     python scripts/publish_public.py --local           # commit locally only
@@ -89,6 +95,13 @@ DECLARED_PRIVATE_PREFIXES = (
     'PreviewPanel25/',
     'modules/suspects/PreviewPanel25.tox',
     'modules/suspects/PreviewPanel25/',
+    # PI's portable release exports. The root one embeds EVERY tool --
+    # the gated package included at full 323-op strength, which is how
+    # 9MB of FNS_TimelineTools reached the mirror in Release v3.0.12
+    # (2026-08-30). Untracked + gitignored in the private repo since
+    # 65c758e; withheld here so a stray re-track can never publish, and
+    # so the next publish DELETES the copies the mirror already carries.
+    'modules/release/',
 )
 
 # Paths that legitimately carry a gated package's name and still publish:
@@ -163,6 +176,44 @@ def KnownPackages():
     """Every name catalog.json knows, free or gated."""
     cat = json.load(io.open(CATALOG, encoding='utf-8'))
     return set(cat.get('packages', cat))
+
+
+def EmbeddedGated():
+    """Gated packages whose bytes would ride INSIDE a published tox.
+
+    The path rules withhold a gated package's OWN files, but the root
+    suspect (modules/suspects/FNSTools.tox) publishes -- and it EMBEDS
+    every child whose `enableexternaltox` is off ('carried by the ROOT
+    toolkit tox'). A gated package in that state leaks through a file no
+    path rule can withhold, so the publish must refuse instead. The
+    manifest records each package's carrier (`tox_carrier`: 'root' =
+    embedded, 'own' = the root holds only a reference).
+
+    A second flag does the same thing more quietly: `savebackup` (Save
+    Backup of External, TD default ON) embeds a full backup copy on every
+    parent save EVEN WITH the external binding intact. The manifest
+    carries it as `save_backup` (presence-style).
+
+    Returns (embedded, unknown): gated names whose bytes the root tox
+    would carry (root-carried, or backup-embedding), and gated names the
+    manifest does not know (undecidable -- also refused, fail closed).
+    """
+    gated = GatedPackages()
+    if not gated:
+        return [], []
+    try:
+        man = json.load(io.open(
+            os.path.join(REPO, 'packaging', 'manifest.json'),
+            encoding='utf-8'))
+        carriers = {p['name']: str(p.get('tox_carrier', ''))
+                    for p in man.get('packages', [])}
+        backups = {p['name'] for p in man.get('packages', [])
+                   if p.get('save_backup')}
+    except Exception:
+        return [], sorted(gated)
+    embedded = sorted({n for n in gated if carriers.get(n) == 'root'}
+                      | (set(gated) & backups))
+    return embedded, sorted(n for n in gated if n not in carriers)
 
 
 def _gatedPrefixes(name):
@@ -361,6 +412,25 @@ def main(argv=None):
                          'withheld path. This is what the pre-push hook '
                          'calls, so hook and publisher cannot drift apart.')
     args = ap.parse_args(argv)
+
+    # The embedding guard runs in EVERY mode, the hook's included: a
+    # root-carried gated package taints modules/suspects/FNSTools.tox
+    # itself, which no per-path rule can withhold.
+    embedded, unknown = EmbeddedGated()
+    if embedded or unknown:
+        if embedded:
+            print('REFUSED -- gated package(s) whose bytes ride the '
+                  'published root tox: %s' % ', '.join(embedded))
+            print('Root-carried (tox_carrier "root") or backup-embedding '
+                  '(Save Backup of External on). Turn enableexternaltox ON '
+                  'and savebackup OFF, PI-save the package and the root, '
+                  'rebuild the manifest, then re-run.')
+        if unknown:
+            print('REFUSED -- gated package(s) the manifest does not know: '
+                  '%s' % ', '.join(unknown))
+            print('Their carrier is undecidable, so whether the root tox '
+                  'embeds them is too. Rebuild the manifest first.')
+        return 2
 
     if args.check_rev:
         plan = Plan(args.check_rev)

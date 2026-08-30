@@ -6,11 +6,17 @@ here. The server itself is ephemeral -- see Open() in ConsoleRegistryExt.
 
 Routes:
   /                         the console page (console_page DAT)
+  /base.css                 the shared UI base (the page's FNS:UIBASE block),
+                            linkable by contributed tabs served under /t/
   /api/tabs                 built-in + contributed tabs
   /api/state /api/set       FNS_ConfigRegistry Ui* -- the paths are the
   /api/export /api/import   registry's original ones on purpose: TDXLPP's
   /api/scope                launcher reads /api/state and /api/set
-  /tools + /manifest.js /selection /status /install
+  /api/updates              FNS_Updater fronted by the console's UiUpdates*:
+  /api/updates/check        Compare rows + release notes (GET), kick a cheap
+  /api/updates/apply        manifest check, apply updates, and the live
+  /api/updates/status       pass's stage/results for the page's poll
+  /tools + /manifest.js /selection /status /install /auth/*
                             FNS_Installer.ServeRequest, forwarded verbatim
   /t/<tab>/                 a contributed tab's page (served as-is)
   /t/<tab>/api/<action>     its api DAT's onConsoleRequest(action, method, body)
@@ -48,16 +54,22 @@ def _body(request):
 	return json.loads(data)
 
 
-PICKER_URIS = ('/manifest.js', '/selection', '/status', '/install')
+# /auth/* and /settings ride along so the FRAMED picker's account rail
+# (sign in / recheck / redeem / the done step's Open Settings) works when
+# the console serves it -- without them those posts 404 against this
+# server while the same page served by the installer answers.
+PICKER_URIS = ('/manifest.js', '/selection', '/status', '/install',
+			   '/auth/signin', '/auth/recheck', '/auth/redeem', '/auth/status',
+			   '/settings')
 CONFIG_URIS = ('/api/state', '/api/set', '/api/export', '/api/import', '/api/scope')
 
 NO_CONFIG = {'ok': False,
 			 'why': 'FNS_ConfigRegistry is not installed -- settings need the config package'}
 
 NO_INSTALLER_HTML = (
-	'<!doctype html><body style="background:#191b1e;color:#8a8f98;'
+	'<!doctype html><body style="background:#0a0a0a;color:#a3a3a3;'
 	'font:14px/1.6 sans-serif;padding:40px;max-width:60ch">'
-	'<h3 style="color:#d6d9de">No installer in this project</h3>'
+	'<h3 style="color:#f5f5f5">No installer in this project</h3>'
 	'This project has no <code>FNS_Installer</code> COMP, so tools cannot '
 	'be added or removed from here. Drop the FNSTools bootstrap (or the '
 	'bare <code>FNS_Installer.tox</code>) into the project and reload this '
@@ -111,6 +123,14 @@ def onHTTPRequest(webServerDAT, request, response):
 		if uri == '/':
 			page = webServerDAT.parent().op(ext.PAGE_NAME)
 			_html(response, page.text if page else 'console_page missing')
+		elif uri == '/base.css':
+			# the shared UI base for contributed tabs: link it from a tab
+			# page served under /t/<name>/ to inherit the family palette
+			# instead of re-declaring it (a tab that also runs outside the
+			# console inlines its own synced copy -- see ColorUI)
+			response['statusCode'], response['statusReason'] = 200, 'OK'
+			response['Content-Type'] = 'text/css; charset=utf-8'
+			response['data'] = ext.UiBaseCss()
 		elif uri == '/api/tabs':
 			# everything, hidden included: the page's bar shows what is
 			# displayed, its tab manager lists the rest
@@ -118,6 +138,15 @@ def onHTTPRequest(webServerDAT, request, response):
 		elif uri == '/api/tabs/display' and method == 'POST':
 			b = _body(request)
 			_json(response, ext.SetTabDisplayed(b.get('name'), b.get('displayed')))
+		elif uri == '/api/updates':
+			_json(response, ext.UiUpdates())
+		elif uri == '/api/updates/check' and method == 'POST':
+			_json(response, ext.UiUpdatesCheck())
+		elif uri == '/api/updates/apply' and method == 'POST':
+			b = _body(request)
+			_json(response, ext.UiUpdatesApply(b.get('names')))
+		elif uri == '/api/updates/status':
+			_json(response, ext.UiUpdatesStatus())
 		elif uri in CONFIG_URIS:
 			_serveConfig(ext, uri, method, request, response)
 		elif uri == '/tools' or uri in PICKER_URIS:

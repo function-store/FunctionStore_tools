@@ -1,0 +1,345 @@
+{
+ "AltSelect": {
+  "build": 45,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "AutoCombine": {
+  "build": 41,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "AutoRes": {
+  "build": 47,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "BorderlessTD": {
+  "build": 67,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "ColorUI": {
+  "build": 29,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.3",
+  "when": "2026-08-30 23:17:55"
+ },
+ "CustomParTools": {
+  "build": 113,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "ExprHotStrings": {
+  "build": 70,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "FNS_CommandKit": {
+  "build": 8,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 06:22",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "FNS_ConfigHost": {
+  "build": 16,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_ConfigRegistry": {
+  "build": 16,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_Console": {
+  "build": 21,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.4",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_HotkeyManager": {
+  "build": 59,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:09",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "FNS_Hub": {
+  "build": 54,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.3",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_HubRegistry": {
+  "build": 23,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_MainMenuRegistry": {
+  "build": 14,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_Navbar": {
+  "build": 143,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "FNS_NavbarRegistry": {
+  "build": 16,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_OpMenu": {
+  "build": 81,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "FNS_OpMenuRegistry": {
+  "build": 13,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_PaletteRegistry": {
+  "build": 19,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_PaneTypeRegistry": {
+  "build": 18,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "FNS_TimelineRegistry": {
+  "build": 42,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_TimelineTools": {
+  "build": 101,
+  "release": "v3.0.12",
+  "saved": "30.08.2026 23:33",
+  "version": "3.0.4",
+  "when": "2026-08-30 23:33:56"
+ },
+ "FNS_Toolbar": {
+  "build": 138,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.3",
+  "when": "2026-08-30 23:17:55"
+ },
+ "FNS_ToolbarRegistry": {
+  "build": 14,
+  "release": "v3.0.12",
+  "saved": "30.08.2026 23:33",
+  "version": "3.0.2",
+  "when": "2026-08-30 23:33:56"
+ },
+ "FNS_Updater": {
+  "build": 64,
+  "release": "v3.0.11",
+  "saved": "30.08.2026 23:17",
+  "version": "3.0.7",
+  "when": "2026-08-30 23:17:55"
+ },
+ "GlobalOutSelect": {
+  "build": 48,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "GlobalVolControl": {
+  "build": 42,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "HydroHomie": {
+  "build": 38,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:08",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "MISC": {
+  "build": 36,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "29.08.2026 08:14",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "OUTPUT": {
+  "build": 35,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:09",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "OpTemplates": {
+  "build": 240,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "OpToClipboard": {
+  "build": 33,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "OpenExt": {
+  "build": 30,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "ParOPDrop": {
+  "build": 47,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "ParRandomizer": {
+  "build": 56,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "QuickCollapse": {
+  "build": 40,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "QuickMarks": {
+  "build": 29,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "QuickPane": {
+  "build": 44,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "QuickTime": {
+  "build": 40,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "ResetPLS1": {
+  "build": 56,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "SetSmoothness": {
+  "build": 35,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "SwapOps": {
+  "build": 35,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "SwitchOPs": {
+  "build": 32,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "TDX_SearchPalette": {
+  "build": 17,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:09",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "VSCodeTools": {
+  "build": 94,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:13",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "midiMapper": {
+  "build": 41,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:11",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "oscMapper": {
+  "build": 33,
+  "release": "baseline (seeded 2026-08-30)",
+  "saved": "30.08.2026 07:11",
+  "version": "3.0.1",
+  "when": "2026-08-30 22:38:43"
+ },
+ "paste_from_clipboard": {
+  "build": 40,
+  "release": "v3.0.12",
+  "saved": "30.08.2026 23:33",
+  "version": "3.0.0",
+  "when": "2026-08-30 23:33:56"
+ }
+}

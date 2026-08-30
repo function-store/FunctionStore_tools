@@ -236,6 +236,75 @@ if script:
     check('the wanted-but-gated picks are recorded in selection.json tools',
           "'tools': SEL + PLUS" in script)
 
+print('8. auto-resume fires only when it honestly can')
+# lift the IIFE's real guard lines: served + unlocked + signed in, every
+# wanted pick entitled, and never over the first-run welcome
+m = re.search(
+    r'if \(!served \|\| locked \|\| !account\) return;\s*\n'
+    r'\s*if \(!wantedStill\.length \|\| !wantedStill\.every\(installable\)\) return;\s*\n'
+    r"(\s*//[^\n]*\n)*"
+    r"\s*if \(firstrun && !sessionFlag\('fns\.welcomed'\)\) return;", src)
+check('the guard lines are present and in order', m is not None)
+auto_harness = """
+function fires(served, locked, account, wanted, firstrun, welcomed) {
+  var byName = {
+    AutoRes: {name: 'AutoRes', access: 'free'},
+    FNS_TimelineTools: {name: 'FNS_TimelineTools', access: '8323905'},
+    FNS_ProOnly: {name: 'FNS_ProOnly', access: '8291595'},
+  };
+  var wantedStill = wanted;
+  function sessionFlag(k) { return welcomed ? '1' : null; }
+  %s
+  %s
+  %s
+  if (!served || locked || !account) return false;
+  if (!wantedStill.length || !wantedStill.every(installable)) return false;
+  if (firstrun && !sessionFlag('fns.welcomed')) return false;
+  return true;
+}
+var out = [];
+out.push(fires(false, '', {products:['FNS_TimelineTools']}, ['FNS_TimelineTools'], false, false));   // site
+out.push(fires(true, '', null, ['FNS_TimelineTools'], false, false));                                // signed out
+out.push(fires(true, 'src lock', {products:['FNS_TimelineTools']}, ['FNS_TimelineTools'], false, false)); // locked
+out.push(fires(true, '', {products:['FNS_TimelineTools']}, [], false, false));                       // nothing wanted
+out.push(fires(true, '', {products:['FNS_TimelineTools']}, ['FNS_TimelineTools','FNS_ProOnly'], false, false)); // partial
+out.push(fires(true, '', {products:['FNS_TimelineTools']}, ['FNS_TimelineTools'], true, false));     // welcome up
+out.push(fires(true, '', {products:['FNS_TimelineTools']}, ['FNS_TimelineTools'], true, true));      // welcomed
+out.push(fires(true, '', {products:['FNS_TimelineTools']}, ['FNS_TimelineTools'], false, false));    // the green path
+console.log(out.join('\\n'));
+""" % (fn_isplus, fn_entitled, fn_installable)
+
+try:
+    got = subprocess.run([os.environ.get('NODE', 'node'), '-e', auto_harness],
+                         capture_output=True, text=True, timeout=30)
+    auto_lines = [l for l in got.stdout.strip().split('\n') if l]
+    if got.returncode != 0:
+        print('  node stderr: %s' % got.stderr.strip()[:300])
+except Exception as e:
+    auto_lines = []
+    print('  SKIP  node unavailable (%s)' % e)
+
+if len(auto_lines) == 8:
+    for i, (label, want) in enumerate((
+            ('site flavor never auto-installs', 'false'),
+            ('signed out never auto-installs', 'false'),
+            ('a locked target never auto-installs', 'false'),
+            ('nothing wanted, nothing fires', 'false'),
+            ('one uncovered pick keeps it manual', 'false'),
+            ('never over the first-run welcome', 'false'),
+            ('welcomed first run may fire', 'true'),
+            ('entitled + wanted fires', 'true'))):
+        check(label, auto_lines[i] == want, auto_lines[i])
+auto_block = src[src.find('auto-resume deferred Plus picks'):]
+auto_block = auto_block[:auto_block.find('})();')]
+check('the plan flows straight into the install (no ceremony)',
+      "post('/install', '{}', installOrPoll);" in auto_block
+      and 'setInterval' not in auto_block)
+check('a plan refusal stays manual (no install post)',
+      'if (!res.ok) { showDialog(res.text, false); return; }' in auto_block)
+check('it waits out an in-flight pass before planning',
+      'st.fetching' in auto_block)
+
 print()
 if FAILS:
     print('FAILED (%d): %s' % (len(FAILS), ', '.join(FAILS)))

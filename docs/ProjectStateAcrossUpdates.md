@@ -97,10 +97,14 @@ reload.
 **There is no "FNS_MEDIA is present" guarantee, and nothing claims to be one.**
 (`Ensurelocal` is unrelated -- it is a Pulse labelled "Add Component Time" that
 clones `/sys/local/time` into a Scope Comp. Named for the local timeline, not
-the media host.) The accessors return `None` when the host is missing and every
-caller already guards for a missing reader, so the tool degrades quietly rather
-than erroring. Whether a missing host should be recreated on demand, or simply
-reported, is open.
+the media host.) The accessors return `None` when the host is missing, and the
+claim that "every caller already guards" turned out to be false: the first field
+fresh-install died in `LoadMedia` on `au.bypass` (2026-08-30), because a fresh
+project has no `/FNS_MEDIA` at all -- nothing ships it and nothing creates it.
+`LoadMedia` now refuses with a status naming the missing host. Whether a missing
+host should be recreated on demand, shipped as its own package, or simply
+reported, is **still open -- and now load-bearing**: until it is settled, a
+fresh install cannot load media at all.
 
 ### 2. The analysis readers stay, and re-derive -- LANDED
 

@@ -98,6 +98,37 @@ def DefaultTarget(owner=None):
     return home.rstrip('/') + '/' + ROOT_NAME
 
 
+def PanePlacement(fallback_path):
+    """Where a `placement: pane` package lands: the network the user is
+    working in -- the current pane's owner when that pane is a network
+    editor, else the first network editor's owner.
+
+    Returns (path, note). Falls back to `fallback_path` (with the reason
+    in the note) when no network editor is open, or when the visible
+    network is one an install must not touch: a source checkout
+    (SourceLock), or /ui and /sys, which TD rebuilds on open so anything
+    landed there silently vanishes with the session.
+    """
+    try:
+        pane = ui.panes.current
+        if pane is None or pane.type != PaneType.NETWORKEDITOR:
+            pane = next((p for p in ui.panes
+                         if p.type == PaneType.NETWORKEDITOR), None)
+        owner = pane.owner if pane is not None else None
+    except Exception:
+        owner = None
+    if owner is None:
+        return fallback_path, 'no network editor open'
+    top = '/' + owner.path.lstrip('/').split('/', 1)[0] if owner.path != '/' else '/'
+    if top in ('/ui', '/sys'):
+        return fallback_path, ('%s is rebuilt on every project open -- '
+                               'nothing lands there' % top)
+    why = SourceLock(owner.path)
+    if why:
+        return fallback_path, 'the visible network is protected (%s)' % owner.path
+    return owner.path, ''
+
+
 def StoreFolder():
     """The machine-wide palette store. By contract a MIRROR of the bucket:
     nothing in it is anyone's work, so a file that disagrees with the
@@ -273,6 +304,24 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
                        if c.family == 'COMP' and c.name in tool_names
                        and c.name not in wanted) if root_comp else []
 
+    # `placement: pane` packages land in the user's working network, not
+    # under the target root -- so "already installed" is the install
+    # RECORD, not a root child, and unselecting one clears only that
+    # record (the spawned copies are the user's work; see RemoveTools).
+    # The ONE exception: a spawn that fell back into the target root
+    # itself sits in the installer's own territory -- it is already in
+    # to_remove above and is removed like any tool, so it must not also
+    # appear here as a record-only forget.
+    pane_names = {p['name'] for p in manifest['packages']
+                  if p.get('placement') == 'pane'}
+    recorded = set()
+    rec_t = root_comp.op(INSTALLED_DAT) if root_comp else None
+    if rec_t is not None:
+        recorded = {rec_t[i, 0].val for i in range(1, rec_t.numRows)
+                    if rec_t[i, 0].val}
+    to_unrecord = sorted((recorded & pane_names & tool_names)
+                         - set(wanted) - set(to_remove))
+
     steps, missing, hash_warnings = [], [], []
     for name in ordered:
         pkg = index[name]
@@ -300,12 +349,17 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
                     stale = True
                 else:
                     hash_warnings.append(name)
+        placement = pkg.get('placement', 'toolkit') or 'toolkit'
         steps.append({'name': name, 'kind': pkg['kind'], 'path': path,
                       'sha256': art.get('sha256', ''),
                       'bytes': art.get('bytes', 0),
                       'release': manifest.get('release', ''),
                       'have': have, 'stale': stale,
-                      'present': op(tgt + '/' + name) is not None})
+                      'placement': placement,
+                      # pane packages live wherever the user spawned them,
+                      # so presence is the install record, not a root child
+                      'present': (name in recorded if placement == 'pane'
+                                  else op(tgt + '/' + name) is not None)})
     return {'target': tgt, 'steps': steps, 'order': [s['name'] for s in steps],
             # non-empty = every executor refuses; the reason is shown as-is
             'locked': SourceLock(tgt),
@@ -318,6 +372,7 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
             'stale_store': [s['name'] for s in steps if s['stale']],
             'hash_warnings': hash_warnings,
             'to_remove': to_remove,
+            'to_unrecord': to_unrecord,
             'missing_artifact': missing, 'unknown_packages': unknown}
 
 
@@ -374,6 +429,15 @@ def _bindPackage(comp, step, bind):
             shutil.copyfile(src, dest)
     comp.par.externaltox = dest
     comp.par.enableexternaltox = True
+    # Save Backup of External ON: the user's .toe embeds a backup, so a
+    # bound package still loads when its file has vanished (a deleted
+    # store, a moved project folder). The OPPOSITE of the dev-side rule --
+    # there the flag would smuggle gated bytes into the published root
+    # suspect; here the user owns both files and the backup is the
+    # self-healing.
+    p = getattr(comp.par, 'savebackup', None)
+    if p is not None:
+        p.val = True
     return dest
 
 
@@ -405,10 +469,12 @@ def RemoveTools(plan):
         return {'removed': [], 'notes': []}
     by_name = {s['name']: s for s in plan['steps']}
     removed, notes = [], []
-    for name in plan.get('to_remove', []):
-        comp = parent_comp.op(name)
-        if comp is None:
-            continue
+
+    def destroy_and_clean(comp):
+        """Destroy an installed COMP; a project-mode package file goes
+        with it, but only while its bytes still match the published
+        artifact -- a modified copy is the user's work and stays."""
+        name = comp.name
         bound = ''
         p = getattr(comp.par, 'externaltox', None)
         if p is not None and comp.par.enableexternaltox.eval():
@@ -431,11 +497,38 @@ def RemoveTools(plan):
                     os.remove(full)
                 else:
                     notes.append('%s: kept %s (modified)' % (name, full))
+
+    def drop_record(name):
         t = parent_comp.op(INSTALLED_DAT)
         if t is not None:
             for i in range(t.numRows - 1, 0, -1):
                 if t[i, 0].val == name:
                     t.deleteRow(i)
+
+    for name in plan.get('to_remove', []):
+        comp = parent_comp.op(name)
+        if comp is None:
+            continue
+        destroy_and_clean(comp)
+        drop_record(name)
+        removed.append(name)
+    # `placement: pane` packages: the spawned copies live in the user's
+    # networks and are the user's work -- unselecting one clears only the
+    # install record, so the picker stops reporting it as installed.
+    # EXCEPT on the installer's own doorstep: a spawn sitting right beside
+    # the toolkit container (a sibling at the network root, where the
+    # no-editor fallback and a `/`-showing pane both land) is removed for
+    # real, exactly like a root child.
+    home = parent_comp.parent()
+    for name in plan.get('to_unrecord', []):
+        beside = home.op(name) if home is not None else None
+        if beside is not None and beside.family == 'COMP':
+            destroy_and_clean(beside)
+            notes.append('%s: removed from %s' % (name, home.path))
+        else:
+            notes.append('%s: forgotten; the copies in your networks '
+                         'stay yours' % name)
+        drop_record(name)
         removed.append(name)
     return {'removed': removed, 'notes': notes}
 
@@ -585,12 +678,30 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
         home = op(tgt.rsplit('/', 1)[0] or '/')
         parent_comp = home.create(baseCOMP, tgt.rsplit('/', 1)[1])
 
+    # Resolved ONCE per pass, not per step: every pane-placed package in
+    # one install lands in the same network the user is looking at.
+    pane_path, pane_note = '', ''
+    if any(s.get('placement') == 'pane' for s in plan['steps']):
+        pane_path, pane_note = PanePlacement(tgt)
+
     results = []
     for step in plan['steps']:
         name = step['name']
         if only and name not in only:
             continue
-        existing = parent_comp.op(name)
+        pane = step.get('placement') == 'pane'
+        if pane:
+            # presence is the install record (ResolvePlan); the spawned
+            # copy lives wherever the user put it, so there is nothing
+            # to verify or destroy here
+            if step.get('present') and not replace:
+                results.append({'name': name, 'ok': True,
+                                'action': 'skipped (already spawned)'})
+                continue
+            dest = op(pane_path) or parent_comp
+        else:
+            dest = parent_comp
+        existing = None if pane else dest.op(name)
         if existing is not None and not replace:
             state = _verify(existing)
             # a skipped package is NOT a failure of this install -- its
@@ -618,17 +729,33 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
         # child itself. Pre-creating a container named after the package
         # nests it a level too deep (AutoRes/AutoRes), so load onto the
         # target and identify the new child by diffing.
-        before = {c.id for c in parent_comp.children}
+        before = {c.id for c in dest.children}
         try:
-            parent_comp.loadTox(step['path'])
+            dest.loadTox(step['path'])
         except Exception as e:
             results.append({'name': name, 'action': 'FAILED', 'ok': False,
                             'why': str(e)[:140]})
             continue
-        fresh = [c for c in parent_comp.children if c.id not in before]
-        comp = fresh[0] if fresh else parent_comp.op(name)
+        fresh = [c for c in dest.children if c.id not in before]
+        comp = fresh[0] if fresh else dest.op(name)
         if comp is not None and comp.name != name:
-            comp.name = name  # TD numbers on collision; the manifest name wins
+            # TD numbers on collision; the manifest name wins -- except in
+            # a pane spawn, where a same-named op is the USER'S and keeps
+            # its name (the spawn stays numbered)
+            if not (pane and dest.op(name) is not None):
+                comp.name = name
+        if pane and comp is not None:
+            # a spawn must not land on top of the user's work: put it just
+            # right of everything in the network, and hand it the selection
+            try:
+                sibs = [c for c in dest.children if c.id != comp.id]
+                if sibs:
+                    comp.nodeX = max(s.nodeX + s.nodeWidth for s in sibs) + 200
+                    comp.nodeY = max(s.nodeY for s in sibs)
+                comp.selected = True
+                comp.current = True
+            except Exception:
+                pass
         bound = ''
         if comp is not None:
             try:
@@ -644,16 +771,24 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
             landed = _fileSha(step['path'])
         except Exception:
             landed = step.get('sha256', '')
+        # ALWAYS on the plan target, even for a pane spawn: the record is
+        # project state and the updater reads it there
         RecordInstalled(parent_comp, name, landed, step.get('release', ''))
         # inside the toolkit, console contributors expose by default --
-        # decided here, once, as the package lands (artifacts ship dormant)
-        exposed = ExposeConsoleHosts(comp)
+        # decided here, once, as the package lands (artifacts ship dormant).
+        # A pane spawn sits in the user's network, outside the toolkit, so
+        # that default does not apply.
+        exposed = [] if pane else ExposeConsoleHosts(comp)
         results.append({'name': name, 'action': 'installed', 'bound': bound,
-                        'exposed': exposed, **_verify(comp)})
+                        'exposed': exposed,
+                        'placed': dest.path if pane else '',
+                        **_verify(comp)})
     return {'target': tgt,
             'installed': [r['name'] for r in results if r.get('action') == 'installed'],
             'failed': [r['name'] for r in results if not r.get('ok', True)],
             'results': results,
+            # non-empty = pane placement fell back to the target, and why
+            'pane_note': pane_note,
             'registries': PromotedRegistries()}
 
 
@@ -1063,6 +1198,23 @@ class InstallerExt:
                     if tgt is not None:
                         installed = sorted(c.name for c in tgt.children
                                            if c.family == 'COMP')
+                        # pane-placed packages are installed WITHOUT being
+                        # root children: their truth is the install record.
+                        # Without this they re-arrive unchecked and a
+                        # re-apply spawns a second copy.
+                        try:
+                            man_doc = LoadJson(full, 'manifest')
+                            pane_names = {p['name']
+                                          for p in man_doc.get('packages', [])
+                                          if p.get('placement') == 'pane'}
+                            rec_t = tgt.op(INSTALLED_DAT)
+                            if rec_t is not None and pane_names:
+                                installed = sorted(set(installed) | {
+                                    rec_t[i, 0].val
+                                    for i in range(1, rec_t.numRows)
+                                    if rec_t[i, 0].val in pane_names})
+                        except Exception:
+                            pass
                         # the page disables Apply up front rather than
                         # letting the user pick and then get refused
                         locked = SourceLock(tgt.path)
@@ -1077,8 +1229,18 @@ class InstallerExt:
                     # living exactly one Textport line and evaporating.
                     wanted = []
                     try:
-                        selp = ('%s/FNStools_ext/selection.json'
-                                % app.userPaletteFolder).replace('\\', '/')
+                        # Read the file THIS rail installs from -- the
+                        # paste points Selectionfile at its own write in
+                        # the store, and /selection re-points it at the
+                        # palette copy. The machine-wide palette file is
+                        # only the fallback: reading it unconditionally
+                        # let a stale scratch copy from another session
+                        # swallow a fresh paste's Plus picks (seen live:
+                        # a wanted FNS_TimelineTools arrived unchecked).
+                        selp = str(self._par('Selectionfile') or '')
+                        if not (selp and os.path.exists(selp)):
+                            selp = ('%s/FNStools_ext/selection.json'
+                                    % app.userPaletteFolder).replace('\\', '/')
                         if os.path.exists(selp):
                             with open(selp, 'r', encoding='utf-8') as sf:
                                 seldoc = json.load(sf)
@@ -1338,7 +1500,14 @@ class InstallerExt:
                     lines = ['installed %d, removed %d, failed %d'
                              % (len(res['installed']), len(res.get('removed', [])),
                                 len(res['failed']))]
-                    lines += ['  %s' % n for n in res['installed']]
+                    placed = {r['name']: r.get('placed', '')
+                              for r in res.get('results', [])}
+                    lines += ['  %s%s' % (n, ' → ' + placed[n]
+                                          if placed.get(n) else '')
+                              for n in res['installed']]
+                    if res.get('pane_note'):
+                        lines.append('  (%s -- spawned into the toolkit '
+                                     'container instead)' % res['pane_note'])
                     lines += ['  removed %s' % n for n in res.get('removed', [])]
                     lines += ['  %s' % n for n in res.get('remove_notes', [])]
                     lines += ['  FAILED %s' % n for n in res['failed']]

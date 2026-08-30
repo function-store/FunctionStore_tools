@@ -104,7 +104,28 @@ texture for nobody — and back on when the exposure ends (Expose off, a failed
 registration, or the host going away). Compare-before-set, so a plain re-apply
 does not flicker.
 
-## 6. Nothing here is durable
+## 6. Styling: inherit the family palette, do not re-declare it
+
+The console serves the toolkit's shared design tokens and components at
+**`/base.css`** — a slice of the console page's own `FNS:UIBASE` block, which
+`packaging/configurator/sync_base.py` keeps current from
+`packaging/configurator/base.css` (see `docs/InstallSurfaceDesign.md`). A tab
+page served under `/t/<name>/` should `<link rel="stylesheet" href="/base.css">`
+(the frame's URL space is rooted at the console server, so the root-relative
+path resolves) and build on `var(--bg)`/`var(--accent)`/`.btn`/`.chip` instead
+of declaring a private palette — a third token family is exactly the drift the
+base retired.
+
+The exception is a page that must also run **outside** the console — ColorUI's
+own Web Render renders the same file with no server behind it. Such a page
+inlines its own copy of the block between `/* FNS:UIBASE:START */` /
+`/* FNS:UIBASE:END */` markers and is added to `sync_base.py`'s `TARGETS`, so
+the sync (and `tests/test_ui_base_sync.py`) keeps it current. ColorUI is the
+worked example either way: its legacy var names (`--panel`, `--fg`, `--acc`, …)
+are defined *from* the base tokens in one `:root` block, so a dense existing
+page retints without rewriting its rules.
+
+## 7. Nothing here is durable
 
 The console's Web Server DAT lives on the `/sys` global, is created on demand,
 activated by `Open`, and deactivated after the idle timeout. `/sys` is rebuilt

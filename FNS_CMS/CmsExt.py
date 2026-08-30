@@ -221,10 +221,15 @@ class CmsExt:
 					'service': 'fns-release',
 					'ui': 'website/tools/cms.mjs -- npm run cms, then Release',
 					'endpoints': ['/api/ping', '/api/dirty', '/api/save',
-								  '/api/preflight', '/api/stage',
+								  '/api/preflight', '/api/rebuildrails',
+								  '/api/retire',
+								  '/api/refreshstore',
+								  '/api/stage',
 								  '/api/release', '/api/upload',
+								  '/api/prunebucket',
 								  '/api/uploadlog', '/api/hotkeys',
-								  '/api/helpurl'],
+								  '/api/helpurl', '/api/parameters',
+								  '/api/parhelp', '/api/parexport'],
 				})
 				return response
 			body = {}
@@ -250,12 +255,19 @@ class CmsExt:
 				('GET', '/api/dirty'): self._apiDirty,
 				('POST', '/api/save'): lambda b=body: self._apiSave(b),
 				('GET', '/api/preflight'): self._apiPreflight,
+				('POST', '/api/rebuildrails'): self._apiRebuildRails,
+				('POST', '/api/retire'): lambda b=body: self._apiRetire(b),
+				('POST', '/api/refreshstore'): self._apiRefreshStore,
 				('POST', '/api/stage'): self._apiStage,
 				('POST', '/api/release'): lambda b=body: self._apiRelease(b),
 				('POST', '/api/upload'): self._apiUpload,
+				('POST', '/api/prunebucket'): lambda b=body: self._apiPruneBucket(b),
 				('GET', '/api/uploadlog'): self._apiUploadLog,
 				('GET', '/api/hotkeys'): self._apiHotkeys,
 				('POST', '/api/helpurl'): lambda b=body: self._apiHelpurl(b),
+				('GET', '/api/parameters'): self._apiParameters,
+				('POST', '/api/parhelp'): lambda b=body: self._apiParHelp(b),
+				('POST', '/api/parexport'): self._apiParExport,
 			}.get((method, path))
 			if handler is None:
 				payload, code = {'error': 'no such endpoint'}, 404
@@ -309,6 +321,20 @@ class CmsExt:
 							 for p in json.load(f).get('packages', [])}
 		except Exception:
 			pass
+		# What each package's PI build read when its artifact last shipped
+		# (release_one._recordShippedBuilds). Live Build differing means the
+		# tox changed since it shipped -- selectable and bumpable even while
+		# the version still equals the published one.
+		shipped = {}
+		try:
+			path = os.path.join(project.folder,
+								'packaging', 'shipped_builds.json')
+			with open(path, encoding='utf-8') as f:
+				doc = json.load(f)
+			if isinstance(doc, dict):
+				shipped = doc
+		except Exception:
+			pass
 		rows = []
 		for c in self._packages() + [op.FNS]:
 			info = {}
@@ -321,10 +347,19 @@ class CmsExt:
 			except Exception:
 				dirty = None
 			name = 'FNSTools' if c is op.FNS else c.name
+			# Child-first, like every reader in the release rail: the
+			# FNS_About copy is the authoritative one (bumps write it),
+			# so a severed comp-level mirror can never invert who wins.
+			# The comp's own bare Pkgversion answers for packages that
+			# never grew the child (packaging/CREATING.md).
 			ver = ''
 			fa = c.op('FNS_About')
 			if fa is not None and hasattr(fa.par, 'Pkgversion'):
 				ver = str(fa.par.Pkgversion.eval()).strip()
+			if not ver:
+				vp = getattr(c.par, 'Pkgversion', None)
+				if vp is not None:
+					ver = str(vp.eval()).strip()
 			pub = str(published.get(name, '') or '')
 			# the ONE help override, and what the name derives to when it is
 			# blank -- shown on the row because the packages view that used
@@ -340,6 +375,14 @@ class CmsExt:
 				if site:
 					derived = '%s/%s/' % (site,
 										  name.lower().replace('_', '-'))
+			# live PI build vs the counter recorded at last ship: differing
+			# means the tox changed without a bump yet. None (no record, or
+			# no PI info) reads as unknown, never as changed.
+			sb = (shipped.get(name) or {}).get('build')
+			live_b = info.get('Build')
+			changed = None
+			if sb is not None and live_b is not None:
+				changed = str(live_b) != str(sb)
 			rows.append({'name': name,
 						 'dirty': dirty,
 						 'help_override': over,
@@ -349,9 +392,191 @@ class CmsExt:
 						 # unshipped: the world has nothing by this name, or
 						 # has an older one. The reason this table exists.
 						 'unshipped': bool(ver) and ver != pub,
-						 'build': info.get('Build'),
+						 'build': live_b,
+						 'shipped_build': sb,
+						 'build_changed': changed,
 						 'saved': info.get('Savetimestamp', '')})
-		return {'rows': rows}
+		# The install rails' own row: not a package (their dirt lives in
+		# repo files PI cannot see), but a first-class release citizen --
+		# stale means rebuild first, changed means worth a release.
+		rails = {}
+		unlanded, rippled = set(), set()
+		try:
+			mod = self._pkgMod('release_one.py')
+			rails = mod['RailsState']()
+			# the THIRD change signal: sources newer than the suspect tox.
+			# A file-synced DAT edit reloads the live comp without touching
+			# PI's dirty flag OR its build counter, so without this a
+			# changed package can read clean + current all the way to ship.
+			u, rp = mod['_unlandedPackages']([r['name'] for r in rows])
+			unlanded, rippled = set(u), set(rp)
+		except Exception as e:
+			rails = {'state': 'unknown', 'error': str(e)}
+		for r in rows:
+			r['unlanded'] = r['name'] in unlanded
+			r['rippled'] = r['name'] in rippled
+		# The prune rail. Three lists, three verbs:
+		#   vanished        published but no longer a live package -- Stage
+		#                   refuses the next release until each is DECLARED
+		#                   retired (or the package is loaded again)
+		#   stale_retired   declared retired but still live -- a standing
+		#                   authorisation for a future accidental drop
+		#   prunable_retired  declared, gone, and no published manifest
+		#                   still lists it -- the entry has done its job
+		retired_list = []
+		try:
+			with open(os.path.join(project.folder, 'packaging',
+								   'release.json'), encoding='utf-8') as f:
+				retired_list = [str(n) for n in
+								(json.load(f).get('retired') or [])]
+		except Exception:
+			pass
+		# The Published column reads the STORE CACHE (the last manifest
+		# actually fetched from the bucket) -- so right after an upload it
+		# lags until the store refreshes. Ship both release labels so the
+		# page can SAY that instead of looking broken (field-confirmed:
+		# "I released and uploaded, still the old versions after refresh").
+		published_release = ''
+		try:
+			folder2 = ''
+			upd2 = op.FNS.op('FNS_Updater')
+			if upd2 is not None:
+				folder2 = str(upd2.par.Storefolder.eval() or '')
+			if not folder2:
+				folder2 = '%s/FNStools_ext/store' % app.userPaletteFolder
+			with open(os.path.join(folder2, 'manifest.json'),
+					  encoding='utf-8') as f:
+				published_release = str(json.load(f).get('release', ''))
+		except Exception:
+			pass
+		staged_release = ''
+		try:
+			with open(self._repo('packaging', 'publish', 'manifest.json'),
+					  encoding='utf-8') as f:
+				staged_release = str(json.load(f).get('release', ''))
+		except Exception:
+			pass
+		live_names = {r['name'] for r in rows} - {'FNSTools'}
+		pruning = {
+			'vanished': sorted(set(published) - live_names
+							   - set(retired_list)),
+			'stale_retired': sorted(set(retired_list) & live_names),
+			'prunable_retired': sorted(set(retired_list) - set(published)
+									   - live_names),
+			'retired': sorted(retired_list),
+		}
+		return {'rows': rows, 'rails': rails, 'pruning': pruning,
+				'published_release': published_release,
+				'staged_release': staged_release}
+
+	def _apiRefreshStore(self):
+		"""Fetch the bucket's rolling manifest into the store cache --
+		names=[] is the manifest-only refresh, no artifact downloads.
+		Async in the updater; the page re-polls /api/dirty after a beat."""
+		upd = op.FNS.op('FNS_Updater')
+		if upd is None:
+			return {'error': 'no FNS_Updater in the toolkit root'}
+		try:
+			r = upd.ext.ExtUpdater.RefreshStore(names=[])
+		except Exception as e:
+			return {'error': 'store refresh failed to start: %s' % e}
+		# `why` on a started job is STATUS ("locating (async)"), not a
+		# refusal -- only ok:False means it did not start
+		if isinstance(r, dict) and r.get('ok') is False:
+			return {'error': r.get('why') or 'store refresh refused'}
+		fnsLog('CMS: store manifest refresh started')
+		return {'ok': True}
+
+	def _apiRetire(self, body):
+		"""The prune rail's writer: declare a vanished package retired
+		(archiving its leftovers), or -- undo=True -- remove a name from
+		the retired list (clearing a stale entry, or pruning one no
+		published manifest still lists).
+
+		Retiring also prunes what would otherwise keep the package alive
+		on the site and in the books: the catalog entry goes, the doc is
+		ARCHIVED to packaging/docs/retired/ (moved, never deleted -- the
+		site build only scans the top level), and the shipped-builds
+		record is dropped. release.json keeps every other key untouched.
+		"""
+		name = str(body.get('name', '')).strip()
+		undo = bool(body.get('undo'))
+		if not name:
+			return {'error': 'no package name'}
+		rel_path = os.path.join(project.folder, 'packaging', 'release.json')
+		try:
+			with open(rel_path, encoding='utf-8') as f:
+				doc = json.load(f)
+		except Exception as e:
+			return {'error': 'release.json unreadable: %s' % e}
+		retired = [str(n) for n in (doc.get('retired') or [])]
+		live = {c.name for c in self._packages()}
+		notes = []
+		if undo:
+			if name not in retired:
+				return {'error': '%s is not in the retired list' % name}
+			retired = [n for n in retired if n != name]
+			arch = os.path.join(project.folder, 'packaging', 'docs',
+								'retired', name + '.md')
+			if os.path.exists(arch):
+				notes.append('its doc is still archived at packaging/docs/'
+							 'retired/%s.md -- restore it (and a catalog '
+							 'entry) by hand if the package returns' % name)
+		else:
+			if name in live:
+				return {'error': '%s is still a live package in this '
+								 'project -- retiring it now would only '
+								 'create a stale entry. Unload it (or drop '
+								 'its pi_suspect tag) first.' % name}
+			if name in retired:
+				return {'error': '%s is already declared retired' % name}
+			retired.append(name)
+			cat_path = os.path.join(project.folder, 'packaging',
+									'catalog.json')
+			try:
+				with open(cat_path, encoding='utf-8') as f:
+					cat = json.load(f)
+				entry = (cat.get('packages') or {}).pop(name, None)
+				if entry is not None:
+					with open(cat_path, 'w', encoding='utf-8') as f:
+						json.dump(cat, f, indent=1)
+						f.write('\n')
+					notes.append('catalog entry removed')
+					if entry.get('access') and entry['access'] != 'free':
+						notes.append('it was GATED (%s): remove it from the '
+									 "worker's tier map (wrangler.toml) and "
+									 'deploy' % entry['access'])
+			except Exception as e:
+				notes.append('catalog not touched (%s)' % e)
+			doc_path = os.path.join(project.folder, 'packaging', 'docs',
+									name + '.md')
+			if os.path.exists(doc_path):
+				arch_dir = os.path.join(project.folder, 'packaging', 'docs',
+										'retired')
+				os.makedirs(arch_dir, exist_ok=True)
+				os.replace(doc_path,
+						   os.path.join(arch_dir, name + '.md'))
+				notes.append('doc archived to packaging/docs/retired/%s.md'
+							 % name)
+			sb_path = os.path.join(project.folder, 'packaging',
+								   'shipped_builds.json')
+			try:
+				with open(sb_path, encoding='utf-8') as f:
+					sb = json.load(f)
+				if isinstance(sb, dict) and name in sb:
+					sb.pop(name)
+					with open(sb_path, 'w', encoding='utf-8') as f:
+						json.dump(sb, f, indent=1, sort_keys=True)
+						f.write('\n')
+					notes.append('shipped-builds record dropped')
+			except Exception:
+				pass
+		doc['retired'] = sorted(set(retired))
+		with open(rel_path, 'w', encoding='utf-8') as f:
+			json.dump(doc, f, indent=1)
+			f.write('\n')
+		return {'ok': True, 'name': name, 'undone': undo,
+				'retired': doc['retired'], 'notes': notes}
 
 	def _apiSave(self, body):
 		name = str(body.get('name', '')).strip()
@@ -369,6 +594,22 @@ class CmsExt:
 
 	def _apiPreflight(self):
 		return self._pkgMod('release_one.py')['Preflight'](quiet=True)
+
+	def _apiRebuildRails(self):
+		"""Rebuild the install rails (packaging/dist) from their current
+		sources -- the remedy for preflight's "rails stale" blocker.
+		Stage() hashes the dist bytes, and staging bytes nobody built
+		would ship an installer that does not match its sources. Runs
+		inside TD because the rails are built FROM live operators; the
+		UI pauses for the few seconds the export takes."""
+		m = self._pkgMod('build_installer.py')
+		inst = m['BuildInstaller']()
+		boot = m['BuildBootstrap']()
+		fnsLog('CMS: rails rebuilt (%s, %s)'
+			   % (inst.get('out', '?'), boot.get('out', '?')))
+		return {'ok': True,
+				'installer': {k: inst.get(k) for k in ('out', 'bytes', 'errors')},
+				'bootstrap': {k: boot.get(k) for k in ('out', 'bytes', 'errors')}}
 
 	def _apiStage(self):
 		r = self._pkgMod('publish.py')['Stage']()
@@ -442,7 +683,8 @@ class CmsExt:
 		package, minutes for forty-nine -- which is why the caller picks.
 		"""
 		names = [str(n).strip() for n in (body.get('names') or []) if str(n).strip()]
-		if not names:
+		rails = bool(body.get('rails'))
+		if not names and not rails:
 			return {'error': 'no packages selected'}
 		bump = str(body.get('bump', 'auto')).strip() or 'auto'
 		if bump not in ('auto', 'patch', 'minor', 'major', 'none'):
@@ -452,6 +694,7 @@ class CmsExt:
 			res = ro['Release'](names,
 								bump=(None if bump == 'none' else bump),
 								upload=False,
+								rails=rails,
 								force=bool(body.get('force')))
 		except Exception as e:
 			fnsLog('CMS: release failed -- %s' % e, level='ERROR')
@@ -481,6 +724,37 @@ class CmsExt:
 		ro['StartUpload']()
 		fnsLog('CMS: bucket upload started, log at packaging/publish/.upload.log')
 		return {'ok': True, 'log': 'packaging/publish/.upload.log'}
+
+	def _apiPruneBucket(self, body):
+		"""Prune old release directories from the bucket -- the detached
+		upload.py --prune-only rail, watched through the same
+		/api/uploadlog. `dry` previews the deletions and touches nothing.
+		The current release is always kept (upload.py pins it first)."""
+		# NOT `or 3`: keep=0 is falsy, and the fallback silently turned an
+		# invalid request into a REAL prune (field lesson, 2026-08-31 --
+		# this exact line deleted two old release directories).
+		try:
+			keep = int(body.get('keep', 3))
+		except (TypeError, ValueError):
+			return {'error': 'keep must be a number'}
+		if keep < 1:
+			return {'error': 'keep must be at least 1 (the current release)'}
+		dry = bool(body.get('dry'))
+		pub = self._repo('packaging', 'publish')
+		if not os.path.exists(os.path.join(pub, 'manifest.json')):
+			return {'error': 'nothing staged -- packaging/publish/ has no '
+							 'manifest (prune reads base_url off it)'}
+		log = os.path.join(pub, '.upload.log')
+		if os.path.exists(log) and time.time() - os.path.getmtime(log) < 15:
+			return {'error': 'an upload or prune appears to be running (its '
+							 'log moved seconds ago) -- watch it, do not '
+							 'start a second'}
+		ro = self._pkgMod('release_one.py')
+		ro['StartPrune'](keep, dry=dry)
+		fnsLog('CMS: bucket prune %sstarted (keep %d)'
+			   % ('preview ' if dry else '', keep))
+		return {'ok': True, 'dry': dry, 'keep': keep,
+				'log': 'packaging/publish/.upload.log'}
 
 	def _apiUploadLog(self):
 		"""Tail of the detached upload's log -- the read-only ship-state
@@ -525,6 +799,112 @@ class CmsExt:
 		fnsLog('CMS: Helpurl override for %s = %r (suspect saved)' % (name, url))
 		return {'ok': True, 'name': name, 'override': url,
 				'effective': effective}
+
+	# ------------------------------------------------------------------
+	# Parameters tab
+	#
+	# A custom parameter's `help` is the tooltip in TouchDesigner AND the
+	# description on the docs page -- build_manifest.Parameters() reads the
+	# pars live and website/tools/build-site.mjs renders exactly that
+	# string. So this tab is not "a place to write documentation about
+	# parameters": it writes the parameter's own help text, and the docs
+	# follow. There is no second copy to keep in step, which is the whole
+	# reason the field is worth authoring here rather than in a markdown
+	# table someone has to remember to update.
+	# ------------------------------------------------------------------
+
+	def _apiParameters(self):
+		"""Every package's customization surface plus its help coverage.
+
+		Derived through build_manifest.Parameters -- the same call the
+		release build makes -- so this page can never show one thing while
+		the site publishes another.
+		"""
+		bm = self._pkgMod('build_manifest.py')
+		out, done, total = [], 0, 0
+		for c in self._packages():
+			try:
+				rows = bm['Parameters'](c)
+			except Exception as e:
+				out.append({'name': c.name, 'error': str(e), 'rows': []})
+				continue
+			# A Header is a section label, not a control: it has no tooltip
+			# to write and counting it would flatter the coverage number.
+			real = [r for r in rows if r.get('style') != 'Header']
+			have = len([r for r in real if r.get('help')])
+			done += have
+			total += len(real)
+			out.append({'name': c.name, 'rows': rows,
+						'documented': have, 'controls': len(real)})
+		return {'packages': out, 'documented': done, 'controls': total,
+				# pages this tab refuses to write: the toolkit authors them
+				'locked': [bm['REGISTRY_PAGE']] + list(bm['DEV_PAGES'])}
+
+	def _apiParHelp(self, body):
+		"""Write help text onto live parameters, then PI-save ONCE.
+
+		Batched per package on purpose. Each save re-exports the suspect
+		tox, so saving per keystroke would mean a tox write per sentence;
+		and an unsaved live par change dies on the next reload (the
+		pi-save discipline _apiHelpurl already follows).
+		"""
+		name = str(body.get('name', '')).strip()
+		edits = body.get('edits') or []
+		comp = self._pkgByName(name)
+		if comp is None or comp is op.FNS:
+			return {'error': 'unknown package %r' % name}
+		bm = self._pkgMod('build_manifest.py')
+		locked = set([bm['REGISTRY_PAGE']]) | set(bm['DEV_PAGES'])
+		pages = {pg.name: pg for pg in comp.customPages}
+		written, skipped = [], []
+		for edit in edits:
+			page_name = str(edit.get('page', ''))
+			par_name = str(edit.get('name', ''))
+			text = str(edit.get('help', '')).strip()
+			# The stamped pages are authored ONCE, in RegistryBase and the
+			# About stamper. Writing them here would document one package's
+			# copy and leave the other 48 saying something else -- exactly
+			# the drift the shared reference exists to prevent.
+			if page_name in locked:
+				skipped.append('%s/%s (stamped by the toolkit)'
+							   % (page_name, par_name))
+				continue
+			page = pages.get(page_name)
+			if page is None:
+				skipped.append('%s/%s (no such page)' % (page_name, par_name))
+				continue
+			members = [pr for pr in page.pars
+					   if str(pr.tupletName) == par_name]
+			if not members:
+				skipped.append('%s/%s (no such parameter)'
+							   % (page_name, par_name))
+				continue
+			# One tooltip per control: TD shows the group's help, so every
+			# member of a tuplet carries the same sentence.
+			for pr in members:
+				pr.help = text
+			written.append('%s/%s' % (page_name, par_name))
+		if written:
+			pi = self._pi()
+			if pi is not None:
+				pi.Save(comp)
+			fnsLog('CMS: help text on %s -- %d written (suspect saved)'
+				   % (name, len(written)))
+		rows = bm['Parameters'](comp)
+		real = [r for r in rows if r.get('style') != 'Header']
+		return {'ok': True, 'name': name, 'written': written,
+				'skipped': skipped, 'rows': rows,
+				'documented': len([r for r in real if r.get('help')]),
+				'controls': len(real)}
+
+	def _apiParExport(self):
+		"""Regenerate packaging/parameters.json from the live pars.
+
+		The docs build reads that file, so this is what carries a tooltip
+		written a minute ago onto the site without waiting for a release.
+		"""
+		bm = self._pkgMod('build_manifest.py')
+		return dict(bm['BuildParameters'](), ok=True)
 
 	# ------------------------------------------------------------------
 	# Content tab -- ONE front door over TWO backends

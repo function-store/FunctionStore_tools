@@ -708,6 +708,67 @@ async function handleTokenDownload(env, request) {
   });
 }
 
+// A signed claim with a 10-YEAR exp cannot be un-signed: revoking the
+// session stops NEW claims, never outstanding ones. That is the accepted
+// cost of the offline promise (purchase gate, not DRM) and it is why the
+// per-kind lifetimes below are the part that must not be got wrong.
+const GUMROAD_CLAIM_TTL = 10 * 365 * 24 * 60 * 60;
+
+/** POST /entitlement -- /token/download generalised (TDXLU G1).
+ *
+ *  Same session load, same refresh, but it answers with a SIGNED
+ *  ENTITLEMENT CLAIM instead of a download token, and it does NOT
+ *  require a non-empty product list: a lapsed session must be able to
+ *  learn that it has lapsed. The claim's lifetime is per kind --
+ *  gumroad is perpetual by decision and must verify offline forever;
+ *  patreon matches the session TTL, renewed by any successful re-check
+ *  (an install in use never expires, an abandoned one ages out).
+ *  `machine` is a CLIENT-computed fingerprint hash, passed through
+ *  opaque and unverifiable by design -- it binds the cached claim to
+ *  the install with exactly the honesty-box strength the old HMAC
+ *  scheme had, minus the forgeability. */
+async function handleEntitlement(env, request) {
+  const device = bearer(request);
+  const session = await loadSession(env, device);
+  if (!session) {
+    return refuse(401, 'signed_out', 'This install is not signed in. Sign in again.');
+  }
+  let body = {};
+  try {
+    body = await request.json();
+  } catch { /* an empty body is fine; machine is optional */ }
+  const refreshed = await refreshEntitlement(env, device, session);
+  const kind = refreshed.kind === 'gumroad' ? 'gumroad'
+    : refreshed.kind === 'trial' ? 'trial' : 'patreon';
+  const ttl = kind === 'gumroad' ? GUMROAD_CLAIM_TTL
+    : kind === 'trial'
+      ? Math.max(60, (refreshed.trial_expires_at || 0) - Math.floor(Date.now() / 1000))
+      : PATREON_SESSION_TTL;
+  const machine = typeof body.machine === 'string'
+    ? body.machine.slice(0, 128) : null;
+  const claim = await mintJWT(env, {
+    sub: await sha256hex(device),
+    machine,
+    kind,
+    products: refreshed.products || [],
+    trial_expires_at: refreshed.trial_expires_at || null,
+  }, ttl);
+  return json({ ok: true, claim, products: refreshed.products || [], kind });
+}
+
+/** GET /pubkey -- the verification half of the keypair. Publishing it
+ *  mints nothing (Ed25519 SPKI, public by definition); serving it here
+ *  gives every client one authoritative place to pin GATE_PUBLIC_KEY
+ *  from instead of a copy-paste channel that can go stale. */
+function handlePubkey(env) {
+  const spki = env.JWT_PUBLIC_KEY || '';
+  if (!spki) {
+    return refuse(500, 'unconfigured', 'The gate has no public key configured.');
+  }
+  return json({ ok: true, alg: 'EdDSA', spki },
+    200, { 'cache-control': 'public, max-age=3600' });
+}
+
 function bearer(request) {
   const h = request.headers.get('authorization') || '';
   return h.toLowerCase().startsWith('bearer ') ? h.slice(7).trim() : '';
@@ -778,6 +839,12 @@ export default {
       }
       if (pathname === '/token/download' && request.method === 'POST') {
         return handleTokenDownload(env, request);
+      }
+      if (pathname === '/entitlement' && request.method === 'POST') {
+        return handleEntitlement(env, request);
+      }
+      if (pathname === '/pubkey' && request.method === 'GET') {
+        return handlePubkey(env);
       }
       if (pathname === '/session/revoke' && request.method === 'POST') {
         return handleSessionRevoke(env, request);

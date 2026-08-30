@@ -557,13 +557,24 @@ def onClickPublish(info):
 def onEditEndPkg(info):
     import re as _re
     o = op(getPath(info))
-    p = getattr(o.par, 'Pkgversion', None) if o is not None else None
+    if o is None:
+        return
+    # WRITE the child, never the comp par: the tool's own Pkgversion is a
+    # mirror (expression/bind onto FNS_About), and a .val assignment there
+    # silently flips it to CONSTANT -- the severed-mirror preflight
+    # blocker. Exactly release_one._versionWritePar's rule; the bare
+    # comp-level par answers only for packages with no FNS_About child.
+    fa = o.op('FNS_About')
+    p = getattr(fa.par, 'Pkgversion', None) if fa is not None else None
+    if p is None:
+        p = getattr(o.par, 'Pkgversion', None)
     if p is None:
         return
     txt = str(info.get('cellText', '')).strip()
     if not _re.match(r'^\\d+\\.\\d+\\.\\d+$', txt):
-        ui.messageBox('FNS publish',
-                      'A package version looks like 1.2.3 -- got %r' % txt)
+        # no ui.messageBox here -- it blocks the main thread (td-python.md)
+        debug('FNS publish: a package version looks like 1.2.3 -- got %r'
+              % txt)
         return
     p.val = txt
     p.default = txt

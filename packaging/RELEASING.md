@@ -3,6 +3,8 @@
 How to ship. What the pieces *are* (rails, bootstrap, store, versioning,
 binding modes) lives in [README.md](README.md); design rationale in
 [`docs/ConfiguratorDistribution.md`](../docs/ConfiguratorDistribution.md).
+Making a NEW package — what one consists of, what it must carry —
+is [CREATING.md](CREATING.md).
 
 ## The button: Guided Release
 

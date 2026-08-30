@@ -291,7 +291,17 @@ class HubExt:
 			if hook is not None:
 				hook(on)
 			elif getattr(comp.par, 'Address', None) is not None:
-				p = getattr(comp.par, 'Active', None)
+				# The FNS webBrowser polices its own Active every frame
+				# (watch_rules), and a windowCOMP window satisfies NONE of
+				# its visibility watchers -- measured: setting Active here
+				# had it switched back off one frame later, a dark console
+				# tab in an open hub. So exposure speaks the rail's own
+				# language: the declared hold, which outranks the watchers
+				# while this tab is the shown one and hands Active back to
+				# them when it is not. A plain palette Web Browser has no
+				# Holdactive; its Active is still driven directly.
+				hp = getattr(comp.par, 'Holdactive', None)
+				p = hp if hp is not None else getattr(comp.par, 'Active', None)
 				if p is not None and bool(p.eval()) != on:
 					p.val = on
 			# refresh-on-show, by capability (the tools_ui convention): a tool

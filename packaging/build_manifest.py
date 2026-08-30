@@ -68,7 +68,20 @@ REGISTRY_OWNER = {
     'FNS_PaneTypeRegistry': 'FNS_PaneTypeRegistry',
     'FNS_Console': 'FNS_Console',
     'FNS_HubRegistry': 'FNS_HubRegistry',
+    # The tenth registry. Listed here like the rest so a tool that hosts it
+    # is FOUND (_hostedRegistries only looks for names in this map) and so
+    # `requires` names it -- installing FNS_TimelineTools without the
+    # registry that carries its panels is a broken install.
+    'FNS_TimelineRegistry': 'FNS_TimelineRegistry',
 }
+# WHAT A PACKAGE GIVES YOU, keyed by the registry it hosts to give it.
+#
+# This is the toolkit's one surface vocabulary. A package's `surfaces` is
+# how a reader answers "does this put a button somewhere, or is it a
+# background behaviour" -- so it is what the picker chips, what the docs
+# page states, and what both of them filter on. The LABELS live beside the
+# ids on purpose: a second copy of the words in the picker and a third in
+# the site is exactly how those two drifted apart before.
 SURFACE_OF = {
     'FNS_ToolbarRegistry': 'toolbar',
     'FNS_NavbarRegistry': 'navbar',
@@ -76,6 +89,28 @@ SURFACE_OF = {
     'FNS_OpMenuRegistry': 'opmenu',
     'FNS_PaneTypeRegistry': 'panebar',
     'FNS_HubRegistry': 'hub',
+    'FNS_Console': 'console',
+    'FNS_TimelineRegistry': 'timeline',
+    # FNS_ConfigRegistry is deliberately absent. 37 of the 49 packages host
+    # it, so a chip for it would mark almost everything and separate
+    # nothing -- and what it grants (settings that follow you between
+    # projects) is the toolkit's default rather than a feature of any one
+    # tool. See docs/ScopeAndPersistence.md.
+    #
+    # FNS_PaletteRegistry is absent because nothing hosts it: the palette
+    # tabs it serves appear without any tool registering (PaletteTabContract).
+}
+# The words a reader sees. Phrased as what you GET, not as the machinery
+# that puts it there -- "Toolbar button", never "hosts ToolbarRegistry".
+SURFACE_LABEL = {
+    'toolbar': 'Toolbar button',
+    'navbar': 'Pane bar button',
+    'mainmenu': 'Main menu entry',
+    'opmenu': 'OP Create menu entry',
+    'panebar': 'Custom pane type',
+    'hub': 'Hub tab',
+    'console': 'Console tab',
+    'timeline': 'Timeline panel',
 }
 # Packages that ARE the infrastructure; always installed, never optional.
 # Core = the raw registries plus two non-registry exceptions: FNS_Updater,
@@ -135,6 +170,14 @@ def _version(comp):
     a sha256 comparison would mark every package updated on every release.
     Hashes verify downloads; this decides updates.
     """
+    fa = comp.op('FNS_About')
+    if fa is not None:
+        # the child is the authoritative copy (release bumps write it);
+        # reading it directly means a severed comp-level mirror can never
+        # invert who wins -- the comp par is display, not truth
+        p = getattr(fa.par, 'Pkgversion', None)
+        if p is not None and str(p.eval()).strip():
+            return str(p.eval()).strip()
     p = getattr(comp.par, 'Pkgversion', None)
     return str(p.eval()).strip() if p is not None else ''
 
@@ -257,6 +300,231 @@ def Hotkeys(comp):
         if prev is None or h['op'].count('/') < prev['op'].count('/'):
             best[h['keys']] = h
     return sorted(best.values(), key=lambda h: (h['keys'], h['op']))
+
+
+# What the TOOLKIT stamps on every package, as opposed to what a tool's
+# author designed. Stamped controls mean the same thing everywhere, so they
+# are published ONCE under the manifest's `parameter_reference` and the docs
+# site renders them on one shared page instead of fifty times over.
+#
+# Only two things qualify, and the boundary was drawn by MEASURING rather
+# than by page name:
+#   REGISTRY_PAGE  -- RegistryBase.TOOL_PAGE_NAME. Wholly stamped: one
+#       section per registry the tool publishes into, every section the
+#       same stems behind a 2-char prefix.
+#   ABOUT_PAGE, read-only pars only -- the identity stamps (Pkgversion,
+#       Version, Build, Date, Touchbuild, author fields). The rest of that
+#       page is NOT uniform: authors have parked real controls there
+#       (Bypass, Show Built-in Parameters, ChatTD Operator, README pulses),
+#       and treating the whole page as boilerplate would hide 19 working
+#       controls from their own documentation.
+# The host `Registration` page (RegistryBase.HOST_PAGE_NAME) is deliberately
+# NOT shared: it exists only on the eight registry packages, where it IS the
+# package's user surface -- what a host offers is the whole contract.
+REGISTRY_PAGE = 'Registry'
+ABOUT_PAGE = 'About'
+# Dev-only. pre_release_common destroys this page on every component before
+# a package ships, so documenting it would describe controls no user can
+# ever see.
+DEV_PAGES = ('Version Ctrl',)
+
+
+def _plain(val):
+    """JSON-safe. TD hands back its own objects for menus and colours."""
+    if isinstance(val, (bool, int, float, str)):
+        return val
+    try:
+        return str(val)
+    except Exception:
+        return ''
+
+
+def _parDefault(par):
+    try:
+        return _plain(par.default)
+    except Exception:
+        return ''
+
+
+def _parRows(page):
+    """One row per TUPLET, in dialog order.
+
+    A tuplet is what the user sees as ONE control: an RGBA swatch is four
+    Pars behind a single label and a WH field is two, so listing Pars
+    would document a colour picker as four sliders. `help` is taken from
+    whichever member carries it -- TD shows one tooltip for the group.
+    """
+    rows, seen = [], set()
+    pars = list(page.pars)
+    for par in pars:
+        tup = str(par.tupletName)
+        if tup in seen:
+            continue
+        seen.add(tup)
+        members = [p for p in pars if str(p.tupletName) == tup]
+        row = {
+            'name': tup,
+            'label': str(par.label),
+            'style': str(par.style),
+            'help': next((str(p.help).strip() for p in members
+                          if str(p.help or '').strip()), ''),
+        }
+        if len(members) > 1:
+            row['size'] = len(members)
+        if par.style != 'Pulse':
+            row['default'] = _parDefault(par)
+        if par.readOnly:
+            row['readonly'] = True
+        if par.startSection:
+            row['section'] = True
+        if par.style in ('Menu', 'StrMenu'):
+            row['menu'] = [{'name': str(n), 'label': str(l)} for n, l
+                           in zip(par.menuNames or [], par.menuLabels or [])]
+        rows.append(row)
+    return rows
+
+
+def Parameters(comp):
+    """The package's own customization surface, read live off the pars.
+
+    Returns [{page, name, label, style, default, help, ...}] for what the
+    tool's author designed -- the registry sections and the About page's
+    identity stamps are published once for the whole toolkit (see
+    SharedParameters) and DEV_PAGES never ship at all.
+
+    The parameter's `help` IS the documentation -- not a copy of it. A
+    tooltip written in TouchDesigner today is the sentence the docs page
+    carries at the next build, with no prose edited anywhere. Nothing
+    about a parameter is authored in catalog.json: a second place to
+    write it is a second place for it to go stale, which is the same
+    reasoning that killed the proposed `help` field in favour of
+    _helpUrl() derivation.
+    """
+    out = []
+    for page in comp.customPages:
+        if page.name == REGISTRY_PAGE or page.name in DEV_PAGES:
+            continue
+        for row in _parRows(page):
+            if page.name == ABOUT_PAGE and row.get('readonly'):
+                continue          # identity stamp; documented once
+            row['page'] = str(page.name)
+            out.append(row)
+    return out
+
+
+def _stem(name):
+    """A registry section par minus its 2-char prefix: Cfautoregister -> Autoregister."""
+    return name[2:].capitalize() if len(name) > 2 else name
+
+
+def _betterRegistryOwner(cand, prev):
+    """FNS_ConfigHost and FNS_ConfigRegistry both answer to the 'Cf'
+    prefix. A reader following "where is this section documented" wants
+    the REGISTRY, not the host shell that carries a copy of it."""
+    if cand in REGISTRY_OWNER:
+        return prev not in REGISTRY_OWNER
+    if cand.endswith('Registry'):
+        return not prev.endswith('Registry')
+    return False
+
+
+def _registryPrefixes():
+    """Section prefix -> the registry package that stamps that section.
+
+    Read off the registries themselves (RegistryBase.TOOL_PAGE_PREFIX), so
+    an eleventh registry needs no entry anywhere: it declares its prefix
+    the same way the ten before it did and the docs follow.
+    """
+    out = {}
+    for comp in _root().children:
+        if comp.family != 'COMP':
+            continue
+        for ext in (comp.extensions or []):
+            prefix = str(getattr(ext, 'TOOL_PAGE_PREFIX', '') or '')
+            if not prefix:
+                continue
+            prev = out.get(prefix)
+            if prev is None or _betterRegistryOwner(comp.name, prev):
+                out[prefix] = comp.name
+    return out
+
+
+def RegistersWith(comp, prefixes=None):
+    """Which registries this package publishes itself into.
+
+    Taken from the section prefixes actually present on its Registry page,
+    which is the same evidence the sections themselves are built from --
+    so a tool cannot appear to register with something it does not.
+    """
+    prefixes = _registryPrefixes() if prefixes is None else prefixes
+    page = next((pg for pg in comp.customPages
+                 if pg.name == REGISTRY_PAGE), None)
+    if page is None:
+        return []
+    found = {prefixes[str(par.name)[:2]] for par in page.pars
+             if str(par.name)[:2] in prefixes}
+    return sorted(found - {comp.name})
+
+
+def RegistrySections(comps):
+    """The section each REGISTRY stamps onto the tools that register with it.
+
+    Grouped by the registry package that owns it, because that is where a
+    reader looks it up: FNS_ToolbarRegistry's page explains the controls a
+    toolbar registration adds, and a tool's own page just says which
+    registries it joined. The alternative -- one global table of stems --
+    loses the labels, which are the part that actually differs (the same
+    Autoregister is "Show in Hub" on one registry and "Expose to Console"
+    on another) and it puts the explanation nowhere near the thing being
+    explained.
+
+    Derived from the tools rather than from the registries, because the
+    section as STAMPED is the truth; a registry's template is what it
+    intends to stamp.
+    """
+    prefixes = _registryPrefixes()
+    out = {}
+    for comp in comps:
+        page = next((pg for pg in comp.customPages
+                     if pg.name == REGISTRY_PAGE), None)
+        if page is None:
+            continue
+        for row in _parRows(page):
+            owner = prefixes.get(row['name'][:2])
+            if owner is None or row['style'] == 'Header':
+                continue      # the Header names the registry, not a control
+            row['name'] = _stem(row['name'])
+            bucket = out.setdefault(owner, {})
+            prev = bucket.get(row['name'])
+            if prev is None:
+                bucket[row['name']] = row
+            elif row['help'] and not prev['help']:
+                prev['help'] = row['help']
+    return {k: list(v.values()) for k, v in sorted(out.items())}
+
+
+def AboutStamps(comps):
+    """The read-only identity block every package carries.
+
+    The rest of the About page is NOT uniform -- authors have parked real
+    controls there -- so only the read-only fields are pulled out; see the
+    ABOUT_PAGE note above.
+    """
+    out = {}
+    for comp in comps:
+        page = next((pg for pg in comp.customPages
+                     if pg.name == ABOUT_PAGE), None)
+        if page is None:
+            continue
+        for row in _parRows(page):
+            if not row.get('readonly'):
+                continue
+            prev = out.get(row['name'])
+            if prev is None:
+                out[row['name']] = row
+            elif row['help'] and not prev['help']:
+                prev['help'] = row['help']
+    return list(out.values())
 
 
 def _minTdBuild(comp):
@@ -624,6 +892,110 @@ def _retired():
     return []
 
 
+def _presets(catalog, packages):
+    """Curated preset bundles for the guided setup's welcome, validated
+    against what THIS manifest actually ships.
+
+    catalog.json may carry `presets`: [{name, blurb, packages}] -- named
+    starting points the picker offers between Recommended and Everything
+    (docs/InstallSurfaceDesign.md). Curation goes stale by nature (a tool
+    renamed, retired, or not yet released), so an unknown name is dropped
+    and REPORTED here rather than shipped -- a bundle must never put an
+    uninstallable name in front of a user -- and a bundle the filter
+    empties is dropped whole. Returns (bundles, problems).
+    """
+    known = {p['name'] for p in packages if p.get('kind') == 'tool'}
+    out, problems = [], []
+    for raw in catalog.get('presets', []) or []:
+        if not isinstance(raw, dict):
+            problems.append('preset %r: not an object' % (raw,))
+            continue
+        name = str(raw.get('name', '')).strip()
+        pkgs = [str(n).strip() for n in (raw.get('packages') or []) if str(n).strip()]
+        if not name or not pkgs:
+            problems.append('preset %r: needs a name and a package list'
+                            % (name or raw))
+            continue
+        gone = [n for n in pkgs if n not in known]
+        keep = [n for n in pkgs if n in known]
+        if gone:
+            problems.append('preset %r: not shipped by this release: %s'
+                            % (name, ', '.join(gone)))
+        if keep:
+            out.append({'name': name,
+                        'blurb': str(raw.get('blurb', '')).strip(),
+                        'packages': keep})
+        else:
+            problems.append('preset %r: empty after filtering -- dropped' % name)
+    return out, problems
+
+PARAMS_SCHEMA = 1
+PARAMS_FILE = 'parameters.json'
+
+
+def BuildParameters(out_path=None, release=None):
+    """Write packaging/parameters.json -- every package's customization
+    surface, with each parameter's own tooltip as its description.
+
+    A SEPARATE document from manifest.json on purpose. The manifest is the
+    rolling pointer every installed toolkit re-fetches to decide whether an
+    update exists; it is uploaded, signed and cache-controlled, and it was
+    54 KB before this existed. The parameter reference is ~160 KB of prose
+    that no client needs in order to answer "is there a newer version" --
+    putting it there would quadruple that fetch for every user, forever, to
+    serve a docs build that runs from the repo anyway. So it stays in the
+    repo, feeds website/tools/build-site.mjs, and is never uploaded.
+
+    Written by Build() rather than by a step of its own: one live pass, two
+    files, no way for them to disagree about which project they describe.
+    """
+    comps = Packages()
+    prefixes = _registryPrefixes()
+    doc = {
+        'schema': PARAMS_SCHEMA,
+        'release': release or _release(),
+        'td_build': app.build,
+        # what each tool's author designed, in dialog order
+        'packages': {c.name: Parameters(c) for c in comps},
+        # the section each registry stamps, filed under the registry that
+        # owns it -- a tool's page points at these rather than repeating
+        # them, so the explanation sits with the thing it explains
+        'registry_sections': RegistrySections(comps),
+        # Which registries put a section on THIS component's own Registry
+        # page. Not the same question as `surfaces` in the manifest: a host
+        # nested inside a widget (GlobalVolControl's toolbar button carries
+        # its own) gives the package a toolbar button while leaving the
+        # package root's Registry page empty. Measured: 5 packages differ.
+        # This one answers "where are these parameters documented", which
+        # is the only thing the docs page uses it for.
+        'registry_pages': {c.name: RegistersWith(c, prefixes) for c in comps
+                           if RegistersWith(c, prefixes)},
+        # what the package gives the user, same derivation as the manifest
+        'surfaces': {c.name: sorted({SURFACE_OF[h]
+                                     for h in _hostedRegistries(c)
+                                     if h in SURFACE_OF})
+                     for c in comps},
+        # the vocabulary itself, so the docs build needs no copy of it and
+        # does not have to wait for a manifest rebuild to learn a new one
+        'surface_meta': {sid: {'label': SURFACE_LABEL.get(sid, sid),
+                               'registry': reg}
+                         for reg, sid in sorted(SURFACE_OF.items())},
+        # the read-only identity block, identical on every package
+        'about_stamp': AboutStamps(comps),
+    }
+    out_path = out_path or _repo(PKG_DIR, PARAMS_FILE)
+    with open(out_path, 'w', encoding='utf-8') as f:
+        json.dump(doc, f, indent=1, sort_keys=False)
+        f.write('\n')
+    return {
+        'path': out_path,
+        'packages': len(doc['packages']),
+        'parameters': sum(len(v) for v in doc['packages'].values()),
+        'registries': {k: len(v) for k, v in doc['registry_sections'].items()},
+        'about_stamp': len(doc['about_stamp']),
+    }
+
+
 def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
     """Write packaging/manifest.json. `export` may be False, True, or a
     list of package names to (re-)export artifacts for."""
@@ -715,6 +1087,26 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
         if warn:
             entry['portability'] = warn
 
+        # Save Backup of External: ON makes every parent save embed a full
+        # backup of this externally-carried child, which is a leak vector
+        # for gated packages (the root suspect publishes). Presence-style;
+        # the public mirror's embedding guard reads it.
+        try:
+            if (comp.par.enableexternaltox.eval()
+                    and comp.par.savebackup.eval()):
+                entry['save_backup'] = True
+        except Exception:
+            pass
+
+        # Where the package lands, curated in catalog.json. Absent (the
+        # default) = a child of the toolkit container, update-tracked in
+        # place. 'pane' = a reusable component: the installer spawns it
+        # into the network the user is working in, presence is the install
+        # record, and instances are frozen at their spawn version (like a
+        # palette component). Stored as presence, like `recommended`.
+        if str(meta.get('placement', '')) == 'pane':
+            entry['placement'] = 'pane'
+
         # per-tool release note for the CURRENT version: freshly attributed
         # prose when this release moves the version, otherwise carried from
         # the previous manifest (it still describes the shipped version)
@@ -788,6 +1180,14 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             # SUPPORT_URL owns the door.
             'support_url': SUPPORT_URL,
             'tiers': tier_ladder,
+            # The surface vocabulary: id -> the words to show and the
+            # registry that documents it. Published so the picker and the
+            # docs site render the same names without either one keeping
+            # its own list.
+            'surface_meta': {
+                sid: {'label': SURFACE_LABEL.get(sid, sid), 'registry': reg}
+                for reg, sid in sorted(SURFACE_OF.items())
+            },
         },
         'core': [p['name'] for p in packages if p['kind'] == 'core'],
         # Deliberate retirements for this release -- see _retired(). Empty
@@ -817,9 +1217,19 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
                     and curated.get(p['name'], {}).get('recommended')],
         'packages': packages,
     }
+    # Curated bundles for the guided setup (catalog `presets`, validated
+    # against this very package list). Emitted only when curation exists,
+    # so older manifests and an unauthored catalog stay byte-identical.
+    preset_bundles, preset_problems = _presets(catalog, packages)
+    if preset_bundles:
+        doc['presets'] = preset_bundles
     with open(out_path, 'w', encoding='utf-8') as f:
         json.dump(doc, f, indent=1, sort_keys=False)
         f.write('\n')
+
+    # Same run, second file: the parameter reference is derived from the
+    # same live pass, so the two can never describe different projects.
+    BuildParameters(release=rel)
 
     # Same data as a <script>-loadable file so configurator/index.html works
     # when opened straight off disk -- fetch() of a sibling .json is blocked
@@ -851,5 +1261,6 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             'core': len(doc['core']),
             'with_artifact': sum(1 for p in packages if 'artifact' in p),
             'export_failed': export_failed,
+            'preset_problems': preset_problems,
             'uncategorized': [p['name'] for p in packages
                               if p['category'] == 'Uncategorized']}

@@ -5,45 +5,343 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FNSTools — build your install</title>
 <style>
-  /* The FNSTools family palette, token-for-token with website/docs.css.
-     This page is served three ways -- as /get/ on the site, by the
-     bootstrap's Web Server DAT inside TouchDesigner, and as a single
-     double-clickable file -- so every style it needs is inline. On the site
-     the build ALSO links docs.css + site-nav.css for the shared header and
+  /* The FNSTools family look. This page is served three ways -- as /get/ on
+     the site, by the bootstrap's Web Server DAT inside TouchDesigner, and as
+     a single double-clickable file -- so every style it needs is inline. The
+     tokens and shared components between the FNS:UIBASE markers are a
+     GENERATED copy of packaging/configurator/base.css (the console page
+     inlines the same block): edit base.css, then run
+     `python packaging/configurator/sync_base.py --write`. On the site the
+     build ALSO links docs.css + site-nav.css for the shared header and
      footer; those declare the same tokens with the same values, so the two
      never disagree. */
-  :root {
-    --bg: #0a0a0a;        --bg-1: #111111;      --bg-2: #161616;
-    --bg-3: #1c1c1c;      --bg-deep: #050505;
-    --border: #262626;    --border-strong: #3a3a3a;
-    --text: #f5f5f5;      --text-dim: #a3a3a3;  --text-faint: #737373;
-    --accent: #fbbf24;    --accent-dim: #2a1f08; --accent-bright: #fcd34d;
-    --accent-ink: #0a0a0a;
-    --green: #4ade80;     --warn: #fdba74;      --warn-dim: #2a1408;
-    --max-w: 1140px;      --radius: 10px;
-    /* Height of the chrome that sits above the sticky filter bar. 0 on its
-       own; the site flavor sets it to the site header's height. */
-    --stick: 0px;
-  }
-  /* Opt-in only, and only where this page is the whole window: the site is
-     dark everywhere, so the site flavor hides the toggle rather than letting
-     the picker drift away from the header above it. */
-  :root[data-theme="light"] {
-    --bg: #f7f7f8;        --bg-1: #ffffff;      --bg-2: #f0f1f4;
-    --bg-3: #e9eaee;      --bg-deep: #f2f3f5;
-    --border: #e2e3e7;    --border-strong: #c6c8ce;
-    --text: #16171a;      --text-dim: #5c6069;  --text-faint: #83878f;
-    --accent: #a16207;    --accent-dim: #fdf3d7; --accent-bright: #854d0e;
-    --accent-ink: #ffffff;
-    --green: #16a34a;     --warn: #b45309;      --warn-dim: #fff5e8;
-  }
+  /* FNS:UIBASE:START -- generated from packaging/configurator/base.css; edit THERE, then run python packaging/configurator/sync_base.py --write */
+/* FNSTools UI base -- the ONE source for the family's design tokens and
+   shared components. Both web shells inline a copy of this file between
+   FNS:UIBASE markers (packaging/configurator/index.html and
+   FNSTools/FNS_Console/console_page.html), because each of them must stay a
+   single self-contained file: one is embedded into the installer and served
+   from a Text DAT inside TouchDesigner, the other doubles as a
+   double-clickable standalone. Edit HERE, then run
 
-  * { box-sizing: border-box; }
-  /* .btn sets display:inline-flex, and an author display beats the UA's
-     [hidden] rule. Served mode hides the paste-rail button that way, and the
-     dialog toggles Copy/Install the same way, so this has to win. */
-  [hidden] { display: none !important; }
-  html, body { margin: 0; padding: 0; }
+       python packaging/configurator/sync_base.py --write
+
+   to push the block into both shells (bare run = drift check only;
+   tests/test_ui_base_sync.py refuses a release with a stale copy).
+
+   Token values are kept in lockstep with website/docs.css on purpose: the
+   /get/ flavor loads docs.css for the site chrome AND this block inline, and
+   the two must never disagree (this block wins the cascade, so a drifted
+   value here would restyle the site header). Change a token value in both
+   places or in neither. */
+
+:root {
+  --bg: #0a0a0a;        --bg-1: #111111;      --bg-2: #161616;
+  --bg-3: #1c1c1c;      --bg-deep: #050505;
+  --border: #262626;    --border-strong: #3a3a3a;
+  --text: #f5f5f5;      --text-dim: #a3a3a3;  --text-faint: #737373;
+  --accent: #fbbf24;    --accent-dim: #2a1f08; --accent-bright: #fcd34d;
+  --accent-ink: #0a0a0a;
+  --green: #4ade80;     --warn: #fdba74;      --warn-dim: #2a1408;
+  --err: #f87171;       --err-dim: #2a0f0f;
+  --max-w: 1140px;      --radius: 10px;
+  /* Height of the chrome that sits above a sticky bar. 0 on its own; the
+     site flavor sets it to the site header's height. */
+  --stick: 0px;
+}
+/* Opt-in only, and only where the page is the whole window: the site and
+   TouchDesigner are dark everywhere, so embedded flavors never offer it. */
+:root[data-theme="light"] {
+  --bg: #f7f7f8;        --bg-1: #ffffff;      --bg-2: #f0f1f4;
+  --bg-3: #e9eaee;      --bg-deep: #f2f3f5;
+  --border: #e2e3e7;    --border-strong: #c6c8ce;
+  --text: #16171a;      --text-dim: #5c6069;  --text-faint: #83878f;
+  --accent: #a16207;    --accent-dim: #fdf3d7; --accent-bright: #854d0e;
+  --accent-ink: #ffffff;
+  --green: #16a34a;     --warn: #b45309;      --warn-dim: #fff5e8;
+  --err: #dc2626;       --err-dim: #fdecec;
+}
+
+* { box-sizing: border-box; }
+/* .btn sets display:inline-flex, and an author display beats the UA's
+   [hidden] rule. Served mode hides the paste-rail button that way, and
+   dialogs toggle their buttons the same way, so this has to win. */
+[hidden] { display: none !important; }
+html, body { margin: 0; padding: 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-bright); }
+code, kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.9em; }
+.spacer { flex: 1 1 auto; }
+
+/* ── buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 8px;
+  font: inherit; font-size: 14px; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-bright); color: var(--accent-ink); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; background: var(--accent); }
+.btn-secondary { background: transparent; color: var(--text); border-color: var(--border-strong); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-quiet {
+  background: transparent; color: var(--text-dim);
+  border-color: var(--border); font-weight: 500;
+}
+.btn-quiet:hover { border-color: var(--border-strong); color: var(--text); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── inputs ── */
+input[type=search], input[type=text].fns, select.fns {
+  padding: 9px 13px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-1); color: var(--text); font: inherit; font-size: 14px;
+}
+input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
+  outline: none; border-color: var(--accent); background: var(--bg-2);
+}
+
+/* ── eyebrow / meta ── */
+.eyebrow {
+  display: inline-block; padding: 5px 12px; border-radius: 999px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(251,191,36,0.25);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+}
+
+/* ── notes ── */
+.note {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, var(--bg-1) 60%);
+  border: 1px solid rgba(251,191,36,0.26); border-radius: 12px;
+  font-size: 14px; color: var(--text-dim); line-height: 1.6;
+}
+.note b { color: var(--text); }
+.note a { white-space: nowrap; }
+
+/* ── category sections ── */
+.cat {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 34px 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+}
+.cat-glyph { color: var(--accent); font-size: 15px; font-weight: 400; }
+.cat-count {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.cat-docs { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+.cat-docs:hover { color: var(--accent); }
+.cat-pitch { margin: 0 0 14px; font-size: 13px; color: var(--text-faint); }
+
+/* ── category quick-nav (jump chips under the filter bar) ── */
+.catnav {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  padding: 8px 0 2px;
+}
+.catnav a {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--text-dim);
+  white-space: nowrap;
+}
+.catnav a:hover { border-color: var(--accent); color: var(--accent); }
+.catnav a .g { color: var(--accent); font-size: 11px; }
+.catnav a .n { color: var(--text-faint); font-size: 11px; }
+
+/* ── the grid and cards ── */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.card {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 16px; cursor: pointer;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.card:hover { border-color: var(--border-strong); background: var(--bg-2); }
+.card.on {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, rgba(251,191,36,0.07) 0%, var(--bg-1) 55%);
+}
+.card.rec { cursor: pointer; text-decoration: none; }
+.card.rec:hover { border-color: var(--accent); }
+.rec-by { font-size: 12px; opacity: .75; }
+.chip.rec { border-style: dashed; }
+.card.core { cursor: default; }
+.card.core:hover { border-color: var(--border); background: var(--bg-1); }
+.card input {
+  flex: none; margin: 3px 0 0; width: 16px; height: 16px;
+  accent-color: var(--accent); cursor: pointer;
+}
+.body { min-width: 0; flex: 1; }
+.name {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+}
+.desc { margin-top: 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+a.help:hover { color: var(--accent); }
+
+/* ── chips ── */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 500; color: var(--text-dim); white-space: nowrap;
+}
+.chip.core {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
+}
+.chip.hint {
+  background: var(--warn-dim); border-color: rgba(251,146,60,0.3); color: var(--warn);
+}
+/* state chips (the updates list, install reports) */
+.chip.ok { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.3); color: var(--green); }
+.chip.warn { background: var(--warn-dim); border-color: rgba(253,186,116,0.35); color: var(--warn); }
+.chip.err { background: var(--err-dim); border-color: rgba(248,113,113,0.35); color: var(--err); }
+.chip.up {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.4); color: var(--accent);
+  font-weight: 600;
+}
+/* Plus: a package the gate serves only to an entitled account. Marked, not
+   hidden -- the decision was "visible and locked", because a picker that
+   hides them lies about what the toolkit is. It is still tickable: this
+   page does not know your entitlement (the server does), and refusing the
+   tick here would be a client-side lock, which is exactly the thing that
+   means nothing. */
+.chip.plus {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
+  font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 10px;
+}
+a.chip.plus:hover { border-color: var(--accent); }
+.card.plus { border-color: rgba(251,191,36,0.22); }
+/* Entitlement, served flavor only. Unlocked reads as filled (a state you
+   HAVE); locked stays outlined and dimmed (a state you could have). The
+   published /get/ page never sets these classes. */
+.chip.plus.own {
+  background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
+}
+.chip.plus.locked { opacity: 0.6; }
+.card.plus.own { border-color: rgba(251,191,36,0.55); }
+.acct { color: var(--text-dim); font-size: 12.5px; }
+.acct b { color: var(--accent); font-weight: 600; }
+.plus-hint { margin-top: 10px; font-size: 12.5px; color: var(--text-dim); }
+.plus-hint a { color: var(--accent); }
+
+/* ── the Plus rail: one understated line, not a storefront banner. The
+   free kit is the toolkit; Plus is named as exactly what it is. ── */
+.plusrail {
+  display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+  margin: 14px 0 0; padding: 10px 16px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-left: 2px solid rgba(251,191,36,0.5); border-radius: 8px;
+  font-size: 13px; color: var(--text-dim);
+}
+.plusrail b { color: var(--text); font-weight: 600; }
+.plusrail .mark { color: var(--accent); font-weight: 700; }
+
+.empty { padding: 48px 0; text-align: center; color: var(--text-faint); }
+.empty code {
+  background: var(--bg-3); border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 4px; color: var(--accent-bright);
+}
+
+/* ── summary rail ──
+   Sticky rather than fixed: it rides the viewport while there is list left
+   to scroll, then settles at the end of the page instead of sitting on top
+   of the footer forever. */
+.sum {
+  position: sticky; bottom: 0; z-index: 7;
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  margin: 40px 0 0; padding: 14px 18px;
+  background: rgba(17,17,17,0.94);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--border); border-radius: 12px 12px 0 0;
+  border-bottom: none;
+}
+:root[data-theme="light"] .sum { background: rgba(255,255,255,0.94); }
+.sum .n { font-size: 15px; font-weight: 700; }
+.sum .muted { font-size: 13px; color: var(--text-faint); }
+.sum-count { display: flex; align-items: baseline; gap: 8px; }
+
+/* ── dialogs ── */
+dialog {
+  max-width: 720px; width: 92vw; padding: 0; color: var(--text);
+  background: var(--bg-1); border: 1px solid var(--border-strong); border-radius: 14px;
+}
+dialog::backdrop { background: rgba(0,0,0,0.7); }
+.dlg { padding: 22px 24px 20px; }
+.dlg h3 { margin: 0 0 8px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.dlg-hint { margin: 0 0 14px; font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
+.dlg pre, pre.out {
+  margin: 0; padding: 14px 16px; max-height: 44vh; overflow: auto;
+  background: var(--bg-deep); border: 1px solid var(--border); border-radius: 10px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px; line-height: 1.6; color: var(--text-dim);
+  white-space: pre-wrap; word-break: break-word;
+}
+.dlg-actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+
+/* ── the guided steps strip ── */
+.steps {
+  display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0 0; padding: 0;
+  list-style: none; font-size: 13px; color: var(--text-faint);
+}
+.steps li { display: flex; align-items: center; gap: 8px; }
+.steps li::before {
+  content: attr(data-n); display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700;
+  background: var(--bg-3); border: 1px solid var(--border-strong); color: var(--text-dim);
+}
+.steps li.now { color: var(--text); }
+.steps li.now::before { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.steps li.done::before {
+  content: '✓'; background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+}
+/* two to four cards, depending on what this machine remembers */
+.presets {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; margin: 6px 0 4px;
+}
+.preset {
+  display: flex; flex-direction: column; gap: 4px; text-align: left; cursor: pointer;
+  padding: 14px; border-radius: var(--radius); color: var(--text);
+  background: var(--bg-2); border: 1px solid var(--border); font: inherit;
+}
+.preset:hover, .preset:focus-visible { border-color: var(--accent); outline: none; }
+.preset b { font-size: 15px; }
+.preset span { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
+.preset .pick { margin-top: 6px; font-size: 12px; color: var(--accent); }
+@media (max-width: 640px) { .presets { grid-template-columns: 1fr; } }
+
+/* ── toast ── */
+.toast {
+  position: fixed; bottom: 14px; right: 18px; padding: 8px 14px;
+  border-radius: 8px; background: var(--bg-2); border: 1px solid var(--border);
+  color: var(--text);
+  opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 30;
+  max-width: 70ch; word-break: break-word; font-size: 13px;
+}
+.toast.show { opacity: 1; }
+.toast.ok { border-color: var(--green); }
+.toast.err { border-color: var(--err); }
+
+/* ── app density: the in-TD manager sets body.app; everything reads a
+   notch tighter without forking any component. ── */
+body.app { font-size: 13px; line-height: 1.5; }
+body.app .btn { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+body.app input[type=search], body.app input[type=text].fns, body.app select.fns {
+  padding: 6px 10px; font-size: 13px; border-radius: 6px;
+}
+body.app .cat { margin: 22px 0 2px; font-size: 16px; }
+body.app .card { padding: 11px 13px; }
+body.app .name { font-size: 14px; }
+body.app .desc { font-size: 12.5px; }
+body.app .dlg h3 { font-size: 16px; }
+/* FNS:UIBASE:END */
+
+  /* ── page-specific: the storefront shell ── */
   html { scroll-padding-top: calc(var(--stick) + 72px); scroll-behavior: smooth; }
   body {
     background: var(--bg); color: var(--text);
@@ -51,21 +349,11 @@
     font-size: 16px; line-height: 1.55;
     -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
   }
-  a { color: var(--accent); text-decoration: none; }
-  a:hover { color: var(--accent-bright); }
-  code, kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.9em; }
-
   .wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
 
-  /* ───── Hero ───── */
+  /* ── hero ── */
   .cfg-hero { padding: 44px 0 26px; }
-  .eyebrow {
-    display: inline-block; padding: 5px 12px; border-radius: 999px;
-    background: var(--accent-dim); color: var(--accent);
-    border: 1px solid rgba(251,191,36,0.25);
-    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
-    margin-bottom: 18px;
-  }
+  .cfg-hero .eyebrow { margin-bottom: 18px; }
   h1 {
     margin: 0 0 14px; font-size: clamp(30px, 4.4vw, 44px);
     font-weight: 700; letter-spacing: -0.025em; line-height: 1.08;
@@ -81,218 +369,25 @@
     width: 6px; height: 6px; border-radius: 50%; background: var(--green);
   }
 
-  /* ───── Filter bar ───── */
+  /* ── filter bar ── */
   .cfg-bar {
     position: sticky; top: var(--stick); z-index: 6;
     display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
     padding: 12px 0; margin-bottom: 4px;
     background: var(--bg); border-bottom: 1px solid var(--border);
   }
-  input[type=search] {
-    flex: 1 1 240px; min-width: 150px; padding: 9px 13px;
-    border-radius: 8px; border: 1px solid var(--border);
-    background: var(--bg-1); color: var(--text); font: inherit; font-size: 14px;
-  }
-  input[type=search]:focus {
-    outline: none; border-color: var(--accent); background: var(--bg-2);
-  }
-  .btn {
-    display: inline-flex; align-items: center; gap: 8px;
-    padding: 9px 16px; border-radius: 8px;
-    font: inherit; font-size: 14px; font-weight: 600;
-    border: 1px solid transparent; cursor: pointer; white-space: nowrap;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  }
-  .btn-primary { background: var(--accent); color: var(--accent-ink); }
-  .btn-primary:hover { background: var(--accent-bright); color: var(--accent-ink); }
-  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; background: var(--accent); }
-  .btn-secondary { background: transparent; color: var(--text); border-color: var(--border-strong); }
-  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-quiet {
-    background: transparent; color: var(--text-dim);
-    border-color: var(--border); font-weight: 500;
-  }
-  .btn-quiet:hover { border-color: var(--border-strong); color: var(--text); }
-  .spacer { flex: 1 1 auto; }
+  input[type=search] { flex: 1 1 240px; min-width: 150px; }
   .bar-docs { font-size: 13px; color: var(--text-dim); white-space: nowrap; }
   .bar-docs:hover { color: var(--accent); }
 
-  /* ───── Core note ───── */
-  .note {
-    margin: 22px 0 8px; padding: 16px 20px;
-    background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, var(--bg-1) 60%);
-    border: 1px solid rgba(251,191,36,0.26); border-radius: 12px;
-    font-size: 14px; color: var(--text-dim); line-height: 1.6;
-  }
-  .note b { color: var(--text); }
-  .note a { white-space: nowrap; }
+  .note { margin: 22px 0 8px; }
 
-  /* ───── Category sections ───── */
-  .cat {
-    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-    margin: 34px 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
-  }
-  .cat-glyph { color: var(--accent); font-size: 15px; font-weight: 400; }
-  .cat-count {
-    font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
-    text-transform: uppercase; color: var(--text-faint);
-  }
-  .cat-docs { font-size: 12px; font-weight: 500; color: var(--text-faint); }
-  .cat-docs:hover { color: var(--accent); }
-  .cat-pitch { margin: 0 0 14px; font-size: 13px; color: var(--text-faint); }
-
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
-
-  /* ───── Cards ───── */
-  .card {
-    display: flex; gap: 12px; align-items: flex-start;
-    padding: 14px 16px; cursor: pointer;
-    background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
-    transition: border-color 0.15s ease, background 0.15s ease;
-  }
-  .card:hover { border-color: var(--border-strong); background: var(--bg-2); }
-  .card.on {
-    border-color: var(--accent);
-    background: linear-gradient(135deg, rgba(251,191,36,0.07) 0%, var(--bg-1) 55%);
-  }
-  .card.rec { cursor: pointer; text-decoration: none; }
-  .card.rec:hover { border-color: var(--accent); }
-  .rec-by { font-size: 12px; opacity: .75; }
-  .chip.rec { border-style: dashed; }
-  .card.core { cursor: default; }
-  .card.core:hover { border-color: var(--border); background: var(--bg-1); }
-  .card input {
-    flex: none; margin: 3px 0 0; width: 16px; height: 16px;
-    accent-color: var(--accent); cursor: pointer;
-  }
-  .body { min-width: 0; flex: 1; }
-  .name {
-    display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
-    font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
-  }
-  .desc { margin-top: 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
-  a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
-  a.help:hover { color: var(--accent); }
-
-  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
-  .chip {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 9px; border-radius: 999px;
-    background: var(--bg-2); border: 1px solid var(--border);
-    font-size: 11px; font-weight: 500; color: var(--text-dim); white-space: nowrap;
-  }
-  .chip.core {
-    background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
-  }
-  .chip.hint {
-    background: var(--warn-dim); border-color: rgba(251,146,60,0.3); color: var(--warn);
-  }
-  /* Plus: a package the gate serves only to an entitled account. Marked, not
-     hidden -- the decision was "visible and locked", because a picker that
-     hides them lies about what the toolkit is. It is still tickable: this
-     page does not know your entitlement (the server does), and refusing the
-     tick here would be a client-side lock, which is exactly the thing that
-     means nothing. */
-  .chip.plus {
-    background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
-    font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 10px;
-  }
-  a.chip.plus:hover { border-color: var(--accent); }
-  .card.plus { border-color: rgba(251,191,36,0.22); }
-  /* Entitlement, served flavor only. Unlocked reads as filled (a state you
-     HAVE); locked stays outlined and dimmed (a state you could have). The
-     published /get/ page never sets these classes. */
-  .chip.plus.own {
-    background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
-  }
-  .chip.plus.locked { opacity: 0.6; }
-  .card.plus.own { border-color: rgba(251,191,36,0.55); }
-  .acct { color: var(--text-dim); font-size: 12.5px; }
-  .acct b { color: var(--accent); font-weight: 600; }
-  .plus-hint {
-    margin-top: 10px; font-size: 12.5px; color: var(--text-dim);
-  }
-  .plus-hint a { color: var(--accent); }
-
-  .empty { padding: 48px 0; text-align: center; color: var(--text-faint); }
-  .empty code {
-    background: var(--bg-3); border: 1px solid var(--border);
-    padding: 1px 5px; border-radius: 4px; color: var(--accent-bright);
-  }
-
-  /* ───── Summary rail ─────
-     Sticky rather than fixed: it rides the viewport while there is list left
-     to scroll, then settles at the end of the page instead of sitting on top
-     of the footer forever. */
-  .sum {
-    position: sticky; bottom: 0; z-index: 7;
-    display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
-    margin: 40px 0 0; padding: 14px 18px;
-    background: rgba(17,17,17,0.94);
-    -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-    border: 1px solid var(--border); border-radius: 12px 12px 0 0;
-    border-bottom: none;
-  }
-  :root[data-theme="light"] .sum { background: rgba(255,255,255,0.94); }
-  .sum .n { font-size: 15px; font-weight: 700; }
-  .sum .muted { font-size: 13px; color: var(--text-faint); }
-  .sum-count { display: flex; align-items: baseline; gap: 8px; }
-
-  /* ───── Dialog ───── */
-  dialog {
-    max-width: 720px; width: 92vw; padding: 0; color: var(--text);
-    background: var(--bg-1); border: 1px solid var(--border-strong); border-radius: 14px;
-  }
-  dialog::backdrop { background: rgba(0,0,0,0.7); }
-  .dlg { padding: 22px 24px 20px; }
-  .dlg h3 { margin: 0 0 8px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
-  .dlg-hint { margin: 0 0 14px; font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
-  pre {
-    margin: 0; padding: 14px 16px; max-height: 44vh; overflow: auto;
-    background: var(--bg-deep); border: 1px solid var(--border); border-radius: 10px;
-    font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 12px; line-height: 1.6; color: var(--text-dim);
-    white-space: pre-wrap; word-break: break-word;
-  }
-  .dlg-actions {
-    display: flex; gap: 10px; align-items: center; margin-top: 16px;
-  }
-
-  /* ───── First run ─────
-     The guided path a freshly dropped bootstrap opens with (served mode,
-     FNS_FIRSTRUN): a welcome dialog offering a starting point, a step
-     strip in the hero, and a done step that hands the panel to the
-     console. Everything else on the page is the ordinary picker. */
-  .steps {
-    display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0 0; padding: 0;
-    list-style: none; font-size: 13px; color: var(--text-faint);
-  }
-  .steps li { display: flex; align-items: center; gap: 8px; }
-  .steps li::before {
-    content: attr(data-n); display: inline-flex; align-items: center; justify-content: center;
-    width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700;
-    background: var(--bg-3); border: 1px solid var(--border-strong); color: var(--text-dim);
-  }
-  .steps li.now { color: var(--text); }
-  .steps li.now::before { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .steps li.done::before {
-    content: '✓'; background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
-  }
-  /* two to four cards, depending on what this machine remembers */
-  .presets {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 10px; margin: 6px 0 4px;
-  }
-  .preset {
-    display: flex; flex-direction: column; gap: 4px; text-align: left; cursor: pointer;
-    padding: 14px; border-radius: var(--radius); color: var(--text);
-    background: var(--bg-2); border: 1px solid var(--border); font: inherit;
-  }
-  .preset:hover, .preset:focus-visible { border-color: var(--accent); outline: none; }
-  .preset b { font-size: 15px; }
-  .preset span { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
-  .preset .pick { margin-top: 6px; font-size: 12px; color: var(--accent); }
-  @media (max-width: 640px) { .presets { grid-template-columns: 1fr; } }
+  /* ── framed inside the FNS console: the console's chrome carries the
+     identity and the tabs, so the picker drops its hero and reads as a
+     native panel (the script also sets body.app for the dense metrics). ── */
+  html[data-embedded] .cfg-hero { display: none; }
+  html[data-embedded] .wrap { padding: 0 16px; }
+  html[data-embedded] .cfg-bar { padding-top: 10px; }
 
   @media (max-width: 640px) {
     .cfg-hero { padding: 32px 0 20px; }
@@ -330,6 +425,7 @@
 
   <div class="cfg-bar">
     <input type="search" id="q" placeholder="Filter by name, description or category…" autocomplete="off">
+    <button class="btn btn-secondary" id="wizard">Guided setup</button>
     <button class="btn btn-quiet" id="all">Select all</button>
     <button class="btn btn-quiet" id="none">Clear</button>
     <button class="btn btn-quiet" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
@@ -337,7 +433,10 @@
     <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
   </div>
 
+  <nav class="catnav" id="catnav" aria-label="Jump to a category"></nav>
+
   <div class="note" id="corenote"></div>
+  <div class="plusrail" id="plusrail"></div>
   <div id="list"></div>
   <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
 
@@ -376,12 +475,11 @@
 </div></dialog>
 
 <dialog id="welcome"><div class="dlg">
-  <span class="eyebrow">FIRST RUN</span>
-  <h3>Welcome to FNSTools</h3>
+  <span class="eyebrow">GUIDED SETUP</span>
+  <h3 id="welcometitle">Welcome to FNSTools</h3>
   <p class="dlg-hint">
-    The container you just dropped is now your toolkit root. Choose a starting
-    point — you adjust the list next, and nothing is downloaded or installed
-    until you confirm the plan.
+    You adjust the list next — nothing is downloaded or installed until
+    you confirm the plan.
   </p>
   <div class="presets" id="presets">
     <button class="preset" id="pre-last" hidden><b>Set up like last time</b><span id="pre-last-desc"></span><span class="pick">Restore ›</span></button>
@@ -400,6 +498,17 @@
 // point at the installer's own web server.
 var FNS_DOCS = 'https://functionstore.tools';
 
+// Framed inside the FNS console: the console's chrome carries the identity
+// and the tabs, so the picker drops its hero and reads as a native panel.
+// Cross-origin access to window.top throws, and a throw means a frame by
+// definition.
+var FNS_EMBEDDED = false;
+try { FNS_EMBEDDED = window.self !== window.top; } catch (e) { FNS_EMBEDDED = true; }
+if (FNS_EMBEDDED) {
+  document.documentElement.setAttribute('data-embedded', '');
+  document.body.classList.add('app');
+}
+
 // A freshly dropped bootstrap (served mode, target holds nothing yet) runs
 // the guided first run: the hero speaks to someone who has never seen the
 // toolkit, and the welcome dialog offers a starting point.
@@ -416,6 +525,10 @@ function fnsBoot() {
   var M = window.FNS_MANIFEST;
   var listEl = document.getElementById('list');
   var firstrun = !!window.FNS_SERVED && !!window.FNS_FIRSTRUN;
+  // The guided setup is the first run's flow, offered on demand in every
+  // flavor: the Guided setup button re-opens the same welcome and lights
+  // the same step strip.
+  var wizardOn = false;
   // Served by the bootstrap's Web Server DAT and the store is still being
   // fetched: say so and poll. /manifest.js flips to the real catalog (and
   // FNS_SERVED) once the refresh lands.
@@ -635,7 +748,17 @@ function fnsBoot() {
       pl.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pl);
     }
-    (p.surfaces || []).forEach(function (s) { chips.appendChild(chip(s)); });
+    // a pane-placed package is a reusable component: it spawns into the
+    // network you are working in, not into the toolkit container
+    if (p.placement === 'pane') {
+      chips.appendChild(chip('lands in your working network', 'hint'));
+    }
+    // The WORDS come from the manifest's surface_meta, so the picker and
+    // the docs site never disagree about what a surface is called. A
+    // manifest built before that field existed falls back to the raw id.
+    (p.surfaces || []).forEach(function (s) {
+      chips.appendChild(chip(surfaceLabel(s)));
+    });
     // an integration whose partner is not selected: say so plainly rather
     // than blocking the choice -- these degrade by design
     (p.integrates_with || []).forEach(function (t) {
@@ -652,6 +775,11 @@ function fnsBoot() {
 
     el.appendChild(cb); el.appendChild(body);
     return el;
+  }
+
+  function surfaceLabel(id) {
+    var meta = (M.toolkit && M.toolkit.surface_meta) || {};
+    return (meta[id] && meta[id].label) || id;
   }
 
   function chip(text, cls) {
@@ -741,12 +869,14 @@ function fnsBoot() {
     return el;
   }
 
-  /** Category heading: glyph, name, live count, and a link into the docs
-   *  index section for the same category. */
+  /** Category heading: glyph, name, live count, a link into the docs index
+   *  section for the same category, and an anchor id the quick-nav jumps
+   *  to. */
   function heading(cat, count) {
     var frag = document.createDocumentFragment();
     var h = document.createElement('h2');
     h.className = 'cat';
+    h.id = 'cat-' + catSlug(cat);
     var m = metaOf(cat);
     if (m.glyph) {
       var g = document.createElement('span');
@@ -773,7 +903,12 @@ function fnsBoot() {
     var q = document.getElementById('q').value.trim().toLowerCase();
     function match(p) {
       if (!q) return true;
-      return (p.name + ' ' + (p.description || '') + ' ' + (p.category || ''))
+      // Surfaces are searchable: "toolbar" is how someone asks for the
+      // tools that put a button somewhere, and it is a question the
+      // package list could not answer before.
+      var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
+      return (p.name + ' ' + (p.description || '') + ' '
+              + (p.category || '') + ' ' + surf)
              .toLowerCase().indexOf(q) !== -1;
     }
     listEl.textContent = '';
@@ -831,20 +966,37 @@ function fnsBoot() {
     var removals = served ? installedNow.filter(function (n) {
       return !picked.has(n);
     }).length : 0;
-    var plusPicked = Array.from(picked).filter(function (n) {
+    var plusSel = Array.from(picked).filter(function (n) {
       return byName[n] && isPlus(byName[n]);
+    });
+    // The sentence must match the chips: an entitled pick is READY, and
+    // telling its owner it "installs once unlocked" reads as a refusal.
+    var plusLocked = plusSel.filter(function (n) {
+      return !installable(n);
+    }).length;
+    var plusReady = plusSel.length - plusLocked;
+    var paneSel = Array.from(picked).filter(function (n) {
+      return byName[n] && byName[n].placement === 'pane';
     }).length;
     document.getElementById('deps').textContent =
       (need.size
         ? '+ ' + need.size + ' core package' + (need.size === 1 ? '' : 's') +
           ' they need (already included)' : '') +
       (removals ? (need.size ? ' · ' : '') + removals + ' will be removed' : '') +
+      (plusReady
+        ? ((need.size || removals) ? ' · ' : '') +
+          plusReady + ' Plus tool' + (plusReady === 1 ? '' : 's') +
+          ' unlocked — Review install finishes it' : '') +
       // Said here rather than by refusing the tick: entitlement is the
       // server's answer, and this page has not asked it.
-      (plusPicked
-        ? ((need.size || removals) ? ' · ' : '') +
-          plusPicked + ' Plus tool' + (plusPicked === 1 ? '' : 's') +
-          ' — installs once unlocked' : '');
+      (plusLocked
+        ? ((need.size || removals || plusReady) ? ' · ' : '') +
+          plusLocked + ' Plus tool' + (plusLocked === 1 ? '' : 's') +
+          ' — installs once unlocked' : '') +
+      (paneSel
+        ? ((need.size || removals || plusReady || plusLocked) ? ' · ' : '') +
+          paneSel + ' component' + (paneSel === 1 ? '' : 's') +
+          ' will spawn into the network you are working in' : '');
     var save = document.getElementById('save');
     if (served && locked) {
       save.textContent = 'Locked (source checkout)';
@@ -907,9 +1059,11 @@ function fnsBoot() {
   });
   // Dark is the default in every flavor -- it matches both the site and
   // TouchDesigner. The toggle is a light escape hatch, and it is hidden on
-  // the site, whose header and footer are dark-only.
+  // the site (whose header and footer are dark-only) and in the console
+  // frame (TouchDesigner is dark, and the frame around this page would not
+  // follow).
   var themeBtn = document.getElementById('theme');
-  if (window.FNS_SITE) {
+  if (window.FNS_SITE || FNS_EMBEDDED) {
     themeBtn.hidden = true;
   } else {
     var savedTheme = stored('fns.theme', null);
@@ -945,7 +1099,9 @@ function fnsBoot() {
   }
   document.getElementById('dlghint').textContent = HINTS.selection;
 
-  // --- the first run: welcome presets, step strip, done step ----------
+  // --- the guided setup: welcome presets, step strip, done step ----------
+  // The first run opens with it; the Guided setup button re-enters it on
+  // demand in every flavor.
   // sessionStorage, not localStorage: the welcome belongs to this visit
   // (the page reloads itself while the store refreshes), and it THROWS
   // in sandboxed contexts like localStorage does.
@@ -956,8 +1112,13 @@ function fnsBoot() {
     } catch (e) { return null; }
   }
   var stepsEl = document.getElementById('steps');
+  // The strip's last step names what "done" IS in this flavor: an install
+  // where this page can install, the paste line where it cannot.
+  if (!served) {
+    stepsEl.children[2].textContent = 'Copy the install script';
+  }
   function setStep(n) {
-    if (!firstrun) return;
+    if (!firstrun && !wizardOn) return;
     stepsEl.hidden = false;
     Array.prototype.forEach.call(stepsEl.children, function (li, i) {
       li.className = i + 1 < n ? 'done' : (i + 1 === n ? 'now' : '');
@@ -966,6 +1127,18 @@ function fnsBoot() {
   var starter = (M.starter || []).filter(function (n) {
     return byName[n] && byName[n].kind === 'tool';
   });
+  // Curated bundles from the catalog (manifest `presets`): named starting
+  // points offered between Recommended and Everything. Filtered against
+  // THIS manifest on the way in -- the same discipline as `starter` -- so
+  // a stale curation can never offer a name the catalog lost; a manifest
+  // that carries none simply renders the four fixed presets.
+  var bundles = (M.presets || []).map(function (b) {
+    return {name: String((b && b.name) || ''),
+            blurb: String((b && b.blurb) || ''),
+            packages: ((b && b.packages) || []).filter(function (n) {
+              return byName[n] && byName[n].kind === 'tool';
+            })};
+  }).filter(function (b) { return b.name && b.packages.length; });
   function applyPreset(names) {
     picked.clear();
     names.forEach(function (n) { picked.add(n); });
@@ -975,6 +1148,8 @@ function fnsBoot() {
     var w = document.getElementById('welcome');
     var pre = document.getElementById('pre-starter');
     var preLast = document.getElementById('pre-last');
+    document.getElementById('welcometitle').textContent =
+      firstrun ? 'Welcome to FNSTools' : 'Choose a starting point';
     preLast.hidden = !last;
     if (last) {
       // core rides in the record too (the table lists every package) but
@@ -1020,12 +1195,49 @@ function fnsBoot() {
       choose(tools.map(function (p) { return p.name; }));
     };
     document.getElementById('pre-none').onclick = function () { choose([]); };
+    // curated bundles render fresh on every open -- the dialog is reused,
+    // and a reload can change what the manifest offers
+    Array.prototype.forEach.call(
+      w.querySelectorAll('.preset.dyn'),
+      function (el) { el.remove(); });
+    var preAll = document.getElementById('pre-all');
+    bundles.forEach(function (bnd) {
+      var btn = document.createElement('button');
+      btn.className = 'preset dyn';
+      var nb = document.createElement('b');
+      nb.textContent = bnd.name;
+      btn.appendChild(nb);
+      var ds = document.createElement('span');
+      ds.textContent = bnd.packages.length
+        + (bnd.packages.length === 1 ? ' tool — ' : ' tools — ')
+        + (bnd.blurb || bnd.packages.slice(0, 4).join(', ')
+           + (bnd.packages.length > 4 ? '…' : ''));
+      btn.appendChild(ds);
+      var pk = document.createElement('span');
+      pk.className = 'pick';
+      pk.textContent = 'Start here ›';
+      btn.appendChild(pk);
+      btn.addEventListener('click', function () { choose(bnd.packages); });
+      preAll.parentNode.insertBefore(btn, preAll);
+    });
     setStep(1);
     w.showModal();
   }
+  document.getElementById('wizard').addEventListener('click', function () {
+    // Repeatable on purpose: it only changes the selection, and nothing
+    // is downloaded or installed without the review dialog.
+    wizardOn = true;
+    showWelcome();
+  });
+  // Appended to the install report by the auto-resume flow: its pass
+  // installs ONLY the deferred Plus picks, so the report alone reads as
+  // "one tool installed" to someone whose paste landed seven others a
+  // moment earlier. The epilogue completes the picture; a manual
+  // install keeps the per-pass report it asked for.
+  var installEpilogue = '';
   function finished(text) {
     document.getElementById('dlgtitle').textContent = 'Installed ✓';
-    showDialog(text, false, HINTS.done);
+    showDialog(text + installEpilogue, false, HINTS.done);
     document.getElementById('doopen').hidden = false;
     setStep(4);   // every step done
   }
@@ -1146,6 +1358,7 @@ function fnsBoot() {
 
   document.getElementById('script').addEventListener('click', function () {
     var text = installScript();
+    setStep(3);
     showDialog(text, false, HINTS.script);
     document.getElementById('dlgtitle').textContent = 'Paste this into the Textport';
     var docopy = document.getElementById('docopy');
@@ -1234,7 +1447,13 @@ function fnsBoot() {
       }
     }
     if (account) {
-      var n = (account.products || []).length;
+      // Count only what THIS catalog can unlock: the gate's grant list
+      // spans every Function Store product (the tier that unlocks a
+      // tool here also unlocks the launcher's), and "2 packages
+      // unlocked" beside a single Plus tool reads as a bug.
+      var n = (account.products || []).filter(function (name) {
+        return byName[name];
+      }).length;
       // DOM nodes, not innerHTML: the label comes from an account record
       // and this page has no escaping helper to lean on.
       var b = document.createElement('b');
@@ -1341,6 +1560,7 @@ function fnsBoot() {
            function (res) { showDialog(res.text, !!res.ok); });
       return;
     }
+    setStep(3);
     var blob = new Blob([JSON.stringify(selection(), null, 1) + '\n'],
                         {type: 'application/json'});
     var a = document.createElement('a');
@@ -1395,9 +1615,65 @@ function fnsBoot() {
   }
   document.getElementById('doinstall').addEventListener('click', function () {
     installPolls = 0;
+    installEpilogue = '';
     showDialog('Installing…', false);
     post('/install', '{}', installOrPoll);
   });
+
+  // --- auto-resume deferred Plus picks --------------------------------
+  // A paste with a Plus item checked defers it into FNS_WANTED (the
+  // paste script can never carry a token), and the consent was given
+  // when the box was ticked on /get. So when every wanted pick is now
+  // entitled -- a machine session adopted before this load, or a
+  // sign-in whose reload brought us here -- the picker finishes the job
+  // itself: plan, a short cancelable countdown, install. Any partial
+  // state (an item the tier does not cover, a server refusal, a failed
+  // download) drops back to the manual picker with its honest labels.
+  // Fires at most once per page load, and quenches itself for good once
+  // the install lands: the wanted set empties with it. Only ever
+  // touches what the user explicitly checked.
+  (function () {
+    if (!served || locked || !account) return;
+    if (!wantedStill.length || !wantedStill.every(installable)) return;
+    // never over the welcome: a first run is mid-conversation already
+    if (firstrun && !sessionFlag('fns.welcomed')) return;
+    var waits = 0;
+    function armed() {
+      setStep(3);
+      document.getElementById('dlgtitle').textContent = 'Install plan';
+      showDialog('Your Plus pick' + (wantedStill.length === 1 ? ' is' : 's are')
+        + ' unlocked — planning the install…', false);
+      post('/selection', JSON.stringify(selection(), null, 1) + '\n',
+        function (res) {
+          if (!res.ok) { showDialog(res.text, false); return; }
+          // Straight through, no countdown: the free picks in the same
+          // paste installed themselves without ceremony, and the Plus
+          // pick was deferred only because the script could not carry a
+          // token -- never because consent was in doubt. The dialog
+          // narrates every hop; only what the user checked is touched.
+          installPolls = 0;
+          if (installedNow.length) {
+            installEpilogue = '\nalready in the project: '
+              + installedNow.join(', ')
+              + '\n\nYour whole selection is live.';
+          }
+          showDialog(res.text + '\n\nInstalling your checked picks…', false);
+          post('/install', '{}', installOrPoll);
+        });
+    }
+    // The paste's own core install can still be running when this page
+    // opens (Configure fires about a second after Install); let any
+    // in-flight pass finish before handing the server a follow-up plan.
+    function whenIdle() {
+      fetch('/status').then(function (r) { return r.json(); })
+        .then(function (st) {
+          if (st.fetching && ++waits < 25) { setTimeout(whenIdle, 1200); return; }
+          armed();
+        })
+        .catch(function () { /* no server answer: stay manual */ });
+    }
+    setTimeout(whenIdle, 800);
+  })();
   document.getElementById('copy').addEventListener('click', function () {
     document.getElementById('dlgtitle').textContent = 'Your selection';
     showDialog(JSON.stringify(selection(), null, 1), false);
@@ -1409,6 +1685,60 @@ function fnsBoot() {
   document.getElementById('close').addEventListener('click', function () {
     document.getElementById('dlg').close();
   });
+
+  // --- presentation rails, built once from the catalog -----------------
+  // The category quick-nav: one jump chip per section. The sections
+  // re-render as the selection changes; the nav does not need to.
+  (function () {
+    var nav = document.getElementById('catnav');
+    if (!nav) return;
+    var cats = (M.categories || []).slice();
+    tools.forEach(function (p) {
+      if (cats.indexOf(p.category) === -1) cats.push(p.category);
+    });
+    if (cats.indexOf('Core') === -1) cats.unshift('Core');
+    cats.forEach(function (cat) {
+      var n = cat === 'Core' ? core.length
+        : tools.filter(function (p) { return p.category === cat; }).length;
+      if (!n) return;
+      var a = document.createElement('a');
+      a.href = '#cat-' + catSlug(cat);
+      var m = metaOf(cat);
+      if (m.glyph) {
+        var g = document.createElement('span');
+        g.className = 'g'; g.setAttribute('aria-hidden', 'true');
+        g.textContent = m.glyph;
+        a.appendChild(g);
+      }
+      a.appendChild(document.createTextNode(cat));
+      var c = document.createElement('span');
+      c.className = 'n'; c.textContent = n;
+      a.appendChild(c);
+      nav.appendChild(a);
+    });
+  })();
+  // The Plus rail: name what Plus IS, once, quietly. The free tools are
+  // the toolkit; this line says a few extras exist for supporters, and
+  // stops there -- the cards' own chips carry the per-tool state.
+  (function () {
+    var rail = document.getElementById('plusrail');
+    if (!rail) return;
+    var plus = tools.filter(isPlus);
+    if (!plus.length) { rail.hidden = true; return; }
+    var mark = document.createElement('span');
+    mark.className = 'mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = '◆';
+    rail.appendChild(mark);
+    var pb = document.createElement('b');
+    pb.textContent = 'Plus';
+    rail.appendChild(pb);
+    rail.appendChild(document.createTextNode(
+      ' — the free tools are the full toolkit; '
+      + plus.length + ' extra' + (plus.length === 1 ? '' : 's') + ' below '
+      + (plus.length === 1 ? 'is' : 'are') + ' a thank-you for supporters. '));
+    rail.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));
+  })();
 
   render();
   loadRecommends();

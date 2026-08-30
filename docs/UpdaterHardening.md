@@ -120,12 +120,30 @@ the failure policy (quiet on CHECK — nobody wants a dialog every launch becaus
 the bucket blipped; loud on INSTALL — once the live component is being touched,
 silence leaves the user on a half-broken install).
 
-## 4. `reloadcustom = off` — LANDED 2026-08-26
+## 4. `reloadcustom = off` — LANDED 2026-08-26, REVERTED, RE-LANDED 2026-08-31
 
-> **DONE** (`c67c0f4`). `reloadcustom` 40 → 0, `reloadbuiltin` 3 → 49, all 49
-> toxes saved, 0 errors. User settings now survive an update in place on every
-> package, and the ConfigScope updater gate below is dissolved rather than
-> worked around: that handoff existed only to restore what `reloadcustom` wiped.
+> **THE REVERSION (found 2026-08-31).** `c67c0f4` saved exactly the 49 child
+> toxes — not the root suspect, not the `.toe`. But an externally-bound
+> child's own par values live in its PARENT's stored shell, and the shell
+> wins at project open — with `reloadbuiltin = off` (the OLD value) blocking
+> the very flag that would have corrected it. One open later the live fleet
+> read the old flags again, and every subsequent PI save re-exported child
+> toxes with the reverted values, silently overwriting the good ones. The
+> flip was fully lost while this section said DONE.
+>
+> **Durable landing requires every layer, leaves first, ROOT LAST, then the
+> project save** — the root tox and `.toe` hold the shells that rebuild the
+> children. Re-landed 2026-08-31 that way (42 `reloadcustom` off, 47
+> `reloadbuiltin` on, plus `savebackup` off on 2 and 6 backslashed
+> `externaltox` paths normalized), verified on all three layers: live pars,
+> a child tox re-probed from disk, root + toe saved. Confirm once more
+> after the next real TD restart.
+
+> **DONE** (`c67c0f4`, re-landed as above). `reloadcustom` 40 → 0,
+> `reloadbuiltin` 3 → 49. User settings now survive an update in place on
+> every package, and the ConfigScope updater gate below is dissolved rather
+> than worked around: that handoff existed only to restore what
+> `reloadcustom` wiped.
 >
 > **`reloadbuiltin` stays ON deliberately.** Every non-default built-in across
 > the fleet is build-owned identity, not a user setting:

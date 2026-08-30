@@ -92,3 +92,8 @@ website/node_modules/
 .vercel/
 .env.local
 /.modus
+
+# PI release exports -- build artifacts, never source. The 9MB portable
+# root embeds EVERY tool including gated ones (leaked to the mirror once,
+# 2026-08-30); distribution is the bucket, never git.
+modules/release/

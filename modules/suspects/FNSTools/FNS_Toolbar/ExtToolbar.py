@@ -70,12 +70,3 @@ class ExtToolbar:
 		for _block, _child in zip(seq.blocks, children):
 			_block.par.Comp = _child.name
 			_block.par.Order = _child.par.alignorder.eval()-self.ownerComp.par.Layoutstart.eval()
-
-	def OnResetdefs(self):
-		fnsLog('FNS_Toolbar: resetting toolbar definition to defaults')
-		mainTable = self.ownerComp.op('ToolbarDef')
-		defaultTable = self.ownerComp.op('ToolbarDef_default')
-
-		mainTable.clear()
-		mainTable.text = defaultTable.text
-

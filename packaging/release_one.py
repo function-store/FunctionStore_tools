@@ -31,6 +31,7 @@ tick). upload=False lets several releases batch before one sync.
 
 import json
 import subprocess
+import time
 from datetime import date
 
 # explicit encoding: a TD session launched without a UTF-8 locale
@@ -237,6 +238,24 @@ def StartUpload():
     return proc, log
 
 
+def StartPrune(keep, dry=False):
+    """Prune the bucket to the newest `keep` releases, detached, into the
+    same log StartUpload uses -- one watcher covers both. `dry` previews
+    the deletions and touches nothing."""
+    py = _shellPython()
+    log = _repo(PKG_DIR, 'publish', '.upload.log')
+    env = dict(os.environ, PYTHONIOENCODING='utf-8')
+    args = py + [_repo(PKG_DIR, 'upload.py'),
+                 '--prune', str(int(keep)), '--prune-only']
+    if dry:
+        args.append('--dry')
+    proc = subprocess.Popen(
+        args,
+        stdout=open(log, 'w', encoding='utf-8', errors='replace'),
+        stderr=subprocess.STDOUT, cwd=project.folder, env=env)
+    return proc, log
+
+
 def _versionWritePar(comp):
     """The par a bump must WRITE, which is not the one everything READS.
 
@@ -261,12 +280,24 @@ def _versionWritePar(comp):
     return comp.par.Pkgversion      # pre-migration component
 
 
-def ReleaseMany(names, bump='auto', label=None, upload=True):
+def ReleaseMany(names, bump='auto', label=None, upload=True, rails=False):
     names = [n.name if isinstance(n, OP) else str(n) for n in names]
     by_name = {c.name: c for c in Packages()}
     skipped = [n for n in names if n not in by_name]
     todo = [n for n in names if n in by_name]
-    if not todo:
+    if rails:
+        # Rails ride into every release automatically (Stage hashes the
+        # dist bytes as it goes); ticking them asserts they are WORTH a
+        # release on their own, so hold that claim to the same honesty
+        # as a package bump.
+        stale = _staleRails()
+        if stale:
+            return {'ok': False, 'why': 'rails are stale (%s) -- rebuild '
+                    'before releasing' % ', '.join(stale), 'skipped': skipped}
+        if not todo and not _railsChanged():
+            return {'ok': False, 'why': 'rails are identical to the staged '
+                    'release -- nothing to ship', 'skipped': skipped}
+    if not todo and not rails:
         return {'ok': False, 'why': 'nothing shippable in selection',
                 'skipped': skipped}
 
@@ -276,7 +307,8 @@ def ReleaseMany(names, bump='auto', label=None, upload=True):
     for n in todo:
         comp = by_name[n]
         p = _versionWritePar(comp)                 # write target: the child
-        old_v = str(comp.par.Pkgversion.eval()).strip()   # read: through the mirror
+        old_v = _version(comp)     # read: child-first (build_manifest's),
+                                   # so a severed mirror cannot feed the bump
         pub = published.get(n, '')
         if bump == 'auto':
             if pub and _verTuple(old_v) <= _verTuple(pub):
@@ -323,12 +355,34 @@ def ReleaseMany(names, bump='auto', label=None, upload=True):
     # successful stage: a refused release must not land its bump. PI
     # absent (headless) degrades to reporting via pi_unsaved, never to
     # silence.
+    # ... and not only the bump: the export shipped the LIVE state, so a
+    # selected package left PI-dirty (or with file-synced sources newer
+    # than its tox) just shipped bytes the suspect tox -- and git -- does
+    # not hold, and a suspect-bound master reloads from its tox on the
+    # next open, losing those edits entirely. Anything selected that any
+    # signal says is unsaved gets saved here too.
+    pi_comp = op('/private_investigator1')
+    pi = (pi_comp.extensions[0]
+          if pi_comp is not None and pi_comp.extensions else None)
+    to_save = list(bumped_live)
+    try:
+        unlanded_sel, _rippled = _unlandedPackages(todo)
+    except Exception:
+        unlanded_sel = []
+    for n in todo:
+        if n in to_save:
+            continue
+        dirty = n in unlanded_sel
+        if not dirty and pi is not None:
+            try:
+                dirty = bool(pi.Get_Dirt(by_name[n]))
+            except Exception:
+                dirty = False
+        if dirty:
+            to_save.append(n)
     pi_saved, pi_unsaved = [], []
-    if bumped_live:
-        pi_comp = op('/private_investigator1')
-        pi = (pi_comp.extensions[0]
-              if pi_comp is not None and pi_comp.extensions else None)
-        for n in bumped_live:
+    if to_save:
+        for n in to_save:
             try:
                 if pi is None:
                     raise RuntimeError('Private Investigator not found')
@@ -341,8 +395,17 @@ def ReleaseMany(names, bump='auto', label=None, upload=True):
               + ', '.join(pi_unsaved) + ' -- Save these in PI before '
               'closing, or the repo keeps the old version')
 
+    # After the PI saves, so the recorded counter is the resting one --
+    # the CMS compares live Build against this to flag "changed since
+    # it last shipped" before any bump exists.
+    try:
+        _recordShippedBuilds(todo, by_name, r2['release'])
+    except Exception as e:
+        print('WARNING: shipped-builds record not written (%s)' % e)
+
     result = {'ok': True, 'packages': versions, 'release': r2['release'],
               'bumped': r2['bumped'], 'skipped': skipped,
+              'rails_only': bool(rails and not todo),
               'pi_saved': pi_saved, 'pi_unsaved': pi_unsaved,
               'notes': bool(per_tool or general), 'uploading': False}
     if upload:
@@ -374,7 +437,12 @@ def ReleaseOne(name, bump='auto', label=None, upload=True):
 # touches anything, and be as true from a terminal as from the Textport.
 
 RAIL_SOURCES = (('packaging', 'build_installer.py'),
-                ('packaging', 'InstallerExt.py'))
+                ('packaging', 'InstallerExt.py'),
+                # embedded page + vendored browser: both ship INSIDE the
+                # rails, so an edit to either makes the built bytes stale
+                # (a page-only edit used to slip past this check)
+                ('packaging', 'configurator', 'index.html'),
+                ('packaging', 'webBrowser.tox'))
 RAIL_ARTIFACTS = (('packaging', 'dist', 'FNSTools.tox'),
                   ('packaging', 'dist', 'FNS_Installer.tox'))
 ROOT_SUSPECT = ('modules', 'suspects', 'FNSTools.tox')
@@ -383,6 +451,54 @@ ROOT_SUSPECT = ('modules', 'suspects', 'FNSTools.tox')
 def _mtime(*parts):
     path = _repo(*parts)
     return os.path.getmtime(path) if os.path.exists(path) else 0.0
+
+
+# What each package's PI build counter read when its artifact last shipped.
+# `Pkgversion` still governs updates and this never decides one -- it exists
+# so the CMS can say "the tox changed since it last shipped" BEFORE anyone
+# bumps: PI's Build increments on every suspect save, so live != recorded
+# means new bytes with an old version, exactly the state worth selecting.
+# Tracked in git, so the record travels between machines with the repo.
+SHIPPED_BUILDS = ('packaging', 'shipped_builds.json')
+
+
+def ShippedBuilds():
+    """{package: {'build', 'saved', 'version', 'release', 'when'}} as
+    recorded at each package's last release. {} when never recorded."""
+    path = _repo(*SHIPPED_BUILDS)
+    try:
+        with open(path, encoding='utf-8') as f:
+            doc = json.load(f)
+        return doc if isinstance(doc, dict) else {}
+    except Exception:
+        return {}
+
+
+def _recordShippedBuilds(names, by_name, release):
+    """Upsert the shipped-build record for `names`, read AFTER the
+    release's own PI saves so the recorded counter is the resting one.
+    Bookkeeping only: a failure here must never fail a release."""
+    pi_comp = op('/private_investigator1')
+    pi = (pi_comp.extensions[0]
+          if pi_comp is not None and pi_comp.extensions else None)
+    doc = ShippedBuilds()
+    for n in names:
+        comp = by_name.get(n)
+        if comp is None:
+            continue
+        info = {}
+        try:
+            info = (pi.Get_Info(comp) or {}) if pi is not None else {}
+        except Exception:
+            info = {}
+        doc[n] = {'build': info.get('Build'),
+                  'saved': info.get('Savetimestamp', ''),
+                  'version': _version(comp),
+                  'release': release,
+                  'when': time.strftime('%Y-%m-%d %H:%M:%S')}
+    with open(_repo(*SHIPPED_BUILDS), 'w', encoding='utf-8') as f:
+        json.dump(doc, f, indent=1, sort_keys=True)
+        f.write('\n')
 
 
 def _newestSource(name):
@@ -394,8 +510,13 @@ def _newestSource(name):
     eight packages needing a re-save, which is the kind of noise that
     teaches you to ignore the check."""
     own = vendored = 0.0
-    for base in ('FNSTools', 'scripts'):
-        root_dir = _repo(base, name)
+    # modules/suspects/FNSTools/<name>/ holds DATs externalized beside the
+    # suspect tox itself (FNS_Updater's ExtUpdater.py lives there) -- a
+    # file-synced edit there reloads the LIVE comp without touching PI's
+    # dirty flag or build counter, so missing this tree made exactly those
+    # edits invisible to every needs-a-save check.
+    for root_dir in (_repo('FNSTools', name), _repo('scripts', name),
+                     _repo('modules', 'suspects', 'FNSTools', name)):
         if not os.path.isdir(root_dir):
             continue
         for here, _dirs, files in os.walk(root_dir):
@@ -457,6 +578,91 @@ def _staleRails():
     return stale
 
 
+def _railsChanged():
+    """True when the built rails differ from the last STAGED release's.
+
+    The one case a release legitimately ships with zero package bumps:
+    the bootstrap and installer reach users through /get pastes and the
+    native installers, not through package updates, so new rail bytes
+    ARE a shippable change even when every Pkgversion stands still."""
+    import hashlib
+    try:
+        with open(_repo(OUT_DIR, 'manifest.json'), encoding='utf-8') as f:
+            prev = json.load(f).get('rails') or {}
+    except Exception:
+        return True     # nothing staged yet: rails are new by definition
+    for parts in RAIL_ARTIFACTS:
+        path = _repo(*parts)
+        if not os.path.exists(path):
+            return False   # unbuilt rails are _staleRails' report, not ours
+        with open(path, 'rb') as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+        if digest != (prev.get(parts[-1]) or {}).get('sha256', ''):
+            return True
+    return False
+
+
+def RailsState():
+    """The install rails' one-row summary for a release surface:
+    stale (sources newer than the built bytes -- rebuild first),
+    changed (built bytes differ from the staged release -- shippable),
+    or current (nothing to ship)."""
+    stale = _staleRails()
+    changed = _railsChanged()
+    return {'stale': stale,
+            'changed': changed,
+            'state': ('stale' if stale else
+                      'changed' if changed else 'current')}
+
+
+def _severedVersionMirrors(names=None):
+    """Packages whose comp-level Pkgversion no longer FOLLOWS FNS_About.
+
+    Who wins on a mismatch is the whole hazard: writes aim at the child
+    (see _versionWritePar), but every read -- the updater compare, the
+    manifest, the CMS row -- resolves the COMP par. A mirror in constant
+    mode serves its stale constant forever, so a bump appears to succeed
+    while the fleet reads the old version as current. The usual cause is
+    an assignment to `.val`, which silently flips the par to constant.
+
+    A bare-Pkgversion package (no FNS_About) has nothing to sever and is
+    fine. Three tests, because the sever has more than one shape
+    (verified live on FNS_TimelineTools): value divergence is the
+    backstop that catches every mechanism; a comp par in CONSTANT mode is
+    the direct sever while values still agree; and in the BIND shape
+    (Pkgversion binds the tool's own Version par, which carries the
+    expression to the child) a `.val` write pushes THROUGH the bind and
+    severs the MIDDLE par while the comp par's own mode innocently stays
+    BIND -- so the middle hop's mode is checked too."""
+    bad = []
+    for c in Packages():
+        if names is not None and c.name not in names:
+            continue
+        fa = c.op('FNS_About')
+        if fa is None or not hasattr(fa.par, 'Pkgversion'):
+            continue
+        p = getattr(c.par, 'Pkgversion', None)
+        if p is None:
+            continue
+        truth = str(fa.par.Pkgversion.eval()).strip()
+        if truth and str(p.eval()).strip() != truth:
+            bad.append(c.name)
+            continue
+        if p.mode == ParMode.CONSTANT:
+            bad.append(c.name)
+            continue
+        if p.mode == ParMode.BIND:
+            # follow the ACTUAL bind master (today always the package's
+            # own Version par, but resolved rather than assumed)
+            try:
+                mid = p.bindMaster
+            except Exception:
+                mid = None
+            if mid is not None and getattr(mid, 'mode', None) == ParMode.CONSTANT:
+                bad.append(c.name)
+    return bad
+
+
 def _gitDirty():
     try:
         out = subprocess.run(['git', 'status', '--porcelain'],
@@ -465,6 +671,40 @@ def _gitDirty():
     except Exception:
         return []
     return [ln for ln in out.splitlines() if ln.strip()]
+
+
+def _gatedLeakRisks():
+    """Gated packages whose bytes would ride a PUBLISHED parent save.
+
+    Two TD flags do it: `enableexternaltox` OFF embeds the child outright
+    ('carried by the root tox'), and `savebackup` (Save Backup of
+    External) ON embeds a full backup copy on every parent save EVEN WITH
+    the external binding intact -- and TD defaults it ON. Either way the
+    root suspect, which the public mirror publishes, would carry paid
+    bytes no path rule can withhold. Checked for EVERY gated package
+    regardless of selection: the root saves regardless.
+    """
+    try:
+        with open(_repo(PKG_DIR, 'catalog.json'), encoding='utf-8') as f:
+            cat = json.load(f).get('packages', {})
+    except Exception:
+        return []
+    gated = {n for n, m in cat.items()
+             if str((m or {}).get('access', 'free') or 'free') != 'free'}
+    out = []
+    for c in Packages():
+        if c.name not in gated:
+            continue
+        try:
+            if not c.par.enableexternaltox.eval():
+                out.append('%s (enableexternaltox off -- embedded outright '
+                           'in the root tox)' % c.name)
+            elif c.par.savebackup.eval():
+                out.append('%s (Save Backup of External on -- a full backup '
+                           'embeds on every root save)' % c.name)
+        except Exception:
+            pass
+    return sorted(out)
 
 
 def Preflight(names=None, quiet=False):
@@ -485,6 +725,7 @@ def Preflight(names=None, quiet=False):
 
     unlanded, rippled = _unlandedPackages(known)
     rails = _staleRails()
+    severed = _severedVersionMirrors(known)
     per_tool, general = AttributedNotes()
     noted = [n for n in known if n in per_tool]
     unnoted = [n for n in known if n not in per_tool]
@@ -506,6 +747,20 @@ def Preflight(names=None, quiet=False):
         blockers.append(
             'rails stale, Stage() would hash bytes nobody built: '
             + ', '.join(rails) + ' -- rebuild before publishing')
+    if severed:
+        blockers.append(
+            'version mirror severed (comp Pkgversion no longer follows '
+            'FNS_About): ' + _some(severed) + ' -- our readers are '
+            'child-first, but the severed constant still ships INSIDE the '
+            'artifact, shows on the parameter page, and feeds every '
+            'already-shipped comp-first reader in the field; restore the '
+            'mirror expression/bind before releasing')
+    leak_risks = _gatedLeakRisks()
+    if leak_risks:
+        blockers.append(
+            'gated bytes would ride the published root tox: '
+            + '; '.join(leak_risks) + ' -- fix the flag(s), PI-save the '
+            'package and the root, then rebuild the manifest')
     if unknown:
         warnings.append('not shippable packages, will be skipped: '
                         + _some(unknown))
@@ -524,7 +779,9 @@ def Preflight(names=None, quiet=False):
 
     report = {'ok': not blockers, 'packages': known, 'blockers': blockers,
               'warnings': warnings, 'unlanded': unlanded, 'rippled': rippled,
-              'stale_rails': rails, 'noted': noted, 'unnoted': unnoted,
+              'stale_rails': rails, 'severed_mirrors': severed,
+              'gated_leak_risks': leak_risks,
+              'noted': noted, 'unnoted': unnoted,
               'git_dirty': len(dirty)}
     if not quiet:
         print('\n--- preflight -------------------------------------------')
@@ -554,7 +811,8 @@ def Preflight(names=None, quiet=False):
     return report
 
 
-def Release(names, bump='auto', label=None, upload=True, force=False):
+def Release(names, bump='auto', label=None, upload=True, force=False,
+            rails=False):
     """Preflight, then publish, then tell you what is left to do.
 
     The one entry point worth remembering:
@@ -570,7 +828,8 @@ def Release(names, bump='auto', label=None, upload=True, force=False):
               'force=True) if you know better.\n')
         return {'ok': False, 'why': 'preflight blocked', 'preflight': pre}
 
-    result = ReleaseMany(names, bump=bump, label=label, upload=upload)
+    result = ReleaseMany(names, bump=bump, label=label, upload=upload,
+                         rails=rails)
     result['preflight'] = pre
     if not result.get('ok'):
         print('  publish refused: ' + str(result.get('why')))

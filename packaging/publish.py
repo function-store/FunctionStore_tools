@@ -173,7 +173,7 @@ def Stage(clean=True):
     # Versions are hand-maintained, so the one failure mode worth catching
     # mechanically is shipping a new release that bumps nothing: every
     # install would compare equal and no user would ever see it.
-    previous, prev_release = {}, None
+    previous, prev_release, prev_rails = {}, None, None
     prev_path = os.path.join(out, 'manifest.json')
     if os.path.exists(prev_path):
         try:
@@ -181,15 +181,25 @@ def Stage(clean=True):
                 prev = json.load(f)
             prev_release = prev.get('release')
             previous = {p['name']: p.get('version', '') for p in prev.get('packages', [])}
+            prev_rails = {n: (r or {}).get('sha256', '')
+                          for n, r in (prev.get('rails') or {}).items()}
         except Exception as e:
             print('publish: previous manifest unreadable (%s)' % e)
     current = {p['name']: p.get('version', '') for p in manifest['packages']}
     bumped = sorted(n for n, v in current.items() if previous.get(n, v) != v)
     added = sorted(n for n in current if n not in previous)
-    if previous and prev_release != release and not bumped and not added:
-        return {'error': 'release %s changes no package version (previous: %s) -- '
-                         'nothing would reach any install. Bump Pkgversion on what '
-                         'changed, rebuild the manifest, then stage.'
+    # New rail bytes ARE a shippable change with zero package bumps: the
+    # bootstrap and installer reach users through /get pastes and the
+    # native installers, which always fetch the CURRENT release's rails.
+    rails_changed = prev_rails is not None and prev_rails != {
+        n: (r or {}).get('sha256', '')
+        for n, r in (manifest.get('rails') or {}).items()}
+    if (previous and prev_release != release
+            and not bumped and not added and not rails_changed):
+        return {'error': 'release %s changes no package version and no rail '
+                         '(previous: %s) -- nothing would reach any install. '
+                         'Bump Pkgversion on what changed (or rebuild the '
+                         'rails), rebuild the manifest, then stage.'
                          % (release, prev_release)}
 
     # A package that DISAPPEARS is the silent one, and the bump guard above

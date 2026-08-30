@@ -455,3 +455,94 @@ details.fold > summary:focus-visible { outline: 2px solid var(--accent); outline
   .tiers, .prod-grid { grid-template-columns: 1fr; }
   .plus-pkg { grid-template-columns: 1fr; }
 }
+
+/* Generated parameter tables. They sit OUTSIDE .docs-body (like .shortcuts)
+   because build-site.mjs injects them around the rendered markdown, so they
+   carry their own table rules rather than inheriting .docs-body table. */
+.parameters { margin: 8px 0 4px; }
+.parameters h2 { scroll-margin-top: 84px; }
+.parameters h3 {
+  font-size: 15px; font-weight: 600; letter-spacing: 0.02em;
+  text-transform: uppercase; color: var(--text-dim);
+  margin: 26px 0 8px;
+}
+.par-wrap { overflow-x: auto; margin: 0 0 18px; }
+.par-table {
+  width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px;
+}
+.par-table th, .par-table td {
+  border: 1px solid var(--border); padding: 9px 12px;
+  text-align: left; vertical-align: top;
+}
+.par-table thead th {
+  background: var(--bg-2); font-weight: 600; font-size: 12.5px;
+  letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-dim);
+}
+.par-table tbody tr:hover { background: var(--bg-1); }
+/* A Header parameter is a section label inside the page, not a control. */
+.par-table .par-head th {
+  background: var(--bg-2); color: var(--accent);
+  font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.par-name { width: 24%; }
+.par-name strong { display: block; font-weight: 600; }
+.par-name code {
+  display: inline-block; margin-top: 3px;
+  font: 500 12px/1.5 var(--mono, ui-monospace, monospace);
+  color: var(--text-faint);
+}
+.par-flag {
+  display: inline-block; margin: 3px 0 0 6px; padding: 0 5px;
+  border: 1px solid var(--border-strong); border-radius: 3px;
+  font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-faint);
+}
+.par-type { width: 16%; color: var(--text-dim); white-space: nowrap; }
+.par-def {
+  display: block; margin-top: 3px; font-size: 12.5px; color: var(--text-faint);
+}
+.par-def::before { content: 'default: '; }
+.par-menu { margin-top: 6px; font-size: 12.5px; color: var(--text-faint); }
+.par-menu code {
+  font: 500 12px/1.5 var(--mono, ui-monospace, monospace);
+  color: var(--text-dim);
+}
+/* Said out loud on purpose: a blank cell is indistinguishable from a
+   documented control, and the gap has to stay visible to get closed. */
+.par-todo { color: var(--text-faint); font-style: italic; }
+.parameters kbd {
+  background: var(--bg-3); border: 1px solid var(--border-strong);
+  border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px;
+  font: 500 12px/1.5 var(--mono, ui-monospace, monospace); color: var(--text);
+}
+.docs-index-note {
+  margin: -8px 0 26px; color: var(--text-dim); font-size: 14.5px;
+  max-width: 68ch;
+}
+
+@media (max-width: 720px) {
+  .par-name, .par-type { width: auto; }
+  .par-type { white-space: normal; }
+}
+.par-registry-list { margin: 6px 0 18px; padding-left: 20px; color: var(--text-dim);
+  font-size: 14.5px; line-height: 1.9; }
+.par-registry-list a { font-weight: 600; }
+.badge-surface {
+  border-color: var(--border-strong); color: var(--text-dim);
+  background: var(--bg-2);
+}
+a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
+
+/* Index filter: what a package puts on screen. */
+.surf-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; }
+.surf-chip {
+  font: inherit; font-size: 13px; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.surf-chip:hover { border-color: var(--border-strong); color: var(--text); }
+.surf-chip.on {
+  background: var(--accent-dim); border-color: var(--accent); color: var(--accent-bright);
+}
+.surf-chip span { opacity: 0.55; margin-left: 4px; font-variant-numeric: tabular-nums; }

@@ -1,5 +1,84 @@
 # FNS tools changelog
 
+## v3.0.12 -- 2026-08-30
+
+- FNS_TimelineTools 3.0.3 -> 3.0.4
+- FNS_ToolbarRegistry 3.0.1 -> 3.0.2
+- paste_from_clipboard 3.0.0
+
+## v3.0.11 -- 2026-08-30
+
+- ColorUI 3.0.2 -> 3.0.3
+- FNS_ConfigHost 3.0.1 -> 3.0.2
+- FNS_ConfigRegistry 3.0.1 -> 3.0.2
+- FNS_Console 3.0.3 -> 3.0.4
+- FNS_Hub 3.0.2 -> 3.0.3
+- FNS_HubRegistry 3.0.1 -> 3.0.2
+- FNS_MainMenuRegistry 3.0.1 -> 3.0.2
+- FNS_NavbarRegistry 3.0.1 -> 3.0.2
+- FNS_OpMenuRegistry 3.0.1 -> 3.0.2
+- FNS_PaletteRegistry 3.0.1 -> 3.0.2
+- FNS_TimelineRegistry 3.0.1 -> 3.0.2
+- FNS_Toolbar 3.0.2 -> 3.0.3
+- FNS_Updater 3.0.6 -> 3.0.7
+- paste_from_clipboard 1.0.6 -> 1.0.7
+
+## v3.0.10 -- 2026-08-30
+
+- FNS_Console 3.0.2 -> 3.0.3
+- FNS_Hub 3.0.2
+- FNS_Toolbar 3.0.1 -> 3.0.2
+- FNS_Updater 3.0.5 -> 3.0.6
+- paste_from_clipboard 1.0.6
+
+## v3.0.9 -- 2026-08-30
+
+
+
+## v3.0.8 -- 2026-08-30
+
+- FNS_Updater 3.0.4 -> 3.0.5
+
+Downloads can no longer damage the store: artifacts land in a staging
+file and only replace the store copy after their checksum passes, so a
+failed or refused fetch leaves the previous good bytes untouched. A
+gated download refused by the gate now says so honestly (instead of
+reading as a checksum failure) and drops the stale download token, so
+the next attempt asks for a fresh one.
+
+The picker now finishes what the /get page started: if you copied an
+install with a Plus tool checked, the pick completes on its own the
+moment your account covers it -- whether you were already signed in on
+this machine or sign in when prompted. A short countdown lets you
+cancel; anything your tier does not cover stays visible with its
+honest label instead of installing.
+
+Signing in anywhere on the machine now counts everywhere: a session
+that existed before shared sign-in shipped is published for other
+Function Store products to adopt the first time it is read.
+
+## v3.0.7 -- 2026-08-30
+
+- FNS_Updater 3.0.3 -> 3.0.4 -- one sign-in now serves the whole machine. Signing in to
+
+any FNS product (the toolkit, the TDX launcher) shares the session --
+clicking Sign in when the machine is already signed in adopts it
+instantly with no browser trip, and signing out anywhere signs the
+machine out everywhere. Entitlement refusals, downloads and rechecks
+are unchanged.
+
+## v3.0.6 -- 2026-08-29
+
+- FNS_Console 3.0.1 -> 3.0.2 -- the console panel renders reliably -- opening it now holds
+
+the shared browser's render on while its server lives, instead of the
+render optimizations switching it off one frame later.
+
+The install rails ride along fixed: the one-line installer lands the
+toolkit at the project root, opens the picker by itself when a Plus
+tool was picked, Pick Tools keeps its panel rendered, and Open
+Settings reports what it actually did.
+
 ## v3.0.5 -- 2026-08-29
 
 - FNS_Updater 3.0.2 -> 3.0.3 -- sign-in now completes end to end -- the loopback listener
