@@ -753,6 +753,9 @@ function fnsBoot() {
     if (p.placement === 'pane') {
       chips.appendChild(chip('lands in your working network', 'hint'));
     }
+    if (p.placement === 'root') {
+      chips.appendChild(chip('lands at your network root', 'hint'));
+    }
     // The WORDS come from the manifest's surface_meta, so the picker and
     // the docs site never disagree about what a surface is called. A
     // manifest built before that field existed falls back to the raw id.

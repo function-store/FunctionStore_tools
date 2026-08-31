@@ -31,6 +31,12 @@ styles, `typing.Literal[...]` → menu, no default → required).
 
 - Extras: `fns_command(label=…, help=…, hidden=True, params=[…])`.
 - **Never set `builtin=`** — that flag is for TD/system commands (TDXLPP-side).
+- **Surfaces** (registry ≥ 1.7.0): `surface='session'` (or a list) asks
+  consumers to show the command beyond quick-launch — `quick`, `session`
+  (launcher Current bar), `context-menu`. Absent = today's behaviour; unknown
+  tokens are ignored, so declaring early is free and safe on old registries.
+  `capability='fns.collect'` marks a command as part of a blessed capability
+  group a consumer may render richly — a hint, **never a gate**.
 - Changed your command set at runtime: `op('ExtUtils/FNSCommandAnnouncer').Announce()`.
 - **Third-party tool**: drop `modules/release/FNS_CommandKit.tox` inside the
   tool, then the same two lines with `FNSCommand = op('FNS_CommandKit').mod('FNSCommand')`.

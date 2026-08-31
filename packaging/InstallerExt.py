@@ -274,19 +274,52 @@ def _artifactPath(art, name, manifest_path):
     return RepoPath(art['path']) if art.get('path') else beside.replace('\\', '/')
 
 
-def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
-    """Resolve a selection into an ordered install plan. Never mutates."""
+def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None,
+                minimal=False, sources=None):
+    """Resolve a selection into an ordered install plan. Never mutates.
+
+    `selection_path` may be a dict, for callers that build a selection in
+    memory rather than reading one off disk (the command rail).
+
+    `minimal` installs EXACTLY what was asked plus its derived
+    `requires`, skipping the core force -- for a request that arrives
+    programmatically ("install autosave") rather than as a user picking a
+    toolkit. See docs/LauncherToolkitBoundary.md: forcing 10 core
+    packages onto someone who asked for one feature is a bait-and-switch,
+    and these self-contained packages plug into none of it.
+
+    `sources` maps package name -> a local artifact path, letting a
+    caller install from bytes it already has (a launcher's bundled free
+    artifact) instead of the store. Such a file is a hash_warning rather
+    than `stale` when it disagrees with the manifest -- stale means "the
+    store lied", which a deliberately-supplied path never is -- so it
+    installs, records the sha that actually landed, and Compare() offers
+    the manifest's version as an upgrade once the machine is online.
+    """
     manifest = LoadJson(manifest_path, 'manifest')
-    sel = LoadJson(selection_path, 'selection')
+    sel = (selection_path if isinstance(selection_path, dict)
+           else LoadJson(selection_path, 'selection'))
     index = {p['name']: p for p in manifest['packages']}
+    sources = {str(k): str(v) for k, v in (sources or {}).items()}
+    # A SELECTION may ask for minimal too, not just a caller. That is what
+    # lets an existing integration opt in without adopting a new code
+    # path: anything that already writes a selection.json and pulses
+    # Install (the launcher's fns_install verb does exactly this) gets
+    # minimal behaviour by adding one key, rather than by moving to the
+    # command rail.
+    minimal = bool(minimal or sel.get('minimal'))
 
     wanted = list(sel.get('install') or (sel.get('core', []) + sel.get('tools', [])))
     unknown = [n for n in wanted if n not in index]
     # Core is not optional: a selection that omits it is a broken selection,
     # not a request to go without the infrastructure every tool plugs into.
-    for c in manifest.get('core', []):
-        if c not in wanted:
-            wanted.append(c)
+    # UNLESS this is a minimal request, where the caller named what it
+    # wants and `requires` still supplies anything those packages actually
+    # depend on (_order walks it transitively).
+    if not minimal:
+        for c in manifest.get('core', []):
+            if c not in wanted:
+                wanted.append(c)
 
     ordered = _order([n for n in wanted if n in index], index)
     tgt = target or DefaultTarget()
@@ -298,28 +331,34 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
     # it. Core is never a candidate (wanted always includes it), and
     # comps the manifest does not know (installer, webBrowser, DATs, the
     # user's own work) are never touched.
+    # A minimal request is ADDITIVE and must never remove: `wanted` is one
+    # package, so the ordinary "not selected means remove it" rule would
+    # treat the user's whole toolkit as removal candidates. This is the
+    # sharpest hazard in the minimal path -- a launcher asking for
+    # autosave could otherwise uninstall everything else.
     tool_names = {p['name'] for p in manifest['packages'] if p['kind'] == 'tool'}
     root_comp = op(tgt)
-    to_remove = sorted(c.name for c in root_comp.children
-                       if c.family == 'COMP' and c.name in tool_names
-                       and c.name not in wanted) if root_comp else []
+    to_remove = [] if minimal else (
+        sorted(c.name for c in root_comp.children
+               if c.family == 'COMP' and c.name in tool_names
+               and c.name not in wanted) if root_comp else [])
 
-    # `placement: pane` packages land in the user's working network, not
-    # under the target root -- so "already installed" is the install
-    # RECORD, not a root child, and unselecting one clears only that
-    # record (the spawned copies are the user's work; see RemoveTools).
-    # The ONE exception: a spawn that fell back into the target root
-    # itself sits in the installer's own territory -- it is already in
-    # to_remove above and is removed like any tool, so it must not also
-    # appear here as a record-only forget.
-    pane_names = {p['name'] for p in manifest['packages']
-                  if p.get('placement') == 'pane'}
+    # `placement: pane` packages land in the user's working network and
+    # `placement: root` ones beside the toolkit container -- neither is a
+    # target-root child, so "already installed" is the install RECORD (or
+    # the doorstep comp), and unselecting one goes through RemoveTools'
+    # doorstep branch: a copy beside the root is removed for real, copies
+    # deeper in the user's networks are only forgotten. The ONE exception:
+    # a spawn that fell back into the target root itself is already in
+    # to_remove above and must not also appear here.
+    spawn_names = {p['name'] for p in manifest['packages']
+                   if p.get('placement') in ('pane', 'root')}
     recorded = set()
     rec_t = root_comp.op(INSTALLED_DAT) if root_comp else None
     if rec_t is not None:
         recorded = {rec_t[i, 0].val for i in range(1, rec_t.numRows)
                     if rec_t[i, 0].val}
-    to_unrecord = sorted((recorded & pane_names & tool_names)
+    to_unrecord = sorted((recorded & spawn_names & tool_names)
                          - set(wanted) - set(to_remove))
 
     steps, missing, hash_warnings = [], [], []
@@ -329,7 +368,8 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
         if not art:
             missing.append(name)
             continue
-        path = _artifactPath(art, name, manifest_path)
+        supplied = sources.get(name, '')
+        path = supplied or _artifactPath(art, name, manifest_path)
         # an absent file is a DOWNLOAD, not a failure: the picker fetches
         # exactly the selection at install time, so planning must work
         # against a store that holds only the manifest
@@ -345,21 +385,31 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
             except Exception:
                 matches = True     # unreadable surfaces at loadTox instead
             if not matches:
-                if _inStore(path):
+                # `stale` means the STORE lied -- a mirror that lagged the
+                # manifest. A path a caller deliberately supplied never
+                # lies; it is simply older, so it warns and installs.
+                if _inStore(path) and not supplied:
                     stale = True
                 else:
                     hash_warnings.append(name)
         placement = pkg.get('placement', 'toolkit') or 'toolkit'
+        # pane packages live wherever the user spawned them, so presence
+        # is the install record; root ones live at a KNOWN address (beside
+        # the toolkit container), so presence is the comp itself
+        if placement == 'pane':
+            present = name in recorded
+        elif placement == 'root':
+            home_path = tgt.rsplit('/', 1)[0] or '/'
+            present = op(home_path + '/' + name) is not None
+        else:
+            present = op(tgt + '/' + name) is not None
         steps.append({'name': name, 'kind': pkg['kind'], 'path': path,
                       'sha256': art.get('sha256', ''),
                       'bytes': art.get('bytes', 0),
                       'release': manifest.get('release', ''),
                       'have': have, 'stale': stale,
                       'placement': placement,
-                      # pane packages live wherever the user spawned them,
-                      # so presence is the install record, not a root child
-                      'present': (name in recorded if placement == 'pane'
-                                  else op(tgt + '/' + name) is not None)})
+                      'present': present})
     return {'target': tgt, 'steps': steps, 'order': [s['name'] for s in steps],
             # non-empty = every executor refuses; the reason is shown as-is
             'locked': SourceLock(tgt),
@@ -373,6 +423,7 @@ def ResolvePlan(selection_path, manifest_path=DEFAULT_MANIFEST, target=None):
             'hash_warnings': hash_warnings,
             'to_remove': to_remove,
             'to_unrecord': to_unrecord,
+            'minimal': bool(minimal),
             'missing_artifact': missing, 'unknown_packages': unknown}
 
 
@@ -690,6 +741,7 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
         if only and name not in only:
             continue
         pane = step.get('placement') == 'pane'
+        rooted = step.get('placement') == 'root'
         if pane:
             # presence is the install record (ResolvePlan); the spawned
             # copy lives wherever the user put it, so there is nothing
@@ -699,6 +751,11 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
                                 'action': 'skipped (already spawned)'})
                 continue
             dest = op(pane_path) or parent_comp
+        elif rooted:
+            # the doorstep: beside the toolkit container, a known address
+            # the installer owns -- present/replace work like a root child
+            home = parent_comp.parent()
+            dest = home if home is not None else parent_comp
         else:
             dest = parent_comp
         existing = None if pane else dest.op(name)
@@ -744,7 +801,7 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
             # its name (the spawn stays numbered)
             if not (pane and dest.op(name) is not None):
                 comp.name = name
-        if pane and comp is not None:
+        if (pane or rooted) and comp is not None:
             # a spawn must not land on top of the user's work: put it just
             # right of everything in the network, and hand it the selection
             try:
@@ -778,10 +835,10 @@ def InstallPlan(plan, replace=False, only=None, bind=None):
         # decided here, once, as the package lands (artifacts ship dormant).
         # A pane spawn sits in the user's network, outside the toolkit, so
         # that default does not apply.
-        exposed = [] if pane else ExposeConsoleHosts(comp)
+        exposed = [] if (pane or rooted) else ExposeConsoleHosts(comp)
         results.append({'name': name, 'action': 'installed', 'bound': bound,
                         'exposed': exposed,
-                        'placed': dest.path if pane else '',
+                        'placed': dest.path if (pane or rooted) else '',
                         **_verify(comp)})
     return {'target': tgt,
             'installed': [r['name'] for r in results if r.get('action') == 'installed'],
@@ -921,6 +978,141 @@ class InstallerExt:
 
     def onParInstall(self, _par):
         self.Install()
+
+    # --- command rail (FNS_CommandRegistry) ---------------------------
+    # The installer answers install requests as COMMANDS, so a consumer
+    # (the launcher) never places toxes itself. One owner of placement
+    # means one install record, one update path, and no duplicates --
+    # docs/LauncherToolkitBoundary.md, Option A.
+
+    def FnsCommands(self):
+        """Spec list for FNS_CommandRegistry.
+
+        `install` is DRY RUN by default. A request arriving from another
+        application is not the same as a user agreeing to it, so the
+        default answer is a plan describing what would land; `confirm`
+        performs it. Same shape as fns.collect, which consumers already
+        know how to render.
+        """
+        cap = 'fns.install'
+        return [
+            {'id': 'install', 'label': 'Install an FNS package…',
+             'help': 'Plan an install (dry run); pass confirm=True to apply',
+             'method': 'CommandInstall',
+             'surface': ['session'], 'capability': cap},
+            {'id': 'installed', 'label': 'Installed packages',
+             'help': 'What this project has, as the install record knows it',
+             'method': 'CommandInstalled', 'hidden': True, 'capability': cap},
+            {'id': 'available', 'label': 'Available packages',
+             'help': 'What the manifest offers, with launcher reach',
+             'method': 'CommandAvailable', 'hidden': True, 'capability': cap},
+        ]
+
+    def onInitTD(self):
+        # Deferred: a registry may still be promoting its /sys global, and
+        # on a fresh bootstrap drop this COMP's own siblings are still
+        # arriving. Guarded inside, so no registry is never an error.
+        run('args[0]._registerLauncherCommands()', self, delayFrames=60)
+
+    def _registerLauncherCommands(self):
+        """Announce to a registry if one is present. Guarded: no registry
+        is ever guaranteed, and the tag makes one that arrives LATER
+        rediscover this COMP by rescan."""
+        try:
+            self.ownerComp.tags.add('fnscommands')
+        except Exception:
+            pass
+        try:
+            reg = getattr(op, 'FNS_COMMANDREGISTRY', None)
+            if reg is not None and hasattr(reg, 'Register'):
+                return reg.Register(self.ownerComp, self.FnsCommands())
+        except Exception:
+            pass
+        return None
+
+    def CommandInstall(self, package='', confirm=False, source=''):
+        """Install ONE package by name, minimally.
+
+        `source` is an optional local artifact path, so a caller holding
+        bytes already (a launcher's bundled free artifact) installs from
+        them rather than the store -- a real install with a record and an
+        update path, not a dropped tox. A supplied file older than the
+        manifest installs with a warning and records the sha that landed,
+        so the next online Compare() offers the upgrade.
+        """
+        name = str(package).strip()
+        if not name:
+            return {'ok': False, 'error': 'no package named'}
+        try:
+            plan = ResolvePlan(
+                {'schema': 1, 'install': [name], 'tools': [name], 'core': []},
+                self._par('Manifestfile') or DefaultManifest(),
+                self._par('Target') or DefaultTarget(self.ownerComp),
+                minimal=True,
+                sources={name: source} if source else None)
+        except Exception as e:
+            return {'ok': False, 'error': str(e)[:160]}
+        if plan.get('unknown_packages'):
+            return {'ok': False, 'error': '%s is not in the manifest' % name}
+        if plan.get('locked'):
+            return {'ok': False, 'error': plan['locked']}
+        would = [s['name'] for s in plan['steps']]
+        summary = {'ok': True, 'package': name, 'target': plan['target'],
+                   'would_install': would,
+                   'already_present': plan['already_present'],
+                   'needs_download': plan['to_fetch'],
+                   'older_than_manifest': plan['hash_warnings']}
+        if not confirm:
+            summary['dry_run'] = True
+            return summary
+        if plan['to_fetch']:
+            why = self._refreshStore(names=plan['to_fetch'])
+            summary.update({'ok': not why, 'fetching': True,
+                            'error': why or '',
+                            'text': why or 'downloading %d artifact(s); '
+                                           'run again when it settles'
+                                    % len(plan['to_fetch'])})
+            return summary
+        res = InstallPlan(plan, replace=False, bind=self._bindChoice())
+        summary.update({'ok': not res['failed'], 'dry_run': False,
+                        'installed': res['installed'], 'failed': res['failed']})
+        return summary
+
+    def CommandInstalled(self):
+        """The install record: what landed here, at which sha and release."""
+        tgt = op(self._par('Target') or DefaultTarget(self.ownerComp))
+        t = tgt.op(INSTALLED_DAT) if tgt is not None else None
+        rows = []
+        if t is not None and t.numRows > 1:
+            for i in range(1, t.numRows):
+                rows.append({c: t[i, n].val for n, c in enumerate(INSTALLED_COLS)})
+        return {'ok': True, 'target': tgt.path if tgt else '', 'packages': rows}
+
+    def CommandAvailable(self):
+        """What the manifest offers, with the `launcher` block passed
+        through so a consumer can show only what reaches its surfaces.
+
+        NOTE the shape difference, confirmed against a live consumer: the
+        MANIFEST omits `launcher` for a package that has none
+        (presence-style, like `placement`), but this projection always
+        emits the key, `null` when absent. That is deliberate here — a
+        consumer iterating packages gets a stable shape and can read
+        `p['launcher']` without a membership test — but it means "absent"
+        and "null" both mean not-launcher-capable, and a consumer must
+        tolerate whichever it meets depending on whether it is reading the
+        manifest or asking us.
+        """
+        try:
+            man = LoadJson(self._par('Manifestfile') or DefaultManifest(),
+                           'manifest')
+        except Exception as e:
+            return {'ok': False, 'error': str(e)[:160]}
+        out = []
+        for p in man.get('packages', []):
+            out.append({'name': p['name'], 'version': p.get('version', ''),
+                        'access': p.get('access', 'free'),
+                        'launcher': p.get('launcher') or None})
+        return {'ok': True, 'release': man.get('release', ''), 'packages': out}
 
     # --- the served configurator (bootstrap rail) ---------------------
     #
@@ -1204,15 +1396,15 @@ class InstallerExt:
                         # re-apply spawns a second copy.
                         try:
                             man_doc = LoadJson(full, 'manifest')
-                            pane_names = {p['name']
-                                          for p in man_doc.get('packages', [])
-                                          if p.get('placement') == 'pane'}
+                            spawn_names = {p['name']
+                                           for p in man_doc.get('packages', [])
+                                           if p.get('placement') in ('pane', 'root')}
                             rec_t = tgt.op(INSTALLED_DAT)
-                            if rec_t is not None and pane_names:
+                            if rec_t is not None and spawn_names:
                                 installed = sorted(set(installed) | {
                                     rec_t[i, 0].val
                                     for i in range(1, rec_t.numRows)
-                                    if rec_t[i, 0].val in pane_names})
+                                    if rec_t[i, 0].val in spawn_names})
                         except Exception:
                             pass
                         # the page disables Apply up front rather than

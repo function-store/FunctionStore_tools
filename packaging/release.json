@@ -12,7 +12,7 @@
   "Remember: this label is for humans and changelogs. Whether a package",
   "needs updating is decided by its Pkgversion, not by this."
  ],
- "release": "v3.0.12",
+ "release": "v3.0.14",
  "channel": "stable",
  "_discovery_comment": [
   "These two ride into the DISCOVERY document, not the manifest -- they are",
@@ -48,7 +48,17 @@
   "MY_HOTKEYS (dissolved into CustomParTools + TDX_SearchPalette) and",
   "QuickParCustom (folded into CustomParTools) retired in the v3.0.x",
   "cycle -- declared 2026-08-28 ahead of the first v3 Stage(), which",
-  "would otherwise refuse them as undeclared drops."
+  "would otherwise refuse them as undeclared drops.",
+  "",
+  "FNS_Media retired 2026-08-31, ONE DAY after v3.0.13 published it: the",
+  "name collided with /FNS_MEDIA, the project-level media container",
+  "FNS_TimelineTools stands up and reaches as op.FNS_MEDIA. Differing only",
+  "in case, the two would have collided the moment anyone gave the package",
+  "the natural FNS_MEDIA global shortcut -- which are globally unique, so",
+  "it would have silently stolen it and broken TimelineTools' markers.",
+  "Renamed to FNS_MediaBrowser while nothing had curated against it."
  ],
- "retired": []
+ "retired": [
+  "FNS_Media"
+ ]
 }

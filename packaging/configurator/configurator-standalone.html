@@ -492,7 +492,7 @@ body.app .dlg h3 { font-size: 16px; }
 <script>
 window.FNS_MANIFEST = {
  "schema": 1,
- "release": "v3.0.12",
+ "release": "v3.0.14",
  "notes": "",
  "channel": "stable",
  "base_url": "https://storage.functionstore.tools/fnstools",
@@ -562,7 +562,9 @@ window.FNS_MANIFEST = {
   "FNS_ToolbarRegistry",
   "FNS_Updater"
  ],
- "retired": [],
+ "retired": [
+  "FNS_Media"
+ ],
  "minimum_updater": "",
  "notices": [],
  "categories": [
@@ -652,7 +654,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/AltSelect.tox",
     "bytes": 88598,
     "sha256": "00f54f3716df4f3b833328eb9d1dea3b4eddb17e9567b6f23294b8b52c46a9d0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/AltSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/AltSelect.tox"
    }
   },
   {
@@ -682,7 +684,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/AutoCombine.tox",
     "bytes": 101318,
     "sha256": "374e7f3f9cf85e12e087eedb72cbb64ad47c2e28b0c95ab20b2f7bbb0141d25b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/AutoCombine.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/AutoCombine.tox"
    }
   },
   {
@@ -712,7 +714,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/AutoRes.tox",
     "bytes": 101022,
     "sha256": "4d6f8b3a32f8802ca7997cea1d7bf77d622d1fda091bed3b2b58555a3e96cfc7",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/AutoRes.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/AutoRes.tox"
    }
   },
   {
@@ -756,7 +758,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/BorderlessTD.tox",
     "bytes": 248950,
     "sha256": "9bcf525adab95471292235015be960c9b6ad9f61d00e6568ef59187fe7be077e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/BorderlessTD.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/BorderlessTD.tox"
    }
   },
   {
@@ -791,7 +793,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ColorUI.tox",
     "bytes": 231646,
     "sha256": "f6856c9c536fa5eac5df8febae0eda233d87d2faaa78e968f4652db00d6b4b05",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/ColorUI.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/ColorUI.tox"
    }
   },
   {
@@ -869,7 +871,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/CustomParTools.tox",
     "bytes": 811778,
     "sha256": "ec1a03c52b03e60e69386d240f44666a8b29f470dbc387fc0d4d43dd34c74831",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/CustomParTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/CustomParTools.tox"
    }
   },
   {
@@ -912,7 +914,83 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ExprHotStrings.tox",
     "bytes": 141830,
     "sha256": "ea1c2b08caa051d59839442699d09b36f8241ed6e3f1d91aaacd15a8b53a599c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/ExprHotStrings.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/ExprHotStrings.tox"
+   }
+  },
+  {
+   "name": "FNS_Autosave",
+   "kind": "tool",
+   "category": "Workflow",
+   "description": "Save the project on a timer without touching the timeline, honouring your increment and backup preferences, and skipping saves while you are performing.",
+   "version": "1.0.0",
+   "help_url": "https://functionstore.tools/docs/fns-autosave/",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 16,
+   "requires": [],
+   "access": "free",
+   "key_available": false,
+   "license": "",
+   "seats": null,
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "min_td_build": "2025.33070",
+   "hotkeys": [],
+   "launcher": {
+    "surfaces": [
+     "context-menu",
+     "session"
+    ],
+    "capabilities": [
+     "fns.autosave"
+    ],
+    "seedable": true
+   },
+   "whatsnew": "",
+   "artifact": {
+    "path": "packaging/dist/FNS_Autosave.tox",
+    "bytes": 14542,
+    "sha256": "5433e1068f4f20664e3a4736ea8ae280fb50a88392bc9f0c1325cf8c843a9f65",
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_Autosave.tox"
+   }
+  },
+  {
+   "name": "FNS_Collect",
+   "kind": "tool",
+   "category": "Workflow",
+   "description": "Gather every external file your project references into the project folder and rewrite the parameters to match, so the project travels. Shows the plan before it copies anything.",
+   "version": "1.0.1",
+   "help_url": "https://functionstore.tools/docs/fns-collect/",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 31,
+   "requires": [],
+   "access": "8323905",
+   "key_available": false,
+   "license": "",
+   "seats": null,
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "min_td_build": "2025.33070",
+   "hotkeys": [],
+   "launcher": {
+    "surfaces": [
+     "context-menu",
+     "session"
+    ],
+    "capabilities": [
+     "fns.collect"
+    ],
+    "seedable": false
+   },
+   "whatsnew": "",
+   "artifact": {
+    "path": "packaging/dist/FNS_Collect.tox",
+    "bytes": 21310,
+    "sha256": "b96545b95ffd4845116ecd5326f56840c2691553dd21c906b216cec1748b8f3e",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.0.14/FNS_Collect.tox"
    }
   },
   {
@@ -940,7 +1018,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandKit.tox",
     "bytes": 13334,
     "sha256": "5130618b5f8d01516b2fba6e665233fbb02bc0e3148ed08afc2bf8e7b24ac17e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_CommandKit.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_CommandKit.tox"
    }
   },
   {
@@ -968,7 +1046,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ConfigHost.tox",
     "bytes": 58414,
     "sha256": "935d98624e688e5e2fc1139e859c7da5d36643ee24bcb25cb12a600a84e50923",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_ConfigHost.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_ConfigHost.tox"
    }
   },
   {
@@ -996,7 +1074,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ConfigRegistry.tox",
     "bytes": 59062,
     "sha256": "3e0c9958a791edadc82e5fef0c1c5430bc362adb33069e347a943149af452c35",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_ConfigRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_ConfigRegistry.tox"
    }
   },
   {
@@ -1024,7 +1102,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Console.tox",
     "bytes": 69366,
     "sha256": "7ee82211cbfa621e76473166b655884465bb56399e199fd9f2e9bc5a09969e75",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_Console.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_Console.tox"
    }
   },
   {
@@ -1071,7 +1149,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
     "bytes": 212822,
     "sha256": "251e61759d7b98bc7a725da884661cdc8d29f297d2b8d594ac0fc139dbaa4104",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_HotkeyManager.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -1102,7 +1180,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Hub.tox",
     "bytes": 931554,
     "sha256": "1e025423eba6b7c48547d3faff7732a99effe142594a1d295b3a7b0eb1e2120b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_Hub.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_Hub.tox"
    }
   },
   {
@@ -1130,7 +1208,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HubRegistry.tox",
     "bytes": 48534,
     "sha256": "75d7f2f86930173bffaeea855ce5f6f7d496491b09d7ff3ffc2a627a6df61b89",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_HubRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_HubRegistry.tox"
    }
   },
   {
@@ -1160,7 +1238,45 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MainMenuRegistry.tox",
     "bytes": 53902,
     "sha256": "d80ccd571aa87b812c83883c48b7f3794afb3eed4d425fbf87ec2a0d31bdae50",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_MainMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_MainMenuRegistry.tox"
+   }
+  },
+  {
+   "name": "FNS_MediaBrowser",
+   "kind": "tool",
+   "category": "Media & Output",
+   "description": "See every media file your project uses and which operator uses it, filter to the missing ones, and replace or repoint them in place.",
+   "version": "1.0.0",
+   "help_url": "https://functionstore.tools/docs/fns-mediabrowser/",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 37,
+   "requires": [],
+   "access": "8323905",
+   "key_available": false,
+   "license": "",
+   "seats": null,
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "min_td_build": "2025.33070",
+   "hotkeys": [],
+   "launcher": {
+    "surfaces": [
+     "context-menu",
+     "session"
+    ],
+    "capabilities": [
+     "fns.media-browser"
+    ],
+    "seedable": false
+   },
+   "whatsnew": "",
+   "artifact": {
+    "path": "packaging/dist/FNS_MediaBrowser.tox",
+    "bytes": 27758,
+    "sha256": "72f6ac27525bb8b77d93b21e8d83b2739be1e1a279a1eed26aec481aec3d66f5",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.0.14/FNS_MediaBrowser.tox"
    }
   },
   {
@@ -1206,7 +1322,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Navbar.tox",
     "bytes": 476872,
     "sha256": "6f22f85b6212c4895200d33fb00402a0ab7846620433bc929dcee9812846a335",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_Navbar.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_Navbar.tox"
    }
   },
   {
@@ -1238,7 +1354,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_NavbarRegistry.tox",
     "bytes": 56678,
     "sha256": "60a331d3465ea7436ebf3c1d83aa2d2fecc9ce9c6490ecfabea3900ba915a792",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_NavbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_NavbarRegistry.tox"
    }
   },
   {
@@ -1281,7 +1397,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenu.tox",
     "bytes": 262286,
     "sha256": "edf66c900510b06ae47ac0841061d53a2de0fbaa291e7f43f02dba450fb79198",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_OpMenu.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_OpMenu.tox"
    }
   },
   {
@@ -1309,7 +1425,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenuRegistry.tox",
     "bytes": 55958,
     "sha256": "a1c8296e7fc25b24d7f36f5bb6637f68141f24046cd3b3bcb03130b901544298",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_OpMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_OpMenuRegistry.tox"
    }
   },
   {
@@ -1337,7 +1453,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaletteRegistry.tox",
     "bytes": 52502,
     "sha256": "325e749ff0972d6f8e97c0c6a4df5f8214c8310de03d9fcbd0c3ef01f0725edc",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_PaletteRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_PaletteRegistry.tox"
    }
   },
   {
@@ -1365,7 +1481,45 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaneTypeRegistry.tox",
     "bytes": 143174,
     "sha256": "815ee8811a4e31bd64cd9667c1a1fd04de99c31dcba7f9aef779143a5d893081",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_PaneTypeRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_PaneTypeRegistry.tox"
+   }
+  },
+  {
+   "name": "FNS_Remote",
+   "kind": "tool",
+   "category": "Control",
+   "description": "Control the project from your phone over your own network: parameter pages, a perform window and multi-touch, paired by QR with no cloud and no account.",
+   "version": "1.0.0",
+   "help_url": "https://functionstore.tools/docs/fns-remote/",
+   "surfaces": [],
+   "shortcut": "FNS_REMOTE",
+   "ops": 22,
+   "requires": [],
+   "access": "8323905",
+   "key_available": false,
+   "license": "",
+   "seats": null,
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "min_td_build": "2025.33070",
+   "hotkeys": [],
+   "launcher": {
+    "surfaces": [
+     "context-menu",
+     "session"
+    ],
+    "capabilities": [
+     "fns.mobile-control"
+    ],
+    "seedable": false
+   },
+   "whatsnew": "",
+   "artifact": {
+    "path": "packaging/dist/FNS_Remote.tox",
+    "bytes": 26798,
+    "sha256": "2d0d7dfe3bf1a0f2d909b2be3e5d9be62e66d90aa3155c883a995b45306291c6",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.0.14/FNS_Remote.tox"
    }
   },
   {
@@ -1393,7 +1547,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineRegistry.tox",
     "bytes": 61590,
     "sha256": "0233f1385a498cbf76995a6d5be60db76e9356d985b55c93c3f1062d36ed7345",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_TimelineRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_TimelineRegistry.tox"
    }
   },
   {
@@ -1464,7 +1618,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineTools.tox",
     "bytes": 327838,
     "sha256": "9bb126aac74ecb53d95caf622ed0ecb0d866472e222bce5b68f9d052753fc2d9",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.0.12/FNS_TimelineTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.0.14/FNS_TimelineTools.tox"
    }
   },
   {
@@ -1499,7 +1653,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Toolbar.tox",
     "bytes": 201790,
     "sha256": "ac1a7793171318c1fa63a6b2c0e5182a807e3116a9e8a32576d678a579875c86",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_Toolbar.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_Toolbar.tox"
    }
   },
   {
@@ -1530,7 +1684,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ToolbarRegistry.tox",
     "bytes": 49518,
     "sha256": "cd34ac07daea2056cc45c3d1fd5cddfae5135b65c1c97ed00dceefaf136cdbb4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_ToolbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_ToolbarRegistry.tox"
    }
   },
   {
@@ -1538,7 +1692,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
-   "version": "3.0.7",
+   "version": "3.0.8",
    "help_url": "https://functionstore.tools/docs/fns-updater/",
    "surfaces": [
     "toolbar"
@@ -1558,9 +1712,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Updater.tox",
-    "bytes": 202150,
-    "sha256": "fc105104048cea617ebe88c76712f0cfe4c31c6848e9b8c70eb956436bc80911",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/FNS_Updater.tox"
+    "bytes": 203158,
+    "sha256": "0626c680fb58b789b832112af5229840b88e89283ccf574bdcf9d1a9c8e1bad4",
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/FNS_Updater.tox"
    }
   },
   {
@@ -1593,7 +1747,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/GlobalOutSelect.tox",
     "bytes": 225366,
     "sha256": "d9070394306f2c752a38f9bef6ee98fbcd3dba7cd25ad30e70c6f965c321f8d0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/GlobalOutSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/GlobalOutSelect.tox"
    }
   },
   {
@@ -1626,7 +1780,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/GlobalVolControl.tox",
     "bytes": 201206,
     "sha256": "6ae319c0f818fbcb17aa7d4162a8dabe088db444873c21e95ec2ebd0badd04f3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/GlobalVolControl.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/GlobalVolControl.tox"
    }
   },
   {
@@ -1659,7 +1813,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/HydroHomie.tox",
     "bytes": 153134,
     "sha256": "92fb3634c7915f31b64f07a0fcf34fcefcadd824a87320063c2d91bfa15b7a96",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/HydroHomie.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/HydroHomie.tox"
    }
   },
   {
@@ -1694,7 +1848,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/midiMapper.tox",
     "bytes": 279142,
     "sha256": "ed34e4580ce0df9717a2385c7dd16781bc53f0b0f329769e3c34551e16668f11",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/midiMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/midiMapper.tox"
    }
   },
   {
@@ -1727,7 +1881,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/MISC.tox",
     "bytes": 182542,
     "sha256": "2c31d2eab0a270ad744cdc1f721809daa36201d2ee87c2c1986c5a0c7bc93d30",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/MISC.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/MISC.tox"
    }
   },
   {
@@ -1757,7 +1911,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/OpenExt.tox",
     "bytes": 87974,
     "sha256": "51dc956846f7fdf9b07c0eb73e60d7e1fdee877cf7e923e686b4e490d9d738eb",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/OpenExt.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/OpenExt.tox"
    }
   },
   {
@@ -1838,7 +1992,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/OpTemplates.tox",
     "bytes": 309304,
     "sha256": "f352677cec1bbc15fa18b0e8f07db3b8d2d07cf0bf9486d0299a0505c15abbbd",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/OpTemplates.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/OpTemplates.tox"
    }
   },
   {
@@ -1868,7 +2022,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/OpToClipboard.tox",
     "bytes": 90038,
     "sha256": "0082af0198a3aa445f6fba05126755e5a2d6cbb209290b0f67dd7ef497054ade",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/OpToClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/OpToClipboard.tox"
    }
   },
   {
@@ -1901,7 +2055,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/oscMapper.tox",
     "bytes": 190798,
     "sha256": "62a35ae5fb5e619a435ea79e0d1610ff2f7e8018f167baf3f5b51b6f508afc24",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/oscMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/oscMapper.tox"
    }
   },
   {
@@ -1934,7 +2088,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/OUTPUT.tox",
     "bytes": 148150,
     "sha256": "d98099ab6b7a32542fe5409b2712d2eed8cabafdaaa3d80ccd4536ba96c1fe1c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/OUTPUT.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/OUTPUT.tox"
    }
   },
   {
@@ -1973,7 +2127,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ParOPDrop.tox",
     "bytes": 138814,
     "sha256": "aeedfa37bbe09f6996d9c775be2be7f7cccc3ec91933560b3856d01377131aac",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/ParOPDrop.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/ParOPDrop.tox"
    }
   },
   {
@@ -2027,7 +2181,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ParRandomizer.tox",
     "bytes": 139894,
     "sha256": "b1390a0aad37b1efe721e349809b8a4291c900c0acf9e0b2ae1f6f9f81b65f81",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/ParRandomizer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/ParRandomizer.tox"
    }
   },
   {
@@ -2063,7 +2217,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/paste_from_clipboard.tox",
     "bytes": 174950,
     "sha256": "c706bcaf0f2e0f8d98e8da09f4bb6c9b56cb948a387a7b679478fc34b530c955",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/paste_from_clipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/paste_from_clipboard.tox"
    }
   },
   {
@@ -2104,7 +2258,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/QuickCollapse.tox",
     "bytes": 102590,
     "sha256": "6c54a3e8b9375a6f19b05ddf070cbe9da713545227952bab5febb4c6c00f8eb8",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/QuickCollapse.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/QuickCollapse.tox"
    }
   },
   {
@@ -2140,7 +2294,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/QuickMarks.tox",
     "bytes": 91062,
     "sha256": "3f14d919a5ca8a76724be76c42a60dc2612158dba5ecab18cdb8d78b52388a36",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/QuickMarks.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/QuickMarks.tox"
    }
   },
   {
@@ -2176,7 +2330,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/QuickPane.tox",
     "bytes": 91062,
     "sha256": "2dbed8edd53ad10497bd356e8760758f8948ef0ec136fdfd052656b30f55af3f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/QuickPane.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/QuickPane.tox"
    }
   },
   {
@@ -2209,7 +2363,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/QuickTime.tox",
     "bytes": 135766,
     "sha256": "4ae04c61cd07fdd8948085f073a537a3d999a295f9c394041e778796c3af0d8e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/QuickTime.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/QuickTime.tox"
    }
   },
   {
@@ -2262,7 +2416,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ResetPLS1.tox",
     "bytes": 156022,
     "sha256": "f3780b3e5bc36dfa6f4c7a3221076b341fe54a2a5e82d11537970fbb6f043ceb",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/ResetPLS1.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/ResetPLS1.tox"
    }
   },
   {
@@ -2295,7 +2449,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/SetSmoothness.tox",
     "bytes": 194238,
     "sha256": "e14b1ea9ff37496b92567f463dae162ff54a8183278624c4b28a87a4887f07d1",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/SetSmoothness.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/SetSmoothness.tox"
    }
   },
   {
@@ -2334,7 +2488,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/SwapOps.tox",
     "bytes": 136542,
     "sha256": "850c9dd70c24b50cd744e4940cb4c5a07180879c7fc613577cb2e7384b59ffa1",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/SwapOps.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/SwapOps.tox"
    }
   },
   {
@@ -2364,7 +2518,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/SwitchOPs.tox",
     "bytes": 88278,
     "sha256": "3833ac61e33c6abdc114fbd2613a4b9e00b9bd2c98217159659dc9fa48b5c405",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/SwitchOPs.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/SwitchOPs.tox"
    }
   },
   {
@@ -2394,7 +2548,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/TDX_SearchPalette.tox",
     "bytes": 76438,
     "sha256": "85857682a8577c70fe6f5a47fc90fb5a82389b4676487c909135ae50b94a461a",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/TDX_SearchPalette.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/TDX_SearchPalette.tox"
    }
   },
   {
@@ -2427,7 +2581,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/VSCodeTools.tox",
     "bytes": 651448,
     "sha256": "e4ca873f2ef37a00bdfec67cc36530904ab43f8f82845b9cf2e35b4e7bb566cb",
-    "url": "https://storage.functionstore.tools/fnstools/v3.0.12/VSCodeTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/VSCodeTools.tox"
    }
   }
  ]
@@ -2695,6 +2849,9 @@ function fnsBoot() {
     // network you are working in, not into the toolkit container
     if (p.placement === 'pane') {
       chips.appendChild(chip('lands in your working network', 'hint'));
+    }
+    if (p.placement === 'root') {
+      chips.appendChild(chip('lands at your network root', 'hint'));
     }
     // The WORDS come from the manifest's surface_meta, so the picker and
     // the docs site never disagree about what a surface is called. A

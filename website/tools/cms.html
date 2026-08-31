@@ -412,6 +412,7 @@ function renderList() {
           tier ? tier.label.toUpperCase() : 'PLUS'}</span>` : '') +
         (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
         (p.placement === 'pane' ? '<span class="tag tag-net" title="Installs into the network the user is working in">NET</span>' : '') +
+        (p.placement === 'root' ? '<span class="tag tag-net" title="Installs at the network root, beside the toolkit container">ROOT</span>' : '') +
         (p.stub ? '<span class="tag tag-stub">STUB</span>'
                 : (p.todos ? `<span class="tag tag-todo">${p.todos} TODO</span>` : ''));
       el.querySelector('.pkg-name').textContent = p.name;
@@ -504,9 +505,10 @@ function renderEditor() {
     </div>
 
     <div class="field">
-      <label for="placement">Installs into <span class="hint">— where the installer lands it. Toolkit: a child of the toolkit container, update-tracked in place. Current network: a reusable component spawned into the network the user is working in; instances stay at their spawn version. Lives in catalog.json; ships with the next release’s manifest.</span></label>
+      <label for="placement">Installs into <span class="hint">— where the installer lands it. Toolkit: a child of the toolkit container, update-tracked in place. Network root: beside the toolkit container — a known address, so it updates and removes like a toolkit tool. Current network: a reusable component spawned into the network the user is working in; instances stay at their spawn version. Lives in catalog.json; ships with the next release’s manifest.</span></label>
       <select id="placement">
         <option value="">Toolkit container (default)</option>
+        <option value="root">Network root — beside the toolkit container</option>
         <option value="pane">Current network — spawns where the user is working</option>
       </select>
     </div>

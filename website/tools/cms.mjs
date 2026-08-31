@@ -533,10 +533,10 @@ const server = http.createServer(async (req, res) => {
           // the default (toolkit container) stays a two-line entry.
           if (typeof body.placement === 'string') {
             const pl = body.placement.trim();
-            if (pl && pl !== 'pane') {
+            if (pl && pl !== 'pane' && pl !== 'root') {
               return json(res, 400, { error: `unknown placement "${pl}"` });
             }
-            if (pl === 'pane') entry.placement = 'pane';
+            if (pl) entry.placement = pl;
             else delete entry.placement;
           }
           writeCatalog(cat);

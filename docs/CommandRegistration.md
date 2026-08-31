@@ -97,7 +97,7 @@ same day. One lifecycle implementation, everywhere.
 
 ---
 
-## Versions (state as of 2026-08-21)
+## Versions (state as of 2026-08-31)
 
 - Live in-session registry: **1.2.0** (decorator harvest + `params` work).
 - `hidden=` (1.3.0) and `builtin=` (1.4.0) are stamped in our metadata
@@ -117,6 +117,32 @@ same day. One lifecycle implementation, everywhere.
   reuses it implicitly (SetVolume, SetInterval work this way). ~24 of
   our commands carry state. Design rationale:
   `docs/CommandStateProposal.md`.
+- **Surfaces and capabilities (registry ≥ 1.7.0, master ported
+  2026-08-31)** — two optional decorator fields, both pure metadata, both
+  ignored by any older registry (the port is backward-safe in either
+  direction, which is why it could land here before the launcher ships):
+
+  - `surface=` names the consumer surfaces a command wants to appear on:
+    a token or list of tokens (lowercase alnum/underscore/dash, ≤24
+    chars, max 8). **Absent = exactly today's behaviour** (quick-launch
+    only). Known tokens: `quick`, `session` (the launcher's Current-view
+    companion bar), `context-menu` (its session right-click menu). The
+    registry validates SHAPE only, never the value — consumers ignore
+    tokens they do not serve, so new surfaces are additive and cost
+    nothing to declare early.
+  - `capability=` marks the command as part of a blessed capability: a
+    namespaced id (`fns.collect`, `fns.media-browser`,
+    `fns.mobile-control`; lowercase alnum/dot/underscore/dash, ≤64
+    chars). A consumer that recognises the id may render rich native UI
+    for the capability's command group; one that does not falls back to
+    generic rendering. Progressive enhancement — **never a gate, never a
+    secret**.
+
+  Adoption is free for any tool: declaring `surface=['session']` today
+  costs nothing and surfaces the command in the launcher's Current bar
+  the moment its companion ships. Candidates:
+  [CommandRegistryCandidates.md](CommandRegistryCandidates.md).
+
 - Handlers run synchronously on the main thread — return fast, kick long
   work off with `run(..., delayFrames=1)`. A dict with `ok: False` marks
   the run failed in the palette footer.

@@ -67,15 +67,24 @@ TIERS = """
 {
   "8323905": [
     "FNS_TimelineTools",
-    "TDXLU_Pro"
+    "TDXLU_Pro",
+    "FNS_Collect",
+    "FNS_Remote",
+    "FNS_MediaBrowser"
   ],
   "8291595": [
     "FNS_TimelineTools",
-    "TDXLU_Pro"
+    "TDXLU_Pro",
+    "FNS_Collect",
+    "FNS_Remote",
+    "FNS_MediaBrowser"
   ],
   "9796651": [
     "FNS_TimelineTools",
-    "TDXLU_Pro"
+    "TDXLU_Pro",
+    "FNS_Collect",
+    "FNS_Remote",
+    "FNS_MediaBrowser"
   ]
 }
 """

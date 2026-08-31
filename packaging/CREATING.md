@@ -90,6 +90,13 @@ Categories and their glyph/pitch live in the same file under
 
 **`placement`** — where the installer lands the package. Absent (the
 default): a child of the toolkit container, update-tracked in place.
+
+`"placement": "root"` lands it at the **network root, beside the toolkit
+container** — for tools that must live at `/` rather than inside the
+container. The address is known, so it behaves like a toolkit tool
+otherwise: presence is the live comp, updates apply in place (the
+updater's doorstep walk), and unselecting removes it for real.
+
 `"placement": "pane"` declares a **reusable component** — something you
 use in normal TouchDesigner work rather than a toolkit tool — and the
 installer spawns it into the network the user is working in (the current
@@ -112,7 +119,7 @@ design (palette-component semantics):
   root compares and updates in place like any tool.
 
 Set it in the CMS package editor ("Installs into"), like the other
-curated keys. Stored as presence: only `"placement": "pane"` is ever
+curated keys. Stored as presence: only `"pane"` or `"root"` is ever
 written.
 
 ### 3. A user-facing doc — `packaging/docs/MyTool.md`
@@ -131,6 +138,15 @@ with its doc or nothing ships. This is deliberate.
 - **Surfaces** (toolbar, hub, op menu…), **integrations**
   (`integrates_with` degrades gracefully by design — never a hard
   dependency), **op counts**, **artifact hashes and URLs**.
+- **Launcher reach** — the manifest's `launcher` block
+  (`{surfaces, capabilities, seedable}`, where `seedable` is NESTED
+  inside it: `p.launcher.seedable`, never `p.seedable`), derived by
+  reflecting over your commands.
+  A package earns it by declaring a `surface` token other than `quick`,
+  or a `capability`, on any command — see `/fns-command-registration`.
+  **Having commands is not enough**: nearly every tool has quick-launch
+  commands, and a launcher's bundler needs the few that reach a surface
+  beyond it. Absent means "commands only", which is the normal answer.
 
 If you find yourself wanting to hand-declare any of these, the design is
 telling you the tool is shaped wrong — usually a tool-to-tool dependency

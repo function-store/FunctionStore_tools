@@ -104,12 +104,30 @@ DECLARED_PRIVATE_PREFIXES = (
     'modules/release/',
 )
 
+# Paths whose NAME collides with a gated package but which belong to a
+# different package entirely, and must keep publishing.
+#
+# `_tokens()` strips the FNS_ prefix, so gating FNS_Remote made every
+# path containing "remote" suspicious -- including FNS_Updater's
+# `github_remote` helper, which fetches release info from GitHub, is not
+# gated, and has nothing to do with phone control (verified: zero
+# references to phone, touch or FNS_Remote). The sweep is deliberately
+# name-based and fail-closed, so a common English word in a gated
+# package's name WILL produce false positives. Each entry here is a
+# decision that a human made once; do not add one without checking the
+# file actually belongs elsewhere.
+NAME_COLLISIONS = (
+    'modules/suspects/FNSTools/FNS_Updater/github_remote.tox',
+    'modules/suspects/FNSTools/FNS_Updater/github_remote/githubRemote.py',
+)
+
+
 # Paths that legitimately carry a gated package's name and still publish:
 # the public catalogue and the tool's own user-facing doc page (the site
 # build hard-fails without it, and a Plus tool having a docs page is the
 # point).
 def _nameAllowed(path, name):
-    return path in (
+    return path in NAME_COLLISIONS or path in (
         'packaging/catalog.json',
         'packaging/manifest.json',
         'packaging/release.json',

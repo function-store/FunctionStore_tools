@@ -150,9 +150,20 @@ def _isGatedKey(key):
 
 
 def _remoteShaAuth(key):
-    """SHA-256 of a gated object via authenticated wrangler get, or None."""
+    """SHA-256 of a gated object via authenticated wrangler get, or None.
+
+    The temp file is UNIQUE PER KEY. Uploads run concurrently across
+    WORKERS processes, so a fixed filename means every gated object in a
+    release races the same path: one deletes it in its `finally` while
+    another is still hashing, and the losers report "uploaded but could
+    not be read back" for bytes that are perfectly fine. Seen on v3.0.13,
+    where all four gated artifacts failed verification and every one was
+    byte-identical in the bucket when checked serially.
+    """
     tmp = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                       '.gated-readback.tmp')
+                       '.gated-readback-%s-%d.tmp'
+                       % (hashlib.sha256(key.encode()).hexdigest()[:12],
+                          os.getpid()))
     cmd = [NPX, '--yes', 'wrangler', 'r2', 'object', 'get',
            f'{BUCKET}/{key}', '--file', tmp, '--remote']
     try:

@@ -1,28 +1,41 @@
 {
-  "_comment": [
-    "Curated site content: the other Function Store products, and the one-line",
-    "pitch for each. Site-only — packaging/ never reads this. It lives here",
-    "rather than being typed twice because the same three cards appear on the",
-    "landing page and on /plus/, and two copies would drift.",
-    "",
-    "Injected into the FAMILY markers on index.html and plus/index.html by",
-    "tools/build-site.mjs. `access` is the same vocabulary catalog.json uses:",
-    "what it costs to get the whole thing."
-  ],
-  "products": [
-    {
-      "name": "TDX Launcher Ultra",
-      "kind": "Desktop app · Windows & macOS",
-      "pitch": "Find the project, get the build it needs, go. Global quick-launch palette, phone remote over QR, git and backup panels, and a companion COMP inside TouchDesigner.",
-      "url": "https://launcher.functionstore.xyz",
-      "access": "Free core · Pro with a membership or a licence key"
-    },
-    {
-      "name": "TDXMap",
-      "kind": "TouchDesigner component",
-      "pitch": "MIDI controller mapping without the wiring: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode and easing curves.",
-      "url": "https://tdxmap.functionstore.xyz",
-      "access": "14-day Pro trial · Base and Pro with a membership or a licence key"
-    }
-  ]
+ "_comment": [
+  "Curated site content: the other Function Store products, and the one-line",
+  "pitch for each. Site-only — packaging/ never reads this. It lives here",
+  "rather than being typed twice because the same three cards appear on the",
+  "landing page and on /plus/, and two copies would drift.",
+  "",
+  "Injected into the FAMILY markers on index.html and plus/index.html by",
+  "tools/build-site.mjs. `access` is the same vocabulary catalog.json uses:",
+  "what it costs to get the whole thing.",
+  "",
+  "KEEP THESE PITCHES HONEST ABOUT WHERE A FEATURE LIVES -- IN BOTH",
+  "DIRECTIONS. This card claimed the launcher did 'phone remote over QR'",
+  "after that moved into the FNS_Remote package, so we advertised another",
+  "product's lost feature as its own. The correction then went too far and",
+  "deleted phone control entirely -- but only TOUCH moved; the launcher",
+  "still serves parameters and session actions, so it reads 'phone and",
+  "browser control of a running session' now.",
+  "",
+  "Both errors are the same shape: nothing derives these pitches and no",
+  "build fails on them, so a capability moving between products leaves",
+  "this card behind. Overstating is a false claim; understating hands a",
+  "sibling product's real feature to nobody."
+ ],
+ "products": [
+  {
+   "name": "TDX Launcher Ultra",
+   "kind": "Desktop app · Windows & macOS",
+   "pitch": "Find the project, get the build it needs, go. Global quick-launch palette that runs your FNSTools commands, phone and browser control of a running session, git and backup panels, and a companion COMP inside TouchDesigner.",
+   "url": "https://launcher.functionstore.xyz",
+   "access": "Free core · Pro with a membership or a licence key"
+  },
+  {
+   "name": "TDXMap",
+   "kind": "TouchDesigner component",
+   "pitch": "MIDI controller mapping without the wiring: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode and easing curves.",
+   "url": "https://tdxmap.functionstore.xyz",
+   "access": "14-day Pro trial · Base and Pro with a membership or a licence key"
+  }
+ ]
 }

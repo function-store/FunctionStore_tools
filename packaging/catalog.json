@@ -269,6 +269,25 @@
   "paste_from_clipboard": {
    "category": "Network",
    "description": "Paste images and data from the system clipboard into TouchDesigner."
+  },
+  "FNS_Collect": {
+   "category": "Workflow",
+   "description": "Gather every external file your project references into the project folder and rewrite the parameters to match, so the project travels. Shows the plan before it copies anything.",
+   "access": "8323905"
+  },
+  "FNS_Remote": {
+   "category": "Control",
+   "description": "Control the project from your phone over your own network: parameter pages, a perform window and multi-touch, paired by QR with no cloud and no account.",
+   "access": "8323905"
+  },
+  "FNS_Autosave": {
+   "category": "Workflow",
+   "description": "Save the project on a timer without touching the timeline, honouring your increment and backup preferences, and skipping saves while you are performing."
+  },
+  "FNS_MediaBrowser": {
+   "category": "Media & Output",
+   "description": "See every media file your project uses and which operator uses it, filter to the missing ones, and replace or repoint them in place.",
+   "access": "8323905"
   }
  }
 }

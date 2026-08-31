@@ -38,7 +38,7 @@ contract (spec fields, param styles, coercion rules).
 
 def fns_command(fn=None, *, id=None, label=None, help='', params=None,
 				args=None, kwargs=None, hidden=False, builtin=False,
-				state=None):
+				state=None, surface=None, capability=None):
 	"""Mark a promoted extension method as a quick-launch command.
 
 	Pure metadata - safe at class-compile time with no registry present.
@@ -57,12 +57,25 @@ def fns_command(fn=None, *, id=None, label=None, help='', params=None,
 	{'method': 'GetX'} names a promoted no-arg method for computed
 	state. Evaluated at QUERY time by the registry - never stale, and
 	it MUST be trivially cheap (a par read, a one-liner).
+
+	surface (registry >= 1.7.0) names the consumer surfaces the command
+	wants to appear on - a token or list of tokens. Absent = today's
+	behaviour (quick-launch only). Known surfaces: 'quick', 'session'
+	(the launcher's Current-view companion bar), 'context-menu' (its
+	session right-click menu). Consumers ignore tokens they don't
+	serve, so new surfaces cost nothing to declare early.
+
+	capability (registry >= 1.7.0) marks the command as part of a
+	BLESSED capability ('fns.collect') - consumers that recognise the
+	id may render rich native UI for the command group; ones that
+	don't fall back to generic rendering. Never a gate.
 	"""
 	def mark(f):
 		f._fns_command = {
 			'id': id, 'label': label, 'help': help,
 			'params': params, 'args': args, 'kwargs': kwargs,
 			'hidden': hidden, 'builtin': builtin, 'state': state,
+			'surface': surface, 'capability': capability,
 		}
 		return f
 	return mark(fn) if callable(fn) else mark

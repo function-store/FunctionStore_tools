@@ -1,5 +1,18 @@
 # FNS tools changelog
 
+## v3.0.14 -- 2026-08-31
+
+- FNS_Collect 1.0.0 -> 1.0.1
+- FNS_MediaBrowser 1.0.0
+
+## v3.0.13 -- 2026-08-31
+
+- FNS_Autosave 1.0.0
+- FNS_Collect 1.0.0
+- FNS_Media 1.0.0
+- FNS_Remote 1.0.0
+- FNS_Updater 3.0.7 -> 3.0.8
+
 ## v3.0.12 -- 2026-08-30
 
 - FNS_TimelineTools 3.0.3 -> 3.0.4

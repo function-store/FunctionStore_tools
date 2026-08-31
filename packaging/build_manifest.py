@@ -246,6 +246,68 @@ def _docsSlug(name):
     return name.lower().replace('_', '-')
 
 
+def LauncherSurface(comp):
+    """What a consumer beyond quick-launch can do with this package.
+
+    Returns {'surfaces': [...], 'capabilities': [...]} or {} — and {} is
+    the answer for most packages, deliberately. **Having commands does
+    not make a package launcher-surface capable.** Every FNS tool carries
+    quick-launch commands; what a launcher's bundler needs to gather is
+    the much smaller set that asks for a surface BEYOND quick-launch, or
+    marks itself part of a blessed capability whose rich UI the consumer
+    renders natively.
+
+    So the predicate is: any `surface` token other than 'quick', or any
+    `capability`. Derived by reflection, never declared in the catalog —
+    same rule as `surfaces` and `hotkeys` (packaging/CREATING.md).
+
+    Harvested from BOTH registration shapes, because the fleet uses one
+    and the ported launcher capabilities use the other: a `FnsCommands()`
+    spec list on the extension, and `@fns_command`-decorated promoted
+    methods carrying `_fns_command`. Only the two fields are read; the
+    full spec stays the registry's business, so this cannot drift into a
+    second harvester.
+    """
+    if not comp.extensions:
+        return {}
+    ext = comp.extensions[0]
+    specs = []
+    try:
+        fn = getattr(ext, 'FnsCommands', None)
+        if callable(fn):
+            specs = list(fn() or [])
+    except Exception as e:
+        debug('packaging: %s FnsCommands() failed (%s)' % (comp.name, e))
+    if not specs:
+        cls = type(ext)
+        for name in dir(cls):
+            if not name[:1].isupper():
+                continue
+            try:
+                spec = getattr(getattr(cls, name), '_fns_command', None)
+            except Exception:
+                spec = None
+            if isinstance(spec, dict):
+                specs.append(spec)
+    surfaces, caps = set(), set()
+    for s in specs:
+        if not isinstance(s, dict):
+            continue
+        raw = s.get('surface') or []
+        if isinstance(raw, str):
+            raw = [raw]
+        for tok in raw:
+            tok = str(tok).strip()
+            if tok and tok != 'quick':
+                surfaces.add(tok)
+        cap = str(s.get('capability') or '').strip()
+        if cap:
+            caps.add(cap)
+    if not surfaces and not caps:
+        return {}
+    return {'surfaces': sorted(surfaces), 'capabilities': sorted(caps)}
+
+
 def Hotkeys(comp):
     """The package's real hotkeys, asked of FNS_HotkeyManager.
 
@@ -1083,6 +1145,36 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
             # reaches the docs without anyone editing prose
             'hotkeys': Hotkeys(comp),
         }
+
+        # Only for packages that reach a consumer surface beyond
+        # quick-launch (see LauncherSurface). Presence-style: absent means
+        # "commands only", which is most of the fleet.
+        launcher = LauncherSurface(comp)
+        if launcher:
+            # `seedable` is the SAFE bundling predicate, and it exists
+            # because `launcher` is not one. Most launcher-capable
+            # packages are gated (3 of 4 today), so a bundler gathering
+            # "everything with a launcher block" would ship paid bytes
+            # inside a freely downloadable app -- the same class of leak
+            # as a release tox carrying a gated package into the public
+            # mirror. Only a free package may be seeded into a store.
+            #
+            # Gated packages are not merely unseedable, they are
+            # unseedABLE: a gated stock needs a download token minted by
+            # the gate, so it requires the network whether or not the
+            # bytes are local. Offline entitlement is a contradiction,
+            # not a gap.
+            # FAIL CLOSED. `access` defaults to 'free' for a package the
+            # catalog does not mention, which is the right default almost
+            # everywhere and exactly the wrong one here: a package whose
+            # gating has not been decided yet would advertise itself as
+            # safe to bundle. Verified live -- before the four ported
+            # capabilities were catalogued, all four read seedable, and
+            # three of them are meant to be gated. So seedable requires a
+            # catalog entry that SAYS free, never the absence of one.
+            launcher['seedable'] = (comp.name in curated
+                                    and entry['access'] == 'free')
+            entry['launcher'] = launcher
         warn = PortabilityWarnings(comp)
         if warn:
             entry['portability'] = warn
@@ -1104,8 +1196,8 @@ def Build(export=False, out_path=None, base_url=BASE_URL, release=None):
         # into the network the user is working in, presence is the install
         # record, and instances are frozen at their spawn version (like a
         # palette component). Stored as presence, like `recommended`.
-        if str(meta.get('placement', '')) == 'pane':
-            entry['placement'] = 'pane'
+        if str(meta.get('placement', '')) in ('pane', 'root'):
+            entry['placement'] = str(meta['placement'])
 
         # per-tool release note for the CURRENT version: freshly attributed
         # prose when this release moves the version, otherwise carried from

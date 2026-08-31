@@ -534,6 +534,16 @@ def _newestSource(name):
     return own, vendored
 
 
+# One PI save writes the tox AND re-exports the externalized .py files
+# beside it, microseconds apart and in no guaranteed order -- measured
+# 0.5ms on this project, with content identical to HEAD. A strict
+# "source newer than tox" test therefore reports every freshly-saved
+# package as unlanded, which is a blocker nobody can clear by saving
+# again. A genuine unlanded edit is seconds to minutes newer, never
+# sub-second, so the comparison carries a small slack.
+_SAVE_SLACK_S = 2.0
+
+
 def _unlandedPackages(names):
     """(unlanded, rippled): packages whose sources outran their .tox.
 
@@ -552,9 +562,9 @@ def _unlandedPackages(names):
             continue
         tox_mt = os.path.getmtime(tox)
         own, vendored = _newestSource(n)
-        if own and own > tox_mt:
+        if own and own > tox_mt + _SAVE_SLACK_S:
             unlanded.append(n)
-        elif vendored and vendored > tox_mt:
+        elif vendored and vendored > tox_mt + _SAVE_SLACK_S:
             rippled.append(n)
     return unlanded, rippled
 

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.0.12",
+ "release": "v3.0.14",
  "td_build": "2025.33070",
  "packages": {
   "AltSelect": [
@@ -3520,6 +3520,126 @@
     "page": "About"
    }
   ],
+  "FNS_Autosave": [
+   {
+    "name": "Active",
+    "label": "Active",
+    "style": "Toggle",
+    "help": "Save the project every Interval minutes. A save stalls the frame while the .toe is written.",
+    "default": false,
+    "section": true,
+    "page": "Autosave"
+   },
+   {
+    "name": "Interval",
+    "label": "Interval (min)",
+    "style": "Float",
+    "help": "Minutes between automatic saves. Changing it restarts the countdown.",
+    "default": 10.0,
+    "page": "Autosave"
+   },
+   {
+    "name": "Mode",
+    "label": "Save Mode",
+    "style": "Menu",
+    "help": "TD Save calls project.save(), so it follows TouchDesigner's own Increment Filename / Copy to Backup Folder preferences. Overwrite saves onto the .toe already open and never increments.",
+    "default": "td",
+    "menu": [
+     {
+      "name": "td",
+      "label": "TD Save (honour preferences)"
+     },
+     {
+      "name": "overwrite",
+      "label": "Overwrite current file"
+     }
+    ],
+    "page": "Autosave"
+   },
+   {
+    "name": "Onlymodified",
+    "label": "Only If Modified",
+    "style": "Toggle",
+    "help": "Skip a scheduled save when no operator has changed since the last one (project.modified is empty).",
+    "default": true,
+    "page": "Autosave"
+   },
+   {
+    "name": "Skipperform",
+    "label": "Skip In Perform Mode",
+    "style": "Toggle",
+    "help": "Skip scheduled saves while the project is in Perform Mode. Save Now still works.",
+    "default": true,
+    "page": "Autosave"
+   },
+   {
+    "name": "Status",
+    "label": "Status",
+    "style": "Str",
+    "help": "When the last save landed, or why the last scheduled one was skipped.",
+    "default": "",
+    "readonly": true,
+    "section": true,
+    "page": "Autosave"
+   },
+   {
+    "name": "Lastsave",
+    "label": "Last Save",
+    "style": "Str",
+    "help": "Time and filename of the last save this component made.",
+    "default": "",
+    "readonly": true,
+    "page": "Autosave"
+   },
+   {
+    "name": "Savenow",
+    "label": "Save Now",
+    "style": "Pulse",
+    "help": "Save immediately using the mode above, ignoring the skip toggles.",
+    "page": "Autosave"
+   }
+  ],
+  "FNS_Collect": [
+   {
+    "name": "Collectui",
+    "label": "Open UI",
+    "style": "Pulse",
+    "help": "Open the collect panel (scan list, per-file selection, collect) in a floating viewer.",
+    "page": "Collect"
+   },
+   {
+    "name": "Collectscan",
+    "label": "Scan External Files",
+    "style": "Pulse",
+    "help": "Dry-run of Collect All & Save: scans every file parameter for references outside the project folder and reports the count and total size in Collect Status (details returned to callers). Nothing is copied or rewritten.",
+    "page": "Collect"
+   },
+   {
+    "name": "Collectsave",
+    "label": "Collect All & Save",
+    "style": "Pulse",
+    "help": "Copies every external audio/movie/geometry/image file reference into {project}/collected/<category>/, rewrites those parameters to project-relative paths, then saves the .toe. Originals are never moved or deleted; expression-driven parameters are left untouched. Progress appears in Collect Status.",
+    "page": "Collect"
+   },
+   {
+    "name": "Collectexpr",
+    "label": "Freeze Expression Refs",
+    "style": "Toggle",
+    "help": "Freeze expressions on collected file references. Off by default: an expression that happens to evaluate to a path is live wiring, and resolving it would detach that rather than bake a value.",
+    "default": false,
+    "page": "Collect"
+   },
+   {
+    "name": "Collectstatus",
+    "label": "Collect Status",
+    "style": "Str",
+    "help": "Live progress / result of the most recent scan or collect run.",
+    "default": "",
+    "readonly": true,
+    "section": true,
+    "page": "Collect"
+   }
+  ],
   "FNS_CommandKit": [],
   "FNS_ConfigHost": [
    {
@@ -4339,6 +4459,40 @@
     "page": "Registration"
    }
   ],
+  "FNS_MediaBrowser": [
+   {
+    "name": "Mediaui",
+    "label": "Open Browser",
+    "style": "Pulse",
+    "help": "Open the media browser panel (reference list + preview) in a floating viewer.",
+    "page": "Media"
+   },
+   {
+    "name": "Mediascan",
+    "label": "Rescan Media",
+    "style": "Pulse",
+    "help": "Re-walk the project for media file references (movie / image / audio / geometry) and rebuild the browser list. Nothing is changed on disk or in the network.",
+    "page": "Media"
+   },
+   {
+    "name": "Mediamissing",
+    "label": "Missing Only",
+    "style": "Toggle",
+    "help": "When on, the browser lists only references whose file is missing on disk - the broken ones you actually need to repoint.",
+    "default": false,
+    "page": "Media"
+   },
+   {
+    "name": "Mediastatus",
+    "label": "Media Status",
+    "style": "Str",
+    "help": "Live readout of the last scan, hover, or replacement.",
+    "default": "",
+    "readonly": true,
+    "section": true,
+    "page": "Media"
+   }
+  ],
   "FNS_Navbar": [
    {
     "name": "Createpulse",
@@ -5027,6 +5181,210 @@
     "style": "Pulse",
     "help": "Open the author's page in your browser.",
     "page": "About"
+   }
+  ],
+  "FNS_Remote": [
+   {
+    "name": "Active",
+    "label": "Active",
+    "style": "Toggle",
+    "help": "Bind the server and serve this session. Off = nothing listens.",
+    "default": false,
+    "page": "Remote"
+   },
+   {
+    "name": "Port",
+    "label": "Port",
+    "style": "Int",
+    "help": "First port of the span to bind (20 ports from here).",
+    "default": 9980,
+    "page": "Remote"
+   },
+   {
+    "name": "Boundport",
+    "label": "Boundport",
+    "style": "Str",
+    "help": "The port actually bound.",
+    "default": "",
+    "readonly": true,
+    "page": "Remote"
+   },
+   {
+    "name": "Lan",
+    "label": "Lan",
+    "style": "Toggle",
+    "help": "OFF = loopback only (127.0.0.1). ON = every interface, so phones on your Wi-Fi can reach it. Deliberate act: leave it off unless you want the LAN to see this session.",
+    "default": false,
+    "section": true,
+    "page": "Remote"
+   },
+   {
+    "name": "Status",
+    "label": "Status",
+    "style": "Str",
+    "help": "One line of current state.",
+    "default": "",
+    "readonly": true,
+    "page": "Remote"
+   },
+   {
+    "name": "Url",
+    "label": "Url",
+    "style": "Str",
+    "help": "Pairing URL (loopback). Carries the access token in the fragment.",
+    "default": "",
+    "readonly": true,
+    "page": "Remote"
+   },
+   {
+    "name": "Openpairing",
+    "label": "Open Pairing Page",
+    "style": "Pulse",
+    "help": "Open the pairing page (QR + link) in your browser.",
+    "section": true,
+    "page": "Remote"
+   },
+   {
+    "name": "Regeneratetoken",
+    "label": "Regenerate Token",
+    "style": "Pulse",
+    "help": "Mint a new access token. Every existing link stops working.",
+    "page": "Remote"
+   },
+   {
+    "name": "Maxtouches",
+    "label": "Maxtouches",
+    "style": "Int",
+    "help": "How many simultaneous touches to expose as CHOP slots.",
+    "default": 10,
+    "page": "Touch"
+   },
+   {
+    "name": "Flipy",
+    "label": "Flipy",
+    "style": "Toggle",
+    "help": "Browser Y counts DOWN from the top; TouchDesigner counts UP from the bottom. On = convert to TD's convention.",
+    "default": true,
+    "page": "Touch"
+   },
+   {
+    "name": "Normalize",
+    "label": "Normalize",
+    "style": "Toggle",
+    "help": "On = 0-1 across the touch area. Off = multiply back up by the phone's reported screen size in pixels.",
+    "default": true,
+    "page": "Touch"
+   },
+   {
+    "name": "Createtarget",
+    "label": "Createtarget",
+    "style": "OP",
+    "help": "Where the builder pulses below drop their operators. Blank = the network you have open.",
+    "default": "",
+    "section": true,
+    "page": "Touch"
+   },
+   {
+    "name": "Createselectchop",
+    "label": "Create Select CHOP",
+    "style": "Pulse",
+    "help": "Build a Select CHOP pointed at the touch channels.",
+    "page": "Touch"
+   },
+   {
+    "name": "Createselectdat",
+    "label": "Create Select DAT",
+    "style": "Pulse",
+    "help": "Build a Select DAT pointed at the client table.",
+    "page": "Touch"
+   },
+   {
+    "name": "Createreceiver",
+    "label": "Create Receiver",
+    "style": "Pulse",
+    "help": "Build one COMP holding both, ready to drag anywhere.",
+    "page": "Touch"
+   },
+   {
+    "name": "Controlstatus",
+    "label": "Controlstatus",
+    "style": "Str",
+    "help": "What is currently exposed to the remote.",
+    "default": "",
+    "readonly": true,
+    "page": "Control"
+   },
+   {
+    "name": "Exposeperform",
+    "label": "Expose Perform Window",
+    "style": "Toggle",
+    "help": "Expose the perform window's own custom parameters to the remote.",
+    "default": true,
+    "page": "Control"
+   },
+   {
+    "name": "Performwindow",
+    "label": "Perform Window",
+    "style": "COMP",
+    "help": "Blank = the project perform window.",
+    "default": "",
+    "page": "Control"
+   },
+   {
+    "name": "Performpages",
+    "label": "Perform Page Filter",
+    "style": "Str",
+    "help": "Space-separated page names to expose. Blank = all custom pages.",
+    "default": "",
+    "page": "Control"
+   },
+   {
+    "name": "Performpars",
+    "label": "Perform Parameter Filter",
+    "style": "Str",
+    "help": "Space-separated parameter names/patterns. Blank = all.",
+    "default": "",
+    "page": "Control"
+   },
+   {
+    "name": "Control",
+    "label": "Control",
+    "style": "Sequence",
+    "help": "",
+    "default": 0,
+    "page": "Control"
+   },
+   {
+    "name": "Control0comp",
+    "label": "Component",
+    "style": "COMP",
+    "help": "A COMP whose custom parameters the remote may see and drive.",
+    "default": "",
+    "page": "Control"
+   },
+   {
+    "name": "Control0pages",
+    "label": "Page Filter",
+    "style": "Str",
+    "help": "Space-separated page names to expose. Blank = every custom page.",
+    "default": "",
+    "page": "Control"
+   },
+   {
+    "name": "Control0pars",
+    "label": "Parameter Filter",
+    "style": "Str",
+    "help": "Space-separated parameter names or patterns. Blank = all.",
+    "default": "",
+    "page": "Control"
+   },
+   {
+    "name": "Control0enable",
+    "label": "Active",
+    "style": "Toggle",
+    "help": "Uncheck to hide this block from the remote without clearing it.",
+    "default": true,
+    "page": "Control"
    }
   ],
   "FNS_TimelineRegistry": [
@@ -8475,6 +8833,8 @@
   "ExprHotStrings": [
    "hub"
   ],
+  "FNS_Autosave": [],
+  "FNS_Collect": [],
   "FNS_CommandKit": [],
   "FNS_ConfigHost": [],
   "FNS_ConfigRegistry": [],
@@ -8488,6 +8848,7 @@
   ],
   "FNS_HubRegistry": [],
   "FNS_MainMenuRegistry": [],
+  "FNS_MediaBrowser": [],
   "FNS_Navbar": [
    "navbar"
   ],
@@ -8499,6 +8860,7 @@
   "FNS_OpMenuRegistry": [],
   "FNS_PaletteRegistry": [],
   "FNS_PaneTypeRegistry": [],
+  "FNS_Remote": [],
   "FNS_TimelineRegistry": [],
   "FNS_TimelineTools": [
    "timeline"

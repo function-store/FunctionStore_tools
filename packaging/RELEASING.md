@@ -237,3 +237,69 @@ installer plans downloads against the store's manifest and re-fetches any
 store file whose sha256 disagrees with it (the store is a mirror — see
 README, "Updating an install"), but a test that bypasses the picker flow
 can still load whatever file a path points at.
+
+---
+
+## Two things that look like breakage and are not
+
+Both cost real time on the v3.0.13 release. Both are fixed; this is so
+the *symptoms* are recognisable if they resurface.
+
+### "not landed, own code newer than the .tox" on packages you just saved
+
+Preflight reported 18 packages as unlanded immediately after a clean
+save. One PI save writes the suspect `.tox` **and** re-exports the
+externalized `.py` files beside it, microseconds apart and in no
+guaranteed order — measured **0.5 ms** apart here, with the `.py`
+identical to git HEAD. A strict "source newer than tox" comparison reads
+that ordering as unlanded work, producing a blocker nobody can clear by
+saving again (each save recreates it).
+
+`_unlandedPackages` now allows `_SAVE_SLACK_S = 2.0` seconds. A genuine
+unlanded edit is seconds-to-minutes newer, never sub-second.
+
+**If you see it anyway**, check whether the source really differs:
+
+```bash
+git status --short modules/suspects/FNSTools/<Name>/
+```
+
+Empty output plus a sub-second mtime gap means it is this. A real hit
+looks different — on v3.0.13 exactly one package survived the slack
+(`CustomParTools`, which owns the `FNSCommand` master edited that day),
+and that one genuinely needed the save.
+
+### "uploaded but could not be read back for verification" on gated artifacts
+
+Every `plus/` artifact failed upload verification while the bytes were
+perfectly correct in the bucket. Gated objects cannot be read back over
+the public rail — that is the privacy working — so `upload.py` verifies
+them through an authenticated `wrangler r2 object get`. That read-back
+wrote to a **fixed** temp filename while uploads run concurrently across
+`WORKERS` processes, so every gated object in a release raced one path:
+one deleted it in its `finally` while another was still hashing.
+
+The temp file is now unique per key. **Never trust that message from an
+older uploader without checking serially:**
+
+```bash
+npx wrangler r2 object get "fnstools/fnstools/plus/<release>/<Name>.tox" --file /tmp/rb.tox --remote
+sha256sum /tmp/rb.tox   # compare against packaging/publish/plus/<release>/<Name>.tox
+```
+
+A re-upload cannot fix a read path, so the uploader deliberately refuses
+to retry — the failure is loud precisely so nobody ships on an unverified
+claim.
+
+### And one that IS breakage: skipping `wrangler deploy`
+
+`gate_package.py` writes the tier map into `worker/wrangler.toml`, but
+`TIERS` is an environment variable **baked into the deployed worker**.
+Until you deploy, the live gate runs the previous map, so a paying
+supporter requesting a newly-gated package gets **403 not_entitled** on
+bytes they own — while the picker advertises it happily. Gating a package
+is not finished until:
+
+```bash
+cd worker && npx wrangler deploy
+```

@@ -685,7 +685,8 @@ class ExtUpdater:
 		if home is not None:
 			for c in home.children:
 				if (c.family == 'COMP' and c.id != root.id
-						and (index.get(c.name) or {}).get('placement') == 'pane'
+						and (index.get(c.name) or {}).get('placement')
+						in ('pane', 'root')
 						and root.op(c.name) is None):
 					candidates.append(c)
 
@@ -727,7 +728,7 @@ class ExtUpdater:
 		for name, rec in sorted(self.Installed(target).items()):
 			if name in seen or root.op(name) is not None:
 				continue
-			if (index.get(name) or {}).get('placement') == 'pane':
+			if (index.get(name) or {}).get('placement') in ('pane', 'root'):
 				# a pane-placed component lives wherever the user spawned
 				# it -- installed WITHOUT being a root child. Instances are
 				# frozen at their spawn version by design (palette
@@ -2093,7 +2094,7 @@ class ExtUpdater:
 		name = step['name']
 		root = self._root(target)
 		dest = root.op(name)
-		if dest is None and step.get('placement') == 'pane':
+		if dest is None and step.get('placement') in ('pane', 'root'):
 			# the doorstep (see Compare): a pane spawn beside the toolkit
 			# container updates in place like a root child
 			home = root.parent()

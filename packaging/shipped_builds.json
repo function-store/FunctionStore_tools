@@ -48,6 +48,20 @@
   "version": "3.0.1",
   "when": "2026-08-30 22:38:43"
  },
+ "FNS_Autosave": {
+  "build": 3,
+  "release": "v3.0.13",
+  "saved": "31.08.2026 05:54",
+  "version": "1.0.0",
+  "when": "2026-08-31 16:29:55"
+ },
+ "FNS_Collect": {
+  "build": 8,
+  "release": "v3.0.14",
+  "saved": "31.08.2026 20:41",
+  "version": "1.0.1",
+  "when": "2026-08-31 20:41:39"
+ },
  "FNS_CommandKit": {
   "build": 8,
   "release": "baseline (seeded 2026-08-30)",
@@ -104,6 +118,20 @@
   "version": "3.0.2",
   "when": "2026-08-30 23:17:55"
  },
+ "FNS_Media": {
+  "build": 5,
+  "release": "v3.0.13",
+  "saved": "31.08.2026 16:29",
+  "version": "1.0.0",
+  "when": "2026-08-31 16:29:55"
+ },
+ "FNS_MediaBrowser": {
+  "build": 7,
+  "release": "v3.0.14",
+  "saved": "31.08.2026 20:41",
+  "version": "1.0.0",
+  "when": "2026-08-31 20:41:39"
+ },
  "FNS_Navbar": {
   "build": 143,
   "release": "baseline (seeded 2026-08-30)",
@@ -146,6 +174,13 @@
   "version": "3.0.1",
   "when": "2026-08-30 22:38:43"
  },
+ "FNS_Remote": {
+  "build": 4,
+  "release": "v3.0.13",
+  "saved": "31.08.2026 05:32",
+  "version": "1.0.0",
+  "when": "2026-08-31 16:29:55"
+ },
  "FNS_TimelineRegistry": {
   "build": 42,
   "release": "v3.0.11",
@@ -175,11 +210,11 @@
   "when": "2026-08-30 23:33:56"
  },
  "FNS_Updater": {
-  "build": 64,
-  "release": "v3.0.11",
-  "saved": "30.08.2026 23:17",
-  "version": "3.0.7",
-  "when": "2026-08-30 23:17:55"
+  "build": 66,
+  "release": "v3.0.13",
+  "saved": "31.08.2026 16:29",
+  "version": "3.0.8",
+  "when": "2026-08-31 16:29:55"
  },
  "GlobalOutSelect": {
   "build": 48,
