@@ -3641,6 +3641,150 @@
    }
   ],
   "FNS_CommandKit": [],
+  "FNS_CommandPalette": [
+   {
+    "name": "Hotkey",
+    "label": "Hotkey",
+    "style": "Str",
+    "help": "Keyboard shortcut that opens the palette. Space-separated combos, parts joined with a dot, e.g. ctrl.shift.p. Rebind it from FNS_HotkeyManager.",
+    "default": "ctrl.shift.p",
+    "page": "Palette"
+   },
+   {
+    "name": "Justifyoffsetto",
+    "label": "Justify and Offset To...",
+    "style": "Menu",
+    "help": "",
+    "default": "specifydisplay",
+    "menu": [
+     {
+      "name": "primarydisplay",
+      "label": "Primary Display"
+     },
+     {
+      "name": "specifydisplay",
+      "label": "Specify Display"
+     },
+     {
+      "name": "alldisplays",
+      "label": "Bounds of All Displays"
+     }
+    ],
+    "page": "Palette"
+   },
+   {
+    "name": "Ignoretaskbar",
+    "label": "Ignore Taskbar",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "page": "Palette"
+   },
+   {
+    "name": "Dpiscaling",
+    "label": "DPI Scaling",
+    "style": "Menu",
+    "help": "",
+    "default": "usedpiscale",
+    "menu": [
+     {
+      "name": "native",
+      "label": "Native"
+     },
+     {
+      "name": "usedpiscale",
+      "label": "Use DPI Scale"
+     }
+    ],
+    "page": "Palette"
+   },
+   {
+    "name": "Single",
+    "label": "Shift to Single Display",
+    "style": "Menu",
+    "help": "",
+    "default": "off",
+    "menu": [
+     {
+      "name": "off",
+      "label": "Off"
+     },
+     {
+      "name": "singledisplay",
+      "label": "Keep on Single Display"
+     },
+     {
+      "name": "cursordisplay",
+      "label": "Keep on Display with Cursor"
+     }
+    ],
+    "page": "Palette"
+   },
+   {
+    "name": "Favouritekeys",
+    "label": "Favourite keys",
+    "style": "Str",
+    "help": "JSON list of command identities (tool#id) starred with Ctrl+D in the palette. Persisted by the config host.",
+    "default": "[]",
+    "page": "Palette"
+   },
+   {
+    "name": "Queryhistory",
+    "label": "Query history",
+    "style": "Str",
+    "help": "JSON list of executed palette queries, oldest first, recalled with Alt+Up / Alt+Down. Persisted by the config host.",
+    "default": "[]",
+    "page": "Palette"
+   },
+   {
+    "name": "Visibilityoverrides",
+    "label": "Visibility overrides",
+    "style": "Str",
+    "help": "JSON dict of command identity (tool#id) -> true (hidden) or false (shown), set from the Commands tab in FNS_Hub. Your choice beats the tool default in both directions. Persisted by the config host.",
+    "default": "{}",
+    "page": "Palette"
+   },
+   {
+    "name": "Presets",
+    "label": "Presets",
+    "style": "Str",
+    "help": "JSON list of presets: a command identity (tool#id) with arguments baked in, under a name of your own, saved with Alt+S in the palette. Persisted by the config host.",
+    "default": "[]",
+    "page": "Palette"
+   },
+   {
+    "name": "Openauthor",
+    "label": "Open Author",
+    "style": "Pulse",
+    "help": "Open the author's page (FNS_About's Authorurl).",
+    "page": "About"
+   }
+  ],
+  "FNS_CommandRegistry": [
+   {
+    "name": "Rescan",
+    "label": "Rescan Tools",
+    "style": "Pulse",
+    "help": "Re-collect commands from COMPs tagged 'fnscommands' that promote FnsCommands(). Runs automatically on init; pulse after dropping a tool in by hand.",
+    "page": "Command Registry"
+   },
+   {
+    "name": "Status",
+    "label": "Status",
+    "style": "Str",
+    "help": "Read-only summary of the current registry: command and tool counts plus the change revision.",
+    "default": "",
+    "readonly": true,
+    "page": "Command Registry"
+   },
+   {
+    "name": "Openauthor",
+    "label": "Open Author",
+    "style": "Pulse",
+    "help": "Open the author's page (FNS_About's Authorurl).",
+    "page": "About"
+   }
+  ],
   "FNS_ConfigHost": [
    {
     "name": "Comp",
@@ -7277,6 +7421,184 @@
     "page": "Custom"
    },
    {
+    "name": "Mark",
+    "label": "Quickmarks",
+    "style": "Sequence",
+    "help": "One block per quickmark slot. Block N is the slot reached by ctrl+N, so the first ten line up with the hotkeys; extra blocks are reachable by command only.",
+    "default": 0,
+    "page": "Marks"
+   },
+   {
+    "name": "Mark0name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark0data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark1name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark1data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark2name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark2data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark3name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark3data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark4name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark4data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark5name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark5data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark6name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark6data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark7name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark7data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark8name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark8data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark9name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Your label for this quickmark. Free text, shown in the command palette. Editing it never affects where the mark points.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Mark9data",
+    "label": "Data",
+    "style": "Str",
+    "help": "The stored location as JSON (network, current child, pan x/y, zoom). Written by Store; edit only if you know the shape.",
+    "default": "",
+    "page": "Marks"
+   },
+   {
+    "name": "Migrated",
+    "label": "Migrated From Storage",
+    "style": "Toggle",
+    "help": "Set once the slots have been copied out of the legacy StorageManager into this sequence. The old storage is left in place untouched as a one-time backup; nothing reads it after migration.",
+    "default": false,
+    "readonly": true,
+    "section": true,
+    "page": "Marks"
+   },
+   {
     "name": "Help",
     "label": "Help",
     "style": "Pulse",
@@ -8707,6 +9029,10 @@
    "FNS_ConfigRegistry",
    "FNS_HubRegistry"
   ],
+  "FNS_CommandPalette": [
+   "FNS_ConfigRegistry",
+   "FNS_HubRegistry"
+  ],
   "FNS_HotkeyManager": [
    "FNS_ConfigRegistry",
    "FNS_HubRegistry"
@@ -8836,6 +9162,10 @@
   "FNS_Autosave": [],
   "FNS_Collect": [],
   "FNS_CommandKit": [],
+  "FNS_CommandPalette": [
+   "hub"
+  ],
+  "FNS_CommandRegistry": [],
   "FNS_ConfigHost": [],
   "FNS_ConfigRegistry": [],
   "FNS_Console": [],
@@ -8926,6 +9256,462 @@
   "TDX_SearchPalette": [],
   "VSCodeTools": [
    "toolbar"
+  ]
+ },
+ "surface_entries": {
+  "BorderlessTD": [
+   {
+    "surface": "mainmenu",
+    "widget": "BorderlessWindow/projname",
+    "label": "ProjName",
+    "order": 4,
+    "side": "left"
+   }
+  ],
+  "ColorUI": [
+   {
+    "surface": "console",
+    "widget": "ColorUI",
+    "label": "ColorUI",
+    "order": 20
+   },
+   {
+    "surface": "hub",
+    "widget": "ColorUI",
+    "label": "OpColor",
+    "order": 150
+   }
+  ],
+  "CustomParTools": [
+   {
+    "surface": "navbar",
+    "widget": "button_custompar_tools",
+    "label": "CustomParTools",
+    "order": 2,
+    "side": "right",
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0B90",
+     "file": "CustomParTools-navbar.png"
+    }
+   },
+   {
+    "surface": "toolbar",
+    "widget": "button_custompar_tools",
+    "label": "CustomParTools",
+    "order": 35,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0B90",
+     "file": "CustomParTools-toolbar.png"
+    }
+   }
+  ],
+  "ExprHotStrings": [
+   {
+    "surface": "hub",
+    "widget": "ExprHotStrings",
+    "label": "ExprHotStrings",
+    "order": 110
+   }
+  ],
+  "FNS_CommandPalette": [
+   {
+    "surface": "hub",
+    "widget": "manager",
+    "label": "Commands",
+    "order": 40
+   }
+  ],
+  "FNS_HotkeyManager": [
+   {
+    "surface": "hub",
+    "widget": "HotkeyUI",
+    "label": "HotkeyManager",
+    "order": 110
+   }
+  ],
+  "FNS_Hub": [
+   {
+    "surface": "hub",
+    "widget": "/FNSTools/webBrowser",
+    "label": "Console",
+    "order": 0
+   },
+   {
+    "surface": "hub",
+    "widget": "MainMenuConfigurator",
+    "label": "MainMenu",
+    "order": 30
+   },
+   {
+    "surface": "hub",
+    "widget": "NavbarConfigurator",
+    "label": "Navbar",
+    "order": 20
+   },
+   {
+    "surface": "hub",
+    "widget": "OpMenuConfigurator",
+    "label": "OpMenu",
+    "order": 40
+   },
+   {
+    "surface": "hub",
+    "widget": "ToolbarConfigurator",
+    "label": "Toolbar",
+    "order": 10
+   },
+   {
+    "surface": "mainmenu",
+    "widget": "select1",
+    "label": "FNS",
+    "order": 2,
+    "side": "right"
+   }
+  ],
+  "FNS_Navbar": [
+   {
+    "surface": "navbar",
+    "widget": "containers/PathCellClickInject",
+    "label": "PathCellClickInject",
+    "side": "right"
+   },
+   {
+    "surface": "navbar",
+    "widget": "containers/hijack_dragdrop",
+    "label": "HijackDragdrop",
+    "side": "right"
+   },
+   {
+    "surface": "navbar",
+    "widget": "containers/parent_hierarchy",
+    "label": "ParentHierarchy",
+    "order": 3,
+    "side": "left",
+    "icon": {
+     "op": "button/text1",
+     "font": "Material Design Icons",
+     "codepoint": "U+F13D2",
+     "file": "FNS_Navbar-navbar.png"
+    }
+   }
+  ],
+  "FNS_OpMenu": [
+   {
+    "surface": "hub",
+    "widget": "FNS_OpMenu",
+    "label": "SearchWords",
+    "order": 130
+   },
+   {
+    "surface": "opmenu",
+    "widget": "FNS_OpMenu",
+    "label": "FNS_OpMenu",
+    "order": 0
+   },
+   {
+    "surface": "opmenu",
+    "widget": "IOFilter",
+    "label": "IOFilter",
+    "order": 2
+   }
+  ],
+  "FNS_TimelineTools": [
+   {
+    "surface": "timeline",
+    "widget": "FNS_TimelineBackground",
+    "label": "TimelineBackground",
+    "order": 1
+   },
+   {
+    "surface": "timeline",
+    "widget": "ui_bar",
+    "label": "TimelineTools",
+    "order": 20
+   }
+  ],
+  "FNS_Toolbar": [
+   {
+    "surface": "toolbar",
+    "widget": "widgets/background1",
+    "label": "BackgroundTOPs",
+    "order": 33,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0247",
+     "file": "FNS_Toolbar-toolbar-2.png"
+    }
+   },
+   {
+    "surface": "toolbar",
+    "widget": "widgets/gridshow",
+    "label": "GridShow",
+    "order": 31,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F02C2",
+     "file": "FNS_Toolbar-toolbar.png"
+    }
+   }
+  ],
+  "FNS_Updater": [
+   {
+    "surface": "toolbar",
+    "widget": "wiki",
+    "label": "Wiki",
+    "order": 18,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F02D6",
+     "file": "FNS_Updater-toolbar.png"
+    }
+   }
+  ],
+  "GlobalOutSelect": [
+   {
+    "surface": "hub",
+    "widget": "GlobalOutSelect",
+    "label": "GlobalOutSelect",
+    "order": 120
+   }
+  ],
+  "GlobalVolControl": [
+   {
+    "surface": "toolbar",
+    "widget": "button_mute",
+    "label": "Mute",
+    "order": 23,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F057E",
+     "file": "GlobalVolControl-toolbar.png"
+    }
+   },
+   {
+    "surface": "toolbar",
+    "widget": "slider_volume",
+    "label": "Volume",
+    "order": 29
+   }
+  ],
+  "HydroHomie": [
+   {
+    "surface": "toolbar",
+    "widget": "HydroHomie",
+    "label": "HydroHomie",
+    "order": 27,
+    "icon": {
+     "op": "buttonMomentary/button0/text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F01AB",
+     "file": "HydroHomie-toolbar.png"
+    }
+   }
+  ],
+  "midiMapper": [
+   {
+    "surface": "hub",
+    "widget": "midiMapper",
+    "label": "midiMapper",
+    "order": 140,
+    "icon": {
+     "op": "button_midi_learn/text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F08D5",
+     "file": "midiMapper-hub.png"
+    }
+   },
+   {
+    "surface": "toolbar",
+    "widget": "button_midi_learn",
+    "label": "MIDILearn",
+    "order": 30,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F08D5",
+     "file": "midiMapper-toolbar.png"
+    }
+   }
+  ],
+  "MISC": [
+   {
+    "surface": "toolbar",
+    "widget": "button_hog",
+    "label": "HogCHOP",
+    "order": 16,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0401",
+     "file": "MISC-toolbar.png"
+    }
+   },
+   {
+    "surface": "toolbar",
+    "widget": "input_mouse",
+    "label": "MouseCHOP",
+    "order": 19,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F037D",
+     "file": "MISC-toolbar-2.png"
+    }
+   }
+  ],
+  "OpTemplates": [
+   {
+    "surface": "opmenu",
+    "widget": "OpTemplates",
+    "label": "OpTemplates",
+    "order": 1,
+    "icon": {
+     "op": "button_templates/text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0B86",
+     "file": "OpTemplates-opmenu.png"
+    }
+   },
+   {
+    "surface": "toolbar",
+    "widget": "button_templates",
+    "label": "OpTemplates",
+    "order": 20,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0B86",
+     "file": "OpTemplates-toolbar.png"
+    }
+   }
+  ],
+  "oscMapper": [
+   {
+    "surface": "hub",
+    "widget": "oscMapper",
+    "label": "oscMapper",
+    "order": 100
+   }
+  ],
+  "OUTPUT": [
+   {
+    "surface": "toolbar",
+    "widget": "button_perform",
+    "label": "Perform",
+    "order": 25,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0DDC",
+     "file": "OUTPUT-toolbar.png"
+    }
+   }
+  ],
+  "ParOPDrop": [
+   {
+    "surface": "toolbar",
+    "widget": "button_ParOpPlace",
+    "label": "ParOPPlace",
+    "order": 34,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0E0A",
+     "file": "ParOPDrop-toolbar.png"
+    }
+   }
+  ],
+  "ParRandomizer": [
+   {
+    "surface": "toolbar",
+    "widget": "button_random",
+    "label": "Randomizer",
+    "order": 26,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F01CF",
+     "file": "ParRandomizer-toolbar.png"
+    }
+   }
+  ],
+  "QuickTime": [
+   {
+    "surface": "toolbar",
+    "widget": "button_quicktime",
+    "label": "QuickTime",
+    "order": 32,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F13AB",
+     "file": "QuickTime-toolbar.png"
+    }
+   }
+  ],
+  "ResetPLS1": [
+   {
+    "surface": "toolbar",
+    "widget": "button_resetpls",
+    "label": "ResetPLS",
+    "order": 22,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F044C",
+     "file": "ResetPLS1-toolbar.png"
+    }
+   }
+  ],
+  "SetSmoothness": [
+   {
+    "surface": "toolbar",
+    "widget": "inputsmoothness1",
+    "label": "InputSmoothness",
+    "order": 28,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F069F",
+     "file": "SetSmoothness-toolbar.png"
+    }
+   }
+  ],
+  "SwapOps": [
+   {
+    "surface": "toolbar",
+    "widget": "button_swapOPs",
+    "label": "SwapOPs",
+    "order": 24,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0BCD",
+     "file": "SwapOps-toolbar.png"
+    }
+   }
+  ],
+  "VSCodeTools": [
+   {
+    "surface": "toolbar",
+    "widget": "button_vscode",
+    "label": "VSCode",
+    "order": 21,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F0A1E",
+     "file": "VSCodeTools-toolbar.png"
+    }
+   }
   ]
  },
  "surface_meta": {

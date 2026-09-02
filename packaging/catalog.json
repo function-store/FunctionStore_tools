@@ -11,7 +11,9 @@
   "Descriptions were seeded by inspection and NEED OWNER REVIEW; correct them here",
   "and re-run the generator. A package missing from this file still ships, with",
   "category 'Uncategorized' and an empty description.",
-  "access/license/seats are ENTITLEMENT metadata. `access` is 'free' or a Patreon TIER ID -- the NUMERIC STRING from the API, never the display name, which can be renamed at any time and is not unique. It is not a flag, because the gate is multi-tier. The tier -> packages map lives in the Worker, never here and never in any shipped client; publish.Stage() cross-checks every gated row against that map and refuses placeholders, mismatched ids, and packages no tier or Gumroad product grants. `seats` is per-package because seat policy may differ per product; null means unlimited."
+  "access/license/seats are ENTITLEMENT metadata. `access` is 'free' or a Patreon TIER ID -- the NUMERIC STRING from the API, never the display name, which can be renamed at any time and is not unique. It is not a flag, because the gate is multi-tier. The tier -> packages map lives in the Worker, never here and never in any shipped client; publish.Stage() cross-checks every gated row against that map and refuses placeholders, mismatched ids, and packages no tier or Gumroad product grants. `seats` is per-package because seat policy may differ per product; null means unlimited.",
+  "category_meta may also carry `deprioritized: true`: a category that is plumbing, shown LAST on the website and never opened by default. It does not reorder `categories`, so the installer picker is unaffected.",
+  "author {name, url}, homepage and changelog_url are CURATED on any package (presentation facts; the manifest carries them to the picker byline and the website badge -- the ONE home for credit, doc frontmatter `credit` is refused). A `source` block {manifest, tox?, package?} makes an entry FOREIGN: bytes and version owned upstream, mirrored by packaging/foreign_sync.py into dist/ and pinned in foreign.lock.json, never exported from a live COMP. Only a foreign entry may carry updates (self|store), help_url and min_td_build -- on a live package those have live authorities. See docs/ForeignPackages.md."
  ],
  "categories": [
   "Core",
@@ -26,7 +28,8 @@
  "category_meta": {
   "Core": {
    "glyph": "◈",
-   "pitch": "The registries every other tool plugs into. Installed as a unit."
+   "pitch": "The registries every other tool plugs into. Installed as a unit.",
+   "deprioritized": true
   },
   "Surfaces": {
    "glyph": "▦",
@@ -34,7 +37,7 @@
   },
   "Parameters": {
    "glyph": "◎",
-   "pitch": "Promote, bind, randomize and reset — by drag and drop."
+   "pitch": "Promote, bind, randomize and reset, by drag and drop."
   },
   "Network": {
    "glyph": "⇄",
@@ -68,7 +71,7 @@
   },
   "AutoRes": {
    "category": "Media & Output",
-   "description": "Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes.",
+   "description": "Project-wide resolution reference that operators can follow, with no hardcoded pixel sizes.",
    "recommended": true
   },
   "BorderlessTD": {
@@ -90,11 +93,19 @@
   },
   "FNS_CommandKit": {
    "category": "Developer",
-   "description": "Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette — decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors."
+   "description": "Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette: decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors."
+  },
+  "FNS_CommandPalette": {
+   "category": "Core",
+   "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in FNS_Hub."
+  },
+  "FNS_CommandRegistry": {
+   "category": "Core",
+   "description": "Collects the commands your tools declare and serves them to whatever can run them: the launcher palette today, an in-TouchDesigner palette next. Discovery is by tag, so a tool installed before any consumer still appears the moment one arrives."
   },
   "FNS_ConfigHost": {
    "category": "Developer",
-   "description": "A standalone FNS_ConfigRegistry host. Drop it into a component to give it roaming settings — its parameters save and reload with your config, with per-parameter and per-page exclusions."
+   "description": "A standalone FNS_ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions."
   },
   "FNS_ConfigRegistry": {
    "category": "Core",
@@ -128,7 +139,7 @@
   },
   "FNS_NavbarRegistry": {
    "category": "Core",
-   "description": "The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets."
+   "description": "The pane-bar surface registry. The raw master, promoted to /sys; clone it to add your own pane-bar widgets."
   },
   "FNS_OpMenu": {
    "category": "Surfaces",
@@ -166,7 +177,7 @@
   },
   "FNS_ToolbarRegistry": {
    "category": "Core",
-   "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys -- clone it to put your own tools on the bar."
+   "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys; clone it to put your own tools on the bar."
   },
   "FNS_Updater": {
    "category": "Developer",
@@ -221,7 +232,11 @@
   },
   "QuickMarks": {
    "category": "Network",
-   "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design."
+   "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design.",
+   "author": {
+    "name": "Alex Guevara",
+    "url": "https://alex-guevara.com"
+   }
   },
   "QuickPane": {
    "category": "Workflow",
@@ -252,7 +267,11 @@
   "TDX_SearchPalette": {
    "category": "Workflow",
    "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
-   "recommended": true
+   "recommended": true,
+   "author": {
+    "name": "Yea Chen",
+    "url": "https://github.com/yeataro/TD-SearchPalette"
+   }
   },
   "VSCodeTools": {
    "category": "Developer",
@@ -260,19 +279,36 @@
   },
   "midiMapper": {
    "category": "Control",
-   "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config."
+   "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config.",
+   "author": {
+    "name": "AlphaMoonbase.berlin",
+    "url": "https://alphamoonbase.de/"
+   }
   },
   "oscMapper": {
    "category": "Control",
-   "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design."
+   "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design.",
+   "author": {
+    "name": "AlphaMoonbase.berlin",
+    "url": "https://alphamoonbase.de/"
+   }
   },
   "paste_from_clipboard": {
    "category": "Network",
-   "description": "Paste images and data from the system clipboard into TouchDesigner."
+   "description": "Paste images and data from the system clipboard into TouchDesigner.",
+   "author": {
+    "name": "DotSimulate",
+    "url": "https://www.patreon.com/dotsimulate"
+   }
   },
   "FNS_Collect": {
    "category": "Workflow",
    "description": "Gather every external file your project references into the project folder and rewrite the parameters to match, so the project travels. Shows the plan before it copies anything.",
+   "access": "8323905"
+  },
+  "FNS_PreviewPanel": {
+   "category": "Network",
+   "description": "A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.",
    "access": "8323905"
   },
   "FNS_Remote": {
@@ -288,6 +324,24 @@
    "category": "Media & Output",
    "description": "See every media file your project uses and which operator uses it, filter to the missing ones, and replace or repoint them in place.",
    "access": "8323905"
+  },
+  "TDXMap": {
+   "category": "Control",
+   "description": "MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode, easing curves, slot and modify modes.",
+   "placement": "root",
+   "author": {
+    "name": "Function Store",
+    "url": "https://tdxmap.functionstore.xyz"
+   },
+   "homepage": "https://tdxmap.functionstore.xyz",
+   "changelog_url": "https://tdxmap.functionstore.xyz/changelog",
+   "source": {
+    "manifest": "https://pub-6d70b11fbdda47e1bbbb33f079ca8a7d.r2.dev/manifest.json",
+    "tox": "TDXMap.tox"
+   },
+   "updates": "self",
+   "help_url": "https://tdxmap.functionstore.xyz/docs/",
+   "min_td_build": "2023.12120"
   }
  }
 }

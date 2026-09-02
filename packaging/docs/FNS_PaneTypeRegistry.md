@@ -20,7 +20,7 @@ The point is that it survives. An entry is recalled by name, so the pane setup
 you reach for every session is one dropdown pick away instead of a manual split,
 navigate and configure each time.
 
-It ships as its own core package -- always installed, never optional --
+It ships as its own core package, always installed,
 promoted to `/sys` with the global shortcut `op.FNS_PANETYPEREGISTRY`.
 
 ## For tool authors

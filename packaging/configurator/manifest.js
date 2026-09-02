@@ -89,7 +89,8 @@ window.FNS_MANIFEST = {
  "category_meta": {
   "Core": {
    "glyph": "\u25c8",
-   "pitch": "The registries every other tool plugs into. Installed as a unit."
+   "pitch": "The registries every other tool plugs into. Installed as a unit.",
+   "deprioritized": true
   },
   "Surfaces": {
    "glyph": "\u25a6",
@@ -97,7 +98,7 @@ window.FNS_MANIFEST = {
   },
   "Parameters": {
    "glyph": "\u25ce",
-   "pitch": "Promote, bind, randomize and reset \u2014 by drag and drop."
+   "pitch": "Promote, bind, randomize and reset, by drag and drop."
   },
   "Network": {
    "glyph": "\u21c4",
@@ -145,7 +146,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/altselect/",
    "surfaces": [],
    "shortcut": "ALT_SELECT",
-   "ops": 108,
+   "ops": 72,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -175,7 +176,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/autocombine/",
    "surfaces": [],
    "shortcut": "AUTO_COMBINE",
-   "ops": 135,
+   "ops": 99,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -200,12 +201,12 @@ window.FNS_MANIFEST = {
    "name": "AutoRes",
    "kind": "tool",
    "category": "Media & Output",
-   "description": "Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes.",
+   "description": "Project-wide resolution reference that operators can follow, with no hardcoded pixel sizes.",
    "version": "3.0.1",
    "help_url": "https://functionstore.tools/docs/autores/",
    "surfaces": [],
    "shortcut": "AUTO_RES",
-   "ops": 135,
+   "ops": 99,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -237,7 +238,7 @@ window.FNS_MANIFEST = {
     "mainmenu"
    ],
    "shortcut": "FNS_BORDERLESS_TD",
-   "ops": 347,
+   "ops": 238,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_MainMenuRegistry"
@@ -282,7 +283,7 @@ window.FNS_MANIFEST = {
     "hub"
    ],
    "shortcut": "FNS_COLOR_UI",
-   "ops": 219,
+   "ops": 145,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_Console",
@@ -317,7 +318,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_CPP",
-   "ops": 1218,
+   "ops": 888,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_NavbarRegistry",
@@ -394,7 +395,7 @@ window.FNS_MANIFEST = {
     "hub"
    ],
    "shortcut": "HOTSTRINGS",
-   "ops": 159,
+   "ops": 104,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_HubRegistry"
@@ -435,7 +436,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-autosave/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 16,
+   "ops": 17,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -473,7 +474,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-collect/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 31,
+   "ops": 32,
    "requires": [],
    "access": "8323905",
    "key_available": false,
@@ -506,12 +507,12 @@ window.FNS_MANIFEST = {
    "name": "FNS_CommandKit",
    "kind": "tool",
    "category": "Developer",
-   "description": "Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette \u2014 decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors.",
+   "description": "Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette: decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors.",
    "version": "3.0.1",
    "help_url": "https://functionstore.tools/docs/fns-commandkit/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 18,
+   "ops": 19,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -531,15 +532,70 @@ window.FNS_MANIFEST = {
    }
   },
   {
+   "name": "FNS_CommandPalette",
+   "kind": "tool",
+   "category": "Core",
+   "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in FNS_Hub.",
+   "version": "0.1.0",
+   "help_url": "https://functionstore.tools/docs/fns-commandpalette/",
+   "surfaces": [
+    "hub"
+   ],
+   "shortcut": "",
+   "ops": 213,
+   "requires": [
+    "FNS_ConfigRegistry",
+    "FNS_HubRegistry"
+   ],
+   "access": "free",
+   "key_available": false,
+   "license": "",
+   "seats": null,
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "min_td_build": "2025.33070",
+   "hotkeys": [
+    {
+     "keys": "ctrl.shift.p",
+     "op": "FNS_CommandPalette",
+     "par": "Hotkey"
+    }
+   ],
+   "whatsnew": ""
+  },
+  {
+   "name": "FNS_CommandRegistry",
+   "kind": "tool",
+   "category": "Core",
+   "description": "Collects the commands your tools declare and serves them to whatever can run them: the launcher palette today, an in-TouchDesigner palette next. Discovery is by tag, so a tool installed before any consumer still appears the moment one arrives.",
+   "version": "0.1.0",
+   "help_url": "https://functionstore.tools/docs/fns-commandregistry/",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 42,
+   "requires": [],
+   "access": "free",
+   "key_available": false,
+   "license": "",
+   "seats": null,
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "min_td_build": "2025.33070",
+   "hotkeys": [],
+   "whatsnew": ""
+  },
+  {
    "name": "FNS_ConfigHost",
    "kind": "tool",
    "category": "Developer",
-   "description": "A standalone FNS_ConfigRegistry host. Drop it into a component to give it roaming settings \u2014 its parameters save and reload with your config, with per-parameter and per-page exclusions.",
+   "description": "A standalone FNS_ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions.",
    "version": "3.0.2",
    "help_url": "https://functionstore.tools/docs/fns-confighost/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 46,
+   "ops": 28,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -567,7 +623,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-configregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 47,
+   "ops": 29,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -595,7 +651,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-console/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 46,
+   "ops": 28,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -625,7 +681,7 @@ window.FNS_MANIFEST = {
     "hub"
    ],
    "shortcut": "FNS_HOTKEY_MANAGER",
-   "ops": 247,
+   "ops": 192,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_HubRegistry"
@@ -673,7 +729,7 @@ window.FNS_MANIFEST = {
     "mainmenu"
    ],
    "shortcut": "",
-   "ops": 1678,
+   "ops": 1530,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -701,7 +757,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-hubregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 44,
+   "ops": 26,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -729,7 +785,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-mainmenuregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 45,
+   "ops": 27,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -759,7 +815,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-mediabrowser/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 37,
+   "ops": 38,
    "requires": [],
    "access": "8323905",
    "key_available": false,
@@ -799,7 +855,7 @@ window.FNS_MANIFEST = {
     "navbar"
    ],
    "shortcut": "FNS_NAVBAR",
-   "ops": 1229,
+   "ops": 1137,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_NavbarRegistry"
@@ -814,18 +870,7 @@ window.FNS_MANIFEST = {
    "tox_carrier": "own",
    "cooking": true,
    "min_td_build": "2025.33070",
-   "hotkeys": [
-    {
-     "keys": "alt",
-     "op": "containers/parent_hierarchy/hotkey",
-     "par": "Keys"
-    },
-    {
-     "keys": "ctrl",
-     "op": "containers/parent_hierarchy/hotkey1",
-     "par": "Keys"
-    }
-   ],
+   "hotkeys": [],
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Navbar.tox",
@@ -838,12 +883,12 @@ window.FNS_MANIFEST = {
    "name": "FNS_NavbarRegistry",
    "kind": "core",
    "category": "Core",
-   "description": "The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets.",
+   "description": "The pane-bar surface registry. The raw master, promoted to /sys; clone it to add your own pane-bar widgets.",
    "version": "3.0.2",
    "help_url": "https://functionstore.tools/docs/fns-navbarregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 45,
+   "ops": 27,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -878,7 +923,7 @@ window.FNS_MANIFEST = {
     "opmenu"
    ],
    "shortcut": "FNS_OPMOD",
-   "ops": 339,
+   "ops": 246,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_HubRegistry",
@@ -918,7 +963,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-opmenuregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 46,
+   "ops": 28,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -946,7 +991,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-paletteregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 44,
+   "ops": 26,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -974,7 +1019,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-panetyperegistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 193,
+   "ops": 175,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -1002,7 +1047,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-remote/",
    "surfaces": [],
    "shortcut": "FNS_REMOTE",
-   "ops": 22,
+   "ops": 23,
    "requires": [],
    "access": "8323905",
    "key_available": false,
@@ -1040,7 +1085,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/fns-timelineregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 44,
+   "ops": 26,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -1070,7 +1115,7 @@ window.FNS_MANIFEST = {
     "timeline"
    ],
    "shortcut": "FNS_TIMELINETOOLS",
-   "ops": 334,
+   "ops": 279,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_TimelineRegistry"
@@ -1141,7 +1186,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_TOOLBAR",
-   "ops": 261,
+   "ops": 187,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1169,12 +1214,12 @@ window.FNS_MANIFEST = {
    "name": "FNS_ToolbarRegistry",
    "kind": "core",
    "category": "Core",
-   "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys -- clone it to put your own tools on the bar.",
+   "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys; clone it to put your own tools on the bar.",
    "version": "3.0.2",
    "help_url": "https://functionstore.tools/docs/fns-toolbarregistry/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 44,
+   "ops": 26,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -1207,7 +1252,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_UPDATER",
-   "ops": 203,
+   "ops": 148,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -1237,7 +1282,7 @@ window.FNS_MANIFEST = {
     "hub"
    ],
    "shortcut": "GLOBAL_OUT_SEL",
-   "ops": 744,
+   "ops": 707,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_HubRegistry"
@@ -1270,7 +1315,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_VolControl",
-   "ops": 243,
+   "ops": 169,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1303,7 +1348,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_HYDROHOMIE",
-   "ops": 219,
+   "ops": 164,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1337,7 +1382,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_MULTIMIDI",
-   "ops": 439,
+   "ops": 365,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_HubRegistry",
@@ -1352,6 +1397,10 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
+   "author": {
+    "name": "AlphaMoonbase.berlin",
+    "url": "https://alphamoonbase.de/"
+   },
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/midiMapper.tox",
@@ -1371,7 +1420,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_MISC",
-   "ops": 214,
+   "ops": 140,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1402,7 +1451,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/openext/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 100,
+   "ops": 64,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1414,7 +1463,13 @@ window.FNS_MANIFEST = {
    "tox_carrier": "own",
    "cooking": true,
    "min_td_build": "2025.33070",
-   "hotkeys": [],
+   "hotkeys": [
+    {
+     "keys": "ctrl.e",
+     "op": "OpenExt",
+     "par": "Shortcuts"
+    }
+   ],
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OpenExt.tox",
@@ -1435,7 +1490,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_OPTEMPLATES",
-   "ops": 601,
+   "ops": 527,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_OpMenuRegistry",
@@ -1513,7 +1568,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/optoclipboard/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 113,
+   "ops": 77,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1525,7 +1580,13 @@ window.FNS_MANIFEST = {
    "tox_carrier": "own",
    "cooking": true,
    "min_td_build": "2025.33070",
-   "hotkeys": [],
+   "hotkeys": [
+    {
+     "keys": "shift.ctrl.c",
+     "op": "keyboardin1",
+     "par": "shortcuts"
+    }
+   ],
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OpToClipboard.tox",
@@ -1545,7 +1606,7 @@ window.FNS_MANIFEST = {
     "hub"
    ],
    "shortcut": "AMB_OSC_MAPPER",
-   "ops": 303,
+   "ops": 266,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_HubRegistry"
@@ -1559,6 +1620,10 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
+   "author": {
+    "name": "AlphaMoonbase.berlin",
+    "url": "https://alphamoonbase.de/"
+   },
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/oscMapper.tox",
@@ -1578,7 +1643,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_OUTPUT",
-   "ops": 171,
+   "ops": 116,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1611,7 +1676,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_POP",
-   "ops": 166,
+   "ops": 112,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1650,7 +1715,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_PARRANDOM",
-   "ops": 164,
+   "ops": 109,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1702,7 +1767,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/paste-from-clipboard/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 262,
+   "ops": 226,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1721,6 +1786,10 @@ window.FNS_MANIFEST = {
      "par": "Shortcut"
     }
    ],
+   "author": {
+    "name": "DotSimulate",
+    "url": "https://www.patreon.com/dotsimulate"
+   },
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/paste_from_clipboard.tox",
@@ -1738,7 +1807,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/quickcollapse/",
    "surfaces": [],
    "shortcut": "FNS_QUICKCOLLAPSE",
-   "ops": 157,
+   "ops": 121,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1779,7 +1848,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/quickmarks/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 102,
+   "ops": 66,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1798,6 +1867,10 @@ window.FNS_MANIFEST = {
      "par": "shortcuts"
     }
    ],
+   "author": {
+    "name": "Alex Guevara",
+    "url": "https://alex-guevara.com"
+   },
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickMarks.tox",
@@ -1815,7 +1888,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/quickpane/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 131,
+   "ops": 95,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -1853,7 +1926,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_QUICKTIME",
-   "ops": 161,
+   "ops": 106,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1886,7 +1959,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_RPLS",
-   "ops": 231,
+   "ops": 176,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1939,7 +2012,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "SMOOTHNESS_SET",
-   "ops": 262,
+   "ops": 207,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1972,7 +2045,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "SWAP_OPS",
-   "ops": 146,
+   "ops": 91,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -2009,7 +2082,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/switchops/",
    "surfaces": [],
    "shortcut": "FNS_SWITCHOP",
-   "ops": 106,
+   "ops": 70,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -2021,7 +2094,13 @@ window.FNS_MANIFEST = {
    "tox_carrier": "own",
    "cooking": true,
    "min_td_build": "2025.33070",
-   "hotkeys": [],
+   "hotkeys": [
+    {
+     "keys": "ctrl.tab",
+     "op": "keyboardin1",
+     "par": "shortcuts"
+    }
+   ],
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/SwitchOPs.tox",
@@ -2039,7 +2118,7 @@ window.FNS_MANIFEST = {
    "help_url": "https://functionstore.tools/docs/tdx-searchpalette/",
    "surfaces": [],
    "shortcut": "TDX_SEARCH_PALETTE",
-   "ops": 124,
+   "ops": 106,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -2051,7 +2130,17 @@ window.FNS_MANIFEST = {
    "tox_carrier": "own",
    "cooking": true,
    "min_td_build": "2025.33070",
-   "hotkeys": [],
+   "hotkeys": [
+    {
+     "keys": "ctrl.shift.f",
+     "op": "TDX_SearchPalette",
+     "par": "Shortcuts"
+    }
+   ],
+   "author": {
+    "name": "Yea Chen",
+    "url": "https://github.com/yeataro/TD-SearchPalette"
+   },
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/TDX_SearchPalette.tox",
@@ -2071,7 +2160,7 @@ window.FNS_MANIFEST = {
     "toolbar"
    ],
    "shortcut": "FNS_VSCODETOOLS",
-   "ops": 372,
+   "ops": 282,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -2084,13 +2173,61 @@ window.FNS_MANIFEST = {
    "tox_carrier": "own",
    "cooking": true,
    "min_td_build": "2025.33070",
-   "hotkeys": [],
+   "hotkeys": [
+    {
+     "keys": "ctrl.shift.e ctrl.shift.alt.e",
+     "op": "ScriptSyncFile/keyboardin1",
+     "par": "shortcuts"
+    }
+   ],
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/VSCodeTools.tox",
     "bytes": 651448,
     "sha256": "e4ca873f2ef37a00bdfec67cc36530904ab43f8f82845b9cf2e35b4e7bb566cb",
     "url": "https://storage.functionstore.tools/fnstools/v3.0.14/VSCodeTools.tox"
+   }
+  },
+  {
+   "name": "TDXMap",
+   "kind": "tool",
+   "foreign": true,
+   "category": "Control",
+   "description": "MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode, easing curves, slot and modify modes.",
+   "version": "1.2.0",
+   "help_url": "https://tdxmap.functionstore.xyz/docs/",
+   "surfaces": [],
+   "shortcut": "",
+   "ops": 0,
+   "requires": [],
+   "access": "free",
+   "key_available": false,
+   "license": "",
+   "seats": null,
+   "integrates_with": [],
+   "tox_carrier": "own",
+   "cooking": true,
+   "min_td_build": "2023.12120",
+   "hotkeys": [],
+   "updates": "self",
+   "whatsnew": "",
+   "upstream": {
+    "manifest": "https://pub-6d70b11fbdda47e1bbbb33f079ca8a7d.r2.dev/manifest.json",
+    "url": "https://pub-6d70b11fbdda47e1bbbb33f079ca8a7d.r2.dev/TDXMap.tox",
+    "fetched_at": 1788304336
+   },
+   "placement": "root",
+   "author": {
+    "name": "Function Store",
+    "url": "https://tdxmap.functionstore.xyz"
+   },
+   "homepage": "https://tdxmap.functionstore.xyz",
+   "changelog_url": "https://tdxmap.functionstore.xyz/changelog",
+   "artifact": {
+    "path": "packaging/dist/TDXMap.tox",
+    "bytes": 934742,
+    "sha256": "339116402eff423173e944862f7f623c3cede0c1593b6a5ac2328d87a65ac4ba",
+    "url": "https://storage.functionstore.tools/fnstools/v3.0.14/TDXMap.tox"
    }
   }
  ]

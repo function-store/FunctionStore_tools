@@ -25,7 +25,7 @@ This button is a quick way to manipulate **Custom Parameters** of a parent compo
 
 - **Drag-and-Drop onto the icon:**
   - **A Parameter:** Promote that **Parameter** to the **Parent Custom Params** and Bind/Reference automatically (always to the currently active/selected page).
-     - Hold `Ctrl` to customize parameter promotion—name it, set min/max values, and tweak clamping.
+     - Hold `Ctrl` to customize parameter promotion: name it, set min/max values, and tweak clamping.
        - `Label` and `ParName` for **all** params, and for slider-type params: `min`, `max` values, `clamping` tickboxes, and `default` value  
        - **Quickly jump** between text fields by pressing `Tab` and `Shift+Tab`
   - **A Table DAT**: adds a new ParMenu and sets the table as a menu source
@@ -34,7 +34,7 @@ This button is a quick way to manipulate **Custom Parameters** of a parent compo
 - **Shift-LeftClick:** Opens **Selected OP Parameters**.
 - **RightClick:** Opens **Parent Component Editor**.
 - **Shift-RightClick:** Opens **Selected OP Component Editor**.
-- **Alt-LeftClick (Cmd+LeftClick for Mac):** Runs **ClearPars** on the selected COMP — any parameter left in `Bind` mode with no valid bind master, or in `Expression` mode whose expression currently raises, is switched to `Constant` mode (dropping the dangling bind/expression), and the COMP's script errors are cleared too. Recursive into the COMP's immediate children (excluding annotations) — usually useful after copying a COMP from another project
+- **Alt-LeftClick (Cmd+LeftClick for Mac):** Runs **ClearPars** on the selected COMP: any parameter left in `Bind` mode with no valid bind master, or in `Expression` mode whose expression currently raises, is switched to `Constant` mode (dropping the dangling bind/expression), and the COMP's script errors are cleared too. Recursive into the COMP's immediate children (excluding annotations), usually useful after copying a COMP from another project
 - **Ctrl+Alt+Drag** an **OP** (Ctrl+Cmd+Drag on Mac): Promote as `iop` to parent
 - **Ctrl+Shift+Click**: Add Parent shortcut
 - **Shift+Alt+LeftClick** (Shift+Cmd+LeftClick for Mac): Add [QuickExt](/docs/custompartools/#quickext) to parent for a streamlined python Extension workflow - see [QuickExt](/docs/custompartools/)  
@@ -49,7 +49,7 @@ See the extensive description of [QuickExt](/docs/custompartools/).
 
 ## CustomParCustomize
 
-A fast way to customize parameter promotion—name it, set min/max values, and tweak clamping. Related to [CustomParTools](/docs/custompartools/#custompar-tools)
+A fast way to customize parameter promotion: name it, set min/max values, and tweak clamping. Related to [CustomParTools](/docs/custompartools/#custompar-tools)
    - `Label` and `ParName` for **all** params, and for slider-type params: `min`, `max` values, `clamping` tickboxes, and `default` value  
    - **Invoked** by holding `Ctrl` while drag-and-dropping a parameter onto the `diamond` button or a parent in the path bar  
    - **Quickly jump** between text fields by pressing `Tab` and `Shift+Tab`  
@@ -90,7 +90,7 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
 - Parameter group (parGroups) management
 - Flexible configuration for inclusion/exclusion of properties and callbacks
 - Optional public/private naming conventions
-- Automatic stub generation for improved IDE support
+- Declare parameters on the class and have them created
 
 ### Usage examples in your extension class:
 
@@ -111,7 +111,8 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
     CustomParHelper.Init(self, ownerComp, enable_properties: bool = True, enable_callbacks: bool = True, enable_parGroups: bool = True, enable_seq: bool = True, expose_public: bool = False,
           par_properties: list[str] = ['*'], par_callbacks: list[str] = ['*'], 
           except_properties: list[str] = [], except_sequences: list[str] = [], except_callbacks: list[str] = [], except_pages: list[str] = [], 
-          enable_stubs: bool = False, general_callback_enable: bool = True)
+          enable_stubs: bool = False, general_callback_enable: bool = True,
+          enable_parfields: bool = True)
     ```
 
     Additional options:
@@ -126,11 +127,101 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
     - `except_callbacks`: List of parameter names to exclude from callback handling
     - `except_pages`: List of parameter pages to exclude from property and callback handling
     - `except_sequences`: List of sequence names to exclude from property and callback handling
-    - `enable_stubs`: If True, automatically creates and updates stubs for the extension (default: False) (thanks to AlphaMoonbase.berlin for Stubser)
+    - `enable_stubs`: **No longer does anything from here** (default: False). Stub
+      generation was removed from `ExtUtils`; the Stubser it carried was ~19 operators
+      in *every* instance and nothing enabled it. The argument is kept so existing calls
+      keep working. Generate stubs through [VSCodeTools](/docs/vscodetools/#stubs) or
+      QuickExt, which carry their own (thanks to AlphaMoonbase.berlin for Stubser)
     - `general_callback_enable`: If True, enables general callbacks that catch all parameter changes (default: True)
+    - `enable_parfields`: If True, creates any parameters the class DECLARES before
+      reflection runs (default: True). Harmless for a class that declares none
 
 
-3. Access and set custom parameters as properties (if enable_properties=True (default)):
+3. Optionally **declare** your parameters in code, and they get created:
+
+    ```python
+    class MyToolExt:
+        def __init__(self, ownerComp):
+            self.ownerComp = ownerComp
+
+            self.Speed = CustomParHelper.Float(ownerComp, 'Speed', default=1.0,
+                                               min=0, max=10, page='Settings',
+                                               help='Playback speed multiplier.')
+            self.Mode  = CustomParHelper.Menu(ownerComp, 'Mode', ['fast', 'slow'],
+                                              page='Settings',
+                                              help='Which way the thing runs.')
+
+            if ownerComp.par.Advanced.eval():            # conditionals work
+                CustomParHelper.Int(ownerComp, 'Depth', default=3,
+                                    page='Settings', help='Recursion depth.')
+
+            for name in ('Alpha', 'Beta'):               # so do loops
+                CustomParHelper.Toggle(ownerComp, name, page='Flags',
+                                       help='Flag %s.' % name)
+
+            CustomParHelper.Init(self, ownerComp)
+    ```
+
+    Each call **creates the parameter and returns it**, so you can use it on the next
+    line: `self.Speed.val = 5`. Declaring inside `__init__` is what makes conditionals,
+    loops and computed defaults ordinary Python, since the COMP exists by then.
+
+    One helper per style: `Float` `Int` `Str` `Toggle` `Pulse` `Menu` `StrMenu` `File`
+    `Folder` `Header` `XYZ` `RGB` `RGBA` `OP` `COMP` `TOP` `CHOP` `SOP` `DAT` `MAT`.
+    The multi-member ones (`XYZ`, `RGB`, `RGBA`) return a ParGroup and take either one
+    value for every member or a sequence: `default=(0.2, 0.4, 0.6)`.
+
+    This is **additive**: CustomParHelper still reflects whatever parameters it finds,
+    so a tool that declares nothing behaves exactly as before, and you can mix declared
+    and hand-made parameters freely. There is **no base class to inherit**.
+
+    Declare *before* `CustomParHelper.Init`, so the new parameters get properties and
+    callbacks in the same pass. A parameter added by hand after `Init` has no property
+    until something refreshes it; a declared one cannot drift.
+
+    **Which page?** The `page` keyword, `page='Settings'` above. It is the page NAME,
+    created if it does not exist, and it defaults to `'Custom'`.
+
+    Every other keyword is a TouchDesigner **`Par` member**, set straight through:
+    `default`, `label`, `help`, `readOnly`, `startSection`, `min`, `max`, `clampMin`,
+    `clampMax`, `normMin`, `normMax`, `menuNames`, `menuLabels`, `order`. There is no
+    second vocabulary to learn: see [Par Class](https://docs.derivative.ca/Par_Class) for
+    what each does and which styles honour it.
+
+    **A static alternative.** If the parameter set never varies you can declare on the
+    class body instead, and `Init` creates them:
+
+    ```python
+    class MyToolExt:
+        Speed = CustomParHelper.ParFloat(default=1.0, page='Settings',
+                                         help='Playback speed multiplier.')
+
+        def __init__(self, ownerComp):
+            CustomParHelper.Init(self, ownerComp)
+    ```
+
+    It cannot do conditionals or loops and it cannot hand you the parameter, because a
+    class body runs before there is any COMP to create one on. `self.Speed` still
+    resolves to the real Par once `Init` has run, and raises a message explaining itself
+    if you touch it before that. Both forms use the same code underneath, so they behave
+    identically once the parameter exists.
+
+    Three things worth knowing:
+
+    - **A new parameter is seeded with its default; an existing one keeps its value.**
+      The first time a declaration creates a parameter it is set to the declared
+      `default`. After that, re-initializing refreshes label, help, range and menu
+      entries and leaves the value alone, whatever you or the saved project put there.
+    - **A style change is applied for you.** Declaring `ParStr` over an existing Float
+      rebuilds the parameter and carries across its value, expression, bind expression
+      and position on the page. The one thing that cannot survive is an **export**:
+      that link belongs to the exporting CHOP and lives outside the parameter, so it is reported in
+      the textport and you re-export it.
+    - **`help` is strongly expected but not enforced.** Omitting it logs a warning rather
+      than breaking your extension. Fill it in: it is the tooltip your users get when
+      they hover the parameter name.
+
+4. Access and set custom parameters as properties (if enable_properties=True (default)):
     
     There are two ways to access and set parameter values:
 
@@ -169,7 +260,7 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
 
     > NOTE: to expose public properties, eg. self.Par<ParamName> instead of self.par<ParamName>, set expose_public=True in the Init function
 
-4. Implement callbacks (if enable_callbacks=True (default)):
+5. Implement callbacks (if enable_callbacks=True (default)):
     a) Parameter-specific callbacks:
     - For regular parameters:
       ```python
@@ -216,6 +307,52 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
         # Called when any pulse parameter is triggered that doesn't have a specific callback
         # _par can be omitted if not needed
       ```
+
+### Naming the handler yourself
+
+Every callback above is found by its NAME. If you would rather name the method
+for what it does, declare which parameter it handles:
+
+```python
+class MyToolExt:
+    def __init__(self, ownerComp):
+        self.ownerComp = ownerComp
+        CustomParHelper.Init(self, ownerComp)     # harvests the declarations
+
+    @CustomParHelper.onPar('Speed')
+    def playbackSpeedChanged(self, _par, _val, _prev):
+        ...
+
+    @CustomParHelper.onPar('Reset')               # a Pulse parameter
+    def clearEverything(self, _par):
+        ...
+
+    @CustomParHelper.onParGroup('Translate')
+    def moved(self, _parGroup, _val):
+        ...
+```
+
+Six decorators, one per callback kind: `onPar` (value change, or pulse for a
+Pulse parameter), `onParGroup`, `onSeq(sequence, par)`, `onSeqBlock(sequence)`,
+`onAnyValueChange()` and `onAnyPulse()` for the two general callbacks.
+
+`Init` harvests them, so there is no extra call and no change to your `Init`
+signature. **Signatures and arity are exactly as documented above**; the
+decorator records which parameter the method handles and returns the method
+untouched, so you can still omit `_val` and `_prev` from the right.
+
+Two things the naming convention cannot do:
+
+- **A declaration that names a parameter you do not have is reported.** With
+  the convention a mistyped `onParSpeeed` is simply a method that never runs
+  and never complains. It is logged, so one bad declaration should
+  not stop a tool loading.
+- **A collision is reported too.** If the class already defines `onParSpeed`
+  and something else declares `@onPar('Speed')`, the real method wins and the
+  declaration is reported as ignored, so nothing silently shadows working code.
+
+Declared and conventionally-named callbacks work side by side on the same
+extension; use whichever reads better per parameter.
 
 ## NoNode
 
@@ -308,6 +445,65 @@ NoNode is a versatile utility class that centralizes the management of various t
      ```
 
 
+### Declaring callbacks on the method
+
+The `Register*` calls above are one way to wire a callback. The other is to
+declare it **on the method itself** and let NoNode collect them:
+
+```python
+class MyToolExt:
+    def __init__(self, ownerComp):
+        self.ownerComp = ownerComp
+        NoNode.Init(ownerComp, enable_chopexec=True, enable_parexec=True)
+        NoNode.HarvestCallbacks(self)          # registers everything below
+
+    @NoNode.onChopExec(NoNode.ChopExecType.ValueChange, 'null_audio', 'chan1')
+    def audioMoved(self, channel, sampleIndex, val, prev):
+        ...
+
+    @NoNode.onParExec(NoNode.ParExecType.ValueChange, 'null_hk', 'Shift')
+    def shiftChanged(self, par, val, prev):
+        ...
+
+    @NoNode.onKeyboardShortcut('ctrl.k')
+    def quickAction(self):
+        ...
+```
+
+`@NoNode.onChopExec`, `@NoNode.onDatExec`, `@NoNode.onParExec` and
+`@NoNode.onKeyboardShortcut` take the same arguments as their `Register*`
+counterparts, minus the callback itself. Signatures are unchanged; arity is
+still inferred, so you can still drop arguments off the right.
+
+**Targets are strings, resolved when `HarvestCallbacks` runs**, relative to the
+extension's COMP. They cannot be `op()` calls: a class body is executed while
+the class is being defined, long before any COMP exists to resolve against.
+Omit the owner on `onParExec` to watch your own COMP's parameter.
+
+What this buys over the imperative form:
+
+- **The binding is visible at the callback**, not in a registration block
+  somewhere else, and the method name is free.
+- **A target that does not resolve is reported.** A mistyped operator or
+  parameter name currently produces a callback that simply never fires;
+  harvest logs it, and nothing is raised, so one bad declaration should not
+  stop a tool from loading.
+- **Re-harvesting rebuilds from scratch**, so a callback deleted
+  from the code disappears with it and there is nothing stale to deregister.
+
+Both styles work on the same extension, and neither needs the other:
+`NoNode.Init` + `HarvestCallbacks` is enough on its own, with no CustomParHelper
+involved.
+
+**It also works alongside CustomParHelper.** The two watch through separate
+exec DATs and do not read each other's state, so a COMP can use CustomParHelper
+for its parameters and decorators for its callbacks. Note that on the *same*
+parameter both fire: an `onParSpeed` method and an `@onParExec` decorator for
+`Speed` give you two callbacks, so pick one style per parameter. Use the
+decorator when you want the handler's name to be free of the `onPar<Name>`
+convention.
+
+
 To demo all the features you can download [QuickExtTest.tox](https://github.com/function-store/FunctionStore_tools/blob/main/modules/suspects/FunctionStore_tools_2023/QuickExtTest.tox) and run it or just check its [extension code](https://github.com/function-store/FunctionStore_tools/blob/main/scripts/QuickExt/templates/ExtUtils/ExtTest.py).
 
 ## TouchDesigner shortcuts
@@ -332,7 +528,7 @@ the same promoted methods the commands do.
 These arrived from the retired **MY_HOTKEYS** package. Their command ids are
 unchanged (`opencurrentparameters`, `openparentparameters`,
 `customizecurrentcomp`, `customizeparentcomp`) but the owning tool is now
-CustomParTools — so launcher history, curation and presets that referenced
+CustomParTools, so launcher history, curation and presets that referenced
 `MY_HOTKEYS#…` need re-pointing once.
 
 ## QuickParCustom
@@ -343,7 +539,7 @@ anything. Its **Active** toggle turns the whole feature off.
 | Shortcut | On the hovered parameter |
 |---|---|
 | `alt+x` | Promote to parent (Bind). If it is already promoted, opens the promoted parameter's customization instead |
-| `shift+alt+x` | Same, but promotes with an Expression rather than a Bind |
+| `shift+alt+x` | Same, with the promotion made as an Expression |
 | `alt+\` | Customize the parameter (a custom par customizes its owner COMP; otherwise the promoted owner) |
 | `ctrl+alt+\` | Toggle that parameter between Bind and Expression |
 

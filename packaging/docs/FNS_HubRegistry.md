@@ -12,7 +12,7 @@ features:
 
 The raw registry that decides what [FNS_Hub](/docs/fns-hub/) shows: one entry
 per tab, with its label, order, visibility and what it renders. The hub itself
-holds no tab knowledge -- it draws what this registry says, and the registry
+holds no tab knowledge; it draws what this registry says, and the registry
 injects one mirror or viewer per entry into the hub's tab area, prunes the ones
 whose tool is gone, and heals the rest.
 
@@ -24,16 +24,16 @@ normally never touch it directly; the hub is the UI.
 ## For tool authors
 
 A tool that wants a hub tab ships a small **host** copy of this registry and
-registers itself on load -- the same shape as a toolbar or navbar entry. The
+registers itself on load, the same shape as a toolbar or navbar entry. The
 host's Registration page names the tab:
 
-- **Tool COMP** -- the contributing tool (defaults to the host's parent).
-- **Tab Content** -- what to show: empty for the tool itself (it must be a
+- **Tool COMP**: the contributing tool (defaults to the host's parent).
+- **Tab Content**: what to show: empty for the tool itself (it must be a
   panel), a panel COMP inside the tool (mirrored, so it can live anywhere), or a
   DAT/CHOP/TOP/SOP/POP (an OP Viewer).
-- **Tab Parameters** -- a page scope instead: a Parameter COMP view of the tool
+- **Tab Parameters**: a page scope instead: a Parameter COMP view of the tool
   (`*` for every page).
-- **Show in Hub / Shown in Hub / Tab Label / Tab Order / Help URL** -- the usual
+- **Show in Hub / Shown in Hub / Tab Label / Tab Order / Help URL**: the usual
   publishing controls; *Shown in Hub* is what the hub's close button writes
   back to, so a hidden tab stays hidden across projects.
 

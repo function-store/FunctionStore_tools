@@ -1,6 +1,6 @@
 ---
 package: GlobalOutSelect
-summary: 'This component shows you your Global OP Shortcuts in a tree list view, as well as any out operators found in them.'
+summary: Your Global OP Shortcuts in a tree, with every Out operator inside them; drag a row out as a Select, or jump to it.
 features:
   - name: GlobalOutSelect
     anchor: globaloutselect
@@ -8,9 +8,12 @@ features:
 
 ## GlobalOutSelect
 
-Available as a tab of [FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
+A tab of [FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
 
-This component shows you your **Global OP Shortcuts **in a tree list view, as well as any `out` operators found in them.
-Similarly to `op_store` you can drag and drop a row your network editor to place a **Select OP **if the row references an operator, as well as open a viewer, open parameters, open a floating network at the referenced location.
+It lists your **Global OP Shortcuts** in a tree, with any `out` operators
+found inside each one. Drag a row into a network editor to place a **Select**
+pointing at that operator; a row also lets you open a viewer, open the
+parameters, or open a floating network editor at the referenced location.
 
-Requires manual refresh by clicking the button in its UI for optimization reasons.
+The list is refreshed only on demand, so the tool costs nothing while you are
+not looking at it: click **Refresh** in the tab after adding shortcuts or outs.

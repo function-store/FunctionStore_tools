@@ -18,6 +18,23 @@ import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
 import MarkdownIt from 'markdown-it';
 import anchor from 'markdown-it-anchor';
+// Only the languages the docs actually contain. hljs/lib/core plus explicit
+// registration rather than the full bundle: it makes the supported set
+// readable here, and an unregistered language falls back to plain text
+// instead of silently guessing (autodetection reads two lines of
+// TouchDesigner Python as Perl often enough to matter).
+import hljs from 'highlight.js/lib/core';
+import hljsPython from 'highlight.js/lib/languages/python';
+import hljsJavascript from 'highlight.js/lib/languages/javascript';
+import hljsBash from 'highlight.js/lib/languages/bash';
+import hljsJson from 'highlight.js/lib/languages/json';
+
+hljs.registerLanguage('python', hljsPython);
+hljs.registerLanguage('javascript', hljsJavascript);
+hljs.registerLanguage('js', hljsJavascript);
+hljs.registerLanguage('bash', hljsBash);
+hljs.registerLanguage('sh', hljsBash);
+hljs.registerLanguage('json', hljsJson);
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const WEB = path.dirname(HERE);
@@ -25,10 +42,15 @@ const REPO = path.dirname(WEB);
 const SRC = path.join(REPO, 'packaging', 'docs');
 const CATALOG = path.join(REPO, 'packaging', 'catalog.json');
 const ICONS = path.join(REPO, 'icons');
+// Glyphs rendered by build_manifest.RenderSurfaceIcons from the SAME Text
+// TOP + font the live bar button uses, so this is the button's own picture
+// rather than a lookalike. Missing is fine: the badges fall back to words.
+const SURFACE_ICONS = path.join(REPO, 'packaging', 'docs', 'surface-icons');
 const OUT = path.join(WEB, 'docs');
 
 const SITE = 'https://functionstore.tools';
 const GH = 'https://github.com/function-store/FunctionStore_tools';
+const PATREON = 'https://patreon.com/function_store';
 // Rolling pointer published by packaging/publish.py; base_url in manifest.json.
 const BUCKET = 'https://storage.functionstore.tools/fnstools';
 const EDIT_BASE = `${GH}/blob/main/packaging/docs`;
@@ -113,6 +135,28 @@ const PARAMS = (() => {
  *  so is as useful as naming a button. */
 const SURFACE_META = () => PARAMS.surface_meta || {};
 const surfacesOf = (name) => ((PARAMS.surfaces || {})[name] || []);
+
+/** What a package actually puts on each bar: one entry per registry host,
+ *  carrying the widget, the name the bar shows, its position, and the icon
+ *  glyph read off the live button (build_manifest.SurfaceEntries).
+ *
+ *  `surfaces` above is the same evidence collapsed to a yes/no, and stays
+ *  the thing the badges and the index filter run on -- this adds the detail
+ *  a reader with the toolbar open in front of them is actually after. A
+ *  build against a parameters.json written before this existed simply has
+ *  none, and every page renders as it did. */
+const entriesOf = (name) => ((PARAMS.surface_entries || {})[name] || []);
+
+/** The rendered glyph for a package's FIRST contribution to one surface.
+ *  Two buttons on one bar (MISC) each keep their own file; the badge shows
+ *  the first and the placement list below shows both. */
+function surfaceIcon(name, sid) {
+  const hit = entriesOf(name).find((e) => e.surface === sid && e.icon);
+  return hit ? hit.icon.file : '';
+}
+const iconImg = (file, cls) => (file
+  ? `<img class="${cls}" src="/docs/assets/icons/surface/${esc(file)}" alt=""
+      width="18" height="18" loading="lazy" decoding="async" />` : '');
 const surfaceLabel = (id) => (SURFACE_META()[id] || {}).label || id;
 const surfaceRegistry = (id) => (SURFACE_META()[id] || {}).registry || '';
 
@@ -139,6 +183,28 @@ const GLYPH = Object.fromEntries(
   categories.map((c) => [c, (catMeta[c] && catMeta[c].glyph) || '·']));
 const CATEGORY_PITCH = Object.fromEntries(
   categories.map((c) => [c, (catMeta[c] && catMeta[c].pitch) || '']));
+
+/** Categories that are plumbing rather than a reason to install.
+ *
+ *  Core is eleven registries: the thing every other tool plugs into, always
+ *  installed, never chosen. Listing it FIRST meant the docs sidebar opened
+ *  on eleven registry names before a single tool a reader came looking for,
+ *  and the landing page's catalogue unfolded on them by default.
+ *
+ *  Marked in catalog.json's `category_meta`, which its own _comment defines
+ *  as the website's presentation layer ("packaging ignores it"). So this
+ *  reorders the SITE only -- `categories` stays the canonical ordered list
+ *  the installer picker runs on, where Core leading is correct because
+ *  those packages are the mandatory ones. */
+const isDeprioritized = (c) => Boolean(catMeta[c] && catMeta[c].deprioritized);
+
+/** Reading order: everything else first, in catalog order, then the
+ *  plumbing. A stable partition, not a sort -- two de-prioritized
+ *  categories would keep their curated order relative to each other. */
+const displayCategories = [
+  ...categories.filter((c) => !isDeprioritized(c)),
+  ...categories.filter(isDeprioritized),
+];
 
 // Entitlement. `access` in catalog.json NAMES A TIER (docs/GatedDeliveryResearch
 // §9.3), so anything that is not the literal 'free' is gated. The site says
@@ -182,14 +248,28 @@ for (const file of files) {
   if (data.package && data.package !== name) {
     fail(`packaging/docs/${file}: frontmatter package "${data.package}" does not match the filename`);
   }
+  // Author has ONE home: catalog.json `author` (the manifest carries it,
+  // so the picker byline and this badge agree). The old doc-frontmatter
+  // `credit` block is refused so the two can never drift apart again.
+  if (data.credit !== undefined) {
+    fail(`packaging/docs/${file}: frontmatter \`credit\` moved to catalog.json \`author\` — delete it here and set it in the CMS package editor`);
+  }
+  const cur = curated[name];
+  const author = cur.author && typeof cur.author === 'object' && cur.author.name
+    ? { name: String(cur.author.name), url: cur.author.url ? String(cur.author.url) : '' }
+    : null;
   pages.push({
     name,
     slug: packageSlug(name),
     file,
     meta: data,
     body: content,
-    category: curated[name].category,
-    description: curated[name].description || '',
+    category: cur.category,
+    description: cur.description || '',
+    author,
+    homepage: cur.homepage ? String(cur.homepage) : '',
+    changelogUrl: cur.changelog_url ? String(cur.changelog_url) : '',
+    foreign: !!(cur.source && typeof cur.source === 'object'),
   });
 }
 
@@ -213,7 +293,37 @@ if (unknownCategory.length) {
 
 // ------------------------------------------------------------- render
 
-const md = new MarkdownIt({ html: true, linkify: true, breaks: false })
+/** Colour a fenced block at BUILD time.
+ *
+ *  Returning the inner HTML only, never a whole <pre>: markdown-it then
+ *  keeps its own `<pre><code class="language-python">` wrapper, so the
+ *  existing .docs-body pre rules still apply and Pagefind still indexes
+ *  the text. Returning a full <pre> would take that wrapper away.
+ *
+ *  Highlighting HERE rather than in the browser is the point -- no
+ *  client-side highlighter to ship, nothing to run on load, and a block
+ *  that is coloured in the HTML stays coloured with scripts off.
+ *
+ *  `ignoreIllegals` because these are excerpts: a snippet that starts
+ *  mid-class is not valid Python on its own and must still colour rather
+ *  than throw the build. */
+const fenceLanguages = new Set();
+function highlight(code, lang) {
+  const name = String(lang || '').trim().toLowerCase();
+  if (name) fenceLanguages.add(name);
+  if (name && hljs.getLanguage(name)) {
+    try {
+      return hljs.highlight(code, { language: name, ignoreIllegals: true }).value;
+    } catch {
+      // fall through to plain, escaped below
+    }
+  }
+  if (name) fail(`a code block is tagged \`${name}\`, which no registered `
+    + `highlighter covers -- register it in build-site.mjs or retag the fence`);
+  return '';   // '' tells markdown-it to escape and render it plain
+}
+
+const md = new MarkdownIt({ html: true, linkify: true, breaks: false, highlight })
   .use(anchor, {
     slugify,
     permalink: anchor.permalink.linkInsideHeader({
@@ -307,9 +417,15 @@ function head(title, description, canonical) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<!-- Pagefind FIRST, then ours. Its bundle declares the same
+     --pagefind-ui-* custom properties on :root that docs.css overrides;
+     equal specificity means the LAST sheet wins, so loading it after
+     docs.css silently reverted every one of them -- the docs search box
+     rendered white-on-white in Arial Bold in a black site, and the bold
+     placeholder overran the 244px sidebar and was clipped mid-word. -->
+<link rel="stylesheet" href="/docs/pagefind/pagefind-ui.css" onerror="this.remove()">
 <link rel="stylesheet" href="/site-nav.css">
 <link rel="stylesheet" href="/docs.css">
-<link rel="stylesheet" href="/docs/pagefind/pagefind-ui.css" onerror="this.remove()">
 </head>
 <body>`;
 }
@@ -427,7 +543,34 @@ function menuLine(row) {
  *  the cell is also what keeps the gap visible -- an undocumented control
  *  that quietly renders as a blank cell is indistinguishable from a
  *  documented one, and nobody ever goes back to fill those in. */
-function parTable(rows) {
+/** A Header par is a section label -- unless there is a row of them.
+ *
+ *  Several Headers in a row are not labelling anything: they are a
+ *  paragraph typed into the parameter dialog one line per par, which is
+ *  the only way to get multi-line prose in there. ExprHotStrings has a run
+ *  of fourteen (`Usage:`, then `L1`..`L12`), and rendered literally that is
+ *  fourteen full-width heading rows of instructions sitting under a table
+ *  of six real controls -- prose wearing the costume of structure.
+ *
+ *  So: a Header ADJACENT to another Header is dropped, every member of the
+ *  run included. A lone Header keeps its meaning and its row. The text is
+ *  not lost -- that is what the tool's page is for, and ExprHotStrings
+ *  already says all of it in prose. */
+const withoutHeaderRuns = (rows) => rows.filter((row, i) => {
+  if (row.style !== 'Header') return true;
+  const before = i > 0 && rows[i - 1].style === 'Header';
+  const after = i < rows.length - 1 && rows[i + 1].style === 'Header';
+  return !before && !after;
+});
+
+let headerRunsDropped = 0;
+
+function parTable(allRows) {
+  const rows = withoutHeaderRuns(allRows);
+  headerRunsDropped += allRows.length - rows.length;
+  // A page that was ONLY a header run has nothing left to tabulate, and an
+  // empty table with a header row still reads as a table.
+  if (!rows.some((r) => r.style !== 'Header')) return '';
   const body = rows.map((row) => {
     if (row.style === 'Header') {
       return `      <tr class="par-head"><th colspan="3">${esc(row.label)}</th></tr>`;
@@ -484,10 +627,12 @@ function registersWithLine(name) {
 function registrySection(name) {
   const rows = (PARAMS.registry_sections || {})[name] || [];
   if (!rows.length) return '';
+  const table = parTable(rows);
+  if (!table) return '';
   return `<section class="parameters">
   <h2 id="registry-section">What it adds to a registered tool</h2>
   <p class="hint-line">Every tool that registers gets these on its own <strong>Registry</strong> page.</p>
-${parTable(rows)}
+${table}
 </section>`;
 }
 
@@ -511,9 +656,13 @@ function parametersSection(p) {
     if (last && last.page === row.page) last.rows.push(row);
     else byPage.push({ page: row.page, rows: [row] });
   }
-  const blocks = byPage.map(({ page, rows: rs }) =>
-    `  <h3 id="${slugify(anchor + '-' + page)}">${esc(page)}</h3>
-${parTable(rs)}`).join('\n');
+  const blocks = byPage.map(({ page, rows: rs }) => {
+    const table = parTable(rs);
+    // No table, no heading for it.
+    return table ? `  <h3 id="${slugify(anchor + '-' + page)}">${esc(page)}</h3>
+${table}` : '';
+  }).filter(Boolean).join('\n');
+  if (!blocks) return '';
   return `<section class="parameters">
   <h2 id="${anchor}">Parameters</h2>
   ${registersWithLine(p.name)}
@@ -521,28 +670,90 @@ ${blocks}
 </section>`;
 }
 
-function sidebar(currentSlug) {
-  const groups = categories.map((cat) => {
-    const items = pages
-      .filter((p) => p.category === cat)
-      .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
-      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.name)}${isPlus(p.name) ? PLUS_MARK : ''}</a></li>`)
-      .join('\n');
-    if (!items) return '';
-    return `  <div class="side-group">
-    <h3><span class="side-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>${esc(cat)}</h3>
+/** One collapsible group in the sidebar.
+ *
+ *  <details open> rather than a plain <div>: on a phone the flat list was
+ *  53 packages tall and pushed the first word of every page 2358px down --
+ *  you tapped a tool and landed back on the menu. Collapsed, the same nav
+ *  is eight rows.
+ *
+ *  Authored OPEN and closed by docs.js only under the mobile breakpoint, so
+ *  the desktop sidebar is unchanged and a reader with no JavaScript gets
+ *  today's fully-expanded list rather than a nav they cannot open. The
+ *  count rides in the summary because a collapsed group that does not say
+ *  how much it hides is a worse affordance than the list it replaced.
+ */
+function sideGroup(glyph, label, items, count) {
+  return `  <details class="side-group" open>
+    <summary>
+      <span class="side-glyph" aria-hidden="true">${glyph}</span>
+      <span class="side-cat">${esc(label)}</span>
+      <span class="side-count">${count}</span>
+    </summary>
     <ul>
 ${items}
     </ul>
-  </div>`;
+  </details>`;
+}
+
+/** "Where it appears" -- every on-screen contribution, one row each.
+ *
+ *  Entirely derived (build_manifest.SurfaceEntries reads the registry
+ *  hosts): the icon is the glyph off the live button, the name is the
+ *  registry's own Canonicalname, and the position is the order par the
+ *  surface configurator writes. Nothing here is authored in a doc, so a
+ *  rebound button or a re-ordered bar reaches the site with no prose
+ *  edited -- which is the whole point, since the previous answer to
+ *  "which icon is this" was a hand-typed PNG filename from the wiki era
+ *  that no longer matched the button.
+ *
+ *  Skipped entirely for a package with no entries: "nothing on screen" is
+ *  already said by the badges, and an empty section says it worse. */
+function placementSection(p) {
+  const entries = entriesOf(p.name);
+  if (!entries.length) return '';
+  const rows = entries.map((e) => {
+    const reg = surfaceRegistry(e.surface);
+    const where = reg
+      ? `<a href="/docs/${packageSlug(reg)}/">${esc(surfaceLabel(e.surface))}</a>`
+      : esc(surfaceLabel(e.surface));
+    const bits = [];
+    // The name the BAR shows, which is often not the package name.
+    if (e.label && e.label !== p.name) bits.push(`as <strong>${esc(e.label)}</strong>`);
+    if (e.side) bits.push(`${esc(e.side)} side`);
+    if (e.order !== undefined) bits.push(`position ${esc(String(e.order))}`);
+    const icon = e.icon
+      ? iconImg(e.icon.file, 'place-icon')
+      : '<span class="place-icon place-icon--none" aria-hidden="true"></span>';
+    return `      <li>${icon}<span class="place-what">${where}</span>`
+      + `<span class="place-detail">${bits.join(' \u00b7 ')}</span></li>`;
+  }).join('\n');
+  return `<section class="placement">
+  <h2 id="where-it-appears">Where it appears</h2>
+  <p class="hint-line">Read off the registry hosts in the component, so this is
+  where the tool puts itself in a default install; every one of these can be
+  reordered or hidden from <a href="/docs/fns-hub/">FNS_Hub</a>.</p>
+  <ul class="place-list">
+${rows}
+  </ul>
+</section>`;
+}
+
+function sidebar(currentSlug) {
+  const groups = displayCategories.map((cat) => {
+    const inCat = pages
+      .filter((p) => p.category === cat)
+      .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+    const items = inCat
+      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.name)}${isPlus(p.name) ? PLUS_MARK : ''}</a></li>`)
+      .join('\n');
+    if (!items) return '';
+    return sideGroup(GLYPH[cat] || '·', cat, items, inCat.length);
   }).filter(Boolean).join('\n');
   // Last, under the packages: it is a reference, not a destination.
-  const reference = `  <div class="side-group">
-    <h3><span class="side-glyph" aria-hidden="true">§</span>Reference</h3>
-    <ul>
-      <li><a href="/docs/${PARAMS_SLUG}/"${currentSlug === PARAMS_SLUG ? ' aria-current="page"' : ''}>Common parameters</a></li>
-    </ul>
-  </div>`;
+  const reference = sideGroup('§', 'Reference',
+    `      <li><a href="/docs/${PARAMS_SLUG}/"${currentSlug === PARAMS_SLUG ? ' aria-current="page"' : ''}>Common parameters</a></li>`,
+    1);
   return `<aside class="docs-side" id="docs-side">
   <div class="docs-search"><div id="search"></div></div>
 ${groups}
@@ -568,6 +779,15 @@ for (const f of fs.readdirSync(ICONS)) {
   fs.copyFileSync(path.join(ICONS, f), path.join(OUT, 'assets', 'icons', f));
   copied++;
 }
+let glyphs = 0;
+if (fs.existsSync(SURFACE_ICONS)) {
+  const dst = path.join(OUT, 'assets', 'icons', 'surface');
+  fs.mkdirSync(dst, { recursive: true });
+  for (const f of fs.readdirSync(SURFACE_ICONS).filter((f) => f.endsWith('.png'))) {
+    fs.copyFileSync(path.join(SURFACE_ICONS, f), path.join(dst, f));
+    glyphs++;
+  }
+}
 
 for (const p of pages) {
   const dir = path.join(OUT, p.slug);
@@ -584,7 +804,11 @@ for (const p of pages) {
   // a reader scanning the docs actually has.
   for (const sid of surfacesOf(p.name)) {
     const reg = surfaceRegistry(sid);
-    const label = esc(surfaceLabel(sid));
+    // The glyph the bar button actually draws, beside the words for it --
+    // a reader scanning the toolbar recognises the picture faster than the
+    // sentence, and the picture is now derived rather than hand-typed.
+    const label = iconImg(surfaceIcon(p.name, sid), 'badge-icon')
+      + esc(surfaceLabel(sid));
     badges.push(reg
       ? `<a class="badge badge-surface" href="/docs/${packageSlug(reg)}/">${label}</a>`
       : `<span class="badge badge-surface">${label}</span>`);
@@ -593,22 +817,40 @@ for (const p of pages) {
   if (Array.isArray(plats) && plats.length && plats.length < 2) {
     badges.push(`<span class="badge badge-warn">${esc(plats.join(', '))} only</span>`);
   }
-  if (p.meta.credit && p.meta.credit.name) {
-    const c = p.meta.credit;
+  if (p.author) {
+    const c = p.author;
     badges.push(c.url
       ? `<span class="badge">by <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a></span>`
       : `<span class="badge">by ${esc(c.name)}</span>`);
+  }
+  // A foreign package (catalog `source`): its own product, mirrored into
+  // the store. Say so, and give the reader the way out to its own site.
+  if (p.foreign) {
+    badges.push(`<span class="badge" title="Its own product with its own updater, installable from the toolkit picker">family product</span>`);
+  }
+  if (p.homepage) {
+    badges.push(`<a class="badge" href="${esc(p.homepage)}" target="_blank" rel="noopener">website ↗</a>`);
+  }
+  if (p.changelogUrl) {
+    badges.push(`<a class="badge" href="${esc(p.changelogUrl)}" target="_blank" rel="noopener">changelog ↗</a>`);
   }
 
   const video = p.meta.video
     ? `<div class="embed-video"><iframe src="https://www.youtube.com/embed/${esc(String(p.meta.video).split(/[/=]/).pop())}" title="${esc(p.name)} walkthrough" loading="lazy" allowfullscreen></iframe></div>`
     : '';
 
+  // The site is the complete record of the gated tools: a Plus page is as
+  // full as a free one, and the note on it is where the reader meets the
+  // membership that pays for the free toolkit.
   const plusNote = isPlus(p.name) ? `<div class="plus-note">
     <p><strong>This one is a Plus tool.</strong> It installs through the same picker as
-    everything else, and unlocks with a Patreon membership or a licence key redeemed inside
-    TouchDesigner. Everything else in the toolkit stays free and MIT.</p>
-    <p><a href="/plus/">How Plus works →</a></p>
+    everything else and unlocks with a Patreon membership or a licence key redeemed inside
+    TouchDesigner. Everything else in the toolkit stays free and MIT, and the membership is
+    what keeps that work moving.</p>
+    <p class="plus-note-actions">
+      <a class="btn btn-primary" href="${PATREON}" target="_blank" rel="noopener">Join on Patreon →</a>
+      <a class="btn btn-secondary" href="/plus/">How Plus works →</a>
+    </p>
   </div>` : '';
 
   const features = p.meta.features || [];
@@ -620,24 +862,21 @@ for (const p of pages) {
     ? ((anchorsOf.get(p.slug) || new Set()).has('parameters')
         ? 'parameter-reference' : 'parameters')
     : '';
-  const tocItems = features
-    .map((f) => `<li><a href="#${esc(f.anchor)}">${featIcon(f)}${esc(f.name)}</a></li>`)
+  const tocItems = (entriesOf(p.name).length
+      ? [`<li><a href="#where-it-appears">Where it appears</a></li>`] : [])
+    .concat(features
+      .map((f) => `<li><a href="#${esc(f.anchor)}">${featIcon(f)}${esc(f.name)}</a></li>`))
     .concat(parAnchor ? [`<li><a href="#${parAnchor}">Parameters</a></li>`] : []);
   const onThisPage = tocItems.length > 1
     ? `<nav class="toc"><span>On this page</span><ul>${tocItems.join('')}</ul></nav>`
     : '';
 
-  // The icon and the hotkeys are authored per feature in the CMS and used
-  // to reach nothing. Inject them into the rendered body by anchor, so the
-  // markdown stays plain markdown and no doc has to be re-authored.
-  let body = p.html;
-  for (const f of features) {
-    if (!f.icon) continue;
-    // markdown-it-anchor emits <h2 id="anchor">Name</h2>
-    const re = new RegExp(`(<h2 id="${f.anchor}"[^>]*>)([\\s\\S]*?)(</h2>)`);
-    body = body.replace(re, (m, open, text, close) =>
-      `${open}${featIcon(f)}${text}${close}`);
-  }
+  // NO icon is injected into the headings. The CMS lets a feature carry an
+  // icons/*.png and this used to stamp it in front of its <h2>; it read as
+  // decoration inside the running text and is gone by request. The file is
+  // still authored and still rides the table of contents, which is a list
+  // of links rather than prose.
+  const body = p.html;
 
   // Shortcuts: the KEYS come from the manifest, which build_manifest
   // fills from FNS_HotkeyManager on every build, so a rebound key
@@ -666,7 +905,7 @@ for (const p of pages) {
   const parSection = parametersSection(p);
   const shortcuts = bound.length ? `<section class="shortcuts">
     <h2 id="shortcuts">Shortcuts</h2>
-    <p class="hint-line">Global — they fire anywhere in TouchDesigner. Shortcuts scoped to a single panel are a local control scheme and are not listed here.</p>
+    <p class="hint-line">Global: they fire anywhere in TouchDesigner. Shortcuts scoped to a single panel are a local control scheme and stay off this list.</p>
     <ul class="feat-keys">${bound.map((h) => {
       const what = said.get(keyId(h.keys)) || '';
       return `<li><kbd>${esc(prettyKeys(h.keys))}</kbd>${
@@ -674,7 +913,17 @@ for (const p of pages) {
     }).join('')}</ul>
   </section>` : '';
 
-  const html = `${head(`${p.name} — FNSTools docs`, p.description || `${p.name} documentation.`, `${SITE}/docs/${p.slug}/`)}
+  // An undocumented page has to LOOK undocumented. Rendered empty it is a
+  // title, a badge row and generated tables -- indistinguishable from a
+  // tool that simply has little to say, which is how AltSelect shipped
+  // with a blank page nobody noticed. Same reasoning as .par-todo.
+  const undocumented = p.body.trim() ? '' : `<p class="page-todo">This tool
+    does not have a written page yet. The generated sections below are read
+    straight from the component, so they are accurate. What is missing is
+    the prose. <a href="${EDIT_BASE}/${p.file}" target="_blank"
+    rel="noopener">Write it →</a></p>`;
+
+  const html = `${head(`${p.name} | FNSTools docs`, p.description || `${p.name} documentation.`, `${SITE}/docs/${p.slug}/`)}
 ${header('/docs/')}
 <div class="docs-layout wrap">
 ${sidebar(p.slug)}
@@ -684,8 +933,10 @@ ${sidebar(p.slug)}
   ${p.description ? `<p class="lede">${esc(p.description)}</p>` : ''}
   <p class="badges">${badges.join(' ')}</p>
   ${plusNote}
+  ${undocumented}
   ${video}
   ${onThisPage}
+  ${placementSection(p)}
   ${shortcuts}
   <div class="docs-body">
 ${body}
@@ -749,7 +1000,7 @@ function surfaceFilter() {
 }
 
 // docs index
-const indexGroups = categories.map((cat) => {
+const indexGroups = displayCategories.map((cat) => {
   const items = pages
     .filter((p) => p.category === cat)
     .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
@@ -768,7 +1019,7 @@ ${items}
 }).filter(Boolean).join('\n');
 
 fs.writeFileSync(path.join(OUT, 'index.html'), `${head(
-  'FNSTools docs — every tool in the toolkit',
+  'FNSTools docs: every tool in the toolkit',
   `Documentation for all ${pages.length} FNSTools packages: templates, parameter tools, network shortcuts, MIDI/OSC mapping and extension helpers for TouchDesigner.`,
   `${SITE}/docs/`)}
 ${header('/docs/')}
@@ -778,6 +1029,7 @@ ${sidebar(null)}
   <h1>Documentation</h1>
   <p class="lede">Every package that ships with FNSTools. Each tool installs on its own, so each one is documented on its own.</p>
   <p class="docs-index-note">Each page lists that tool's own controls. The ones every package shares are described once on the <a href="/docs/${PARAMS_SLUG}/">common parameters</a> page.</p>
+  <p class="docs-index-note">The Plus tools are here too, marked ${PLUS_MARK}. Every gated package is listed and documented in full, locked or unlocked, so this index is the complete record of what a <a href="${PATREON}" target="_blank" rel="noopener">Patreon membership</a> unlocks. <a href="/plus/">How Plus works →</a></p>
 ${surfaceFilter()}
 ${indexGroups}
 </main>
@@ -796,11 +1048,11 @@ ${FOOT}`);
   const registries = Object.entries(PARAMS.registry_sections || {});
   const registryList = registries.map(([name, rows]) =>
     `      <li><a href="/docs/${packageSlug(name)}/#registry-section">${esc(name)}</a>`
-    + ` &mdash; ${rows.length} controls</li>`).join('\n');
+    + `: ${rows.length} controls</li>`).join('\n');
   const dir = path.join(OUT, PARAMS_SLUG);
   fs.mkdirSync(dir, { recursive: true });
   fs.writeFileSync(path.join(dir, 'index.html'), `${head(
-    'Common parameters — FNSTools docs',
+    'Common parameters | FNSTools docs',
     'The controls every FNSTools package carries: the read-only About block that identifies a version, and the registry sections that decide where a tool appears.',
     `${SITE}/docs/${PARAMS_SLUG}/`)}
 ${header('/docs/')}
@@ -836,7 +1088,7 @@ ${FOOT}`);
 //
 // Core is open by default: it is the shortest way to answer "what is this
 // thing actually made of" for someone who just arrived.
-const grid = categories.map((cat) => {
+const grid = displayCategories.map((cat) => {
   const inCat = pages
     .filter((p) => p.category === cat)
     .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
@@ -848,7 +1100,9 @@ const grid = categories.map((cat) => {
   const plusHere = inCat.filter((p) => isPlus(p.name)).length;
   const count = `${inCat.length} tool${inCat.length === 1 ? '' : 's'}`
     + (plusHere ? ` · ${plusHere} Plus` : '');
-  return `      <details class="cat"${cat === 'Core' ? ' open' : ''}>
+  // The first category a reader meets, whichever that now is -- never a
+  // hardcoded name, which is how this stayed pinned to Core.
+  return `      <details class="cat"${cat === displayCategories[0] ? ' open' : ''}>
         <summary>
           <span class="cat-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>
           <span>
@@ -879,7 +1133,7 @@ const familyBlock = family.map((p) => `      <a class="prod" href="${esc(p.url)}
 // Static markup inside one link: the real thing is one click away, and a
 // second copy of the picker's logic here would be a second thing to keep
 // true.
-const previewCats = categories.filter((c) => c !== 'Core').slice(0, 2);
+const previewCats = displayCategories.filter((c) => !isDeprioritized(c)).slice(0, 2);
 const previewBlock = previewCats.map((cat) => {
   const items = pages
     .filter((p) => p.category === cat)
@@ -1023,7 +1277,7 @@ if (fs.existsSync(plusSrc)) {
   </a>`).join('\n') + `\n</div>`
     // Not an error: a catalog with nothing gated is a legitimate state, and
     // the page still has to explain what Plus is for when the first one lands.
-    : `<p class="plus-pkgs-empty">Nothing is gated in the current catalogue — every package on this site installs free.</p>`;
+    : `<p class="plus-pkgs-empty">Nothing is gated in the current catalogue; every package on this site installs free.</p>`;
 
   for (const [marker, markup] of [
     ['PLUSPKGS', plusList],
@@ -1047,8 +1301,8 @@ if (fs.existsSync(plusSrc)) {
 
   fs.mkdirSync(path.join(WEB, 'plus'), { recursive: true });
   fs.writeFileSync(path.join(WEB, 'plus', 'index.html'),
-    `${head('FNSTools Plus — supporter tools, and what stays free',
-      'Nearly all of FNSTools is free and MIT. A few tools unlock with a Patreon membership or a licence key, redeemed inside TouchDesigner — here is exactly how that works.',
+    `${head('FNSTools Plus: supporter tools, and what stays free',
+      'Nearly all of FNSTools is free and MIT. A few tools unlock with a Patreon membership or a licence key, redeemed inside TouchDesigner. Here is exactly how that works.',
       `${SITE}/plus/`)}
 <!-- GENERATED by tools/build-site.mjs from website/content/plus.html — do not edit here -->
 ${header('/plus/')}
@@ -1070,9 +1324,9 @@ ${FOOT}`);
 // worker/src/index.js, the code they describe. A policy hosted anywhere else
 // is one that silently stops being true.
 for (const [slug, title, desc] of [
-  ['privacy', 'Privacy — FNSTools',
+  ['privacy', 'Privacy | FNSTools',
     'What FNSTools collects: nothing at all in the free toolkit, and the least the supporter gate can store and still know that a membership is live.'],
-  ['terms', 'Terms — FNSTools',
+  ['terms', 'Terms | FNSTools',
     'The free packages are MIT and stay that way; Plus packages are licensed to you while your membership or licence key is live. Everything ships as-is.'],
 ]) {
   const src = path.join(WEB, 'content', `${slug}.html`);
@@ -1138,7 +1392,7 @@ if (fs.existsSync(cfgSrc)) {
     `<link rel="icon" href="/favicon.png" type="image/png" />\n`
     + `<link rel="apple-touch-icon" href="/favicon.png" />\n`
     + `<link rel="canonical" href="${SITE}/get/" />\n`
-    + `<meta name="description" content="Pick your FNSTools packages and copy a one-line install script for the TouchDesigner Textport — sha256-verified, macOS or Windows." />\n`
+    + `<meta name="description" content="Pick your FNSTools packages and copy a one-line install script for the TouchDesigner Textport: sha256-verified, macOS or Windows." />\n`
     + `<meta property="og:title" content="Build your FNSTools install" />\n`
     + `<meta property="og:description" content="Pick the TouchDesigner tools you want and get a single sha256-verified line to paste into the Textport." />\n`
     + `<meta property="og:type" content="website" />\n`
@@ -1172,7 +1426,166 @@ if (fs.existsSync(cfgSrc)) {
   console.warn('note: packaging/configurator/index.html missing — /get/ not built');
 }
 
-console.log(`built ${pages.length} package pages + index, ${copied} icons copied`);
+// ------------------------------------------------- doc evidence audit
+//
+// The generated blocks on a page cannot be wrong -- they are read off the
+// live component. The PROSE can, and silently: a sentence naming a shortcut
+// that nothing binds looks exactly like one naming a shortcut that works.
+//
+// Reported, never fatal: each line is a claim to CHECK. The filters below
+// exist because the first version of this printed 9 lines of which 7 were
+// correct prose, and a report that cries wolf gets ignored -- which is the
+// failure mode it was written to prevent.
+{
+  const MOUSE = /click|drag|drop|scroll|wheel|hover/i;
+  const MODS = /^(?:ctrl|cmd|alt|opt|option|shift|meta)$/i;
+  const COMBO = /\b((?:(?:ctrl|cmd|alt|opt|option|shift|meta)\s*(?:\([^)]*\))?\s*\+\s*)+[A-Za-z0-9\\[\]{}]+)/gi;
+
+  /** The key a combo actually presses -- its last part. */
+  const keyOf = (raw) => {
+    const parts = String(raw).replace(/\([^)]*\)/g, '').split('+')
+      .map((x) => x.trim()).filter(Boolean);
+    return (parts[parts.length - 1] || '').toLowerCase();
+  };
+  /** TD writes a character class; prose writes {number}. Same shortcut. */
+  const normKey = (k) => (/^(\[0-9\]|\{number\}|\{0-9\}|\[n\])$/.test(k) ? '#' : k);
+
+  // Every binding in the toolkit, not just this package's: a registry page
+  // legitimately documents the tool it serves (FNS_PaletteRegistry names
+  // TDX_SearchPalette's Ctrl+Shift+F), and that is a cross-reference, not
+  // a stale claim.
+  const allCombos = new Set();
+  const allKeys = new Map();       // key -> the package that binds it
+  const ownCombos = {};
+  for (const [name, list] of Object.entries(HOTKEYS)) {
+    ownCombos[name] = new Set();
+    for (const h of list) {
+      for (const combo of String(h.keys).trim().split(/\s+/)) {
+        allCombos.add(keyId(combo));
+        ownCombos[name].add(keyId(combo));
+        const k = normKey(keyOf(combo.replace(/\./g, '+')));
+        if (k && !allKeys.has(k)) allKeys.set(k, name);
+      }
+    }
+  }
+
+  const claims = [];
+  for (const p of pages) {
+    // Parenthesised combos are the mac restatement of the one beside them
+    // ("Ctrl+Tab or (Option+Tab)"). The manifest carries whichever half
+    // THIS machine binds, so the other half can never match and is not a
+    // finding. Drop them before scanning rather than after.
+    const prose = p.body.replace(/\([^)]*\)/g, ' ');
+    const said = new Map();
+    // Keys a page declares as its own panel's control scheme -- the
+    // in-window keys of a palette or an editor -- are no more bindings
+    // than a mouse combo is, and the Shortcuts hint-line already says
+    // panel-scoped keys are not listed. `local_keys:` in the frontmatter
+    // is that declaration, so the exemption is explicit, not guessed.
+    const local = new Set((p.meta.local_keys || []).map((k) => keyId(String(k))));
+    // Keys a tool binds OUTSIDE FNS_HotkeyManager's reach -- BorderlessTD's
+    // Shift+Esc lives in a list expression the conformance contract does not
+    // recognise (docs/DocsEvidenceDerivation.md, "What this does not do").
+    // They are real and global, so `local_keys` would be a lie; `fixed_keys:`
+    // says exactly what they are, and the audit stops crying wolf over a
+    // gap that is already on record.
+    const fixed = new Set((p.meta.fixed_keys || []).map((k) => keyId(String(k))));
+    for (const m of prose.matchAll(COMBO)) {
+      const raw = m[1];
+      if (MOUSE.test(raw)) continue;
+      const parts = raw.split('+').map((x) => x.trim()).filter(Boolean);
+      // "Hold Ctrl+Alt while dragging" is an instruction, not a binding --
+      // build_manifest drops these from the manifest for the same reason.
+      if (parts.every((x) => MODS.test(x))) continue;
+      const id = keyId(raw.replace(/opt(ion)?/gi, 'alt').replace(/cmd/gi, 'ctrl'));
+      if (!id || allCombos.has(id) || local.has(id) || fixed.has(id)) continue;
+      const key = normKey(keyOf(raw));
+      // The exact combo is unbound, but the KEY is -- ParOPDrop binds `p`
+      // and its doc describes four modifier variants of pressing it. The
+      // doc is right and so is the manifest; they differ in granularity.
+      if (allKeys.has(key)) continue;
+      said.set(raw.replace(/\s+/g, ''), key);
+    }
+    if (said.size) claims.push({ name: p.name, combos: [...said.keys()] });
+  }
+
+  // An UNTAGGED fence renders as grey plain text next to a coloured one,
+  // which reads as a rendering bug rather than as missing metadata.
+  //
+  // Fences must be walked in PAIRS: a closing ``` carries no info string by
+  // definition, so a plain regex over every fence line reports every page
+  // that has a code block at all -- which it did, naming all four.
+  const untagged = new Set();
+  for (const p of pages) {
+    let open = false;
+    for (const line of p.body.split('\n')) {
+      const m = /^\s{0,3}```(.*)$/.exec(line);
+      if (!m) continue;
+      if (open) { open = false; continue; }      // closing fence
+      open = true;
+      if (!m[1].trim()) untagged.add(p.name);    // opening fence, no language
+    }
+  }
+  if (untagged.size) {
+    console.log(`note: ${untagged.size} page(s) open a code fence with no `
+      + `language, so it renders unhighlighted: ${[...untagged].join(', ')}`);
+  }
+
+  // House style: no em-dashes and no double-hyphen asides in reader-facing
+  // prose. Reported per page so the habit cannot creep back in unnoticed.
+  const dashy = pages.filter((p) => /—|(?<=\S) -- (?=\S)/.test(
+    p.body.replace(/<!--[\s\S]*?-->/g, '') + ' ' + (p.description || '')));
+  if (dashy.length) {
+    console.log(`note: ${dashy.length} page(s) use an em-dash or " -- " in prose `
+      + `(house style is plain punctuation): ${dashy.map((p) => p.name).join(', ')}`);
+  }
+  // The same rule for tooltips, which reach the tables verbatim. These live
+  // on the parameters inside the components, so the fix is in TouchDesigner
+  // (par.help), and this is where anyone learns that it is needed.
+  const DASH = /—|(?<=\S) -- (?=\S)/;
+  const tipDashes = [];
+  for (const p of pages) {
+    const n = ((PARAMS.packages || {})[p.name] || [])
+      .filter((r) => DASH.test(String(r.help || ''))).length;
+    if (n) tipDashes.push(`${p.name} (${n})`);
+  }
+  if (tipDashes.length) {
+    console.log(`note: parameter tooltips with an em-dash or " -- ", by package `
+      + `(fix par.help in TouchDesigner): ${tipDashes.join(', ')}`);
+  }
+
+  const blank = pages.filter((p) => !p.body.trim()).map((p) => p.name);
+  if (blank.length) {
+    console.log(`note: ${blank.length} page(s) have no prose at all: ${blank.join(', ')}`);
+  }
+  if (claims.length) {
+    console.log(`note: ${claims.length} page(s) name a key nothing in the toolkit binds `
+      + `-- either the doc is stale, or the binding is not reaching `
+      + `FNS_HotkeyManager (docs/HotkeyManagerConformance.md):`);
+    for (const c of claims) console.log(`  - ${c.name}: ${c.combos.join(', ')}`);
+  } else {
+    console.log('every shortcut named in prose is backed by a real binding');
+  }
+}
+
+if (headerRunsDropped) {
+  console.log(`note: ${headerRunsDropped} Header parameters dropped from the tables `
+    + `-- consecutive Headers are prose typed into the parameter dialog, not `
+    + `section labels`);
+}
+console.log(`built ${pages.length} package pages + index, ${copied} icons copied`
+  + `, ${glyphs} surface glyphs`
+  + `, code fences: ${[...fenceLanguages].sort().join(', ') || 'none'}`);
+{
+  // Said out loud for the same reason an undocumented parameter is: a
+  // surface with no gathered glyph renders as words and looks deliberate.
+  const noIcon = pages.filter((p) => entriesOf(p.name).some((e) => !e.icon));
+  if (noIcon.length) {
+    console.log(`note: ${noIcon.length} packages contribute a surface with no icon `
+      + `glyph (panels, sliders and whole-COMP tabs have none): `
+      + noIcon.map((p) => p.name).join(', '));
+  }
+}
 const stubs = pages.filter((p) => /TODO: no wiki content/.test(p.body));
 if (stubs.length) {
   console.log(`${stubs.length} pages are still stubs: ${stubs.map((p) => p.name).join(', ')}`);

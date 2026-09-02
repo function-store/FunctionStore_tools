@@ -26,6 +26,6 @@ always a **dry run**: it reports the files it found, grouped by category,
 and only then do you confirm. You can include or exclude individual files
 before applying.
 
-Expressions are left alone by default — freezing an expression that
-happens to evaluate to a path would detach live wiring rather than bake a
+Expressions are left alone by default: freezing an expression that
+happens to evaluate to a path would detach live wiring, with nothing gained over a
 value. Turn **Collect Expressions** on if you want them resolved too.

@@ -10,14 +10,13 @@ features:
 
 ## Saving on an interval
 
-Set an interval and leave it on. The save is driven by a Timer CHOP
-rather than the timeline, so it does not depend on the project playing
+Set an interval and leave it on. The save is driven by a Timer CHOP, independent of the timeline, so it does not depend on the project playing
 and does not move anything you are working with.
 
 Two modes, because people mean different things by "save":
 
 - **TD** uses TouchDesigner's own Save, honouring your *Increment
-  Filename when Saving* and *Copy to Backup Folder* preferences — so if
+  Filename when Saving* and *Copy to Backup Folder* preferences, so if
   you like numbered saves, you keep getting them.
 - **Overwrite** holds that increment preference off for the duration of
   the save, so every save lands back in the file you already have open,

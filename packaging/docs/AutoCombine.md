@@ -1,6 +1,6 @@
 ---
 package: AutoCombine
-summary: When holding Alt (same for Mac) and placing a Generator type TOP (e.g.
+summary: Hold Alt while placing a generator TOP to set its combine, operation and format defaults.
 features:
   - name: AutoCombine
     anchor: autocombine

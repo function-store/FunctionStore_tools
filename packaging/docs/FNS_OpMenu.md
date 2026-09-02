@@ -23,12 +23,12 @@ This is a table to define custom search keywords for each OpType for the **OpMen
 FNS_OpMenu is a set of mods to TouchDesigner's **OP Create dialog**
 (`/ui/dialogs/menu_op`). They are applied through
 [FNS_OpMenuRegistry](/docs/fns-opmenuregistry/), so several tools can decorate
-the same dialog without fighting over it -- and so the dialog goes back to
+the same dialog without fighting over it, and so the dialog goes back to
 stock the moment you remove them.
 
 The mods this package ships are below: Greg Hermanovic's IO filters, custom
 search keywords, and Dotsimulate's OpType acronyms. Other installed tools add
-their own decorations through the same registry -- for instance
+their own decorations through the same registry, for instance
 [OpTemplates](/docs/optemplates/) marks every operator type you have a template
 for with a `>>>`.
 

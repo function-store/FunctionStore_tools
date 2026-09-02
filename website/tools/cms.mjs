@@ -174,7 +174,18 @@ function docPath(cat, name) {
 const mtimeOf = (p) => (fs.existsSync(p) ? fs.statSync(p).mtimeMs : 0);
 
 /** Frontmatter key order, so saved files stay diffable against each other. */
-const FM_ORDER = ['package', 'summary', 'features', 'platforms', 'credit', 'video'];
+// `credit` is gone from here on purpose: author name + link live in
+// catalog.json `author` (the manifest carries it to the picker and the
+// site), and the site build refuses a doc that still carries `credit`.
+const FM_ORDER = ['package', 'summary', 'features', 'platforms', 'video'];
+
+/** Curated fields every package may carry (docs/ForeignPackages.md §1b),
+ *  and the ones only a FOREIGN entry (one with a `source`) may carry --
+ *  on a live package each has a live authority that must not fork. */
+const LINK_KEYS = ['homepage', 'changelog_url'];
+const FOREIGN_ONLY = ['updates', 'help_url', 'min_td_build'];
+const UPDATES_MODES = ['self', 'store'];
+const isForeignEntry = (e) => !!(e && e.source && typeof e.source === 'object');
 function orderedData(data) {
   const out = {};
   for (const k of FM_ORDER) if (data[k] !== undefined) out[k] = data[k];
@@ -210,6 +221,81 @@ function setAccess(name, tier) {
   return (r.stdout || '').trim();
 }
 
+/** The curated link + foreign fields of one catalog entry, normalised for
+ *  the editor: strings for text inputs, an object for author, and the
+ *  `source` block verbatim. */
+function curatedExtras(entry) {
+  const a = entry.author && typeof entry.author === 'object' ? entry.author : null;
+  return {
+    author: a && a.name ? { name: String(a.name), url: String(a.url || '') } : null,
+    homepage: String(entry.homepage || ''),
+    changelog_url: String(entry.changelog_url || ''),
+    foreign: isForeignEntry(entry),
+    source: isForeignEntry(entry)
+      ? { manifest: String(entry.source.manifest || ''),
+          tox: String(entry.source.tox || ''),
+          package: String(entry.source.package || '') }
+      : null,
+    updates: String(entry.updates || ''),
+    help_url: String(entry.help_url || ''),
+    min_td_build: String(entry.min_td_build || ''),
+  };
+}
+
+/** Apply the editor's curated fields onto a catalog entry, enforcing the
+ *  allowed-on rules. Returns an error string, or '' when applied. Stored
+ *  as presence throughout: an unset field leaves no key behind. */
+function applyCurated(entry, body) {
+  const setOrDelete = (k, v) => { if (v) entry[k] = v; else delete entry[k]; };
+  if (body.author !== undefined) {
+    const a = body.author && typeof body.author === 'object' ? body.author : {};
+    const name = String(a.name || '').trim();
+    const url = String(a.url || '').trim();
+    if (url && !name) return 'author needs a name when a link is given';
+    if (url && !/^https:\/\//.test(url)) return 'author link must be https://';
+    setOrDelete('author', name ? (url ? { name, url } : { name }) : null);
+  }
+  for (const k of LINK_KEYS) {
+    if (typeof body[k] !== 'string') continue;
+    const v = body[k].trim();
+    if (v && !/^https:\/\//.test(v)) return `${k} must be https://`;
+    setOrDelete(k, v);
+  }
+  // `source` decides foreign-ness. Clearing its manifest URL removes the
+  // block, and with it every foreign-only field (they would be orphans).
+  if (body.source !== undefined) {
+    const s = body.source && typeof body.source === 'object' ? body.source : {};
+    const manifest = String(s.manifest || '').trim();
+    if (manifest) {
+      if (!/^https:\/\//.test(manifest)) return 'source manifest must be https://';
+      const src = { manifest };
+      const tox = String(s.tox || '').trim();
+      const pkg = String(s.package || '').trim();
+      if (tox && !/\.tox$/i.test(tox)) return 'source tox must name a .tox file';
+      if (tox) src.tox = tox;
+      if (pkg) src.package = pkg;
+      entry.source = src;
+    } else {
+      delete entry.source;
+    }
+  }
+  const foreign = isForeignEntry(entry);
+  for (const k of FOREIGN_ONLY) {
+    if (!foreign) { delete entry[k]; continue; }
+    if (typeof body[k] !== 'string') continue;
+    const v = body[k].trim();
+    if (k === 'updates' && v && !UPDATES_MODES.includes(v)) {
+      return `updates must be one of ${UPDATES_MODES.join(', ')}`;
+    }
+    if (k === 'help_url' && v && !/^https:\/\//.test(v)) return 'help_url must be https://';
+    if (k === 'min_td_build' && v && !/^\d{4}\.\d+$/.test(v)) {
+      return 'min_td_build looks like 2025.33070';
+    }
+    setOrDelete(k, v);
+  }
+  return '';
+}
+
 function loadPackage(cat, name) {
   const p = docPath(cat, name);
   if (!p || !fs.existsSync(p)) return null;
@@ -228,6 +314,7 @@ function loadPackage(cat, name) {
     // '' = toolkit container (default); 'pane' = the installer spawns it
     // into the network the user is working in.
     placement: String(cat.packages[name].placement || ''),
+    ...curatedExtras(cat.packages[name]),
     data,
     body: content.replace(/^\n+/, ''),
     mtime: mtimeOf(p),
@@ -251,6 +338,7 @@ function state() {
         access: String(cat.packages[n].access || ''),
         plus: Boolean(cat.packages[n].access) && cat.packages[n].access !== 'free',
         placement: String(cat.packages[n].placement || ''),
+        ...curatedExtras(cat.packages[n]),
         data: {}, body: '', mtime: 0, stub: true, todos: 0, words: 0,
         missing: true,
       };
@@ -509,10 +597,14 @@ const server = http.createServer(async (req, res) => {
           cat = readCatalog();
         }
 
+        const curatedKeys = ['author', 'source', ...LINK_KEYS, ...FOREIGN_ONLY];
         if (typeof body.category === 'string' || typeof body.description === 'string'
             || typeof body.recommended === 'boolean'
-            || typeof body.placement === 'string') {
+            || typeof body.placement === 'string'
+            || curatedKeys.some((k) => body[k] !== undefined)) {
           const entry = cat.packages[name];
+          const bad = applyCurated(entry, body);
+          if (bad) return json(res, 400, { error: bad });
           if (typeof body.category === 'string') {
             if (!cat.categories.includes(body.category)) {
               return json(res, 400, { error: `unknown category "${body.category}"` });
@@ -543,6 +635,9 @@ const server = http.createServer(async (req, res) => {
         }
 
         const data = orderedData({ ...(body.data || {}), package: name });
+        // the site build refuses it; refuse it here so the save that
+        // would break the build cannot happen
+        delete data.credit;
         // Trim blank lines off the ends only. A plain .trim() would also eat
         // the two trailing spaces on the final line, which are a markdown
         // hard line break — the CMS must not silently rewrite prose.

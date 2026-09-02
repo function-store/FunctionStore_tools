@@ -9,9 +9,6 @@ features:
   - name: Mapper
     anchor: mapper
     icon: Mapper.png
-credit:
-  name: AlphaMoonbase.berlin
-  url: 'https://alphamoonbase.de/'
 ---
 
 ## midiMapper
@@ -27,7 +24,7 @@ Bypass and un-bypass MIDI operators to unstick them (requested by Jacopo)
    - 🖱️ **Middle-click** the `midiMapper` toolbar button to reset **all**  
    - Can be set to **auto-reset all on startup**  
 
-Its settings persist and follow you across projects through [FNS_ConfigRegistry](/docs/fns-configregistry/), like every other tool -- the `Registry` page on the component controls whether it participates.
+Its settings persist and follow you across projects through [FNS_ConfigRegistry](/docs/fns-configregistry/), like every other tool; the `Registry` page on the component controls whether it participates.
 
 ## Mapper
 

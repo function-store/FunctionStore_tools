@@ -413,6 +413,7 @@ function renderList() {
         (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
         (p.placement === 'pane' ? '<span class="tag tag-net" title="Installs into the network the user is working in">NET</span>' : '') +
         (p.placement === 'root' ? '<span class="tag tag-net" title="Installs at the network root, beside the toolkit container">ROOT</span>' : '') +
+        (p.foreign ? '<span class="tag tag-net" title="Foreign package: bytes and version owned upstream, mirrored by foreign_sync.py">FOREIGN</span>' : '') +
         (p.stub ? '<span class="tag tag-stub">STUB</span>'
                 : (p.todos ? `<span class="tag tag-todo">${p.todos} TODO</span>` : ''));
       el.querySelector('.pkg-name').textContent = p.name;
@@ -520,14 +521,57 @@ function renderEditor() {
 
     <div class="row">
       <div class="field">
-        <label for="credit-name">Credit</label>
-        <input type="text" id="credit-name" placeholder="e.g. AlphaMoonbase.berlin" />
+        <label for="author-name">Author <span class="hint">— who made it. Blank = Function Store. Lives in catalog.json; the picker byline and the docs badge both read it.</span></label>
+        <input type="text" id="author-name" placeholder="e.g. AlphaMoonbase.berlin" />
       </div>
       <div class="field">
-        <label for="credit-url">Credit link</label>
-        <input type="text" id="credit-url" placeholder="https://…" />
+        <label for="author-url">Author link</label>
+        <input type="text" id="author-url" placeholder="https://…" />
       </div>
     </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="homepage">Website <span class="hint">— the product’s own site, when it has one</span></label>
+        <input type="text" id="homepage" placeholder="https://…" />
+      </div>
+      <div class="field">
+        <label for="changelog_url">Changelog <span class="hint">— release notes hosted upstream</span></label>
+        <input type="text" id="changelog_url" placeholder="https://…" />
+      </div>
+    </div>
+
+    <details class="field" id="foreignBox"${d.foreign ? ' open' : ''}>
+      <summary>Foreign package <span class="hint">— a product whose bytes and version are owned upstream (another repo, another release rail). Setting a source manifest makes this entry foreign: the release rail mirrors the artifact with <code>foreign_sync.py</code> instead of exporting a live component. Live toolkit packages leave this empty.</span></summary>
+      <div class="row">
+        <div class="field">
+          <label for="source-manifest">Upstream manifest URL</label>
+          <input type="text" id="source-manifest" placeholder="https://…/manifest.json" />
+        </div>
+        <div class="field">
+          <label for="source-tox">Artifact file name <span class="hint">— when the manifest names no url</span></label>
+          <input type="text" id="source-tox" placeholder="Name.tox" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="updates">Updates <span class="hint">— self: the tool runs its own updater after install (the toolkit never touches it). store: the toolkit updater tracks it like a tool (needs a Pkgversion par inside the artifact).</span></label>
+          <select id="updates">
+            <option value="">store (default)</option>
+            <option value="self">self — the tool keeps itself current</option>
+            <option value="store">store — the toolkit updater tracks it</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="min_td_build">Minimum TD build <span class="hint">— e.g. 2025.33070; blank = no floor</span></label>
+          <input type="text" id="min_td_build" placeholder="2025.33070" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="help_url">Docs URL <span class="hint">— the upstream documentation page; live packages derive theirs, foreign ones declare it</span></label>
+        <input type="text" id="help_url" placeholder="https://…" />
+      </div>
+    </details>
 
     <div class="row">
       <div class="field">
@@ -597,8 +641,15 @@ function renderEditor() {
   $('#recommended').checked = !!d.recommended;
   $('#placement').value = d.placement || '';
   $('#summary').value = d.data.summary || '';
-  $('#credit-name').value = (d.data.credit && d.data.credit.name) || '';
-  $('#credit-url').value = (d.data.credit && d.data.credit.url) || '';
+  $('#author-name').value = (d.author && d.author.name) || '';
+  $('#author-url').value = (d.author && d.author.url) || '';
+  $('#homepage').value = d.homepage || '';
+  $('#changelog_url').value = d.changelog_url || '';
+  $('#source-manifest').value = (d.source && d.source.manifest) || '';
+  $('#source-tox').value = (d.source && d.source.tox) || '';
+  $('#updates').value = d.updates || '';
+  $('#min_td_build').value = d.min_td_build || '';
+  $('#help_url').value = d.help_url || '';
   $('#video').value = d.data.video || '';
   $('#body').value = d.body;
   const plats = d.data.platforms || [];
@@ -613,13 +664,31 @@ function renderEditor() {
   $('#platforms').onchange = (e) => {
     setData('platforms', e.target.value ? [e.target.value] : undefined);
   };
-  const credit = () => {
-    const name = $('#credit-name').value.trim();
-    const url = $('#credit-url').value.trim();
-    setData('credit', name ? (url ? { name, url } : { name }) : undefined);
+  // Curated catalog fields (docs/ForeignPackages.md §1b). They live on the
+  // draft itself, not in `data` (which is the doc's frontmatter).
+  const author = () => {
+    const name = $('#author-name').value.trim();
+    const url = $('#author-url').value.trim();
+    d.author = name ? { name, url } : null;
+    markDirty();
   };
-  $('#credit-name').oninput = credit;
-  $('#credit-url').oninput = credit;
+  $('#author-name').oninput = author;
+  $('#author-url').oninput = author;
+  $('#homepage').oninput = (e) => { d.homepage = e.target.value.trim(); markDirty(); };
+  $('#changelog_url').oninput = (e) => { d.changelog_url = e.target.value.trim(); markDirty(); };
+  const source = () => {
+    const manifest = $('#source-manifest').value.trim();
+    const tox = $('#source-tox').value.trim();
+    d.source = manifest ? { manifest, tox, package: (d.source && d.source.package) || '' } : null;
+    d.foreign = !!manifest;
+    markDirty();
+    renderList();
+  };
+  $('#source-manifest').oninput = source;
+  $('#source-tox').oninput = source;
+  $('#updates').onchange = (e) => { d.updates = e.target.value; markDirty(); };
+  $('#min_td_build').oninput = (e) => { d.min_td_build = e.target.value.trim(); markDirty(); };
+  $('#help_url').oninput = (e) => { d.help_url = e.target.value.trim(); markDirty(); };
 
   let previewTimer;
   $('#body').oninput = (e) => {
@@ -947,7 +1016,22 @@ function renderRelease(problem) {
           : at(relRails.error || 'state unknown')}</td>
       <td><button class="btn" id="relRailsBuild">Rebuild</button></td>
     </tr>` : '') +
-    relRows.map((r) => `<tr>
+    relRows.map((r) => r.foreign ? `<tr>
+      <td><input type="checkbox" class="relpick" data-name="${at(r.name)}"
+        ${relPicked.has(r.name) ? 'checked' : ''} /></td>
+      <td>${at(r.name)} <span class="tag tag-net" title="Foreign: bytes and version owned upstream (${at(r.upstream && r.upstream.manifest)}). Never bumped, exported or PI-saved — Sync mirrors the upstream build into packaging/dist and pins it in foreign.lock.json.">FOREIGN</span>${
+        r.updates === 'self' ? ' <span class="hint">updates itself</span>' : ''}</td>
+      <td class="${r.mirrored && !(r.problems || []).length ? '' : 'warn'}"
+        title="${at((r.problems || []).join('; '))}">${
+        (r.problems || []).length ? 'not mirrored' : r.mirrored ? 'mirrored' : 'not synced'}</td>
+      <td title="lock version — what foreign_sync last fetched${r.upstream && r.upstream.fetched_at ? ', ' + new Date(r.upstream.fetched_at * 1000).toLocaleString() : ''}">${at(r.version) || '&mdash;'}</td>
+      <td class="${r.unshipped ? 'warn' : ''}">${at(r.published) || '&mdash;'}</td>
+      <td><span class="hint">${at(r.help_override) || 'set in the package editor'}</span></td>
+      <td><button class="btn relforeignsync" data-name="${at(r.name)}"
+        title="Fetch the upstream manifest, mirror the artifact, pin the lock (runs detached; watch the log)">Sync</button>
+        <button class="btn relretire" data-name="${at(r.name)}"
+        title="Stop shipping it: declares the drop in release.json, removes the catalog entry (the declaration IS the package), archives its doc">Retire</button></td>
+    </tr>` : `<tr>
       <td><input type="checkbox" class="relpick" data-name="${at(r.name)}"
         ${relPicked.has(r.name) ? 'checked' : ''} /></td>
       <td>${at(r.name)}</td>
@@ -1006,6 +1090,37 @@ function renderRelease(problem) {
       } catch (e) { toast(e.message, 'err'); rs.disabled = false; }
     };
   }
+  document.querySelectorAll('.relforeignsync').forEach((b) => {
+    b.onclick = async () => {
+      b.disabled = true;
+      const out = $('#relOut');
+      out.hidden = false;
+      out.className = 'log';
+      out.textContent = 'Syncing ' + b.dataset.name + ' from upstream...';
+      try {
+        await api('/api/td/foreignsync', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ names: [b.dataset.name] }),
+        });
+        // detached: poll the log until it settles, then re-read the rows
+        let polls = 0;
+        const tick = async () => {
+          try {
+            const l = await api('/api/td/foreignlog');
+            out.textContent = l.tail || out.textContent;
+            if (l.exists && l.age_s != null && l.age_s > 3 || ++polls > 60) {
+              out.className = 'log ' + (/FAILED/.test(l.tail || '') ? 'err' : 'ok');
+              await loadRelease();
+              return;
+            }
+          } catch (e) { out.textContent = e.message; }
+          setTimeout(tick, 1000);
+        };
+        setTimeout(tick, 1500);
+      } catch (e) { toast(e.message, 'err'); out.textContent = e.message; b.disabled = false; }
+    };
+  });
   document.querySelectorAll('.relretire').forEach((b) => {
     b.onclick = async () => {
       const undo = !!b.dataset.undo;
@@ -1698,6 +1813,13 @@ async function save() {
         description: draft.description,
         recommended: !!draft.recommended,
         placement: draft.placement || '',
+        author: draft.author || null,
+        homepage: draft.homepage || '',
+        changelog_url: draft.changelog_url || '',
+        source: draft.source || null,
+        updates: draft.updates || '',
+        help_url: draft.help_url || '',
+        min_td_build: draft.min_td_build || '',
         data: draft.data,
         body: draft.body,
         mtime: current.mtime,

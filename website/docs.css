@@ -90,13 +90,22 @@ nav.site-nav a[aria-current="page"]:not(.btn) { color: var(--text); }
 .docs-side::-webkit-scrollbar { width: 8px; }
 .docs-side::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
 
+/* A sidebar group is a <details open>. Desktop keeps today's look: the
+   summary is styled to read as the old <h3>, and the marker is hidden
+   because nothing collapses at this width. docs.js closes them under the
+   mobile breakpoint -- see the media query at the end of this file. */
 .side-group { margin-bottom: 22px; }
-.side-group h3 {
+.side-group > summary {
   display: flex; align-items: center; gap: 8px;
   margin: 0 0 8px; font-size: 11px; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--text-faint);
+  list-style: none; cursor: default;
 }
+.side-group > summary::-webkit-details-marker { display: none; }
+.side-group > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+/* The count only earns its place when the group can be closed. */
+.side-count { display: none; }
 .side-glyph { color: var(--accent); font-size: 12px; }
 .side-group ul { list-style: none; margin: 0; padding: 0; }
 .side-group li a {
@@ -246,14 +255,83 @@ footer.site { border-top: 1px solid var(--border); padding: 28px 0; }
 }
 .pagefind-ui__result-link { color: var(--accent) !important; }
 
+/* We init PagefindUI with resetStyles:false, so its `all: unset` reset never
+   runs and the <input> keeps the UA's own colour and font instead of
+   inheriting the widget's. Harmless while the box was white; now that the
+   tokens above actually apply, black-on-#111 would make typed text
+   invisible. Both are therefore set here rather than left to inherit. */
+.docs-search .pagefind-ui__search-input {
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  /* The placeholder has to survive a 244px sidebar. Pagefind reserves
+     calc(70px * scale) on the right for a Clear button that does not exist
+     until you type, leaving 128.8px of content box for 130px of text -- the
+     sidebar search read "Search the do". Reclaim it while the field is
+     empty, and never let a longer string clip without saying so. */
+  padding-right: 14px;
+  text-overflow: ellipsis;
+}
+.docs-search .pagefind-ui__search-input:not(:placeholder-shown) {
+  padding-right: calc(70px * var(--pagefind-ui-scale));
+}
+/* Pagefind's own ::placeholder is opacity .2 -- legible as grey on white,
+   almost nothing on #111. */
+.docs-search .pagefind-ui__search-input::placeholder {
+  color: var(--text-faint); opacity: 1;
+}
+.docs-search .pagefind-ui__search-input:focus {
+  outline: none; border-color: var(--border-strong);
+}
+/* The clear button sits on top of the field; match it or it reads as a chip. */
+.docs-search .pagefind-ui__search-clear {
+  background: transparent; color: var(--text-dim);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.docs-search .pagefind-ui__search-clear:hover { color: var(--accent); }
+
 @media (max-width: 900px) {
   .docs-layout { grid-template-columns: 1fr; gap: 0; padding-top: 20px; }
   .docs-side {
     position: static; max-height: none; overflow: visible;
-    margin-bottom: 32px; padding-bottom: 24px;
+    margin-bottom: 28px; padding-bottom: 20px;
     border-bottom: 1px solid var(--border);
   }
-  .side-group { margin-bottom: 16px; }
+
+  /* Each category collapses to one tappable row, so the whole nav is
+     eight rows instead of 53 and the article starts on the first screen.
+     docs.js closes them at load; these rules are what makes a closed one
+     look like a control rather than a dead heading. */
+  .side-group { margin-bottom: 0; border-bottom: 1px solid var(--border); }
+  .side-group:last-of-type { border-bottom: none; }
+  .side-group > summary {
+    margin: 0; padding: 13px 30px 13px 2px;
+    position: relative; cursor: pointer;
+    font-size: 12px; color: var(--text-dim);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .side-group > summary:hover { color: var(--text); }
+  .side-cat { flex: 1; min-width: 0; }
+  /* Count and chevron: how much is hidden, and that it opens. */
+  .side-count {
+    display: inline-block;
+    font-size: 11px; font-weight: 600; letter-spacing: 0;
+    color: var(--text-faint); font-variant-numeric: tabular-nums;
+  }
+  .side-group > summary::after {
+    content: ''; position: absolute; right: 6px; top: 50%;
+    width: 7px; height: 7px; margin-top: -5px;
+    border-right: 1.5px solid var(--text-faint);
+    border-bottom: 1.5px solid var(--text-faint);
+    transform: rotate(45deg); transition: transform 0.15s ease;
+  }
+  .side-group[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
+  .side-group[open] > summary { color: var(--text); }
+  .side-group > ul { padding-bottom: 8px; }
+  /* Touch targets, not 5px-padded desktop rows. */
+  .side-group li a { padding: 9px 10px; }
+
+  .docs-search { margin-bottom: 8px; }
 }
 
 /* ═════ Plus ═════
@@ -546,3 +624,108 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
   background: var(--accent-dim); border-color: var(--accent); color: var(--accent-bright);
 }
 .surf-chip span { opacity: 0.55; margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+/* ───── Where it appears ─────
+   Derived from the registry hosts (build_manifest.SurfaceEntries): the icon
+   is the glyph rendered from the same font the live bar button draws, so
+   this block is the button's own picture rather than a description of it. */
+.placement { margin: 0 0 30px; }
+.placement h2 {
+  margin: 0 0 6px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+  scroll-margin-top: 84px;
+}
+.placement .hint-line {
+  margin: 0 0 12px; font-size: 13px; color: var(--text-faint); max-width: 66ch;
+}
+.place-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.place-list li {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 14px; font-size: 14px;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: 10px;
+}
+.place-icon {
+  width: 18px; height: 18px; flex: none;
+  /* The PNGs are white-on-transparent masters; tint them to the accent so
+     they read as part of the page rather than as pasted screenshots. */
+  filter: brightness(0) saturate(100%) invert(78%) sepia(58%)
+          saturate(748%) hue-rotate(332deg) brightness(101%) contrast(97%);
+}
+.place-icon--none {
+  border: 1px dashed var(--border-strong); border-radius: 4px; opacity: 0.5;
+}
+.place-what { font-weight: 600; color: var(--text); }
+.place-detail { color: var(--text-dim); font-size: 13px; }
+.place-detail:empty { display: none; }
+
+/* The same glyph, inline in the badge row at the top of the page. */
+.badge-icon {
+  width: 14px; height: 14px; vertical-align: -2px; margin-right: 5px;
+  opacity: 0.85;
+}
+
+/* An undocumented page says so. Same reasoning as .par-todo: a gap that
+   renders as absence is indistinguishable from a gap nobody has. */
+.page-todo {
+  margin: 0 0 26px; padding: 14px 18px;
+  border: 1px dashed var(--border-strong); border-radius: 10px;
+  background: var(--bg-1); color: var(--text-dim);
+  font-size: 14px; max-width: 68ch;
+}
+
+/* ───── Code highlighting ─────
+   Emitted at build time by highlight.js in tools/build-site.mjs, so these
+   classes are already in the HTML: nothing runs on load and a block stays
+   coloured with scripts off. The wrapper is still .docs-body pre, which
+   owns the background, padding and scrolling -- these rules only colour
+   tokens.
+
+   Tuned for the near-black --bg-deep the blocks sit on, and deliberately
+   NOT the site accent for keywords: amber is the link and badge colour
+   here, and a keyword wearing it reads as clickable. */
+.docs-body pre code .hljs-comment,
+.docs-body pre code .hljs-quote {
+  color: var(--text-faint); font-style: italic;
+}
+.docs-body pre code .hljs-keyword,
+.docs-body pre code .hljs-selector-tag,
+.docs-body pre code .hljs-meta-keyword {
+  color: #c792ea;
+}
+.docs-body pre code .hljs-string,
+.docs-body pre code .hljs-meta .hljs-string,
+.docs-body pre code .hljs-regexp {
+  color: var(--green);
+}
+.docs-body pre code .hljs-number,
+.docs-body pre code .hljs-literal {
+  color: #f78c6c;
+}
+.docs-body pre code .hljs-title,
+.docs-body pre code .hljs-title.function_,
+.docs-body pre code .hljs-built_in,
+.docs-body pre code .hljs-type {
+  color: #82aaff;
+}
+.docs-body pre code .hljs-attr,
+.docs-body pre code .hljs-property,
+.docs-body pre code .hljs-params {
+  color: var(--text);
+}
+/* `self` and `me` -- the TouchDesigner reader's anchor in every snippet. */
+.docs-body pre code .hljs-variable.language_,
+.docs-body pre code .hljs-symbol {
+  color: #f07178; font-style: italic;
+}
+/* Decorators: @FNSCommand.fns_command is load-bearing in these docs. */
+.docs-body pre code .hljs-meta {
+  color: #ffcb6b;
+}
+.docs-body pre code .hljs-subst { color: var(--text); }
+.docs-body pre code .hljs-deletion { color: #f07178; }
+.docs-body pre code .hljs-addition { color: var(--green); }
+.docs-body pre code .hljs-emphasis { font-style: italic; }
+.docs-body pre code .hljs-strong { font-weight: 700; }
+
+/* The two calls to action in a Plus tool's note. */
+.plus-note-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.plus-note-actions .btn { font-size: 13.5px; padding: 9px 16px; }

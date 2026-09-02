@@ -5,7 +5,7 @@
      KEEP THIS TRUE TO THE CODE. Every claim below is checkable:
        worker/src/index.js   what the gate requests from Patreon and what the
                              session record actually holds (no name, no email,
-                             no user id — a refresh token, tier ids, stamps)
+                             no user id: a refresh token, tier ids, stamps)
        docs/EntitlementLifecycle.md   the retention windows quoted here -->
 
 <h1>Privacy</h1>
@@ -54,7 +54,7 @@
 <p>
   It does <strong>not</strong> store your name, your email address, your Patreon profile, your
   pledge amount, or your payment details. The record is keyed by an opaque random token held by your
-  copy of TouchDesigner — not by an account we could look you up in.
+  copy of TouchDesigner, with no account we could look you up in.
 </p>
 
 <h3>Redeeming a licence key</h3>
@@ -73,7 +73,7 @@
 <h2>How long any of it lasts</h2>
 <ul class="plus-facts">
   <li><strong>Patreon sessions expire after 180 days</strong> without use, then are gone.</li>
-  <li><strong>Licence-key sessions do not expire</strong> — a key bought outright keeps working.</li>
+  <li><strong>Licence-key sessions do not expire.</strong> A key bought outright keeps working.</li>
   <li><strong>Signing out revokes immediately.</strong> Pulse <em>Sign Out</em> in the updater and the
     token is dead on the server; the revoked record itself is dropped after 30 days.</li>
 </ul>
@@ -96,6 +96,6 @@
 
 <h2>Changes</h2>
 <p>
-  If what the gate stores ever changes, this page changes in the same commit as the code — it is kept
+  If what the gate stores ever changes, this page changes in the same commit as the code; it is kept
   in the repository beside it, so it cannot quietly fall out of date.
 </p>

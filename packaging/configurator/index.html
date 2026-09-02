@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FNSTools — build your install</title>
+<title>FNSTools: build your install</title>
 <style>
   /* The FNSTools family look. This page is served three ways -- as /get/ on
      the site, by the bootstrap's Web Server DAT inside TouchDesigner, and as
@@ -412,7 +412,7 @@ body.app .dlg h3 { font-size: 16px; }
     <h1>Build your install.</h1>
     <p class="cfg-sub">
       Pick the tools you actually want. Nothing else is downloaded, and nothing else
-      ends up in your project — then take one line to paste into the TouchDesigner
+      ends up in your project. Then take one line to paste into the TouchDesigner
       Textport, or a <code>selection.json</code> for the installer.
     </p>
     <p class="cfg-meta" id="sub">loading…</p>
@@ -478,7 +478,7 @@ body.app .dlg h3 { font-size: 16px; }
   <span class="eyebrow">GUIDED SETUP</span>
   <h3 id="welcometitle">Welcome to FNSTools</h3>
   <p class="dlg-hint">
-    You adjust the list next — nothing is downloaded or installed until
+    You adjust the list next; nothing is downloaded or installed until
     you confirm the plan.
   </p>
   <div class="presets" id="presets">
@@ -517,7 +517,7 @@ function heroFirstRun() {
   document.querySelector('.cfg-hero h1').textContent = 'Welcome to FNSTools.';
   document.querySelector('.cfg-sub').textContent =
     'This container is now your toolkit root. Pick what goes in it, review ' +
-    'the plan, install — every download is verified, and you can change the ' +
+    'the plan, install. Every download is verified, and you can change the ' +
     'selection any time from the root’s Pick Tools.';
 }
 
@@ -645,7 +645,7 @@ function fnsBoot() {
     ' They carry the registries, settings persistence and shared surfaces that ' +
     'every tool plugs into, so tools never depend on each other and you can pick ' +
     'any subset below without breaking anything. Installing only decides what is ' +
-    'in the project — after installation your saved tool settings (the config) ' +
+    'in the project. After installation your saved tool settings (the config) ' +
     'take precedence: they re-apply over installs and updates, and a removed ' +
     'tool keeps its settings for the next install. '));
   note.appendChild(docsLink(FNS_DOCS + '/docs/fns-configregistry/',
@@ -720,6 +720,16 @@ function fnsBoot() {
       a.addEventListener('click', function (e) { e.stopPropagation(); });
       name.appendChild(a);
     }
+    // Curated link-outs beside the docs link (catalog author / homepage /
+    // changelog_url -- docs/ForeignPackages.md §1b). Same stopPropagation
+    // reason as the docs link.
+    [['homepage', 'site ↗'], ['changelog_url', 'changelog ↗']].forEach(function (k) {
+      if (p[k[0]]) {
+        var l = docsLink(p[k[0]], k[1], 'help');
+        l.addEventListener('click', function (e) { e.stopPropagation(); });
+        name.appendChild(l);
+      }
+    });
     body.appendChild(name);
 
     if (p.description) {
@@ -727,9 +737,29 @@ function fnsBoot() {
       d.className = 'desc'; d.textContent = p.description;
       body.appendChild(d);
     }
+    // the byline: who made it, when the manifest says so (absent means
+    // Function Store, which the page header already says)
+    if (p.author && p.author.name) {
+      var by = document.createElement('div');
+      by.className = 'desc byline';
+      by.appendChild(document.createTextNode('by '));
+      if (p.author.url) {
+        var al = docsLink(p.author.url, p.author.name, 'help');
+        al.addEventListener('click', function (e) { e.stopPropagation(); });
+        by.appendChild(al);
+      } else {
+        by.appendChild(document.createTextNode(p.author.name));
+      }
+      body.appendChild(by);
+    }
 
     var chips = document.createElement('div');
     chips.className = 'chips';
+    // a foreign package with its own updater: the picker installs it once,
+    // the tool keeps itself current from then on
+    if (p.updates === 'self') {
+      chips.appendChild(chip('updates itself', 'hint'));
+    }
     if (isPlus(p)) {
       // Without an account the chip says only what the package IS, which is
       // all the public page can honestly claim.
@@ -989,13 +1019,13 @@ function fnsBoot() {
       (plusReady
         ? ((need.size || removals) ? ' · ' : '') +
           plusReady + ' Plus tool' + (plusReady === 1 ? '' : 's') +
-          ' unlocked — Review install finishes it' : '') +
+          ' unlocked; Review install finishes it' : '') +
       // Said here rather than by refusing the tick: entitlement is the
       // server's answer, and this page has not asked it.
       (plusLocked
         ? ((need.size || removals || plusReady) ? ' · ' : '') +
           plusLocked + ' Plus tool' + (plusLocked === 1 ? '' : 's') +
-          ' — installs once unlocked' : '') +
+          ', installs once unlocked' : '') +
       (paneSel
         ? ((need.size || removals || plusReady || plusLocked) ? ' · ' : '') +
           paneSel + ' component' + (paneSel === 1 ? '' : 's') +
@@ -1088,11 +1118,11 @@ function fnsBoot() {
       : 'Save this as selection.json next to the installer COMP, or paste ' +
         'the list into the toolkit’s installer.',
     script: 'Paste into a TouchDesigner Textport (Dialogs ▸ Textport ' +
-      'and DATs) — macOS or Windows. TD pauses briefly while it ' +
+      'and DATs), macOS or Windows. TD pauses briefly while it ' +
       'downloads; everything is sha256-verified against the release ' +
       'manifest before anything is installed.',
     done: 'Your tools are live in the project. Settings, install & remove ' +
-      'and updates all live in the FNS console — open it here, or any time ' +
+      'and updates all live in the FNS console. Open it here, or any time ' +
       'from the toolkit root’s parameters (Open Settings / Pick Tools). ' +
       'This window can be closed.'
   };
@@ -1168,7 +1198,7 @@ function fnsBoot() {
     // than offering an empty one
     pre.hidden = !starter.length;
     document.getElementById('pre-starter-desc').textContent =
-      starter.length + ' tools — the everyday set: ' +
+      starter.length + ' tools, the everyday set: ' +
       starter.slice(0, 4).join(', ') + (starter.length > 4 ? '…' : '');
     document.getElementById('pre-all-desc').textContent =
       'All ' + tools.length + ' tools. Remove any later from Pick Tools.';
@@ -1212,7 +1242,7 @@ function fnsBoot() {
       btn.appendChild(nb);
       var ds = document.createElement('span');
       ds.textContent = bnd.packages.length
-        + (bnd.packages.length === 1 ? ' tool — ' : ' tools — ')
+        + (bnd.packages.length === 1 ? ' tool: ' : ' tools: ')
         + (bnd.blurb || bnd.packages.slice(0, 4).join(', ')
            + (bnd.packages.length > 4 ? '…' : ''));
       btn.appendChild(ds);
@@ -1328,7 +1358,7 @@ function fnsBoot() {
       "r_ = run(\"i = op('%s/FNS_Installer'); i.par.Selectionfile = '%s'; i.par.Install.pulse()\" % (root.path, sp), delayFrames=90)",
       "_ = PLUS and run(\"op('%s/FNS_Installer').par.Configure.pulse()\" % root.path, delayFrames=150)",
       "print('FNSTools', m['release'], '--', len(names), 'packages verified; installing into', root.path)",
-      "_ = PLUS and print('Needs a supporter account:', ', '.join(PLUS) + '.', 'The picker will open by itself -- your picks are waiting there; click Sign in.')"
+      "_ = PLUS and print('Needs a supporter account:', ', '.join(PLUS) + '.', 'The picker will open by itself; your picks are waiting there. Click Sign in.')"
     ].join('; ');
   }
 
@@ -1464,7 +1494,7 @@ function fnsBoot() {
       el.textContent = '';
       el.appendChild(b);
       el.appendChild(document.createTextNode(
-        ' — ' + n + ' package' + (n === 1 ? '' : 's') + ' unlocked'));
+        ': ' + n + ' package' + (n === 1 ? '' : 's') + ' unlocked'));
       if (account.checked_at) {
         // an entitlement is only as fresh as its last check, and the
         // download is the real authority -- so say HOW OLD, rather than
@@ -1549,7 +1579,7 @@ function fnsBoot() {
         // it shuts itself down after an install, and a browser panel can
         // outlive it by days showing a page whose every click would
         // otherwise land in the void. Name the remedy, not the error.
-        showDialog('Could not reach the picker’s server — it may have '
+        showDialog('Could not reach the picker’s server. It may have '
           + 'closed since this page loaded.\nPress Pick Tools on the '
           + 'FNSTools root to reopen it.\n\n(' + e + ')', false);
       });
@@ -1584,7 +1614,7 @@ function fnsBoot() {
     }
     if (res.text) showDialog(res.text, false);
     if (++installPolls > 400) {
-      showDialog('Download did not finish -- check the UPDATER status in TouchDesigner.', false);
+      showDialog('Download did not finish. Check the UPDATER status in TouchDesigner.', false);
       return;
     }
     setTimeout(function () {
@@ -1609,7 +1639,7 @@ function fnsBoot() {
           showDialog('Not downloaded:' + gatedNote, false);
         } else {
           showDialog('Download failed: ' +
-            ((st.failed && st.failed.join('; ')) || 'unknown -- see UPDATER status') +
+            ((st.failed && st.failed.join('; ')) || 'unknown; see UPDATER status') +
             gatedNote +
             '\nClose and try Install again to retry.', false);
         }
@@ -1645,7 +1675,7 @@ function fnsBoot() {
       setStep(3);
       document.getElementById('dlgtitle').textContent = 'Install plan';
       showDialog('Your Plus pick' + (wantedStill.length === 1 ? ' is' : 's are')
-        + ' unlocked — planning the install…', false);
+        + ' unlocked. Planning the install…', false);
       post('/selection', JSON.stringify(selection(), null, 1) + '\n',
         function (res) {
           if (!res.ok) { showDialog(res.text, false); return; }
@@ -1737,7 +1767,7 @@ function fnsBoot() {
     pb.textContent = 'Plus';
     rail.appendChild(pb);
     rail.appendChild(document.createTextNode(
-      ' — the free tools are the full toolkit; '
+      ': the free tools are the full toolkit; '
       + plus.length + ' extra' + (plus.length === 1 ? '' : 's') + ' below '
       + (plus.length === 1 ? 'is' : 'are') + ' a thank-you for supporters. '));
     rail.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));

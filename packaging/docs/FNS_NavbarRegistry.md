@@ -1,6 +1,6 @@
 ---
 package: FNS_NavbarRegistry
-summary: 'The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets.'
+summary: 'The pane-bar surface registry. The raw master, promoted to /sys; clone it to add your own pane-bar widgets.'
 features:
   - name: Navbar Registry
     anchor: navbar-registry
@@ -14,12 +14,12 @@ The raw registry behind the [FNS Navbar](/docs/fns-navbar/) mods: which widgets
 appear in TouchDesigner's pane bars, their order, which side they sit on, and
 whether they are shown.
 
-A pane bar is not one object -- TD gives every pane its own, plus a default used
+There are several pane bars: TD gives every pane its own, plus a default used
 for new ones. The registry handles that for you: registered entries are stamped
 into the default pane bar and into each live pane bar, so a widget you add shows
 up in every pane and in panes you open later.
 
-It ships as its own core package -- always installed, never optional --
+It ships as its own core package, always installed,
 promoted to `/sys` with the global shortcut `op.FNS_NAVBARREGISTRY`.
 
 As a user you interact with the **Navbar** tab of [FNS_Hub](/docs/fns-hub/)

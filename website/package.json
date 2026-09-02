@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "gray-matter": "^4.0.3",
+    "highlight.js": "^11.12.0",
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.2.0",
     "pagefind": "^1.1.1"

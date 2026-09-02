@@ -12,7 +12,7 @@ video: 'https://www.youtube.com/watch?v=j43gZ0MB2xo'
 [YouTube breakdown](https://www.youtube.com/watch?v=j43gZ0MB2xo)
 
 Define `Abbreviations` in the first column that when used in a parameter expression will expand to the string defined in the `Expands` column.
-Forget `absTime.seconds`, use `#AT`! With `Replace inline` enabled on the component (off by default -- without it an abbreviation only expands when it is the *entire* expression) the abbreviations work in-line too, meaning you can type `#AT * 0.2` or even combine them!
+Forget `absTime.seconds`, use `#AT`! With `Replace inline` enabled on the component (off by default; without it an abbreviation only expands when it is the *entire* expression) the abbreviations work in-line too, meaning you can type `#AT * 0.2` or even combine them!
 
 > Most of the behaviors below live behind their own toggle on the component, and only `CustomPar Promote Enable` is on by default: `#@op Wrap Enable` gates `#@`, `#! Parent Shortcut Enable` gates `#!`/`#!!`.
 

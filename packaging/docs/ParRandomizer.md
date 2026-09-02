@@ -1,6 +1,6 @@
 ---
 package: ParRandomizer
-summary: 'Hotkeys also available:'
+summary: Randomize an operator's parameters by click, drag-drop or hotkey.
 features:
   - name: ParRandomizer
     anchor: parrandomizer

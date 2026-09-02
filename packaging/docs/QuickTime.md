@@ -1,6 +1,6 @@
 ---
 package: QuickTime
-summary: 'Left click the icon to access some common timing references:'
+summary: 'A toolbar clock: resettable, scalable absTime and frame references to drag into your network.'
 features:
   - name: QuickTime
     anchor: quicktime
@@ -9,10 +9,17 @@ features:
 
 ## QuickTime
 
-Left click the icon to access some common timing references:
-- **absTime**: Similar to `absTime.seconds`, except resettable, and scalable with custom parameters acessible by right-clicking the icon.
-- **absFrame**: Similar to `absTime.frame`, except resettable, and scalable with custom parameters acessible by right-clicking the icon.
-- **frame**: Current frame.
-- **progress**: Fraction of `current frame / end frame` useful for lookups and perfect loops.
+Left-click the icon for a popup of common timing references, ready to drag
+onto a parameter:
 
-Middle-clicking the toolbar icon resets internal timers.
+- **absTime**: like `absTime.seconds`, except it can be reset and scaled.
+- **absFrame**: like `absTime.frame`, likewise resettable and scalable.
+- **frame**: the current frame.
+- **progress**: the fraction `current frame / end frame`, useful for lookups
+  and perfect loops.
+
+**Multiplier** scales absTime and absFrame: 1 is real time, 0.5 runs them at
+half speed. Right-click the icon to reach it.
+
+**Middle-click** the icon to set the internal timers back to zero, the same
+thing as pulsing **Reset** on the component.

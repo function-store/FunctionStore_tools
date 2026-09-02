@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" href="/favicon.png" type="image/png" />
 <link rel="apple-touch-icon" href="/favicon.png" />
-<title>FNSTools — TouchDesigner workflow toolkit</title>
-<meta name="description" content="FNSTools is a free, open-source toolkit of TouchDesigner workflow tools: operator templates, parameter promotion, MIDI/OSC mapping, network shortcuts and extension helpers. Pick only the tools you want — the installer downloads just those." />
-<meta property="og:title" content="FNSTools — TouchDesigner workflow toolkit" />
-<meta property="og:description" content="Operator templates, parameter promotion, MIDI/OSC mapping, network shortcuts and extension helpers for TouchDesigner. Free and open source — pick only the tools you want." />
+<title>FNSTools - Enhance your TouchDesigner workflow</title>
+<meta name="description" content="FNSTools is a free, open-source toolkit of TouchDesigner workflow tools: operator templates, parameter promotion, MIDI/OSC mapping, network shortcuts and extension helpers. Pick only the tools you want; the installer downloads just those." />
+<meta property="og:title" content="FNSTools - Enhance your TouchDesigner workflow" />
+<meta property="og:description" content="Operator templates, parameter promotion, MIDI/OSC mapping, network shortcuts and extension helpers for TouchDesigner. Free and open source. Pick only the tools you want." />
 <meta property="og:type" content="website" />
 <meta property="og:image" content="https://functionstore.tools/og-image.png" />
 <link rel="canonical" href="https://functionstore.tools/" />
@@ -652,10 +652,10 @@
 <section class="hero">
   <div class="wrap hero-inner">
     <span class="eyebrow">FREE · OPEN SOURCE · MIT</span>
-    <h1 class="hero-title">TouchDesigner,<br />minus the busywork.</h1>
+    <h1 class="hero-title">FNSTools<br />Enhance your TouchDesigner workflow</h1>
     <p class="hero-sub">
       Templates, parameter promotion by drag and drop, MIDI and OSC mapping, network and
-      navigation shortcuts — built to feel like they shipped with TD. Take the whole toolkit,
+      navigation shortcuts, built to feel like they shipped with TD. Take the whole toolkit,
       or pick the three tools you actually want.
     </p>
     <div class="hero-cta">
@@ -669,7 +669,7 @@
     <ul class="hero-meta">
       <li><span class="dot" aria-hidden="true"></span> TouchDesigner 2025.33070+</li>
       <li>Windows &amp; macOS</li>
-      <li><span class="js-fns-count">53</span> tools, pick what you want</li>
+      <li><span class="js-fns-count">57</span> tools, pick what you want</li>
       <li>MIT licensed</li>
     </ul>
 
@@ -680,7 +680,7 @@
       <p class="hero-video__caption">
         A full walkthrough with the TouchDesigner team on
         <a href="https://www.youtube.com/watch?v=hnpC5uh-GTs" target="_blank" rel="noopener">InSession</a>.
-        Recorded on an earlier release — the tools have grown since, but the ideas are the same.
+        Recorded on an earlier release. The tools have grown since, and the ideas are the same.
       </p>
     </div>
   </div>
@@ -703,7 +703,7 @@
         <h3>Drop one <code>.tox</code></h3>
         <p>
           Drag <code>FNSTools.tox</code> into the root of a project. It is about 150 KB and
-          arrives empty — the container you drop <em>is</em> where your tools will live.
+          arrives empty: the container you drop <em>is</em> where your tools will live.
         </p>
         <a class="btn btn-primary js-fns-download" href="https://storage.functionstore.tools/fnstools/latest/FNSTools.tox" download>Download</a>
         <details class="fold">
@@ -732,7 +732,7 @@
               and verifies every file against the release manifest with sha256 before anything is
               installed.</p>
             <p>Nothing else is written. You can also export a <code>selection.json</code> and hand
-              that to the installer instead of clicking through the picker.</p>
+              that to the installer and skip the picker.</p>
             <p>On the very first run it fetches the catalogue before it can show you anything, and
               says so while it does.</p>
           </div>
@@ -751,7 +751,7 @@
           <summary>Where your settings live</summary>
           <div class="fold-body">
             <p>Preferences do not live in the project file. They go into one aggregated JSON in
-              your user palette, so the way you set a tool up follows you into the next project —
+              your user palette, so the way you set a tool up follows you into the next project,
               and survives the next update.</p>
             <p>MIDI and OSC maps are the deliberate exception: they save into the project folder,
               so they travel with the show.</p>
@@ -777,7 +777,7 @@
         <summary>On macOS</summary>
         <div class="fold-body">
           <p>Everything works except the Olib Browser and clipboard image paste. Where the docs
-            say <code>Alt</code>, press <code>Cmd</code> — exceptions are called out per tool.</p>
+            say <code>Alt</code>, press <code>Cmd</code>. Exceptions are called out per tool.</p>
         </div>
       </details>
       <details class="fold">
@@ -802,8 +802,8 @@
         <span class="cfg-band__eyebrow">Configurator</span>
         <h2>Choose before you install anything</h2>
         <p>
-          Browse all <span class="js-fns-count">53</span> packages by category, read what each one
-          does, and tick the ones you want. You get a single line to paste into the Textport — it
+          Browse all <span class="js-fns-count">57</span> packages by category, read what each one
+          does, and tick the ones you want. You get a single line to paste into the Textport. It
           installs that selection and nothing else.
         </p>
         <div class="cfg-band__actions">
@@ -813,10 +813,10 @@
         <details class="fold">
           <summary>Why there seem to be two pickers</summary>
           <div class="fold-body">
-            <p>There is one. The same page is served from inside TouchDesigner by the installer —
-              nothing leaves your machine there — and hosted here so you can look around before
+            <p>There is one. The same page is served from inside TouchDesigner by the installer, where
+              nothing leaves your machine, and hosted here so you can look around before
               downloading anything.</p>
-            <p>The web copy hands you a paste line instead of installing directly. That line
+            <p>The web copy hands you a paste line, and the installing happens in TouchDesigner. That line
               re-resolves the current release at paste time, so a copied line stays valid.</p>
           </div>
         </details>
@@ -892,68 +892,12 @@
     <div class="section-head">
       <h2>What's in the toolkit</h2>
       <p>
-        <span class="js-fns-count">53</span> packages, each installing on its own. Core goes in as
+        <span class="js-fns-count">57</span> packages, each installing on its own. Core goes in as
         a unit; everything else is optional. Open a category to see what is inside.
       </p>
     </div>
     <!-- TOOLS:START -->
       <details class="cat" open>
-        <summary>
-          <span class="cat-glyph" aria-hidden="true">◈</span>
-          <span>
-            <span class="cat-name">Core</span>
-            <span class="cat-pitch">The registries every other tool plugs into. Installed as a unit.</span>
-          </span>
-          <span class="cat-count">11 tools</span>
-        </summary>
-        <div class="cat-list">
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-configregistry/">FNS_ConfigRegistry</a></strong><span>Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-console/">FNS_Console</a></strong><span>The toolkit's web front, served from inside your project: every tool's settings on one page, the install picker, and any tab a tool contributes. The raw master, promoted to /sys.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-hub/">FNS_Hub</a></strong><span>The FNS button in TouchDesigner's main-menu bar and the one-stop manager window behind it: the Toolbar, Navbar and Main Menu configurators as tabs, the console, and any tab a tool contributes. Drop a panel COMP on the button to register it into a surface.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-hubregistry/">FNS_HubRegistry</a></strong><span>The registry behind FNS_Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-mainmenuregistry/">FNS_MainMenuRegistry</a></strong><span>TD main-menu surface registry, including project-name display. The raw master, promoted to /sys.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-navbarregistry/">FNS_NavbarRegistry</a></strong><span>The pane-bar surface registry. The raw master, promoted to /sys -- clone it to add your own pane-bar widgets.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-opmenuregistry/">FNS_OpMenuRegistry</a></strong><span>OP Create dialog surface registry: search words, row decorations, right-click items, filter stages. The raw master, promoted to /sys.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-paletteregistry/">FNS_PaletteRegistry</a></strong><span>Contribute tabs to TouchDesigner's Palette Browser: a tool publishes a native panel COMP and it appears beside the stock Palette tab, sized to the slot and notified on every tab change.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-panetyperegistry/">FNS_PaneTypeRegistry</a></strong><span>Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-timelineregistry/">FNS_TimelineRegistry</a></strong><span>Publish a widget into TouchDesigner's timeline bar: transport controls beside the stock ones, an entry on the time-properties block, or a full-width strip in the frame-ruler band that gets its own row.</span></div>
-          </div>
-          <div class="feat">
-            <div class="feat-icon" aria-hidden="true">◈</div>
-            <div class="feat-text"><strong><a href="/docs/fns-toolbarregistry/">FNS_ToolbarRegistry</a></strong><span>The toolbar surface registry and mirror rail. The raw master, promoted to /sys -- clone it to put your own tools on the bar.</span></div>
-          </div>
-        </div>
-      </details>
-      <details class="cat">
         <summary>
           <span class="cat-glyph" aria-hidden="true">▦</span>
           <span>
@@ -990,7 +934,7 @@
           <span class="cat-glyph" aria-hidden="true">◎</span>
           <span>
             <span class="cat-name">Parameters</span>
-            <span class="cat-pitch">Promote, bind, randomize and reset — by drag and drop.</span>
+            <span class="cat-pitch">Promote, bind, randomize and reset, by drag and drop.</span>
           </span>
           <span class="cat-count">4 tools</span>
         </summary>
@@ -1020,7 +964,7 @@
             <span class="cat-name">Network</span>
             <span class="cat-pitch">Build, swap, collapse and navigate without touching a menu.</span>
           </span>
-          <span class="cat-count">9 tools</span>
+          <span class="cat-count">10 tools · 1 Plus</span>
         </summary>
         <div class="cat-list">
           <div class="feat">
@@ -1030,6 +974,10 @@
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⇄</div>
             <div class="feat-text"><strong><a href="/docs/autocombine/">AutoCombine</a></strong><span>Hold Alt while placing a generator TOP to have it come in pre-set to composite over its input.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⇄</div>
+            <div class="feat-text"><strong><a href="/docs/fns-previewpanel/">FNS_PreviewPanel</a><span class="plus-mark">Plus</span></strong><span>A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⇄</div>
@@ -1073,7 +1021,7 @@
         <div class="cat-list">
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">▶</div>
-            <div class="feat-text"><strong><a href="/docs/autores/">AutoRes</a></strong><span>Project-wide resolution reference that operators can follow instead of hardcoding pixel sizes.</span></div>
+            <div class="feat-text"><strong><a href="/docs/autores/">AutoRes</a></strong><span>Project-wide resolution reference that operators can follow, with no hardcoded pixel sizes.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">▶</div>
@@ -1108,7 +1056,7 @@
             <span class="cat-name">Control</span>
             <span class="cat-pitch">Hardware in, parameters out.</span>
           </span>
-          <span class="cat-count">4 tools · 1 Plus</span>
+          <span class="cat-count">5 tools · 1 Plus</span>
         </summary>
         <div class="cat-list">
           <div class="feat">
@@ -1126,6 +1074,10 @@
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⊙</div>
             <div class="feat-text"><strong><a href="/docs/setsmoothness/">SetSmoothness</a></strong><span>Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/tdxmap/">TDXMap</a></strong><span>MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode, easing curves, slot and modify modes.</span></div>
           </div>
         </div>
       </details>
@@ -1185,11 +1137,11 @@
         <div class="cat-list">
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⌨</div>
-            <div class="feat-text"><strong><a href="/docs/fns-commandkit/">FNS_CommandKit</a></strong><span>Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette — decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors.</span></div>
+            <div class="feat-text"><strong><a href="/docs/fns-commandkit/">FNS_CommandKit</a></strong><span>Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette: decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⌨</div>
-            <div class="feat-text"><strong><a href="/docs/fns-confighost/">FNS_ConfigHost</a></strong><span>A standalone FNS_ConfigRegistry host. Drop it into a component to give it roaming settings — its parameters save and reload with your config, with per-parameter and per-page exclusions.</span></div>
+            <div class="feat-text"><strong><a href="/docs/fns-confighost/">FNS_ConfigHost</a></strong><span>A standalone FNS_ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⌨</div>
@@ -1205,9 +1157,73 @@
           </div>
         </div>
       </details>
+      <details class="cat">
+        <summary>
+          <span class="cat-glyph" aria-hidden="true">◈</span>
+          <span>
+            <span class="cat-name">Core</span>
+            <span class="cat-pitch">The registries every other tool plugs into. Installed as a unit.</span>
+          </span>
+          <span class="cat-count">13 tools</span>
+        </summary>
+        <div class="cat-list">
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-commandpalette/">FNS_CommandPalette</a></strong><span>A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in FNS_Hub.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-commandregistry/">FNS_CommandRegistry</a></strong><span>Collects the commands your tools declare and serves them to whatever can run them: the launcher palette today, an in-TouchDesigner palette next. Discovery is by tag, so a tool installed before any consumer still appears the moment one arrives.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-configregistry/">FNS_ConfigRegistry</a></strong><span>Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-console/">FNS_Console</a></strong><span>The toolkit's web front, served from inside your project: every tool's settings on one page, the install picker, and any tab a tool contributes. The raw master, promoted to /sys.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-hub/">FNS_Hub</a></strong><span>The FNS button in TouchDesigner's main-menu bar and the one-stop manager window behind it: the Toolbar, Navbar and Main Menu configurators as tabs, the console, and any tab a tool contributes. Drop a panel COMP on the button to register it into a surface.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-hubregistry/">FNS_HubRegistry</a></strong><span>The registry behind FNS_Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-mainmenuregistry/">FNS_MainMenuRegistry</a></strong><span>TD main-menu surface registry, including project-name display. The raw master, promoted to /sys.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-navbarregistry/">FNS_NavbarRegistry</a></strong><span>The pane-bar surface registry. The raw master, promoted to /sys; clone it to add your own pane-bar widgets.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-opmenuregistry/">FNS_OpMenuRegistry</a></strong><span>OP Create dialog surface registry: search words, row decorations, right-click items, filter stages. The raw master, promoted to /sys.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-paletteregistry/">FNS_PaletteRegistry</a></strong><span>Contribute tabs to TouchDesigner's Palette Browser: a tool publishes a native panel COMP and it appears beside the stock Palette tab, sized to the slot and notified on every tab change.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-panetyperegistry/">FNS_PaneTypeRegistry</a></strong><span>Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-timelineregistry/">FNS_TimelineRegistry</a></strong><span>Publish a widget into TouchDesigner's timeline bar: transport controls beside the stock ones, an entry on the time-properties block, or a full-width strip in the frame-ruler band that gets its own row.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◈</div>
+            <div class="feat-text"><strong><a href="/docs/fns-toolbarregistry/">FNS_ToolbarRegistry</a></strong><span>The toolbar surface registry and mirror rail. The raw master, promoted to /sys; clone it to put your own tools on the bar.</span></div>
+          </div>
+        </div>
+      </details>
       <!-- TOOLS:END -->
     <p class="hero-cta-note" style="text-align:left; margin-top: 22px;">
-      Every package has its own page, and the docs are searchable —
+      Every package has its own page, and the docs are searchable,
       <a href="/docs/">open the documentation →</a>
     </p>
   </div>
@@ -1220,7 +1236,9 @@
       <h2>Free toolkit. A few tools ask for support.</h2>
       <p>
         Nearly everything here is MIT and stays that way. A small number of tools unlock when you
-        support the work — through the same installer, the same updater and the same release.
+        support the work, through the same installer, the same updater and the same release.
+        Every Plus tool is listed and documented on this site, locked or unlocked, so you can
+        see exactly what a membership unlocks before you join.
       </p>
     </div>
     <div class="tiers">
@@ -1231,7 +1249,7 @@
         <ul>
           <li><strong>No account, no sign-in.</strong> Nothing phones home, and there is no telemetry.</li>
           <li><strong>Source on GitHub.</strong> Read it, fork it, use it in commercial work.</li>
-          <li><strong>Every machine you own</strong> — and every machine you set up for someone else.</li>
+          <li><strong>Every machine you own</strong>, and every machine you set up for someone else.</li>
           <li><strong>Free stays free.</strong> A tool that is free today does not become paid later.</li>
         </ul>
         <div class="tier-actions">
@@ -1244,14 +1262,14 @@
         <h3>Plus tools</h3>
         <p>Unlocked inside TouchDesigner by connecting Patreon or redeeming a licence key.</p>
         <ul>
-          <li><strong>Already in the picker</strong>, marked Plus — visible and documented, locked until you unlock them.</li>
-          <li><strong>Sign in once.</strong> The credential goes into the Windows Credential Manager or the macOS Keychain — never into your project file, and never into a <code>.tox</code> you might pass on.</li>
+          <li><strong>Already in the picker</strong>, marked Plus: visible and documented, locked until you unlock them.</li>
+          <li><strong>Sign in once.</strong> The credential goes into the Windows Credential Manager or the macOS Keychain, never into your project file or a <code>.tox</code> you might pass on.</li>
           <li><strong>Same rails.</strong> One release, one manifest, the same sha256 verification and the same updater as everything else.</li>
           <li><strong>Membership or licence key.</strong> Patreon keeps them current for as long as you are a member; a licence key buys one tool outright.</li>
         </ul>
         <div class="tier-actions">
-          <a class="btn btn-primary" href="/plus/">How Plus works →</a>
-          <a class="btn btn-secondary" href="https://patreon.com/function_store" target="_blank" rel="noopener">See the tiers</a>
+          <a class="btn btn-primary" href="https://patreon.com/function_store" target="_blank" rel="noopener">Join on Patreon →</a>
+          <a class="btn btn-secondary" href="/plus/">How Plus works →</a>
         </div>
       </div>
     </div>
@@ -1265,7 +1283,7 @@
   <div class="wrap">
     <div class="section-head">
       <h2>More from Function Store</h2>
-      <p>The toolkit is not the only thing here. Both of these work the same way: a free core, more with support.</p>
+      <p>Two more Function Store tools live alongside the toolkit. Both work the same way: a free core, more with support.</p>
     </div>
     <!-- FAMILY:START -->
     <div class="prod-grid">
@@ -1294,7 +1312,7 @@
         <span class="docs-callout__eyebrow">Documentation</span>
         <h2>Every tool documented on its own page</h2>
         <p>
-          What you read matches exactly what you installed — no hunting through one long page for
+          What you read matches exactly what you installed, with no hunting through one long page for
           the three tools you picked. Search covers every page.
         </p>
         <ul class="docs-callout__links">
@@ -1320,7 +1338,7 @@
         <h2>Free forever. Patreon if it earns its keep.</h2>
         <p>
           The toolkit is MIT and free for everyone, including commercial work. If it saves you
-          time, a membership keeps it moving — and unlocks the Plus tools while you are there.
+          time, a membership keeps it moving, and unlocks the Plus tools while you are there.
           The Discord is where bugs get sorted fastest.
         </p>
       </div>
@@ -1339,7 +1357,7 @@
     <div class="alt-tools">
       <div class="alt-tools-head">
         <h3>Built with</h3>
-        <p>Plenty of this toolkit is not mine. These people contributed tools, mods and the habits I picked up from reading their components — please support them.</p>
+        <p>Much of this toolkit came from other people. They contributed tools, mods and the habits I picked up from reading their components. Please support them.</p>
       </div>
       <div class="alt-tools-grid">
         <div class="alt-tool">
@@ -1354,7 +1372,7 @@
         </div>
         <div class="alt-tool">
           <strong>IO filters, and TouchDesigner</strong>
-          <p>The OP Create dialog filters — and the software all of this sits on.</p>
+          <p>The OP Create dialog filters, and the software all of this sits on.</p>
           <span class="alt-tool-by">by <a href="https://derivative.ca" target="_blank" rel="noopener">Greg Hermanovic</a></span>
         </div>
         <div class="alt-tool">

@@ -18,7 +18,7 @@ sign into. Each machine mints its own access token the first time it
 serves, and the link carries it.
 
 The token is deliberately **not** a parameter. Parameters travel inside
-the `.toe`, and a token that travels is a token you gave away — so it
+the `.toe`, and a token that travels is a token you gave away, so it
 lives beside the toolkit's config on the machine that minted it. **Regenerate
 Token** invalidates every link that was handed out before.
 
@@ -33,5 +33,4 @@ count you set and optional normalising and Y-flip.
 
 It serves nothing until you turn it on, and when it does it binds to
 loopback until you opt into LAN. That is deliberate: a project that
-quietly opened a port on every network it ever joined would be a liability
-rather than a feature.
+quietly opened a port on every network it ever joined would be a liability.
