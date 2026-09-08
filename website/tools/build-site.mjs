@@ -351,6 +351,53 @@ for (const p of pages) {
   anchorsOf.set(p.slug, ids);
 }
 
+// ------------------------------------------------------------- guides
+//
+// Long-form pages about the toolkit as a whole, as opposed to one package:
+// how it is built, how an update decides, how the launcher and the gate
+// fit together. Authored as markdown in website/content/guides/<slug>.md
+// with a two-key frontmatter (title, summary), rendered through the same
+// markdown pipeline and the same docs chrome as a package page, and
+// published under /docs/guides/<slug>/ so Pagefind indexes them with the
+// rest of the docs. They join the link check in both directions: a guide's
+// links to package pages are verified, and a package page may link to a
+// guide. The filename is the slug, and the slug is the URL.
+const GUIDES_SRC = path.join(WEB, 'content', 'guides');
+const guides = [];
+if (fs.existsSync(GUIDES_SRC)) {
+  for (const file of fs.readdirSync(GUIDES_SRC).filter((f) => f.endsWith('.md')).sort()) {
+    const slug = file.replace(/\.md$/, '');
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      fail(`website/content/guides/${file}: the filename is the URL slug, so it must be lowercase letters, digits and hyphens`);
+      continue;
+    }
+    const raw = fs.readFileSync(path.join(GUIDES_SRC, file), 'utf8');
+    const { data, content } = matter(raw);
+    if (!data.title || !data.summary) {
+      fail(`website/content/guides/${file}: frontmatter needs both \`title\` and \`summary\``);
+      continue;
+    }
+    // Where the guide sits in the docs. `guides` (the default) is the short,
+    // instructional kind and leads the sidebar and the index; `reference`
+    // is the long-form kind (how the toolkit is built) and closes both,
+    // beside the common-parameters page, so a reader meets the
+    // instructions first and the architecture only if they go looking.
+    const section = data.section ? String(data.section) : 'guides';
+    if (!['guides', 'reference'].includes(section)) {
+      fail(`website/content/guides/${file}: frontmatter \`section\` must be "guides" or "reference"`);
+      continue;
+    }
+    const html = md.render(content);
+    const ids = new Set();
+    for (const m of html.matchAll(/<h[2-6][^>]*\sid="([^"]+)"/g)) ids.add(m[1]);
+    anchorsOf.set(`guides/${slug}`, ids);
+    guides.push({
+      slug, file, body: content, html, section,
+      title: String(data.title), summary: String(data.summary),
+    });
+  }
+}
+
 // Internal links must resolve. This is the check that would have caught the
 // wiki's own dead anchors (#-custompar-tools, #opmenu-mod, ...), and it also
 // covers the hand-written landing page, whose /docs/ links are easy to typo.
@@ -376,6 +423,7 @@ const PARAMS_SLUG = 'common-parameters';
 anchorsOf.set(PARAMS_SLUG, new Set(['registry-sections', 'about']));
 
 for (const p of pages) checkLinks(p.html, p.file, p.slug);
+for (const g of guides) checkLinks(g.html, `content/guides/${g.file}`, `guides/${g.slug}`);
 
 const landingPath = path.join(WEB, 'index.html');
 if (fs.existsSync(landingPath)) {
@@ -760,12 +808,23 @@ function sidebar(currentSlug) {
     if (!items) return '';
     return sideGroup(GLYPH[cat] || '·', cat, items, inCat.length);
   }).filter(Boolean).join('\n');
-  // Last, under the packages: it is a reference, not a destination.
-  const reference = sideGroup('§', 'Reference',
+  const guideItem = (g) => `      <li><a href="/docs/guides/${g.slug}/"${currentSlug === `guides/${g.slug}` ? ' aria-current="page"' : ''}>${esc(g.title)}</a></li>`;
+  // First, above the packages: the instructional guides are where a reader
+  // who has not yet picked a tool starts, and there are only ever a few.
+  const topGuides = guides.filter((g) => g.section === 'guides');
+  const guideGroup = topGuides.length
+    ? sideGroup('◈', 'Guides', topGuides.map(guideItem).join('\n'), topGuides.length)
+    : '';
+  // Last, under the packages: a reference is something to come back to, and
+  // the long-form guides (how the toolkit is built) live here on purpose.
+  const endGuides = guides.filter((g) => g.section === 'reference');
+  const reference = sideGroup('§', 'Reference', [
     `      <li><a href="/docs/${PARAMS_SLUG}/"${currentSlug === PARAMS_SLUG ? ' aria-current="page"' : ''}>Common parameters</a></li>`,
-    1);
+    ...endGuides.map(guideItem),
+  ].join('\n'), 1 + endGuides.length);
   return `<aside class="docs-side" id="docs-side">
   <div class="docs-search"><div id="search"></div></div>
+${guideGroup}
 ${groups}
 ${reference}
 </aside>`;
@@ -960,6 +1019,43 @@ ${FOOT}`;
   fs.writeFileSync(path.join(dir, 'index.html'), html);
 }
 
+// Guides get the package page's chrome and nothing generated: no badges, no
+// parameter tables, no registry section. "On this page" is read off the
+// guide's own second-level headings, since a guide declares no features.
+for (const g of guides) {
+  const dir = path.join(OUT, 'guides', g.slug);
+  fs.mkdirSync(dir, { recursive: true });
+  const h2s = [];
+  for (const m of g.html.matchAll(/<h2[^>]*\sid="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/g)) {
+    const text = m[2]
+      .replace(/<a class="heading-anchor"[\s\S]*?<\/a>/, '')
+      .replace(/<[^>]+>/g, '')
+      .trim();
+    h2s.push(`<li><a href="#${esc(m[1])}">${text}</a></li>`);
+  }
+  const onThisPage = h2s.length > 1
+    ? `<nav class="toc"><span>On this page</span><ul>${h2s.join('')}</ul></nav>`
+    : '';
+  fs.writeFileSync(path.join(dir, 'index.html'), `${head(`${g.title} | FNSTools docs`, g.summary, `${SITE}/docs/guides/${g.slug}/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/guides/${g.file}: do not edit here -->
+${header('/docs/')}
+<div class="docs-layout wrap">
+${sidebar(`guides/${g.slug}`)}
+<main class="docs-main" data-pagefind-body>
+  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> ${g.section === 'reference' ? 'Reference' : 'Guides'}</p>
+  <h1>${esc(g.title)}</h1>
+  <p class="lede">${esc(g.summary)}</p>
+  ${onThisPage}
+  <div class="docs-body">
+${g.html}
+  </div>
+  <p class="edit-page"><a href="${GH}/blob/main/website/content/guides/${g.file}" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
+</main>
+</div>
+${FOOT}`);
+  console.log(`built /docs/guides/${g.slug}/`);
+}
+
 /** Filter the index by what a package puts on screen.
  *
  *  Built from the surfaces actually in use, so a vocabulary entry nothing
@@ -1009,7 +1105,24 @@ function surfaceFilter() {
   <\/script>`;
 }
 
-// docs index
+// docs index: the instructional guides first, one section per category,
+// and the reference guides last. A guide card carries every surface id
+// plus "none" so the surface filter, which is a question about packages,
+// never hides it.
+const everySurface = [...Object.keys(SURFACE_META()), 'none'].join(' ');
+const guideCardSection = (id, glyph, label, list) => (list.length ? `  <section class="doc-cat">
+    <h2 id="${id}"><span class="side-glyph" aria-hidden="true">${glyph}</span>${esc(label)}</h2>
+    <div class="doc-cards">
+${list.map((g) => `      <a class="doc-card" href="/docs/guides/${g.slug}/" data-surfaces="${esc(everySurface)}">
+        <strong>${esc(g.title)}</strong>
+        <span>${esc(g.summary)}</span>
+      </a>`).join('\n')}
+    </div>
+  </section>` : '');
+const guideCards = guideCardSection('guides', '◈', 'Guides',
+  guides.filter((g) => g.section === 'guides'));
+const referenceCards = guideCardSection('reference', '§', 'Reference',
+  guides.filter((g) => g.section === 'reference'));
 const indexGroups = displayCategories.map((cat) => {
   const items = pages
     .filter((p) => p.category === cat)
@@ -1040,8 +1153,10 @@ ${sidebar(null)}
   <p class="lede">Every package that ships with FNSTools. Each tool installs on its own, so each one is documented on its own.</p>
   <p class="docs-index-note">Each page lists that tool's own controls. The ones every package shares are described once on the <a href="/docs/${PARAMS_SLUG}/">common parameters</a> page.</p>
   <p class="docs-index-note">The Plus tools are here too, marked ${PLUS_MARK}. Every gated package is listed and documented in full, locked or unlocked, so this index is the complete record of what a <a href="${PATREON}" target="_blank" rel="noopener">Patreon membership</a> unlocks. <a href="/plus/">How Plus works →</a></p>
+${guideCards}
 ${surfaceFilter()}
 ${indexGroups}
+${referenceCards}
 </main>
 </div>
 ${FOOT}`);
@@ -1543,7 +1658,10 @@ if (fs.existsSync(cfgSrc)) {
 
   // House style: no em-dashes and no double-hyphen asides in reader-facing
   // prose. Reported per page so the habit cannot creep back in unnoticed.
-  const dashy = pages.filter((p) => /—|(?<=\S) -- (?=\S)/.test(
+  const dashy = [
+    ...pages,
+    ...guides.map((g) => ({ name: `guides/${g.slug}`, body: g.body, description: g.summary })),
+  ].filter((p) => /—|(?<=\S) -- (?=\S)/.test(
     p.body.replace(/<!--[\s\S]*?-->/g, '') + ' ' + (p.description || '')));
   if (dashy.length) {
     console.log(`note: ${dashy.length} page(s) use an em-dash or " -- " in prose `

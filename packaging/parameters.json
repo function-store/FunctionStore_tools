@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.1.1",
+ "release": "v3.1.4",
  "td_build": "2025.33070",
  "packages": {
   "AltSelect": [
@@ -9892,14 +9892,6 @@
     "help": "Take this tool's contribution back out of the registry and turn Autoregister off, so it stays out. Register puts it back."
    },
    {
-    "name": "Regstatus",
-    "label": "Registration Status",
-    "style": "Str",
-    "help": "Read-only status of this host registration.",
-    "default": "",
-    "readonly": true
-   },
-   {
     "name": "Menuorder",
     "label": "Toolbar Order",
     "style": "Int",
@@ -9919,6 +9911,14 @@
     "style": "Int",
     "help": "Width of this widget in the toolbar. 0 = auto (follow the widget). Persisted here; the registry writes manager edits back.",
     "default": 0
+   },
+   {
+    "name": "Regstatus",
+    "label": "Registration Status",
+    "style": "Str",
+    "help": "Read-only status of this host registration.",
+    "default": "",
+    "readonly": true
    }
   ]
  },
@@ -9933,7 +9933,8 @@
    "FNS_ConfigRegistry"
   ],
   "BorderlessTD": [
-   "FNS_ConfigRegistry"
+   "FNS_ConfigRegistry",
+   "FNS_ToolbarRegistry"
   ],
   "ColorUI": [
    "FNS_ConfigRegistry",
@@ -10079,7 +10080,8 @@
   "AutoCombine": [],
   "AutoRes": [],
   "BorderlessTD": [
-   "mainmenu"
+   "mainmenu",
+   "toolbar"
   ],
   "ColorUI": [
    "console",
@@ -10205,6 +10207,18 @@
     "label": "ProjName",
     "order": 4,
     "side": "left"
+   },
+   {
+    "surface": "toolbar",
+    "widget": "gridshow",
+    "label": "GridShow",
+    "order": 31,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F02C2",
+     "file": "BorderlessTD-toolbar.png"
+    }
    }
   ],
   "ColorUI": [
@@ -10402,18 +10416,6 @@
      "op": "text",
      "font": "Material Design Icons",
      "codepoint": "U+F0247",
-     "file": "FNS_Toolbar-toolbar-2.png"
-    }
-   },
-   {
-    "surface": "toolbar",
-    "widget": "widgets/gridshow",
-    "label": "GridShow",
-    "order": 31,
-    "icon": {
-     "op": "text",
-     "font": "Material Design Icons",
-     "codepoint": "U+F02C2",
      "file": "FNS_Toolbar-toolbar.png"
     }
    }

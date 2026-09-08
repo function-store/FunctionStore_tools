@@ -492,8 +492,8 @@ body.app .dlg h3 { font-size: 16px; }
 <script>
 window.FNS_MANIFEST = {
  "schema": 1,
- "release": "v3.1.1",
- "notes": "This is a beta. Every tool has been used in the dev project daily, and\nthis is the first release where strangers install it. Four packages are\nnew, one is mirrored from its own site, and every tool carries a fleet\nchange to the shared ExtUtils base. If something wedges, especially a\ndownload that sits at \"0 done, 1 to go\", leave it as it is and report\nit with the Textport contents.\n\nListings show the public name now: the package FNS_BeatMod appears as\nBeatMod in the picker, the console and the site. Shortcuts, file names\nand COMP names keep the prefix.\n\nEvery tool: the shared ExtUtils base heals its watchers when a watched\noperator is renamed or moved, and a pasted or copied tool initialises\nits extension on its own instead of waiting for something to cook it.\nStub generation left ExtUtils, which is about 1150 fewer operators in a\nfull install. Every quick-launch command carries help text and says\nwhat it acts on.\n\nFNS_BeatMod: New. Beat-synced modulation of any parameter from the timeline tempo. Three kinds of modulator, a wave on the beat, a channel of any CHOP, or a recorded gesture, each built beside its target and gliding in through Tweener. Hold a kind in the menu for an XY pad, and manage every modulator in the project from the Hub tab.\n\nFNS_CommandPalette: New. A command palette inside TouchDesigner over the command registry. Type to run any tool's commands, navigate the network with / . and .., walk parameters, keep favourites and history, and curate what shows from the Hub's Commands tab. Favourites and hidden commands are shared with the TDX launcher.\n\nFNS_CommandRegistry: New as a store package. The registry the palette and the TDX launcher both read, shipped here for installs without the launcher, with TouchDesigner's own built-in commands inside it. The launcher carries the same artifact, so both loaded together resolve to one set.\n\nFNS_PreviewPanel: New. A pane type that shows whatever you drop on it: TOPs as images, geometry through an orbitable camera, panels as themselves, POPs as points with their attributes one click away, and a POP as a live table or in its own viewer window.\n\nTDXMap: Mirrored from its own release at version 1.2.0. MIDI controller mapping with a live web UI. It updates itself; the toolkit updater reports it as self-managed and leaves it alone.\n\nFNS_TimelineTools: Keyframer. Key any operators' parameters into an Animation COMP at the current frame from a KF / KEY / UNKEY / DRIVE strip in the Animation editor's graph heading. Drop operators, parameters or groups on the strip to add channels; the editor's channel list is what gets keyed and driven.\n\nSwapOps: Swapping preserves connector indices, including COMP connectors, so a growing multi-input keeps its slot order and wired COMPs keep their vertical wiring. Inputs that do not fit the other operator stay where they were instead of being dropped.\n\nQuickMarks: Marks live on a parameter sequence and can be named. Retrieve is a single action, auto-names are unique, and the palette commands reach the same marks the hotkeys set.\n\nParOPDrop: Dropping a CHOP, a channel or a DAT onto a parameter creates its Execute DAT, watching that channel or all of them. Dropping a vector or colour group expands to its members.\n\nCustomParTools: Promoting while hovering a component of a vector or colour parameter promotes the whole group in one undo step. For extension authors, parameters can be declared as fields on the class and callbacks as decorators, with no base class required.\n\nFNS_HotkeyManager: Conflict checks fold Cmd onto Ctrl so a Mac binding is compared against the same key, and a rebind the manager refuses now says so.\n\nFNS_ConfigRegistry: The Config Scope setting on every host guards against a project with no toolkit root, and a host missing the setting gets it back on init.",
+ "release": "v3.1.4",
+ "notes": "Every tool: every package now runs the shared export strip. Twenty-five\npackages, every registry among them, had no hook for it and shipped their\nauthoring bookkeeping (Version Ctrl pages and tables) and the dev\nproject's paths in their FNS_About. The strip also writes the About\npage's Owner as an expression that resolves wherever the tool lands.",
  "channel": "stable",
  "base_url": "https://storage.functionstore.tools/fnstools",
  "toolkit": {
@@ -636,7 +636,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Alternative selection helpers for operators in the network editor.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/altselect/",
    "surfaces": [],
    "shortcut": "ALT_SELECT",
@@ -656,9 +656,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/AltSelect.tox",
-    "bytes": 128214,
-    "sha256": "24c9266814af337b4d9d7bd06b90653a3c540f63445857acc619dca3136914df",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/AltSelect.tox"
+    "bytes": 129110,
+    "sha256": "ddcc273747aba5d9fb0f795a771b77f3f36d73a86ed0e386273ac1fa9a6c9468",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/AltSelect.tox"
    }
   },
   {
@@ -667,7 +667,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Hold Alt while placing a generator TOP to have it come in pre-set to composite over its input.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/autocombine/",
    "surfaces": [],
    "shortcut": "AUTO_COMBINE",
@@ -687,9 +687,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/AutoCombine.tox",
-    "bytes": 141462,
-    "sha256": "10c1a096712f6fb19e1cd4a132cbf0dc034d4ed4a56404480730f369d3d9bd7f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/AutoCombine.tox"
+    "bytes": 142390,
+    "sha256": "18318a23c587e5586ec33955b054e0197bd12ac665c227fcb7dd2034b978036e",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/AutoCombine.tox"
    }
   },
   {
@@ -698,7 +698,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Media & Output",
    "description": "Project-wide resolution reference that operators can follow, with no hardcoded pixel sizes.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/autores/",
    "surfaces": [],
    "shortcut": "AUTO_RES",
@@ -718,9 +718,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/AutoRes.tox",
-    "bytes": 141150,
-    "sha256": "876f7aabc5e4cee622dd5ed61111c3c586b10dc37eab52d9da0e375902ddc014",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/AutoRes.tox"
+    "bytes": 142094,
+    "sha256": "8c65d60bfbe824426a0403c7cde6554d5491394b5f262d55fe1f083d1ec17600",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/AutoRes.tox"
    }
   },
   {
@@ -729,16 +729,18 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "Borderless TouchDesigner window, plus timeline hiding.",
-   "version": "3.0.2",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/borderlesstd/",
    "surfaces": [
-    "mainmenu"
+    "mainmenu",
+    "toolbar"
    ],
    "shortcut": "FNS_BORDERLESS_TD",
-   "ops": 238,
+   "ops": 268,
    "requires": [
     "FNS_ConfigRegistry",
-    "FNS_MainMenuRegistry"
+    "FNS_MainMenuRegistry",
+    "FNS_ToolbarRegistry"
    ],
    "access": "free",
    "key_available": false,
@@ -763,9 +765,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/BorderlessTD.tox",
-    "bytes": 336438,
-    "sha256": "64f21c4af7450f067f19c6e5a55c9fb0ccb4d4f341b391f73221e0b7141fe5cb",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/BorderlessTD.tox"
+    "bytes": 396726,
+    "sha256": "9afbe22ef2d146c8e5e775961d4b9f21f2f9a6e4bdd4d225452d7c213ccd5068",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/BorderlessTD.tox"
    }
   },
   {
@@ -774,7 +776,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "Operator and family colour palettes, with the active palette roaming through config.",
-   "version": "3.0.4",
+   "version": "3.0.6",
    "help_url": "https://functionstore.tools/docs/colorui/",
    "surfaces": [
     "console",
@@ -799,9 +801,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ColorUI.tox",
-    "bytes": 286670,
-    "sha256": "3822b483cc8928c60d2e67bf33c92e8049fe325cd56ad9f521b3868cca2b3291",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/ColorUI.tox"
+    "bytes": 288358,
+    "sha256": "48ae1feee65fc8bef78386c55b4308cda162d813c3db1d471e7810df91e6ebc6",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/ColorUI.tox"
    }
   },
   {
@@ -810,7 +812,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion. Also carries four stock-TouchDesigner shortcuts for opening parameters and the COMP editor.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/custompartools/",
    "surfaces": [
     "navbar",
@@ -875,12 +877,12 @@ window.FNS_MANIFEST = {
      "par": "Shortcutrolloverpromotemod"
     }
    ],
-   "whatsnew": "Promoting while hovering a component of a vector or colour parameter promotes the whole group in one undo step. For extension authors, parameters can be declared as fields on the class and callbacks as decorators, with no base class required.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/CustomParTools.tox",
-    "bytes": 1065554,
-    "sha256": "6452adf9d3545158f9233dec8ae101083d28556138aff9a394e53da354e18a12",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/CustomParTools.tox"
+    "bytes": 1072538,
+    "sha256": "2e6109e51a3b07384a75529fa4e67aceff3d8e860d4f6ceeccdd75ef6cb96ab9",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/CustomParTools.tox"
    }
   },
   {
@@ -889,7 +891,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/exprhotstrings/",
    "surfaces": [
     "hub"
@@ -922,9 +924,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ExprHotStrings.tox",
-    "bytes": 190086,
-    "sha256": "0177efb6e883b645819a80cb85c64978ddabb33ff700d128baefbd0d7dd30a07",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/ExprHotStrings.tox"
+    "bytes": 191270,
+    "sha256": "b4b59856203c3244ab28b16564b4e62e82f91255a9b520908a670f74b63b9026",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/ExprHotStrings.tox"
    }
   },
   {
@@ -933,7 +935,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Save the project on a timer without touching the timeline, honouring your increment and backup preferences, and skipping saves while you are performing.",
-   "version": "1.0.1",
+   "version": "1.0.3",
    "help_url": "https://functionstore.tools/docs/fns-autosave/",
    "surfaces": [],
    "shortcut": "",
@@ -963,9 +965,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Autosave.tox",
-    "bytes": 115934,
-    "sha256": "0f839d2368b5a1a62422a1167499e0e1935bb36bf88e7a301c292c7a99b90f4b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_Autosave.tox"
+    "bytes": 116086,
+    "sha256": "e1bddc0073f5bc3c2158fad366992e2fea0470f4f65e95cd87afd996437cf91a",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_Autosave.tox"
    }
   },
   {
@@ -974,7 +976,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Beat-synced modulation on any parameter or ParGroup, locked to the timeline tempo: a wave, a channel of any CHOP, or a gesture you record by hand, gliding in instead of cutting. Tap tempo sets the global BPM, and a manager lists every modulator in the project.",
-   "version": "0.1.1",
+   "version": "0.1.3",
    "help_url": "https://functionstore.tools/docs/fns-beatmod/",
    "surfaces": [
     "hub"
@@ -1025,12 +1027,12 @@ window.FNS_MANIFEST = {
      "par": "Shortcutremove"
     }
    ],
-   "whatsnew": "New. Beat-synced modulation of any parameter from the timeline tempo. Three kinds of modulator, a wave on the beat, a channel of any CHOP, or a recorded gesture, each built beside its target and gliding in through Tweener. Hold a kind in the menu for an XY pad, and manage every modulator in the project from the Hub tab.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_BeatMod.tox",
-    "bytes": 504544,
-    "sha256": "a287faf9ea711dd4db54adf90c222cd3b699cad88a3ddc668159adde0a166578",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.1/FNS_BeatMod.tox"
+    "bytes": 502808,
+    "sha256": "10f6d988996bf2f665cd613b728c264acc2bd8a50bda26d6726419738596bec1",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.4/FNS_BeatMod.tox"
    }
   },
   {
@@ -1039,7 +1041,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Gather every external file your project references into the project folder and rewrite the parameters to match, so the project travels. Shows the plan before it copies anything.",
-   "version": "1.0.2",
+   "version": "1.0.4",
    "help_url": "https://functionstore.tools/docs/fns-collect/",
    "surfaces": [],
    "shortcut": "",
@@ -1067,9 +1069,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Collect.tox",
-    "bytes": 35782,
-    "sha256": "0a615d08b00ff277db0febabf945a458aaa16d60c50c25a5673e973f755ba2d4",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.1/FNS_Collect.tox"
+    "bytes": 35710,
+    "sha256": "a1a204e34b854b02f0ddf745ec5c03314a1bc9ce6b4ad3f44988533ef37147f3",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.4/FNS_Collect.tox"
    }
   },
   {
@@ -1078,11 +1080,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Developer",
    "description": "Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette: decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/fns-commandkit/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 19,
+   "ops": 20,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -1096,9 +1098,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_CommandKit.tox",
-    "bytes": 29710,
-    "sha256": "2f6a07145ef0adcafd43ecf2c1624f7fdb3c6c60aad8434967fea031fca0b3ae",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_CommandKit.tox"
+    "bytes": 29646,
+    "sha256": "3d5a9050fc6f39dccd44718adc4568e6a117257d741224ed196e121d0d880436",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_CommandKit.tox"
    }
   },
   {
@@ -1107,13 +1109,13 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Core",
    "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in Hub.",
-   "version": "0.1.1",
+   "version": "0.1.3",
    "help_url": "https://functionstore.tools/docs/fns-commandpalette/",
    "surfaces": [
     "hub"
    ],
    "shortcut": "",
-   "ops": 214,
+   "ops": 215,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_HubRegistry"
@@ -1133,12 +1135,12 @@ window.FNS_MANIFEST = {
      "par": "Hotkey"
     }
    ],
-   "whatsnew": "New. A command palette inside TouchDesigner over the command registry. Type to run any tool's commands, navigate the network with / . and .., walk parameters, keep favourites and history, and curate what shows from the Hub's Commands tab. Favourites and hidden commands are shared with the TDX launcher.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_CommandPalette.tox",
-    "bytes": 323062,
-    "sha256": "b5a058ca2df97f557db805b66f43a4f346784a309cf835659a84cae7de4a642c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_CommandPalette.tox"
+    "bytes": 324134,
+    "sha256": "a4c40e6d3eedb89ffb67f687d1e2b0dcc7074765f5a7c56de2d388650ba375c5",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_CommandPalette.tox"
    }
   },
   {
@@ -1147,7 +1149,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Core",
    "description": "Collects the commands your tools declare and serves them to whatever can run them: the launcher palette today, an in-TouchDesigner palette next. Discovery is by tag, so a tool installed before any consumer still appears the moment one arrives.",
-   "version": "0.1.2",
+   "version": "0.1.4",
    "help_url": "https://functionstore.tools/docs/fns-commandregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1162,12 +1164,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "New as a store package. The registry the palette and the TDX launcher both read, shipped here for installs without the launcher, with TouchDesigner's own built-in commands inside it. The launcher carries the same artifact, so both loaded together resolve to one set.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_CommandRegistry.tox",
-    "bytes": 87774,
-    "sha256": "7681fd31cf36b3e0f9f2fb86c299d0664fc1342b119836442e93b76ab9c8cdfa",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_CommandRegistry.tox"
+    "bytes": 87934,
+    "sha256": "8a7573de0580007c367790d59f5da35b973fafc5e6fed544322c152955c50dda",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_CommandRegistry.tox"
    }
   },
   {
@@ -1176,7 +1178,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Developer",
    "description": "A standalone ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-confighost/",
    "surfaces": [],
    "shortcut": "",
@@ -1194,9 +1196,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ConfigHost.tox",
-    "bytes": 87574,
-    "sha256": "9f779be2d223fd4a3551d1130ea8f6a99531943a0e0509382e1b39019efe2d5b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_ConfigHost.tox"
+    "bytes": 87798,
+    "sha256": "b52092bc83851d7264804216958c5dd1024e039ad5f870cf82024013982cecc7",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_ConfigHost.tox"
    }
   },
   {
@@ -1205,7 +1207,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-configregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1220,12 +1222,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "The Config Scope setting on every host guards against a project with no toolkit root, and a host missing the setting gets it back on init.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ConfigRegistry.tox",
-    "bytes": 88038,
-    "sha256": "e9b146f2a06ea1b0d1ee8c3ab046122652dbd39503a06f0b6a03e8ea52e38ff4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_ConfigRegistry.tox"
+    "bytes": 88230,
+    "sha256": "7c1dda7ea643d58e261307af46296c5f1c45b4a2bc2c13519fc170b019fe7e4f",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_ConfigRegistry.tox"
    }
   },
   {
@@ -1234,7 +1236,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "The toolkit's web front, served from inside your project: every tool's settings on one page, the install picker, and any tab a tool contributes. The raw master, promoted to /sys.",
-   "version": "3.0.5",
+   "version": "3.0.7",
    "help_url": "https://functionstore.tools/docs/fns-console/",
    "surfaces": [],
    "shortcut": "",
@@ -1252,9 +1254,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Console.tox",
-    "bytes": 96822,
-    "sha256": "49c3562458bd082c15231fd748e1da0570eceb5f1ddb6bba00517b6475d226a2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_Console.tox"
+    "bytes": 97038,
+    "sha256": "55ebb4cf84a4a42f21178837c745b68fa5aa9f4d1e9de733f9a2fa44a24476aa",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_Console.tox"
    }
   },
   {
@@ -1263,7 +1265,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/fns-hotkeymanager/",
    "surfaces": [
     "hub"
@@ -1297,12 +1299,12 @@ window.FNS_MANIFEST = {
      "path": "<palette>/FNStools_ext/tables/Hotkeys.tsv"
     }
    ],
-   "whatsnew": "Conflict checks fold Cmd onto Ctrl so a Mac binding is compared against the same key, and a rebind the manager refuses now says so.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
-    "bytes": 261982,
-    "sha256": "ade834c2d138587dde3e26f8458de0a410d457786af7c23cbdc2965ba45ea550",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_HotkeyManager.tox"
+    "bytes": 261790,
+    "sha256": "0b743897e35e5137b4dd9154fe5a92cc9fc2db0d2b9624116aa1d9ce780246b9",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -1311,14 +1313,14 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "The FNS button in TouchDesigner's main-menu bar and the one-stop manager window behind it: the Toolbar, Navbar and Main Menu configurators as tabs, the console, and any tab a tool contributes. Drop a panel COMP on the button to register it into a surface.",
-   "version": "3.0.4",
+   "version": "3.0.6",
    "help_url": "https://functionstore.tools/docs/fns-hub/",
    "surfaces": [
     "hub",
     "mainmenu"
    ],
    "shortcut": "",
-   "ops": 1532,
+   "ops": 1533,
    "requires": [],
    "access": "free",
    "key_available": false,
@@ -1332,9 +1334,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Hub.tox",
-    "bytes": 1017306,
-    "sha256": "58b35ea2557332544e9810ee99e777c6ffccd46c930a266c576ed4c2f9d85ab7",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_Hub.tox"
+    "bytes": 1016306,
+    "sha256": "543026eb329741a684bbe22018d1deb906308684c58111f8fa92b243be754158",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_Hub.tox"
    }
   },
   {
@@ -1343,7 +1345,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "The registry behind Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-hubregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1361,9 +1363,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_HubRegistry.tox",
-    "bytes": 75366,
-    "sha256": "63e97bf16c5d654724f8fd44b7442db2303e46f2307fa7058d37ff862eec8446",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_HubRegistry.tox"
+    "bytes": 75590,
+    "sha256": "283e8d5a8dbce696f9cf2e240c9f794d79c442599b4ac8590ec39383bf75070b",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_HubRegistry.tox"
    }
   },
   {
@@ -1372,7 +1374,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "TD main-menu surface registry, including project-name display. The raw master, promoted to /sys.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-mainmenuregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1392,9 +1394,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_MainMenuRegistry.tox",
-    "bytes": 81582,
-    "sha256": "6163142f49019eb99f35149a9e1c0c1da2b69ad7a67b2d0c2adec5f29ac4e3d6",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_MainMenuRegistry.tox"
+    "bytes": 81758,
+    "sha256": "b69f5a132996cdd1a428601965dfcb209ebd0156a466635ec6c59fd79643d72b",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_MainMenuRegistry.tox"
    }
   },
   {
@@ -1403,7 +1405,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Media & Output",
    "description": "See every media file your project uses and which operator uses it, filter to the missing ones, and replace or repoint them in place.",
-   "version": "1.0.1",
+   "version": "1.0.3",
    "help_url": "https://functionstore.tools/docs/fns-mediabrowser/",
    "surfaces": [],
    "shortcut": "",
@@ -1431,9 +1433,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_MediaBrowser.tox",
-    "bytes": 42182,
-    "sha256": "664518e2e9a7d78b0c225b5d489c9d64ea71afec6c19386dd2acb00e2c054f27",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.1/FNS_MediaBrowser.tox"
+    "bytes": 42134,
+    "sha256": "25aa7aa8d97220cc99d46a3c82074ef8f9a975a91de53e7853e72bb6d2799976",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.4/FNS_MediaBrowser.tox"
    }
   },
   {
@@ -1442,7 +1444,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "Pane-bar extras: parent-hierarchy navigation, path injection and drag-drop hijack, plus the navbar Configurator.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/fns-navbar/",
    "surfaces": [
     "navbar"
@@ -1467,9 +1469,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Navbar.tox",
-    "bytes": 545944,
-    "sha256": "3ff6de2548d6bbc5c546f546b5c242056ad2056215deffb8141df8714591a98d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_Navbar.tox"
+    "bytes": 548176,
+    "sha256": "c83e63577b2b8cb2a31b825a9c89c2641ed194d20675a70a4377f10c30d4b8d9",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_Navbar.tox"
    }
   },
   {
@@ -1478,7 +1480,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "The pane-bar surface registry. The raw master, promoted to /sys; clone it to add your own pane-bar widgets.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-navbarregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1500,9 +1502,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_NavbarRegistry.tox",
-    "bytes": 84398,
-    "sha256": "7bf5b9ff662181c628091ac84c646e48b893db3d651932f8cfa9beb019675a78",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_NavbarRegistry.tox"
+    "bytes": 84590,
+    "sha256": "587626886f6ce68c4e15d35894fbf109f2fe3b25fbc0313a20497f80be4d4382",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_NavbarRegistry.tox"
    }
   },
   {
@@ -1511,7 +1513,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "OP Create dialog extras: the IO filter, operator search words and script injection.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/fns-opmenu/",
    "surfaces": [
     "hub",
@@ -1544,9 +1546,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_OpMenu.tox",
-    "bytes": 326302,
-    "sha256": "fe599a3f88740f5dfd860939ad16745e6a2d718a185897f490c2e6829a9d1d59",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_OpMenu.tox"
+    "bytes": 328110,
+    "sha256": "945f235c4f9630e03bbaefdf16d9e0d2658342ce3dceaadeee484b1a8f49177a",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_OpMenu.tox"
    }
   },
   {
@@ -1555,7 +1557,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "OP Create dialog surface registry: search words, row decorations, right-click items, filter stages. The raw master, promoted to /sys.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-opmenuregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1573,9 +1575,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_OpMenuRegistry.tox",
-    "bytes": 83414,
-    "sha256": "d4024e2afe451f063bab387168e1034b770272bd465ec8fb31d0cdfca095bc10",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_OpMenuRegistry.tox"
+    "bytes": 83606,
+    "sha256": "9848f98e6b120ea329651bbf47d01c2842fffcc1e0506b3e60ed54e58a5faa46",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_OpMenuRegistry.tox"
    }
   },
   {
@@ -1584,7 +1586,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Core",
    "description": "Contribute tabs to TouchDesigner's Palette Browser: a tool publishes a native panel COMP and it appears beside the stock Palette tab, sized to the slot and notified on every tab change.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-paletteregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1602,9 +1604,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_PaletteRegistry.tox",
-    "bytes": 79990,
-    "sha256": "98095f7920fb04f1e49db0221ca1e7bb63f4484f924d4c1a6d0751290d995a03",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_PaletteRegistry.tox"
+    "bytes": 80198,
+    "sha256": "401844c003d20120104bd243920141ca733ac98821d544325797778c454c5faa",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_PaletteRegistry.tox"
    }
   },
   {
@@ -1613,7 +1615,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/fns-panetyperegistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1631,9 +1633,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_PaneTypeRegistry.tox",
-    "bytes": 167662,
-    "sha256": "992d3ffd45271c334b5084ba0054f1ba1f8cb0d9accba0fca7de613a34acf40c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_PaneTypeRegistry.tox"
+    "bytes": 167894,
+    "sha256": "cba13cae9cf6ca9034f965b262603b9ba07e556d2b9e0218334de937a9bdbfe9",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_PaneTypeRegistry.tox"
    }
   },
   {
@@ -1642,7 +1644,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.",
-   "version": "0.1.1",
+   "version": "0.1.3",
    "help_url": "https://functionstore.tools/docs/fns-previewpanel/",
    "surfaces": [
     "panebar"
@@ -1741,12 +1743,12 @@ window.FNS_MANIFEST = {
      "path": "<td>/Samples/Geo/defcam.geo"
     }
    ],
-   "whatsnew": "New. A pane type that shows whatever you drop on it: TOPs as images, geometry through an orbitable camera, panels as themselves, POPs as points with their attributes one click away, and a POP as a live table or in its own viewer window.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_PreviewPanel.tox",
-    "bytes": 800602,
-    "sha256": "76a337bde043eef1c47fc3c4cfce5c5cfd3a006b265f670ea260af01e2db0ff4",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.1/FNS_PreviewPanel.tox"
+    "bytes": 798658,
+    "sha256": "2761faa9b3e2e14abeff2db61dd14561fb55f291b4725b87a41b3c0e5f2e85df",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.4/FNS_PreviewPanel.tox"
    }
   },
   {
@@ -1755,7 +1757,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Control",
    "description": "Control the project from your phone over your own network: parameter pages, a perform window and multi-touch, paired by QR with no cloud and no account.",
-   "version": "1.0.1",
+   "version": "1.0.3",
    "help_url": "https://functionstore.tools/docs/fns-remote/",
    "surfaces": [],
    "shortcut": "FNS_REMOTE",
@@ -1785,9 +1787,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Remote.tox",
-    "bytes": 128462,
-    "sha256": "50eb3a7205d8acf22c3cd6cdd1f7aa9f3fd5a4e8b8acb761b355d1f2493cbb7b",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.1/FNS_Remote.tox"
+    "bytes": 128582,
+    "sha256": "1d5ae7896abca3890445cce6620913388ba92f3b9466f9fa972de11c701ad5ee",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.4/FNS_Remote.tox"
    }
   },
   {
@@ -1796,7 +1798,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Core",
    "description": "Publish a widget into TouchDesigner's timeline bar: transport controls beside the stock ones, an entry on the time-properties block, or a full-width strip in the frame-ruler band that gets its own row.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-timelineregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1814,9 +1816,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_TimelineRegistry.tox",
-    "bytes": 88966,
-    "sha256": "451a101ff58073e97b603376316af2fa91cd6c27d6cc0a0a87dd92ae422c816e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_TimelineRegistry.tox"
+    "bytes": 89158,
+    "sha256": "dfef41939d4be98fa27daf6984a858875dee239d78de3b3ef5cd2914e2d6a703",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_TimelineRegistry.tox"
    }
   },
   {
@@ -1825,7 +1827,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Media & Output",
    "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip, a waveform and your editor's markers. Key any operators' parameters into an Animation COMP with one press, and play them back from it.",
-   "version": "3.0.5",
+   "version": "3.0.7",
    "help_url": "https://functionstore.tools/docs/fns-timelinetools/",
    "surfaces": [
     "timeline"
@@ -1889,12 +1891,12 @@ window.FNS_MANIFEST = {
      "path": "<abs>/Rick Astley - Never Gonna Give You Up (Official Music Video).mov"
     }
    ],
-   "whatsnew": "Keyframer. Key any operators' parameters into an Animation COMP at the current frame from a KF / KEY / UNKEY / DRIVE strip in the Animation editor's graph heading. Drop operators, parameters or groups on the strip to add channels; the editor's channel list is what gets keyed and driven.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_TimelineTools.tox",
-    "bytes": 352830,
-    "sha256": "de25280502d3bd49d71f52a37ee4b0aa16b0bac50ef55e0ab532a8bde15863df",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.1/FNS_TimelineTools.tox"
+    "bytes": 354542,
+    "sha256": "a0324003d5875713d0bdba86ed0bc4ebb2e353a76c84d0ecd7a70f28ca6ee3dc",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.1.4/FNS_TimelineTools.tox"
    }
   },
   {
@@ -1903,13 +1905,13 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Surfaces",
    "description": "Toolbar extras: the Configurator UI for ordering, grouping and hiding bar widgets, plus stock widgets.",
-   "version": "3.0.4",
+   "version": "3.0.7",
    "help_url": "https://functionstore.tools/docs/fns-toolbar/",
    "surfaces": [
     "toolbar"
    ],
    "shortcut": "FNS_TOOLBAR",
-   "ops": 187,
+   "ops": 157,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_ToolbarRegistry"
@@ -1918,9 +1920,7 @@ window.FNS_MANIFEST = {
    "key_available": false,
    "license": "",
    "seats": null,
-   "integrates_with": [
-    "BorderlessTD"
-   ],
+   "integrates_with": [],
    "tox_carrier": "own",
    "cooking": true,
    "min_td_build": "2025.33070",
@@ -1928,9 +1928,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Toolbar.tox",
-    "bytes": 258230,
-    "sha256": "15b36f01aafc20edd2ae3589fd0c0d14e657471866f25f847f96aa0c18d0b299",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_Toolbar.tox"
+    "bytes": 201878,
+    "sha256": "49ee098e0464f3f644e38d4c62e010b5f596b693a512a651e11885bee31799fb",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_Toolbar.tox"
    }
   },
   {
@@ -1939,7 +1939,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys; clone it to put your own tools on the bar.",
-   "version": "3.0.3",
+   "version": "3.0.5",
    "help_url": "https://functionstore.tools/docs/fns-toolbarregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -1960,9 +1960,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ToolbarRegistry.tox",
-    "bytes": 77118,
-    "sha256": "2e7a22167c7821ff92335bc27c9cb7543eced25fe68180c0d0dbcc0a45612fd0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_ToolbarRegistry.tox"
+    "bytes": 77310,
+    "sha256": "c8cde11317f343d1c8d9e89cb7b4e916e5888e7d51889bb3551444404f22f732",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_ToolbarRegistry.tox"
    }
   },
   {
@@ -1971,7 +1971,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
-   "version": "3.0.10",
+   "version": "3.0.12",
    "help_url": "https://functionstore.tools/docs/fns-updater/",
    "surfaces": [
     "toolbar"
@@ -1991,9 +1991,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Updater.tox",
-    "bytes": 249686,
-    "sha256": "3bf3c43310eced25f6682c29efc25fd2b079e88096ff3d353fbddc54df1c751f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/FNS_Updater.tox"
+    "bytes": 250878,
+    "sha256": "851906a300bae74e783d751ae402e0bc9025b7b839697fb3be3f7f52ccf7c6ec",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/FNS_Updater.tox"
    }
   },
   {
@@ -2002,7 +2002,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Media & Output",
    "description": "Browse Global OP Shortcuts and the out operators inside them in a tree, and drag any of them into a network as a Select.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/globaloutselect/",
    "surfaces": [
     "hub"
@@ -2025,9 +2025,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/GlobalOutSelect.tox",
-    "bytes": 259070,
-    "sha256": "2879661384a8485f9de7bf0c5a2ee657e70349f75f9b59c7dac389ee51021679",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/GlobalOutSelect.tox"
+    "bytes": 259958,
+    "sha256": "a95f13c83819db24191c58ca38335c97a2b7b641c4ba37a16a4419cad267d6de",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/GlobalOutSelect.tox"
    }
   },
   {
@@ -2036,7 +2036,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Media & Output",
    "description": "Global audio volume control.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/globalvolcontrol/",
    "surfaces": [
     "toolbar"
@@ -2059,9 +2059,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/GlobalVolControl.tox",
-    "bytes": 257710,
-    "sha256": "91ddaba6c9ed8915262a606ae0bb815350a04cbf2ef4856e4616e8fcdb536876",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/GlobalVolControl.tox"
+    "bytes": 259206,
+    "sha256": "1b0228798b7b26fcae1a4a9da0f4ce46f3c6382569d9916bd11995abf876fe80",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/GlobalVolControl.tox"
    }
   },
   {
@@ -2070,7 +2070,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Media & Output",
    "description": "A toolbar reminder to drink water at an interval you set. Off by default.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/hydrohomie/",
    "surfaces": [
     "toolbar"
@@ -2093,9 +2093,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/HydroHomie.tox",
-    "bytes": 200990,
-    "sha256": "4ca5f38105d7f79f13283b51bf7a60242ea0007210c8a9b4e4d8192d65bfcb89",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/HydroHomie.tox"
+    "bytes": 202174,
+    "sha256": "27faf34e82409aae843ff8c329fdc788f0690b57de28d9f8a4aee161ed1309ed",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/HydroHomie.tox"
    }
   },
   {
@@ -2104,7 +2104,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Control",
    "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/midimapper/",
    "surfaces": [
     "hub",
@@ -2133,9 +2133,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/midiMapper.tox",
-    "bytes": 333230,
-    "sha256": "9414f2e2a80d427e70dab9f2fd1692b0264781ee79e9aea615c069698240c036",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/midiMapper.tox"
+    "bytes": 332518,
+    "sha256": "f44eecdb61b902346d51aeda82b145c9d4e6d46f98b2d0b6edc8b908e07af283",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/midiMapper.tox"
    }
   },
   {
@@ -2144,7 +2144,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Assorted small utilities that ship together (hog CHOP, mouse input and friends).",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/misc/",
    "surfaces": [
     "toolbar"
@@ -2167,9 +2167,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/MISC.tox",
-    "bytes": 240526,
-    "sha256": "3512305b3c66ab4fc2b620fa09f7a18d7bf72c37f5d59174a096fae63b963d43",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/MISC.tox"
+    "bytes": 242030,
+    "sha256": "a5ab15d27671d793e219d54975389769b553446543628ea53fce6b636af65852",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/MISC.tox"
    }
   },
   {
@@ -2178,7 +2178,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Developer",
    "description": "Open an operator's extension source quickly.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/openext/",
    "surfaces": [],
    "shortcut": "",
@@ -2204,9 +2204,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OpenExt.tox",
-    "bytes": 127438,
-    "sha256": "f979b0aca83027e5e0f1e1475ebd8774f8586ffc3d24ee1e931b9c6cd78de9b4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/OpenExt.tox"
+    "bytes": 128358,
+    "sha256": "55040587e050ca9484b7253f66ab7b86abb20f7fd3764791cb5ded310b216da0",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/OpenExt.tox"
    }
   },
   {
@@ -2215,7 +2215,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "A library of preconfigured operator templates to drop into a network.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/optemplates/",
    "surfaces": [
     "opmenu",
@@ -2286,9 +2286,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OpTemplates.tox",
-    "bytes": 366064,
-    "sha256": "a3fc5dffb18454a1d37887a1a96e7723f9f6500e23557e79be1d35394025360b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/OpTemplates.tox"
+    "bytes": 368192,
+    "sha256": "44abad4a3db1bc6ceb082fb6486b89bacd3d72145457ef71535bf29b60b912d0",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/OpTemplates.tox"
    }
   },
   {
@@ -2297,7 +2297,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/optoclipboard/",
    "surfaces": [],
    "shortcut": "",
@@ -2323,9 +2323,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OpToClipboard.tox",
-    "bytes": 129598,
-    "sha256": "72ad8b2dee78bbcb849154fbdb539416d6a224a0bb9be7d82e619ee80b3b944d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/OpToClipboard.tox"
+    "bytes": 130502,
+    "sha256": "4a455bac8a702d0ec164d68566e8d813404512b6cbb4c9f2f5d777255856e9ec",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/OpToClipboard.tox"
    }
   },
   {
@@ -2334,7 +2334,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Control",
    "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/oscmapper/",
    "surfaces": [
     "hub"
@@ -2361,9 +2361,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/oscMapper.tox",
-    "bytes": 225214,
-    "sha256": "1c32eb4e08e7ebfa620a752c328c29b09063d972729a6e3272390a66ba128688",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/oscMapper.tox"
+    "bytes": 226086,
+    "sha256": "3d797500a06ed7f2fe18c37139615ab21f279a39ba65aa648c7f1978d4ac6016",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/oscMapper.tox"
    }
   },
   {
@@ -2372,7 +2372,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Media & Output",
    "description": "Output window and display routing helpers.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/output/",
    "surfaces": [
     "toolbar"
@@ -2395,9 +2395,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/OUTPUT.tox",
-    "bytes": 196302,
-    "sha256": "9fde2c30dd9597c0f651da6b963bb7355d469135c191b1b5320c4d1c30bee5ee",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/OUTPUT.tox"
+    "bytes": 197494,
+    "sha256": "0a095271ce9d2fa922a4817cc8e7b960ec29ef6365a19ea4bf77bf6bbe95ce39",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/OUTPUT.tox"
    }
   },
   {
@@ -2406,7 +2406,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/paropdrop/",
    "surfaces": [
     "toolbar"
@@ -2432,12 +2432,12 @@ window.FNS_MANIFEST = {
      "par": "keys"
     }
    ],
-   "whatsnew": "Dropping a CHOP, a channel or a DAT onto a parameter creates its Execute DAT, watching that channel or all of them. Dropping a vector or colour group expands to its members.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ParOPDrop.tox",
-    "bytes": 190774,
-    "sha256": "e8de82d2637d31db148766f3d9938e6536b4003f58f976a0b1f0701e1cbb9817",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/ParOPDrop.tox"
+    "bytes": 191958,
+    "sha256": "3e02f7eaecda3e0ac7c9fe944e3421b2d35d7449483338459955e365960b37ac",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/ParOPDrop.tox"
    }
   },
   {
@@ -2446,7 +2446,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Randomize parameter values within range, for quick exploration.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/parrandomizer/",
    "surfaces": [
     "toolbar"
@@ -2490,9 +2490,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ParRandomizer.tox",
-    "bytes": 187894,
-    "sha256": "ad8d848e4ae5baf878212f82f3aefc1891914b35548fe18fbaa36f192203eef4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/ParRandomizer.tox"
+    "bytes": 189110,
+    "sha256": "5d23e2d12e51262d6234fdec47150ec29a84ed70f59e6ad3f4c130b0b5ae7c9f",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/ParRandomizer.tox"
    }
   },
   {
@@ -2501,11 +2501,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Paste images and data from the system clipboard into TouchDesigner.",
-   "version": "3.0.1",
+   "version": "3.0.3",
    "help_url": "https://functionstore.tools/docs/paste-from-clipboard/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 226,
+   "ops": 227,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -2531,9 +2531,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/paste_from_clipboard.tox",
-    "bytes": 212342,
-    "sha256": "735f9623a53d341eccca93cb63c87df6e157e7e61a03085ce678302bd2248a14",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/paste_from_clipboard.tox"
+    "bytes": 212694,
+    "sha256": "6e16454be96d682e68a52c8de2568bfc315df4fad27753a9d9d843a4f9cd32e6",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/paste_from_clipboard.tox"
    }
   },
   {
@@ -2542,7 +2542,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Collapse a selection into a component, with an optional customize dialog.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/quickcollapse/",
    "surfaces": [],
    "shortcut": "FNS_QUICKCOLLAPSE",
@@ -2573,9 +2573,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickCollapse.tox",
-    "bytes": 141718,
-    "sha256": "f15d686b4935e77474836b5e592fd5b10561d3b5ed6341f2b61937814c6cba7c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/QuickCollapse.tox"
+    "bytes": 142622,
+    "sha256": "a87d35b1aa690834de5c248b383331a98883d57fb4d5782a2a0121c19429356c",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/QuickCollapse.tox"
    }
   },
   {
@@ -2584,11 +2584,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/quickmarks/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 66,
+   "ops": 67,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -2611,12 +2611,12 @@ window.FNS_MANIFEST = {
     "name": "Alex Guevara",
     "url": "https://alex-guevara.com"
    },
-   "whatsnew": "Marks live on a parameter sequence and can be named. Retrieve is a single action, auto-names are unique, and the palette commands reach the same marks the hotkeys set.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickMarks.tox",
-    "bytes": 132126,
-    "sha256": "101cf11e917133c69c47db6036645425ef14ee69e8016bdc8cf6ee8d85412d74",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/QuickMarks.tox"
+    "bytes": 132462,
+    "sha256": "9a5c6213f94dac8bc1602887e0bf643835ed7df8c5690fa46e4a04213b899d43",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/QuickMarks.tox"
    }
   },
   {
@@ -2625,7 +2625,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Pane layout shortcuts.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/quickpane/",
    "surfaces": [],
    "shortcut": "",
@@ -2651,9 +2651,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickPane.tox",
-    "bytes": 130678,
-    "sha256": "5cd4f1b7106144f6e29106e1242cbd2204b35e4f53efe2846a8e20249c97fad6",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/QuickPane.tox"
+    "bytes": 131582,
+    "sha256": "22daea834d7cca2a4fafcfdf3c8ac976e1cd29fcce82aa564bcc5c6675ad765b",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/QuickPane.tox"
    }
   },
   {
@@ -2662,7 +2662,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Timeline and time-related shortcuts.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/quicktime/",
    "surfaces": [
     "toolbar"
@@ -2685,9 +2685,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickTime.tox",
-    "bytes": 183838,
-    "sha256": "f164757e8d39bac6ecd4989741b552e773124062dbdecdf37a69bd282539d48f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/QuickTime.tox"
+    "bytes": 185046,
+    "sha256": "b33b1d1834aae3ac07fb05f55ee53558906828bd65359a230384d915a7ee8460",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/QuickTime.tox"
    }
   },
   {
@@ -2696,7 +2696,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/resetpls1/",
    "surfaces": [
     "toolbar"
@@ -2739,9 +2739,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/ResetPLS1.tox",
-    "bytes": 205518,
-    "sha256": "18931275f3277ccc5001d618bcf936fe84a1ee72441b6b109119d1cb3560068d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/ResetPLS1.tox"
+    "bytes": 206734,
+    "sha256": "7bd56c68d96a140ed10627b105601eab33e35793bd2c46bed9bfa23a6cedb18a",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/ResetPLS1.tox"
    }
   },
   {
@@ -2750,7 +2750,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Control",
    "description": "Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/setsmoothness/",
    "surfaces": [
     "toolbar"
@@ -2773,9 +2773,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/SetSmoothness.tox",
-    "bytes": 241774,
-    "sha256": "b753571ed477325292d54b6b272043900235fa4a7040dd40837baeb4c6194668",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/SetSmoothness.tox"
+    "bytes": 242974,
+    "sha256": "1c9c49875dac7b4415488ba6b0e82a4f35e739aeeacd11b4192d583658443cc1",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/SetSmoothness.tox"
    }
   },
   {
@@ -2784,7 +2784,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Swap one operator for another while keeping connections intact.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/swapops/",
    "surfaces": [
     "toolbar"
@@ -2810,12 +2810,12 @@ window.FNS_MANIFEST = {
      "par": "Shortcuts"
     }
    ],
-   "whatsnew": "Swapping preserves connector indices, including COMP connectors, so a growing multi-input keeps its slot order and wired COMPs keep their vertical wiring. Inputs that do not fit the other operator stay where they were instead of being dropped.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/SwapOps.tox",
-    "bytes": 185766,
-    "sha256": "e14aca2e06db52a0ab26d901002ef0c2db405f61356832539190b38e19e3a07a",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/SwapOps.tox"
+    "bytes": 186974,
+    "sha256": "c96a1089f8a7e220f53b2d1e8c899ebadbe49fbcf65fe81577c112c23b18eb1c",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/SwapOps.tox"
    }
   },
   {
@@ -2824,7 +2824,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Switch between operators in place.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/switchops/",
    "surfaces": [],
    "shortcut": "FNS_SWITCHOP",
@@ -2850,9 +2850,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/SwitchOPs.tox",
-    "bytes": 127974,
-    "sha256": "c077e5bf85e57e89a95adb4eede14fcf4e4e20fb8a65f9c1ed4255000a0abd55",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/SwitchOPs.tox"
+    "bytes": 128886,
+    "sha256": "3b098f91319b0a6998a8ce0a7bf6f1f39b90c22de8a46763832afc36947b735f",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/SwitchOPs.tox"
    }
   },
   {
@@ -2861,11 +2861,11 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Workflow",
    "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/tdx-searchpalette/",
    "surfaces": [],
    "shortcut": "TDX_SEARCH_PALETTE",
-   "ops": 106,
+   "ops": 107,
    "requires": [
     "FNS_ConfigRegistry"
    ],
@@ -2891,9 +2891,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/TDX_SearchPalette.tox",
-    "bytes": 102118,
-    "sha256": "11c1e5a7d351bafeada383bd998952b092da9d80f9539a981b172426fce82190",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/TDX_SearchPalette.tox"
+    "bytes": 102038,
+    "sha256": "9586e36160f9d85ef05883635c0b04370ea9859002c459e59638e0c38daf9247",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/TDX_SearchPalette.tox"
    }
   },
   {
@@ -2902,7 +2902,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Developer",
    "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs.",
-   "version": "3.0.2",
+   "version": "3.0.4",
    "help_url": "https://functionstore.tools/docs/vscodetools/",
    "surfaces": [
     "toolbar"
@@ -2931,9 +2931,9 @@ window.FNS_MANIFEST = {
    "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/VSCodeTools.tox",
-    "bytes": 741032,
-    "sha256": "4ed7e631bb5a9eb675b4a3a9f77f34339a3fd4cb6d722ead56d8739a2db37886",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/VSCodeTools.tox"
+    "bytes": 743144,
+    "sha256": "c36b641d599ec212cc4eb5f67094508b86d814485e663211ac6b507adc7b20a2",
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/VSCodeTools.tox"
    }
   },
   {
@@ -2976,7 +2976,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/TDXMap.tox",
     "bytes": 934742,
     "sha256": "339116402eff423173e944862f7f623c3cede0c1593b6a5ac2328d87a65ac4ba",
-    "url": "https://storage.functionstore.tools/fnstools/v3.1.1/TDXMap.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.1.4/TDXMap.tox"
    }
   }
  ]

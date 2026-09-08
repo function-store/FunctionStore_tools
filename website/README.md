@@ -12,6 +12,7 @@ packaging/docs/<Name>.md   prose + frontmatter per package     (curated)
 website/index.html         landing page                        (hand-written)
 website/content/plus.html  /plus/ prose, a fragment            (hand-written)
 website/content/family.json the other Function Store products  (curated)
+website/content/guides/*.md long-form guides, one file per page   (hand-written)
 website/docs/              GENERATED — gitignored, built on every deploy
 website/get/               GENERATED — gitignored, the online configurator
 website/plus/              GENERATED — gitignored, from content/plus.html
@@ -53,6 +54,32 @@ to build** if they disagree — a `.md` with no catalog entry, a catalog
 package with no `.md`, a frontmatter `package` that does not match its
 filename, or an internal `/docs/` link pointing at a page or heading that
 does not exist.
+
+## Guides
+
+A guide is a page about the toolkit as a whole, as opposed to one package:
+`website/content/guides/<slug>.md`, with a frontmatter of `title`, `summary`
+(the lede and the meta description) and an optional `section`. The filename
+is the URL: `getting-started.md` is served at `/docs/guides/getting-started/`,
+so it must be lowercase letters, digits and hyphens. The build renders a
+guide through the same markdown pipeline as a package page, gives it the
+docs chrome (sidebar, crumbs, an "On this page" list read off its `##`
+headings), and Pagefind indexes it with the rest of the docs. Internal links
+to `/docs/...` pages and headings are validated both ways, the dash note
+covers its prose, and a missing `title` or `summary` fails the build. No
+parameter tables, badges or registry sections are generated for it.
+
+`section` decides where it sits. `guides` (the default) is the short,
+instructional kind: it leads the sidebar under **Guides** and leads the docs
+index. `reference` is the long-form kind: it closes the sidebar's
+**Reference** group beside the common-parameters page and closes the index,
+so a reader meets the instructions first and the architecture only if they
+go looking for it. Two ship today: `getting-started.md` (install, pick,
+update, settings; links to the other one in its first line) and
+`architecture.md`, *How FNSTools is built* (the bootstrap, versioning and
+updates, dependencies, the launcher ecosystem and the gate on one page; the
+internal record behind it is `docs/ArchitectureResearch.md`). Guides are not
+in the CMS; edit the markdown.
 
 ## Free and Plus
 
@@ -104,12 +131,12 @@ shared head, header and footer. Edit the fragment, not `website/plus/`. The
 build **refuses to run** if either marker pair is gone — the failure mode
 otherwise is a Plus page that quietly lists nothing.
 
-> **Before this ships:** the page describes signing in and unlocking as
-> something that works today. It does not yet — the Worker is written but
-> undeployed, `catalog.json` carries `PLACEHOLDER_TIER`, and `Gateurl`
-> defaults to a hostname that does not resolve. Deploy the gate, swap the
-> tier id, and confirm an unauthenticated GET of `plus/` is refused before
-> the copy on `/plus/` is true. See `docs/GatedDeliveryResearch.md` §10.
+> **Status (corrected 2026-09-08):** the page's claims are true. The gate
+> went live on 2026-08-29, `catalog.json` carries real tier ids on six
+> packages, `Gateurl` defaults to `https://gate.functionstore.tools`, and an
+> unauthenticated GET of a `plus/` artifact returns 401 (probed 2026-09-08).
+> This note used to say the Worker was undeployed and the catalog carried
+> `PLACEHOLDER_TIER`; both were true until the 2026-08-29 deploy.
 
 ## Build
 
@@ -253,10 +280,13 @@ features:                         # drives the "On this page" list
     hotkeys:
       - {keys: "Ctrl+Alt+Drag", does: "Promote as iop"}
 platforms: [windows]              # omit when it runs everywhere
-credit: {name: AlphaMoonbase.berlin, url: "https://alphamoonbase.de/"}
 video: "https://youtu.be/j43gZ0MB2xo"
 ---
 ```
+
+Author credit is not frontmatter: it lives in `catalog.json` as
+`author {name, url}` (edited in the CMS package editor), and the build
+refuses a doc that still carries a `credit` block.
 
 ## Deploying
 
