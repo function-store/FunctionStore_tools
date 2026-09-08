@@ -1,6 +1,6 @@
 ---
 package: FNS_CommandRegistry
-summary: 'Collects the commands your tools declare, and TouchDesigner''s own, and serves them to whatever can run them: the FNS_CommandPalette inside TouchDesigner and the TDXL launcher''s tray palette. Tools never depend on it being installed.'
+summary: 'Collects the commands your tools declare, and TouchDesigner''s own, and serves them to whatever can run them: the CommandPalette inside TouchDesigner and the TDXL launcher''s tray palette. Tools never depend on it being installed.'
 features:
   - name: Command Registry
     anchor: command-registry
@@ -31,7 +31,7 @@ carries no `RegistryBase`, injects no chrome, and claims no part of the
 TouchDesigner UI. It shares the `/sys/FNS_Registries` home with them and nothing
 else.
 
-The authoring side is a separate package, [FNS_CommandKit](/docs/fns-commandkit/),
+The authoring side is a separate package, [CommandKit](/docs/fns-commandkit/),
 and the split is deliberate: a tool needs the kit and *no* registry. Every call a
 tool makes is guarded, so with no registry in the session nothing happens and
 nothing errors.

@@ -521,7 +521,7 @@ palette:
 (On macOS, Alt is Option.)
 
 They call nothing but TouchDesigner itself, so they work regardless of which
-other packages are installed, and each is rebindable in FNS_HotkeyManager.
+other packages are installed, and each is rebindable in HotkeyManager.
 Keyboard and palette share one implementation: the keyboardin callbacks invoke
 the same promoted methods the commands do.
 
@@ -544,7 +544,7 @@ anything. Its **Active** toggle turns the whole feature off.
 | `ctrl+alt+\` | Toggle that parameter between Bind and Expression |
 
 All four are rebindable on the **Custom** page of QuickParCustom, and listed
-in FNS_HotkeyManager.
+in HotkeyManager.
 
 It was a separate package until 2026-08-24. It never really was one: it drove
 promotion by calling this package's promoter through the `FNS_CPP` global, so

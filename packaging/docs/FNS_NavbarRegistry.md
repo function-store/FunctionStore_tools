@@ -22,10 +22,10 @@ up in every pane and in panes you open later.
 It ships as its own core package, always installed,
 promoted to `/sys` with the global shortcut `op.FNS_NAVBARREGISTRY`.
 
-As a user you interact with the **Navbar** tab of [FNS_Hub](/docs/fns-hub/)
+As a user you interact with the **Navbar** tab of [Hub](/docs/fns-hub/)
 (the FNS button in the main-menu bar), where you reorder items, flip one
 between the left and right side, and show or hide it. The layout roams with
-your config through [FNS_ConfigRegistry](/docs/fns-configregistry/).
+your config through [ConfigRegistry](/docs/fns-configregistry/).
 
 ## For tool authors
 

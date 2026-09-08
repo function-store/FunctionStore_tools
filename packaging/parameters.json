@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.0.14",
+ "release": "v3.1.1",
  "td_build": "2025.33070",
  "packages": {
   "AltSelect": [
@@ -3599,6 +3599,706 @@
     "page": "Autosave"
    }
   ],
+  "FNS_BeatMod": [
+   {
+    "name": "Bpm",
+    "label": "BPM",
+    "style": "Float",
+    "help": "The timeline tempo, TouchDesigner's global BPM, mirrored live. Set it here, with Tap Tempo or the tap hotkey; every beat-locked modulator follows.",
+    "default": 120.0,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Tap",
+    "label": "Tap Tempo",
+    "style": "Pulse",
+    "help": "Tap in time with the music: from the fourth tap on, the mean interval of the last eight taps sets the BPM. A pause of over two seconds starts a new sequence.",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Tapresets",
+    "label": "First Tap Resets The Bar",
+    "style": "Toggle",
+    "help": "The first tap of a sequence restarts every modulator's beat together, so the bar lines up with your downbeat. That is a phase jump for every running modulator, which is why it is off by default; tempo changes alone never jump.",
+    "default": false,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Modulate",
+    "label": "LFO On Hovered Par",
+    "style": "Pulse",
+    "help": "Beat-locked wave (the Default Wave) on the parameter under the mouse, or on the whole group when a group is hovered.",
+    "section": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Modulatespeed",
+    "label": "Speed On Hovered Par",
+    "style": "Pulse",
+    "help": "Beat-locked linear rate on the parameter under the mouse: it counts on by so many units per beat, like a Speed CHOP locked to the tempo.",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Openmenu",
+    "label": "Menu For Hovered Par",
+    "style": "Pulse",
+    "help": "Open the modulation menu at the mouse for the hovered parameter: every kind, tick boxes for the beat division, beat sync and how far the swing reaches, Remove and Tap.",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Holdpad",
+    "label": "Hold Opens The Settings",
+    "style": "Toggle",
+    "help": "Press an item in the menu and keep the button down: after a moment its settings open, the XY pad for a wave and Recording options for a gesture. Off, a press is a plain click. Channels never hold; they open the CHOP panel.",
+    "default": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Padsticky",
+    "label": "Pad Stays Open",
+    "style": "Toggle",
+    "help": "The pad a hold opens stays open after you let go: move freely, click to apply, Escape for nothing. For macOS, where a held button does not track into the new window (owner, 2026-09-07). Off, keep the button down, drag, and the release applies.",
+    "default": false,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Clicksettings",
+    "label": "A Plain Click Uses",
+    "style": "Menu",
+    "help": "What a plain click in the menu, or a hotkey, applies. As they stand: the last settings set anywhere -- these pages, the pad, the settings strip, Recording options -- so they carry on. The shipped defaults: a click always applies what the tool came with, and those surfaces only affect the visit they are used in, which keeps a quick click predictable.",
+    "default": "last",
+    "menu": [
+     {
+      "name": "last",
+      "label": "The settings as they stand"
+     },
+     {
+      "name": "shipped",
+      "label": "The shipped defaults"
+     }
+    ],
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Openmanager",
+    "label": "Modulator Manager",
+    "style": "Pulse",
+    "help": "Open the manager: every modulator in the project with the operator and parameters it drives, its cycle, its source, and how far it is faded in, with the tempo and Tap at the top.",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Remove",
+    "label": "Remove From Hovered Par",
+    "style": "Pulse",
+    "help": "Glide the parameter under the mouse back to its rest value and delete its modulator.",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Divisions",
+    "label": "Beat Divisions",
+    "style": "Str",
+    "help": "The beat divisions the menu and the pad offer, in beats of the timeline tempo, in any order: whole numbers, decimals or fractions such as 1/3, separated by spaces. The tool sorts them, and a saved Default Period keeps its meaning by value. Roams with your settings.",
+    "default": "1/4 1/2 1 2 4 8 16 32",
+    "section": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Period",
+    "label": "Default Period",
+    "style": "Menu",
+    "help": "Cycle length for a new modulator, in beats of the timeline tempo, one of the Beat Divisions; the menu ticks it. Editable on the modulator afterwards (Beats).",
+    "default": "b1",
+    "menu": [
+     {
+      "name": "b0125",
+      "label": "1/8 beat"
+     },
+     {
+      "name": "b0250",
+      "label": "1/4 beat"
+     },
+     {
+      "name": "b0500",
+      "label": "1/2 beat"
+     },
+     {
+      "name": "b1",
+      "label": "1 beat"
+     },
+     {
+      "name": "b2",
+      "label": "2 beats"
+     },
+     {
+      "name": "b4",
+      "label": "4 beats (1 bar)"
+     },
+     {
+      "name": "b8",
+      "label": "8 beats (2 bars)"
+     }
+    ],
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Wave",
+    "label": "Default Wave",
+    "style": "Menu",
+    "help": "Waveform the LFO hotkey uses. Editable on the modulator afterwards.",
+    "default": "sin",
+    "menu": [
+     {
+      "name": "sin",
+      "label": "Sine"
+     },
+     {
+      "name": "tri",
+      "label": "Triangle"
+     },
+     {
+      "name": "ramp",
+      "label": "Ramp"
+     },
+     {
+      "name": "square",
+      "label": "Square"
+     },
+     {
+      "name": "pulse",
+      "label": "Pulse"
+     },
+     {
+      "name": "gaussian",
+      "label": "Gaussian"
+     },
+     {
+      "name": "random",
+      "label": "Random (step)"
+     },
+     {
+      "name": "randomsmooth",
+      "label": "Random (smooth)"
+     }
+    ],
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Randomlink",
+    "label": "Random Shared By Members",
+    "style": "Toggle",
+    "help": "New random modulations (step or smooth) on a group: on, every member draws the same random value each cycle, so a translate group moves as one and a colour flickers as a whole; off, each member draws its own sequence, the default. The menu ticks it; Spread still staggers members in time. Re-applying to a running random modulation crossfades the change in.",
+    "default": false,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Rangemode",
+    "label": "Default Range",
+    "style": "Menu",
+    "help": "How far a new wave swings. Around the value, to the nearest slider end: centred on the parameter's current value and reaching the closer of normMin and normMax, so it never leaves the slider range (a value sitting at an end gets the fraction instead). Around the value, a fraction of the slider range: centred on the value, Default Fraction of normMax minus normMin each way. Between the slider ends: the whole normMin..normMax sweep. The menu ticks it. Speed always measures its rate against the slider range.",
+    "default": "edge",
+    "section": true,
+    "menu": [
+     {
+      "name": "edge",
+      "label": "Around the value, to the nearest slider end"
+     },
+     {
+      "name": "fraction",
+      "label": "Around the value, a fraction of the slider range"
+     },
+     {
+      "name": "range",
+      "label": "Between the slider ends"
+     }
+    ],
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Polarity",
+    "label": "Default Polarity",
+    "style": "Menu",
+    "help": "Which side of the value a new wave swings on. Both ways: the window sits around the value. Up only: it starts at the value and reaches upward (to the slider's top with the nearest-end strategy). Down only: the mirror. Between the slider ends, up or down means the part of the slider on that side of the value. The menu and the pad tick it. Speed ignores it.",
+    "default": "bipolar",
+    "menu": [
+     {
+      "name": "bipolar",
+      "label": "Swing both ways"
+     },
+     {
+      "name": "up",
+      "label": "Swing up only"
+     },
+     {
+      "name": "down",
+      "label": "Swing down only"
+     }
+    ],
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Fraction",
+    "label": "Default Fraction",
+    "style": "Float",
+    "help": "The swing each way as a fraction of the slider range (normMax minus normMin), for the fraction strategy and for the nearest-end strategy when the value sits at an end: 0.1 on a 0..1 slider swings 0.1 each way around the value.",
+    "default": 0.1,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Multiplier",
+    "label": "Default Multiplier",
+    "style": "Float",
+    "help": "Scale of a new wave inside the window Default Range picks: 1 is the whole window, 0.5 half of it. The modulator keeps Range Min and Max, this Multiplier and an Offset, all editable afterwards.",
+    "default": 1.0,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Speedrate",
+    "label": "Default Speed",
+    "style": "Float",
+    "help": "Rate of a new Speed modulator as a fraction of the parameter's slider range (normMin to normMax) per Default Period, per second with beat sync off: 0.1 on a 0..1 slider adds 0.1 every period, a tenth of the range. A real Speed CHOP counting on from the current value.",
+    "default": 0.1,
+    "section": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Speedsync",
+    "label": "Speed Syncs To Beat",
+    "style": "Toggle",
+    "help": "New Speed modulators follow the tempo (rate per beat division, so tap tempo changes it). Off, they run in units per second like a plain Speed CHOP. The menu ticks it.",
+    "default": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Speedbipolar",
+    "label": "Random Speed Either Way",
+    "style": "Toggle",
+    "help": "New Random speed modulators run either way, a new random pace and direction every beat division, so the value wanders around where it started; off, they only run forward, at a random pace.",
+    "default": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Speedrandomlink",
+    "label": "Random Speed Shared By Members",
+    "style": "Toggle",
+    "help": "New Random speed modulations on a group: on, every member draws the same random pace each division, so a translate group drifts as one; off, each member wanders on its own. Editable afterwards as Randomlink on the modulator.",
+    "default": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Tween",
+    "label": "Default Tween",
+    "style": "Float",
+    "help": "Seconds a new modulation takes to glide in from the parameter's current value, and to glide out when removed.",
+    "default": 1.0,
+    "section": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Curve",
+    "label": "Tween Curve",
+    "style": "Menu",
+    "help": "Easing of the glide, tweened by Tweener. Without Tweener the modulator glides linearly.",
+    "default": "QuadraticEaseOut",
+    "menu": [
+     {
+      "name": "LinearInterpolation",
+      "label": "Linear"
+     },
+     {
+      "name": "QuadraticEaseIn",
+      "label": "Quadratic ease in"
+     },
+     {
+      "name": "QuadraticEaseOut",
+      "label": "Quadratic ease out"
+     },
+     {
+      "name": "QuadraticEaseInOut",
+      "label": "Quadratic ease in-out"
+     },
+     {
+      "name": "CubicEaseIn",
+      "label": "Cubic ease in"
+     },
+     {
+      "name": "CubicEaseOut",
+      "label": "Cubic ease out"
+     },
+     {
+      "name": "CubicEaseInOut",
+      "label": "Cubic ease in-out"
+     },
+     {
+      "name": "QuarticEaseIn",
+      "label": "Quartic ease in"
+     },
+     {
+      "name": "QuarticEaseOut",
+      "label": "Quartic ease out"
+     },
+     {
+      "name": "QuarticEaseInOut",
+      "label": "Quartic ease in-out"
+     },
+     {
+      "name": "QuinticEaseIn",
+      "label": "Quintic ease in"
+     },
+     {
+      "name": "QuinticEaseOut",
+      "label": "Quintic ease out"
+     },
+     {
+      "name": "QuinticEaseInOut",
+      "label": "Quintic ease in-out"
+     },
+     {
+      "name": "SineEaseIn",
+      "label": "Sine ease in"
+     },
+     {
+      "name": "SineEaseOut",
+      "label": "Sine ease out"
+     },
+     {
+      "name": "SineEaseInOut",
+      "label": "Sine ease in-out"
+     },
+     {
+      "name": "CircularEaseIn",
+      "label": "Circular ease in"
+     },
+     {
+      "name": "CircularEaseOut",
+      "label": "Circular ease out"
+     },
+     {
+      "name": "CircularEaseInOut",
+      "label": "Circular ease in-out"
+     },
+     {
+      "name": "ExponentialEaseIn",
+      "label": "Exponential ease in"
+     },
+     {
+      "name": "ExponentialEaseOut",
+      "label": "Exponential ease out"
+     },
+     {
+      "name": "ExponentialEaseInOut",
+      "label": "Exponential ease in-out"
+     },
+     {
+      "name": "ElasticEaseIn",
+      "label": "Elastic ease in"
+     },
+     {
+      "name": "ElasticEaseOut",
+      "label": "Elastic ease out"
+     },
+     {
+      "name": "ElasticEaseInOut",
+      "label": "Elastic ease in-out"
+     },
+     {
+      "name": "BackEaseIn",
+      "label": "Back ease in"
+     },
+     {
+      "name": "BackEaseOut",
+      "label": "Back ease out"
+     },
+     {
+      "name": "BackEaseInOut",
+      "label": "Back ease in-out"
+     },
+     {
+      "name": "BounceEaseIn",
+      "label": "Bounce ease in"
+     },
+     {
+      "name": "BounceEaseOut",
+      "label": "Bounce ease out"
+     },
+     {
+      "name": "BounceEaseInOut",
+      "label": "Bounce ease in-out"
+     }
+    ],
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Shortcutlfo",
+    "label": "LFO Hotkey",
+    "style": "Str",
+    "help": "Hotkey: beat-locked wave on the hovered parameter or group.",
+    "default": "alt.g",
+    "section": true,
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Shortcutspeed",
+    "label": "Speed Hotkey",
+    "style": "Str",
+    "help": "Hotkey: beat-locked linear rate on the hovered parameter or group.",
+    "default": "alt.shift.g",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Shortcutmenu",
+    "label": "Menu Hotkey",
+    "style": "Str",
+    "help": "Hotkey: the modulation menu at the mouse for the hovered parameter or group.",
+    "default": "ctrl.alt.g",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Shortcutremove",
+    "label": "Remove Hotkey",
+    "style": "Str",
+    "help": "Hotkey: glide the hovered parameter back to rest and delete its modulator.",
+    "default": "ctrl.shift.g",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Shortcuttap",
+    "label": "Tap Tempo Hotkey",
+    "style": "Str",
+    "help": "Hotkey for tap tempo.",
+    "default": "alt.t",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Shortcutrecord",
+    "label": "Record Hotkey",
+    "style": "Str",
+    "help": "Hotkey that arms a recording of the hovered parameter: its first change starts the recording, the hotkey again or a pause ends it, and the gesture loops.",
+    "default": "ctrl.alt.r",
+    "page": "Beat Mod"
+   },
+   {
+    "name": "Sourcechop",
+    "label": "Source CHOP",
+    "style": "CHOP",
+    "help": "The CHOP whose channels the menu offers as modulation sources (From CHOP), one sample per channel assumed. A path in this project, so it does not roam with the other settings.",
+    "default": "",
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Chopnormalize",
+    "label": "Normalize Over Window",
+    "style": "Toggle",
+    "help": "New CHOP modulators map the channel to 0..1 by the lowest and highest values it took over the last Normalize Window seconds, so a source of any scale drives the full swing. The pad ticks it.",
+    "default": false,
+    "section": true,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Chopwindow",
+    "label": "Normalize Window (s)",
+    "style": "Float",
+    "help": "Seconds of history the normalisation looks back over.",
+    "default": 5.0,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Choptrigger",
+    "label": "Trigger Envelope",
+    "style": "Toggle",
+    "help": "New CHOP modulators shape the channel into an envelope that rises over Attack when the channel crosses Threshold and falls over Release once it drops back, like a drum hit. The pad ticks it.",
+    "default": false,
+    "section": true,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Chopthreshold",
+    "label": "Trigger Threshold",
+    "style": "Float",
+    "help": "The level the channel must cross to fire the envelope, after normalisation when that is on.",
+    "default": 0.5,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Chopattack",
+    "label": "Trigger Attack (s)",
+    "style": "Float",
+    "help": "Seconds the envelope takes to reach its peak.",
+    "default": 0.02,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Choprelease",
+    "label": "Trigger Release (s)",
+    "style": "Float",
+    "help": "Seconds the envelope takes to fall back once the channel drops below the threshold.",
+    "default": 0.3,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Chopfromlo",
+    "label": "Source Range Low",
+    "style": "Float",
+    "help": "The channel value that means the bottom of the swing, when neither Normalize nor Trigger is on.",
+    "default": 0.0,
+    "section": true,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Chopfromhi",
+    "label": "Source Range High",
+    "style": "Float",
+    "help": "The channel value that means the top of the swing, when neither Normalize nor Trigger is on.",
+    "default": 1.0,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Choplimit",
+    "label": "Limit",
+    "style": "Menu",
+    "help": "What happens beyond 0..1 after the range mapping: clamp holds at the ends, loop wraps, zigzag bounces, off lets it run past. The pad ticks clamp on and off.",
+    "default": "clamp",
+    "menu": [
+     {
+      "name": "off",
+      "label": "Off"
+     },
+     {
+      "name": "clamp",
+      "label": "Clamp"
+     },
+     {
+      "name": "loop",
+      "label": "Loop"
+     },
+     {
+      "name": "zigzag",
+      "label": "Zigzag"
+     }
+    ],
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Chopsmooth",
+    "label": "Smooth (s)",
+    "style": "Float",
+    "help": "Lag on the mapped value for new CHOP modulators, in seconds: 0 follows the source instantly. The pad sets it along its x axis.",
+    "default": 0.0,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Choptrigmode",
+    "label": "Trigger Envelope Shape",
+    "style": "Menu",
+    "help": "Attack and release: the envelope rises, holds while the channel stays above the threshold, and falls over Release when it drops. Attack and decay: it rises and falls over Decay at once, one shot per crossing, whatever the channel does after.",
+    "default": "ar",
+    "menu": [
+     {
+      "name": "ar",
+      "label": "Attack and release (held while above)"
+     },
+     {
+      "name": "ad",
+      "label": "Attack and decay (one shot)"
+     }
+    ],
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Chopdecay",
+    "label": "Trigger Decay (s)",
+    "style": "Float",
+    "help": "Seconds the one-shot envelope takes to fall back after its peak.",
+    "default": 0.3,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Choptolo",
+    "label": "Mapped Range Low",
+    "style": "Float",
+    "help": "Where the Source Range Low lands for new CHOP modulators, before the window. With Mapped Range High at 1 this is the plain mapping; swap the two to run the channel backwards, or narrow them to sweep only part of the window. The panel sets both on its To page.",
+    "default": 0.0,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Choptohi",
+    "label": "Mapped Range High",
+    "style": "Float",
+    "help": "Where the Source Range High lands for new CHOP modulators, before the window.",
+    "default": 1.0,
+    "page": "CHOP Mod"
+   },
+   {
+    "name": "Rectimeout",
+    "label": "Stop After (s)",
+    "style": "Float",
+    "help": "A running recording ends on its own when nothing has moved for this long; the still tail is cut off, so the loop ends where the gesture did. 0 records until the hotkey.",
+    "default": 2.0,
+    "page": "Record"
+   },
+   {
+    "name": "Recmode",
+    "label": "Play Back",
+    "style": "Menu",
+    "help": "How a recorded loop plays: stretched over a beat division of the timeline tempo, so it stays on the grid whatever the tempo does, or over the seconds it was recorded in.",
+    "default": "beat",
+    "menu": [
+     {
+      "name": "beat",
+      "label": "Over beats of the tempo"
+     },
+     {
+      "name": "time",
+      "label": "At its own speed"
+     }
+    ],
+    "page": "Record"
+   },
+   {
+    "name": "Recround",
+    "label": "Round To A Division",
+    "style": "Toggle",
+    "help": "When playing over beats, the loop takes the beat division nearest its recorded length; off, it takes exactly the beats it lasted, which may fall between divisions.",
+    "default": true,
+    "page": "Record"
+   },
+   {
+    "name": "Recseam",
+    "label": "Seam",
+    "style": "Menu",
+    "help": "How a recorded loop comes round: a crossfade from its end into its start (a Join CHOP bridge of Seam Length, added to the loop), forward then backward, or a plain cut.",
+    "default": "blend",
+    "menu": [
+     {
+      "name": "blend",
+      "label": "Blend the end into the start"
+     },
+     {
+      "name": "pingpong",
+      "label": "Ping-pong"
+     },
+     {
+      "name": "hard",
+      "label": "Hard cut"
+     }
+    ],
+    "page": "Record"
+   },
+   {
+    "name": "Recseamfrac",
+    "label": "Seam Length",
+    "style": "Float",
+    "help": "The blended seam as a fraction of the recording.",
+    "default": 0.1,
+    "page": "Record"
+   },
+   {
+    "name": "Openauthor",
+    "label": "Open Author",
+    "style": "Pulse",
+    "help": "Open the author's page (FNS_About's Authorurl).",
+    "page": "About"
+   }
+  ],
   "FNS_Collect": [
    {
     "name": "Collectui",
@@ -3724,7 +4424,7 @@
     "name": "Favouritekeys",
     "label": "Favourite keys",
     "style": "Str",
-    "help": "JSON list of command identities (tool#id) starred with Ctrl+D in the palette. Persisted by the config host.",
+    "help": "Legacy store of starred command identities (tool#id) from before the shared curation file; adopted into that file on first read, then emptied.",
     "default": "[]",
     "page": "Palette"
    },
@@ -3740,7 +4440,7 @@
     "name": "Visibilityoverrides",
     "label": "Visibility overrides",
     "style": "Str",
-    "help": "JSON dict of command identity (tool#id) -> true (hidden) or false (shown), set from the Commands tab in FNS_Hub. Your choice beats the tool default in both directions. Persisted by the config host.",
+    "help": "Legacy store of visibility overrides (tool#id -> hidden or shown) from before the shared curation file; adopted into that file on first read, then emptied.",
     "default": "{}",
     "page": "Palette"
    },
@@ -3748,7 +4448,7 @@
     "name": "Presets",
     "label": "Presets",
     "style": "Str",
-    "help": "JSON list of presets: a command identity (tool#id) with arguments baked in, under a name of your own, saved with Alt+S in the palette. Persisted by the config host.",
+    "help": "Legacy store of presets from before the shared curation file; adopted into that file on first read, then emptied.",
     "default": "[]",
     "page": "Palette"
    },
@@ -3902,6 +4602,24 @@
     "page": "Registration"
    },
    {
+    "name": "Configscope",
+    "label": "Config Scope",
+    "style": "Menu",
+    "help": "Follows the toolkit root's Config Scope (op.FNS, FNSTools page) through a guarded expression, and reads 'project' when there is no root: a standalone tool release keeps its settings in the .toe. Author on the root; the root par is the record.",
+    "default": "global",
+    "menu": [
+     {
+      "name": "global",
+      "label": "Global (user palette, roams)"
+     },
+     {
+      "name": "project",
+      "label": "Project (.toe only)"
+     }
+    ],
+    "page": "Config"
+   },
+   {
     "name": "Configfile",
     "label": "Config File",
     "style": "File",
@@ -4053,7 +4771,7 @@
     "name": "Configscope",
     "label": "Config Scope",
     "style": "Menu",
-    "help": "Bound to the toolkit root's Config Scope (op.FNS, FNSTools page) -- edit either; the root par is the record. Where FNSTools' persisted settings and bar layouts live. Global: one JSON in the user palette, shared by every project on this machine (last save wins across projects). Project: the roaming file is never read nor written -- everything lives in this project's .toe and travels with it. Switching back to Global: the next save overwrites the shared layout with this project's state.",
+    "help": "Follows the toolkit root's Config Scope (op.FNS, FNSTools page) through a guarded expression, and reads 'project' when there is no root: a standalone tool release keeps its settings in the .toe. Author on the root; the root par is the record. Where FNSTools' persisted settings and bar layouts live: global roams through one file in the user palette, project never reads or writes it.",
     "default": "global",
     "menu": [
      {
@@ -5327,6 +6045,15 @@
     "page": "About"
    }
   ],
+  "FNS_PreviewPanel": [
+   {
+    "name": "Openauthor",
+    "label": "Open Author",
+    "style": "Pulse",
+    "help": "Open the author's page (FNS_About's Authorurl).",
+    "page": "About"
+   }
+  ],
   "FNS_Remote": [
    {
     "name": "Active",
@@ -6445,6 +7172,163 @@
     "default": "",
     "readonly": true,
     "page": "Markers"
+   },
+   {
+    "name": "Animation",
+    "label": "Animation COMP",
+    "style": "OP",
+    "help": "The Animation COMP the keys go into. Its channels are named operator:parameter, one per keyed parameter, and the current frame is that animation's own, whichever timeline it sits on.",
+    "default": "",
+    "page": "Keyframer"
+   },
+   {
+    "name": "Refs",
+    "label": "References",
+    "style": "Sequence",
+    "help": "",
+    "default": 0,
+    "page": "Keyframer"
+   },
+   {
+    "name": "Refs0op",
+    "label": "Operator",
+    "style": "OP",
+    "help": "An operator whose parameters are keyed. Add a block per operator.",
+    "default": "",
+    "page": "Keyframer"
+   },
+   {
+    "name": "Refs0include",
+    "label": "Include",
+    "style": "Str",
+    "help": "Parameter names to key, as patterns: * for all, t? r? for the transform, or a list.",
+    "default": "*",
+    "page": "Keyframer"
+   },
+   {
+    "name": "Refs0exclude",
+    "label": "Exclude",
+    "style": "Str",
+    "help": "Parameter names left out, as patterns. Applied after Include.",
+    "default": "",
+    "page": "Keyframer"
+   },
+   {
+    "name": "Excludepages",
+    "label": "Exclude Pages",
+    "style": "Str",
+    "help": "Parameter pages never keyed, on every referenced operator. Common, About, Info and Version are housekeeping on most operators and are the shipped default.",
+    "default": "Common About Info Version",
+    "section": true,
+    "page": "Keyframer"
+   },
+   {
+    "name": "Function",
+    "label": "Key Function",
+    "style": "Menu",
+    "help": "The interpolation written with every new key: how the channel moves from this key to the next.",
+    "default": "linear",
+    "menu": [
+     {
+      "name": "linear",
+      "label": "Linear"
+     },
+     {
+      "name": "constant",
+      "label": "Constant (hold)"
+     },
+     {
+      "name": "ease",
+      "label": "Ease"
+     },
+     {
+      "name": "easein",
+      "label": "Ease in"
+     },
+     {
+      "name": "easeout",
+      "label": "Ease out"
+     },
+     {
+      "name": "cubic",
+      "label": "Cubic"
+     },
+     {
+      "name": "bezier",
+      "label": "Bezier"
+     },
+     {
+      "name": "spline",
+      "label": "Spline"
+     }
+    ],
+    "page": "Keyframer"
+   },
+   {
+    "name": "Addchannels",
+    "label": "Add Channels From References",
+    "style": "Pulse",
+    "help": "Give every referenced parameter that passes the patterns a channel in the animation, no keys: the References as a bulk add. Keys come from Keyframe Now and the KEY button, which act on the channel list.",
+    "page": "Keyframer"
+   },
+   {
+    "name": "Keyframe",
+    "label": "Keyframe Now",
+    "style": "Pulse",
+    "help": "Key the animation's channels as their parameters stand, at its current frame: the ones picked in the editor's list when any are, else all of them. Nothing is created here; drop on the strip or Add Channels to add.",
+    "section": true,
+    "page": "Keyframer"
+   },
+   {
+    "name": "Removekeys",
+    "label": "Remove Keys At Frame",
+    "style": "Pulse",
+    "help": "Delete the keys at the animation's current frame from the picked channels, else all of them. Channels stay.",
+    "page": "Keyframer"
+   },
+   {
+    "name": "Drive",
+    "label": "Drive Parameters",
+    "style": "Toggle",
+    "help": "On, the referenced parameters read their channels from the animation, so it plays them; off, they are put back to constants at the value they show and can be authored again. Author with it off, play with it on.",
+    "default": false,
+    "section": true,
+    "page": "Keyframer"
+   },
+   {
+    "name": "Drivemethod",
+    "label": "Drive Method",
+    "style": "Menu",
+    "help": "How Drive connects the parameters to the animation. CHOP export is TouchDesigner's own way, a Null CHOP placed beside the Animation COMP exporting through a table, and it shows in the parameter as an export. Expressions read the animation's out CHOP on each parameter instead; both release to constants.",
+    "default": "export",
+    "menu": [
+     {
+      "name": "export",
+      "label": "CHOP export, a Null beside the animation"
+     },
+     {
+      "name": "expression",
+      "label": "An expression per parameter"
+     }
+    ],
+    "page": "Keyframer"
+   },
+   {
+    "name": "Editorcontrols",
+    "label": "Controls In Animation Editor",
+    "style": "Toggle",
+    "help": "KEY, UNKEY and DRIVE buttons in the Animation editor, beside the layer toggles, so keys can be set from the editor itself.",
+    "default": true,
+    "page": "Keyframer"
+   },
+   {
+    "name": "Keyframerstatus",
+    "label": "Status",
+    "style": "Str",
+    "help": "What the last action did, or why it did not.",
+    "default": "",
+    "readonly": true,
+    "page": "Keyframer"
    }
   ],
   "FNS_Toolbar": [
@@ -8951,6 +9835,42 @@
     "default": true
    }
   ],
+  "FNS_PaneTypeRegistry": [
+   {
+    "name": "Autoregister",
+    "label": "Auto-register",
+    "style": "Toggle",
+    "help": "When on, register the host COMP immediately and keep recall flags / callback in sync when settings change. When off, use Register or Python RegisterPanel.",
+    "default": false
+   },
+   {
+    "name": "Register",
+    "label": "Register",
+    "style": "Pulse",
+    "help": "Register the host COMP now (even if Auto-register is off). Validates COMP type against Pane Type."
+   },
+   {
+    "name": "Unregister",
+    "label": "Unregister",
+    "style": "Pulse",
+    "help": "Take this tool's contribution back out of the registry and turn Autoregister off, so it stays out. Register puts it back."
+   },
+   {
+    "name": "Regstatus",
+    "label": "Status",
+    "style": "Str",
+    "help": "Read-only status of host auto-registration (Idle, Registered, Skipped under /sys or /ui, Error).",
+    "default": "Idle",
+    "readonly": true
+   },
+   {
+    "name": "Menuorder",
+    "label": "Menu Order",
+    "style": "Int",
+    "help": "Preferred order among registered panebar entries. -1 = no preference (append, default). 0 = first among custom entries, 1 = second, and so on. Built-in rows are not moved.",
+    "default": -1
+   }
+  ],
   "FNS_ToolbarRegistry": [
    {
     "name": "Autoregister",
@@ -9029,6 +9949,13 @@
    "FNS_ConfigRegistry",
    "FNS_HubRegistry"
   ],
+  "FNS_Autosave": [
+   "FNS_ConfigRegistry"
+  ],
+  "FNS_BeatMod": [
+   "FNS_ConfigRegistry",
+   "FNS_HubRegistry"
+  ],
   "FNS_CommandPalette": [
    "FNS_ConfigRegistry",
    "FNS_HubRegistry"
@@ -9045,6 +9972,12 @@
    "FNS_ConfigRegistry",
    "FNS_HubRegistry",
    "FNS_OpMenuRegistry"
+  ],
+  "FNS_PreviewPanel": [
+   "FNS_PaneTypeRegistry"
+  ],
+  "FNS_Remote": [
+   "FNS_ConfigRegistry"
   ],
   "FNS_TimelineTools": [
    "FNS_ConfigRegistry"
@@ -9160,6 +10093,9 @@
    "hub"
   ],
   "FNS_Autosave": [],
+  "FNS_BeatMod": [
+   "hub"
+  ],
   "FNS_Collect": [],
   "FNS_CommandKit": [],
   "FNS_CommandPalette": [
@@ -9190,6 +10126,9 @@
   "FNS_OpMenuRegistry": [],
   "FNS_PaletteRegistry": [],
   "FNS_PaneTypeRegistry": [],
+  "FNS_PreviewPanel": [
+   "panebar"
+  ],
   "FNS_Remote": [],
   "FNS_TimelineRegistry": [],
   "FNS_TimelineTools": [
@@ -9317,6 +10256,14 @@
     "order": 110
    }
   ],
+  "FNS_BeatMod": [
+   {
+    "surface": "hub",
+    "widget": "FNS_BeatMod",
+    "label": "BeatMod",
+    "order": 60
+   }
+  ],
   "FNS_CommandPalette": [
    {
     "surface": "hub",
@@ -9417,6 +10364,18 @@
     "widget": "IOFilter",
     "label": "IOFilter",
     "order": 2
+   }
+  ],
+  "FNS_PreviewPanel": [
+   {
+    "surface": "panebar",
+    "widget": "FNS_PreviewPanel",
+    "label": "PreviewPanel"
+   },
+   {
+    "surface": "panebar",
+    "widget": "UI/POPtoDAT_panel",
+    "label": "PopViewer"
    }
   ],
   "FNS_TimelineTools": [
@@ -9767,16 +10726,8 @@
    "section": true
   },
   {
-   "name": "Version",
-   "label": "Version",
-   "style": "Str",
-   "help": "FNS_CommandKit version.",
-   "default": "1.0.0",
-   "readonly": true
-  },
-  {
    "name": "Build",
-   "label": "Build",
+   "label": "Build Number",
    "style": "Int",
    "help": "Build counter of this component.",
    "default": 0,
@@ -9784,7 +10735,7 @@
   },
   {
    "name": "Date",
-   "label": "Date",
+   "label": "Build Date",
    "style": "Str",
    "help": "When this build was made.",
    "default": "",
@@ -9792,10 +10743,18 @@
   },
   {
    "name": "Touchbuild",
-   "label": "Touchbuild",
+   "label": "Touch Build",
    "style": "Str",
    "help": "TouchDesigner build this component was last saved with.",
    "default": "",
+   "readonly": true
+  },
+  {
+   "name": "Version",
+   "label": "Version",
+   "style": "Str",
+   "help": "FNS_CommandKit version.",
+   "default": "1.0.0",
    "readonly": true
   },
   {

@@ -1,6 +1,6 @@
 ---
 package: FNS_HubRegistry
-summary: 'The registry behind FNS_Hub''s tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys.'
+summary: 'The registry behind Hub''s tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys.'
 features:
   - name: Hub Registry
     anchor: hub-registry
@@ -10,7 +10,7 @@ features:
 
 ## Hub Registry
 
-The raw registry that decides what [FNS_Hub](/docs/fns-hub/) shows: one entry
+The raw registry that decides what [Hub](/docs/fns-hub/) shows: one entry
 per tab, with its label, order, visibility and what it renders. The hub itself
 holds no tab knowledge; it draws what this registry says, and the registry
 injects one mirror or viewer per entry into the hub's tab area, prunes the ones
@@ -18,7 +18,7 @@ whose tool is gone, and heals the rest.
 
 It ships as its own core package, promoted to `/sys` (global shortcut
 `op.FNS_HUBREGISTRY`), alongside the six surface registries,
-[FNS_Console](/docs/fns-console/) and [FNS_Updater](/docs/fns-updater/). You
+[Console](/docs/fns-console/) and [Updater](/docs/fns-updater/). You
 normally never touch it directly; the hub is the UI.
 
 ## For tool authors

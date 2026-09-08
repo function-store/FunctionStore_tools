@@ -163,6 +163,15 @@ const surfaceRegistry = (id) => (SURFACE_META()[id] || {}).registry || '';
 /** URL slug for a package. Must match _helpUrl() in build_manifest.py. */
 const packageSlug = (name) => name.toLowerCase().replace(/_/g, '-');
 
+/** The name a reader sees: the package name with a leading FNS_ removed.
+ *  Must match PublicName() in build_manifest.py, which writes it into the
+ *  manifest as `title`. The prefix is an operator-name convention and it
+ *  earns nothing in a sorted list, where it collapses every FNS package
+ *  under "F". `name` stays the identity everywhere it is looked up, and a
+ *  curated catalog.json `title` wins over the derivation.
+ *  See docs/PublicToolNames.md. */
+const publicName = (name) => (name.startsWith('FNS_') ? name.slice(4) : name);
+
 const esc = (s) => String(s)
   .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   .replace(/"/g, '&quot;');
@@ -260,6 +269,7 @@ for (const file of files) {
     : null;
   pages.push({
     name,
+    title: String(cur.title || publicName(name)),
     slug: packageSlug(name),
     file,
     meta: data,
@@ -719,7 +729,7 @@ function placementSection(p) {
       : esc(surfaceLabel(e.surface));
     const bits = [];
     // The name the BAR shows, which is often not the package name.
-    if (e.label && e.label !== p.name) bits.push(`as <strong>${esc(e.label)}</strong>`);
+    if (e.label && e.label !== p.name && e.label !== p.title) bits.push(`as <strong>${esc(e.label)}</strong>`);
     if (e.side) bits.push(`${esc(e.side)} side`);
     if (e.order !== undefined) bits.push(`position ${esc(String(e.order))}`);
     const icon = e.icon
@@ -732,7 +742,7 @@ function placementSection(p) {
   <h2 id="where-it-appears">Where it appears</h2>
   <p class="hint-line">Read off the registry hosts in the component, so this is
   where the tool puts itself in a default install; every one of these can be
-  reordered or hidden from <a href="/docs/fns-hub/">FNS_Hub</a>.</p>
+  reordered or hidden from <a href="/docs/fns-hub/">Hub</a>.</p>
   <ul class="place-list">
 ${rows}
   </ul>
@@ -743,9 +753,9 @@ function sidebar(currentSlug) {
   const groups = displayCategories.map((cat) => {
     const inCat = pages
       .filter((p) => p.category === cat)
-      .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+      .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
     const items = inCat
-      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.name)}${isPlus(p.name) ? PLUS_MARK : ''}</a></li>`)
+      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.title)}${isPlus(p.name) ? PLUS_MARK : ''}</a></li>`)
       .join('\n');
     if (!items) return '';
     return sideGroup(GLYPH[cat] || '·', cat, items, inCat.length);
@@ -836,7 +846,7 @@ for (const p of pages) {
   }
 
   const video = p.meta.video
-    ? `<div class="embed-video"><iframe src="https://www.youtube.com/embed/${esc(String(p.meta.video).split(/[/=]/).pop())}" title="${esc(p.name)} walkthrough" loading="lazy" allowfullscreen></iframe></div>`
+    ? `<div class="embed-video"><iframe src="https://www.youtube.com/embed/${esc(String(p.meta.video).split(/[/=]/).pop())}" title="${esc(p.title)} walkthrough" loading="lazy" allowfullscreen></iframe></div>`
     : '';
 
   // The site is the complete record of the gated tools: a Plus page is as
@@ -923,13 +933,13 @@ for (const p of pages) {
     the prose. <a href="${EDIT_BASE}/${p.file}" target="_blank"
     rel="noopener">Write it →</a></p>`;
 
-  const html = `${head(`${p.name} | FNSTools docs`, p.description || `${p.name} documentation.`, `${SITE}/docs/${p.slug}/`)}
+  const html = `${head(`${p.title} | FNSTools docs`, p.description || `${p.title} documentation.`, `${SITE}/docs/${p.slug}/`)}
 ${header('/docs/')}
 <div class="docs-layout wrap">
 ${sidebar(p.slug)}
 <main class="docs-main" data-pagefind-body>
   <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> ${esc(p.category)}</p>
-  <h1>${esc(p.name)}</h1>
+  <h1>${esc(p.title)}</h1>
   ${p.description ? `<p class="lede">${esc(p.description)}</p>` : ''}
   <p class="badges">${badges.join(' ')}</p>
   ${plusNote}
@@ -1003,10 +1013,10 @@ function surfaceFilter() {
 const indexGroups = displayCategories.map((cat) => {
   const items = pages
     .filter((p) => p.category === cat)
-    .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }))
+    .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }))
     .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/" data-surfaces="${
         esc(surfacesOf(p.name).join(' ')) || 'none'}">
-        <strong>${esc(p.name)}${isPlus(p.name) ? PLUS_MARK : ''}</strong>
+        <strong>${esc(p.title)}${isPlus(p.name) ? PLUS_MARK : ''}</strong>
         <span>${esc(p.description || p.meta.summary)}</span>
       </a>`).join('\n');
   if (!items) return '';
@@ -1091,10 +1101,10 @@ ${FOOT}`);
 const grid = displayCategories.map((cat) => {
   const inCat = pages
     .filter((p) => p.category === cat)
-    .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+    .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
   const items = inCat.map((p) => `          <div class="feat">
             <div class="feat-icon" aria-hidden="true">${GLYPH[cat] || '·'}</div>
-            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.name)}</a>${isPlus(p.name) ? PLUS_MARK : ''}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
+            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.title)}</a>${isPlus(p.name) ? PLUS_MARK : ''}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
           </div>`).join('\n');
   if (!items) return '';
   const plusHere = inCat.filter((p) => isPlus(p.name)).length;
@@ -1137,11 +1147,11 @@ const previewCats = displayCategories.filter((c) => !isDeprioritized(c)).slice(0
 const previewBlock = previewCats.map((cat) => {
   const items = pages
     .filter((p) => p.category === cat)
-    .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+    .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
   const cards = items.slice(0, 2).map((p, i) => `          <span class="picker__card${i === 0 ? ' is-on' : ''}">
             <span class="picker__box" aria-hidden="true">${i === 0 ? '✓' : ''}</span>
             <span class="picker__card-body">
-              <b>${esc(p.name)}</b>
+              <b>${esc(p.title)}</b>
               <span>${esc(p.description || p.meta.summary || '')}</span>
             </span>
             <span class="picker__card-docs">docs ↗</span>
@@ -1264,12 +1274,12 @@ if (fs.existsSync(plusSrc)) {
 
   const plusPages = pages
     .filter((p) => isPlus(p.name))
-    .sort((a, b) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }));
+    .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
 
   const plusList = plusPages.length
     ? `<div class="plus-pkgs">\n` + plusPages.map((p) => `  <a class="plus-pkg" href="/docs/${p.slug}/">
     <span>
-      <b>${esc(p.name)}</b>
+      <b>${esc(p.title)}</b>
       <span>${esc(p.description || p.meta.summary || '')}</span>
       <span class="cat-of">${GLYPH[p.category] || '·'} ${esc(p.category)}</span>
     </span>

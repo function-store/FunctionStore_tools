@@ -7,7 +7,7 @@ hotkeys:
   - keys: alt.F7
     does: Show or hide the timeline
 # Bound on the tool's keyboardin through a list expression, which
-# FNS_HotkeyManager cannot discover; see the "fixed key" sentence below.
+# HotkeyManager cannot discover; see the "fixed key" sentence below.
 fixed_keys: [Shift+Esc]
 features:
   - name: BorderlessTD

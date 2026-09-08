@@ -60,7 +60,7 @@ link can deep-link to it.
   search across all tools. Writing a value goes through
   `FNS_ConfigRegistry`'s own filters and persistence, so the page can
   never disagree with the components. The header carries **scope**
-  (global/project; see FNS_ConfigRegistry), **Export** (writes
+  (global/project; see ConfigRegistry), **Export** (writes
   `<config dir>/exports/FNStools_config_<stamp>.json` server-side and
   offers a download) and **Import** (applies a document to installed tools
   now and keeps sections for tools you install later).

@@ -58,5 +58,5 @@ Registration is **not** instantaneous: the entry is stored first and its zone
 arrives with the host's parameter a frame later, so anything that depends on the
 final zone settles a frame later.
 
-[FNS_TimelineTools](/docs/fns-timelinetools/) is the reference consumer; it uses
+[TimelineTools](/docs/fns-timelinetools/) is the reference consumer; it uses
 `transport` for its own controls and `background` for the media strip.

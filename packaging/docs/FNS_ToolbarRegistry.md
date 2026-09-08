@@ -24,10 +24,10 @@ It ships as its own core package, always installed,
 promoted to `/sys` with the global shortcut `op.FNS_TOOLBARREGISTRY`.
 
 You normally never touch it directly. Open the **Toolbar** tab of
-[FNS_Hub](/docs/fns-hub/) (the FNS button in the main-menu bar) to reorder,
+[Hub](/docs/fns-hub/) (the FNS button in the main-menu bar) to reorder,
 group, hide/show and add dividers between widgets; the layout is saved and
 follows you across projects through
-[FNS_ConfigRegistry](/docs/fns-configregistry/).
+[ConfigRegistry](/docs/fns-configregistry/).
 
 ## For tool authors
 

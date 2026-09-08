@@ -23,7 +23,7 @@ network you are in: one input, a ranked list, and a footer that always says
 what Enter will do to the row you are on. Type to filter, Up and Down to move,
 Enter or a click to act, Esc to close. Clicking anywhere else closes it too.
 
-The list is fed by [FNS_CommandRegistry](/docs/fns-commandregistry/): every
+The list is fed by [CommandRegistry](/docs/fns-commandregistry/): every
 command any installed FNS tool declares, without the tools knowing this
 palette exists. TouchDesigner's own palette components are in the same list,
 read from the Palette Browser's model, so your own palette folders are
@@ -80,7 +80,7 @@ deletes it.
 
 ## Commands tab
 
-The palette contributes a **Commands** tab to [FNS_Hub](/docs/fns-hub/):
+The palette contributes a **Commands** tab to [Hub](/docs/fns-hub/):
 every registered command, hidden ones included, with its tool and context.
 Click **Star** to star it and **Hidden** to hide or show it; your choice
 beats the tool's own default in both directions. A filter field narrows the
@@ -90,12 +90,12 @@ TouchDesigner's built-in commands show `built-in` in their Context cell.
 ## Hotkey and persistence
 
 The hotkey lives on the tool's `Hotkey` parameter, so
-[FNS_HotkeyManager](/docs/fns-hotkeymanager/) lists it, checks it for
+[HotkeyManager](/docs/fns-hotkeymanager/) lists it, checks it for
 conflicts and rebinds it. Which display the window opens on is set by the
 window placement parameters on the same page.
 
 Favourites, presets and hidden commands are keyed by tool and command id,
 the same identity the launcher's tray app uses, so they survive a tool moving
 in the network. They and the query history persist through
-[FNS_ConfigRegistry](/docs/fns-configregistry/), so under global scope they
+[ConfigRegistry](/docs/fns-configregistry/), so under global scope they
 follow you between projects and under project scope they stay in the `.toe`.

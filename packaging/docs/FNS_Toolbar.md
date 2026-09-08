@@ -41,7 +41,7 @@ and want the operator tiles on their own.
 ## Customising the bar
 
 The way to arrange the bar is the **Toolbar** tab of
-[FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar): reorder,
+[Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar): reorder,
 group, hide and show widgets and add dividers between them. Drag rows in the
 list; right-click a name for its docs. Drop any panel COMP on the FNS button to
 register it as a toolbar package of your own. The layout is saved and follows

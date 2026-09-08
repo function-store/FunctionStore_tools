@@ -39,4 +39,4 @@ Furthermore holding `Ctrl` will show the relative path of the `iop` target as we
 - You can then paste this to any expression or script
 - Right-Clicking on any of the parameters will open the parameter customization window of that param
 
-> The **Navbar** tab of [FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar) manages what else lives on the pane bar: reorder items, flip an item between the left/right side, show/hide it, and drop any panel COMP on the FNS button to register it as its own self-installing navbar package.
+> The **Navbar** tab of [Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar) manages what else lives on the pane bar: reorder items, flip an item between the left/right side, show/hide it, and drop any panel COMP on the FNS button to register it as its own self-installing navbar package.

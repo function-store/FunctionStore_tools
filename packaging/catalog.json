@@ -91,13 +91,18 @@
    "category": "Parameters",
    "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field."
   },
+  "FNS_BeatMod": {
+   "category": "Parameters",
+   "description": "Beat-synced modulation on any parameter or ParGroup, locked to the timeline tempo: a wave, a channel of any CHOP, or a gesture you record by hand, gliding in instead of cutting. Tap tempo sets the global BPM, and a manager lists every modulator in the project.",
+   "access": "8323905"
+  },
   "FNS_CommandKit": {
    "category": "Developer",
    "description": "Drop-in kit that lets ANY component publish quick-launch commands to the TDXL launcher palette: decorate a promoted method, or declare a spec. Guarded: with no launcher in the session nothing happens and nothing errors."
   },
   "FNS_CommandPalette": {
    "category": "Core",
-   "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in FNS_Hub."
+   "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in Hub."
   },
   "FNS_CommandRegistry": {
    "category": "Core",
@@ -105,7 +110,7 @@
   },
   "FNS_ConfigHost": {
    "category": "Developer",
-   "description": "A standalone FNS_ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions."
+   "description": "A standalone ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions."
   },
   "FNS_ConfigRegistry": {
    "category": "Core",
@@ -126,7 +131,7 @@
   },
   "FNS_HubRegistry": {
    "category": "Core",
-   "description": "The registry behind FNS_Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys."
+   "description": "The registry behind Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys."
   },
   "FNS_MainMenuRegistry": {
    "category": "Core",
@@ -164,7 +169,7 @@
   },
   "FNS_TimelineTools": {
    "category": "Media & Output",
-   "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip and a waveform.",
+   "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip, a waveform and your editor's markers. Key any operators' parameters into an Animation COMP with one press, and play them back from it.",
    "access": "8323905",
    "license": "",
    "seats": null,

@@ -33,12 +33,12 @@ your workspace.
 The tab step matters because the search field lives inside the *stock* palette
 list, and any contributed tab hides that list. The hotkey asks whichever
 palette-tab owner is installed to show TD's own tab again
-([FNS_PaletteRegistry](/docs/fns-paletteregistry/) and TDXLU's own injector are
+([PaletteRegistry](/docs/fns-paletteregistry/) and TDXLU's own injector are
 both feature-detected, neither required), then takes focus one frame later,
 a tab switched back this frame is still hidden.
 
 **Rebindable.** The combo lives on this package's own **Search Hotkey**
-parameter, so it is listed under TDX_SearchPalette in FNS_HotkeyManager and can
+parameter, so it is listed under TDX_SearchPalette in HotkeyManager and can
 be changed there or on the parameter directly; *Reset to Default* restores
 `ctrl+shift+f`. It used to live in MY_HOTKEYS; keeping it with the tool that
 owns the field means uninstalling this package takes its hotkey with it.

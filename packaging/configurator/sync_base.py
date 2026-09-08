@@ -35,11 +35,11 @@ END = '/* FNS:UIBASE:END */'
 # Every file that inlines the base. Repo-relative, forward slashes.
 TARGETS = (
     'packaging/configurator/index.html',
-    'FNSTools/FNS_Console/console_page.html',
+    'modules/suspects/FNSTools/FNS_Console/console_page.html',
     # ColorUI runs standalone in its own Web Render (TitleBridge) as well as
     # framed under /t/ColorUI/, so it cannot rely on the console server's
     # /base.css and inlines its copy like the shells do.
-    'FNSTools/ColorUI/webui.html',
+    'modules/suspects/FNSTools/ColorUI/webui.html',
 )
 
 START_LINE = ('/* FNS:UIBASE:START -- generated from '

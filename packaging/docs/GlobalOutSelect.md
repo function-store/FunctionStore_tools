@@ -8,7 +8,7 @@ features:
 
 ## GlobalOutSelect
 
-A tab of [FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
+A tab of [Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
 
 It lists your **Global OP Shortcuts** in a tree, with any `out` operators
 found inside each one. Drag a row into a network editor to place a **Select**

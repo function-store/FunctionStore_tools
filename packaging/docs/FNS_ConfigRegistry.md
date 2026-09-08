@@ -31,7 +31,7 @@ why it is always correct for the subset of tools you actually installed
 and never grows dead entries for ones you removed. Each tool's `Registry`
 page is skipped; that is registration plumbing.
 
-The page is served by **FNS_Console**, the toolkit's web front and a core
+The page is served by **Console**, the toolkit's web front and a core
 package of its own, on `127.0.0.1`, first free port in **36710-36759**,
 only while you are looking at it (see `FNS_Console.md`). This registry
 only answers the console's `/api/*` calls: `UiState`, `UiSet`,
@@ -44,12 +44,12 @@ still works; it forwards to `op.FNS_CONSOLE.Open()`.
 
 ## Syncing/Externalizing
 
-FNS_ConfigRegistry aggregates every installed tool's Custom Parameters (plus optional extra state, e.g. from [OpTemplates](/docs/optemplates/) or [ExprHotStrings](/docs/exprhotstrings/#exprhotstrings)) into **one JSON file** inside your **User Palette** (`FNStools_ext/config/FNStools_config.json` by default, overridable per-install via the master's `Configfile` par), so your settings follow you across projects and stay out of the `.toe`.
+ConfigRegistry aggregates every installed tool's Custom Parameters (plus optional extra state, e.g. from [OpTemplates](/docs/optemplates/) or [ExprHotStrings](/docs/exprhotstrings/#exprhotstrings)) into **one JSON file** inside your **User Palette** (`FNStools_ext/config/FNStools_config.json` by default, overridable per-install via the master's `Configfile` par), so your settings follow you across projects and stay out of the `.toe`.
 
-Each tool loads its own section once per session, ~30 frames after it registers (`Autoload`, on by default per tool; turn it off on a tool that should keep project-local settings instead, e.g. one whose state should migrate with the project folder). Saving happens automatically on project pre-save, via the `Save All` pulse on any tool's Registry page (forwards to the FNS_ConfigRegistry master), and right before the updater replaces a package.
+Each tool loads its own section once per session, ~30 frames after it registers (`Autoload`, on by default per tool; turn it off on a tool that should keep project-local settings instead, e.g. one whose state should migrate with the project folder). Saving happens automatically on project pre-save, via the `Save All` pulse on any tool's Registry page (forwards to the ConfigRegistry master), and right before the updater replaces a package.
 
 ## Custom Parameters
 
-FNS_ConfigRegistry is one of the toolkit's **core** packages, always installed. Core is the six surface registries (Config, Toolbar, Navbar, MainMenu, OpMenu, PaneType) plus [FNS_Console](/docs/fns-console/) and [FNS_Updater](/docs/fns-updater/). It ships as its own package, promoted to `/sys` (global shortcut `op.FNS_CONFIGREGISTRY`). Every tool that wants its settings to persist carries a small **host** copy of it, visible as the tool's own `Registry` page (the `Cf`-prefixed section; every control in it is listed under [What it adds to a registered tool](#registry-section)). Removing a tool's host means that tool's settings stop syncing, and nothing else breaks.
+ConfigRegistry is one of the toolkit's **core** packages, always installed. Core is the six surface registries (Config, Toolbar, Navbar, MainMenu, OpMenu, PaneType) plus [Console](/docs/fns-console/) and [Updater](/docs/fns-updater/). It ships as its own package, promoted to `/sys` (global shortcut `op.FNS_CONFIGREGISTRY`). Every tool that wants its settings to persist carries a small **host** copy of it, visible as the tool's own `Registry` page (the `Cf`-prefixed section; every control in it is listed under [What it adds to a registered tool](#registry-section)). Removing a tool's host means that tool's settings stop syncing, and nothing else breaks.
 
-Use `Save All` / `Load All` (on the FNS_ConfigRegistry master, or any host's forwarded pulse) to explicitly sync all tool settings to/from the JSON at once, handy after a significant change you want to carry into other projects.
+Use `Save All` / `Load All` (on the ConfigRegistry master, or any host's forwarded pulse) to explicitly sync all tool settings to/from the JSON at once, handy after a significant change you want to carry into other projects.

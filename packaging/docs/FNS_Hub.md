@@ -12,7 +12,7 @@ features:
     anchor: contributing-a-tab
 ---
 
-FNS_Hub is the one place to manage the toolkit from inside TouchDesigner. It
+Hub is the one place to manage the toolkit from inside TouchDesigner. It
 puts an **FNS** button at the right end of the main-menu bar and, behind it, a
 window with a tab per concern: the Toolbar, Navbar and Main Menu configurators
 (the per-bar gear buttons are gone; this is where they went), the web
@@ -49,10 +49,10 @@ Hub* and *Open main-menu configurator*.
 - **Commands**: every command the command registry serves, hidden ones and
   TouchDesigner's built-ins included, with its tool and context; star and
   hide from here, and your choice beats the tool's default. Contributed by
-  [FNS_CommandPalette](/docs/fns-commandpalette/).
+  [CommandPalette](/docs/fns-commandpalette/).
 - **Tool tabs**: the larger tool UIs that used to live in the `Fx`
   tools panel: oscMapper, ExprHotStrings, GlobalOutSelect, SearchWords
-  (FNS_OpMenu's keyword table), midiMapper and OpColor (ColorUI's palette
+  (OpMenu's keyword table), midiMapper and OpColor (ColorUI's palette
   editor). Exactly the ones you have installed.
 
 **Right-click a tab** to open the owning tool's parameters; that is where
@@ -63,7 +63,7 @@ tabs with scroll arrows and a dropdown. Drag a tab onto another tab to reorder
 in either style. There is no close button in either: hide a tab from the contributing tool's *Shown in Hub*
 parameter on its Registry page, and bring any hidden tab back from the FNS
 button's right-click menu ("Show …"). Tab order and the active tab roam with
-your settings through [FNS_ConfigRegistry](/docs/fns-configregistry/), as do
+your settings through [ConfigRegistry](/docs/fns-configregistry/), as do
 the three configurators' layouts. A tool carrying a *Refresh* pulse is
 refreshed every time its tab is shown.
 

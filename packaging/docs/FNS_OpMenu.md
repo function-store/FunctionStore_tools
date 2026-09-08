@@ -16,13 +16,13 @@ features:
 
 ## Custom OpMenu Search Keywords
 
-This is a table to define custom search keywords for each OpType for the **OpMenu / OP Create Dialog**. Read more [here](/docs/fns-opmenu/#opmenu-mods). It is also reachable as the **SearchWords** tab of [FNS_Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
+This is a table to define custom search keywords for each OpType for the **OpMenu / OP Create Dialog**. Read more [here](/docs/fns-opmenu/#opmenu-mods). It is also reachable as the **SearchWords** tab of [Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
 
 ## OpMenu Mods
 
-FNS_OpMenu is a set of mods to TouchDesigner's **OP Create dialog**
+OpMenu is a set of mods to TouchDesigner's **OP Create dialog**
 (`/ui/dialogs/menu_op`). They are applied through
-[FNS_OpMenuRegistry](/docs/fns-opmenuregistry/), so several tools can decorate
+[OpMenuRegistry](/docs/fns-opmenuregistry/), so several tools can decorate
 the same dialog without fighting over it, and so the dialog goes back to
 stock the moment you remove them.
 

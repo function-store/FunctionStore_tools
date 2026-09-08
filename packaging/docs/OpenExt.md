@@ -29,5 +29,5 @@ For the full round trip, editing outside and syncing the changes back, see
 [VSCodeTools](/docs/vscodetools/); the two tools sit alongside each other.
 
 It is also published as a quick-launch command, **Open extension of current**,
-so you can fire it from [FNS_CommandKit](/docs/fns-commandkit/) without the
+so you can fire it from [CommandKit](/docs/fns-commandkit/) without the
 hotkey.

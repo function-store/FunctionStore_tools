@@ -1,6 +1,6 @@
 ---
 package: FNS_CommandKit
-summary: 'Drop-in kit that lets any component publish commands to every palette that serves them: the FNS_CommandPalette inside TouchDesigner and the TDXL launcher''s.'
+summary: 'Drop-in kit that lets any component publish commands to every palette that serves them: the CommandPalette inside TouchDesigner and the TDXL launcher''s.'
 features:
   - name: Command Kit
     anchor: command-kit
@@ -11,7 +11,7 @@ features:
 ## Command Kit
 
 Your component's commands appear in every palette that serves the command
-registry, the [FNS_CommandPalette](/docs/fns-commandpalette/) inside
+registry, the [CommandPalette](/docs/fns-commandpalette/) inside
 TouchDesigner and the TDXL launcher's (`>` / `?` in both), without it having
 to know anything about the registry. Drop this COMP inside your component,
 mark the methods you want exposed, and they show up.

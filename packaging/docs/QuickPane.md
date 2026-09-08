@@ -29,4 +29,4 @@ first value for a horizontal split, the second for a vertical one.
 
 It is also a quick-launch command, **Split pane**, which asks for the direction
 and defaults to right, so it can be fired from
-[FNS_CommandKit](/docs/fns-commandkit/) or the palette without either gesture.
+[CommandKit](/docs/fns-commandkit/) or the palette without either gesture.

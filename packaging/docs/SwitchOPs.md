@@ -18,5 +18,5 @@ and you are back where you were without retracing the path.
 
 Nothing to configure: the tool has one hotkey and an **Active** toggle. Rebind
 the key from its own parameter or from
-[FNS_HotkeyManager](/docs/fns-hotkeymanager/), like every other shortcut in the
+[HotkeyManager](/docs/fns-hotkeymanager/), like every other shortcut in the
 toolkit.

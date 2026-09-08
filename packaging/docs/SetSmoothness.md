@@ -29,4 +29,4 @@ the chore this replaces.
 
 Both actions are also quick-launch commands, **Smoothness → selected** and
 **Smoothness → all**, so they can be fired from
-[FNS_CommandKit](/docs/fns-commandkit/) with no toolbar button at all.
+[CommandKit](/docs/fns-commandkit/) with no toolbar button at all.

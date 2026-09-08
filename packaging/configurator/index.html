@@ -693,6 +693,14 @@ function fnsBoot() {
   // gating existed carries.
   function isPlus(p) { return !!p.access && p.access !== 'free'; }
 
+  // The name a reader sees: the manifest's `title` (build_manifest.PublicName,
+  // the package name minus a leading FNS_). `name` stays the identity in
+  // `picked`, the plan and every lookup. Falls back to the derivation so a
+  // manifest published before `title` existed still reads right.
+  function publicName(n) { return n.indexOf('FNS_') === 0 ? n.slice(4) : n; }
+  function titleOf(p) { return p.title || publicName(p.name); }
+  function byTitle(a, b) { return titleOf(a).localeCompare(titleOf(b), 'en', {sensitivity: 'base'}); }
+
   function card(p) {
     var on = picked.has(p.name);
     var el = document.createElement('label');
@@ -712,7 +720,7 @@ function fnsBoot() {
 
     var name = document.createElement('div');
     name.className = 'name';
-    name.appendChild(document.createTextNode(p.name));
+    name.appendChild(document.createTextNode(titleOf(p)));
     if (p.help_url) {
       var a = docsLink(p.help_url, 'docs ↗', 'help');
       // The card is a <label>: without this the docs link would also toggle
@@ -886,7 +894,7 @@ function fnsBoot() {
     body.className = 'body';
     var n = document.createElement('div');
     n.className = 'name';
-    n.appendChild(document.createTextNode(p.name));
+    n.appendChild(document.createTextNode(titleOf(p)));
     if (p.help_url) n.appendChild(docsLink(p.help_url, 'docs ↗', 'help'));
     body.appendChild(n);
     if (p.description) {
@@ -940,7 +948,7 @@ function fnsBoot() {
       // tools that put a button somewhere, and it is a question the
       // package list could not answer before.
       var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
-      return (p.name + ' ' + (p.description || '') + ' '
+      return (p.name + ' ' + titleOf(p) + ' ' + (p.description || '') + ' '
               + (p.category || '') + ' ' + surf)
              .toLowerCase().indexOf(q) !== -1;
     }
@@ -955,7 +963,7 @@ function fnsBoot() {
       listEl.appendChild(heading('Core', core.length + ' packages'));
       var g0 = document.createElement('div');
       g0.className = 'grid';
-      core.forEach(function (p) { g0.appendChild(coreCard(p)); });
+      core.slice().sort(byTitle).forEach(function (p) { g0.appendChild(coreCard(p)); });
       listEl.appendChild(g0);
     }
 
@@ -968,7 +976,7 @@ function fnsBoot() {
       listEl.appendChild(heading(cat, sel + ' of ' + items.length + ' selected'));
       var g = document.createElement('div');
       g.className = 'grid';
-      items.forEach(function (p) { g.appendChild(card(p)); });
+      items.sort(byTitle).forEach(function (p) { g.appendChild(card(p)); });
       listEl.appendChild(g);
     });
 
@@ -1436,7 +1444,7 @@ function fnsBoot() {
         keyable.forEach(function (p) {
           var o = document.createElement('option');
           o.value = p.name;
-          o.textContent = p.name;
+          o.textContent = titleOf(p);
           sel.appendChild(o);
         });
         var pickedLocked = keyable.filter(function (p) {

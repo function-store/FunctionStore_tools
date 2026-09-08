@@ -12,6 +12,8 @@ features:
     anchor: the-waveform
   - name: Markers from your editor
     anchor: markers-from-your-editor
+  - name: Keyframes from parameters
+    anchor: keyframes-from-parameters
 ---
 
 ## Media on the timeline
@@ -132,5 +134,60 @@ snapped to the nearest and a marker dropped between frames moves by up to half a
 frame. The status line tells you how many of each, so nothing is left for you to find
 out in the edit.
 
-Requires [FNS_TimelineRegistry](/docs/fns-timelineregistry/) for the timeline
+Requires [TimelineRegistry](/docs/fns-timelineregistry/) for the timeline
 surface; the Animation editor background works without it.
+
+## Keyframes from parameters
+
+Set a scene up by hand, then turn it into a key. The Animation editor's
+channel list is the truth: **Keyframe Now** (or KEY in the editor) reads
+every channel's parameter as it stands and writes a key at the animation's
+current frame, whichever timeline that animation sits on, and when you have
+channels picked in the list, only those. Channels get in by dropping on the
+KF block (below), by adding them in the editor (a channel named
+`operator:parameter` works like one the tool made), or in bulk from the
+**Keyframer** page: point **Animation COMP** at the Animation COMP that
+should hold the curves, add a **Reference** block per operator, and press
+**Add Channels From References** for every parameter that passes the block's
+*Include* and *Exclude* patterns, no keys yet. Delete a channel in the editor
+and it is gone.
+
+Patterns are TouchDesigner's own (`*` for everything, `t? r?` for the
+transform, a list of names), and **Exclude Pages** keeps whole pages out of
+it on every reference; `Common About Info Version` is the shipped default,
+since those are housekeeping on most operators. Numbers, toggles and menus
+are keyed (a menu as its index); pulses, strings and references have no
+curve. **Key Function** chooses the interpolation each new key carries, from
+linear and constant through the eases to bezier and spline. **Remove Keys At
+Frame** (UNKEY) deletes the keys at the current frame from the picked
+channels, else all of them, and leaves the channels.
+
+**Drive Parameters** is the other direction. On, the tool builds the rig you
+would build by hand: a Null CHOP beside the Animation COMP, fed from it,
+exporting each channel to its parameter through a table, so the parameters
+show as exports and the animation plays them. Drive plays every curve the
+animation holds, whoever keyed it, like every other action here. **Drive Method** can switch
+that to an expression per parameter instead. Off, either way, they go back to
+plain constants at the value they show, so nothing jumps, and the rig goes
+with them. Author with it
+off, play with it on: with Drive on a parameter's value *is* the animation,
+and Keyframe Now says so rather than copying the curve onto itself. A
+parameter already driven by an expression, export or bind of your own is
+left alone.
+
+The same three actions sit in the Animation editor itself. Its graph heading
+carries a **KF** block beside the MEDIA button and the layer toggles: **KEY**
+and **UNKEY** are Keyframe Now and Remove Keys At Frame, and **DRIVE** is the
+Drive Parameters toggle, lit while it drives, so a scene is keyed from the
+editor you are already looking at. **KF** is the block's handle: click it
+and the Keyframer page opens; drop an operator on the block for a channel
+per parameter, a parameter or a pargroup for just those, or an Animation
+COMP to make it the animation. Whatever you drop shows up in the editor's
+channel list at once, keys or not, and the block always acts on the
+animation the editor is showing, so it follows you from one Animation COMP
+to the next.
+**Controls In Animation Editor** on the Keyframer page takes the block out
+again.
+
+The keys themselves are the Animation COMP's, in its own tables: open its
+Animation editor and you are editing what the tool wrote.
