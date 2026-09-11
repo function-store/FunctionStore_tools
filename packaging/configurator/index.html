@@ -676,6 +676,7 @@ function fnsBoot() {
   // flavor: the Guided setup button re-opens the same welcome and lights
   // the same step strip.
   var wizardOn = false;
+  var firstVisit = false;   // the site's once-per-browser welcome
   // Served by the bootstrap's Web Server DAT and the store is still being
   // fetched: say so and poll. /manifest.js flips to the real catalog (and
   // FNS_SERVED) once the refresh lands.
@@ -840,6 +841,9 @@ function fnsBoot() {
   function publicName(n) { return n.indexOf('FNS_') === 0 ? n.slice(4) : n; }
   function titleOf(p) { return p.title || publicName(p.name); }
   function byTitle(a, b) { return titleOf(a).localeCompare(titleOf(b), 'en', {sensitivity: 'base'}); }
+  /** The name a reader sees for a package NAME (identity in `picked`,
+   *  the plan, the manifest); never show the raw FNS_ form. */
+  function titleOfName(n) { return byName[n] ? titleOf(byName[n]) : publicName(n); }
 
   // --- section fold state -------------------------------------------
   // The overview IS the closed state: category rows with a pitch and a
@@ -1021,12 +1025,12 @@ function fnsBoot() {
     // than blocking the choice -- these degrade by design
     (p.integrates_with || []).forEach(function (t) {
       if (byName[t] && byName[t].kind === 'tool' && !picked.has(t)) {
-        chips.appendChild(chip('extra features with ' + t, 'hint'));
+        chips.appendChild(chip('extra features with ' + titleOfName(t), 'hint'));
       }
     });
     (enhances[p.name] || []).forEach(function (src) {
       if (picked.has(src) && !picked.has(p.name)) {
-        chips.appendChild(chip(src + ' can use this', 'hint'));
+        chips.appendChild(chip(titleOfName(src) + ' can use this', 'hint'));
       }
     });
     if (chips.children.length) body.appendChild(chips);
@@ -1537,7 +1541,7 @@ function fnsBoot() {
     document.getElementById('presets').hidden = on;
     document.getElementById('quiz').hidden = !on;
     document.getElementById('welcometitle').textContent = on
-      ? 'Find my set' : (firstrun ? 'Welcome to FNSTools' : 'Choose a starting point');
+      ? 'Find my set' : ((firstrun || firstVisit) ? 'Welcome to FNSTools' : 'Choose a starting point');
   }
   function quizRender(onUse) {
     var n = quiz.questions.length;
@@ -1730,7 +1734,7 @@ function fnsBoot() {
     pre.hidden = !starter.length;
     document.getElementById('pre-starter-desc').textContent =
       starter.length + ' tools, the everyday set: ' +
-      starter.slice(0, 4).join(', ') + (starter.length > 4 ? '…' : '');
+      starter.slice(0, 4).map(titleOfName).join(', ') + (starter.length > 4 ? '…' : '');
     document.getElementById('pre-all-desc').textContent =
       'All ' + tools.length + ' tools. Remove any later from Pick Tools.';
     // Esc counts as "pick my own": the page behind is the empty list
@@ -1775,7 +1779,7 @@ function fnsBoot() {
       var ds = document.createElement('span');
       ds.textContent = bnd.packages.length
         + (bnd.packages.length === 1 ? ' tool: ' : ' tools: ')
-        + (bnd.blurb || bnd.packages.slice(0, 4).join(', ')
+        + (bnd.blurb || bnd.packages.slice(0, 4).map(titleOfName).join(', ')
            + (bnd.packages.length > 4 ? '…' : ''));
       btn.appendChild(ds);
       var pk = document.createElement('span');
@@ -2347,6 +2351,16 @@ function fnsBoot() {
   loadRecommends();
   if (firstrun) {
     if (sessionFlag('fns.welcomed')) setStep(2); else showWelcome();
+  } else if (!served && !FNS_EMBEDDED && !stored('fns.visited', null)) {
+    // A first visit to the site or the standalone opens the guided setup
+    // once: the page is for someone who has never seen the toolkit, and
+    // eight category rows answer less than "what should I start with".
+    // Per browser; dismissible (Esc is "pick my own"); never in a frame,
+    // and never on the served rail, which has its own first run.
+    try { localStorage.setItem('fns.visited', '1'); } catch (e) { /* nicety */ }
+    firstVisit = true;
+    wizardOn = true;
+    showWelcome();
   }
 }
 
