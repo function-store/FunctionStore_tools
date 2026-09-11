@@ -1519,10 +1519,19 @@ if (fs.existsSync(cfgSrc)) {
     manifest.quiz = catalog.quiz;
   }
   if (!manifest.presets && repoManifest.presets) manifest.presets = repoManifest.presets;
+  // Category, description and fits are curated in the catalog and are
+  // presentation only; the catalog is newer than any published release,
+  // so it wins for these three (what ships, versions, artifacts and
+  // access stay the published manifest's). The category list itself
+  // comes from the catalog for the same reason.
+  manifest.categories = categories;
   for (const pkg of manifest.packages || []) {
-    if (pkg.fits) continue;
     const row = curated[pkg.name] || curated['FNS_' + pkg.name];
-    if (row && Array.isArray(row.fits) && row.fits.length) pkg.fits = row.fits;
+    if (!row) continue;
+    if (row.category) pkg.category = row.category;
+    if (row.description) pkg.description = row.description;
+    if (Array.isArray(row.fits) && row.fits.length) pkg.fits = row.fits;
+    else delete pkg.fits;
   }
   let page = fs.readFileSync(cfgSrc, 'utf8');
   const tag = '<script src="manifest.js"></script>';

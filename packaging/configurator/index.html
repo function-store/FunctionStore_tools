@@ -2412,10 +2412,18 @@ function fnsBoot() {
           ['quiz', 'presets'].forEach(function (k) {
             if (!m[k] && baked[k]) m[k] = baked[k];
           });
-          var bakedFits = {};
-          (baked.packages || []).forEach(function (p) { if (p.fits) bakedFits[p.name] = p.fits; });
+          // Category, description and fits are catalog presentation the
+          // site build baked; they are newer than any published release,
+          // so the baked copy wins for those three.
+          if (baked.categories) m.categories = baked.categories;
+          var bakedRow = {};
+          (baked.packages || []).forEach(function (p) { bakedRow[p.name] = p; });
           m.packages.forEach(function (p) {
-            if (!p.fits && bakedFits[p.name]) p.fits = bakedFits[p.name];
+            var b = bakedRow[p.name];
+            if (!b) return;
+            if (b.category) p.category = b.category;
+            if (b.description) p.description = b.description;
+            if (b.fits) p.fits = b.fits; else delete p.fits;
           });
           window.FNS_MANIFEST = m;
         }

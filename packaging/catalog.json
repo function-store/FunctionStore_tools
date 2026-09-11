@@ -16,7 +16,8 @@
   "A package's `minor: true` marks a small convenience that should not compete for attention with the tools someone came for: the picker ranks it LAST inside its own category and draws it in a denser, lighter card. It is never hidden and never moved out of its category -- it is a real package someone may want, and a picker that hides packages lies about what the toolkit contains. Curation, not a measure of size: set it by whether the tool would be noise to someone scanning for the thing they came for.",
   "author {name, url}, homepage and changelog_url are CURATED on any package (presentation facts; the manifest carries them to the picker byline and the website badge -- the ONE home for credit, doc frontmatter `credit` is refused). A `source` block {manifest, tox?, package?} makes an entry FOREIGN: bytes and version owned upstream, mirrored by packaging/foreign_sync.py into dist/ and pinned in foreign.lock.json, never exported from a live COMP. Only a foreign entry may carry updates (self|store), help_url and min_td_build -- on a live package those have live authorities. See docs/ForeignPackages.md.",
   "`alternatives_for` is DERIVED for a live package that carries an FNS_OpMenuRegistry host (build_manifest calls its onAlternatives()); it may be CURATED, in the content CMS or here, on a foreign entry and on a live package with NO op-menu host: a list of operator types the package is an alternative for (a curated list beside a host is a preflight problem). The op-menu registry offers a store tox for those types when the package is not in the project, and places it from disk.",
-  "`quiz` is the guided setup's questionnaire: questions with options, each option carrying tags; a package's `fits` names the tags it answers. The picker recommends every tool whose fits meet the chosen tags, best matches first. build_manifest validates both (an option tag no package fits is reported). Content, so it is authored on the cms.mjs side like presets."
+  "`quiz` is the guided setup's questionnaire: questions with options, each option carrying tags; a package's `fits` names the tags it answers. The picker recommends every tool whose fits meet the chosen tags, best matches first. build_manifest validates both (an option tag no package fits is reported). Content, so it is authored on the cms.mjs side like presets.",
+  "`fits` rule of thumb: `visual` means the tool's working surface is something you look at or work in (a Hub tab, a pane type, a window, a changed dialog or palette, the editor's look), not that it has a toolbar button; a button that only triggers an action does not earn it. Tags follow the doc and the parameters, not the name."
  ],
  "categories": [
   "Core",
@@ -237,13 +238,12 @@
   },
   "FNS_AutoRes": {
    "category": "Network",
-   "description": "Project-wide resolution reference that operators can follow, with no hardcoded pixel sizes.",
+   "description": "Hold Alt while placing a generator TOP to have its resolution follow the project (or the panel it sits in) instead of a hardcoded pixel size.",
    "recommended": true,
    "fits": [
-    "projector",
-    "show",
-    "screen",
-    "live"
+    "network",
+    "speed",
+    "show"
    ]
   },
   "FNS_Autosave": {
@@ -260,7 +260,8 @@
    "description": "Every .toe backup TouchDesigner has written under a folder, grouped by the project that made them, with their size and an estimate of the hours they represent; send the ones you are done with to the recycle bin, or delete them outright.",
    "access": "8323905",
    "fits": [
-    "tidy"
+    "tidy",
+    "visual"
    ]
   },
   "FNS_BeatMod": {
@@ -271,7 +272,9 @@
     "live",
     "params",
     "art",
-    "audio"
+    "audio",
+    "speed",
+    "visual"
    ]
   },
   "FNS_BorderlessTD": {
@@ -279,9 +282,9 @@
    "description": "Borderless TouchDesigner window, plus timeline hiding.",
    "fits": [
     "show",
-    "projector",
     "screen",
-    "live"
+    "live",
+    "visual"
    ]
   },
   "FNS_Collect": {
@@ -290,7 +293,8 @@
    "access": "8323905",
    "fits": [
     "tidy",
-    "show"
+    "show",
+    "media"
    ]
   },
   "FNS_ColorUI": {
@@ -298,18 +302,27 @@
    "description": "Operator and family colour palettes, with the active palette roaming through config.",
    "fits": [
     "visual",
-    "learn"
+    "learn",
+    "screen"
    ]
   },
   "FNS_CommandKit": {
-   "category": "Core",
-   "description": "Drop-in kit that lets ANY component publish quick-launch commands to the in-TouchDesigner command palette and the TDX launcher: decorate a promoted method, or declare a spec. Guarded: with no registry in the session nothing happens and nothing errors."
+   "category": "Developer",
+   "description": "Drop-in kit that lets ANY component publish quick-launch commands to the in-TouchDesigner command palette and the TDX launcher: decorate a promoted method, or declare a spec. Guarded: with no registry in the session nothing happens and nothing errors.",
+   "fits": [
+    "dev",
+    "speed"
+   ]
   },
   "FNS_CommandPalette": {
    "category": "Surfaces",
    "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in Hub.",
    "fits": [
-    "speed"
+    "speed",
+    "visual",
+    "network",
+    "learn",
+    "dev"
    ]
   },
   "FNS_CommandRegistry": {
@@ -356,7 +369,7 @@
    "fits": [
     "network",
     "visual",
-    "show"
+    "learn"
    ]
   },
   "FNS_GlobalVolControl": {
@@ -374,7 +387,8 @@
    "recommended": true,
    "fits": [
     "speed",
-    "learn"
+    "learn",
+    "visual"
    ]
   },
   "FNS_Hub": {
@@ -386,7 +400,7 @@
    "description": "The registry behind Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys."
   },
   "FNS_HydroHomie": {
-   "category": "Media & Output",
+   "category": "Workflow",
    "description": "A toolbar reminder to drink water at an interval you set. Off by default."
   },
   "FNS_iopBrowser": {
@@ -395,7 +409,8 @@
    "fits": [
     "network",
     "dev",
-    "visual"
+    "visual",
+    "learn"
    ]
   },
   "FNS_MainMenuRegistry": {
@@ -417,7 +432,9 @@
    "description": "Three small toolbar utilities: a Background Viewer toggle for the network's backdrop TOPs and CHOPs, a global Mouse In CHOP you can drag channels from onto parameters, and a Hog CHOP for starving a patch of cook time to see how it copes.",
    "minor": true,
    "fits": [
-    "visual"
+    "visual",
+    "dev",
+    "network"
    ]
   },
   "FNS_NavbarRegistry": {
@@ -435,12 +452,13 @@
   },
   "FNS_OpMenuMods": {
    "category": "Surfaces",
-   "description": "OP Create dialog extras: the IO filter, operator search words and script injection.",
+   "description": "OP Create dialog extras: IO filter buttons, your own search keywords per operator type, and acronym search (type m f o for Movie File Out).",
    "recommended": true,
    "fits": [
     "network",
     "speed",
-    "learn"
+    "learn",
+    "visual"
    ]
   },
   "FNS_OpMenuRegistry": {
@@ -458,7 +476,7 @@
    ]
   },
   "FNS_OpToClipboard": {
-   "category": "Network",
+   "category": "Parameters",
    "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression.",
    "recommended": true,
    "fits": [
@@ -469,7 +487,7 @@
   },
   "FNS_Output": {
    "category": "Media & Output",
-   "description": "Output window and display routing helpers.",
+   "description": "A toolbar button for the perform window: drop an operator to route it, click to open or close, and switch NDI and Spout/Syphon streaming of the same window.",
    "fits": [
     "projector",
     "screen",
@@ -486,12 +504,13 @@
    "description": "Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks."
   },
   "FNS_ParentHierarchy": {
-   "category": "Network",
+   "category": "Developer",
    "description": "Hover a parent in the pane-bar path with Alt to see its parent shortcut, global shortcut and internal operators, and Ctrl to see its custom parameters and values. Click any item to copy a reference to it. Adds no button of its own; it works on the path you already have.",
    "fits": [
     "network",
     "visual",
-    "learn"
+    "learn",
+    "dev"
    ]
   },
   "FNS_ParOPDrop": {
@@ -500,7 +519,8 @@
    "recommended": true,
    "fits": [
     "params",
-    "dev"
+    "dev",
+    "speed"
    ]
   },
   "FNS_ParRandomizer": {
@@ -508,17 +528,18 @@
    "description": "Randomize parameter values within range, for quick exploration.",
    "fits": [
     "params",
-    "art"
+    "art",
+    "speed"
    ]
   },
   "FNS_PreviewPanel": {
-   "category": "Network",
+   "category": "Surfaces",
    "description": "A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.",
    "access": "8323905",
    "fits": [
     "visual",
     "art",
-    "network",
+    "screen",
     "learn"
    ]
   },
@@ -538,15 +559,16 @@
    "recommended": true,
    "fits": [
     "speed",
-    "visual"
+    "network"
    ]
   },
   "FNS_QuickTime": {
    "category": "Workflow",
-   "description": "Timeline and time-related shortcuts.",
+   "description": "A toolbar clock that hands out drag-and-drop time references for parameters: resettable and scalable absTime and absFrame, frame, and a progress value for perfect loops.",
    "fits": [
-    "media",
-    "speed"
+    "art",
+    "params",
+    "visual"
    ]
   },
   "FNS_Remote": {
@@ -556,7 +578,8 @@
    "fits": [
     "phone",
     "show",
-    "live"
+    "live",
+    "params"
    ]
   },
   "FNS_ResetPLS": {
@@ -565,7 +588,8 @@
    "fits": [
     "show",
     "live",
-    "tidy"
+    "tidy",
+    "speed"
    ]
   },
   "FNS_SearchPalette": {
@@ -578,16 +602,18 @@
    },
    "fits": [
     "speed",
-    "learn"
+    "learn",
+    "visual"
    ]
   },
   "FNS_SetSmoothness": {
-   "category": "Control",
+   "category": "Parameters",
    "description": "Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network.",
    "minor": true,
    "fits": [
     "art",
-    "screen"
+    "screen",
+    "params"
    ]
   },
   "FNS_SwapOps": {
@@ -601,7 +627,7 @@
   },
   "FNS_SwitchOPs": {
    "category": "Network",
-   "description": "Switch between operators in place.",
+   "description": "One hotkey jumps focus back and forth between the last two operators you selected, across networks.",
    "fits": [
     "network",
     "speed"
@@ -620,8 +646,10 @@
    "recommended": true,
    "fits": [
     "media",
-    "live",
-    "audio"
+    "audio",
+    "params",
+    "visual",
+    "art"
    ]
   },
   "FNS_ToolbarRegistry": {
@@ -636,7 +664,9 @@
    "category": "Developer",
    "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs.",
    "fits": [
-    "dev"
+    "dev",
+    "speed",
+    "tidy"
    ]
   },
   "midiMapper": {
@@ -649,7 +679,8 @@
    "fits": [
     "live",
     "show",
-    "params"
+    "params",
+    "visual"
    ]
   },
   "oscMapper": {
@@ -662,19 +693,21 @@
    "fits": [
     "show",
     "live",
-    "params"
+    "params",
+    "visual"
    ]
   },
   "PasteFromClipboard": {
    "category": "Network",
-   "description": "Paste images and data from the system clipboard into TouchDesigner.",
+   "description": "Paste the image on the clipboard into the current network as a Movie File In, a Script TOP or an annotation. Windows only.",
    "author": {
     "name": "DotSimulate",
     "url": "https://www.patreon.com/dotsimulate"
    },
    "fits": [
     "art",
-    "speed"
+    "speed",
+    "network"
    ]
   },
   "QuickMarks": {
