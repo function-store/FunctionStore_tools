@@ -62,9 +62,14 @@ Matching goes beyond the original module's prefix search:
 - **Exclude with `-`**: a word prefixed with a minus removes matches: `blur -barrel` finds every blur except the
   `barrel_blur` pair.
 - **Fuzzy fallback**: when nothing matches literally, each word is
-  re-read as a *subsequence*, so initials find the component: `fbg` finds
-  `feedbackGen`, `wbrsr` finds `webBrowser`. These only ever appear when
-  the strict search came up empty, ranked tightest-match first.
+  re-read more loosely, best reading first: a spelling either side of the
+  Atlantic (`randomise` finds `randomize`, `colour` finds `color`),
+  initials (`mfo` finds `movieFileOut`), a typo of a word or its start
+  (`nosie` finds `noise`, `kinnect` finds `kinectAzure`; one slip for
+  words of four to seven letters, two from eight), and last a
+  *subsequence*, so `fbg` finds `feedbackGen` and `wbrsr` finds
+  `webBrowser`. These only ever appear when the strict search came up
+  empty, and they never reorder it.
 - **Folder search**: a word containing `/` matches the palette *folder*
   instead of the name: `gen/ noise` finds `noise` in the Generators
   folder, and `tools/` alone lists a whole folder. Toggleable via the

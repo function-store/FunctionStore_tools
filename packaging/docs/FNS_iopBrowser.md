@@ -8,7 +8,7 @@ features:
 
 ## iop Browser
 
-Adds a button to the left of the path bar. Clicking it opens a popup listing the
+Adds a button to the left of the path bar. Drop an operator on it to add that operator as an internal operator shortcut of the network you are in, the root included (CustomParTools asks for the shortcut name when it is installed; without it the operator's own name is used). Clicking it opens a popup listing the
 `iops` available from the COMP you are currently in, which means the internal
 operators of every parent, not just the nearest one.
 

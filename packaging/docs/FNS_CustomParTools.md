@@ -557,7 +557,7 @@ As a child it calls its parent directly.
 
 ## Path Bar mods
 
-Dragging an operator onto one of the parents in the Path Bar, and holding **Ctrl+Alt** (or Ctrl+Cmd) will promote the operator as an **iop** (internal operator).
+Dragging an operator onto one of the parents in the Path Bar, and holding **Ctrl+Alt** (or Ctrl+Cmd) will promote the operator as an **iop** (internal operator). The root `/` cell counts as a parent, so a shortcut can be added to the root too.
 
 Dragging a parameter onto one of the parents in the Path Bar will promote it to that parent.
 

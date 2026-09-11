@@ -44,6 +44,16 @@ components. A command whose context is missing is dimmed and refused rather
 than run into nothing. Badges are coloured by kind, and context commands carry
 a small `par` / `op` / `net` tag so the reason for a row's rank is visible.
 
+Once you type, the words you typed decide the order and the context only
+breaks ties. Every word must hit, and a hit is read as strictly as it can be:
+the whole title, its start, the start of a word in it, anywhere in it, then
+the looser readings that only fill in below those, initials (`mfo`), a typo
+of a word (`opne ext`, `nosie`; one slip for words of four to seven letters,
+two from eight) and last the letters in order (`tmln`). Spellings either side
+of the Atlantic are the same word (`randomise` finds Randomize). A hit in the
+title ranks above the same hit in a tool name, and the file path of a
+component only counts when the word is literally in it.
+
 A command that declares parameters does not run on Enter; it walks them one
 at a time. A menu parameter becomes pick rows filtered as you type, the rest a
 text field whose placeholder names the parameter, its type and its default.
