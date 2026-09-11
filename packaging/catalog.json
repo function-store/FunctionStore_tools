@@ -504,7 +504,7 @@
    "description": "Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks."
   },
   "FNS_ParentHierarchy": {
-   "category": "Developer",
+   "category": "Network",
    "description": "Hover a parent in the pane-bar path with Alt to see its parent shortcut, global shortcut and internal operators, and Ctrl to see its custom parameters and values. Click any item to copy a reference to it. Adds no button of its own; it works on the path you already have.",
    "fits": [
     "network",
