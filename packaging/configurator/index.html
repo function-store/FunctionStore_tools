@@ -92,6 +92,8 @@ code, kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0
 }
 .btn-quiet:hover { border-color: var(--border-strong); color: var(--text); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* a toggle that is on (the Plus-only filter) */
+.btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
 /* ── inputs ── */
 input[type=search], input[type=text].fns, select.fns {
@@ -352,7 +354,24 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .qres-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .qres-body b { font-size: 14px; font-weight: 600; }
 .qres-body .chip { align-self: flex-start; }
+.qres-name { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.qres-name .chip { align-self: center; }
+.qres-desc {
+  font-size: 12.5px; color: var(--text-dim); line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 .qres-why { font-size: 12px; color: var(--text-faint); }
+/* the Plus reminder on the result: the rail's look, inside the dialog */
+.quiz-plus {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin: 0 0 8px; padding: 8px 12px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-left: 2px solid rgba(251,191,36,0.5); border-radius: 8px;
+  font-size: 12.5px; color: var(--text-dim); line-height: 1.5;
+}
+.quiz-plus b { color: var(--text); font-weight: 600; }
+.quiz-plus .mark { color: var(--accent); }
+.quiz-plus .btn { margin-left: auto; padding: 4px 10px; font-size: 12px; }
 .qres-sub { margin: 10px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
 .qres.plus { border-color: rgba(251,191,36,0.22); }
 
@@ -538,6 +557,7 @@ body.app .dlg h3 { font-size: 16px; }
     <button class="btn btn-secondary" id="wizard">Guided setup</button>
     <button class="btn btn-quiet" id="all">Select all</button>
     <button class="btn btn-quiet" id="none">Clear</button>
+    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" title="Show only the Plus tools">◆ Plus only</button>
     <button class="btn btn-quiet" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
     <span class="spacer"></span>
     <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
@@ -863,6 +883,39 @@ function fnsBoot() {
       .concat(cats.filter(quiet));
   }
 
+  // --- Plus, said plainly where it would otherwise surprise --------------
+  // What actually happens to a Plus pick in THIS flavor. Used wherever a
+  // reader meets Plus for the first time (the rail, the questionnaire's
+  // result, the paste-script dialog), so the reality shows up before the
+  // install does, not at it.
+  function plusReality() {
+    if (account) {
+      return 'the ones your membership covers install like any other tool; '
+        + 'the rest wait for an upgrade.';
+    }
+    if (hasAuthRail) {
+      return 'they install once you sign in as a supporter; everything else '
+        + 'installs right away.';
+    }
+    return 'they install once you sign in as a supporter inside TouchDesigner; '
+      + 'everything else installs right away.';
+  }
+  // The Plus-only filter: the list narrows to the supporter extras, every
+  // section with one opens, the core footnote and the other creators'
+  // links step aside. Same shape as a search, so the same rules apply.
+  var plusOnly = false;
+  function setPlusOnly(on) {
+    plusOnly = !!on;
+    var b = document.getElementById('plusonly');
+    if (b) {
+      b.classList.toggle('on', plusOnly);
+      b.setAttribute('aria-pressed', plusOnly ? 'true' : 'false');
+    }
+    var l = document.getElementById('plusrail-only');
+    if (l) l.textContent = plusOnly ? 'Show everything' : 'Show only Plus';
+    render();
+  }
+
   function card(p) {
     var on = picked.has(p.name);
     var el = document.createElement('label');
@@ -1169,6 +1222,7 @@ function fnsBoot() {
   function render() {
     var q = document.getElementById('q').value.trim().toLowerCase();
     function match(p) {
+      if (plusOnly && !isPlus(p)) return false;
       if (!q) return true;
       // Surfaces are searchable: "toolbar" is how someone asks for the
       // tools that put a button somewhere, and it is a question the
@@ -1210,13 +1264,13 @@ function fnsBoot() {
       // a filter match opens the section: a hit hidden behind a fold is
       // a search that looks like it found nothing
       listEl.appendChild(section(cat, countText(sel, items.length,
-        items.length === 1 ? 'tool' : 'tools'), nodes, q ? true : undefined));
+        items.length === 1 ? 'tool' : 'tools'), nodes, (q || plusOnly) ? true : undefined));
     });
 
     // Tools by OTHER creators. Rendered LAST and never selectable: these are
     // links to someone else's download page, not packages. Nothing here
     // enters `picked`, so the install plan cannot see them.
-    var recs = (window.FNS_RECOMMENDS || []).filter(function (r) {
+    var recs = (plusOnly ? [] : (window.FNS_RECOMMENDS || [])).filter(function (r) {
       if (!q) return true;
       return (r.name + ' ' + (r.author || '') + ' ' + (r.description || ''))
         .toLowerCase().indexOf(q) !== -1;
@@ -1228,13 +1282,13 @@ function fnsBoot() {
       recs.forEach(function (r) { gr.appendChild(recCard(r)); });
       listEl.appendChild(section('From other creators',
         recs.length + ' link' + (recs.length === 1 ? '' : 's'), [gr],
-        q ? true : undefined));
+        (q || plusOnly) ? true : undefined));
     }
 
     // Core, last and quiet: plumbing that installs with any selection.
     // Nobody picks it, so it is a folded footnote, not a section a
     // reader has to get past.
-    if (!q) {
+    if (!q && !plusOnly) {
       var coreNote = document.getElementById('corenote');
       var coreNodes = [];
       if (coreNote) { coreNote.hidden = false; coreNodes.push(coreNote); }
@@ -1246,7 +1300,7 @@ function fnsBoot() {
     }
     updateNav();
 
-    document.getElementById('empty').hidden = shown > 0 || !q;
+    document.getElementById('empty').hidden = shown > 0 || !(q || plusOnly);
     document.getElementById('cnt').textContent = picked.size;
     var need = new Set();
     picked.forEach(function (n) {
@@ -1537,6 +1591,7 @@ function fnsBoot() {
     opts.hidden = true; res.hidden = false;
     next.hidden = true; use.hidden = !picks.length;
     var chosenNames = {};
+    var plusBoxes = {};   // the Plus rows' checkboxes, for Leave Plus out
     function resultRow(r, ticked) {
       var p = byName[r.name];
       var row = document.createElement('label');
@@ -1544,14 +1599,35 @@ function fnsBoot() {
       var cb = document.createElement('input');
       cb.type = 'checkbox'; cb.checked = ticked;
       chosenNames[r.name] = ticked;
+      if (isPlus(p)) plusBoxes[r.name] = cb;
       cb.addEventListener('change', function () { chosenNames[r.name] = cb.checked; });
       row.appendChild(cb);
       var body = document.createElement('span');
       body.className = 'qres-body';
+      // the same name line a card has: title, docs, and the curated
+      // link-outs; a reader deciding on a recommendation needs the docs
+      // one click away, not after leaving the dialog
+      var nm = document.createElement('span');
+      nm.className = 'qres-name';
       var t = document.createElement('b');
       t.textContent = titleOf(p);
-      body.appendChild(t);
-      if (isPlus(p)) body.appendChild(chip('Plus', 'plus'));
+      nm.appendChild(t);
+      if (isPlus(p)) nm.appendChild(chip('Plus', 'plus'));
+      [['help_url', 'docs ↗'], ['homepage', 'site ↗'], ['changelog_url', 'changelog ↗']]
+        .forEach(function (k) {
+          if (!p[k[0]]) return;
+          var l = docsLink(p[k[0]], k[1], 'help');
+          // the row is a <label>: a link click must not toggle its box
+          l.addEventListener('click', function (e) { e.stopPropagation(); });
+          nm.appendChild(l);
+        });
+      body.appendChild(nm);
+      if (p.description) {
+        var ds = document.createElement('span');
+        ds.className = 'qres-desc';
+        ds.textContent = p.description;
+        body.appendChild(ds);
+      }
       var w = document.createElement('span');
       w.className = 'qres-why';
       w.textContent = 'because: ' + r.why.join(', ');
@@ -1560,6 +1636,41 @@ function fnsBoot() {
       return row;
     }
     split.main.forEach(function (r) { res.appendChild(resultRow(r, true)); });
+    // A Plus tool in the set is the moment a reader would otherwise be
+    // surprised at install time. Say what it is and what happens, and
+    // offer the one-click way out. Counted on what is NOT installable
+    // here: an entitled account's own tools are no surprise.
+    var plusInSet = split.main.filter(function (r) {
+      return isPlus(byName[r.name]) && !installable(r.name);
+    });
+    if (plusInSet.length) {
+      var pn = document.createElement('div');
+      pn.className = 'quiz-plus';
+      var pm = document.createElement('span');
+      pm.className = 'mark'; pm.setAttribute('aria-hidden', 'true');
+      pm.textContent = '◆';
+      pn.appendChild(pm);
+      var pb = document.createElement('b');
+      pb.textContent = plusInSet.length + ' of these '
+        + (plusInSet.length === 1 ? 'is' : 'are') + ' Plus,';
+      pn.appendChild(pb);
+      pn.appendChild(document.createTextNode(
+        ' the supporter extras: ' + plusReality() + ' '));
+      pn.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));
+      var out = document.createElement('button');
+      out.type = 'button';
+      out.className = 'btn btn-quiet';
+      out.textContent = 'Leave Plus out';
+      out.addEventListener('click', function () {
+        Object.keys(plusBoxes).forEach(function (nm) {
+          plusBoxes[nm].checked = false;
+          chosenNames[nm] = false;
+        });
+        out.disabled = true;
+      });
+      pn.appendChild(out);
+      res.insertBefore(pn, res.firstChild);
+    }
     if (split.more.length) {
       var sub = document.createElement('div');
       sub.className = 'qres-sub';
@@ -1812,8 +1923,19 @@ function fnsBoot() {
 
   document.getElementById('script').addEventListener('click', function () {
     var text = installScript();
+    // the script installs the free picks and hands the Plus ones to the
+    // picker inside TouchDesigner (a paste can carry no token); say so
+    // HERE, before the paste, not in a Textport line after it
+    var plusN = Array.from(picked).filter(function (n) {
+      return byName[n] && isPlus(byName[n]);
+    }).length;
     setStep(3);
-    showDialog(text, false, HINTS.script);
+    showDialog(text, false, HINTS.script + (plusN
+      ? ' ' + plusN + ' Plus pick' + (plusN === 1 ? '' : 's')
+        + ' in this selection: the script installs the free tools now and '
+        + 'opens the picker inside TouchDesigner for the Plus '
+        + (plusN === 1 ? 'one' : 'ones') + ', where you sign in as a supporter.'
+      : ''));
     document.getElementById('dlgtitle').textContent = 'Paste this into the Textport';
     var docopy = document.getElementById('docopy');
     docopy.hidden = false;
@@ -2200,8 +2322,25 @@ function fnsBoot() {
     rail.appendChild(document.createTextNode(
       'the free tools are the full toolkit; '
       + plus.length + ' extra' + (plus.length === 1 ? '' : 's') + ' below '
-      + (plus.length === 1 ? 'is' : 'are') + ' a thank-you for supporters. '));
+      + (plus.length === 1 ? 'is' : 'are') + ' a thank-you for supporters, and '
+      + plusReality() + ' '));
     rail.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));
+    var only = document.createElement('a');
+    only.id = 'plusrail-only';
+    only.href = '#';
+    only.textContent = 'Show only Plus';
+    only.addEventListener('click', function (e) {
+      e.preventDefault();
+      setPlusOnly(!plusOnly);
+    });
+    rail.appendChild(document.createTextNode(' · '));
+    rail.appendChild(only);
+    var pob = document.getElementById('plusonly');
+    if (pob) {
+      pob.hidden = false;
+      pob.textContent = '◆ Plus only (' + plus.length + ')';
+      pob.addEventListener('click', function () { setPlusOnly(!plusOnly); });
+    }
   })();
 
   render();
@@ -2252,6 +2391,18 @@ function fnsBoot() {
           // category_meta existed carries none -- keep the baked copy's
           // presentation rather than losing the glyphs to a stale release.
           if (!m.category_meta && baked.category_meta) m.category_meta = baked.category_meta;
+          // Same for the questionnaire, the preset bundles and each
+          // package's fits: presentation the site build baked from the
+          // catalog, which a release published before they were authored
+          // does not carry. The live manifest still decides what ships.
+          ['quiz', 'presets'].forEach(function (k) {
+            if (!m[k] && baked[k]) m[k] = baked[k];
+          });
+          var bakedFits = {};
+          (baked.packages || []).forEach(function (p) { if (p.fits) bakedFits[p.name] = p.fits; });
+          m.packages.forEach(function (p) {
+            if (!p.fits && bakedFits[p.name]) p.fits = bakedFits[p.name];
+          });
           window.FNS_MANIFEST = m;
         }
       })

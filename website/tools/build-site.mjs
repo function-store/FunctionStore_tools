@@ -1505,8 +1505,25 @@ ${FOOT}`);
 // stays self-contained and this build dresses it in the site's chrome.
 const cfgSrc = path.join(REPO, 'packaging', 'configurator', 'index.html');
 if (fs.existsSync(cfgSrc)) {
-  const manifest = live
-    || JSON.parse(fs.readFileSync(path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+  const repoManifest = JSON.parse(fs.readFileSync(path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+  const manifest = live || repoManifest;
+  // Presentation the picker reads that a PUBLISHED manifest may predate:
+  // the questionnaire and each package's fits (curated in catalog.json,
+  // the same source category_meta is baked from) and the preset bundles
+  // (from the repo manifest, where build_manifest validated them). Baked
+  // here so /get/ has them the day they are authored, without waiting for
+  // the bucket's rolling manifest to be republished; the page merges the
+  // baked copy in at runtime the same way when the live fetch lacks them.
+  if (!manifest.quiz && catalog.quiz && Array.isArray(catalog.quiz.questions)
+      && catalog.quiz.questions.length) {
+    manifest.quiz = catalog.quiz;
+  }
+  if (!manifest.presets && repoManifest.presets) manifest.presets = repoManifest.presets;
+  for (const pkg of manifest.packages || []) {
+    if (pkg.fits) continue;
+    const row = curated[pkg.name] || curated['FNS_' + pkg.name];
+    if (row && Array.isArray(row.fits) && row.fits.length) pkg.fits = row.fits;
+  }
   let page = fs.readFileSync(cfgSrc, 'utf8');
   const tag = '<script src="manifest.js"></script>';
   if (!page.includes(tag)) {
