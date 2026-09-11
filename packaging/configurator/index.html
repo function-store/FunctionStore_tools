@@ -169,6 +169,17 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
 .chip.rec { border-style: dashed; }
 .card.core { cursor: default; }
 .card.core:hover { border-color: var(--border); background: var(--bg-1); }
+/* A MINOR tool: a small convenience that should not compete for attention
+   with the tools someone actually came for. Ranked last inside its own
+   category and drawn about two thirds the weight, in a denser grid so a
+   handful of them cost one row instead of four. Marked, never hidden --
+   same reasoning as .chip.plus below: a picker that hides packages lies
+   about what the toolkit contains. Curated per package in catalog.json. */
+.grid.compact { grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 8px; }
+.card.minor { padding: 9px 12px; gap: 9px; }
+.card.minor .name { font-size: 13px; font-weight: 500; }
+.card.minor .desc { margin-top: 2px; font-size: 12px; color: var(--text-faint); }
+.card.minor .chips { margin-top: 6px; }
 .card input {
   flex: none; margin: 3px 0 0; width: 16px; height: 16px;
   accent-color: var(--accent); cursor: pointer;
@@ -179,6 +190,11 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
   font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
 }
 .desc { margin-top: 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+/* two lines at a glance; the full text rides the card's tooltip */
+.card .desc:not(.byline) {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
 a.help:hover { color: var(--accent); }
 
@@ -315,6 +331,31 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .preset .pick { margin-top: 6px; font-size: 12px; color: var(--accent); }
 @media (max-width: 640px) { .presets { grid-template-columns: 1fr; } }
 
+/* ── the questionnaire (inside the guided setup dialog) ── */
+.quiz-progress { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.quiz-prompt { margin: 6px 0 4px; font-size: 18px; font-weight: 700; letter-spacing: -0.015em; }
+.quiz-hint { margin: 0 0 12px; font-size: 13px; color: var(--text-dim); }
+.quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.qopt {
+  text-align: left; cursor: pointer; padding: 10px 14px; border-radius: 8px;
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 14px;
+}
+.qopt:hover { border-color: var(--border-strong); }
+.qopt.on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent-bright); }
+.quiz-result { display: flex; flex-direction: column; gap: 4px; max-height: 44vh; overflow: auto; }
+.qres {
+  display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-2);
+}
+.qres input { margin-top: 3px; accent-color: var(--accent); }
+.qres-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qres-body b { font-size: 14px; font-weight: 600; }
+.qres-body .chip { align-self: flex-start; }
+.qres-why { font-size: 12px; color: var(--text-faint); }
+.qres-sub { margin: 10px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.qres.plus { border-color: rgba(251,191,36,0.22); }
+
 /* ── toast ── */
 .toast {
   position: fixed; bottom: 14px; right: 18px; padding: 8px 14px;
@@ -326,6 +367,76 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .toast.show { opacity: 1; }
 .toast.ok { border-color: var(--green); }
 .toast.err { border-color: var(--err); }
+
+/* ── collapsible category sections ──
+   The overview IS the closed state: eight header rows with a pitch and a
+   count. A section opens on click, on a filter match, or when a preset
+   selects into it; open state persists per browser (fns.fold). ── */
+.cat-sec { margin: 10px 0 0; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-1); }
+.cat-sec.closed { background: transparent; }
+.cat-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 13px 16px; cursor: pointer; user-select: none;
+  border-radius: 12px;
+}
+.cat-head:hover { background: var(--bg-2); }
+.cat-sec:not(.closed) > .cat-head { border-bottom: 1px solid var(--border); border-radius: 12px 12px 0 0; }
+.cat-head .cat-glyph { width: 18px; text-align: center; font-size: 15px; }
+.cat-head .cat-name { font-size: 16px; font-weight: 700; letter-spacing: -0.015em; }
+.cat-head .cat-pitch { margin: 0; flex: 1 1 240px; font-size: 13px; color: var(--text-faint); }
+.cat-head .cat-count { white-space: nowrap; text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 12.5px; }
+.cat-head .cat-count b { color: var(--accent); font-weight: 600; }
+.cat-head .cat-docs { white-space: nowrap; }
+.cat-head .chev {
+  width: 18px; text-align: center; color: var(--text-faint); font-size: 12px;
+  transition: transform 0.15s ease;
+}
+.cat-sec.closed .chev { transform: rotate(-90deg); }
+.cat-body { padding: 14px 16px 16px; }
+.cat-sec.closed > .cat-body { display: none; }
+.cat-body .grid + .grid { margin-top: 10px; }
+.cat-body .note { margin: 0 0 14px; }
+/* a deprioritized category (Core): a footnote, not a section to get past */
+.cat-sec.quiet { margin-top: 22px; border-style: dashed; }
+.cat-sec.quiet .cat-head { padding: 9px 16px; }
+.cat-sec.quiet .cat-name { font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.cat-sec.quiet .cat-pitch, .cat-sec.quiet .cat-count { font-size: 12px; }
+.cat-sec.quiet .cat-glyph { color: var(--text-faint); font-size: 12px; }
+.cat-sec.quiet .card.core { padding: 8px 12px; }
+.cat-sec.quiet .card.core .name { font-size: 13px; font-weight: 500; }
+.cat-sec.quiet .card.core .desc { font-size: 12px; }
+.cat-sec.quiet .card.core .chips { display: none; }
+
+/* ── the layout: a sticky side rail on wide screens, the chip row below ── */
+.layout { display: block; }
+.layout > .content { min-width: 0; }
+.fold-all { display: flex; gap: 6px; align-items: center; }
+@media (min-width: 1000px) {
+  .layout { display: grid; grid-template-columns: 212px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .layout > .catnav {
+    position: sticky; top: calc(var(--stick) + 86px);
+    display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 4px 0 0;
+    max-height: calc(100vh - var(--stick) - 110px); overflow-y: auto;
+  }
+  .layout > .catnav a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 8px; border: 1px solid transparent;
+    background: transparent; font-size: 13px; color: var(--text-dim);
+  }
+  .layout > .catnav a:hover { background: var(--bg-1); border-color: var(--border); color: var(--text); }
+  .layout > .catnav a.open { color: var(--text); }
+  .layout > .catnav a .g { width: 16px; text-align: center; }
+  .layout > .catnav a .n { margin-left: auto; font-size: 11px; }
+  .layout > .catnav a .n b { color: var(--accent); font-weight: 600; }
+  .layout > .catnav .fold-all {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .layout > .catnav .fold-all .btn { flex: 1 1 auto; justify-content: center; padding: 5px 8px; font-size: 12px; }
+}
+@media (max-width: 999px) {
+  .catnav .fold-all { margin-left: auto; }
+  .catnav .fold-all .btn { padding: 4px 10px; font-size: 12px; }
+}
 
 /* ── app density: the in-TD manager sets body.app; everything reads a
    notch tighter without forking any component. ── */
@@ -411,9 +522,8 @@ body.app .dlg h3 { font-size: 16px; }
     <span class="eyebrow">CONFIGURATOR</span>
     <h1>Build your install.</h1>
     <p class="cfg-sub">
-      Pick the tools you actually want. Nothing else is downloaded, and nothing else
-      ends up in your project. Then take one line to paste into the TouchDesigner
-      Textport, or a <code>selection.json</code> for the installer.
+      Open a category, tick the tools you want, and copy one line for the
+      TouchDesigner Textport. Nothing else is downloaded.
     </p>
     <p class="cfg-meta" id="sub">loading…</p>
     <ol class="steps" id="steps" hidden>
@@ -433,12 +543,15 @@ body.app .dlg h3 { font-size: 16px; }
     <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
   </div>
 
-  <nav class="catnav" id="catnav" aria-label="Jump to a category"></nav>
-
-  <div class="note" id="corenote"></div>
-  <div class="plusrail" id="plusrail"></div>
-  <div id="list"></div>
-  <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
+  <div class="layout">
+    <nav class="catnav" id="catnav" aria-label="Categories"></nav>
+    <div class="content">
+      <div class="note" id="corenote" hidden></div>
+      <div class="plusrail" id="plusrail"></div>
+      <div id="list"></div>
+      <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
+    </div>
+  </div>
 
   <div class="sum">
     <span class="sum-count"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span></span>
@@ -482,10 +595,24 @@ body.app .dlg h3 { font-size: 16px; }
     you confirm the plan.
   </p>
   <div class="presets" id="presets">
+    <button class="preset" id="pre-quiz" hidden><b>Answer a few questions</b><span>A few quick questions, then a set picked for how you work.</span><span class="pick">Find my set ›</span></button>
     <button class="preset" id="pre-last" hidden><b>Set up like last time</b><span id="pre-last-desc"></span><span class="pick">Restore ›</span></button>
     <button class="preset" id="pre-starter"><b>Recommended</b><span id="pre-starter-desc"></span><span class="pick">Start here ›</span></button>
     <button class="preset" id="pre-all"><b>Everything</b><span id="pre-all-desc"></span><span class="pick">Select all ›</span></button>
     <button class="preset" id="pre-none"><b>Pick my own</b><span>Start from an empty list and browse the catalog.</span><span class="pick">Browse ›</span></button>
+  </div>
+  <div class="quiz" id="quiz" hidden>
+    <div class="quiz-progress" id="quiz-progress"></div>
+    <h4 class="quiz-prompt" id="quiz-prompt"></h4>
+    <p class="quiz-hint" id="quiz-hint"></p>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="quiz-result" id="quiz-result" hidden></div>
+    <div class="dlg-actions">
+      <button class="btn btn-quiet" id="quiz-back">Back</button>
+      <span class="spacer"></span>
+      <button class="btn btn-secondary" id="quiz-next">Next</button>
+      <button class="btn btn-primary" id="quiz-use" hidden>Use this selection</button>
+    </div>
   </div>
 </div></dialog>
 
@@ -622,9 +749,8 @@ function fnsBoot() {
                .filter(function (n) { return byName[n]; }));
 
   var meta = [
-    M.packages.length + ' packages',
-    core.length + ' core, always installed',
-    'every download sha256-verified',
+    tools.length + ' tools',
+    'sha256-verified',
   ];
   if (M.release) meta.push(M.release);
   if (M.toolkit && M.toolkit.td_build) meta.push('TD ' + M.toolkit.td_build);
@@ -638,16 +764,10 @@ function fnsBoot() {
 
   var note = document.getElementById('corenote');
   note.textContent = '';
-  var b = document.createElement('b');
-  b.textContent = core.length + ' core packages are always installed.';
-  note.appendChild(b);
   note.appendChild(document.createTextNode(
-    ' They carry the registries, settings persistence and shared surfaces that ' +
-    'every tool plugs into, so tools never depend on each other and you can pick ' +
-    'any subset below without breaking anything. Installing only decides what is ' +
-    'in the project. After installation your saved tool settings (the config) ' +
-    'take precedence: they re-apply over installs and updates, and a removed ' +
-    'tool keeps its settings for the next install. '));
+    'The plumbing every tool plugs into: registries, settings persistence and ' +
+    'the shared surfaces. It installs with any selection and needs no choice. ' +
+    'Your saved tool settings re-apply over installs and updates. '));
   note.appendChild(docsLink(FNS_DOCS + '/docs/fns-configregistry/',
                             'How settings persistence works ↗'));
   if (locked) {
@@ -701,11 +821,53 @@ function fnsBoot() {
   function titleOf(p) { return p.title || publicName(p.name); }
   function byTitle(a, b) { return titleOf(a).localeCompare(titleOf(b), 'en', {sensitivity: 'base'}); }
 
+  // --- section fold state -------------------------------------------
+  // The overview IS the closed state: category rows with a pitch and a
+  // count. Served by the installer (or framed in the console) the page is
+  // the raw view and opens everything; on the site and the standalone it
+  // opens nothing until asked. Per-browser memory of what was opened,
+  // in localStorage like the selection, with the same "a nicety, never a
+  // blocker" tolerance for storage that throws.
+  var FOLD_KEY = 'fns.fold';
+  var foldOpen = null;   // null = defaults; else {cat: true}
+  try {
+    var rawFold = stored(FOLD_KEY, null);
+    if (rawFold) foldOpen = JSON.parse(rawFold);
+  } catch (e) { foldOpen = null; }
+  // A category the catalog marks `deprioritized` (Core: plumbing, not a
+  // choice) is never opened by default, in any flavor.
+  function quiet(cat) { return cat === 'Core' || !!metaOf(cat).deprioritized; }
+  function isOpen(cat) {
+    if (foldOpen && Object.prototype.hasOwnProperty.call(foldOpen, cat)) return !!foldOpen[cat];
+    if (quiet(cat)) return false;
+    return served;
+  }
+  function setOpen(cat, on) {
+    if (!foldOpen) foldOpen = {};
+    foldOpen[cat] = !!on;
+    try { localStorage.setItem(FOLD_KEY, JSON.stringify(foldOpen)); } catch (e) { /* nicety */ }
+  }
+  function setAllOpen(on) {
+    allCats().forEach(function (c) { setOpen(c, on); });
+    render();
+  }
+  /** Categories in display order: the catalog's order, then the ones it
+   *  marks deprioritized (Core) at the end, same as the website. */
+  function allCats() {
+    var cats = (M.categories || []).slice();
+    tools.forEach(function (p) {
+      if (cats.indexOf(p.category) === -1) cats.push(p.category);
+    });
+    if (cats.indexOf('Core') === -1) cats.push('Core');
+    return cats.filter(function (c) { return !quiet(c); })
+      .concat(cats.filter(quiet));
+  }
+
   function card(p) {
     var on = picked.has(p.name);
     var el = document.createElement('label');
     el.className = 'card' + (on ? ' on' : '') + (isPlus(p) ? ' plus' : '')
-      + (isPlus(p) && entitled(p) ? ' own' : '');
+      + (isPlus(p) && entitled(p) ? ' own' : '') + (p.minor ? ' minor' : '');
     el.setAttribute('data-name', p.name);
 
     var cb = document.createElement('input');
@@ -794,12 +956,14 @@ function fnsBoot() {
     if (p.placement === 'root') {
       chips.appendChild(chip('lands at your network root', 'hint'));
     }
-    // The WORDS come from the manifest's surface_meta, so the picker and
-    // the docs site never disagree about what a surface is called. A
-    // manifest built before that field existed falls back to the raw id.
-    (p.surfaces || []).forEach(function (s) {
-      chips.appendChild(chip(surfaceLabel(s)));
-    });
+    // Surfaces ride the tooltip, not the card: at a glance a card is a
+    // name and a line, and "Toolbar button / Pane bar button" on every
+    // other card was most of the noise. They stay searchable (match()
+    // reads them through surfaceLabel), and the words still come from
+    // the manifest's surface_meta.
+    var surf = (p.surfaces || []).map(surfaceLabel);
+    el.title = (p.description || '')
+      + (surf.length ? '\n\nAdds: ' + surf.join(', ') : '');
     // an integration whose partner is not selected: say so plainly rather
     // than blocking the choice -- these degrade by design
     (p.integrates_with || []).forEach(function (t) {
@@ -910,34 +1074,96 @@ function fnsBoot() {
     return el;
   }
 
-  /** Category heading: glyph, name, live count, a link into the docs index
-   *  section for the same category, and an anchor id the quick-nav jumps
-   *  to. */
-  function heading(cat, count) {
-    var frag = document.createDocumentFragment();
-    var h = document.createElement('h2');
-    h.className = 'cat';
-    h.id = 'cat-' + catSlug(cat);
+  /** A category section: a header row (glyph, name, pitch, count, docs,
+   *  chevron) that toggles the body, and the body itself. The section id
+   *  is the quick-nav's anchor. `open` overrides the fold state (a filter
+   *  match forces a section open). */
+  function section(cat, countNode, bodyNodes, open) {
+    var sec = document.createElement('section');
+    var isOn = (typeof open === 'boolean') ? open : isOpen(cat);
+    sec.className = 'cat-sec' + (isOn ? '' : ' closed') + (quiet(cat) ? ' quiet' : '');
+    sec.id = 'cat-' + catSlug(cat);
+    sec.setAttribute('data-cat', cat);
+    var head = document.createElement('div');
+    head.className = 'cat-head';
+    head.setAttribute('role', 'button');
+    head.setAttribute('aria-expanded', isOn ? 'true' : 'false');
     var m = metaOf(cat);
-    if (m.glyph) {
-      var g = document.createElement('span');
-      g.className = 'cat-glyph'; g.setAttribute('aria-hidden', 'true');
-      g.textContent = m.glyph;
-      h.appendChild(g);
-    }
-    h.appendChild(document.createTextNode(cat));
-    if (count) {
+    var g = document.createElement('span');
+    g.className = 'cat-glyph'; g.setAttribute('aria-hidden', 'true');
+    g.textContent = m.glyph || '·';
+    head.appendChild(g);
+    var nm = document.createElement('span');
+    nm.className = 'cat-name'; nm.textContent = cat;
+    head.appendChild(nm);
+    var pitch = document.createElement('span');
+    pitch.className = 'cat-pitch'; pitch.textContent = m.pitch || '';
+    head.appendChild(pitch);
+    if (countNode) {
       var c = document.createElement('span');
-      c.className = 'cat-count'; c.textContent = count;
-      h.appendChild(c);
+      c.className = 'cat-count';
+      if (typeof countNode === 'string') c.textContent = countNode;
+      else c.appendChild(countNode);
+      head.appendChild(c);
     }
-    h.appendChild(docsLink(FNS_DOCS + '/docs/#' + catSlug(cat), 'docs ↗', 'cat-docs'));
-    frag.appendChild(h);
-    var pitch = document.createElement('p');
-    pitch.className = 'cat-pitch';
-    pitch.textContent = m.pitch || '';
-    frag.appendChild(pitch);
+    if (cat !== 'From other creators') {
+      var dl = docsLink(FNS_DOCS + '/docs/#' + catSlug(cat), 'docs ↗', 'cat-docs');
+      dl.addEventListener('click', function (e) { e.stopPropagation(); });
+      head.appendChild(dl);
+    }
+    var chev = document.createElement('span');
+    chev.className = 'chev'; chev.setAttribute('aria-hidden', 'true');
+    chev.textContent = '▾';
+    head.appendChild(chev);
+    head.addEventListener('click', function () {
+      setOpen(cat, sec.classList.contains('closed'));
+      render();
+    });
+    sec.appendChild(head);
+    var body = document.createElement('div');
+    body.className = 'cat-body';
+    bodyNodes.forEach(function (n) { body.appendChild(n); });
+    sec.appendChild(body);
+    return sec;
+  }
+
+  /** "k selected" in accent, then "of N tools": the count a closed
+   *  section shows, so a selection is visible without opening it. */
+  function countText(sel, n, noun) {
+    var frag = document.createDocumentFragment();
+    if (sel) {
+      var b = document.createElement('b');
+      b.textContent = sel + ' selected';
+      frag.appendChild(b);
+      frag.appendChild(document.createTextNode(' of ' + n + ' ' + noun));
+    } else {
+      frag.appendChild(document.createTextNode(n + ' ' + noun));
+    }
     return frag;
+  }
+
+  /** The rail's counts follow the selection; the rail itself is built
+   *  once at boot. */
+  function updateNav() {
+    var nav = document.getElementById('catnav');
+    if (!nav) return;
+    Array.prototype.forEach.call(nav.querySelectorAll('a[data-cat]'), function (a) {
+      var cat = a.getAttribute('data-cat');
+      var n = cat === 'Core' ? core.length
+        : tools.filter(function (p) { return p.category === cat; }).length;
+      var sel = cat === 'Core' ? 0
+        : tools.filter(function (p) { return p.category === cat && picked.has(p.name); }).length;
+      var cnt = a.querySelector('.n');
+      cnt.textContent = '';
+      if (sel) {
+        var b = document.createElement('b'); b.textContent = sel;
+        cnt.appendChild(b);
+        cnt.appendChild(document.createTextNode('/' + n));
+      } else {
+        cnt.textContent = n;
+      }
+      a.classList.toggle('open', isOpen(cat));
+    });
   }
 
   function render() {
@@ -954,18 +1180,7 @@ function fnsBoot() {
     }
     listEl.textContent = '';
     var shown = 0;
-    var cats = (M.categories || []).slice();
-    tools.forEach(function (p) {
-      if (cats.indexOf(p.category) === -1) cats.push(p.category);
-    });
-
-    if (!q) {
-      listEl.appendChild(heading('Core', core.length + ' packages'));
-      var g0 = document.createElement('div');
-      g0.className = 'grid';
-      core.slice().sort(byTitle).forEach(function (p) { g0.appendChild(coreCard(p)); });
-      listEl.appendChild(g0);
-    }
+    var cats = allCats();
 
     cats.forEach(function (cat) {
       if (cat === 'Core') return;
@@ -973,11 +1188,29 @@ function fnsBoot() {
       if (!items.length) return;
       shown += items.length;
       var sel = items.filter(function (p) { return picked.has(p.name); }).length;
-      listEl.appendChild(heading(cat, sel + ' of ' + items.length + ' selected'));
-      var g = document.createElement('div');
-      g.className = 'grid';
-      items.sort(byTitle).forEach(function (p) { g.appendChild(card(p)); });
-      listEl.appendChild(g);
+      // Minor tools rank after everything else in their category and go in
+      // their own denser grid. Splitting the grids rather than just sorting
+      // is what makes them read as a footnote to the category instead of
+      // more of the same list.
+      var major = items.filter(function (p) { return !p.minor; });
+      var small = items.filter(function (p) { return !!p.minor; });
+      var nodes = [];
+      if (major.length) {
+        var g = document.createElement('div');
+        g.className = 'grid';
+        major.sort(byTitle).forEach(function (p) { g.appendChild(card(p)); });
+        nodes.push(g);
+      }
+      if (small.length) {
+        var gm = document.createElement('div');
+        gm.className = 'grid compact';
+        small.sort(byTitle).forEach(function (p) { gm.appendChild(card(p)); });
+        nodes.push(gm);
+      }
+      // a filter match opens the section: a hit hidden behind a fold is
+      // a search that looks like it found nothing
+      listEl.appendChild(section(cat, countText(sel, items.length,
+        items.length === 1 ? 'tool' : 'tools'), nodes, q ? true : undefined));
     });
 
     // Tools by OTHER creators. Rendered LAST and never selectable: these are
@@ -990,13 +1223,28 @@ function fnsBoot() {
     });
     if (recs.length) {
       shown += recs.length;
-      listEl.appendChild(heading('From other creators',
-        recs.length + ' link' + (recs.length === 1 ? '' : 's')));
       var gr = document.createElement('div');
       gr.className = 'grid';
       recs.forEach(function (r) { gr.appendChild(recCard(r)); });
-      listEl.appendChild(gr);
+      listEl.appendChild(section('From other creators',
+        recs.length + ' link' + (recs.length === 1 ? '' : 's'), [gr],
+        q ? true : undefined));
     }
+
+    // Core, last and quiet: plumbing that installs with any selection.
+    // Nobody picks it, so it is a folded footnote, not a section a
+    // reader has to get past.
+    if (!q) {
+      var coreNote = document.getElementById('corenote');
+      var coreNodes = [];
+      if (coreNote) { coreNote.hidden = false; coreNodes.push(coreNote); }
+      var g0 = document.createElement('div');
+      g0.className = 'grid compact';
+      core.slice().sort(byTitle).forEach(function (p) { g0.appendChild(coreCard(p)); });
+      coreNodes.push(g0);
+      listEl.appendChild(section('Core', core.length + ' packages, installed with any selection', coreNodes));
+    }
+    updateNav();
 
     document.getElementById('empty').hidden = shown > 0 || !q;
     document.getElementById('cnt').textContent = picked.size;
@@ -1180,17 +1428,181 @@ function fnsBoot() {
               return byName[n] && byName[n].kind === 'tool';
             })};
   }).filter(function (b) { return b.name && b.packages.length; });
+  // --- the questionnaire ---------------------------------------------
+  // Questions and their options' tags come from the manifest (`quiz`,
+  // curated in the catalog); each tool's `fits` names the tags it
+  // answers. Scoring is a count: how many chosen tags a tool fits, with
+  // a tag chosen by two answers counting twice. Everything with a score
+  // is recommended, best first, and the reasons are the answers' own
+  // labels. Pure and lifted by tests/test_wizard_quiz.py.
+  function quizScore(answers, quiz, tools) {
+    var weight = {};
+    var why = {};
+    (quiz.questions || []).forEach(function (q) {
+      var chosen = answers[q.id] || [];
+      (q.options || []).forEach(function (o) {
+        if (chosen.indexOf(o.id) === -1) return;
+        (o.tags || []).forEach(function (t) {
+          weight[t] = (weight[t] || 0) + 1;
+          (why[t] = why[t] || []).push(o.label);
+        });
+      });
+    });
+    var out = [];
+    tools.forEach(function (p) {
+      var score = 0, reasons = [];
+      (p.fits || []).forEach(function (t) {
+        if (!weight[t]) return;
+        score += weight[t];
+        why[t].forEach(function (r) { if (reasons.indexOf(r) === -1) reasons.push(r); });
+      });
+      if (score > 0) out.push({name: p.name, score: score, why: reasons});
+    });
+    out.sort(function (a, b) { return b.score - a.score || a.name.localeCompare(b.name); });
+    return out;
+  }
+  // The set versus the long tail. Six generous answers can fit most of
+  // the catalog, and a set that is most of the catalog is no set. Tools
+  // several answers pointed at are the recommendation (ticked); a
+  // single-answer match is offered below it, unticked, so the breadth
+  // stays visible without becoming the selection. A thin result keeps
+  // its single matches in the set rather than offering nothing.
+  function quizSplit(picks) {
+    var main = picks.filter(function (r) { return r.score >= 2; });
+    var more = picks.filter(function (r) { return r.score < 2; });
+    if (main.length < 6) {
+      main = picks.slice(0, Math.min(picks.length, 8));
+      more = picks.slice(main.length);
+    }
+    return {main: main, more: more};
+  }
+  var quiz = (M.quiz && M.quiz.questions && M.quiz.questions.length) ? M.quiz : null;
+  var quizAnswers = {};
+  var quizStep = 0;
+  function quizShow(on) {
+    document.getElementById('presets').hidden = on;
+    document.getElementById('quiz').hidden = !on;
+    document.getElementById('welcometitle').textContent = on
+      ? 'Find my set' : (firstrun ? 'Welcome to FNSTools' : 'Choose a starting point');
+  }
+  function quizRender(onUse) {
+    var n = quiz.questions.length;
+    var prog = document.getElementById('quiz-progress');
+    var prompt = document.getElementById('quiz-prompt');
+    var hint = document.getElementById('quiz-hint');
+    var opts = document.getElementById('quiz-options');
+    var res = document.getElementById('quiz-result');
+    var next = document.getElementById('quiz-next');
+    var use = document.getElementById('quiz-use');
+    opts.textContent = ''; res.textContent = '';
+    if (quizStep < n) {
+      var q = quiz.questions[quizStep];
+      prog.textContent = 'Question ' + (quizStep + 1) + ' of ' + n;
+      prompt.textContent = q.prompt;
+      hint.textContent = q.multi ? 'Pick everything that applies.' : 'Pick one.';
+      opts.hidden = false; res.hidden = true;
+      next.hidden = false; use.hidden = true;
+      next.textContent = quizStep === n - 1 ? 'See my set' : 'Next';
+      var chosen = quizAnswers[q.id] || [];
+      q.options.forEach(function (o) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'qopt' + (chosen.indexOf(o.id) !== -1 ? ' on' : '');
+        b.textContent = o.label;
+        b.addEventListener('click', function () {
+          var cur = quizAnswers[q.id] || [];
+          if (q.multi) {
+            var i = cur.indexOf(o.id);
+            if (i === -1) cur.push(o.id); else cur.splice(i, 1);
+          } else {
+            cur = [o.id];
+          }
+          quizAnswers[q.id] = cur;
+          quizRender(onUse);
+        });
+        opts.appendChild(b);
+      });
+      return;
+    }
+    // the result: a pre-ticked set with the reasons, editable before use
+    var picks = quizScore(quizAnswers, quiz, tools);
+    var split = quizSplit(picks);
+    prog.textContent = 'Your set';
+    prompt.textContent = split.main.length
+      ? split.main.length + ' tool' + (split.main.length === 1 ? '' : 's') + ' for how you work'
+      : 'Nothing matched those answers';
+    hint.textContent = picks.length
+      ? 'Untick anything you do not want. You can still change the list after.'
+      : 'Go back and pick a few more answers, or start from Recommended.';
+    opts.hidden = true; res.hidden = false;
+    next.hidden = true; use.hidden = !picks.length;
+    var chosenNames = {};
+    function resultRow(r, ticked) {
+      var p = byName[r.name];
+      var row = document.createElement('label');
+      row.className = 'qres' + (isPlus(p) ? ' plus' : '');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox'; cb.checked = ticked;
+      chosenNames[r.name] = ticked;
+      cb.addEventListener('change', function () { chosenNames[r.name] = cb.checked; });
+      row.appendChild(cb);
+      var body = document.createElement('span');
+      body.className = 'qres-body';
+      var t = document.createElement('b');
+      t.textContent = titleOf(p);
+      body.appendChild(t);
+      if (isPlus(p)) body.appendChild(chip('Plus', 'plus'));
+      var w = document.createElement('span');
+      w.className = 'qres-why';
+      w.textContent = 'because: ' + r.why.join(', ');
+      body.appendChild(w);
+      row.appendChild(body);
+      return row;
+    }
+    split.main.forEach(function (r) { res.appendChild(resultRow(r, true)); });
+    if (split.more.length) {
+      var sub = document.createElement('div');
+      sub.className = 'qres-sub';
+      sub.textContent = 'Also fits one of your answers, unticked:';
+      res.appendChild(sub);
+      split.more.forEach(function (r) { res.appendChild(resultRow(r, false)); });
+    }
+    use.onclick = function () {
+      onUse(picks.map(function (r) { return r.name; })
+        .filter(function (nm) { return chosenNames[nm]; }));
+    };
+  }
+  function quizStart(onUse) {
+    quizAnswers = {}; quizStep = 0;
+    quizShow(true);
+    quizRender(onUse);
+    document.getElementById('quiz-back').onclick = function () {
+      if (quizStep === 0) { quizShow(false); return; }
+      quizStep -= 1; quizRender(onUse);
+    };
+    document.getElementById('quiz-next').onclick = function () {
+      quizStep += 1; quizRender(onUse);
+    };
+  }
+
   function applyPreset(names) {
     picked.clear();
     names.forEach(function (n) { picked.add(n); });
+    // a starting point opens the sections it selected into, so the choice
+    // is visible without hunting for it behind the folds
+    names.forEach(function (n) {
+      if (byName[n] && byName[n].category) setOpen(byName[n].category, true);
+    });
     save(); render();
   }
   function showWelcome() {
     var w = document.getElementById('welcome');
     var pre = document.getElementById('pre-starter');
     var preLast = document.getElementById('pre-last');
-    document.getElementById('welcometitle').textContent =
-      firstrun ? 'Welcome to FNSTools' : 'Choose a starting point';
+    var preQuiz = document.getElementById('pre-quiz');
+    quizShow(false);   // a reopened dialog starts on the cards, not mid-quiz
+    // a manifest with no questionnaire hides the card, like the starter
+    preQuiz.hidden = !quiz;
     preLast.hidden = !last;
     if (last) {
       // core rides in the record too (the table lists every package) but
@@ -1232,6 +1644,7 @@ function fnsBoot() {
     }
     preLast.onclick = function () { choose(lastNames, last && last.bind); };
     pre.onclick = function () { choose(starter); };
+    preQuiz.onclick = function () { quizStart(function (names) { choose(names); }); };
     document.getElementById('pre-all').onclick = function () {
       choose(tools.map(function (p) { return p.name; }));
     };
@@ -1733,17 +2146,16 @@ function fnsBoot() {
   (function () {
     var nav = document.getElementById('catnav');
     if (!nav) return;
-    var cats = (M.categories || []).slice();
-    tools.forEach(function (p) {
-      if (cats.indexOf(p.category) === -1) cats.push(p.category);
-    });
-    if (cats.indexOf('Core') === -1) cats.unshift('Core');
-    cats.forEach(function (cat) {
-      var n = cat === 'Core' ? core.length
-        : tools.filter(function (p) { return p.category === cat; }).length;
+    // Core is not on the rail: it is plumbing, not a place to go
+    allCats().filter(function (c) { return !quiet(c); }).forEach(function (cat) {
+      var n = tools.filter(function (p) { return p.category === cat; }).length;
       if (!n) return;
       var a = document.createElement('a');
       a.href = '#cat-' + catSlug(cat);
+      a.setAttribute('data-cat', cat);
+      // the rail opens what it jumps to; a jump to a closed section
+      // landed on one header row and looked like a broken link
+      a.addEventListener('click', function () { setOpen(cat, true); render(); });
       var m = metaOf(cat);
       if (m.glyph) {
         var g = document.createElement('span');
@@ -1757,6 +2169,17 @@ function fnsBoot() {
       a.appendChild(c);
       nav.appendChild(a);
     });
+    var fold = document.createElement('div');
+    fold.className = 'fold-all';
+    [['Expand all', true], ['Collapse all', false]].forEach(function (f) {
+      var b = document.createElement('button');
+      b.className = 'btn btn-quiet';
+      b.textContent = f[0];
+      b.addEventListener('click', function () { setAllOpen(f[1]); });
+      fold.appendChild(b);
+    });
+    nav.appendChild(fold);
+    updateNav();
   })();
   // The Plus rail: name what Plus IS, once, quietly. The free tools are
   // the toolkit; this line says a few extras exist for supporters, and
@@ -1772,10 +2195,10 @@ function fnsBoot() {
     mark.textContent = '◆';
     rail.appendChild(mark);
     var pb = document.createElement('b');
-    pb.textContent = 'Plus';
+    pb.textContent = 'Plus:';
     rail.appendChild(pb);
     rail.appendChild(document.createTextNode(
-      ': the free tools are the full toolkit; '
+      'the free tools are the full toolkit; '
       + plus.length + ' extra' + (plus.length === 1 ? '' : 's') + ' below '
       + (plus.length === 1 ? 'is' : 'are') + ' a thank-you for supporters. '));
     rail.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));

@@ -10,7 +10,7 @@ features:
 
 ## Toolbar Registry
 
-The raw registry behind the [FNS Toolbar](/docs/fns-toolbar/): which widgets sit
+The raw registry behind the FNS toolbar: which widgets sit
 on the bar, in what order, and which of them are shown. That state lives here
 and in no per-widget parameter, which is why installing or removing a tool
 never leaves a hole or a dead button behind.

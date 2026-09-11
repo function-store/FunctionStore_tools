@@ -44,7 +44,7 @@ still works; it forwards to `op.FNS_CONSOLE.Open()`.
 
 ## Syncing/Externalizing
 
-ConfigRegistry aggregates every installed tool's Custom Parameters (plus optional extra state, e.g. from [OpTemplates](/docs/optemplates/) or [ExprHotStrings](/docs/exprhotstrings/#exprhotstrings)) into **one JSON file** inside your **User Palette** (`FNStools_ext/config/FNStools_config.json` by default, overridable per-install via the master's `Configfile` par), so your settings follow you across projects and stay out of the `.toe`.
+ConfigRegistry aggregates every installed tool's Custom Parameters (plus optional extra state, e.g. from [OpTemplates](/docs/fns-optemplates/) or [ExprHotStrings](/docs/fns-exprhotstrings/#exprhotstrings)) into **one JSON file** inside your **User Palette** (`FNStools_ext/config/FNStools_config.json` by default, overridable per-install via the master's `Configfile` par), so your settings follow you across projects and stay out of the `.toe`.
 
 Each tool loads its own section once per session, ~30 frames after it registers (`Autoload`, on by default per tool; turn it off on a tool that should keep project-local settings instead, e.g. one whose state should migrate with the project folder). Saving happens automatically on project pre-save, via the `Save All` pulse on any tool's Registry page (forwards to the ConfigRegistry master), and right before the updater replaces a package.
 

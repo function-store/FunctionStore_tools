@@ -12,7 +12,7 @@ packaging/docs/<Name>.md   prose + frontmatter per package     (curated)
 website/index.html         landing page                        (hand-written)
 website/content/plus.html  /plus/ prose, a fragment            (hand-written)
 website/content/family.json the other Function Store products  (curated)
-website/content/guides/*.md long-form guides, one file per page   (hand-written)
+website/content/guides/*.md guides and reference pages, one per file (hand-written)
 website/docs/              GENERATED — gitignored, built on every deploy
 website/get/               GENERATED — gitignored, the online configurator
 website/plus/              GENERATED — gitignored, from content/plus.html
@@ -59,27 +59,38 @@ does not exist.
 
 A guide is a page about the toolkit as a whole, as opposed to one package:
 `website/content/guides/<slug>.md`, with a frontmatter of `title`, `summary`
-(the lede and the meta description) and an optional `section`. The filename
-is the URL: `getting-started.md` is served at `/docs/guides/getting-started/`,
-so it must be lowercase letters, digits and hyphens. The build renders a
-guide through the same markdown pipeline as a package page, gives it the
-docs chrome (sidebar, crumbs, an "On this page" list read off its `##`
+(the lede and the meta description) and the optional `section` and `order`.
+The filename is the URL: `getting-started.md` is served at
+`/docs/guides/getting-started/`, so it must be lowercase letters, digits and
+hyphens, and it should match the title so a guessed URL lands where the
+reader expects. The build renders a guide through the same markdown
+pipeline as a package page, gives it the docs chrome (sidebar, crumbs, an "On this page" list read off its `##`
 headings), and Pagefind indexes it with the rest of the docs. Internal links
 to `/docs/...` pages and headings are validated both ways, the dash note
 covers its prose, and a missing `title` or `summary` fails the build. No
 parameter tables, badges or registry sections are generated for it.
 
-`section` decides where it sits. `guides` (the default) is the short,
-instructional kind: it leads the sidebar under **Guides** and leads the docs
-index. `reference` is the long-form kind: it closes the sidebar's
-**Reference** group beside the common-parameters page and closes the index,
-so a reader meets the instructions first and the architecture only if they
-go looking for it. Two ship today: `getting-started.md` (install, pick,
-update, settings; links to the other one in its first line) and
-`architecture.md`, *How FNSTools is built* (the bootstrap, versioning and
-updates, dependencies, the launcher ecosystem and the gate on one page; the
-internal record behind it is `docs/ArchitectureResearch.md`). Guides are not
-in the CMS; edit the markdown.
+`section` decides where it sits. `guides` (the default) is the short kind:
+it leads the sidebar under **Guides** and leads the docs index. `reference`
+is the long-form kind: it closes the sidebar's **Reference** group beside
+the common-parameters page and closes the index, so a reader meets the
+short pages first and the deep one only on purpose. `order` (default 50,
+low first) sets the reading order inside a section, with the title breaking
+ties. Make it explicit: without it the order is the filename's alphabet,
+and a guide named `advanced-...` would silently outrank Getting started.
+
+Three ship today, and they are a ladder:
+
+| Guide | Section | For |
+| --- | --- | --- |
+| `getting-started.md` | guides, 10 | install, pick, update, settings, Plus, help |
+| `architecture.md` | guides, 20 | the shape of the toolkit in one page, around 700 words |
+| `how-fnstools-is-built.md` | reference, 10 | the full account: bootstrap, versioning and updates, dependencies, the release rail, the launcher ecosystem, the gate |
+
+Each links to the next one down and the deep page links back up, so a
+reader can stop at any rung. The internal record behind the deep page is
+`docs/ArchitectureResearch.md`. Guides are not in the CMS; edit the
+markdown.
 
 ## Free and Plus
 

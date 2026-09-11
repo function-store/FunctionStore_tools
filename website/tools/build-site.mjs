@@ -387,15 +387,25 @@ if (fs.existsSync(GUIDES_SRC)) {
       fail(`website/content/guides/${file}: frontmatter \`section\` must be "guides" or "reference"`);
       continue;
     }
+    // Reading order inside the section, low first. Explicit because the
+    // alternative is the filename, and a guide named later in the alphabet
+    // would quietly jump the queue in front of Getting started.
+    const order = data.order === undefined ? 50 : Number(data.order);
+    if (!Number.isFinite(order)) {
+      fail(`website/content/guides/${file}: frontmatter \`order\` must be a number`);
+      continue;
+    }
     const html = md.render(content);
     const ids = new Set();
     for (const m of html.matchAll(/<h[2-6][^>]*\sid="([^"]+)"/g)) ids.add(m[1]);
     anchorsOf.set(`guides/${slug}`, ids);
     guides.push({
-      slug, file, body: content, html, section,
+      slug, file, body: content, html, section, order,
       title: String(data.title), summary: String(data.summary),
     });
   }
+  guides.sort((a, b) => a.order - b.order
+    || a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
 }
 
 // Internal links must resolve. This is the check that would have caught the

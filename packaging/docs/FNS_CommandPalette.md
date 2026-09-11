@@ -1,10 +1,6 @@
 ---
 package: FNS_CommandPalette
 summary: 'A command palette inside TouchDesigner: every command your FNS tools declare, plus TouchDesigner''s own palette components, ranked by what you are looking at.'
-hotkeys:
-  - keys: Ctrl+Shift+P
-    does: Open the palette over the network you are in
-local_keys: [Ctrl+D, Ctrl+H, Alt+S, Alt+Up, Alt+Down]
 features:
   - name: CommandPalette
     anchor: commandpalette
@@ -14,6 +10,15 @@ features:
     anchor: commands-tab
   - name: Hotkey and persistence
     anchor: hotkey-and-persistence
+hotkeys:
+  - keys: Ctrl+Shift+P
+    does: Open the palette over the network you are in
+local_keys:
+  - Ctrl+D
+  - Ctrl+H
+  - Alt+S
+  - Alt+Up
+  - Alt+Down
 ---
 
 ## CommandPalette
@@ -45,6 +50,10 @@ text field whose placeholder names the parameter, its type and its default.
 Enter accepts (empty keeps the default), Left steps back a parameter, Esc
 backs out to the list.
 
+### Palette components
+
+TouchDesigner's own palette components are rows like any other, tagged `TOX`. Choosing one (Enter, or a click) loads it into the network the palette was opened over and **hands it to your mouse**, exactly like a new operator from the OP Create dialog: move it where you want and click to place. You can also **press a row and drag it** into any network pane, the gesture TouchDesigner's own Palette browser uses. Derivative's built-in components ship as bundles (the component, its icon and its help text in one wrapper); the palette unwraps them either way, so what lands in your network is the component itself.
+
 ## Prefixes
 
 A leading character scopes the query. With nothing typed the footer shows
@@ -60,10 +69,22 @@ them.
 | `#` | One tool's commands: `#` lists the tools, `#QuickMarks ` lists that tool's commands |
 
 Navigation and tool rows drill in with Right and back out with Left, keeping
-whichever convention you are typing in. A method runs through the COMP, so
-the palette can only call what the COMP itself exposes; arguments typed after
-the name (`~SetLevel 0.5`) are passed along, and a method whose required
-arguments are missing is refused with the footer saying how many it needs.
+whichever convention you are typing in.
+
+**Methods complete before they run.** Enter (or a click, or Right) on a method
+row fills the input with `~SetLevel ` and leaves the palette open, so you can
+type the arguments; Enter again calls it. **Tab** only ever completes, never
+runs, and the footer shows what it would give you.
+
+**Scope to one extension.** `~ext.` lists the extensions on the subject COMP,
+and `~ext.MyExt.` or the shorter `~MyExt.` lists that one's members. Addressed
+this way the list is everything not starting with an underscore, not just the
+capitalized half: reaching a member through `.ext.MyExt` does not require it to
+be promoted, so the lowercase wiring tier is callable here even though the COMP
+does not expose it. The name is the Extension Name parameter when one is set and
+the class name when it is not, which is what `.ext.` resolves by either way. A method runs through the COMP, so the palette can only
+call what the COMP itself exposes, and one whose required arguments are still
+missing is refused with the footer saying how many it needs.
 
 Ctrl+D stars the selected command or component; starred rows lead within
 their tier. Ctrl+H hides the selected command from the palette; the Commands

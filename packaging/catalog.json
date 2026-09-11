@@ -12,8 +12,11 @@
   "and re-run the generator. A package missing from this file still ships, with",
   "category 'Uncategorized' and an empty description.",
   "access/license/seats are ENTITLEMENT metadata. `access` is 'free' or a Patreon TIER ID -- the NUMERIC STRING from the API, never the display name, which can be renamed at any time and is not unique. It is not a flag, because the gate is multi-tier. The tier -> packages map lives in the Worker, never here and never in any shipped client; publish.Stage() cross-checks every gated row against that map and refuses placeholders, mismatched ids, and packages no tier or Gumroad product grants. `seats` is per-package because seat policy may differ per product; null means unlimited.",
-  "category_meta may also carry `deprioritized: true`: a category that is plumbing, shown LAST on the website and never opened by default. It does not reorder `categories`, so the installer picker is unaffected.",
-  "author {name, url}, homepage and changelog_url are CURATED on any package (presentation facts; the manifest carries them to the picker byline and the website badge -- the ONE home for credit, doc frontmatter `credit` is refused). A `source` block {manifest, tox?, package?} makes an entry FOREIGN: bytes and version owned upstream, mirrored by packaging/foreign_sync.py into dist/ and pinned in foreign.lock.json, never exported from a live COMP. Only a foreign entry may carry updates (self|store), help_url and min_td_build -- on a live package those have live authorities. See docs/ForeignPackages.md."
+  "category_meta may also carry `deprioritized: true`: a category that is plumbing, shown LAST on the website and never opened by default. It does not reorder `categories`; the installer picker also shows it last, folded and quiet, and leaves it off its category rail.",
+  "A package's `minor: true` marks a small convenience that should not compete for attention with the tools someone came for: the picker ranks it LAST inside its own category and draws it in a denser, lighter card. It is never hidden and never moved out of its category -- it is a real package someone may want, and a picker that hides packages lies about what the toolkit contains. Curation, not a measure of size: set it by whether the tool would be noise to someone scanning for the thing they came for.",
+  "author {name, url}, homepage and changelog_url are CURATED on any package (presentation facts; the manifest carries them to the picker byline and the website badge -- the ONE home for credit, doc frontmatter `credit` is refused). A `source` block {manifest, tox?, package?} makes an entry FOREIGN: bytes and version owned upstream, mirrored by packaging/foreign_sync.py into dist/ and pinned in foreign.lock.json, never exported from a live COMP. Only a foreign entry may carry updates (self|store), help_url and min_td_build -- on a live package those have live authorities. See docs/ForeignPackages.md.",
+  "`alternatives_for` is DERIVED for a live package that carries an FNS_OpMenuRegistry host (build_manifest calls its onAlternatives()); it may be CURATED, in the content CMS or here, on a foreign entry and on a live package with NO op-menu host: a list of operator types the package is an alternative for (a curated list beside a host is a preflight problem). The op-menu registry offers a store tox for those types when the package is not in the project, and places it from disk.",
+  "`quiz` is the guided setup's questionnaire: questions with options, each option carrying tags; a package's `fits` names the tags it answers. The picker recommends every tool whose fits meet the chosen tags, best matches first. build_manifest validates both (an option tag no package fits is reported). Content, so it is authored on the cms.mjs side like presets."
  ],
  "categories": [
   "Core",
@@ -60,49 +63,254 @@
    "pitch": "Extensions, stubs and the editor you actually write them in."
   }
  },
+ "quiz": {
+  "questions": [
+   {
+    "id": "work",
+    "prompt": "What do you mostly do in TouchDesigner?",
+    "multi": true,
+    "options": [
+     {
+      "id": "live",
+      "label": "Live visuals and VJ sets",
+      "tags": [
+       "live",
+       "media",
+       "audio"
+      ]
+     },
+     {
+      "id": "show",
+      "label": "Installations and shows",
+      "tags": [
+       "show",
+       "projector",
+       "tidy",
+       "network"
+      ]
+     },
+     {
+      "id": "art",
+      "label": "Generative art and rendering",
+      "tags": [
+       "art",
+       "params",
+       "network"
+      ]
+     },
+     {
+      "id": "dev",
+      "label": "Building tools and components",
+      "tags": [
+       "dev",
+       "params"
+      ]
+     },
+     {
+      "id": "learn",
+      "label": "Learning TouchDesigner",
+      "tags": [
+       "learn",
+       "visual"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "style",
+    "prompt": "How do you like to work?",
+    "multi": false,
+    "options": [
+     {
+      "id": "speed",
+      "label": "Keyboard and speed: hotkeys, a command palette, fewer clicks",
+      "tags": [
+       "speed"
+      ]
+     },
+     {
+      "id": "visual",
+      "label": "Visual: buttons on the toolbar and pane bar, a manager window",
+      "tags": [
+       "visual"
+      ]
+     },
+     {
+      "id": "stock",
+      "label": "Keep TouchDesigner close to stock",
+      "tags": []
+     }
+    ]
+   },
+   {
+    "id": "output",
+    "prompt": "Where does the output go?",
+    "multi": true,
+    "options": [
+     {
+      "id": "projector",
+      "label": "Projectors, LED walls, several displays",
+      "tags": [
+       "projector"
+      ]
+     },
+     {
+      "id": "screen",
+      "label": "The screen in front of me",
+      "tags": [
+       "screen"
+      ]
+     },
+     {
+      "id": "audio",
+      "label": "Sound matters too",
+      "tags": [
+       "audio"
+      ]
+     },
+     {
+      "id": "phone",
+      "label": "Controlled from a phone or tablet",
+      "tags": [
+       "phone"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "params",
+    "prompt": "Do you wire a lot of parameters?",
+    "multi": false,
+    "options": [
+     {
+      "id": "yes",
+      "label": "Yes: promote, bind, randomize, reset, map controllers",
+      "tags": [
+       "params"
+      ]
+     },
+     {
+      "id": "no",
+      "label": "Not really",
+      "tags": []
+     }
+    ]
+   },
+   {
+    "id": "build",
+    "prompt": "Do you build reusable components or extensions?",
+    "multi": false,
+    "options": [
+     {
+      "id": "yes",
+      "label": "Yes, with Python and custom parameters",
+      "tags": [
+       "dev"
+      ]
+     },
+     {
+      "id": "no",
+      "label": "No",
+      "tags": []
+     }
+    ]
+   }
+  ]
+ },
  "packages": {
-  "AltSelect": {
+  "FNS_AltSelect": {
    "category": "Network",
-   "description": "Alternative selection helpers for operators in the network editor."
+   "description": "Alternative selection helpers for operators in the network editor.",
+   "fits": [
+    "network",
+    "speed"
+   ]
   },
-  "AutoCombine": {
+  "FNS_AutoCombine": {
    "category": "Network",
-   "description": "Hold Alt while placing a generator TOP to have it come in pre-set to composite over its input."
+   "description": "Hold Alt while placing a generator TOP to have it come in pre-set to composite over its input.",
+   "fits": [
+    "network",
+    "art",
+    "speed"
+   ]
   },
-  "AutoRes": {
-   "category": "Media & Output",
+  "FNS_AutoRes": {
+   "category": "Network",
    "description": "Project-wide resolution reference that operators can follow, with no hardcoded pixel sizes.",
-   "recommended": true
+   "recommended": true,
+   "fits": [
+    "projector",
+    "show",
+    "screen",
+    "live"
+   ]
   },
-  "BorderlessTD": {
-   "category": "Surfaces",
-   "description": "Borderless TouchDesigner window, plus timeline hiding."
+  "FNS_Autosave": {
+   "category": "Workflow",
+   "description": "Save the project on a timer without touching the timeline, honouring your increment and backup preferences, and skipping saves while you are performing.",
+   "fits": [
+    "tidy",
+    "show",
+    "learn"
+   ]
   },
-  "ColorUI": {
-   "category": "Surfaces",
-   "description": "Operator and family colour palettes, with the active palette roaming through config."
-  },
-  "CustomParTools": {
-   "category": "Parameters",
-   "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion. Also carries four stock-TouchDesigner shortcuts for opening parameters and the COMP editor.",
-   "recommended": true
-  },
-  "ExprHotStrings": {
-   "category": "Parameters",
-   "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field."
+  "FNS_BackupCleaner": {
+   "category": "Workflow",
+   "description": "Every .toe backup TouchDesigner has written under a folder, grouped by the project that made them, with their size and an estimate of the hours they represent; send the ones you are done with to the recycle bin, or delete them outright.",
+   "access": "8323905",
+   "fits": [
+    "tidy"
+   ]
   },
   "FNS_BeatMod": {
    "category": "Parameters",
    "description": "Beat-synced modulation on any parameter or ParGroup, locked to the timeline tempo: a wave, a channel of any CHOP, or a gesture you record by hand, gliding in instead of cutting. Tap tempo sets the global BPM, and a manager lists every modulator in the project.",
-   "access": "8323905"
+   "access": "8323905",
+   "fits": [
+    "live",
+    "params",
+    "art",
+    "audio"
+   ]
+  },
+  "FNS_BorderlessTD": {
+   "category": "Surfaces",
+   "description": "Borderless TouchDesigner window, plus timeline hiding.",
+   "fits": [
+    "show",
+    "projector",
+    "screen",
+    "live"
+   ]
+  },
+  "FNS_Collect": {
+   "category": "Workflow",
+   "description": "Gather every external file your project references into the project folder and rewrite the parameters to match, so the project travels. Shows the plan before it copies anything.",
+   "access": "8323905",
+   "fits": [
+    "tidy",
+    "show"
+   ]
+  },
+  "FNS_ColorUI": {
+   "category": "Surfaces",
+   "description": "Operator and family colour palettes, with the active palette roaming through config.",
+   "fits": [
+    "visual",
+    "learn"
+   ]
   },
   "FNS_CommandKit": {
-   "category": "Developer",
+   "category": "Core",
    "description": "Drop-in kit that lets ANY component publish quick-launch commands to the in-TouchDesigner command palette and the TDX launcher: decorate a promoted method, or declare a spec. Guarded: with no registry in the session nothing happens and nothing errors."
   },
   "FNS_CommandPalette": {
-   "category": "Core",
-   "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in Hub."
+   "category": "Surfaces",
+   "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in Hub.",
+   "fits": [
+    "speed"
+   ]
   },
   "FNS_CommandRegistry": {
    "category": "Core",
@@ -110,7 +318,10 @@
   },
   "FNS_ConfigHost": {
    "category": "Developer",
-   "description": "A standalone ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions."
+   "description": "A standalone ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions.",
+   "fits": [
+    "dev"
+   ]
   },
   "FNS_ConfigRegistry": {
    "category": "Core",
@@ -120,10 +331,51 @@
    "category": "Core",
    "description": "The toolkit's web front, served from inside your project: every tool's settings on one page, the install picker, and any tab a tool contributes. The raw master, promoted to /sys."
   },
+  "FNS_CustomParTools": {
+   "category": "Parameters",
+   "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion. Also carries the pane-bar drag-drop hijack and path-cell injection, and four stock-TouchDesigner shortcuts for opening parameters and the COMP editor.",
+   "recommended": true,
+   "fits": [
+    "params",
+    "dev",
+    "speed"
+   ]
+  },
+  "FNS_ExprHotStrings": {
+   "category": "Parameters",
+   "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field.",
+   "fits": [
+    "params",
+    "speed",
+    "dev"
+   ]
+  },
+  "FNS_GlobalOutSelect": {
+   "category": "Network",
+   "description": "Browse Global OP Shortcuts and the out operators inside them in a tree, and drag any of them into a network as a Select.",
+   "fits": [
+    "network",
+    "visual",
+    "show"
+   ]
+  },
+  "FNS_GlobalVolControl": {
+   "category": "Media & Output",
+   "description": "Global audio volume control.",
+   "fits": [
+    "audio",
+    "live",
+    "visual"
+   ]
+  },
   "FNS_HotkeyManager": {
    "category": "Workflow",
    "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit.",
-   "recommended": true
+   "recommended": true,
+   "fits": [
+    "speed",
+    "learn"
+   ]
   },
   "FNS_Hub": {
    "category": "Core",
@@ -133,27 +385,97 @@
    "category": "Core",
    "description": "The registry behind Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys."
   },
+  "FNS_HydroHomie": {
+   "category": "Media & Output",
+   "description": "A toolbar reminder to drink water at an interval you set. Off by default."
+  },
+  "FNS_iopBrowser": {
+   "category": "Network",
+   "description": "Browse the internal operators and the OP tree of the network you are in, from a popup opened off the pane bar. One browser instance serves every pane; the bar carries only the button.",
+   "fits": [
+    "network",
+    "dev",
+    "visual"
+   ]
+  },
   "FNS_MainMenuRegistry": {
    "category": "Core",
    "description": "TD main-menu surface registry, including project-name display. The raw master, promoted to /sys."
   },
-  "FNS_Navbar": {
-   "category": "Surfaces",
-   "description": "Pane-bar extras: parent-hierarchy navigation, path injection and drag-drop hijack, plus the navbar Configurator.",
-   "recommended": true
+  "FNS_MediaBrowser": {
+   "category": "Media & Output",
+   "description": "See every media file your project uses and which operator uses it, filter to the missing ones, and replace or repoint them in place.",
+   "access": "8323905",
+   "fits": [
+    "media",
+    "show",
+    "tidy"
+   ]
+  },
+  "FNS_Misc": {
+   "category": "Workflow",
+   "description": "Three small toolbar utilities: a Background Viewer toggle for the network's backdrop TOPs and CHOPs, a global Mouse In CHOP you can drag channels from onto parameters, and a Hog CHOP for starving a patch of cook time to see how it copes.",
+   "minor": true,
+   "fits": [
+    "visual"
+   ]
   },
   "FNS_NavbarRegistry": {
    "category": "Core",
    "description": "The pane-bar surface registry. The raw master, promoted to /sys; clone it to add your own pane-bar widgets."
   },
-  "FNS_OpMenu": {
+  "FNS_OpenExt": {
+   "category": "Developer",
+   "description": "Open an operator's extension source quickly.",
+   "minor": true,
+   "fits": [
+    "dev",
+    "speed"
+   ]
+  },
+  "FNS_OpMenuMods": {
    "category": "Surfaces",
    "description": "OP Create dialog extras: the IO filter, operator search words and script injection.",
-   "recommended": true
+   "recommended": true,
+   "fits": [
+    "network",
+    "speed",
+    "learn"
+   ]
   },
   "FNS_OpMenuRegistry": {
    "category": "Core",
    "description": "OP Create dialog surface registry: search words, row decorations, right-click items, filter stages. The raw master, promoted to /sys."
+  },
+  "FNS_OpTemplates": {
+   "category": "Network",
+   "description": "A library of preconfigured operator templates to drop into a network.",
+   "fits": [
+    "network",
+    "art",
+    "learn",
+    "speed"
+   ]
+  },
+  "FNS_OpToClipboard": {
+   "category": "Network",
+   "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression.",
+   "recommended": true,
+   "fits": [
+    "dev",
+    "params",
+    "speed"
+   ]
+  },
+  "FNS_Output": {
+   "category": "Media & Output",
+   "description": "Output window and display routing helpers.",
+   "fits": [
+    "projector",
+    "screen",
+    "show",
+    "live"
+   ]
   },
   "FNS_PaletteRegistry": {
    "category": "Core",
@@ -162,6 +484,128 @@
   "FNS_PaneTypeRegistry": {
    "category": "Core",
    "description": "Named, persistent pane-type entries for TD's panebar: any COMP can appear in the pane-type dropdown and be recalled with configurable owner, type, window actions and callbacks."
+  },
+  "FNS_ParentHierarchy": {
+   "category": "Network",
+   "description": "Hover a parent in the pane-bar path with Alt to see its parent shortcut, global shortcut and internal operators, and Ctrl to see its custom parameters and values. Click any item to copy a reference to it. Adds no button of its own; it works on the path you already have.",
+   "fits": [
+    "network",
+    "visual",
+    "learn"
+   ]
+  },
+  "FNS_ParOPDrop": {
+   "category": "Parameters",
+   "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey.",
+   "recommended": true,
+   "fits": [
+    "params",
+    "dev"
+   ]
+  },
+  "FNS_ParRandomizer": {
+   "category": "Parameters",
+   "description": "Randomize parameter values within range, for quick exploration.",
+   "fits": [
+    "params",
+    "art"
+   ]
+  },
+  "FNS_PreviewPanel": {
+   "category": "Network",
+   "description": "A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.",
+   "access": "8323905",
+   "fits": [
+    "visual",
+    "art",
+    "network",
+    "learn"
+   ]
+  },
+  "FNS_QuickCollapse": {
+   "category": "Network",
+   "description": "Collapse a selection into a component, with an optional customize dialog.",
+   "recommended": true,
+   "fits": [
+    "network",
+    "speed",
+    "dev"
+   ]
+  },
+  "FNS_QuickPane": {
+   "category": "Workflow",
+   "description": "Pane layout shortcuts.",
+   "recommended": true,
+   "fits": [
+    "speed",
+    "visual"
+   ]
+  },
+  "FNS_QuickTime": {
+   "category": "Workflow",
+   "description": "Timeline and time-related shortcuts.",
+   "fits": [
+    "media",
+    "speed"
+   ]
+  },
+  "FNS_Remote": {
+   "category": "Control",
+   "description": "Control the project from your phone over your own network: parameter pages, a perform window and multi-touch, paired by QR with no cloud and no account.",
+   "access": "8323905",
+   "fits": [
+    "phone",
+    "show",
+    "live"
+   ]
+  },
+  "FNS_ResetPLS": {
+   "category": "Workflow",
+   "description": "Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0.",
+   "fits": [
+    "show",
+    "live",
+    "tidy"
+   ]
+  },
+  "FNS_SearchPalette": {
+   "category": "Workflow",
+   "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
+   "recommended": true,
+   "author": {
+    "name": "Yea Chen",
+    "url": "https://github.com/yeataro/TD-SearchPalette"
+   },
+   "fits": [
+    "speed",
+    "learn"
+   ]
+  },
+  "FNS_SetSmoothness": {
+   "category": "Control",
+   "description": "Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network.",
+   "minor": true,
+   "fits": [
+    "art",
+    "screen"
+   ]
+  },
+  "FNS_SwapOps": {
+   "category": "Network",
+   "description": "Swap one operator for another while keeping connections intact.",
+   "recommended": true,
+   "fits": [
+    "network",
+    "speed"
+   ]
+  },
+  "FNS_SwitchOPs": {
+   "category": "Network",
+   "description": "Switch between operators in place.",
+   "fits": [
+    "network",
+    "speed"
+   ]
   },
   "FNS_TimelineRegistry": {
    "category": "Core",
@@ -173,12 +617,12 @@
    "access": "8323905",
    "license": "",
    "seats": null,
-   "recommended": true
-  },
-  "FNS_Toolbar": {
-   "category": "Surfaces",
-   "description": "Toolbar extras: the Configurator UI for ordering, grouping and hiding bar widgets, plus stock widgets.",
-   "recommended": true
+   "recommended": true,
+   "fits": [
+    "media",
+    "live",
+    "audio"
+   ]
   },
   "FNS_ToolbarRegistry": {
    "category": "Core",
@@ -188,99 +632,12 @@
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement."
   },
-  "GlobalOutSelect": {
-   "category": "Media & Output",
-   "description": "Browse Global OP Shortcuts and the out operators inside them in a tree, and drag any of them into a network as a Select."
-  },
-  "GlobalVolControl": {
-   "category": "Media & Output",
-   "description": "Global audio volume control."
-  },
-  "HydroHomie": {
-   "category": "Media & Output",
-   "description": "A toolbar reminder to drink water at an interval you set. Off by default."
-  },
-  "MISC": {
-   "category": "Workflow",
-   "description": "Assorted small utilities that ship together (hog CHOP, mouse input and friends)."
-  },
-  "OUTPUT": {
-   "category": "Media & Output",
-   "description": "Output window and display routing helpers."
-  },
-  "OpTemplates": {
-   "category": "Network",
-   "description": "A library of preconfigured operator templates to drop into a network."
-  },
-  "OpToClipboard": {
-   "category": "Network",
-   "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression.",
-   "recommended": true
-  },
-  "OpenExt": {
+  "FNS_VSCodeTools": {
    "category": "Developer",
-   "description": "Open an operator's extension source quickly."
-  },
-  "ParOPDrop": {
-   "category": "Parameters",
-   "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey.",
-   "recommended": true
-  },
-  "ParRandomizer": {
-   "category": "Parameters",
-   "description": "Randomize parameter values within range, for quick exploration."
-  },
-  "QuickCollapse": {
-   "category": "Network",
-   "description": "Collapse a selection into a component, with an optional customize dialog.",
-   "recommended": true
-  },
-  "QuickMarks": {
-   "category": "Network",
-   "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design.",
-   "author": {
-    "name": "Alex Guevara",
-    "url": "https://alex-guevara.com"
-   }
-  },
-  "QuickPane": {
-   "category": "Workflow",
-   "description": "Pane layout shortcuts.",
-   "recommended": true
-  },
-  "QuickTime": {
-   "category": "Workflow",
-   "description": "Timeline and time-related shortcuts."
-  },
-  "ResetPLS1": {
-   "category": "Workflow",
-   "description": "Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0."
-  },
-  "SetSmoothness": {
-   "category": "Control",
-   "description": "Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network."
-  },
-  "SwapOps": {
-   "category": "Network",
-   "description": "Swap one operator for another while keeping connections intact.",
-   "recommended": true
-  },
-  "SwitchOPs": {
-   "category": "Network",
-   "description": "Switch between operators in place."
-  },
-  "TDX_SearchPalette": {
-   "category": "Workflow",
-   "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
-   "recommended": true,
-   "author": {
-    "name": "Yea Chen",
-    "url": "https://github.com/yeataro/TD-SearchPalette"
-   }
-  },
-  "VSCodeTools": {
-   "category": "Developer",
-   "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs."
+   "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs.",
+   "fits": [
+    "dev"
+   ]
   },
   "midiMapper": {
    "category": "Control",
@@ -288,7 +645,12 @@
    "author": {
     "name": "AlphaMoonbase.berlin",
     "url": "https://alphamoonbase.de/"
-   }
+   },
+   "fits": [
+    "live",
+    "show",
+    "params"
+   ]
   },
   "oscMapper": {
    "category": "Control",
@@ -296,39 +658,36 @@
    "author": {
     "name": "AlphaMoonbase.berlin",
     "url": "https://alphamoonbase.de/"
-   }
+   },
+   "fits": [
+    "show",
+    "live",
+    "params"
+   ]
   },
-  "paste_from_clipboard": {
+  "PasteFromClipboard": {
    "category": "Network",
    "description": "Paste images and data from the system clipboard into TouchDesigner.",
    "author": {
     "name": "DotSimulate",
     "url": "https://www.patreon.com/dotsimulate"
-   }
+   },
+   "fits": [
+    "art",
+    "speed"
+   ]
   },
-  "FNS_Collect": {
-   "category": "Workflow",
-   "description": "Gather every external file your project references into the project folder and rewrite the parameters to match, so the project travels. Shows the plan before it copies anything.",
-   "access": "8323905"
-  },
-  "FNS_PreviewPanel": {
+  "QuickMarks": {
    "category": "Network",
-   "description": "A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.",
-   "access": "8323905"
-  },
-  "FNS_Remote": {
-   "category": "Control",
-   "description": "Control the project from your phone over your own network: parameter pages, a perform window and multi-touch, paired by QR with no cloud and no account.",
-   "access": "8323905"
-  },
-  "FNS_Autosave": {
-   "category": "Workflow",
-   "description": "Save the project on a timer without touching the timeline, honouring your increment and backup preferences, and skipping saves while you are performing."
-  },
-  "FNS_MediaBrowser": {
-   "category": "Media & Output",
-   "description": "See every media file your project uses and which operator uses it, filter to the missing ones, and replace or repoint them in place.",
-   "access": "8323905"
+   "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design.",
+   "author": {
+    "name": "Alex Guevara",
+    "url": "https://alex-guevara.com"
+   },
+   "fits": [
+    "network",
+    "speed"
+   ]
   },
   "TDXMap": {
    "category": "Control",
@@ -346,7 +705,12 @@
    },
    "updates": "self",
    "help_url": "https://tdxmap.functionstore.xyz/docs/",
-   "min_td_build": "2023.12120"
+   "min_td_build": "2023.12120",
+   "fits": [
+    "live",
+    "show",
+    "params"
+   ]
   }
  }
 }

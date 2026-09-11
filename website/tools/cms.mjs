@@ -239,6 +239,10 @@ function curatedExtras(entry) {
     updates: String(entry.updates || ''),
     help_url: String(entry.help_url || ''),
     min_td_build: String(entry.min_td_build || ''),
+    // operator types the package stands in for; one space-separated string
+    // for the input. Derived at manifest build for a live package with an
+    // op-menu host (a curated list there is a preflight problem).
+    alternatives_for: (Array.isArray(entry.alternatives_for) ? entry.alternatives_for : []).join(' '),
   };
 }
 
@@ -260,6 +264,15 @@ function applyCurated(entry, body) {
     const v = body[k].trim();
     if (v && !/^https:\/\//.test(v)) return `${k} must be https://`;
     setOrDelete(k, v);
+  }
+  if (typeof body.alternatives_for === 'string') {
+    const tokens = body.alternatives_for.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
+    const badTypes = tokens.filter((t) => !/^[a-z0-9_]+(TOP|CHOP|SOP|DAT|MAT|COMP|POP)$/.test(t));
+    if (badTypes.length) {
+      return `alternatives_for: ${badTypes.join(', ')} -- an operator type reads like moviefileinTOP or noiseCHOP`;
+    }
+    const list = [...new Set(tokens)].sort();
+    if (list.length) entry.alternatives_for = list; else delete entry.alternatives_for;
   }
   // `source` decides foreign-ness. Clearing its manifest URL removes the
   // block, and with it every foreign-only field (they would be orphans).
@@ -597,7 +610,7 @@ const server = http.createServer(async (req, res) => {
           cat = readCatalog();
         }
 
-        const curatedKeys = ['author', 'source', ...LINK_KEYS, ...FOREIGN_ONLY];
+        const curatedKeys = ['author', 'source', 'alternatives_for', ...LINK_KEYS, ...FOREIGN_ONLY];
         if (typeof body.category === 'string' || typeof body.description === 'string'
             || typeof body.recommended === 'boolean'
             || typeof body.placement === 'string'

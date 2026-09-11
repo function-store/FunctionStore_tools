@@ -10,7 +10,8 @@ features:
 
 ## Navbar Registry
 
-The raw registry behind the [FNS Navbar](/docs/fns-navbar/) mods: which widgets
+The raw registry behind the pane-bar tools ([ParentHierarchy](/docs/fns-parenthierarchy/),
+[iopBrowser](/docs/fns-iopbrowser/) and [CustomParTools](/docs/fns-custompartools/)): which widgets
 appear in TouchDesigner's pane bars, their order, which side they sit on, and
 whether they are shown.
 

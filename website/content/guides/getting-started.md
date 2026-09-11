@@ -1,9 +1,10 @@
 ---
 title: Getting started
+order: 10
 summary: Install the toolkit, pick your tools, keep them current, and know where your settings live. The short version.
 ---
 
-This is the short version. If you want to know how the machinery under it works, read [How FNSTools is built](/docs/guides/architecture/) at the end of the docs.
+This is the short version. For the shape of the toolkit itself, read [Architecture](/docs/guides/architecture/); the full account of the machinery is [How FNSTools is built](/docs/guides/how-fnstools-is-built/) at the end of the docs.
 
 You need TouchDesigner 2025 or newer, on Windows or macOS.
 

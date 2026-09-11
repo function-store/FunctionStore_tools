@@ -515,6 +515,11 @@ function renderEditor() {
     </div>
 
     <div class="field">
+      <label for="alternatives_for">Alternative for <span class="hint">— operator types this tool stands in for, separated by spaces (moviefileinTOP ndiinTOP). Creating one of those types with the alternatives shortcut held offers this tool, from the store when it is not in the project. A live package that carries an op-menu host derives this from its own onAlternatives(); leave it empty there.</span></label>
+      <input type="text" id="alternatives_for" placeholder="moviefileinTOP ndiinTOP" />
+    </div>
+
+    <div class="field">
       <label for="summary">Summary <span class="hint">— optional fallback used only if Description is empty</span></label>
       <textarea id="summary" rows="2"></textarea>
     </div>
@@ -650,6 +655,7 @@ function renderEditor() {
   $('#updates').value = d.updates || '';
   $('#min_td_build').value = d.min_td_build || '';
   $('#help_url').value = d.help_url || '';
+  $('#alternatives_for').value = d.alternatives_for || '';
   $('#video').value = d.data.video || '';
   $('#body').value = d.body;
   const plats = d.data.platforms || [];
@@ -689,6 +695,7 @@ function renderEditor() {
   $('#updates').onchange = (e) => { d.updates = e.target.value; markDirty(); };
   $('#min_td_build').oninput = (e) => { d.min_td_build = e.target.value.trim(); markDirty(); };
   $('#help_url').oninput = (e) => { d.help_url = e.target.value.trim(); markDirty(); };
+  $('#alternatives_for').oninput = (e) => { d.alternatives_for = e.target.value.trim(); markDirty(); };
 
   let previewTimer;
   $('#body').oninput = (e) => {
@@ -1820,6 +1827,7 @@ async function save() {
         updates: draft.updates || '',
         help_url: draft.help_url || '',
         min_td_build: draft.min_td_build || '',
+        alternatives_for: draft.alternatives_for || '',
         data: draft.data,
         body: draft.body,
         mtime: current.mtime,

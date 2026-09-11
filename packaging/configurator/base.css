@@ -151,6 +151,17 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
 .chip.rec { border-style: dashed; }
 .card.core { cursor: default; }
 .card.core:hover { border-color: var(--border); background: var(--bg-1); }
+/* A MINOR tool: a small convenience that should not compete for attention
+   with the tools someone actually came for. Ranked last inside its own
+   category and drawn about two thirds the weight, in a denser grid so a
+   handful of them cost one row instead of four. Marked, never hidden --
+   same reasoning as .chip.plus below: a picker that hides packages lies
+   about what the toolkit contains. Curated per package in catalog.json. */
+.grid.compact { grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 8px; }
+.card.minor { padding: 9px 12px; gap: 9px; }
+.card.minor .name { font-size: 13px; font-weight: 500; }
+.card.minor .desc { margin-top: 2px; font-size: 12px; color: var(--text-faint); }
+.card.minor .chips { margin-top: 6px; }
 .card input {
   flex: none; margin: 3px 0 0; width: 16px; height: 16px;
   accent-color: var(--accent); cursor: pointer;
@@ -161,6 +172,11 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
   font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
 }
 .desc { margin-top: 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+/* two lines at a glance; the full text rides the card's tooltip */
+.card .desc:not(.byline) {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
 a.help:hover { color: var(--accent); }
 
@@ -297,6 +313,31 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .preset .pick { margin-top: 6px; font-size: 12px; color: var(--accent); }
 @media (max-width: 640px) { .presets { grid-template-columns: 1fr; } }
 
+/* ── the questionnaire (inside the guided setup dialog) ── */
+.quiz-progress { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.quiz-prompt { margin: 6px 0 4px; font-size: 18px; font-weight: 700; letter-spacing: -0.015em; }
+.quiz-hint { margin: 0 0 12px; font-size: 13px; color: var(--text-dim); }
+.quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.qopt {
+  text-align: left; cursor: pointer; padding: 10px 14px; border-radius: 8px;
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 14px;
+}
+.qopt:hover { border-color: var(--border-strong); }
+.qopt.on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent-bright); }
+.quiz-result { display: flex; flex-direction: column; gap: 4px; max-height: 44vh; overflow: auto; }
+.qres {
+  display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-2);
+}
+.qres input { margin-top: 3px; accent-color: var(--accent); }
+.qres-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qres-body b { font-size: 14px; font-weight: 600; }
+.qres-body .chip { align-self: flex-start; }
+.qres-why { font-size: 12px; color: var(--text-faint); }
+.qres-sub { margin: 10px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.qres.plus { border-color: rgba(251,191,36,0.22); }
+
 /* ── toast ── */
 .toast {
   position: fixed; bottom: 14px; right: 18px; padding: 8px 14px;
@@ -308,6 +349,76 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .toast.show { opacity: 1; }
 .toast.ok { border-color: var(--green); }
 .toast.err { border-color: var(--err); }
+
+/* ── collapsible category sections ──
+   The overview IS the closed state: eight header rows with a pitch and a
+   count. A section opens on click, on a filter match, or when a preset
+   selects into it; open state persists per browser (fns.fold). ── */
+.cat-sec { margin: 10px 0 0; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-1); }
+.cat-sec.closed { background: transparent; }
+.cat-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 13px 16px; cursor: pointer; user-select: none;
+  border-radius: 12px;
+}
+.cat-head:hover { background: var(--bg-2); }
+.cat-sec:not(.closed) > .cat-head { border-bottom: 1px solid var(--border); border-radius: 12px 12px 0 0; }
+.cat-head .cat-glyph { width: 18px; text-align: center; font-size: 15px; }
+.cat-head .cat-name { font-size: 16px; font-weight: 700; letter-spacing: -0.015em; }
+.cat-head .cat-pitch { margin: 0; flex: 1 1 240px; font-size: 13px; color: var(--text-faint); }
+.cat-head .cat-count { white-space: nowrap; text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 12.5px; }
+.cat-head .cat-count b { color: var(--accent); font-weight: 600; }
+.cat-head .cat-docs { white-space: nowrap; }
+.cat-head .chev {
+  width: 18px; text-align: center; color: var(--text-faint); font-size: 12px;
+  transition: transform 0.15s ease;
+}
+.cat-sec.closed .chev { transform: rotate(-90deg); }
+.cat-body { padding: 14px 16px 16px; }
+.cat-sec.closed > .cat-body { display: none; }
+.cat-body .grid + .grid { margin-top: 10px; }
+.cat-body .note { margin: 0 0 14px; }
+/* a deprioritized category (Core): a footnote, not a section to get past */
+.cat-sec.quiet { margin-top: 22px; border-style: dashed; }
+.cat-sec.quiet .cat-head { padding: 9px 16px; }
+.cat-sec.quiet .cat-name { font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.cat-sec.quiet .cat-pitch, .cat-sec.quiet .cat-count { font-size: 12px; }
+.cat-sec.quiet .cat-glyph { color: var(--text-faint); font-size: 12px; }
+.cat-sec.quiet .card.core { padding: 8px 12px; }
+.cat-sec.quiet .card.core .name { font-size: 13px; font-weight: 500; }
+.cat-sec.quiet .card.core .desc { font-size: 12px; }
+.cat-sec.quiet .card.core .chips { display: none; }
+
+/* ── the layout: a sticky side rail on wide screens, the chip row below ── */
+.layout { display: block; }
+.layout > .content { min-width: 0; }
+.fold-all { display: flex; gap: 6px; align-items: center; }
+@media (min-width: 1000px) {
+  .layout { display: grid; grid-template-columns: 212px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .layout > .catnav {
+    position: sticky; top: calc(var(--stick) + 86px);
+    display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 4px 0 0;
+    max-height: calc(100vh - var(--stick) - 110px); overflow-y: auto;
+  }
+  .layout > .catnav a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 8px; border: 1px solid transparent;
+    background: transparent; font-size: 13px; color: var(--text-dim);
+  }
+  .layout > .catnav a:hover { background: var(--bg-1); border-color: var(--border); color: var(--text); }
+  .layout > .catnav a.open { color: var(--text); }
+  .layout > .catnav a .g { width: 16px; text-align: center; }
+  .layout > .catnav a .n { margin-left: auto; font-size: 11px; }
+  .layout > .catnav a .n b { color: var(--accent); font-weight: 600; }
+  .layout > .catnav .fold-all {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .layout > .catnav .fold-all .btn { flex: 1 1 auto; justify-content: center; padding: 5px 8px; font-size: 12px; }
+}
+@media (max-width: 999px) {
+  .catnav .fold-all { margin-left: auto; }
+  .catnav .fold-all .btn { padding: 4px 10px; font-size: 12px; }
+}
 
 /* ── app density: the in-TD manager sets body.app; everything reads a
    notch tighter without forking any component. ── */
