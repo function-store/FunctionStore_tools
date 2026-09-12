@@ -2265,6 +2265,24 @@ function fnsBoot() {
   document.getElementById('close').addEventListener('click', function () {
     document.getElementById('dlg').close();
   });
+  // Served in TouchDesigner, the page lives only while the installer's
+  // server does: the server stops after a spell of silence and releases
+  // the browser's render with it, and a dormant render shows its last
+  // frame and takes no clicks (the "Installed" dialog whose Close button
+  // died a minute after the install). So while someone is at the page --
+  // mouse or keys in the last two minutes -- it says so every 20 s. Left
+  // alone, it goes quiet and the server may stop, as it should.
+  if (window.FNS_SERVED) {
+    var lastActivity = Date.now();
+    ['mousemove', 'pointerdown', 'keydown', 'wheel'].forEach(function (ev) {
+      document.addEventListener(ev, function () { lastActivity = Date.now(); }, {passive: true});
+    });
+    setInterval(function () {
+      if (Date.now() - lastActivity < 120000) {
+        fetch('/status').catch(function () { /* no server: nothing to keep */ });
+      }
+    }, 20000);
+  }
 
   // --- presentation rails, built once from the catalog -----------------
   // The category quick-nav: one jump chip per section. The sections
