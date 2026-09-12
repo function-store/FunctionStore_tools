@@ -37,7 +37,7 @@
   },
   "Surfaces": {
    "glyph": "▦",
-   "pitch": "The parts of TouchDesigner you look at all day, made yours."
+   "pitch": "Window layout, operator colours, menus and preview panels."
   },
   "Parameters": {
    "glyph": "◎",
@@ -45,23 +45,23 @@
   },
   "Network": {
    "glyph": "⇄",
-   "pitch": "Build, swap, collapse and navigate without touching a menu."
+   "pitch": "Operator creation, replacement, grouping and network navigation."
   },
   "Media & Output": {
    "glyph": "▶",
-   "pitch": "Where the picture and the sound actually leave the project."
+   "pitch": "Media playback, previews and audio and video output."
   },
   "Control": {
    "glyph": "⊙",
-   "pitch": "Hardware in, parameters out."
+   "pitch": "MIDI, OSC and remote parameter control."
   },
   "Workflow": {
    "glyph": "⚡",
-   "pitch": "The small frictions, removed."
+   "pitch": "Project setup, backups and everyday editing shortcuts."
   },
   "Developer": {
    "glyph": "⌨",
-   "pitch": "Extensions, stubs and the editor you actually write them in."
+   "pitch": "Python extensions, type stubs and editor integration."
   }
  },
  "quiz": {

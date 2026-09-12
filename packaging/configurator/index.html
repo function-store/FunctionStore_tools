@@ -317,6 +317,8 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .dlg-report .chips { display: flex; flex-wrap: wrap; gap: 6px; }
 .dlg-report .chip { font-size: 12.5px; padding: 5px 10px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--border-strong); color: var(--text); }
 .dlg-report .chip.ok { border-color: var(--accent); }
+.dlg-report a.chip { text-decoration: none; cursor: pointer; }
+.dlg-report a.chip:hover { background: var(--accent-dim); color: var(--accent-bright); }
 .dlg-report .chip.rm { color: var(--text-faint); text-decoration: line-through; }
 .dlg-report .chip.bad { border-color: #c0392b; color: #e57368; }
 .dlg-report .note { margin: 12px 0 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
@@ -1881,7 +1883,14 @@ function fnsBoot() {
         } else if (/^[A-Za-z_][\w]*$/.test(s)) {
           if (isCore(s)) { coreN++; return; }
           toolsN++;
-          chip.classList.add('ok'); chip.textContent = titleOfName(s);
+          // a chip is the tool's docs page when the catalog has one
+          var help = byName[s] && byName[s].help_url;
+          if (help) {
+            chip = docsLink(help, titleOfName(s), 'chip ok');
+            chip.title = 'Open the docs for ' + titleOfName(s);
+          } else {
+            chip.classList.add('ok'); chip.textContent = titleOfName(s);
+          }
         } else {
           leftovers.push(s); return;
         }
@@ -2379,6 +2388,20 @@ function fnsBoot() {
   // died a minute after the install). So while someone is at the page --
   // mouse or keys in the last two minutes -- it says so every 20 s. Left
   // alone, it goes quiet and the server may stop, as it should.
+  // Served inside TouchDesigner, the page draws in a Web Render TOP, and
+  // a target=_blank link is a popup there -- ignored (Redirect Popups is
+  // off; on would navigate the picker itself away). So every external
+  // link hands its address to the server, which opens the system browser.
+  if (window.FNS_SERVED) {
+    document.addEventListener('click', function (ev) {
+      var a = ev.target && ev.target.closest ? ev.target.closest('a[target="_blank"]') : null;
+      if (!a || !/^https?:\/\//.test(a.href)) return;
+      ev.preventDefault();
+      fetch('/open', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({url: a.href})})
+        .catch(function () { /* the server is gone; nothing to open with */ });
+    });
+  }
   if (window.FNS_SERVED) {
     var lastActivity = Date.now();
     ['mousemove', 'pointerdown', 'keydown', 'wheel'].forEach(function (ev) {
