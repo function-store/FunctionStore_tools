@@ -300,6 +300,26 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
   white-space: pre-wrap; word-break: break-word;
 }
 .dlg-actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+/* the done state: a check in the title, the report as a count and chips */
+.dlg.done h3 { display: flex; align-items: center; gap: 10px; }
+.dlg.done h3::before {
+  content: '✓'; display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%; font-size: 15px; font-weight: 800;
+  background: var(--accent); color: var(--accent-ink);
+}
+.dlg-report {
+  padding: 16px 18px; border-radius: 10px;
+  background: var(--bg-deep); border: 1px solid var(--border);
+}
+.dlg-report .sumline { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.dlg-report .big { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: var(--accent-bright); }
+.dlg-report .lab { font-size: 14px; color: var(--text-dim); }
+.dlg-report .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dlg-report .chip { font-size: 12.5px; padding: 5px 10px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--border-strong); color: var(--text); }
+.dlg-report .chip.ok { border-color: var(--accent); }
+.dlg-report .chip.rm { color: var(--text-faint); text-decoration: line-through; }
+.dlg-report .chip.bad { border-color: #c0392b; color: #e57368; }
+.dlg-report .note { margin: 12px 0 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
 
 /* ── the guided steps strip ── */
 .steps {
@@ -331,6 +351,9 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .preset b { font-size: 15px; }
 .preset span { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
 .preset .pick { margin-top: 6px; font-size: 12px; color: var(--accent); }
+/* the one card that is also the confirmation ("like last time"): first, and lit */
+.preset.primary { border-color: var(--accent); background: var(--accent-dim); }
+.preset.primary .pick { font-weight: 700; }
 @media (max-width: 640px) { .presets { grid-template-columns: 1fr; } }
 
 /* ── the questionnaire (inside the guided setup dialog) ── */
@@ -597,6 +620,7 @@ body.app .dlg h3 { font-size: 16px; }
     list into the toolkit's installer.
   </p>
   <pre id="out"></pre>
+  <div class="dlg-report" id="report" hidden></div>
   <div class="dlg-actions">
     <a class="bar-docs" id="dlgdocs" target="_blank" rel="noopener">Installation notes ↗</a>
     <span class="spacer"></span>
@@ -615,8 +639,8 @@ body.app .dlg h3 { font-size: 16px; }
     you confirm the plan.
   </p>
   <div class="presets" id="presets">
+    <button class="preset primary" id="pre-last" hidden><b>Set up like last time</b><span id="pre-last-desc"></span><span class="pick">Install now ›</span></button>
     <button class="preset" id="pre-quiz" hidden><b>Answer a few questions</b><span>A few quick questions, then a set picked for how you work.</span><span class="pick">Find my set ›</span></button>
-    <button class="preset" id="pre-last" hidden><b>Set up like last time</b><span id="pre-last-desc"></span><span class="pick">Restore ›</span></button>
     <button class="preset" id="pre-starter"><b>Recommended</b><span id="pre-starter-desc"></span><span class="pick">Start here ›</span></button>
     <button class="preset" id="pre-all"><b>Everything</b><span id="pre-all-desc"></span><span class="pick">Select all ›</span></button>
     <button class="preset" id="pre-none"><b>Pick my own</b><span>Start from an empty list and browse the catalog.</span><span class="pick">Browse ›</span></button>
@@ -1757,7 +1781,26 @@ function fnsBoot() {
       wantBind = bind || null;
       applyPreset(names); w.close(); dismiss();
     }
-    preLast.onclick = function () { choose(lastNames, last && last.bind); };
+    // "Like last time" is the one card that IS the confirmation: the list
+    // is the user's own, from a project they saved, so the click plans
+    // and installs in one go instead of parking them on a review dialog.
+    // Served only; the site has no server and never shows this card.
+    function installNow(names, bind) {
+      choose(names, bind);
+      if (!served || locked) return;
+      setStep(3);
+      installPolls = 0;
+      installEpilogue = '';
+      document.getElementById('dlgtitle').textContent = 'Setting up like last time';
+      showDialog('Planning the install…', false);
+      post('/selection', JSON.stringify(selection(), null, 1) + '\n',
+        function (res) {
+          if (!res.ok) { showDialog(res.text, false); return; }
+          showDialog(res.text + '\n\nInstalling…', false);
+          post('/install', '{}', installOrPoll);
+        });
+    }
+    preLast.onclick = function () { installNow(lastNames, last && last.bind); };
     pre.onclick = function () { choose(starter); };
     preQuiz.onclick = function () { quizStart(function (names) { choose(names); }); };
     document.getElementById('pre-all').onclick = function () {
@@ -1804,9 +1847,70 @@ function fnsBoot() {
   // moment earlier. The epilogue completes the picture; a manual
   // install keeps the per-pass report it asked for.
   var installEpilogue = '';
+  // The installer's report is lines of text ("installed 7, removed 1,
+  // failed 0", then one name per line, "removed X", "FAILED X"); the
+  // done dialog renders it as a report -- the count up front, each tool
+  // as a chip by its title, removals and failures marked -- and keeps
+  // the raw text underneath the chips only when a line does not parse.
   function finished(text) {
-    document.getElementById('dlgtitle').textContent = 'Installed ✓';
+    document.getElementById('dlgtitle').textContent = 'Installed';
     showDialog(text + installEpilogue, false, HINTS.done);
+    var report = document.getElementById('report');
+    var out = document.getElementById('out');
+    report.innerHTML = '';
+    var lines = String(text || '').split('\n');
+    var m = /^installed (\d+), removed (\d+), failed (\d+)/.exec(lines[0] || '');
+    if (m) {
+      var rm = parseInt(m[2], 10), bad = parseInt(m[3], 10);
+      // core is plumbing: it folds into the label, and the chips are the
+      // tools the user actually picked
+      var isCore = function (name) { return byName[name] && byName[name].kind !== 'tool'; };
+      var chips = document.createElement('div');
+      chips.className = 'chips';
+      var leftovers = [], toolsN = 0, coreN = 0;
+      lines.slice(1).forEach(function (line) {
+        var s = line.trim();
+        if (!s) return;
+        var chip = document.createElement('span');
+        chip.className = 'chip';
+        var mm;
+        if ((mm = /^removed (\S+)/.exec(s))) {
+          chip.classList.add('rm'); chip.textContent = titleOfName(mm[1]);
+        } else if ((mm = /^FAILED (\S+)/.exec(s))) {
+          chip.classList.add('bad'); chip.textContent = titleOfName(mm[1]) + ' failed';
+        } else if (/^[A-Za-z_][\w]*$/.test(s)) {
+          if (isCore(s)) { coreN++; return; }
+          toolsN++;
+          chip.classList.add('ok'); chip.textContent = titleOfName(s);
+        } else {
+          leftovers.push(s); return;
+        }
+        chips.appendChild(chip);
+      });
+      var sum = document.createElement('div');
+      sum.className = 'sumline';
+      var big = document.createElement('span');
+      big.className = 'big';
+      big.textContent = String(toolsN);
+      sum.appendChild(big);
+      var lab = document.createElement('span');
+      lab.className = 'lab';
+      lab.textContent = (toolsN === 1 ? 'tool installed' : 'tools installed')
+        + (coreN ? ' with ' + coreN + ' core package' + (coreN === 1 ? '' : 's') : '')
+        + (rm ? ', ' + rm + ' removed' : '') + (bad ? ', ' + bad + ' failed' : '');
+      sum.appendChild(lab);
+      report.appendChild(sum);
+      report.appendChild(chips);
+      if (leftovers.length || installEpilogue) {
+        var note = document.createElement('p');
+        note.className = 'note';
+        note.textContent = leftovers.concat([installEpilogue.trim()]).filter(Boolean).join(' ');
+        report.appendChild(note);
+      }
+      report.hidden = false;
+      out.hidden = true;
+    }
+    document.querySelector('#dlg .dlg').classList.add('done');
     document.getElementById('doopen').hidden = false;
     setStep(4);   // every step done
   }
@@ -1835,6 +1939,9 @@ function fnsBoot() {
   function showDialog(text, installable, hint) {
     var dlg = document.getElementById('dlg');
     document.getElementById('out').textContent = text;
+    document.getElementById('out').hidden = false;
+    document.getElementById('report').hidden = true;
+    dlg.querySelector('.dlg').classList.remove('done');
     document.getElementById('doinstall').hidden = !installable;
     document.getElementById('docopy').hidden = true;
     document.getElementById('doopen').hidden = true;

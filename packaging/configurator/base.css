@@ -282,6 +282,26 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
   white-space: pre-wrap; word-break: break-word;
 }
 .dlg-actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+/* the done state: a check in the title, the report as a count and chips */
+.dlg.done h3 { display: flex; align-items: center; gap: 10px; }
+.dlg.done h3::before {
+  content: '✓'; display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%; font-size: 15px; font-weight: 800;
+  background: var(--accent); color: var(--accent-ink);
+}
+.dlg-report {
+  padding: 16px 18px; border-radius: 10px;
+  background: var(--bg-deep); border: 1px solid var(--border);
+}
+.dlg-report .sumline { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.dlg-report .big { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: var(--accent-bright); }
+.dlg-report .lab { font-size: 14px; color: var(--text-dim); }
+.dlg-report .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dlg-report .chip { font-size: 12.5px; padding: 5px 10px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--border-strong); color: var(--text); }
+.dlg-report .chip.ok { border-color: var(--accent); }
+.dlg-report .chip.rm { color: var(--text-faint); text-decoration: line-through; }
+.dlg-report .chip.bad { border-color: #c0392b; color: #e57368; }
+.dlg-report .note { margin: 12px 0 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
 
 /* ── the guided steps strip ── */
 .steps {
@@ -313,6 +333,9 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .preset b { font-size: 15px; }
 .preset span { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
 .preset .pick { margin-top: 6px; font-size: 12px; color: var(--accent); }
+/* the one card that is also the confirmation ("like last time"): first, and lit */
+.preset.primary { border-color: var(--accent); background: var(--accent-dim); }
+.preset.primary .pick { font-weight: 700; }
 @media (max-width: 640px) { .presets { grid-template-columns: 1fr; } }
 
 /* ── the questionnaire (inside the guided setup dialog) ── */
