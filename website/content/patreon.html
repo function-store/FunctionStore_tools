@@ -1,17 +1,19 @@
-<!-- Source for /plus/. Hand-written prose; tools/build-site.mjs wraps this in
-     the site head, header and footer and writes website/plus/index.html
-     (generated, gitignored — like docs/ and get/).
+<!-- Source for /patreon/. Hand-written prose; tools/build-site.mjs wraps this in
+     the site head, header and footer and writes website/patreon/index.html
+     (generated, gitignored — like docs/ and get/). /plus/ redirects here
+     (website/vercel.json): installed pickers still link the old address.
 
      Two blocks are injected:
-       PLUSPKGS  the packages catalog.json marks with a non-free `access`
+       PLUSPKGS  the packages catalog.json marks with a non-free `access`,
+                 each with its minimum Patreon tier from the manifest
        FAMILY    the cards from content/family.json, same as the landing page
 
      The build refuses to run if either marker pair is missing, because the
-     failure mode otherwise is a Plus page that quietly lists nothing. -->
+     failure mode otherwise is a page that quietly lists nothing. -->
 
-<h1>FNSTools Plus</h1>
-<p class="lede">Most FNSTools packages are free and MIT licensed. Plus tools require a Patreon membership
-  or a licence key. You install and update them through the same picker.</p>
+<h1>FNSTools on Patreon</h1>
+<p class="lede">Most FNSTools packages are free and MIT licensed. A few tools unlock with a Patreon
+  membership or a Gumroad licence key. You install and update them through the same picker.</p>
 
 <div class="tiers plus-tiers">
   <div class="tier">
@@ -29,12 +31,13 @@
     </div>
   </div>
   <div class="tier tier--plus">
-    <span class="tier-tag">Plus</span>
+    <span class="tier-tag">Patreon</span>
     <h3>A few tools</h3>
-    <p>Paid tools in the FNSTools catalogue. Sign in or redeem a licence key to download them.</p>
+    <p>Paid tools in the FNSTools catalogue. Sign in with Patreon or redeem a Gumroad licence key to
+      download them.</p>
     <ul>
-      <li><strong>Visible and documented.</strong> Plus tools sit in the picker and the docs like any other, marked Plus.</li>
-      <li><strong>Two ways in.</strong> A Patreon membership, or a licence key bought outright.</li>
+      <li><strong>Visible and documented.</strong> These tools sit in the picker and the docs like any other, marked Patreon.</li>
+      <li><strong>Base, Pro or Coaching.</strong> Each tool names the lowest Patreon tier that unlocks it, and every tier above it unlocks it too.</li>
       <li><strong>Same installer.</strong> Install and update alongside your free tools.</li>
     </ul>
     <div class="tier-actions">
@@ -44,9 +47,9 @@
   </div>
 </div>
 
-<h2 id="whats-in-plus">What is in Plus right now</h2>
+<h2 id="whats-unlocked">What Patreon unlocks right now</h2>
 <p>
-  These tools require Plus access. Each links to its documentation.
+  Each tool links to its documentation and names the lowest Patreon tier that unlocks it.
 </p>
 
 <!-- PLUSPKGS:START -->
@@ -57,11 +60,11 @@
   <div class="tier">
     <span class="tier-tag">Membership</span>
     <h3>Patreon</h3>
-    <p>Ongoing support. Your tier decides which Plus tools you get, and they stay current for as
-      long as you are a member.</p>
+    <p>Ongoing support. Your tier (Base, Pro or Coaching) decides which tools you get, and they stay
+      current for as long as you are a member.</p>
     <ul>
       <li>Covers more than the toolkit: the same membership reaches the other Function Store tools.</li>
-      <li>New Plus tools appear as they ship, without buying anything again.</li>
+      <li>New tools at your tier appear as they ship, without buying anything again.</li>
       <li>Connect once per machine, from inside TouchDesigner.</li>
     </ul>
     <div class="tier-actions">
@@ -70,12 +73,12 @@
   </div>
   <div class="tier">
     <span class="tier-tag">Licence key</span>
-    <h3>Buy one tool</h3>
-    <p>A one-time purchase for a single tool, redeemed with a key. No membership, no recurring
-      charge.</p>
+    <h3>Gumroad</h3>
+    <p>A one-time purchase for a single tool, sold on Gumroad and redeemed with a key. No membership,
+      no recurring charge.</p>
     <ul>
       <li>One key per tool. Hold as many as you have bought, and add or remove them individually.</li>
-      <li>How many machines a key covers is stated where you buy it.</li>
+      <li>How many machines a key covers is stated on the Gumroad page.</li>
       <li>Redeemed in the same place as the Patreon connection.</li>
     </ul>
     <div class="tier-actions">
@@ -87,7 +90,7 @@
 <h2 id="unlocking-in-touchdesigner">Unlocking, step by step</h2>
 <ol class="plus-steps">
   <li>
-    <strong>Install the toolkit as usual.</strong> Plus tools need no special installer; they are
+    <strong>Install the toolkit as usual.</strong> These tools need no special installer; they are
     rows in the same catalogue. <a href="/#get">The three steps are here.</a>
   </li>
   <li>
@@ -95,13 +98,13 @@
     parameters are where all of this happens, and there is no separate account tool to install.
   </li>
   <li>
-    <strong>Pulse <em>Sign In</em>, or paste a licence key and pulse <em>Redeem</em>.</strong>
-    Signing in opens your normal browser, you approve there, and the tab hands the result back to
-    TouchDesigner by itself.
+    <strong>Pulse <em>Sign In</em>, or paste a Gumroad licence key and pulse <em>Redeem</em>.</strong>
+    Signing in opens Patreon in your normal browser, you approve there, and the tab hands the result
+    back to TouchDesigner by itself.
   </li>
   <li>
-    <strong>Pick your tools.</strong> The Plus packages you are entitled to stop being locked in
-    the picker and install like anything else.
+    <strong>Pick your tools.</strong> The tools your tier or key covers stop being locked in the
+    picker and install like anything else.
   </li>
 </ol>
 
@@ -139,7 +142,7 @@
     <p>Tools already installed in your project keep working. They are files in your
       <code>.toe</code> like any other component; nothing calls home to check on them, and
       nothing expires.</p>
-    <p>What you lose is the ability to download them again: updates to Plus tools, and installing
+    <p>What you lose is the ability to download them again: updates to those tools, and installing
       them on a new machine or into a new project. Rejoin and both come back.</p>
   </div>
 </details>
@@ -150,15 +153,16 @@
     <p>No. The free packages are served publicly and unauthenticated exactly as they were, the
       source stays on GitHub under MIT, and the installer does not ask you to sign in to use
       them. If you never unlock anything, you will not notice the gate exists beyond a few
-      cards marked Plus.</p>
-    <p>Nothing that is free today becomes paid later. Plus grows by new tools arriving in it.</p>
+      cards marked Patreon.</p>
+    <p>Nothing that is free today becomes paid later. The Patreon list grows by new tools arriving
+      in it.</p>
   </div>
 </details>
 
 <details class="fold">
-  <summary>Can I still read the source of a Plus tool?</summary>
+  <summary>Can I still read the source of a Patreon tool?</summary>
   <div class="fold-body">
-    <p>Plus packages are not published to the public GitHub repository, and they are not MIT.
+    <p>These packages are not published to the public GitHub repository, and they are not MIT.
       Once installed they are ordinary TouchDesigner components in your project; you can open
       them, read the Python inside, and see exactly what they do. What you may not do is
       redistribute them.</p>
@@ -170,8 +174,8 @@
   <div class="fold-body">
     <p>Connect each one. A membership is checked per machine against your account, so signing in
       on a new box is the whole procedure.</p>
-    <p>Licence keys are per tool, and how many machines one key covers is stated where you buy
-      it.</p>
+    <p>Gumroad licence keys are per tool, and how many machines one key covers is stated on the
+      Gumroad page.</p>
   </div>
 </details>
 
@@ -187,8 +191,8 @@
 <details class="fold">
   <summary>Why gate anything at all?</summary>
   <div class="fold-body">
-    <p>Plus purchases and memberships help pay for development and maintenance of FNSTools,
-      including the free tools.</p>
+    <p>Patreon memberships and Gumroad purchases help pay for development and maintenance of
+      FNSTools, including the free tools.</p>
   </div>
 </details>
 

@@ -6,6 +6,10 @@
   "outputDirectory": ".",
   "cleanUrls": true,
   "trailingSlash": true,
+  "redirects": [
+    { "source": "/plus", "destination": "/patreon/", "permanent": true },
+    { "source": "/plus/", "destination": "/patreon/", "permanent": true }
+  ],
   "rewrites": [
     {
       "source": "/.well-known/fnstools.json",

@@ -10,12 +10,12 @@ Static files, no framework, deployed on Vercel with **root directory =
 packaging/catalog.json     category + description + access per package (curated)
 packaging/docs/<Name>.md   prose + frontmatter per package     (curated)
 website/index.html         landing page                        (hand-written)
-website/content/plus.html  /plus/ prose, a fragment            (hand-written)
+website/content/patreon.html /patreon/ prose, a fragment       (hand-written)
 website/content/family.json the other Function Store products  (curated)
 website/content/guides/*.md guides and reference pages, one per file (hand-written)
 website/docs/              GENERATED — gitignored, built on every deploy
 website/get/               GENERATED — gitignored, the online configurator
-website/plus/              GENERATED — gitignored, from content/plus.html
+website/patreon/           GENERATED — gitignored, from content/patreon.html
 ```
 
 `/get/` is emitted from `packaging/configurator/index.html` with the
@@ -92,7 +92,7 @@ reader can stop at any rung. The internal record behind the deep page is
 `docs/ArchitectureResearch.md`. Guides are not in the CMS; edit the
 markdown.
 
-## Free and Plus
+## Free and Patreon
 
 The site has two audiences at once: someone who has never heard of any of
 this, and someone deciding whether to pay for part of it. The shape that
@@ -107,25 +107,28 @@ why the tool catalogue is one fold per category rather than 49 rows in a
 column. Nothing was deleted; the caveats moved into the fold under the step
 they belong to.
 
-**A package is Plus when `catalog.json` gives it an `access` that is not the
+**A package is gated when `catalog.json` gives it an `access` that is not the
 literal `free`.** `access` NAMES A TIER (`docs/GatedDeliveryResearch.md`
-§9.3), and which tier covers which package is a **server-side** map — so
-this build says "Plus" and stops. A copy of the tier→packages map here would
-be the second place that answer lives, which is the failure LOPs shipped.
-Absent `access` means free, so a catalog written before gating existed reads
-correctly.
+§9.3), the ENTRY tier of the ladder. The marker says **Patreon**; it was
+"Plus" until 2026-09-13, and the CSS classes (`.plus-mark`, `.tier--plus`)
+and the `PLUSPKGS` marker kept the old name (`docs/PatreonNaming.md`). The
+tier's NAME (Base, Pro, Coaching) comes from the repo manifest's
+`toolkit.tiers` ladder, and "or a Gumroad licence key" from its per-package
+`key_available`; build_manifest derives both, so the site never keeps a copy
+of the tier→packages map, which is the failure LOPs shipped. Absent `access`
+means free, so a catalog written before gating existed reads correctly.
 
-Plus surfaces in five places, all generated from that one field:
+Gated packages surface in five places, all generated from that one field:
 
 | Surface | What it shows |
 | --- | --- |
-| landing catalogue | a `Plus` marker on the row, and `· N Plus` in the category count |
-| `/plus/` | the generated list of gated packages, with the whole story around it |
-| docs page | a `◆ Plus` badge and an unlock callout above the prose |
+| landing catalogue | a `Patreon` marker on the row, and `· N Patreon` in the category count |
+| `/patreon/` | the generated list of gated packages with each one's minimum tier, and the whole story around it (`/plus/` redirects here, `vercel.json`) |
+| docs page | a `◆ Patreon` badge and an unlock callout naming the tier above the prose |
 | docs index + sidebar | the same marker beside the name |
-| `/get/` picker | a `Plus` chip, a tinted card, and a line in the summary |
+| `/get/` picker | a `Patreon` chip (tier in its tooltip), a tinted card, and a line in the summary |
 
-**Plus packages are visible and tickable everywhere, never hidden.** That is
+**Gated packages are visible and tickable everywhere, never hidden.** That is
 the decision from GatedDeliveryResearch §9.2 — a picker that hides them lies
 about what the toolkit is — and the picker cannot refuse the tick anyway:
 entitlement is the server's answer and no page here has asked it. The real
@@ -133,14 +136,14 @@ lock is R2 refusing to serve the object.
 
 `content/family.json` holds the other Function Store products. It is
 site-only content — `packaging/` never reads it — injected into the `FAMILY`
-markers on **both** the landing page and `/plus/`, because two hand-kept
+markers on **both** the landing page and `/patreon/`, because two hand-kept
 copies of the same two cards drift.
 
-`/plus/` is generated the way `/get/` is: `content/plus.html` is a fragment
+`/patreon/` is generated the way `/get/` is: `content/patreon.html` is a fragment
 of prose with `PLUSPKGS` and `FAMILY` markers, and the build wraps it in the
-shared head, header and footer. Edit the fragment, not `website/plus/`. The
+shared head, header and footer. Edit the fragment, not `website/patreon/`. The
 build **refuses to run** if either marker pair is gone — the failure mode
-otherwise is a Plus page that quietly lists nothing.
+otherwise is a Patreon page that quietly lists nothing.
 
 > **Status (corrected 2026-09-08):** the page's claims are true. The gate
 > went live on 2026-08-29, `catalog.json` carries real tier ids on six
@@ -164,7 +167,7 @@ npm run serve     # http://localhost:3000
 | `npm run pages` | pages only — leaves the existing search index alone |
 | `npm run search` | re-index only |
 
-**Do not commit `website/docs/`, `website/get/` or `website/plus/`** — all
+**Do not commit `website/docs/`, `website/get/` or `website/patreon/`** — all
 three are gitignored.
 Vercel runs this same build on every deploy, so the generated tree exists
 only on your machine (for preview) and on the deploy. Build output in git

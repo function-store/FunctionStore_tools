@@ -32,9 +32,9 @@ Every tool keeps its settings in the project file. By default, a shared settings
 
 MIDI and OSC maps are the exception: they save into the project folder, so they travel with the show.
 
-## Plus tools
+## Patreon tools
 
-A few tools are marked Plus. They appear in the picker like everything else and install once your account covers them: press **Sign in** in the picker to connect a Patreon membership, and where a tool offers a licence key, redeem it in the same place. [How Plus works](/plus/) has the details, and everything else stays free.
+A few tools are marked Patreon. They appear in the picker like everything else and install once your membership covers them: each one names the lowest Patreon tier that unlocks it (Base, Pro or Coaching). Press **Sign in with Patreon** in the picker to connect your membership, and where a tool offers a Gumroad licence key, redeem it in the same place. [How unlocking works](/patreon/) has the details, and everything else stays free.
 
 ## Getting help
 

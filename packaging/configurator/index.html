@@ -596,7 +596,7 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <button class="btn btn-secondary" id="wizard">Guided setup</button>
     <button class="btn btn-quiet" id="all">Select all</button>
     <button class="btn btn-quiet" id="none">Clear</button>
-    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" title="Show only the Plus tools">◆ Plus only</button>
+    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" title="Show only the tools that unlock with Patreon">◆ Patreon only</button>
     <button class="btn btn-quiet" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
     <span class="spacer"></span>
     <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
@@ -616,10 +616,10 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <span class="sum-count"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span></span>
     <span class="muted" id="deps"></span>
     <span class="acct" id="acct"></span>
-    <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Become a supporter ↗</a>
+    <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Join on Patreon ↗</a>
     <button class="btn btn-quiet" id="recheck" hidden>Check again</button>
-    <button class="btn btn-quiet" id="signin" hidden>Sign in</button>
-    <button class="btn btn-quiet" id="redeem" hidden>Redeem key</button>
+    <button class="btn btn-quiet" id="signin" hidden>Sign in with Patreon</button>
+    <button class="btn btn-quiet" id="redeem" hidden>Redeem Gumroad key</button>
     <span class="spacer"></span>
     <button class="btn btn-secondary" id="script">Copy install script</button>
     <button class="btn btn-primary" id="save">Download selection.json</button>
@@ -955,7 +955,7 @@ function fnsBoot() {
       b.setAttribute('aria-pressed', plusOnly ? 'true' : 'false');
     }
     var l = document.getElementById('plusrail-only');
-    if (l) l.textContent = plusOnly ? 'Show everything' : 'Show only Plus';
+    if (l) l.textContent = plusOnly ? 'Show everything' : 'Show only Patreon tools';
     render();
   }
 
@@ -1030,16 +1030,18 @@ function fnsBoot() {
       // Without an account the chip says only what the package IS, which is
       // all the public page can honestly claim.
       var own = entitled(p);
-      var label = !account ? 'Plus'
-        : (own ? 'Plus · unlocked' : 'Plus · locked');
-      var extra = !account ? '' : (own ? ' own' : ' locked');
-      var pl = docsLink(FNS_DOCS + '/plus/', label, 'chip plus' + extra);
-      // the ROUTE, not just the state: which tier unlocks it (the
-      // ladder grants upward), and the key when a Gumroad row exists
+      // the ROUTE, not just the state: "Patreon:Base" names the lowest
+      // tier that unlocks it (the ladder grants upward); the tooltip adds
+      // the key when a Gumroad row exists
       var tierName = tierLabel(p.access);
+      var mark = tierName ? 'Patreon:' + tierName : 'Patreon';
+      var label = !account ? mark
+        : (own ? mark + ' · unlocked' : mark + ' · locked');
+      var extra = !account ? '' : (own ? ' own' : ' locked');
+      var pl = docsLink(FNS_DOCS + '/patreon/', label, 'chip plus' + extra);
       if (tierName && !own) {
-        pl.title = 'unlocks at the ' + tierName + ' tier or higher'
-          + (p.key_available ? ', or with a lifetime key' : '');
+        pl.title = 'unlocks with the Patreon ' + tierName + ' tier or higher'
+          + (p.key_available ? ', or with a Gumroad licence key' : '');
       }
       pl.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pl);
@@ -1373,7 +1375,7 @@ function fnsBoot() {
     if (removals) notes.push(removals + ' to remove');
     // Said here rather than by refusing the tick: entitlement is the
     // server's answer, and this page has not asked it.
-    if (plusLocked) notes.push(plusLocked + ' Plus locked');
+    if (plusLocked) notes.push(plusLocked + ' locked (Patreon)');
     if (paneSel) notes.push(paneSel + (paneSel === 1 ? ' spawns' : ' spawn') + ' into your network');
     document.getElementById('deps').textContent = notes.join(' · ');
     var save = document.getElementById('save');
@@ -1648,7 +1650,10 @@ function fnsBoot() {
       var t = document.createElement('b');
       t.textContent = titleOf(p);
       nm.appendChild(t);
-      if (isPlus(p)) nm.appendChild(chip('Plus', 'plus'));
+      if (isPlus(p)) {
+        nm.appendChild(chip(tierLabel(p.access)
+          ? 'Patreon:' + tierLabel(p.access) : 'Patreon', 'plus'));
+      }
       [['help_url', 'docs ↗'], ['homepage', 'site ↗'], ['changelog_url', 'changelog ↗']]
         .forEach(function (k) {
           if (!p[k[0]]) return;
@@ -1688,15 +1693,15 @@ function fnsBoot() {
       pn.appendChild(pm);
       var pb = document.createElement('b');
       pb.textContent = plusInSet.length + ' of these '
-        + (plusInSet.length === 1 ? 'is' : 'are') + ' Plus,';
+        + (plusInSet.length === 1 ? 'needs' : 'need') + ' Patreon,';
       pn.appendChild(pb);
       pn.appendChild(document.createTextNode(
         ' the supporter extras: ' + plusReality() + ' '));
-      pn.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));
+      pn.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗'));
       var out = document.createElement('button');
       out.type = 'button';
       out.className = 'btn btn-quiet';
-      out.textContent = 'Leave Plus out';
+      out.textContent = 'Leave the Patreon tools out';
       out.addEventListener('click', function () {
         Object.keys(plusBoxes).forEach(function (nm) {
           plusBoxes[nm].checked = false;
@@ -2097,7 +2102,7 @@ function fnsBoot() {
       "r_ = run(\"i = op('%s/FNS_Installer'); i.par.Selectionfile = '%s'; i.par.Install.pulse()\" % (root.path, sp), delayFrames=90)",
       "_ = PLUS and run(\"op('%s/FNS_Installer').par.Configure.pulse()\" % root.path, delayFrames=150)",
       "print('FNSTools', m['release'], '--', len(names), 'packages verified; installing into', root.path)",
-      "_ = PLUS and print('Needs a supporter account:', ', '.join(PLUS) + '.', 'The picker will open by itself; your picks are waiting there. Click Sign in.')"
+      "_ = PLUS and print('Needs Patreon:', ', '.join(PLUS) + '.', 'The picker will open by itself; your picks are waiting there. Click Sign in with Patreon.')"
     ].join('; ');
   }
 
@@ -2138,9 +2143,9 @@ function fnsBoot() {
     }).length;
     setStep(3);
     showDialog(text, false, HINTS.script + (plusN
-      ? ' ' + plusN + ' Plus pick' + (plusN === 1 ? '' : 's')
+      ? ' ' + plusN + ' Patreon pick' + (plusN === 1 ? '' : 's')
         + ' in this selection: the script installs the free tools now and '
-        + 'opens the picker inside TouchDesigner for the Plus '
+        + 'opens the picker inside TouchDesigner for the Patreon '
         + (plusN === 1 ? 'one' : 'ones') + ', where you sign in as a supporter.'
       : ''));
     document.getElementById('dlgtitle').textContent = 'Paste this into the Textport';
@@ -2195,14 +2200,14 @@ function fnsBoot() {
         if (pickedLocked) { sel.value = pickedLocked.name; }
         var inp = document.createElement('input');
         inp.type = 'text';
-        inp.placeholder = 'paste the licence key';
+        inp.placeholder = 'paste the Gumroad licence key';
         inp.style.flex = '1';
         var go = document.createElement('button');
         go.className = 'btn btn-secondary';
         go.textContent = 'Redeem';
         go.addEventListener('click', function () {
           var key = (inp.value || '').trim();
-          if (!key) { showDialog('Paste the licence key first.', false); return; }
+          if (!key) { showDialog('Paste the Gumroad licence key first.', false); return; }
           post('/auth/redeem',
             JSON.stringify({ key: key, package: sel.value }),
             function (res) {
@@ -2219,14 +2224,14 @@ function fnsBoot() {
     }
     // Where to actually become one. From the manifest when it says, so a
     // campaign move is a manifest change rather than a reshipped page.
-    var join = ((M.toolkit || {}).support_url) || (FNS_DOCS + '/plus/');
+    var join = ((M.toolkit || {}).support_url) || (FNS_DOCS + '/patreon/');
     if (support) {
       support.href = join;
       // Someone already paying is not asked to "become" anything: a
       // held tier that grants nothing here means the remedy is a HIGHER
       // tier, and the button should say so.
       if (account && account.tier && !(account.products || []).length) {
-        support.textContent = 'Upgrade your tier ↗';
+        support.textContent = 'Upgrade your Patreon tier ↗';
       }
     }
     if (account) {
@@ -2423,7 +2428,7 @@ function fnsBoot() {
     function armed() {
       setStep(3);
       document.getElementById('dlgtitle').textContent = 'Install plan';
-      showDialog('Your Plus pick' + (wantedStill.length === 1 ? ' is' : 's are')
+      showDialog('Your Patreon pick' + (wantedStill.length === 1 ? ' is' : 's are')
         + ' unlocked. Planning the install…', false);
       post('/selection', JSON.stringify(selection(), null, 1) + '\n',
         function (res) {
@@ -2547,7 +2552,7 @@ function fnsBoot() {
     mark.textContent = '◆';
     rail.appendChild(mark);
     var pb = document.createElement('b');
-    pb.textContent = 'Plus:';
+    pb.textContent = 'Patreon:';
     rail.appendChild(pb);
     var sentence = 'the free tools are the full toolkit; '
       + plus.length + ' extra' + (plus.length === 1 ? '' : 's') + ' below '
@@ -2562,11 +2567,11 @@ function fnsBoot() {
     } else {
       rail.appendChild(document.createTextNode(sentence + ' '));
     }
-    rail.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));
+    rail.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗'));
     var pob = document.getElementById('plusonly');
     if (pob) {
       pob.hidden = false;
-      pob.textContent = '◆ Plus only (' + plus.length + ')';
+      pob.textContent = '◆ Patreon only (' + plus.length + ')';
       pob.addEventListener('click', function () { setPlusOnly(!plusOnly); });
     }
   })();

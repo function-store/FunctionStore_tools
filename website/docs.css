@@ -335,7 +335,8 @@ footer.site { border-top: 1px solid var(--border); padding: 28px 0; }
 }
 
 /* ═════ Plus ═════
-   Used by /plus/ (generated from content/plus.html) and by the Plus marker
+   Named Plus before 2026-09-13; the class names kept it, the copy says Patreon.
+   Used by /patreon/ (generated from content/patreon.html) and by the Patreon marker
    on package pages, the docs index and the sidebar.
 
    These mirror the same-named rules in index.html's inline <style>, the way

@@ -224,7 +224,7 @@ A tool whose bytes and version are owned upstream, by another repository with it
 
 **Launcher capabilities.** Four packages carry commands that target the launcher's session view and context menu and declare a capability id the launcher recognises, so it can render rich native UI for them: [Autosave](/docs/fns-autosave/) (free), [Collect](/docs/fns-collect/), [MediaBrowser](/docs/fns-mediabrowser/) and [Remote](/docs/fns-remote/). The rule they were written to: a launcher capability is a complete TouchDesigner tool that also lights up the launcher's session view when both are installed. None of them requires the launcher, and the three lookups they make toward the launcher's companion are guarded and degrade to standalone behaviour. The manifest derives a `launcher` block for such packages so a bundler can find the few that reach a surface beyond quick launch; `seedable` inside it is false for anything gated, so a free app can never bundle paid bytes by reading the wrong key.
 
-**One sign-in.** The launcher's Pro tier and the toolkit's Plus packages sit on one tier map, behind the same gate, the same Patreon client and the same signing key. A sign-in on a machine is published to a shared session file that either product adopts, and signing out anywhere revokes the session and signs the machine out everywhere.
+**One sign-in.** The launcher's Pro tier and the toolkit's Patreon packages sit on one tier map, behind the same gate, the same Patreon client and the same signing key. A sign-in on a machine is published to a shared session file that either product adopts, and signing out anywhere revokes the session and signs the machine out everywhere.
 
 **One settings surface.** The launcher edits a running session's settings through the ConfigRegistry's own loopback settings server, so validation and persistence stay TouchDesigner's, and edits the roaming JSON directly when no session is running.
 
@@ -232,9 +232,9 @@ A tool whose bytes and version are owned upstream, by another repository with it
 
 The recipe, stated once: TD-native tags that need no registry to exist, guarded lookups that degrade instead of failing, one store that both sides treat as a mirror, one gate, one config folder, and a contract written down on both sides before either side writes a line against it.
 
-## Gated releases: Plus
+## Gated releases: Patreon
 
-Six packages are gated today: [BeatMod](/docs/fns-beatmod/), [Collect](/docs/fns-collect/), [MediaBrowser](/docs/fns-mediabrowser/), [PreviewPanel](/docs/fns-previewpanel/), [Remote](/docs/fns-remote/) and [TimelineTools](/docs/fns-timelinetools/). Everything else is free and MIT, and [the Plus page](/plus/) says what a membership buys. This section is about how the gate is built.
+Seven packages are gated today: [BackupCleaner](/docs/fns-backupcleaner/), [BeatMod](/docs/fns-beatmod/), [Collect](/docs/fns-collect/), [MediaBrowser](/docs/fns-mediabrowser/), [PreviewPanel](/docs/fns-previewpanel/), [Remote](/docs/fns-remote/) and [TimelineTools](/docs/fns-timelinetools/). Each unlocks with a Patreon membership at its named tier or higher, or with a Gumroad licence key where one is sold. Everything else is free and MIT, and [the Patreon page](/patreon/) says what a membership buys. This section is about how the gate is built.
 
 **Gate the bytes.** Greying out a card in the picker is cosmetic. The only lock that means anything is the bucket refusing to serve the object, so gated artifacts live under a private `plus/` prefix on the same storage host, served only through a Cloudflare Worker that checks a download token. The prefix stays on the same host on purpose: the updater derives an artifact's path by stripping the manifest's base URL and re-basing it onto the configured one, which is what makes local mirrors and offline tests work, and a second host would have broken that for paid packages only. Every upload plants a canary under the prefix and fails if the public rail serves it.
 

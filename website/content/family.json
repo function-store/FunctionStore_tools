@@ -3,7 +3,7 @@
   "Curated site content: the other Function Store products, and the one-line",
   "pitch for each. Site-only — packaging/ never reads this. It lives here",
   "rather than being typed twice because the same three cards appear on the",
-  "landing page and on /plus/, and two copies would drift.",
+  "landing page and on /patreon/, and two copies would drift.",
   "",
   "Injected into the FAMILY markers on index.html and plus/index.html by",
   "tools/build-site.mjs. `access` is the same vocabulary catalog.json uses:",

@@ -596,7 +596,7 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <button class="btn btn-secondary" id="wizard">Guided setup</button>
     <button class="btn btn-quiet" id="all">Select all</button>
     <button class="btn btn-quiet" id="none">Clear</button>
-    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" title="Show only the Plus tools">◆ Plus only</button>
+    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" title="Show only the tools that unlock with Patreon">◆ Patreon only</button>
     <button class="btn btn-quiet" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
     <span class="spacer"></span>
     <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
@@ -616,10 +616,10 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <span class="sum-count"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span></span>
     <span class="muted" id="deps"></span>
     <span class="acct" id="acct"></span>
-    <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Become a supporter ↗</a>
+    <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Join on Patreon ↗</a>
     <button class="btn btn-quiet" id="recheck" hidden>Check again</button>
-    <button class="btn btn-quiet" id="signin" hidden>Sign in</button>
-    <button class="btn btn-quiet" id="redeem" hidden>Redeem key</button>
+    <button class="btn btn-quiet" id="signin" hidden>Sign in with Patreon</button>
+    <button class="btn btn-quiet" id="redeem" hidden>Redeem Gumroad key</button>
     <span class="spacer"></span>
     <button class="btn btn-secondary" id="script">Copy install script</button>
     <button class="btn btn-primary" id="save">Download selection.json</button>
@@ -678,8 +678,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 <script>
 window.FNS_MANIFEST = {
  "schema": 1,
- "release": "v3.2.6",
- "notes": "The install plan reads as what will happen: how many tools install and with how much core, each as a chip by its title, removals and problems called out, what is already in the project folded into one line.\n\nThe Hub's Console tab renders at its own size. The toolkit's browser panel was a fixed 1280 by 720 page scaled down into the tab, which made the text small and left black bands above and below; it now takes the size of the area that shows it.\n\nFNS_Hub: the window is taller, 900 by 800, so the console and the configurators get the room they need.\n\nFNS_Console: the Install & remove tab's explanatory paragraph is one sentence, and a tab is always loaded fresh, never from the browser's cache, so an updated picker shows up at once.\n\nThe picker is calmer inside TouchDesigner: a selected tool shows as a filled checkbox on a lifted card instead of a yellow border on every card, the Plus strip is one quiet line with the explanation as a tooltip, the category pitches step back, the category rail steps aside (the section headers carry the counts), the footer is one short line with one action, unlocked Plus chips are outlined instead of filled, the duplicate Show only Plus link is gone (the toolbar button does that), and Copy list is gone everywhere (the paste script and Download selection.json cover it).",
+ "release": "v3.2.7",
+ "notes": "The word \"Plus\" is gone. Tools that need a membership are marked with the lowest Patreon tier that unlocks them, Patreon:Base, Patreon:Pro or Patreon:Coaching, in the picker and on the website, and licence keys are called Gumroad licence keys. The sign-in button reads Sign in with Patreon. The explainer page moved to functionstore.tools/patreon/, and the old /plus/ address redirects there.\n\nFNS_Hub: no black band above the tabs on a fresh install (the tab bar's height change left the layout half updated), and the Console tab is sized by the Hub itself when it shows, so the page renders at the tab's size on every install, not only where the Hub was already there.",
  "channel": "stable",
  "base_url": "https://storage.functionstore.tools/fnstools",
  "toolkit": {
@@ -879,7 +879,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AltSelect.tox",
     "bytes": 130702,
     "sha256": "c1232727354a751be807d8841ec3210d4e8fbd1faca30fee67adf96db1d49377",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_AltSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_AltSelect.tox"
    }
   },
   {
@@ -915,7 +915,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AutoCombine.tox",
     "bytes": 144038,
     "sha256": "992c2c50d021792ad6f28089d6bf27e530b7400fe6355f2361dea64142c50090",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_AutoCombine.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_AutoCombine.tox"
    }
   },
   {
@@ -951,7 +951,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AutoRes.tox",
     "bytes": 143750,
     "sha256": "577f6ae546e2600350259580c94e4e3d7d08d36b01f8e1f32b2dcecaa9198a03",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_AutoRes.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_AutoRes.tox"
    }
   },
   {
@@ -997,7 +997,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Autosave.tox",
     "bytes": 116534,
     "sha256": "f6b12ae828f80ceba71fba31d58f901acf742647f275fc249c77d4f88cd21f19",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_Autosave.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_Autosave.tox"
    }
   },
   {
@@ -1035,7 +1035,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BackupCleaner.tox",
     "bytes": 366646,
     "sha256": "3cd8bf7eef0a73718e94606a066e19c9b2d3e6a8ffb86b9e9012d6270636fe8f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.6/FNS_BackupCleaner.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.7/FNS_BackupCleaner.tox"
    }
   },
   {
@@ -1108,7 +1108,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BeatMod.tox",
     "bytes": 502984,
     "sha256": "23c472fef786a2d165c1606097e0b7a62f83698e8137d10e82bf24be0c72085f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.6/FNS_BeatMod.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.7/FNS_BeatMod.tox"
    }
   },
   {
@@ -1161,7 +1161,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BorderlessTD.tox",
     "bytes": 399902,
     "sha256": "a694c7c1053af39c9cef1c0a1605794456922ffe21bb489135a933d91e190b6c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_BorderlessTD.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_BorderlessTD.tox"
    }
   },
   {
@@ -1205,7 +1205,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Collect.tox",
     "bytes": 35726,
     "sha256": "3dc1318eafbbd61f2e7e20f59f115aa202fa5e9f81be7c6db1261931174c369b",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.6/FNS_Collect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.7/FNS_Collect.tox"
    }
   },
   {
@@ -1246,7 +1246,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ColorUI.tox",
     "bytes": 293854,
     "sha256": "89871cd5a2ba5291a43c0d0716ed3437aa486b7a660195d3280153750fc0e1ab",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ColorUI.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ColorUI.tox"
    }
   },
   {
@@ -1279,7 +1279,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandKit.tox",
     "bytes": 29662,
     "sha256": "1fd8b24c17ee1e4f2743ac79d5f6391d55cfce50d285be98c03450f44919a2ba",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_CommandKit.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_CommandKit.tox"
    }
   },
   {
@@ -1326,7 +1326,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandPalette.tox",
     "bytes": 334334,
     "sha256": "6067f054e071cc98c3b2596e218fd0b06ed15dfc7d0ddcf99a36556a763460bc",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_CommandPalette.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_CommandPalette.tox"
    }
   },
   {
@@ -1355,7 +1355,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandRegistry.tox",
     "bytes": 87926,
     "sha256": "728739538a7ad90ece8662f1a54334b408800299ef4bf4634d10cbd053b5542e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_CommandRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_CommandRegistry.tox"
    }
   },
   {
@@ -1387,7 +1387,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ConfigHost.tox",
     "bytes": 89214,
     "sha256": "a89df74bb85273fe714afdccfd36f4879063c44dd79348ed6595121c10ea12d2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ConfigHost.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ConfigHost.tox"
    }
   },
   {
@@ -1416,7 +1416,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ConfigRegistry.tox",
     "bytes": 89622,
     "sha256": "b64c1c3561f45a5a66f5fdd963b6d16e89f2b707692604de8b1ef0afd1196347",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ConfigRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ConfigRegistry.tox"
    }
   },
   {
@@ -1445,7 +1445,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Console.tox",
     "bytes": 100150,
     "sha256": "27dbdc9f979b14179a6dc9c1563d5e5ed0cb3332c8fc1997894433733fee2819",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_Console.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_Console.tox"
    }
   },
   {
@@ -1529,7 +1529,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CustomParTools.tox",
     "bytes": 1222194,
     "sha256": "962c937ee45112ddad52b4bd6d5af90578bc141d37fdaaa7dcd70e573cf91553",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_CustomParTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_CustomParTools.tox"
    }
   },
   {
@@ -1578,7 +1578,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ExprHotStrings.tox",
     "bytes": 193894,
     "sha256": "5586234444033603a6770a4c3f1c64729e1548ab6b69e5431133b35dfb706c39",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ExprHotStrings.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ExprHotStrings.tox"
    }
   },
   {
@@ -1617,7 +1617,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_GlobalOutSelect.tox",
     "bytes": 269622,
     "sha256": "c564b5630c216e7403d40de53b1e7d2993e0db2756d80f2b69370015beaf013a",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_GlobalOutSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_GlobalOutSelect.tox"
    }
   },
   {
@@ -1656,7 +1656,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_GlobalVolControl.tox",
     "bytes": 262758,
     "sha256": "a01a5a2edd7aedcea2175ebb6bb7427a7ae3c682245bcd078cab29009f2e1e16",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_GlobalVolControl.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_GlobalVolControl.tox"
    }
   },
   {
@@ -1709,7 +1709,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
     "bytes": 266214,
     "sha256": "c743ff3d4d5146aad4c337ff705690c36003f60d7a5e41418aca7a39b435b6cc",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_HotkeyManager.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -1718,7 +1718,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "The FNS button in TouchDesigner's main-menu bar and the one-stop manager window behind it: the Toolbar, Navbar and Main Menu configurators as tabs, the console, and any tab a tool contributes. Drop a panel COMP on the button to register it into a surface.",
-   "version": "3.2.3",
+   "version": "3.2.4",
    "help_url": "https://functionstore.tools/docs/fns-hub/",
    "surfaces": [
     "hub",
@@ -1736,12 +1736,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "the window is taller, 900 by 800, so the console and the configurators get the room they need.",
+   "whatsnew": "no black band above the tabs on a fresh install (the tab bar's height change left the layout half updated), and the Console tab is sized by the Hub itself when it shows, so the page renders at the tab's size on every install, not only where the Hub was already there.",
    "artifact": {
     "path": "packaging/dist/FNS_Hub.tox",
-    "bytes": 1021018,
-    "sha256": "60193dc52122f9f41106cec56dcac233317fb680e8cb64c551a556458c5a629b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_Hub.tox"
+    "bytes": 1021378,
+    "sha256": "4724cdea5b220759f22f3860dcece629f7386a8585d60af02a366c801e9958a5",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_Hub.tox"
    }
   },
   {
@@ -1770,7 +1770,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HubRegistry.tox",
     "bytes": 76038,
     "sha256": "2a2bf5916d8efe6c60100139d9c5036d506d7d57e60a7e78b2985dc3064d38c4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_HubRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_HubRegistry.tox"
    }
   },
   {
@@ -1804,7 +1804,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HydroHomie.tox",
     "bytes": 204758,
     "sha256": "f904701b6a78bee839bada5d60d7b9c1dae1db8b826b92e0b6ac32c95b598e94",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_HydroHomie.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_HydroHomie.tox"
    }
   },
   {
@@ -1845,7 +1845,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_iopBrowser.tox",
     "bytes": 236502,
     "sha256": "29b1d3b19217c4e23ca0be381b263f06d4273d5c45671cac6f4aafcd026113b3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_iopBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_iopBrowser.tox"
    }
   },
   {
@@ -1876,7 +1876,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MainMenuRegistry.tox",
     "bytes": 82198,
     "sha256": "cefc1212a6fd30ad5b1ee021a949abef2c04b5312af80ba5ab02059a993066fa",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_MainMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_MainMenuRegistry.tox"
    }
   },
   {
@@ -1920,7 +1920,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MediaBrowser.tox",
     "bytes": 42150,
     "sha256": "707755f6640ddf2f4c853a199fa0396723604e0fdd1d2e0ce11e2ab15316ca8a",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.6/FNS_MediaBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.7/FNS_MediaBrowser.tox"
    }
   },
   {
@@ -1960,7 +1960,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Misc.tox",
     "bytes": 313774,
     "sha256": "209c3cc354de63e77ad00a67f38942506aa81666013ba7f10081b53e0f154db1",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_Misc.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_Misc.tox"
    }
   },
   {
@@ -1991,7 +1991,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_NavbarRegistry.tox",
     "bytes": 85030,
     "sha256": "d7583b6685efdb9cdc38d5befa1a5f833b831ab9aa43bcdef5e6291aeeeb047e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_NavbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_NavbarRegistry.tox"
    }
   },
   {
@@ -2033,7 +2033,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpenExt.tox",
     "bytes": 129934,
     "sha256": "a47ec74c2f429dc70faaddbd46542da7ad3b5b4dfe58808d1cc79d15e89f2896",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_OpenExt.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_OpenExt.tox"
    }
   },
   {
@@ -2083,7 +2083,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenuMods.tox",
     "bytes": 353086,
     "sha256": "248a67e498418088618886a101cb611a7c0ea2d48078bf7add48bc35bd73cf33",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_OpMenuMods.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_OpMenuMods.tox"
    }
   },
   {
@@ -2114,7 +2114,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenuRegistry.tox",
     "bytes": 96062,
     "sha256": "d394c53c3ac1026967dd590383768d845cd713ff4b0e32887e35d8cf9ecfbe93",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_OpMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_OpMenuRegistry.tox"
    }
   },
   {
@@ -2221,7 +2221,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpTemplates.tox",
     "bytes": 385552,
     "sha256": "417fddc3dafb28276b457c9ad17857ca0f62e05788a2ee052569dd4913ff40a0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_OpTemplates.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_OpTemplates.tox"
    }
   },
   {
@@ -2263,7 +2263,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpToClipboard.tox",
     "bytes": 132070,
     "sha256": "48dbb93a8758bb3360f7b82c8dc3d9475893018032cba635ddba123ee3a42f52",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_OpToClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_OpToClipboard.tox"
    }
   },
   {
@@ -2303,7 +2303,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Output.tox",
     "bytes": 199702,
     "sha256": "59ea12399dc345041d59948539a82c15bc66c049705046139773da3d32afdbf6",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_Output.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_Output.tox"
    }
   },
   {
@@ -2332,7 +2332,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaletteRegistry.tox",
     "bytes": 80638,
     "sha256": "81b869dc0f232f854dee2967cc4d11b08481302eb1aede0fcb527d8e686cf411",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_PaletteRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_PaletteRegistry.tox"
    }
   },
   {
@@ -2361,7 +2361,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaneTypeRegistry.tox",
     "bytes": 168334,
     "sha256": "7840589b872749ee135988d69e948e5f63723360cc0b6f2302f5d75c56cc8ddf",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_PaneTypeRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_PaneTypeRegistry.tox"
    }
   },
   {
@@ -2402,7 +2402,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParentHierarchy.tox",
     "bytes": 204862,
     "sha256": "c4e27234df3cef8747077622773682591f1d2657c25c8b63f028490de1f91610",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ParentHierarchy.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ParentHierarchy.tox"
    }
   },
   {
@@ -2447,7 +2447,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParOPDrop.tox",
     "bytes": 194198,
     "sha256": "deb5e199c252fd02fa8b267959ecce1d36acbce5f502bb8162aded084cb93b99",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ParOPDrop.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ParOPDrop.tox"
    }
   },
   {
@@ -2507,7 +2507,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParRandomizer.tox",
     "bytes": 191662,
     "sha256": "106fcf81ccbd824c18a90873e8432a1d5efb2eeda3f9c94680b7986bf2e85970",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ParRandomizer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ParRandomizer.tox"
    }
   },
   {
@@ -2632,7 +2632,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PreviewPanel.tox",
     "bytes": 801986,
     "sha256": "386028b6504a3fc261ce0964cd4b79eb938a353f7df9757a93d478a94efea731",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.6/FNS_PreviewPanel.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.7/FNS_PreviewPanel.tox"
    }
   },
   {
@@ -2679,7 +2679,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickCollapse.tox",
     "bytes": 144222,
     "sha256": "1a9ca1a802ecbc6dd46f797d7c5211f38a28b79f52fdfd010e162c077a985df7",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_QuickCollapse.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_QuickCollapse.tox"
    }
   },
   {
@@ -2720,7 +2720,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickPane.tox",
     "bytes": 133182,
     "sha256": "6cb246df6aad11c078afd6dc285be033d577b8b38a2a1de3d96194c1a6469a21",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_QuickPane.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_QuickPane.tox"
    }
   },
   {
@@ -2759,7 +2759,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickTime.tox",
     "bytes": 187766,
     "sha256": "097cb7298e6b0b713ccc5ed15bb403549af398862b15dc4020a07c184352b27a",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_QuickTime.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_QuickTime.tox"
    }
   },
   {
@@ -2809,7 +2809,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Remote.tox",
     "bytes": 248070,
     "sha256": "ef8b0075d5079490ed8b0e280247d38ca8f06530fe243c4c039ca1d2e229c98d",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.6/FNS_Remote.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.7/FNS_Remote.tox"
    }
   },
   {
@@ -2869,7 +2869,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ResetPLS.tox",
     "bytes": 209286,
     "sha256": "0177ae36687135e30f01c58fb553ba855accff331cb363f988ae2dca679c6244",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ResetPLS.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ResetPLS.tox"
    }
   },
   {
@@ -2915,7 +2915,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SearchPalette.tox",
     "bytes": 107222,
     "sha256": "27bac8f2de0cc8ef7fc2c83a5191d861a9e4ef456d54ba0754089d20df3b6503",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_SearchPalette.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_SearchPalette.tox"
    }
   },
   {
@@ -2955,7 +2955,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SetSmoothness.tox",
     "bytes": 245582,
     "sha256": "c2bc29ddf5c7ba6fd56d0bc8f78f45cb2d52795caff4ba26ec28e1c9b1e22033",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_SetSmoothness.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_SetSmoothness.tox"
    }
   },
   {
@@ -2999,7 +2999,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SwapOps.tox",
     "bytes": 189558,
     "sha256": "a5165251d03b93a351f8399efa1cac1d36c740d4c46c601780ba9840da790db0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_SwapOps.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_SwapOps.tox"
    }
   },
   {
@@ -3040,7 +3040,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SwitchOPs.tox",
     "bytes": 130542,
     "sha256": "8ba12a1660e2f61dc1a4eba75d5458b786eb67eb39512b2318d251f14feb7e29",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_SwitchOPs.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_SwitchOPs.tox"
    }
   },
   {
@@ -3069,7 +3069,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineRegistry.tox",
     "bytes": 89606,
     "sha256": "559f252753b23ad61a2eaf02d67b45a027310315625ad782f5d1edfb786c51d7",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_TimelineRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_TimelineRegistry.tox"
    }
   },
   {
@@ -3148,7 +3148,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineTools.tox",
     "bytes": 358862,
     "sha256": "2bef546f968b989c7b2e5887cccd03b7b77550d01f32bb6ee89b0b428c3ca45c",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.6/FNS_TimelineTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.7/FNS_TimelineTools.tox"
    }
   },
   {
@@ -3179,7 +3179,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ToolbarRegistry.tox",
     "bytes": 77758,
     "sha256": "efccb39e6f825d9c440463b0150b6061810c4485c5f8662bfd13fad268213925",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_ToolbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_ToolbarRegistry.tox"
    }
   },
   {
@@ -3208,7 +3208,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Updater.tox",
     "bytes": 194862,
     "sha256": "b4fc0fb3c72a759f04f8d72fec286ed7953c5dca237b10905bc745d2914ffec6",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_Updater.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_Updater.tox"
    }
   },
   {
@@ -3253,7 +3253,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_VSCodeTools.tox",
     "bytes": 745664,
     "sha256": "c519377bb5dd9bc43bdb1471b0cf28c7913058930104e5b09f8ad8314997735d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/FNS_VSCodeTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/FNS_VSCodeTools.tox"
    }
   },
   {
@@ -3299,7 +3299,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/midiMapper.tox",
     "bytes": 336110,
     "sha256": "0dae474850cb37f0b2dcd34e658307df2af65c079481f2a258b0e5120a1271bc",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/midiMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/midiMapper.tox"
    }
   },
   {
@@ -3343,7 +3343,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/oscMapper.tox",
     "bytes": 228654,
     "sha256": "ad8de7f14dad417c7071f3ab5c927f975dc741dd989ce05e2ca45b3066a79482",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/oscMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/oscMapper.tox"
    }
   },
   {
@@ -3389,7 +3389,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/PasteFromClipboard.tox",
     "bytes": 214070,
     "sha256": "8e52985fb1edefa6faa91fee36e329100b323105798900a01e3bd806f8e2278a",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/PasteFromClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/PasteFromClipboard.tox"
    }
   },
   {
@@ -3434,7 +3434,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/QuickMarks.tox",
     "bytes": 133854,
     "sha256": "502d1616d8ceab55ee76b8b79f1d57d97bfb037f22247734fbfd24633085a253",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/QuickMarks.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/QuickMarks.tox"
    }
   },
   {
@@ -3477,7 +3477,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/TDXMap.tox",
     "bytes": 934742,
     "sha256": "339116402eff423173e944862f7f623c3cede0c1593b6a5ac2328d87a65ac4ba",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.6/TDXMap.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.7/TDXMap.tox"
    }
   }
  ],
@@ -3916,7 +3916,7 @@ function fnsBoot() {
       b.setAttribute('aria-pressed', plusOnly ? 'true' : 'false');
     }
     var l = document.getElementById('plusrail-only');
-    if (l) l.textContent = plusOnly ? 'Show everything' : 'Show only Plus';
+    if (l) l.textContent = plusOnly ? 'Show everything' : 'Show only Patreon tools';
     render();
   }
 
@@ -3991,16 +3991,18 @@ function fnsBoot() {
       // Without an account the chip says only what the package IS, which is
       // all the public page can honestly claim.
       var own = entitled(p);
-      var label = !account ? 'Plus'
-        : (own ? 'Plus · unlocked' : 'Plus · locked');
-      var extra = !account ? '' : (own ? ' own' : ' locked');
-      var pl = docsLink(FNS_DOCS + '/plus/', label, 'chip plus' + extra);
-      // the ROUTE, not just the state: which tier unlocks it (the
-      // ladder grants upward), and the key when a Gumroad row exists
+      // the ROUTE, not just the state: "Patreon:Base" names the lowest
+      // tier that unlocks it (the ladder grants upward); the tooltip adds
+      // the key when a Gumroad row exists
       var tierName = tierLabel(p.access);
+      var mark = tierName ? 'Patreon:' + tierName : 'Patreon';
+      var label = !account ? mark
+        : (own ? mark + ' · unlocked' : mark + ' · locked');
+      var extra = !account ? '' : (own ? ' own' : ' locked');
+      var pl = docsLink(FNS_DOCS + '/patreon/', label, 'chip plus' + extra);
       if (tierName && !own) {
-        pl.title = 'unlocks at the ' + tierName + ' tier or higher'
-          + (p.key_available ? ', or with a lifetime key' : '');
+        pl.title = 'unlocks with the Patreon ' + tierName + ' tier or higher'
+          + (p.key_available ? ', or with a Gumroad licence key' : '');
       }
       pl.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pl);
@@ -4334,7 +4336,7 @@ function fnsBoot() {
     if (removals) notes.push(removals + ' to remove');
     // Said here rather than by refusing the tick: entitlement is the
     // server's answer, and this page has not asked it.
-    if (plusLocked) notes.push(plusLocked + ' Plus locked');
+    if (plusLocked) notes.push(plusLocked + ' locked (Patreon)');
     if (paneSel) notes.push(paneSel + (paneSel === 1 ? ' spawns' : ' spawn') + ' into your network');
     document.getElementById('deps').textContent = notes.join(' · ');
     var save = document.getElementById('save');
@@ -4609,7 +4611,10 @@ function fnsBoot() {
       var t = document.createElement('b');
       t.textContent = titleOf(p);
       nm.appendChild(t);
-      if (isPlus(p)) nm.appendChild(chip('Plus', 'plus'));
+      if (isPlus(p)) {
+        nm.appendChild(chip(tierLabel(p.access)
+          ? 'Patreon:' + tierLabel(p.access) : 'Patreon', 'plus'));
+      }
       [['help_url', 'docs ↗'], ['homepage', 'site ↗'], ['changelog_url', 'changelog ↗']]
         .forEach(function (k) {
           if (!p[k[0]]) return;
@@ -4649,15 +4654,15 @@ function fnsBoot() {
       pn.appendChild(pm);
       var pb = document.createElement('b');
       pb.textContent = plusInSet.length + ' of these '
-        + (plusInSet.length === 1 ? 'is' : 'are') + ' Plus,';
+        + (plusInSet.length === 1 ? 'needs' : 'need') + ' Patreon,';
       pn.appendChild(pb);
       pn.appendChild(document.createTextNode(
         ' the supporter extras: ' + plusReality() + ' '));
-      pn.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));
+      pn.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗'));
       var out = document.createElement('button');
       out.type = 'button';
       out.className = 'btn btn-quiet';
-      out.textContent = 'Leave Plus out';
+      out.textContent = 'Leave the Patreon tools out';
       out.addEventListener('click', function () {
         Object.keys(plusBoxes).forEach(function (nm) {
           plusBoxes[nm].checked = false;
@@ -5058,7 +5063,7 @@ function fnsBoot() {
       "r_ = run(\"i = op('%s/FNS_Installer'); i.par.Selectionfile = '%s'; i.par.Install.pulse()\" % (root.path, sp), delayFrames=90)",
       "_ = PLUS and run(\"op('%s/FNS_Installer').par.Configure.pulse()\" % root.path, delayFrames=150)",
       "print('FNSTools', m['release'], '--', len(names), 'packages verified; installing into', root.path)",
-      "_ = PLUS and print('Needs a supporter account:', ', '.join(PLUS) + '.', 'The picker will open by itself; your picks are waiting there. Click Sign in.')"
+      "_ = PLUS and print('Needs Patreon:', ', '.join(PLUS) + '.', 'The picker will open by itself; your picks are waiting there. Click Sign in with Patreon.')"
     ].join('; ');
   }
 
@@ -5099,9 +5104,9 @@ function fnsBoot() {
     }).length;
     setStep(3);
     showDialog(text, false, HINTS.script + (plusN
-      ? ' ' + plusN + ' Plus pick' + (plusN === 1 ? '' : 's')
+      ? ' ' + plusN + ' Patreon pick' + (plusN === 1 ? '' : 's')
         + ' in this selection: the script installs the free tools now and '
-        + 'opens the picker inside TouchDesigner for the Plus '
+        + 'opens the picker inside TouchDesigner for the Patreon '
         + (plusN === 1 ? 'one' : 'ones') + ', where you sign in as a supporter.'
       : ''));
     document.getElementById('dlgtitle').textContent = 'Paste this into the Textport';
@@ -5156,14 +5161,14 @@ function fnsBoot() {
         if (pickedLocked) { sel.value = pickedLocked.name; }
         var inp = document.createElement('input');
         inp.type = 'text';
-        inp.placeholder = 'paste the licence key';
+        inp.placeholder = 'paste the Gumroad licence key';
         inp.style.flex = '1';
         var go = document.createElement('button');
         go.className = 'btn btn-secondary';
         go.textContent = 'Redeem';
         go.addEventListener('click', function () {
           var key = (inp.value || '').trim();
-          if (!key) { showDialog('Paste the licence key first.', false); return; }
+          if (!key) { showDialog('Paste the Gumroad licence key first.', false); return; }
           post('/auth/redeem',
             JSON.stringify({ key: key, package: sel.value }),
             function (res) {
@@ -5180,14 +5185,14 @@ function fnsBoot() {
     }
     // Where to actually become one. From the manifest when it says, so a
     // campaign move is a manifest change rather than a reshipped page.
-    var join = ((M.toolkit || {}).support_url) || (FNS_DOCS + '/plus/');
+    var join = ((M.toolkit || {}).support_url) || (FNS_DOCS + '/patreon/');
     if (support) {
       support.href = join;
       // Someone already paying is not asked to "become" anything: a
       // held tier that grants nothing here means the remedy is a HIGHER
       // tier, and the button should say so.
       if (account && account.tier && !(account.products || []).length) {
-        support.textContent = 'Upgrade your tier ↗';
+        support.textContent = 'Upgrade your Patreon tier ↗';
       }
     }
     if (account) {
@@ -5384,7 +5389,7 @@ function fnsBoot() {
     function armed() {
       setStep(3);
       document.getElementById('dlgtitle').textContent = 'Install plan';
-      showDialog('Your Plus pick' + (wantedStill.length === 1 ? ' is' : 's are')
+      showDialog('Your Patreon pick' + (wantedStill.length === 1 ? ' is' : 's are')
         + ' unlocked. Planning the install…', false);
       post('/selection', JSON.stringify(selection(), null, 1) + '\n',
         function (res) {
@@ -5508,7 +5513,7 @@ function fnsBoot() {
     mark.textContent = '◆';
     rail.appendChild(mark);
     var pb = document.createElement('b');
-    pb.textContent = 'Plus:';
+    pb.textContent = 'Patreon:';
     rail.appendChild(pb);
     var sentence = 'the free tools are the full toolkit; '
       + plus.length + ' extra' + (plus.length === 1 ? '' : 's') + ' below '
@@ -5523,11 +5528,11 @@ function fnsBoot() {
     } else {
       rail.appendChild(document.createTextNode(sentence + ' '));
     }
-    rail.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));
+    rail.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗'));
     var pob = document.getElementById('plusonly');
     if (pob) {
       pob.hidden = false;
-      pob.textContent = '◆ Plus only (' + plus.length + ')';
+      pob.textContent = '◆ Patreon only (' + plus.length + ')';
       pob.addEventListener('click', function () { setPlusOnly(!plusOnly); });
     }
   })();

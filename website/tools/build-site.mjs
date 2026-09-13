@@ -109,6 +109,23 @@ const HOTKEYS = (() => {
   }
 })();
 
+/** How a gated package unlocks, from the same REPO manifest: its tier
+ *  ladder (id -> Base / Pro / Coaching) and which packages a Gumroad key
+ *  can unlock. build_manifest derives both from the Worker's maps, so the
+ *  site names a tier without keeping a copy of which tier covers what. */
+const ROUTES = (() => {
+  try {
+    const doc = JSON.parse(fs.readFileSync(
+      path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+    const tiers = {};
+    for (const t of (doc.toolkit && doc.toolkit.tiers) || []) tiers[String(t.id)] = t.label;
+    const keys = new Set((doc.packages || []).filter((q) => q.key_available).map((q) => q.name));
+    return { tiers, keys };
+  } catch {
+    return { tiers: {}, keys: new Set() };   // no manifest yet: no tier named
+  }
+})();
+
 /** Every package's customization surface, from the REPO's
  *  packaging/parameters.json -- written by build_manifest.BuildParameters()
  *  in the same live pass that writes the manifest, so the two can never
@@ -216,20 +233,33 @@ const displayCategories = [
 ];
 
 // Entitlement. `access` in catalog.json NAMES A TIER (docs/GatedDeliveryResearch
-// §9.3), so anything that is not the literal 'free' is gated. The site says
-// "Plus" and stops there on purpose: which tier covers which package is a
-// SERVER-side map, and a copy of it here would be the second place that
-// answer lives. Absent means free, so a catalog written before gating
-// existed reads correctly.
+// §9.3), so anything that is not the literal 'free' is gated. The marker says
+// "Patreon" (docs/PatreonNaming.md); the tier NAME comes from the manifest's
+// ladder, never from a copy of the Worker's map kept here. Absent means free,
+// so a catalog written before gating existed reads correctly.
 const isPlus = (name) => {
   const a = curated[name] && curated[name].access;
   return Boolean(a) && a !== 'free';
 };
-const PLUS_MARK = '<span class="plus-mark">Plus</span>';
+const PLUS_MARK = '<span class="plus-mark">Patreon</span>';
+/** The minimum Patreon tier's name for a gated package, '' when unknown. */
+const tierOf = (name) => ROUTES.tiers[String(curated[name] && curated[name].access)] || '';
+/** "the Patreon Base tier or higher, or a Gumroad licence key", as far as
+ *  the manifest can say. */
+const unlockRoute = (name) => {
+  const tier = tierOf(name);
+  const patreon = tier ? `the Patreon ${tier} tier or higher` : 'a Patreon membership';
+  return ROUTES.keys.has(name) ? `${patreon}, or a Gumroad licence key` : patreon;
+};
+/** "Patreon:Base" -- the route and its lowest tier in one word; plain
+ *  "Patreon" when the manifest names no tier. */
+const tierMark = (name) => (tierOf(name) ? `Patreon:${tierOf(name)}` : 'Patreon');
+/** The row marker for one package: PLUS_MARK with the tier in it. */
+const plusMark = (name) => `<span class="plus-mark" title="Unlocks with ${esc(unlockRoute(name))}">${esc(tierMark(name))}</span>`;
 
 // Curated site content: the other Function Store products. Site-only —
 // packaging/ never reads it. One source, injected into both the landing page
-// and /plus/, because two hand-kept copies of the same two cards drift.
+// and /patreon/, because two hand-kept copies of the same two cards drift.
 const FAMILY = path.join(WEB, 'content', 'family.json');
 const family = fs.existsSync(FAMILY)
   ? (JSON.parse(fs.readFileSync(FAMILY, 'utf8')).products || [])
@@ -461,9 +491,8 @@ if (problems.length) {
 const navLinks = [
   ['/#get', 'Install'],
   ['/#tools', 'Tools'],
-  ['/plus/', 'Plus'],
   ['/docs/', 'Docs'],
-  ['https://patreon.com/function_store', 'Patreon'],
+  ['/patreon/', 'Patreon'],
 ];
 
 function head(title, description, canonical) {
@@ -534,13 +563,12 @@ const FOOTER = `<footer class="site">
     <div>© 2026 FNSTools · Built for TouchDesigner</div>
     <div class="footer-links">
       <a href="/docs/">Docs</a>
-      <a href="/plus/">Plus</a>
+      <a href="/patreon/">Patreon</a>
       <a href="/privacy/">Privacy</a>
       <a href="/terms/">Terms</a>
       <a href="${GH}" target="_blank" rel="noopener">GitHub</a>
       <a href="https://discord.gg/b4CaCP3g3K" target="_blank" rel="noopener">Discord</a>
       <a href="https://derivative.ca" target="_blank" rel="noopener">TouchDesigner</a>
-      <a href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
       <a href="https://functionstore.xyz" target="_blank" rel="noopener">Function Store</a>
       <a href="mailto:dan%2Bfnstools@functionstore.xyz?subject=FNSTools%20feedback">Feedback</a>
     </div>
@@ -813,7 +841,7 @@ function sidebar(currentSlug) {
       .filter((p) => p.category === cat)
       .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
     const items = inCat
-      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.title)}${isPlus(p.name) ? PLUS_MARK : ''}</a></li>`)
+      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}</a></li>`)
       .join('\n');
     if (!items) return '';
     return sideGroup(GLYPH[cat] || '·', cat, items, inCat.length);
@@ -875,10 +903,12 @@ for (const p of pages) {
   const badges = [
     `<span class="badge badge-cat">${GLYPH[p.category] || '·'} ${esc(p.category)}</span>`,
   ];
-  // A Plus package is documented exactly like a free one — the decision was
+  // A gated package is documented exactly like a free one — the decision was
   // "visible and locked", so the page is public and complete. What differs is
   // one badge and one callout saying how to get it.
-  if (isPlus(p.name)) badges.push(`<a class="badge badge-cat" href="/plus/">◆ Plus</a>`);
+  if (isPlus(p.name)) {
+    badges.push(`<a class="badge badge-cat" href="/patreon/" title="Unlocks with ${esc(unlockRoute(p.name))}">◆ ${esc(tierMark(p.name))}</a>`);
+  }
   // Where it shows up, before anything else about it: this is the question
   // a reader scanning the docs actually has.
   for (const sid of surfacesOf(p.name)) {
@@ -918,17 +948,18 @@ for (const p of pages) {
     ? `<div class="embed-video"><iframe src="https://www.youtube.com/embed/${esc(String(p.meta.video).split(/[/=]/).pop())}" title="${esc(p.title)} walkthrough" loading="lazy" allowfullscreen></iframe></div>`
     : '';
 
-  // The site is the complete record of the gated tools: a Plus page is as
+  // The site is the complete record of the gated tools: a gated page is as
   // full as a free one, and the note on it is where the reader meets the
   // membership that pays for the free toolkit.
   const plusNote = isPlus(p.name) ? `<div class="plus-note">
-    <p><strong>This one is a Plus tool.</strong> It installs through the same picker as
-    everything else and unlocks with a Patreon membership or a licence key redeemed inside
-    TouchDesigner. Everything else in the toolkit stays free and MIT, and the membership is
-    what keeps that work moving.</p>
+    <p><strong>This tool unlocks with Patreon.</strong> It installs through the same picker as
+    everything else and unlocks with ${esc(unlockRoute(p.name))}, connected from inside
+    TouchDesigner.
+    Everything else in the toolkit stays free and MIT, and the membership is what keeps that
+    work moving.</p>
     <p class="plus-note-actions">
       <a class="btn btn-primary" href="${PATREON}" target="_blank" rel="noopener">Join on Patreon →</a>
-      <a class="btn btn-secondary" href="/plus/">How Plus works →</a>
+      <a class="btn btn-secondary" href="/patreon/">How unlocking works →</a>
     </p>
   </div>` : '';
 
@@ -1139,7 +1170,7 @@ const indexGroups = displayCategories.map((cat) => {
     .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }))
     .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/" data-surfaces="${
         esc(surfacesOf(p.name).join(' ')) || 'none'}">
-        <strong>${esc(p.title)}${isPlus(p.name) ? PLUS_MARK : ''}</strong>
+        <strong>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}</strong>
         <span>${esc(p.description || p.meta.summary)}</span>
       </a>`).join('\n');
   if (!items) return '';
@@ -1162,7 +1193,7 @@ ${sidebar(null)}
   <h1>Documentation</h1>
   <p class="lede">Every package that ships with FNSTools. Each tool installs on its own, so each one is documented on its own.</p>
   <p class="docs-index-note">Each page lists that tool's own controls. The ones every package shares are described once on the <a href="/docs/${PARAMS_SLUG}/">common parameters</a> page.</p>
-  <p class="docs-index-note">The Plus tools are here too, marked ${PLUS_MARK}. Every gated package is listed and documented in full, locked or unlocked, so this index is the complete record of what a <a href="${PATREON}" target="_blank" rel="noopener">Patreon membership</a> unlocks. <a href="/plus/">How Plus works →</a></p>
+  <p class="docs-index-note">The tools that unlock with Patreon are here too, marked with the lowest tier that unlocks them, such as ${PLUS_MARK.replace('>Patreon<', '>Patreon:Base<')}. Every gated package is listed and documented in full, locked or unlocked, so this index is the complete record of what a <a href="${PATREON}" target="_blank" rel="noopener">Patreon membership</a> unlocks. <a href="/patreon/">How unlocking works →</a></p>
 ${guideCards}
 ${surfaceFilter()}
 ${indexGroups}
@@ -1229,12 +1260,12 @@ const grid = displayCategories.map((cat) => {
     .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
   const items = inCat.map((p) => `          <div class="feat">
             <div class="feat-icon" aria-hidden="true">${GLYPH[cat] || '·'}</div>
-            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.title)}</a>${isPlus(p.name) ? PLUS_MARK : ''}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
+            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.title)}</a>${isPlus(p.name) ? plusMark(p.name) : ''}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
           </div>`).join('\n');
   if (!items) return '';
   const plusHere = inCat.filter((p) => isPlus(p.name)).length;
   const count = `${inCat.length} tool${inCat.length === 1 ? '' : 's'}`
-    + (plusHere ? ` · ${plusHere} Plus` : '');
+    + (plusHere ? ` · ${plusHere} Patreon` : '');
   // The first category a reader meets, whichever that now is -- never a
   // hardcoded name, which is how this stayed pinned to Core.
   return `      <details class="cat"${cat === displayCategories[0] ? ' open' : ''}>
@@ -1382,18 +1413,18 @@ if (fs.existsSync(landing)) {
   console.warn('note: website/index.html does not exist yet — tool catalogue not injected');
 }
 
-// ------------------------------------------------------ /plus/ — the gate
+// --------------------------------------------------- /patreon/ — the gate
 //
-// Prose is hand-written in website/content/plus.html and is only a fragment:
+// Prose is hand-written in website/content/patreon.html and is only a fragment:
 // this wraps it in the same head, header and footer every other generated
-// page gets, so the Plus page cannot drift out of the site's chrome. The
+// page gets, so the page cannot drift out of the site's chrome. The
 // output is generated and gitignored, exactly like docs/ and get/.
 //
 // Two blocks are injected. The package list comes from catalog.json, so the
-// page cannot advertise a Plus tool that does not ship (or miss one that
+// page cannot advertise a gated tool that does not ship (or miss one that
 // does); the family cards come from content/family.json, the same source the
 // landing page uses.
-const plusSrc = path.join(WEB, 'content', 'plus.html');
+const plusSrc = path.join(WEB, 'content', 'patreon.html');
 if (fs.existsSync(plusSrc)) {
   let body = fs.readFileSync(plusSrc, 'utf8');
 
@@ -1406,12 +1437,12 @@ if (fs.existsSync(plusSrc)) {
     <span>
       <b>${esc(p.title)}</b>
       <span>${esc(p.description || p.meta.summary || '')}</span>
-      <span class="cat-of">${GLYPH[p.category] || '·'} ${esc(p.category)}</span>
+      <span class="cat-of">${GLYPH[p.category] || '·'} ${esc(p.category)}${tierOf(p.name) ? ` · ${esc(tierOf(p.name))} tier or higher` : ''}${ROUTES.keys.has(p.name) ? ' · Gumroad key available' : ''}</span>
     </span>
     <span class="btn btn-secondary">Read the docs →</span>
   </a>`).join('\n') + `\n</div>`
     // Not an error: a catalog with nothing gated is a legitimate state, and
-    // the page still has to explain what Plus is for when the first one lands.
+    // the page still has to explain what Patreon unlocks when the first one lands.
     : `<p class="plus-pkgs-empty">Nothing is gated in the current catalogue; every package on this site installs free.</p>`;
 
   for (const [marker, markup] of [
@@ -1420,34 +1451,34 @@ if (fs.existsSync(plusSrc)) {
   ]) {
     const re = new RegExp(`(<!-- ${marker}:START -->)[\\s\\S]*?(<!-- ${marker}:END -->)`);
     if (!re.test(body)) {
-      console.error(`website/content/plus.html is missing its <!-- ${marker}:START --> / `
-        + `<!-- ${marker}:END --> markers — /plus/ would ship without that block`);
+      console.error(`website/content/patreon.html is missing its <!-- ${marker}:START --> / `
+        + `<!-- ${marker}:END --> markers — /patreon/ would ship without that block`);
       process.exit(1);
     }
     body = body.replace(re, (_m, a, b) => `${a}\n${markup}\n${b}`);
   }
 
-  checkLinks(body, 'content/plus.html', null);
+  checkLinks(body, 'content/patreon.html', null);
   if (problems.length) {
     console.error('build refused — unresolved internal links:\n' +
       problems.map((p) => `  - ${p}`).join('\n'));
     process.exit(1);
   }
 
-  fs.mkdirSync(path.join(WEB, 'plus'), { recursive: true });
-  fs.writeFileSync(path.join(WEB, 'plus', 'index.html'),
-    `${head('FNSTools Plus: supporter tools, and what stays free',
-      'Nearly all of FNSTools is free and MIT. A few tools unlock with a Patreon membership or a licence key, redeemed inside TouchDesigner. Here is exactly how that works.',
-      `${SITE}/plus/`)}
-<!-- GENERATED by tools/build-site.mjs from website/content/plus.html — do not edit here -->
-${header('/plus/')}
+  fs.mkdirSync(path.join(WEB, 'patreon'), { recursive: true });
+  fs.writeFileSync(path.join(WEB, 'patreon', 'index.html'),
+    `${head('FNSTools on Patreon: supporter tools, and what stays free',
+      'Nearly all of FNSTools is free and MIT. A few tools unlock with a Patreon membership or a Gumroad licence key, redeemed inside TouchDesigner. Here is exactly how that works.',
+      `${SITE}/patreon/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/patreon.html — do not edit here -->
+${header('/patreon/')}
 <main class="plus-page">
 ${body}
 </main>
 ${FOOT}`);
-  console.log(`built /plus/ (${plusPages.length} Plus package${plusPages.length === 1 ? '' : 's'}, ${family.length} family cards)`);
+  console.log(`built /patreon/ (${plusPages.length} gated package${plusPages.length === 1 ? '' : 's'}, ${family.length} family cards)`);
 } else {
-  console.warn('note: website/content/plus.html missing — /plus/ not built, and every link to it 404s');
+  console.warn('note: website/content/patreon.html missing — /patreon/ not built, and every link to it 404s');
 }
 
 // ------------------------------------------- /privacy/ and /terms/ — legal
@@ -1462,7 +1493,7 @@ for (const [slug, title, desc] of [
   ['privacy', 'Privacy | FNSTools',
     'What FNSTools collects: nothing at all in the free toolkit, and the least the supporter gate can store and still know that a membership is live.'],
   ['terms', 'Terms | FNSTools',
-    'The free packages are MIT and stay that way; Plus packages are licensed to you while your membership or licence key is live. Everything ships as-is.'],
+    'The free packages are MIT and stay that way; the Patreon packages are licensed to you while your membership or Gumroad licence key is live. Everything ships as-is.'],
 ]) {
   const src = path.join(WEB, 'content', `${slug}.html`);
   if (!fs.existsSync(src)) {
