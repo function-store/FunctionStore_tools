@@ -1,10 +1,10 @@
 ---
 title: Getting started
 order: 10
-summary: Install the toolkit, pick your tools, keep them current, and know where your settings live. The short version.
+summary: Install FNSTools, choose packages, update them and manage settings.
 ---
 
-This is the short version. For the shape of the toolkit itself, read [Architecture](/docs/guides/architecture/); the full account of the machinery is [How FNSTools is built](/docs/guides/how-fnstools-is-built/) at the end of the docs.
+For an overview of packages and registries, see [Architecture](/docs/guides/architecture/). For implementation details, see [How FNSTools is built](/docs/guides/how-fnstools-is-built/).
 
 You need TouchDesigner 2025 or newer, on Windows or macOS.
 
@@ -14,21 +14,21 @@ You need TouchDesigner 2025 or newer, on Windows or macOS.
 2. The picker opens by itself on the first drop. Choose **Recommended**, **Everything** or **Pick my own** (on a machine that has installed before, **Set up like last time** comes first), adjust the list, press **Review install** and then **Install**. Only the packages you ticked are downloaded, plus the core they need, and every file is verified before it is written.
 3. Save the project and set it as your startup file in `Preferences > General > Startup File Mode`, so every new project opens with your tools in it.
 
-Other ways in: a project that already has a toolkit container takes the bare [`FNS_Installer.tox`](https://storage.functionstore.tools/fnstools/latest/FNS_Installer.tox); [the online picker](/get/) gives you one line to paste into the Textport with no download at all; and the FNSTools tab of TDX Launcher Ultra installs into a running session through the same installer.
+You can also use [the online picker](/get/) and paste its install command into the Textport, or install into a running session from the FNSTools tab of TDX Launcher Ultra.
 
 ## Add or remove tools later
 
-Select the toolkit container and pulse **Pick Tools** on its `FNSTools` page. The picker opens inside TouchDesigner with your installed tools pre-checked. Tick to add, untick to remove; a removed tool keeps its settings for the day you reinstall it.
+Select the toolkit container and pulse **Pick Tools** on its `FNSTools` page. The picker opens inside TouchDesigner with your installed tools pre-checked. Tick to add, untick to remove; removed tools retain their settings for reinstallation.
 
 ## Updating
 
-Pulse **Open Settings** on the toolkit container and switch to the **Updates** tab. **Check for updates** compares every installed package against the published release and lists what is newer, with its release notes. Update one package or all of them. Your settings survive an update; a tool comes back where you left it.
+Pulse **Open Settings** on the toolkit container and switch to the **Updates** tab. **Check for updates** compares every installed package against the published release and lists what is newer, with its release notes. Update one package or all of them. Updates preserve your settings.
 
 Only the tools you installed are offered. An update never adds a package you did not choose.
 
 ## Your settings
 
-Every tool keeps its settings in the project file. By default they also roam: one settings file in your user palette follows you into the next project and across updates, so the way you set a tool up is the way you find it. To pin a project to its own settings instead, set **Config Scope** to `project` on the toolkit container. The **Settings** tab of the same window edits every installed tool's parameters in one place and can export or import them.
+Every tool keeps its settings in the project file. By default, a shared settings file in your user palette also applies them to other projects and preserves them across updates. To pin a project to its own settings instead, set **Config Scope** to `project` on the toolkit container. The **Settings** tab of the same window edits every installed tool's parameters in one place and can export or import them.
 
 MIDI and OSC maps are the exception: they save into the project folder, so they travel with the show.
 

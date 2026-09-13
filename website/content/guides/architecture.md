@@ -2,16 +2,16 @@
 title: Architecture
 section: guides
 order: 20
-summary: The toolkit in one page. Independent packages, a small core of registries they plug into, one place they install and update from, and settings that follow you between projects.
+summary: How packages, registries, installation and shared settings fit together.
 ---
 
-This is the shape of it in a couple of minutes. The long version, with the reasoning and the measurements behind every choice, is [How FNSTools is built](/docs/guides/how-fnstools-is-built/) at the end of the docs.
+For implementation details, see [How FNSTools is built](/docs/guides/how-fnstools-is-built/).
 
 ## One tool, one package
 
-Every tool in the catalog is a single `.tox` with its own version, its own docs page and its own line in the picker. You install the ones you want and leave the rest alone. Ticking SwapOps brings nothing else along with it.
+Every tool in the catalog is a single `.tox` with its own version, its own docs page and its own line in the picker. You install the ones you want and leave the rest alone. Individual tools also require the shared core described below.
 
-The exception is a small **core** that arrives with your first pick and that every tool leans on. Core is mostly registries.
+The shared **core** is installed with your first tool selection. It consists mainly of registries.
 
 ## Registries are the backbone
 
@@ -31,11 +31,11 @@ A registry owns one place in TouchDesigner's interface and decides what appears 
 
 A tool that wants a toolbar button carries a small host, and the host publishes one entry into the toolbar registry. The registry decides the order, the visibility and the placement from there, which is why you can reorder or hide anything from [Hub](/docs/fns-hub/) and have it stay that way.
 
-Two things follow. A registry collects whatever is present, so a partial install is simply a shorter list and any single tool works on its own. And the registries ship raw and cloneable, so a component you built yourself can carry a host and sit on the toolbar beside everything else.
+Registries list the installed tools. You can also clone a registry and add a host to your own component to register it, for example as a toolbar entry.
 
 ## No tool depends on another tool
 
-What a package requires is worked out from the registries it hosts. A tool with a toolbar button requires the toolbar registry, and that is the whole graph. Nothing is written by hand, so nothing goes stale, and every requirement points at core.
+What a package requires is worked out from the registries it hosts. A tool with a toolbar button requires the toolbar registry. These dependencies are derived from its hosts and point to core packages.
 
 Tools reach for each other only through a guarded lookup. ExprHotStrings uses CustomParTools when it is installed and carries on quietly when it is absent, with the extra behaviour missing and no error raised.
 
@@ -53,9 +53,9 @@ A tool's settings live in your project file. By default they also roam through o
 
 Tools announce the actions they can perform, so anything able to run them can also list them: the [command palette](/docs/fns-commandpalette/) inside TouchDesigner, and TDX Launcher Ultra, which asks this installer to place packages instead of dropping files of its own.
 
-A few tools are Plus. The lock sits on the bytes, so the server declines to send them without a membership, and every page and every listing stays complete whether or not you have one. [How Plus works](/plus/) covers the details.
+Plus tools require a membership or licence key to download. Their catalogue entries and documentation are public. [How Plus works](/plus/) covers the details.
 
 ## Next
 
 - [Getting started](/docs/guides/getting-started/) walks the install itself.
-- [How FNSTools is built](/docs/guides/how-fnstools-is-built/) is this page again with the reasoning, the measurements and the traps that shaped each decision.
+- [How FNSTools is built](/docs/guides/how-fnstools-is-built/) covers implementation details and design decisions.

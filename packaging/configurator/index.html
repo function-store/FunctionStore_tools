@@ -161,10 +161,11 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 .card:hover { border-color: var(--border-strong); background: var(--bg-2); }
-.card.on {
-  border-color: var(--accent);
-  background: linear-gradient(135deg, rgba(251,191,36,0.07) 0%, var(--bg-1) 55%);
-}
+/* Selected reads from the filled checkbox and a slightly lifted card, not
+   an accent border: with forty cards selected the borders were the whole
+   page, and the eye had nowhere to land. */
+.card.on { border-color: var(--border-strong); background: var(--bg-2); }
+.card.on .name { color: var(--text); }
 .card.rec { cursor: pointer; text-decoration: none; }
 .card.rec:hover { border-color: var(--accent); }
 .rec-by { font-size: 12px; opacity: .75; }
@@ -234,14 +235,12 @@ a.help:hover { color: var(--accent); }
 }
 a.chip.plus:hover { border-color: var(--accent); }
 .card.plus { border-color: rgba(251,191,36,0.22); }
-/* Entitlement, served flavor only. Unlocked reads as filled (a state you
-   HAVE); locked stays outlined and dimmed (a state you could have). The
+/* Entitlement, served flavor only. Unlocked reads as a firmer outline;
+   locked stays dimmed (a state you could have). Neither fills: a filled
+   accent chip on every Plus card was one more thing shouting. The
    published /get/ page never sets these classes. */
-.chip.plus.own {
-  background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
-}
+.chip.plus.own { border-color: rgba(251,191,36,0.55); }
 .chip.plus.locked { opacity: 0.6; }
-.card.plus.own { border-color: rgba(251,191,36,0.55); }
 .acct { color: var(--text-dim); font-size: 12.5px; }
 .acct b { color: var(--accent); font-weight: 600; }
 .plus-hint { margin-top: 10px; font-size: 12.5px; color: var(--text-dim); }
@@ -322,6 +321,11 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .dlg-report .chip.rm { color: var(--text-faint); text-decoration: line-through; }
 .dlg-report .chip.bad { border-color: #c0392b; color: #e57368; }
 .dlg-report .note { margin: 12px 0 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.dlg-report .note.bad { color: #e57368; }
+.dlg-report .sec { margin-top: 12px; }
+.dlg-report .sumline + .sec { margin-top: 4px; }
+.dlg-report .seclab { margin-bottom: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+.dlg-report .chip.kept { color: var(--text-dim); border-color: var(--border); }
 
 /* ── the guided steps strip ── */
 .steps {
@@ -494,6 +498,16 @@ body.app .card { padding: 11px 13px; }
 body.app .name { font-size: 14px; }
 body.app .desc { font-size: 12.5px; }
 body.app .dlg h3 { font-size: 16px; }
+/* fewer strips before the first card: the notes and the Plus line go
+   quiet, the category chips small, the footer one row with one action */
+body.app .note { padding: 8px 12px; font-size: 12.5px; line-height: 1.5; border-radius: 8px; }
+body.app .plusrail { margin-top: 10px; padding: 6px 12px; font-size: 12px; border-radius: 6px; background: transparent; }
+body.app .catnav a { padding: 3px 9px; font-size: 12px; }
+body.app .cat-head .cat-pitch { display: none; }
+body.app .sum { padding: 10px 14px; gap: 10px; margin-top: 24px; }
+body.app .sum .n { font-size: 14px; }
+body.app .sum .muted, body.app .sum .acct { font-size: 12px; }
+body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 /* FNS:UIBASE:END */
 
   /* ── page-specific: the storefront shell ── */
@@ -607,7 +621,6 @@ body.app .dlg h3 { font-size: 16px; }
     <button class="btn btn-quiet" id="signin" hidden>Sign in</button>
     <button class="btn btn-quiet" id="redeem" hidden>Redeem key</button>
     <span class="spacer"></span>
-    <button class="btn btn-quiet" id="copy">Copy list</button>
     <button class="btn btn-secondary" id="script">Copy install script</button>
     <button class="btn btn-primary" id="save">Download selection.json</button>
   </div>
@@ -1351,25 +1364,18 @@ function fnsBoot() {
     var paneSel = Array.from(picked).filter(function (n) {
       return byName[n] && byName[n].placement === 'pane';
     }).length;
-    document.getElementById('deps').textContent =
-      (need.size
-        ? '+ ' + need.size + ' core package' + (need.size === 1 ? '' : 's') +
-          ' they need (already included)' : '') +
-      (removals ? (need.size ? ' · ' : '') + removals + ' will be removed' : '') +
-      (plusReady
-        ? ((need.size || removals) ? ' · ' : '') +
-          plusReady + ' Plus tool' + (plusReady === 1 ? '' : 's') +
-          ' unlocked; Review install finishes it' : '') +
-      // Said here rather than by refusing the tick: entitlement is the
-      // server's answer, and this page has not asked it.
-      (plusLocked
-        ? ((need.size || removals || plusReady) ? ' · ' : '') +
-          plusLocked + ' Plus tool' + (plusLocked === 1 ? '' : 's') +
-          ', installs once unlocked' : '') +
-      (paneSel
-        ? ((need.size || removals || plusReady || plusLocked) ? ' · ' : '') +
-          paneSel + ' component' + (paneSel === 1 ? '' : 's') +
-          ' will spawn into the network you are working in' : '');
+    // One short line: core is implied, an unlocked Plus tool is just a
+    // tool, and only what changes the outcome gets a word -- removals, a
+    // Plus pick that waits for an upgrade, a component that lands in the
+    // user's own network.
+    var notes = [];
+    if (need.size) notes.push('+ ' + need.size + ' core');
+    if (removals) notes.push(removals + ' to remove');
+    // Said here rather than by refusing the tick: entitlement is the
+    // server's answer, and this page has not asked it.
+    if (plusLocked) notes.push(plusLocked + ' Plus locked');
+    if (paneSel) notes.push(paneSel + (paneSel === 1 ? ' spawns' : ' spawn') + ' into your network');
+    document.getElementById('deps').textContent = notes.join(' · ');
     var save = document.getElementById('save');
     if (served && locked) {
       save.textContent = 'Locked (source checkout)';
@@ -1945,6 +1951,87 @@ function fnsBoot() {
     saveBtn.className = 'btn btn-secondary';
     script.parentNode.insertBefore(script, saveBtn.nextSibling);
   }
+  // The installer's plan is lines of "name kind state". The review
+  // dialog renders it as what will HAPPEN -- installs, removals,
+  // problems -- with what is already there folded into one line, and
+  // keeps the raw text only when nothing in it parses.
+  function showPlan(res) {
+    showDialog(res.text, !!res.ok);
+    if (!res.ok) return;
+    var report = document.getElementById('report');
+    var out = document.getElementById('out');
+    report.innerHTML = '';
+    var installs = [], removes = [], problems = [];
+    var keptTools = [], keptCore = 0, installCore = 0, download = '', target = '';
+    String(res.text || '').split('\n').forEach(function (line) {
+      var s = line.trim(), m;
+      if (!s) return;
+      if ((m = /^install into (.+)$/.exec(s))) { target = m[1]; return; }
+      if ((m = /^([\d.]+ MB) to download$/.exec(s))) { download = m[1]; return; }
+      if ((m = /^(\S+)\s+(core|tool)\s+(.+)$/.exec(s))) {
+        var name = m[1], kind = m[2], state = m[3];
+        if (/^REMOVE/.test(state)) removes.push(name);
+        else if (state === 'present, kept') { if (kind === 'core') keptCore++; else keptTools.push(name); }
+        else if (/^install|^present, stale/.test(state)) { if (kind === 'core') installCore++; else installs.push(name); }
+        else problems.push(titleOfName(name) + ': ' + state);
+        return;
+      }
+      if ((m = /^(\S+)\s+(NO ARTIFACT|NOT IN MANIFEST)$/.exec(s))) { problems.push(titleOfName(m[1]) + ': ' + m[2].toLowerCase()); return; }
+      if (/^REFUSED/.test(s)) problems.push(s);
+    });
+    if (!installs.length && !removes.length && !problems.length && !keptTools.length && !installCore) return;
+    function section(label, names, cls) {
+      var sec = document.createElement('div');
+      sec.className = 'sec';
+      var lab = document.createElement('div');
+      lab.className = 'seclab';
+      lab.textContent = label;
+      sec.appendChild(lab);
+      var chips = document.createElement('div');
+      chips.className = 'chips';
+      names.forEach(function (n) {
+        var chip = document.createElement('span');
+        chip.className = 'chip ' + cls;
+        chip.textContent = titleOfName(n);
+        chips.appendChild(chip);
+      });
+      sec.appendChild(chips);
+      report.appendChild(sec);
+    }
+    if (installs.length || installCore) {
+      var sum = document.createElement('div');
+      sum.className = 'sumline';
+      var big = document.createElement('span');
+      big.className = 'big';
+      big.textContent = String(installs.length);
+      sum.appendChild(big);
+      var lab = document.createElement('span');
+      lab.className = 'lab';
+      lab.textContent = (installs.length === 1 ? 'tool to install' : 'tools to install')
+        + (installCore ? ' with ' + installCore + ' core package' + (installCore === 1 ? '' : 's') : '')
+        + (download ? ', ' + download + ' to download' : '');
+      sum.appendChild(lab);
+      report.appendChild(sum);
+      if (installs.length) section('Installs', installs, 'ok');
+    }
+    if (removes.length) section('Removes (settings kept for a reinstall)', removes, 'rm');
+    if (keptTools.length) section('Already in the project, kept', keptTools, 'kept');
+    if (problems.length) {
+      var note = document.createElement('p');
+      note.className = 'note bad';
+      note.textContent = problems.join(' · ');
+      report.appendChild(note);
+    }
+    if (target) {
+      var tn = document.createElement('p');
+      tn.className = 'note';
+      tn.textContent = 'Into ' + target + (keptCore ? ' · ' + keptCore + ' core package' + (keptCore === 1 ? '' : 's') + ' already there' : '');
+      report.appendChild(tn);
+    }
+    report.hidden = false;
+    out.hidden = true;
+  }
+
   function showDialog(text, installable, hint) {
     var dlg = document.getElementById('dlg');
     document.getElementById('out').textContent = text;
@@ -2252,8 +2339,7 @@ function fnsBoot() {
       setStep(3);
       document.getElementById('dlgtitle').textContent = 'Install plan';
       showDialog('Planning…', false);
-      post('/selection', JSON.stringify(selection(), null, 1) + '\n',
-           function (res) { showDialog(res.text, !!res.ok); });
+      post('/selection', JSON.stringify(selection(), null, 1) + '\n', showPlan);
       return;
     }
     setStep(3);
@@ -2370,14 +2456,6 @@ function fnsBoot() {
     }
     setTimeout(whenIdle, 800);
   })();
-  document.getElementById('copy').addEventListener('click', function () {
-    document.getElementById('dlgtitle').textContent = 'Your selection';
-    showDialog(JSON.stringify(selection(), null, 1), false);
-    var pre = document.getElementById('out');
-    var r = document.createRange(); r.selectNodeContents(pre);
-    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
-    try { document.execCommand('copy'); } catch (e) { /* selection is still there */ }
-  });
   document.getElementById('close').addEventListener('click', function () {
     document.getElementById('dlg').close();
   });
@@ -2471,22 +2549,20 @@ function fnsBoot() {
     var pb = document.createElement('b');
     pb.textContent = 'Plus:';
     rail.appendChild(pb);
-    rail.appendChild(document.createTextNode(
-      'the free tools are the full toolkit; '
+    var sentence = 'the free tools are the full toolkit; '
       + plus.length + ' extra' + (plus.length === 1 ? '' : 's') + ' below '
       + (plus.length === 1 ? 'is' : 'are') + ' a thank-you for supporters, and '
-      + plusReality() + ' '));
+      + plusReality();
+    if (FNS_EMBEDDED) {
+      // inside the manager the strip is one quiet line; the full sentence
+      // rides as a tooltip, and the toolbar's Plus-only button does the filter
+      rail.title = sentence;
+      rail.appendChild(document.createTextNode(
+        plus.length + ' supporter extra' + (plus.length === 1 ? '' : 's') + ' below. '));
+    } else {
+      rail.appendChild(document.createTextNode(sentence + ' '));
+    }
     rail.appendChild(docsLink(FNS_DOCS + '/plus/', 'How Plus works ↗'));
-    var only = document.createElement('a');
-    only.id = 'plusrail-only';
-    only.href = '#';
-    only.textContent = 'Show only Plus';
-    only.addEventListener('click', function (e) {
-      e.preventDefault();
-      setPlusOnly(!plusOnly);
-    });
-    rail.appendChild(document.createTextNode(' · '));
-    rail.appendChild(only);
     var pob = document.getElementById('plusonly');
     if (pob) {
       pob.hidden = false;

@@ -18,13 +18,10 @@ features:
 
 A tab of [Hub](/docs/fns-hub/) (the **FNS** button in the main-menu bar).
 
-TouchDesigner writes a numbered `.toe` into a `Backup` folder every time you
-save. They are worth having, and after a year of work there are thousands of
-them. This tool finds them under a folder you choose, shows you what they cost
-you in disk space, and lets you throw away the ones you are finished with.
+Backup Cleaner finds numbered `.toe` backups under a folder you choose,
+shows their disk usage, and lets you select backups to remove.
 
-Nothing is scanned until you open the tab or press **Scan**, so the tool costs
-nothing while you are working.
+Scanning starts when you open the tab or press **Scan**.
 
 ## Reading the list
 
@@ -37,8 +34,7 @@ A folder row totals everything below it, including its sub-folders:
 - **Count**, how many backup files.
 - **Work Hrs**, an estimate of the time those saves represent. Save timestamps
   are grouped into sessions, a gap of more than an hour starts a new one, and
-  the sessions are added up. It is a rough number and it is often the reason
-  you decide to keep a folder.
+  the sessions are added up. This is an estimate, not a record of time spent working.
 
 Right-click a row to show that file in your file browser. Click the header of
 the size column to re-scan.
@@ -47,8 +43,7 @@ the size column to re-scan.
 
 **Keep Last** protects the newest N backups in every folder. At `0` nothing is
 protected and everything found is a candidate. Set it to `5` and the five most
-recent saves in each folder drop out of the list, so what remains is only the
-history you have clearly moved past.
+recent saves in each folder drop out of the list, leaving older backups available for review.
 
 ## Cleaning
 

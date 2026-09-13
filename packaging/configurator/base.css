@@ -143,10 +143,11 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 .card:hover { border-color: var(--border-strong); background: var(--bg-2); }
-.card.on {
-  border-color: var(--accent);
-  background: linear-gradient(135deg, rgba(251,191,36,0.07) 0%, var(--bg-1) 55%);
-}
+/* Selected reads from the filled checkbox and a slightly lifted card, not
+   an accent border: with forty cards selected the borders were the whole
+   page, and the eye had nowhere to land. */
+.card.on { border-color: var(--border-strong); background: var(--bg-2); }
+.card.on .name { color: var(--text); }
 .card.rec { cursor: pointer; text-decoration: none; }
 .card.rec:hover { border-color: var(--accent); }
 .rec-by { font-size: 12px; opacity: .75; }
@@ -216,14 +217,12 @@ a.help:hover { color: var(--accent); }
 }
 a.chip.plus:hover { border-color: var(--accent); }
 .card.plus { border-color: rgba(251,191,36,0.22); }
-/* Entitlement, served flavor only. Unlocked reads as filled (a state you
-   HAVE); locked stays outlined and dimmed (a state you could have). The
+/* Entitlement, served flavor only. Unlocked reads as a firmer outline;
+   locked stays dimmed (a state you could have). Neither fills: a filled
+   accent chip on every Plus card was one more thing shouting. The
    published /get/ page never sets these classes. */
-.chip.plus.own {
-  background: var(--accent); color: var(--accent-ink); border-color: var(--accent);
-}
+.chip.plus.own { border-color: rgba(251,191,36,0.55); }
 .chip.plus.locked { opacity: 0.6; }
-.card.plus.own { border-color: rgba(251,191,36,0.55); }
 .acct { color: var(--text-dim); font-size: 12.5px; }
 .acct b { color: var(--accent); font-weight: 600; }
 .plus-hint { margin-top: 10px; font-size: 12.5px; color: var(--text-dim); }
@@ -304,6 +303,11 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
 .dlg-report .chip.rm { color: var(--text-faint); text-decoration: line-through; }
 .dlg-report .chip.bad { border-color: #c0392b; color: #e57368; }
 .dlg-report .note { margin: 12px 0 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.dlg-report .note.bad { color: #e57368; }
+.dlg-report .sec { margin-top: 12px; }
+.dlg-report .sumline + .sec { margin-top: 4px; }
+.dlg-report .seclab { margin-bottom: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+.dlg-report .chip.kept { color: var(--text-dim); border-color: var(--border); }
 
 /* ── the guided steps strip ── */
 .steps {
@@ -476,3 +480,13 @@ body.app .card { padding: 11px 13px; }
 body.app .name { font-size: 14px; }
 body.app .desc { font-size: 12.5px; }
 body.app .dlg h3 { font-size: 16px; }
+/* fewer strips before the first card: the notes and the Plus line go
+   quiet, the category chips small, the footer one row with one action */
+body.app .note { padding: 8px 12px; font-size: 12.5px; line-height: 1.5; border-radius: 8px; }
+body.app .plusrail { margin-top: 10px; padding: 6px 12px; font-size: 12px; border-radius: 6px; background: transparent; }
+body.app .catnav a { padding: 3px 9px; font-size: 12px; }
+body.app .cat-head .cat-pitch { display: none; }
+body.app .sum { padding: 10px 14px; gap: 10px; margin-top: 24px; }
+body.app .sum .n { font-size: 14px; }
+body.app .sum .muted, body.app .sum .acct { font-size: 12px; }
+body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }

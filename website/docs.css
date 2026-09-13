@@ -729,3 +729,20 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
 /* The two calls to action in a Plus tool's note. */
 .plus-note-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .plus-note-actions .btn { font-size: 13.5px; padding: 9px 16px; }
+
+/* Documentation reading layout. */
+.docs-layout .badge { border-radius: 2px; background: transparent; padding: 2px 7px; }
+.docs-layout .toc { background: transparent; border: 0; border-left: 2px solid var(--border-strong); border-radius: 0; padding: 4px 0 4px 18px; }
+.docs-layout .doc-cards { grid-template-columns: 1fr; gap: 0; }
+.docs-layout .doc-card { background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 16px 0; }
+.docs-layout .doc-card:hover { background: var(--bg-1); }
+.docs-layout .docs-body { line-height: 1.7; }
+.docs-layout .docs-body li { margin-bottom: 10px; }
+.docs-layout .docs-body pre { border-radius: 3px; }
+.docs-layout .docs-body blockquote { background: transparent; border-radius: 0; }
+.docs-layout .docs-body th, .docs-layout .docs-body td { vertical-align: top; padding: 10px 12px; }
+.docs-layout .docs-body td { border-left: 0; border-right: 0; }
+.docs-layout .crumbs, .docs-layout .toc > span { color: var(--text-dim); }
+.docs-layout a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.docs-layout .heading-anchor:focus-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
