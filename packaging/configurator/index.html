@@ -554,6 +554,34 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     background: var(--bg); border-bottom: 1px solid var(--border);
   }
   input[type=search] { flex: 1 1 240px; min-width: 150px; }
+  /* inside the manager the bar must stay one line: flex-wrap breaks on
+     the search field's 240px BASIS, not its 150px minimum, so the field
+     starts small and grows, and the action never wraps */
+  body.app .cfg-bar input[type=search] { flex: 1 1 150px; }
+  body.app .cfg-bar .bar-act { flex: 0 0 auto; white-space: nowrap; }
+  /* Inside the manager the category rail stays a chip row at every width:
+     the side-rail layout the site uses past 1000px spends a 212px column
+     on seven chips and leaves it empty below them, and the cards need
+     that width more. Expand/Collapse ride the row's end as quiet links. */
+  body.app .layout { display: block; }
+  body.app .layout > .catnav {
+    position: static; display: flex; flex-direction: row; flex-wrap: wrap;
+    align-items: center; gap: 6px; padding: 6px 0 2px; max-height: none; overflow: visible;
+  }
+  body.app .layout > .catnav a {
+    display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px;
+    border-radius: 999px; background: var(--bg-1); border: 1px solid var(--border);
+    font-size: 12px; color: var(--text-dim);
+  }
+  body.app .layout > .catnav a:hover { border-color: var(--accent); color: var(--accent); background: var(--bg-1); }
+  body.app .layout > .catnav a .g { width: auto; }
+  body.app .layout > .catnav a .n { margin-left: 0; }
+  body.app .layout > .catnav .fold-all { margin: 0 0 0 auto; padding: 0; border: 0; display: flex; gap: 4px; }
+  body.app .layout > .catnav .fold-all .btn {
+    flex: 0 0 auto; background: transparent; border-color: transparent;
+    padding: 2px 6px; font-size: 12px; color: var(--text-dim);
+  }
+  body.app .layout > .catnav .fold-all .btn:hover { color: var(--text); border-color: var(--border); }
   .bar-docs { font-size: 13px; color: var(--text-dim); white-space: nowrap; }
   .bar-docs:hover { color: var(--accent); }
 
@@ -2536,10 +2564,13 @@ function fnsBoot() {
     });
     var fold = document.createElement('div');
     fold.className = 'fold-all';
+    // inside the manager the row must hold seven chips and these two, so
+    // the labels drop the "all" there; the title keeps the full phrase
     [['Expand all', true], ['Collapse all', false]].forEach(function (f) {
       var b = document.createElement('button');
       b.className = 'btn btn-quiet';
-      b.textContent = f[0];
+      b.textContent = FNS_EMBEDDED ? f[0].split(' ')[0] : f[0];
+      b.title = f[0];
       b.addEventListener('click', function () { setAllOpen(f[1]); });
       fold.appendChild(b);
     });
