@@ -808,14 +808,23 @@ ${items}
 function placementSection(p) {
   const entries = entriesOf(p.name);
   if (!entries.length) return '';
+  // How many rows share a surface: a package with two hosts on one bar
+  // (PreviewPanel registers itself AND its nested PopViewer as pane types)
+  // needs both names printed, or the row whose name matches the package
+  // reads as an empty duplicate of the other.
+  const perSurface = new Map();
+  for (const e of entries) perSurface.set(e.surface, (perSurface.get(e.surface) || 0) + 1);
   const rows = entries.map((e) => {
     const reg = surfaceRegistry(e.surface);
     const where = reg
       ? `<a href="/docs/${packageSlug(reg)}/">${esc(surfaceLabel(e.surface))}</a>`
       : esc(surfaceLabel(e.surface));
     const bits = [];
-    // The name the BAR shows, which is often not the package name.
-    if (e.label && e.label !== p.name && e.label !== p.title) bits.push(`as <strong>${esc(e.label)}</strong>`);
+    // The name the BAR shows, which is often not the package name. Printed
+    // when it differs from the package, and always when the package has
+    // more than one row on this surface.
+    const ownName = e.label === p.name || e.label === p.title;
+    if (e.label && (!ownName || perSurface.get(e.surface) > 1)) bits.push(`as <strong>${esc(e.label)}</strong>`);
     if (e.side) bits.push(`${esc(e.side)} side`);
     if (e.order !== undefined) bits.push(`position ${esc(String(e.order))}`);
     const icon = e.icon
