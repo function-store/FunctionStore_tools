@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.10",
+ "release": "v3.2.11",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -9477,6 +9477,14 @@
     "label": "Position at Mouse",
     "style": "Toggle",
     "help": "Position image at current mouse location",
+    "default": true,
+    "page": "Settings"
+   },
+   {
+    "name": "Copyfiles",
+    "label": "Copy Pasted Files",
+    "style": "Toggle",
+    "help": "When the clipboard holds image files copied in Explorer, copy each one into the Save Folder so the pasted File In keeps working if the original moves. Off: the File In reads the original file where it is.",
     "default": true,
     "page": "Settings"
    },

@@ -43,6 +43,13 @@ be changed there or on the parameter directly; *Reset to Default* restores
 `ctrl+shift+f`. It used to live in MY_HOTKEYS; keeping it with the tool that
 owns the field means uninstalling this package takes its hotkey with it.
 
+## Editing the search text
+
+The search field is a Text COMP, so it edits the way TouchDesigner's own text
+fields do, including `ctrl+left` / `ctrl+right` to jump by word. It replaced
+the legacy Field COMP, which TouchDesigner deprecated in 2022.24200 and which
+had no word navigation.
+
 ## Search behavior
 
 Matching goes beyond the original module's prefix search:
