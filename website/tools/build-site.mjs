@@ -1191,9 +1191,9 @@ ${header('/docs/')}
 ${sidebar(null)}
 <main class="docs-main docs-index" data-pagefind-body>
   <h1>Documentation</h1>
-  <p class="lede">Every package that ships with FNSTools. Each tool installs on its own, so each one is documented on its own.</p>
-  <p class="docs-index-note">Each page lists that tool's own controls. The ones every package shares are described once on the <a href="/docs/${PARAMS_SLUG}/">common parameters</a> page.</p>
-  <p class="docs-index-note">The tools that unlock with Patreon are here too, marked with the lowest tier that unlocks them, such as ${PLUS_MARK.replace('>Patreon<', '>Patreon:Base<')}. Every gated package is listed and documented in full, locked or unlocked, so this index is the complete record of what a <a href="${PATREON}" target="_blank" rel="noopener">Patreon membership</a> unlocks. <a href="/patreon/">How unlocking works →</a></p>
+  <p class="lede">Setup instructions, shortcuts and reference for FNSTools.</p>
+  <p class="docs-index-note">For controls shared by all tools, see the <a href="/docs/${PARAMS_SLUG}/">common parameters</a> page.</p>
+  <p class="docs-index-note">Access labels show the lowest Patreon tier required. <a href="/patreon/">Membership and licence details →</a></p>
 ${guideCards}
 ${surfaceFilter()}
 ${indexGroups}

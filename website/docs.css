@@ -229,7 +229,7 @@ h2:hover .heading-anchor, h3:hover .heading-anchor { opacity: 1; }
 }
 .doc-card:hover { border-color: var(--accent); background: var(--bg-2); color: var(--text); }
 .doc-card strong { display: block; font-size: 15px; margin-bottom: 4px; }
-.doc-card span { display: block; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.doc-card > span { display: block; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
 
 /* ───── Footer ───── */
 footer.site { border-top: 1px solid var(--border); padding: 28px 0; }
@@ -734,8 +734,8 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
 /* Documentation reading layout. */
 .docs-layout .badge { border-radius: 2px; background: transparent; padding: 2px 7px; }
 .docs-layout .toc { background: transparent; border: 0; border-left: 2px solid var(--border-strong); border-radius: 0; padding: 4px 0 4px 18px; }
-.docs-layout .doc-cards { grid-template-columns: 1fr; gap: 0; }
-.docs-layout .doc-card { background: transparent; border: 0; border-bottom: 1px solid var(--border); border-radius: 0; padding: 16px 0; }
+.docs-layout .doc-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+.docs-layout .doc-card { min-width: 0; background: transparent; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 18px 0 22px; }
 .docs-layout .doc-card:hover { background: var(--bg-1); }
 .docs-layout .docs-body { line-height: 1.7; }
 .docs-layout .docs-body li { margin-bottom: 10px; }
@@ -747,3 +747,12 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
 .docs-layout a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .docs-layout .heading-anchor:focus-visible { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Keep access labels separate from description typography. */
+.docs-index .doc-card strong { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+.docs-index .doc-card .plus-mark { display: inline-flex; width: auto; flex: 0 0 auto; margin: 0; padding: 1px 5px; font-size: 10px; line-height: 1.5; letter-spacing: 0; text-transform: none; border-radius: 3px; color: var(--accent); }
+.docs-index .doc-card > span { font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.docs-index .doc-cat { margin-top: 32px; }
+.docs-index .doc-cat h2 { font-size: 19px; margin-bottom: 14px; }
+.docs-index .docs-index-note { max-width: 65ch; }
+@media (max-width: 600px) { .docs-layout .doc-cards { grid-template-columns: 1fr; } }
