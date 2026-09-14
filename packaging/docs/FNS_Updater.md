@@ -7,6 +7,8 @@ features:
     icon: Wiki.png
   - name: Self-Update Feature
     anchor: self-update-feature
+  - name: Notes after an update
+    anchor: notes-after-an-update
 ---
 
 ## Wiki
@@ -21,3 +23,9 @@ If there is an update available for any package installed in your project, the `
 - Reload each replaced tool's saved configs
 
 This way we can ensure that your settings are retained between updates, alongside the externally retained data, outlined in the next chapter.
+
+## Notes after an update
+
+The first time a project opens after an update landed, a small popup shows that release's notes. It appears once per update, never on a plain project open.
+
+Turn off **Show Notes After Update** on the updater's parameters to skip it. The setting roams with your other toolkit settings, so one click silences the popup in every project on the machine. The notes stay readable at any time on the Hub's Updates tab.

@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.11",
+ "release": "v3.2.13",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -8936,6 +8936,14 @@
     "style": "Toggle",
     "help": "Open the downloader's progress window while files are fetched.",
     "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Shownotes",
+    "label": "Show Notes After Update",
+    "style": "Toggle",
+    "help": "After an update lands, the next project open shows a one-time popup with that release's notes. Turn this off to skip the popup; the notes stay readable on the Hub's Updates tab. Roams with your settings.",
+    "default": true,
     "page": "Custom"
    },
    {
