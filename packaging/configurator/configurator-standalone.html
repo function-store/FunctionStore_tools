@@ -682,9 +682,26 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   </div>
 </div></dialog>
 
+<dialog id="patreon"><div class="dlg">
+  <span class="eyebrow">PATREON</span>
+  <h3 id="patreontitle">This tool comes with Patreon</h3>
+  <p id="patreontext"></p>
+  <p class="dlg-hint" id="patreonhint">Keep it ticked and it installs once your account includes it.</p>
+  <div class="dlg-actions">
+    <a class="bar-docs" id="patreonjoin" target="_blank" rel="noopener">Become a supporter ↗</a>
+    <span class="spacer"></span>
+    <button class="btn btn-quiet" id="patreonuntick">Untick</button>
+    <button class="btn btn-secondary" id="patreonkeep">Keep it ticked</button>
+    <button class="btn btn-secondary" id="patreonrecheck" hidden>I just pledged</button>
+    <button class="btn btn-primary" id="patreonsignin" hidden>Sign in with Patreon</button>
+  </div>
+</div></dialog>
+
 <dialog id="welcome"><div class="dlg">
   <span class="eyebrow">GUIDED SETUP</span>
   <h3 id="welcometitle">Welcome to FNSTools</h3>
+  <p class="welcome-counts" id="welcomecounts" hidden></p>
+  <p class="dlg-hint welcome-auth" id="welcomeauth" hidden></p>
   <p class="dlg-hint">
     You adjust the list next; nothing is downloaded or installed until
     you confirm the plan.
@@ -714,8 +731,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 <script>
 window.FNS_MANIFEST = {
  "schema": 1,
- "release": "v3.2.16",
- "notes": "A fresh install from the website opens the tool picker again. Dropping FNSTools.tox into a new project had shown an empty browser and installed nothing, so the toolkit arrived without its Hub or anything else.\n\nFNS_Updater: the update check when a project opens and the what's-new prompt after an update now run. Both were scheduled in a way that never reached the updater, so neither had been running.",
+ "release": "v3.2.17",
+ "notes": "The tool picker now leads with what is free, and names the Patreon tools with the tier they unlock at. Recommended, Everything and the other starting points leave out a Patreon tool the account cannot install yet, ticking one by hand explains how it unlocks and offers sign-in, and an install never waits on a Patreon tool the account does not include. Closing the install dialog now closes it.\n\nFNS_Updater: a download that gets no response ends with an error you can retry. On a slow or stalled connection the store refresh could wait forever, which is how a fresh install on a Mac never finished.",
  "channel": "stable",
  "base_url": "https://storage.functionstore.tools/fnstools",
  "toolkit": {
@@ -915,7 +932,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AltSelect.tox",
     "bytes": 117398,
     "sha256": "0be78e3dad859b95efab1362ee1d137e9bf1d712774a1637866a2435e38065cf",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_AltSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_AltSelect.tox"
    }
   },
   {
@@ -951,7 +968,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AutoCombine.tox",
     "bytes": 131006,
     "sha256": "d9a9925ba0f8829b338ee465ef4f2026b0acd9d44d1e9e6180725eb236acd276",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_AutoCombine.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_AutoCombine.tox"
    }
   },
   {
@@ -987,7 +1004,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AutoRes.tox",
     "bytes": 130718,
     "sha256": "193c1e8452359a0fc49efb2ada5141108da6483725b6711d760fc4855f1d4d89",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_AutoRes.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_AutoRes.tox"
    }
   },
   {
@@ -1033,7 +1050,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Autosave.tox",
     "bytes": 116534,
     "sha256": "f6b12ae828f80ceba71fba31d58f901acf742647f275fc249c77d4f88cd21f19",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_Autosave.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_Autosave.tox"
    }
   },
   {
@@ -1071,7 +1088,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BackupCleaner.tox",
     "bytes": 372966,
     "sha256": "caa7670716d11f346c5894a4adea1163228c35e39991142e690cb65eebc0b943",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.16/FNS_BackupCleaner.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.17/FNS_BackupCleaner.tox"
    }
   },
   {
@@ -1144,7 +1161,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BeatMod.tox",
     "bytes": 510312,
     "sha256": "332df32db7af6fcf44a74cdef3919fa86a299827cb10998a782151ee31918ae9",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.16/FNS_BeatMod.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.17/FNS_BeatMod.tox"
    }
   },
   {
@@ -1197,7 +1214,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BorderlessTD.tox",
     "bytes": 347094,
     "sha256": "a61500068a7f87e04cb7fbf3d1eb08808be5ee69c666823a88dc23977beb850c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_BorderlessTD.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_BorderlessTD.tox"
    }
   },
   {
@@ -1241,7 +1258,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Collect.tox",
     "bytes": 35726,
     "sha256": "3dc1318eafbbd61f2e7e20f59f115aa202fa5e9f81be7c6db1261931174c369b",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.16/FNS_Collect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.17/FNS_Collect.tox"
    }
   },
   {
@@ -1282,7 +1299,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ColorUI.tox",
     "bytes": 282982,
     "sha256": "7ab9ce5df8b2eb13eb535a1e7d3e2ffafa8eee5c6eb47e97589eb0d0c3bb91c1",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ColorUI.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ColorUI.tox"
    }
   },
   {
@@ -1315,7 +1332,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandKit.tox",
     "bytes": 29662,
     "sha256": "1fd8b24c17ee1e4f2743ac79d5f6391d55cfce50d285be98c03450f44919a2ba",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_CommandKit.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_CommandKit.tox"
    }
   },
   {
@@ -1362,7 +1379,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandPalette.tox",
     "bytes": 322030,
     "sha256": "1606d441e577dc7f81a49677410684a5ffd0099b79e2d9535155bda35cd14343",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_CommandPalette.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_CommandPalette.tox"
    }
   },
   {
@@ -1391,7 +1408,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandRegistry.tox",
     "bytes": 88830,
     "sha256": "d130b18739b17c5c449f78e9a68a530d8181eb0c46cf4eab8fe0521b3594ab2b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_CommandRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_CommandRegistry.tox"
    }
   },
   {
@@ -1423,7 +1440,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ConfigHost.tox",
     "bytes": 89214,
     "sha256": "a89df74bb85273fe714afdccfd36f4879063c44dd79348ed6595121c10ea12d2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ConfigHost.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ConfigHost.tox"
    }
   },
   {
@@ -1452,7 +1469,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ConfigRegistry.tox",
     "bytes": 89622,
     "sha256": "b64c1c3561f45a5a66f5fdd963b6d16e89f2b707692604de8b1ef0afd1196347",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ConfigRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ConfigRegistry.tox"
    }
   },
   {
@@ -1481,7 +1498,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Console.tox",
     "bytes": 100302,
     "sha256": "30fe137408a2217aa4d1e72f474efaa4f1f74dc7114ce03609b3a9cbe1b44cf3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_Console.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_Console.tox"
    }
   },
   {
@@ -1565,7 +1582,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CustomParTools.tox",
     "bytes": 1100442,
     "sha256": "b4c5dcf91649900dc67080da26d7a7e5bfff304f3aa6127c7519dde264b7f7f4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_CustomParTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_CustomParTools.tox"
    }
   },
   {
@@ -1614,7 +1631,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ExprHotStrings.tox",
     "bytes": 180278,
     "sha256": "efdc9c982fffd5e9974a81099a36dd049e533504c76eda2f604cb2534d4db27d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ExprHotStrings.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ExprHotStrings.tox"
    }
   },
   {
@@ -1653,7 +1670,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_GlobalOutSelect.tox",
     "bytes": 269622,
     "sha256": "c564b5630c216e7403d40de53b1e7d2993e0db2756d80f2b69370015beaf013a",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_GlobalOutSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_GlobalOutSelect.tox"
    }
   },
   {
@@ -1692,7 +1709,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_GlobalVolControl.tox",
     "bytes": 249718,
     "sha256": "8c42f41e0b98c510c6d2b746869ac5ba149a03a7247345271cea1336414b8884",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_GlobalVolControl.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_GlobalVolControl.tox"
    }
   },
   {
@@ -1745,7 +1762,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
     "bytes": 254262,
     "sha256": "62addb7cf45107f8d1cb4760ff406f5a52975241bf523857c2ae56e15d1d51bb",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_HotkeyManager.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -1777,7 +1794,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Hub.tox",
     "bytes": 1007986,
     "sha256": "3cd13317ed9c9d251f03b19d0b78c00d1bae06a254d4c5da91e57245398afe5e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_Hub.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_Hub.tox"
    }
   },
   {
@@ -1806,7 +1823,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HubRegistry.tox",
     "bytes": 76038,
     "sha256": "2a2bf5916d8efe6c60100139d9c5036d506d7d57e60a7e78b2985dc3064d38c4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_HubRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_HubRegistry.tox"
    }
   },
   {
@@ -1840,7 +1857,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HydroHomie.tox",
     "bytes": 191670,
     "sha256": "adb464f55c11e12d50e6a86440edbaa6a73cd8938c2e2728cf1c8d9617c42341",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_HydroHomie.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_HydroHomie.tox"
    }
   },
   {
@@ -1881,7 +1898,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_iopBrowser.tox",
     "bytes": 236502,
     "sha256": "29b1d3b19217c4e23ca0be381b263f06d4273d5c45671cac6f4aafcd026113b3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_iopBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_iopBrowser.tox"
    }
   },
   {
@@ -1912,7 +1929,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MainMenuRegistry.tox",
     "bytes": 82198,
     "sha256": "cefc1212a6fd30ad5b1ee021a949abef2c04b5312af80ba5ab02059a993066fa",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_MainMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_MainMenuRegistry.tox"
    }
   },
   {
@@ -1956,7 +1973,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MediaBrowser.tox",
     "bytes": 42150,
     "sha256": "707755f6640ddf2f4c853a199fa0396723604e0fdd1d2e0ce11e2ab15316ca8a",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.16/FNS_MediaBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.17/FNS_MediaBrowser.tox"
    }
   },
   {
@@ -1996,7 +2013,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Misc.tox",
     "bytes": 300374,
     "sha256": "7027622af71ba8c888fd52a6dc48d8f25456efc83df9bd03526f4fcd2b9e5f6b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_Misc.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_Misc.tox"
    }
   },
   {
@@ -2027,7 +2044,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_NavbarRegistry.tox",
     "bytes": 85030,
     "sha256": "d7583b6685efdb9cdc38d5befa1a5f833b831ab9aa43bcdef5e6291aeeeb047e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_NavbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_NavbarRegistry.tox"
    }
   },
   {
@@ -2069,7 +2086,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpenExt.tox",
     "bytes": 116646,
     "sha256": "da3cc4605fb1986f04e900b678726ded781e0a2ce1c3de106236572d5edd9218",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_OpenExt.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_OpenExt.tox"
    }
   },
   {
@@ -2119,7 +2136,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenuMods.tox",
     "bytes": 340510,
     "sha256": "703d18541dd7b977544cbea7d0222ead899ed375a312d400d525faa9f5276bf4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_OpMenuMods.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_OpMenuMods.tox"
    }
   },
   {
@@ -2150,7 +2167,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenuRegistry.tox",
     "bytes": 96382,
     "sha256": "0dad0a44df0c4d881df24de0f5ccc9003e0eef4d2678452bfde472cfb37febb0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_OpMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_OpMenuRegistry.tox"
    }
   },
   {
@@ -2257,7 +2274,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpTemplates.tox",
     "bytes": 372328,
     "sha256": "fe4b58976e4c98fc3fe3eda0dcfaf4b77b94a0c4ad4c02e8e503990065038bab",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_OpTemplates.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_OpTemplates.tox"
    }
   },
   {
@@ -2299,7 +2316,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpToClipboard.tox",
     "bytes": 119126,
     "sha256": "2fc9db3a3c7119046419960ee7ee30f9e1d3783d138def9727d4480d38e9dc64",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_OpToClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_OpToClipboard.tox"
    }
   },
   {
@@ -2339,7 +2356,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Output.tox",
     "bytes": 187286,
     "sha256": "6d1cff45cbe96a0a920719351968ec6d6582a151d48aacb0d3c35cd6a6d882de",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_Output.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_Output.tox"
    }
   },
   {
@@ -2368,7 +2385,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaletteRegistry.tox",
     "bytes": 80638,
     "sha256": "81b869dc0f232f854dee2967cc4d11b08481302eb1aede0fcb527d8e686cf411",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_PaletteRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_PaletteRegistry.tox"
    }
   },
   {
@@ -2397,7 +2414,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaneTypeRegistry.tox",
     "bytes": 168326,
     "sha256": "6187a93d9df66dd6f82190793f39867e25abf0ff4332f5b59fb1dfe0c3debd77",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_PaneTypeRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_PaneTypeRegistry.tox"
    }
   },
   {
@@ -2438,7 +2455,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParentHierarchy.tox",
     "bytes": 204862,
     "sha256": "c4e27234df3cef8747077622773682591f1d2657c25c8b63f028490de1f91610",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ParentHierarchy.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ParentHierarchy.tox"
    }
   },
   {
@@ -2483,7 +2500,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParOPDrop.tox",
     "bytes": 180974,
     "sha256": "1d1907998467949b20c9c4129346e0226d89545ff2d82a6cbe0bd525d4f65e97",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ParOPDrop.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ParOPDrop.tox"
    }
   },
   {
@@ -2543,7 +2560,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParRandomizer.tox",
     "bytes": 178358,
     "sha256": "43413ddef92eaed266579154afd717b4da5901d166ddf8904b5bde08af5ecc30",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ParRandomizer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ParRandomizer.tox"
    }
   },
   {
@@ -2668,7 +2685,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PreviewPanel.tox",
     "bytes": 788770,
     "sha256": "d56227f596011c32ef45bb78959019835dcc6df6cac8b90bfe9afaee83ac4d2c",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.16/FNS_PreviewPanel.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.17/FNS_PreviewPanel.tox"
    }
   },
   {
@@ -2715,7 +2732,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickCollapse.tox",
     "bytes": 130998,
     "sha256": "8271d9f74b82beb3c241f1eca5d822bafa71ff8d0c016f98917fc456a74c5eb1",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_QuickCollapse.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_QuickCollapse.tox"
    }
   },
   {
@@ -2756,7 +2773,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickPane.tox",
     "bytes": 119910,
     "sha256": "4b20e729682a3f16035a7cf10775b0dd2b852054315358ab2b5e396b7e63595d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_QuickPane.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_QuickPane.tox"
    }
   },
   {
@@ -2795,7 +2812,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickTime.tox",
     "bytes": 174454,
     "sha256": "a543f42003a839466e05a17f3acaddb4d002c1b59dfc11b38afd0e21ff29ae44",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_QuickTime.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_QuickTime.tox"
    }
   },
   {
@@ -2845,7 +2862,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Remote.tox",
     "bytes": 248406,
     "sha256": "7a04342df19c0bb6e579e44f0501edd0b812b031c35e09e90c2c85ace530d680",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.16/FNS_Remote.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.17/FNS_Remote.tox"
    }
   },
   {
@@ -2905,7 +2922,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ResetPLS.tox",
     "bytes": 195774,
     "sha256": "c42cae8e5c0a0a63d55ef866e1c4846ecc69a9e2a7827a12a20479daf7b2d116",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ResetPLS.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ResetPLS.tox"
    }
   },
   {
@@ -2951,7 +2968,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SearchPalette.tox",
     "bytes": 108238,
     "sha256": "e4f7f150f0b78a9bc086f8207fab1576e373193ef8ea84fba3140e7226b9ce12",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_SearchPalette.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_SearchPalette.tox"
    }
   },
   {
@@ -2991,7 +3008,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SetSmoothness.tox",
     "bytes": 232278,
     "sha256": "7265f10589ad03dbc69ce9a87d743f69514250c6df4a3746bc9ce9a557825cc3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_SetSmoothness.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_SetSmoothness.tox"
    }
   },
   {
@@ -3035,7 +3052,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SwapOps.tox",
     "bytes": 176294,
     "sha256": "10a6121f3aaa2f805b1aa0e55a0601b0acddfaabe5e096870461fa8dd46c0589",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_SwapOps.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_SwapOps.tox"
    }
   },
   {
@@ -3076,7 +3093,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SwitchOPs.tox",
     "bytes": 117246,
     "sha256": "384544c9807c40868a6cf94c5b2d533dca9dbbf4e9ac6b39866c3b76fbb58982",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_SwitchOPs.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_SwitchOPs.tox"
    }
   },
   {
@@ -3105,7 +3122,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineRegistry.tox",
     "bytes": 89606,
     "sha256": "559f252753b23ad61a2eaf02d67b45a027310315625ad782f5d1edfb786c51d7",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_TimelineRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_TimelineRegistry.tox"
    }
   },
   {
@@ -3184,7 +3201,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineTools.tox",
     "bytes": 358790,
     "sha256": "fe9c6b63a4a8b6e72d8430553944938f049a26fd7544e0029f0b2b78e1a34bdd",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.16/FNS_TimelineTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.17/FNS_TimelineTools.tox"
    }
   },
   {
@@ -3215,7 +3232,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ToolbarRegistry.tox",
     "bytes": 77758,
     "sha256": "efccb39e6f825d9c440463b0150b6061810c4485c5f8662bfd13fad268213925",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_ToolbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_ToolbarRegistry.tox"
    }
   },
   {
@@ -3224,7 +3241,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Developer",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
-   "version": "3.2.3",
+   "version": "3.2.4",
    "help_url": "https://functionstore.tools/docs/fns-updater/",
    "surfaces": [],
    "shortcut": "FNS_UPDATER",
@@ -3239,12 +3256,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "the update check when a project opens and the what's-new prompt after an update now run. Both were scheduled in a way that never reached the updater, so neither had been running.",
+   "whatsnew": "a download that gets no response ends with an error you can retry. On a slow or stalled connection the store refresh could wait forever, which is how a fresh install on a Mac never finished.",
    "artifact": {
     "path": "packaging/dist/FNS_Updater.tox",
-    "bytes": 182022,
-    "sha256": "231a6347869788cfd1567c3fe82c046fef645340ada09e6a73febef33ac5f1a0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_Updater.tox"
+    "bytes": 182750,
+    "sha256": "f4ff7fc652f1052e17a4edf0bbd4fa4a37e018d5e114c497dd3770542be862e0",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_Updater.tox"
    }
   },
   {
@@ -3289,7 +3306,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_VSCodeTools.tox",
     "bytes": 705696,
     "sha256": "75b48bf8f22e9f1e5ff856b173182fe18585976b090bf8871bc85caf0f2bbf43",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/FNS_VSCodeTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/FNS_VSCodeTools.tox"
    }
   },
   {
@@ -3335,7 +3352,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/midiMapper.tox",
     "bytes": 322638,
     "sha256": "f0575bce7dfd56f061ba12051ec5e4a6f47550688f6b803e3472791ebac80d30",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/midiMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/midiMapper.tox"
    }
   },
   {
@@ -3379,7 +3396,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/oscMapper.tox",
     "bytes": 228654,
     "sha256": "ad8de7f14dad417c7071f3ab5c927f975dc741dd989ce05e2ca45b3066a79482",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/oscMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/oscMapper.tox"
    }
   },
   {
@@ -3425,7 +3442,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/PasteFromClipboard.tox",
     "bytes": 203078,
     "sha256": "32cf70aaacd852e3811d704f6a05b88d5868c4f0492ec202604bb08db14a1331",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/PasteFromClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/PasteFromClipboard.tox"
    }
   },
   {
@@ -3470,7 +3487,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/QuickMarks.tox",
     "bytes": 120574,
     "sha256": "4dd457448682cc5a3b705332b38fcb32558ed9555e21d1f8e8ddaa2d13619b73",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/QuickMarks.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/QuickMarks.tox"
    }
   },
   {
@@ -3513,7 +3530,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/TDXMap.tox",
     "bytes": 934742,
     "sha256": "339116402eff423173e944862f7f623c3cede0c1593b6a5ac2328d87a65ac4ba",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.16/TDXMap.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.17/TDXMap.tox"
    }
   }
  ],
@@ -3739,6 +3756,10 @@ function fnsBoot() {
   var account = (typeof window.FNS_ACCOUNT !== 'undefined')
     ? window.FNS_ACCOUNT : undefined;
   var hasAuthRail = (typeof account !== 'undefined');
+  // The sign-in, recheck and join doors, filled in by the account block
+  // below when this flavor has an auth rail. The welcome and the Patreon
+  // dialog open the same doors the header does, so there is one flow.
+  var authActions = {};
   function entitled(p) {
     return !!(account && (account.products || []).indexOf(p.name) >= 0);
   }
@@ -3968,6 +3989,13 @@ function fnsBoot() {
     cb.addEventListener('change', function () {
       if (cb.checked) picked.add(p.name); else picked.delete(p.name);
       save(); render();
+      // A Patreon tool this account cannot install yet is said out loud at
+      // the tick, not discovered at install time.
+      if (cb.checked && lockedPatreon([p.name]).length) {
+        askPatreon([p.name], function () {
+          picked.delete(p.name); save(); render();
+        });
+      }
     });
 
     var body = document.createElement('div');
@@ -4409,6 +4437,159 @@ function fnsBoot() {
     return entitled(p);
   }
 
+  // --- Patreon: what the account cannot install yet ------------------------
+  function lockedPatreon(names) {
+    return names.filter(function (n) {
+      return byName[n] && isPlus(byName[n]) && !installable(n);
+    });
+  }
+  // The lowest tier among these packages, by the manifest's own ladder
+  // order, so the sentence names where they START unlocking.
+  function lowestTier(pkgs) {
+    var ladder = (M && M.toolkit && M.toolkit.tiers) || [];
+    for (var i = 0; i < ladder.length; i++) {
+      var id = String(ladder[i].id);
+      if (pkgs.some(function (p) { return String(p.access) === id; })) {
+        return ladder[i].label || '';
+      }
+    }
+    return '';
+  }
+  function joinNames(list) {
+    if (list.length < 2) return list.join('');
+    return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
+  }
+  // Ask once, at the moment of a manual tick. `onUntick` undoes the tick;
+  // keeping it needs nothing, because the tick is already made. Built for
+  // the embedded Chromium that renders this page inside TouchDesigner: its
+  // dialog close event was seen never arriving, so every button acts
+  // directly rather than waiting for one.
+  function askPatreon(names, onUntick) {
+    var d = document.getElementById('patreon');
+    if (!d || !names.length) return;
+    var pkgs = names.map(function (n) { return byName[n]; }).filter(Boolean);
+    var one = pkgs.length === 1;
+    var tier = lowestTier(pkgs);
+    var at = tier ? ' at the ' + tier + ' tier' : '';
+    document.getElementById('patreontitle').textContent = one
+      ? titleOf(pkgs[0]) + ' comes with Patreon'
+      : pkgs.length + ' of these come with Patreon';
+    var text;
+    if (hasAuthRail && account) {
+      text = 'Your Patreon tier does not include ' + (one ? 'it' : 'them')
+        + ' yet. ' + (one ? 'It unlocks' : 'They unlock') + at + '.';
+    } else if (hasAuthRail) {
+      text = (one ? 'It unlocks' : 'They unlock') + at + '. If you support '
+        + 'Function Store on Patreon, sign in and ' + (one ? 'it installs' : 'they install')
+        + ' with the rest.';
+    } else {
+      text = (one ? 'It unlocks' : 'They unlock') + at + '. Patreon supporters '
+        + 'sign in from the installer inside TouchDesigner.';
+    }
+    document.getElementById('patreontext').textContent = text;
+    document.getElementById('patreonhint').textContent = one
+      ? 'Keep it ticked and it installs once your account includes it.'
+      : 'Keep them ticked and they install once your account includes them.';
+    var join = document.getElementById('patreonjoin');
+    join.href = authActions.join || (FNS_DOCS + '/patreon/');
+    join.textContent = (account && account.tier)
+      ? 'Upgrade your Patreon tier ↗' : 'Become a supporter ↗';
+    var signin = document.getElementById('patreonsignin');
+    var recheck = document.getElementById('patreonrecheck');
+    signin.hidden = !(hasAuthRail && !account && authActions.signIn);
+    recheck.hidden = !(hasAuthRail && account && authActions.recheck);
+    function done() { try { d.close(); } catch (e) { /* already closed */ } }
+    signin.onclick = function () { done(); authActions.signIn(); };
+    recheck.onclick = function () { done(); authActions.recheck(); };
+    document.getElementById('patreonkeep').onclick = done;
+    document.getElementById('patreonuntick').onclick = function () {
+      done(); if (onUntick) onUntick();
+    };
+    try { d.showModal(); } catch (e) { d.setAttribute('open', ''); }
+  }
+  // What a starting point may select: everything this account can install.
+  function autoPick(names) {
+    return names.filter(function (n) { return !lockedPatreon([n]).length; });
+  }
+  // The welcome leads with what is free (owner, 2026-09-16: the first step
+  // must not discourage). Every number and tier label is read from the
+  // manifest and the account, so a new tool or tier needs no copy change.
+  function renderWelcomeAccess() {
+    var counts = document.getElementById('welcomecounts');
+    var authEl = document.getElementById('welcomeauth');
+    if (!counts || !authEl) return;
+    refreshAccountOnce();
+    var plus = tools.filter(isPlus);
+    var free = tools.length - plus.length;
+    var locked = plus.filter(function (p) { return !installable(p.name); });
+    counts.textContent = '';
+    authEl.textContent = '';
+    authEl.hidden = true;
+    counts.hidden = false;
+    var lead = document.createElement('b');
+    if (!plus.length) {
+      lead.textContent = 'All ' + free + ' tools are free';
+      counts.appendChild(lead);
+      counts.appendChild(document.createTextNode(', and they all install from here.'));
+      return;
+    }
+    if (!locked.length) {
+      lead.textContent = free + ' tools are free';
+      counts.appendChild(lead);
+      counts.appendChild(document.createTextNode(', and your Patreon tier adds '
+        + plus.length + ' more. All ' + tools.length + ' are ready to install.'));
+      return;
+    }
+    var tier = lowestTier(locked);
+    var examples = locked.slice(0, 3).map(titleOf);
+    lead.textContent = free + ' tools are free';
+    counts.appendChild(lead);
+    counts.appendChild(document.createTextNode(', and they all install from here. '
+      + locked.length + ' more come with Patreon' + (tier ? ' from the ' + tier + ' tier' : '')
+      + (locked.length > examples.length ? ', among them ' : ': ')
+      + joinNames(examples) + '.'));
+    authEl.hidden = false;
+    var join = authActions.join || (FNS_DOCS + '/patreon/');
+    if (hasAuthRail && !account && authActions.signIn) {
+      authEl.appendChild(document.createTextNode('Already a supporter? '));
+      var a = document.createElement('a');
+      a.href = '#';
+      a.textContent = 'Sign in with Patreon';
+      a.addEventListener('click', function (e) { e.preventDefault(); authActions.signIn(); });
+      authEl.appendChild(a);
+      authEl.appendChild(document.createTextNode(' to add your tools.'));
+    } else if (hasAuthRail && account) {
+      authEl.appendChild(document.createTextNode('Your Patreon tier does not include them yet. '));
+      authEl.appendChild(docsLink(join, account.tier ? 'Upgrade your tier ↗' : 'Become a supporter ↗', 'help'));
+      if (authActions.recheck) {
+        authEl.appendChild(document.createTextNode(' · '));
+        var rc = document.createElement('a');
+        rc.href = '#';
+        rc.textContent = 'I just pledged';
+        rc.addEventListener('click', function (e) { e.preventDefault(); authActions.recheck(); });
+        authEl.appendChild(rc);
+      }
+    } else {
+      authEl.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗', 'help'));
+    }
+  }
+  // The account the page loaded with can be stale: a recheck elsewhere can
+  // change it after this page was served (field report 2026-09-16, a Mac
+  // planned a Patreon tool from an old sign-in record). Ask once per
+  // session when the welcome opens, and reload if it moved, which is the
+  // same honest refresh a sign-in ends in.
+  function refreshAccountOnce() {
+    if (!served || !hasAuthRail || sessionFlag('fns.acctsync')) return;
+    sessionFlag('fns.acctsync', true);
+    fetch('/auth/status').then(function (r) { return r.json(); })
+      .then(function (st) {
+        var now = JSON.stringify(st.products || null);
+        var was = JSON.stringify((account && account.products) || null);
+        if (now !== was) location.reload();
+      })
+      .catch(function () { /* no server answer: keep what the page has */ });
+  }
+
   function selection() {
     var chosen = Array.from(picked).sort();
     var need = new Set(M.core);
@@ -4635,7 +4816,14 @@ function fnsBoot() {
       cb.type = 'checkbox'; cb.checked = ticked;
       chosenNames[r.name] = ticked;
       if (isPlus(p)) plusBoxes[r.name] = cb;
-      cb.addEventListener('change', function () { chosenNames[r.name] = cb.checked; });
+      cb.addEventListener('change', function () {
+        chosenNames[r.name] = cb.checked;
+        if (cb.checked && lockedPatreon([r.name]).length) {
+          askPatreon([r.name], function () {
+            cb.checked = false; chosenNames[r.name] = false;
+          });
+        }
+      });
       row.appendChild(cb);
       var body = document.createElement('span');
       body.className = 'qres-body';
@@ -4673,7 +4861,11 @@ function fnsBoot() {
       row.appendChild(body);
       return row;
     }
-    split.main.forEach(function (r) { res.appendChild(resultRow(r, true)); });
+    // A recommendation starts ticked only when this account can install it.
+    // A Patreon tool the reader cannot get yet is still offered, unticked:
+    // ticked by default it read as part of the install for a signed-out
+    // reader, who then watched an install that could never include it.
+    split.main.forEach(function (r) { res.appendChild(resultRow(r, installable(r.name))); });
     // A Plus tool in the set is the moment a reader would otherwise be
     // surprised at install time. Say what it is and what happens, and
     // offer the one-click way out. Counted on what is NOT installable
@@ -4698,13 +4890,24 @@ function fnsBoot() {
       var out = document.createElement('button');
       out.type = 'button';
       out.className = 'btn btn-quiet';
-      out.textContent = 'Leave the Patreon tools out';
+      // They start unticked (above), so the choice offered is to add them:
+      // a ticked Patreon tool is recorded as wanted and installs once the
+      // account is signed in and entitled.
+      out.textContent = 'Add the Patreon tools anyway';
       out.addEventListener('click', function () {
-        Object.keys(plusBoxes).forEach(function (nm) {
-          plusBoxes[nm].checked = false;
-          chosenNames[nm] = false;
+        var names = Object.keys(plusBoxes);
+        names.forEach(function (nm) {
+          plusBoxes[nm].checked = true;
+          chosenNames[nm] = true;
         });
         out.disabled = true;
+        askPatreon(lockedPatreon(names), function () {
+          names.forEach(function (nm) {
+            plusBoxes[nm].checked = false;
+            chosenNames[nm] = false;
+          });
+          out.disabled = false;
+        });
       });
       pn.appendChild(out);
       res.insertBefore(pn, res.firstChild);
@@ -4759,18 +4962,23 @@ function fnsBoot() {
       var gone = last.packages.filter(function (n) { return !byName[n]; }).length;
       var when = String(last.when || '').slice(0, 10);
       document.getElementById('pre-last-desc').textContent =
-        lastNames.length + ' tools, as in ' + (last.project || 'your last project') +
+        autoPick(lastNames).length + ' tools, as in ' + (last.project || 'your last project') +
         (when ? ' on ' + when : '') +
         (gone ? ' (' + gone + ' no longer in the catalog)' : '') + '.';
     }
+    renderWelcomeAccess();
     // a manifest that carries no starter list hides the preset rather
     // than offering an empty one
-    pre.hidden = !starter.length;
+    var starterReady = autoPick(starter);
+    pre.hidden = !starterReady.length;
     document.getElementById('pre-starter-desc').textContent =
-      starter.length + ' tools, the everyday set: ' +
-      starter.slice(0, 4).map(titleOfName).join(', ') + (starter.length > 4 ? '…' : '');
+      starterReady.length + ' tools, the everyday set: ' +
+      starterReady.slice(0, 4).map(titleOfName).join(', ') + (starterReady.length > 4 ? '…' : '');
+    var allReady = autoPick(tools.map(function (p) { return p.name; }));
     document.getElementById('pre-all-desc').textContent =
-      'All ' + tools.length + ' tools. Remove any later from Pick Tools.';
+      allReady.length < tools.length
+        ? 'All ' + allReady.length + ' tools you can install now. Remove any later from Pick Tools.'
+        : 'All ' + tools.length + ' tools. Remove any later from Pick Tools.';
     // Esc counts as "pick my own": the page behind is the empty list
     // already, and a welcome that cannot be dismissed is a wall, not a
     // guide. Idempotent and called from every exit on purpose: the
@@ -4787,9 +4995,13 @@ function fnsBoot() {
     }
     w.addEventListener('cancel', dismiss);
     w.addEventListener('close', dismiss);
-    function choose(names, bind) {
+    // Every starting point the page picks for the reader leaves out what
+    // this account cannot install yet (owner, 2026-09-16). `explicit` is a
+    // list whose ticks the reader made, the questionnaire's result, and
+    // passes through as it is.
+    function choose(names, bind, explicit) {
       wantBind = bind || null;
-      applyPreset(names); w.close(); dismiss();
+      applyPreset(explicit ? names : autoPick(names)); w.close(); dismiss();
     }
     // "Like last time" is the one card that IS the confirmation: the list
     // is the user's own, from a project they saved, so the click plans
@@ -4799,7 +5011,7 @@ function fnsBoot() {
       choose(names, bind);
       if (!served || locked) return;
       setStep(3);
-      installPolls = 0;
+      installPolls = 0; installCancelled = false;
       installEpilogue = '';
       document.getElementById('dlgtitle').textContent = 'Setting up like last time';
       showDialog('Planning the install…', false);
@@ -4812,7 +5024,7 @@ function fnsBoot() {
     }
     preLast.onclick = function () { installNow(lastNames, last && last.bind); };
     pre.onclick = function () { choose(starter); };
-    preQuiz.onclick = function () { quizStart(function (names) { choose(names); }); };
+    preQuiz.onclick = function () { quizStart(function (names) { choose(names, null, true); }); };
     document.getElementById('pre-all').onclick = function () {
       choose(tools.map(function (p) { return p.name; }));
     };
@@ -4830,10 +5042,11 @@ function fnsBoot() {
       nb.textContent = bnd.name;
       btn.appendChild(nb);
       var ds = document.createElement('span');
-      ds.textContent = bnd.packages.length
-        + (bnd.packages.length === 1 ? ' tool: ' : ' tools: ')
-        + (bnd.blurb || bnd.packages.slice(0, 4).map(titleOfName).join(', ')
-           + (bnd.packages.length > 4 ? '…' : ''));
+      var bndReady = autoPick(bnd.packages);
+      ds.textContent = bndReady.length
+        + (bndReady.length === 1 ? ' tool: ' : ' tools: ')
+        + (bnd.blurb || bndReady.slice(0, 4).map(titleOfName).join(', ')
+           + (bndReady.length > 4 ? '…' : ''));
       btn.appendChild(ds);
       var pk = document.createElement('span');
       pk.className = 'pick';
@@ -5222,6 +5435,19 @@ function fnsBoot() {
     // Where to actually become one. From the manifest when it says, so a
     // campaign move is a manifest change rather than a reshipped page.
     var join = ((M.toolkit || {}).support_url) || (FNS_DOCS + '/patreon/');
+    authActions.join = join;
+    authActions.signIn = function () {
+      post('/auth/signin', '{}', function (res) {
+        showDialog(res.text, false);
+        if (res.ok) watchAuth();
+      });
+    };
+    authActions.recheck = function () {
+      post('/auth/recheck', '{}', function (res) {
+        showDialog(res.text, false);
+        if (res.ok) watchAuth();
+      });
+    };
     if (support) {
       support.href = join;
       // Someone already paying is not asked to "become" anything: a
@@ -5356,7 +5582,12 @@ function fnsBoot() {
   // Install may answer "fetching": the server downloads exactly the
   // selected packages, we show progress, and re-post once they're here.
   var installPolls = 0;
+  // Set when the reader closes the dialog: the poll stops there. Without
+  // it every tick re-showed the dialog, so Close never closed anything
+  // while an install waited (field report 2026-09-16).
+  var installCancelled = false;
   function installOrPoll(res) {
+    if (installCancelled) return;
     if (!res.fetching) {
       // ok without fetching is the installer's own "installed N" report;
       // a refusal or a failure comes back ok:false with its reason
@@ -5369,7 +5600,9 @@ function fnsBoot() {
       return;
     }
     setTimeout(function () {
+      if (installCancelled) return;
       fetch('/status').then(function (r) { return r.json(); }).then(function (st) {
+        if (installCancelled) return;
         // A gated refusal is not a download failure: it arrives with its
         // own sentence (sign in / your tier / gate unreachable) and the
         // free picks still install. Speak it wherever it appears.
@@ -5398,7 +5631,7 @@ function fnsBoot() {
     }, 1200);
   }
   document.getElementById('doinstall').addEventListener('click', function () {
-    installPolls = 0;
+    installPolls = 0; installCancelled = false;
     installEpilogue = '';
     showDialog('Installing…', false);
     post('/install', '{}', installOrPoll);
@@ -5435,7 +5668,7 @@ function fnsBoot() {
           // pick was deferred only because the script could not carry a
           // token -- never because consent was in doubt. The dialog
           // narrates every hop; only what the user checked is touched.
-          installPolls = 0;
+          installPolls = 0; installCancelled = false;
           if (installedNow.length) {
             installEpilogue = '\nalready in the project: '
               + installedNow.join(', ')
@@ -5459,6 +5692,7 @@ function fnsBoot() {
     setTimeout(whenIdle, 800);
   })();
   document.getElementById('close').addEventListener('click', function () {
+    installCancelled = true;
     document.getElementById('dlg').close();
   });
   // Served in TouchDesigner, the page lives only while the installer's

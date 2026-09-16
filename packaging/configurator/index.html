@@ -682,9 +682,26 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   </div>
 </div></dialog>
 
+<dialog id="patreon"><div class="dlg">
+  <span class="eyebrow">PATREON</span>
+  <h3 id="patreontitle">This tool comes with Patreon</h3>
+  <p id="patreontext"></p>
+  <p class="dlg-hint" id="patreonhint">Keep it ticked and it installs once your account includes it.</p>
+  <div class="dlg-actions">
+    <a class="bar-docs" id="patreonjoin" target="_blank" rel="noopener">Become a supporter ↗</a>
+    <span class="spacer"></span>
+    <button class="btn btn-quiet" id="patreonuntick">Untick</button>
+    <button class="btn btn-secondary" id="patreonkeep">Keep it ticked</button>
+    <button class="btn btn-secondary" id="patreonrecheck" hidden>I just pledged</button>
+    <button class="btn btn-primary" id="patreonsignin" hidden>Sign in with Patreon</button>
+  </div>
+</div></dialog>
+
 <dialog id="welcome"><div class="dlg">
   <span class="eyebrow">GUIDED SETUP</span>
   <h3 id="welcometitle">Welcome to FNSTools</h3>
+  <p class="welcome-counts" id="welcomecounts" hidden></p>
+  <p class="dlg-hint welcome-auth" id="welcomeauth" hidden></p>
   <p class="dlg-hint">
     You adjust the list next; nothing is downloaded or installed until
     you confirm the plan.
@@ -778,6 +795,10 @@ function fnsBoot() {
   var account = (typeof window.FNS_ACCOUNT !== 'undefined')
     ? window.FNS_ACCOUNT : undefined;
   var hasAuthRail = (typeof account !== 'undefined');
+  // The sign-in, recheck and join doors, filled in by the account block
+  // below when this flavor has an auth rail. The welcome and the Patreon
+  // dialog open the same doors the header does, so there is one flow.
+  var authActions = {};
   function entitled(p) {
     return !!(account && (account.products || []).indexOf(p.name) >= 0);
   }
@@ -1007,6 +1028,13 @@ function fnsBoot() {
     cb.addEventListener('change', function () {
       if (cb.checked) picked.add(p.name); else picked.delete(p.name);
       save(); render();
+      // A Patreon tool this account cannot install yet is said out loud at
+      // the tick, not discovered at install time.
+      if (cb.checked && lockedPatreon([p.name]).length) {
+        askPatreon([p.name], function () {
+          picked.delete(p.name); save(); render();
+        });
+      }
     });
 
     var body = document.createElement('div');
@@ -1448,6 +1476,159 @@ function fnsBoot() {
     return entitled(p);
   }
 
+  // --- Patreon: what the account cannot install yet ------------------------
+  function lockedPatreon(names) {
+    return names.filter(function (n) {
+      return byName[n] && isPlus(byName[n]) && !installable(n);
+    });
+  }
+  // The lowest tier among these packages, by the manifest's own ladder
+  // order, so the sentence names where they START unlocking.
+  function lowestTier(pkgs) {
+    var ladder = (M && M.toolkit && M.toolkit.tiers) || [];
+    for (var i = 0; i < ladder.length; i++) {
+      var id = String(ladder[i].id);
+      if (pkgs.some(function (p) { return String(p.access) === id; })) {
+        return ladder[i].label || '';
+      }
+    }
+    return '';
+  }
+  function joinNames(list) {
+    if (list.length < 2) return list.join('');
+    return list.slice(0, -1).join(', ') + ' and ' + list[list.length - 1];
+  }
+  // Ask once, at the moment of a manual tick. `onUntick` undoes the tick;
+  // keeping it needs nothing, because the tick is already made. Built for
+  // the embedded Chromium that renders this page inside TouchDesigner: its
+  // dialog close event was seen never arriving, so every button acts
+  // directly rather than waiting for one.
+  function askPatreon(names, onUntick) {
+    var d = document.getElementById('patreon');
+    if (!d || !names.length) return;
+    var pkgs = names.map(function (n) { return byName[n]; }).filter(Boolean);
+    var one = pkgs.length === 1;
+    var tier = lowestTier(pkgs);
+    var at = tier ? ' at the ' + tier + ' tier' : '';
+    document.getElementById('patreontitle').textContent = one
+      ? titleOf(pkgs[0]) + ' comes with Patreon'
+      : pkgs.length + ' of these come with Patreon';
+    var text;
+    if (hasAuthRail && account) {
+      text = 'Your Patreon tier does not include ' + (one ? 'it' : 'them')
+        + ' yet. ' + (one ? 'It unlocks' : 'They unlock') + at + '.';
+    } else if (hasAuthRail) {
+      text = (one ? 'It unlocks' : 'They unlock') + at + '. If you support '
+        + 'Function Store on Patreon, sign in and ' + (one ? 'it installs' : 'they install')
+        + ' with the rest.';
+    } else {
+      text = (one ? 'It unlocks' : 'They unlock') + at + '. Patreon supporters '
+        + 'sign in from the installer inside TouchDesigner.';
+    }
+    document.getElementById('patreontext').textContent = text;
+    document.getElementById('patreonhint').textContent = one
+      ? 'Keep it ticked and it installs once your account includes it.'
+      : 'Keep them ticked and they install once your account includes them.';
+    var join = document.getElementById('patreonjoin');
+    join.href = authActions.join || (FNS_DOCS + '/patreon/');
+    join.textContent = (account && account.tier)
+      ? 'Upgrade your Patreon tier ↗' : 'Become a supporter ↗';
+    var signin = document.getElementById('patreonsignin');
+    var recheck = document.getElementById('patreonrecheck');
+    signin.hidden = !(hasAuthRail && !account && authActions.signIn);
+    recheck.hidden = !(hasAuthRail && account && authActions.recheck);
+    function done() { try { d.close(); } catch (e) { /* already closed */ } }
+    signin.onclick = function () { done(); authActions.signIn(); };
+    recheck.onclick = function () { done(); authActions.recheck(); };
+    document.getElementById('patreonkeep').onclick = done;
+    document.getElementById('patreonuntick').onclick = function () {
+      done(); if (onUntick) onUntick();
+    };
+    try { d.showModal(); } catch (e) { d.setAttribute('open', ''); }
+  }
+  // What a starting point may select: everything this account can install.
+  function autoPick(names) {
+    return names.filter(function (n) { return !lockedPatreon([n]).length; });
+  }
+  // The welcome leads with what is free (owner, 2026-09-16: the first step
+  // must not discourage). Every number and tier label is read from the
+  // manifest and the account, so a new tool or tier needs no copy change.
+  function renderWelcomeAccess() {
+    var counts = document.getElementById('welcomecounts');
+    var authEl = document.getElementById('welcomeauth');
+    if (!counts || !authEl) return;
+    refreshAccountOnce();
+    var plus = tools.filter(isPlus);
+    var free = tools.length - plus.length;
+    var locked = plus.filter(function (p) { return !installable(p.name); });
+    counts.textContent = '';
+    authEl.textContent = '';
+    authEl.hidden = true;
+    counts.hidden = false;
+    var lead = document.createElement('b');
+    if (!plus.length) {
+      lead.textContent = 'All ' + free + ' tools are free';
+      counts.appendChild(lead);
+      counts.appendChild(document.createTextNode(', and they all install from here.'));
+      return;
+    }
+    if (!locked.length) {
+      lead.textContent = free + ' tools are free';
+      counts.appendChild(lead);
+      counts.appendChild(document.createTextNode(', and your Patreon tier adds '
+        + plus.length + ' more. All ' + tools.length + ' are ready to install.'));
+      return;
+    }
+    var tier = lowestTier(locked);
+    var examples = locked.slice(0, 3).map(titleOf);
+    lead.textContent = free + ' tools are free';
+    counts.appendChild(lead);
+    counts.appendChild(document.createTextNode(', and they all install from here. '
+      + locked.length + ' more come with Patreon' + (tier ? ' from the ' + tier + ' tier' : '')
+      + (locked.length > examples.length ? ', among them ' : ': ')
+      + joinNames(examples) + '.'));
+    authEl.hidden = false;
+    var join = authActions.join || (FNS_DOCS + '/patreon/');
+    if (hasAuthRail && !account && authActions.signIn) {
+      authEl.appendChild(document.createTextNode('Already a supporter? '));
+      var a = document.createElement('a');
+      a.href = '#';
+      a.textContent = 'Sign in with Patreon';
+      a.addEventListener('click', function (e) { e.preventDefault(); authActions.signIn(); });
+      authEl.appendChild(a);
+      authEl.appendChild(document.createTextNode(' to add your tools.'));
+    } else if (hasAuthRail && account) {
+      authEl.appendChild(document.createTextNode('Your Patreon tier does not include them yet. '));
+      authEl.appendChild(docsLink(join, account.tier ? 'Upgrade your tier ↗' : 'Become a supporter ↗', 'help'));
+      if (authActions.recheck) {
+        authEl.appendChild(document.createTextNode(' · '));
+        var rc = document.createElement('a');
+        rc.href = '#';
+        rc.textContent = 'I just pledged';
+        rc.addEventListener('click', function (e) { e.preventDefault(); authActions.recheck(); });
+        authEl.appendChild(rc);
+      }
+    } else {
+      authEl.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗', 'help'));
+    }
+  }
+  // The account the page loaded with can be stale: a recheck elsewhere can
+  // change it after this page was served (field report 2026-09-16, a Mac
+  // planned a Patreon tool from an old sign-in record). Ask once per
+  // session when the welcome opens, and reload if it moved, which is the
+  // same honest refresh a sign-in ends in.
+  function refreshAccountOnce() {
+    if (!served || !hasAuthRail || sessionFlag('fns.acctsync')) return;
+    sessionFlag('fns.acctsync', true);
+    fetch('/auth/status').then(function (r) { return r.json(); })
+      .then(function (st) {
+        var now = JSON.stringify(st.products || null);
+        var was = JSON.stringify((account && account.products) || null);
+        if (now !== was) location.reload();
+      })
+      .catch(function () { /* no server answer: keep what the page has */ });
+  }
+
   function selection() {
     var chosen = Array.from(picked).sort();
     var need = new Set(M.core);
@@ -1674,7 +1855,14 @@ function fnsBoot() {
       cb.type = 'checkbox'; cb.checked = ticked;
       chosenNames[r.name] = ticked;
       if (isPlus(p)) plusBoxes[r.name] = cb;
-      cb.addEventListener('change', function () { chosenNames[r.name] = cb.checked; });
+      cb.addEventListener('change', function () {
+        chosenNames[r.name] = cb.checked;
+        if (cb.checked && lockedPatreon([r.name]).length) {
+          askPatreon([r.name], function () {
+            cb.checked = false; chosenNames[r.name] = false;
+          });
+        }
+      });
       row.appendChild(cb);
       var body = document.createElement('span');
       body.className = 'qres-body';
@@ -1712,7 +1900,11 @@ function fnsBoot() {
       row.appendChild(body);
       return row;
     }
-    split.main.forEach(function (r) { res.appendChild(resultRow(r, true)); });
+    // A recommendation starts ticked only when this account can install it.
+    // A Patreon tool the reader cannot get yet is still offered, unticked:
+    // ticked by default it read as part of the install for a signed-out
+    // reader, who then watched an install that could never include it.
+    split.main.forEach(function (r) { res.appendChild(resultRow(r, installable(r.name))); });
     // A Plus tool in the set is the moment a reader would otherwise be
     // surprised at install time. Say what it is and what happens, and
     // offer the one-click way out. Counted on what is NOT installable
@@ -1737,13 +1929,24 @@ function fnsBoot() {
       var out = document.createElement('button');
       out.type = 'button';
       out.className = 'btn btn-quiet';
-      out.textContent = 'Leave the Patreon tools out';
+      // They start unticked (above), so the choice offered is to add them:
+      // a ticked Patreon tool is recorded as wanted and installs once the
+      // account is signed in and entitled.
+      out.textContent = 'Add the Patreon tools anyway';
       out.addEventListener('click', function () {
-        Object.keys(plusBoxes).forEach(function (nm) {
-          plusBoxes[nm].checked = false;
-          chosenNames[nm] = false;
+        var names = Object.keys(plusBoxes);
+        names.forEach(function (nm) {
+          plusBoxes[nm].checked = true;
+          chosenNames[nm] = true;
         });
         out.disabled = true;
+        askPatreon(lockedPatreon(names), function () {
+          names.forEach(function (nm) {
+            plusBoxes[nm].checked = false;
+            chosenNames[nm] = false;
+          });
+          out.disabled = false;
+        });
       });
       pn.appendChild(out);
       res.insertBefore(pn, res.firstChild);
@@ -1798,18 +2001,23 @@ function fnsBoot() {
       var gone = last.packages.filter(function (n) { return !byName[n]; }).length;
       var when = String(last.when || '').slice(0, 10);
       document.getElementById('pre-last-desc').textContent =
-        lastNames.length + ' tools, as in ' + (last.project || 'your last project') +
+        autoPick(lastNames).length + ' tools, as in ' + (last.project || 'your last project') +
         (when ? ' on ' + when : '') +
         (gone ? ' (' + gone + ' no longer in the catalog)' : '') + '.';
     }
+    renderWelcomeAccess();
     // a manifest that carries no starter list hides the preset rather
     // than offering an empty one
-    pre.hidden = !starter.length;
+    var starterReady = autoPick(starter);
+    pre.hidden = !starterReady.length;
     document.getElementById('pre-starter-desc').textContent =
-      starter.length + ' tools, the everyday set: ' +
-      starter.slice(0, 4).map(titleOfName).join(', ') + (starter.length > 4 ? '…' : '');
+      starterReady.length + ' tools, the everyday set: ' +
+      starterReady.slice(0, 4).map(titleOfName).join(', ') + (starterReady.length > 4 ? '…' : '');
+    var allReady = autoPick(tools.map(function (p) { return p.name; }));
     document.getElementById('pre-all-desc').textContent =
-      'All ' + tools.length + ' tools. Remove any later from Pick Tools.';
+      allReady.length < tools.length
+        ? 'All ' + allReady.length + ' tools you can install now. Remove any later from Pick Tools.'
+        : 'All ' + tools.length + ' tools. Remove any later from Pick Tools.';
     // Esc counts as "pick my own": the page behind is the empty list
     // already, and a welcome that cannot be dismissed is a wall, not a
     // guide. Idempotent and called from every exit on purpose: the
@@ -1826,9 +2034,13 @@ function fnsBoot() {
     }
     w.addEventListener('cancel', dismiss);
     w.addEventListener('close', dismiss);
-    function choose(names, bind) {
+    // Every starting point the page picks for the reader leaves out what
+    // this account cannot install yet (owner, 2026-09-16). `explicit` is a
+    // list whose ticks the reader made, the questionnaire's result, and
+    // passes through as it is.
+    function choose(names, bind, explicit) {
       wantBind = bind || null;
-      applyPreset(names); w.close(); dismiss();
+      applyPreset(explicit ? names : autoPick(names)); w.close(); dismiss();
     }
     // "Like last time" is the one card that IS the confirmation: the list
     // is the user's own, from a project they saved, so the click plans
@@ -1838,7 +2050,7 @@ function fnsBoot() {
       choose(names, bind);
       if (!served || locked) return;
       setStep(3);
-      installPolls = 0;
+      installPolls = 0; installCancelled = false;
       installEpilogue = '';
       document.getElementById('dlgtitle').textContent = 'Setting up like last time';
       showDialog('Planning the install…', false);
@@ -1851,7 +2063,7 @@ function fnsBoot() {
     }
     preLast.onclick = function () { installNow(lastNames, last && last.bind); };
     pre.onclick = function () { choose(starter); };
-    preQuiz.onclick = function () { quizStart(function (names) { choose(names); }); };
+    preQuiz.onclick = function () { quizStart(function (names) { choose(names, null, true); }); };
     document.getElementById('pre-all').onclick = function () {
       choose(tools.map(function (p) { return p.name; }));
     };
@@ -1869,10 +2081,11 @@ function fnsBoot() {
       nb.textContent = bnd.name;
       btn.appendChild(nb);
       var ds = document.createElement('span');
-      ds.textContent = bnd.packages.length
-        + (bnd.packages.length === 1 ? ' tool: ' : ' tools: ')
-        + (bnd.blurb || bnd.packages.slice(0, 4).map(titleOfName).join(', ')
-           + (bnd.packages.length > 4 ? '…' : ''));
+      var bndReady = autoPick(bnd.packages);
+      ds.textContent = bndReady.length
+        + (bndReady.length === 1 ? ' tool: ' : ' tools: ')
+        + (bnd.blurb || bndReady.slice(0, 4).map(titleOfName).join(', ')
+           + (bndReady.length > 4 ? '…' : ''));
       btn.appendChild(ds);
       var pk = document.createElement('span');
       pk.className = 'pick';
@@ -2261,6 +2474,19 @@ function fnsBoot() {
     // Where to actually become one. From the manifest when it says, so a
     // campaign move is a manifest change rather than a reshipped page.
     var join = ((M.toolkit || {}).support_url) || (FNS_DOCS + '/patreon/');
+    authActions.join = join;
+    authActions.signIn = function () {
+      post('/auth/signin', '{}', function (res) {
+        showDialog(res.text, false);
+        if (res.ok) watchAuth();
+      });
+    };
+    authActions.recheck = function () {
+      post('/auth/recheck', '{}', function (res) {
+        showDialog(res.text, false);
+        if (res.ok) watchAuth();
+      });
+    };
     if (support) {
       support.href = join;
       // Someone already paying is not asked to "become" anything: a
@@ -2395,7 +2621,12 @@ function fnsBoot() {
   // Install may answer "fetching": the server downloads exactly the
   // selected packages, we show progress, and re-post once they're here.
   var installPolls = 0;
+  // Set when the reader closes the dialog: the poll stops there. Without
+  // it every tick re-showed the dialog, so Close never closed anything
+  // while an install waited (field report 2026-09-16).
+  var installCancelled = false;
   function installOrPoll(res) {
+    if (installCancelled) return;
     if (!res.fetching) {
       // ok without fetching is the installer's own "installed N" report;
       // a refusal or a failure comes back ok:false with its reason
@@ -2408,7 +2639,9 @@ function fnsBoot() {
       return;
     }
     setTimeout(function () {
+      if (installCancelled) return;
       fetch('/status').then(function (r) { return r.json(); }).then(function (st) {
+        if (installCancelled) return;
         // A gated refusal is not a download failure: it arrives with its
         // own sentence (sign in / your tier / gate unreachable) and the
         // free picks still install. Speak it wherever it appears.
@@ -2437,7 +2670,7 @@ function fnsBoot() {
     }, 1200);
   }
   document.getElementById('doinstall').addEventListener('click', function () {
-    installPolls = 0;
+    installPolls = 0; installCancelled = false;
     installEpilogue = '';
     showDialog('Installing…', false);
     post('/install', '{}', installOrPoll);
@@ -2474,7 +2707,7 @@ function fnsBoot() {
           // pick was deferred only because the script could not carry a
           // token -- never because consent was in doubt. The dialog
           // narrates every hop; only what the user checked is touched.
-          installPolls = 0;
+          installPolls = 0; installCancelled = false;
           if (installedNow.length) {
             installEpilogue = '\nalready in the project: '
               + installedNow.join(', ')
@@ -2498,6 +2731,7 @@ function fnsBoot() {
     setTimeout(whenIdle, 800);
   })();
   document.getElementById('close').addEventListener('click', function () {
+    installCancelled = true;
     document.getElementById('dlg').close();
   });
   // Served in TouchDesigner, the page lives only while the installer's
