@@ -2361,6 +2361,8 @@ function fnsBoot() {
       "_ = open(f, 'wb').write(boot)",
       "root = op('/').loadTox(f)",
       "root.store('FNS_welcomed', 'paste')",
+      "w_ = root.op('exec_root_welcome')",
+      "_ = w_ is not None and hasattr(w_.module, 'reveal') and w_.module.reveal(root)",
       "r_ = run(\"i = op('%s/FNS_Installer'); i.par.Selectionfile = '%s'; i.par.Install.pulse()\" % (root.path, sp), delayFrames=90)",
       "_ = PLUS and run(\"op('%s/FNS_Installer').par.Configure.pulse()\" % root.path, delayFrames=150)",
       "print('FNSTools', m['release'], '--', len(names), 'packages verified; installing into', root.path)",
