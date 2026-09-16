@@ -1599,7 +1599,7 @@ function fnsBoot() {
       authEl.appendChild(document.createTextNode(' to add your tools.'));
     } else if (hasAuthRail && account) {
       authEl.appendChild(document.createTextNode('Your Patreon tier does not include them yet. '));
-      authEl.appendChild(docsLink(join, account.tier ? 'Upgrade your tier ↗' : 'Become a supporter ↗', 'help'));
+      authEl.appendChild(docsLink(join, account.tier ? 'Upgrade your tier ↗' : 'Become a supporter ↗', ''));
       if (authActions.recheck) {
         authEl.appendChild(document.createTextNode(' · '));
         var rc = document.createElement('a');
@@ -1609,7 +1609,7 @@ function fnsBoot() {
         authEl.appendChild(rc);
       }
     } else {
-      authEl.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗', 'help'));
+      authEl.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗', ''));
     }
   }
   // The account the page loaded with can be stale: a recheck elsewhere can
@@ -1790,6 +1790,15 @@ function fnsBoot() {
   var quizStep = 0;
   function quizShow(on) {
     document.getElementById('presets').hidden = on;
+    // The result carries its own Patreon box, counted on THIS set, so the
+    // welcome's catalog-wide lines step aside while the questionnaire is
+    // open (one Patreon message per screen) and return with the cards.
+    if (on) {
+      document.getElementById('welcomecounts').hidden = true;
+      document.getElementById('welcomeauth').hidden = true;
+    } else {
+      renderWelcomeAccess();
+    }
     document.getElementById('quiz').hidden = !on;
     document.getElementById('welcometitle').textContent = on
       ? 'Find my set' : ((firstrun || firstVisit) ? 'Welcome to FNSTools' : 'Choose a starting point');
@@ -1837,8 +1846,12 @@ function fnsBoot() {
     var picks = quizScore(quizAnswers, quiz, tools);
     var split = quizSplit(picks);
     prog.textContent = 'Your set';
+    // Counted on what the set TICKS: a Patreon match the account cannot
+    // install starts unticked and is named in the box below as "more".
+    var readyMain = split.main.filter(function (r) { return installable(r.name); }).length;
     prompt.textContent = split.main.length
-      ? split.main.length + ' tool' + (split.main.length === 1 ? '' : 's') + ' for how you work'
+      ? (readyMain ? readyMain + ' tool' + (readyMain === 1 ? '' : 's') + ' for how you work'
+                   : 'These fit how you work')
       : 'Nothing matched those answers';
     hint.textContent = picks.length
       ? 'Untick anything you do not want. You can still change the list after.'
@@ -1920,11 +1933,11 @@ function fnsBoot() {
       pm.textContent = '◆';
       pn.appendChild(pm);
       var pb = document.createElement('b');
-      pb.textContent = plusInSet.length + ' of these '
-        + (plusInSet.length === 1 ? 'needs' : 'need') + ' Patreon,';
+      pb.textContent = plusInSet.length + ' more '
+        + (plusInSet.length === 1 ? 'fits' : 'fit') + ', with Patreon:';
       pn.appendChild(pb);
       pn.appendChild(document.createTextNode(
-        ' the supporter extras: ' + plusReality() + ' '));
+        ' ' + plusReality() + ' '));
       pn.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗'));
       var out = document.createElement('button');
       out.type = 'button';
