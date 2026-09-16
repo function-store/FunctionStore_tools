@@ -193,7 +193,7 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
   font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
 }
 .desc { margin-top: 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
-/* two lines at a glance; the full text rides the card's tooltip */
+/* two lines at a glance; the full text rides the card's data-tip */
 .card .desc:not(.byline) {
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
   overflow: hidden;
@@ -516,6 +516,16 @@ body.app .plusrail .rail-acc:has(> [hidden]) { display: none; }
 body.app .plusrail .rail-acc:has(> .acct:empty) { display: none; }
 body.app .plusrail .rail-acc .btn { padding: 2px 8px; font-size: 11.5px; }
 body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
+
+/* ── tooltip ── data-tip, drawn by base.js: TouchDesigner's Web Render (CEF)
+   never draws a native `title`, so nothing in the family uses one. */
+.fns-tip {
+  position: fixed; z-index: 1000; pointer-events: none;
+  max-width: 360px; padding: 8px 11px; border-radius: 8px;
+  background: var(--bg-3); color: var(--text); border: 1px solid var(--border-strong);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  font-size: 12.5px; font-weight: 400; line-height: 1.45; white-space: pre-line;
+}
 /* FNS:UIBASE:END */
 
   /* ── page-specific: the storefront shell ── */
@@ -632,8 +642,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <button class="btn btn-secondary" id="wizard">Guided setup</button>
     <button class="btn btn-quiet" id="all">Select all</button>
     <button class="btn btn-quiet" id="none">Clear</button>
-    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" title="Show only the tools that unlock with Patreon">◆ Patreon only</button>
-    <button class="btn btn-quiet" id="theme" title="Toggle theme" aria-label="Toggle theme">◐</button>
+    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" data-tip="Show only the tools that unlock with Patreon">◆ Patreon only</button>
+    <button class="btn btn-quiet" id="theme" data-tip="Toggle theme" aria-label="Toggle theme">◐</button>
     <span class="spacer"></span>
     <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
   </div>
@@ -729,6 +739,102 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 </div></dialog>
 
 <script src="manifest.js"></script>
+<script>
+/* FNS:UIBASEJS:START -- generated from packaging/configurator/base.js; edit THERE, then run python packaging/configurator/sync_base.py --write */
+/* FNSTools UI base script -- the ONE source for behaviour every shell
+   shares. Inlined between FNS:UIBASEJS markers by sync_base.py, exactly
+   like base.css: edit HERE, then run
+
+       python packaging/configurator/sync_base.py --write
+
+   Tooltips. TouchDesigner's Web Render (CEF) never draws a native `title`
+   tooltip, so every hover text in the family rides `data-tip` and this one
+   element draws it: a short delay, it follows the cursor, stays inside the
+   viewport, and pre-line keeps a multi-line tip's breaks (a card's tip is
+   its full description plus "Adds: ..."). Set text with
+   el.setAttribute('data-tip', text) or window.fnsTip(el, text); never
+   `title`. Inside an open modal <dialog> the element is moved into that
+   dialog, because the top layer covers everything appended to body. */
+(function () {
+  if (window.fnsTip) return;
+  var tip = null, cur = null, timer = 0, lastX = 0, lastY = 0, lastPress = 0;
+  var DELAY = 350, GAP = 14, EDGE = 8;
+  function tipEl(host) {
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'fns-tip';
+      tip.setAttribute('role', 'tooltip');
+      tip.hidden = true;
+    }
+    host = host || document.body;
+    if (tip.parentNode !== host) host.appendChild(tip);
+    return tip;
+  }
+  function place(x, y) {
+    if (!tip || tip.hidden) return;
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var left = x + GAP, top = y + GAP;
+    if (left + w > vw - EDGE) left = Math.max(EDGE, x - GAP - w);
+    if (top + h > vh - EDGE) top = Math.max(EDGE, y - GAP - h);
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+  function show(target, x, y) {
+    var text = target.getAttribute('data-tip');
+    if (!text) return;
+    var host = target.closest('dialog[open]') || document.body;
+    var t = tipEl(host);
+    t.textContent = text;
+    t.hidden = false;
+    place(x, y);
+  }
+  function hide() {
+    clearTimeout(timer); timer = 0; cur = null;
+    if (tip) tip.hidden = true;
+  }
+  function tipTarget(e) {
+    var n = e.target;
+    return n && n.closest ? n.closest('[data-tip]') : null;
+  }
+  document.addEventListener('mouseover', function (e) {
+    var target = tipTarget(e);
+    if (target === cur) return;
+    hide();
+    if (!target) return;
+    cur = target;
+    lastX = e.clientX; lastY = e.clientY;
+    timer = setTimeout(function () {
+      if (cur === target) show(target, lastX, lastY);
+    }, DELAY);
+  });
+  document.addEventListener('mousemove', function (e) {
+    lastX = e.clientX; lastY = e.clientY;
+    if (cur) place(lastX, lastY);
+  });
+  // keyboard focus shows the tip at the element; a click's focus does not
+  document.addEventListener('mousedown', function () { lastPress = Date.now(); hide(); });
+  document.addEventListener('focusin', function (e) {
+    var target = tipTarget(e);
+    if (!target || Date.now() - lastPress < 500) return;
+    hide();
+    cur = target;
+    var r = target.getBoundingClientRect();
+    show(target, r.left, r.bottom);
+  });
+  document.addEventListener('focusout', hide);
+  document.addEventListener('keydown', hide);
+  document.addEventListener('scroll', hide, true);
+  document.documentElement.addEventListener('mouseleave', hide);
+  window.addEventListener('blur', hide);
+  window.fnsTip = function (node, text) {
+    if (text) node.setAttribute('data-tip', text);
+    else node.removeAttribute('data-tip');
+    return node;
+  };
+})();
+/* FNS:UIBASEJS:END */
+</script>
 <script>
 // Where a tool's documentation lives. help_url in the manifest is already
 // absolute against this host; the category and section links below are built
@@ -1104,8 +1210,8 @@ function fnsBoot() {
       var extra = !account ? '' : (own ? ' own' : ' locked');
       var pl = docsLink(FNS_DOCS + '/patreon/', label, 'chip plus' + extra);
       if (tierName && !own) {
-        pl.title = 'unlocks with the Patreon ' + tierName + ' tier or higher'
-          + (p.key_available ? ', or with a Gumroad licence key' : '');
+        pl.setAttribute('data-tip', 'unlocks with the Patreon ' + tierName + ' tier or higher'
+          + (p.key_available ? ', or with a Gumroad licence key' : ''));
       }
       pl.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pl);
@@ -1124,8 +1230,8 @@ function fnsBoot() {
     // reads them through surfaceLabel), and the words still come from
     // the manifest's surface_meta.
     var surf = (p.surfaces || []).map(surfaceLabel);
-    el.title = (p.description || '')
-      + (surf.length ? '\n\nAdds: ' + surf.join(', ') : '');
+    el.setAttribute('data-tip', (p.description || '')
+      + (surf.length ? '\n\nAdds: ' + surf.join(', ') : ''));
     // an integration whose partner is not selected: say so plainly rather
     // than blocking the choice -- these degrade by design
     (p.integrates_with || []).forEach(function (t) {
@@ -2160,7 +2266,7 @@ function fnsBoot() {
           var help = byName[s] && byName[s].help_url;
           if (help) {
             chip = docsLink(help, titleOfName(s), 'chip ok');
-            chip.title = 'Open the docs for ' + titleOfName(s);
+            chip.setAttribute('data-tip', 'Open the docs for ' + titleOfName(s));
           } else {
             chip.classList.add('ok'); chip.textContent = titleOfName(s);
           }
@@ -2536,7 +2642,7 @@ function fnsBoot() {
           : ageS < 5400 ? Math.round(ageS / 60) + ' minutes ago'
           : ageS < 129600 ? Math.round(ageS / 3600) + ' hours ago'
           : Math.round(ageS / 86400) + ' days ago';
-        el.title = 'entitlement last confirmed by the gate ' + age;
+        el.setAttribute('data-tip', 'entitlement last confirmed by the gate ' + age);
       }
       // Signed in and entitled to nothing is the case that decides whether
       // someone becomes a customer, so it gets BOTH doors: join, and -- for
@@ -2819,7 +2925,7 @@ function fnsBoot() {
       var b = document.createElement('button');
       b.className = 'btn btn-quiet';
       b.textContent = FNS_EMBEDDED ? f[0].split(' ')[0] : f[0];
-      b.title = f[0];
+      b.setAttribute('data-tip', f[0]);
       b.addEventListener('click', function () { setAllOpen(f[1]); });
       fold.appendChild(b);
     });
@@ -2849,7 +2955,7 @@ function fnsBoot() {
     if (FNS_EMBEDDED) {
       // inside the manager the strip is one quiet line; the full sentence
       // rides as a tooltip, and the toolbar's Plus-only button does the filter
-      rail.title = sentence;
+      rail.setAttribute('data-tip', sentence);
       rail.appendChild(document.createTextNode(
         plus.length + ' supporter extra' + (plus.length === 1 ? '' : 's') + ' below. '));
     } else {
