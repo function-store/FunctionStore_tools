@@ -65,6 +65,11 @@ import anything. See the kit's own **README** DAT for that form.
 - Handlers run **synchronously on the main thread**. Return quickly and kick
   long work off with `run(..., delayFrames=1)`.
 - Caps: 24 commands per component, 6 parameters per command.
+- **Placed more than once?** Promote `FnsInstance()` returning a short label
+  for each copy, and `FnsToolName()` returning one shared name when the copies'
+  COMP names differ. Palettes then tell the copies apart, and favourites reach
+  all of them. Needs FNS_CommandRegistry 3.2.1 or newer; older registries
+  ignore both.
 
 Components inside the FNS toolkit do not need this kit; they already carry an
 ExtUtils with the announcer in it. This is for everything else.

@@ -69,6 +69,26 @@ moved in the network; both palettes use that identity. Ids and tool names
 are therefore permanent: renaming either orphans a user's curation, so a
 shipped id is public API.
 
+### Tools with several copies
+
+Some tools are meant to be placed more than once, one copy per output or per
+target. Each copy registers the same commands under its own path, so running
+one always reaches the copy it belongs to. Two optional promoted methods on the
+copy make them readable in a palette:
+
+- **`FnsInstance()`** returns a short label for this copy, such as the output
+  it drives. It is read every time the list is built, so it follows renames
+  and target changes, and it travels with each command as `instance`. Palettes
+  show it beside the label: `Freeze scope · Main out`.
+- **`FnsToolName()`** returns one tool name for every copy, for when the COMP
+  names differ (`Scope1`, `Scope2`). Without it each copy counts as a separate
+  tool, and a favourite on one never reaches the others.
+
+Favourites and hidden flags always apply to every copy, in every project. A
+preset can either run on every copy, listed once per copy, or be pinned to one
+label with `tool#id@instance`. A pinned preset waits quietly in projects
+where no copy carries that label.
+
 Limits are enforced at harvest: 24 commands per tool, 6
 parameters per command, 5 contexts and 8 surfaces per command. A malformed
 declaration is rejected with a reason instead of being served broken.
@@ -87,8 +107,8 @@ consumer can keep them apart from your tools' commands: the FNS palette badges
 them `TD`, lists them after tool commands and leaves them out of `?`.
 
 Every built-in also declares a canonical id. When two packages offer the same
-command, the one with the newest package version is served and the other is
-set aside and listed by `Shadowed()`, so installing
+command, the one with the newest package version is served, with every copy of
+that package kept, and the other is set aside and listed by `Shadowed()`, so installing
 a newer registry beside an older one never doubles the list. The TDXL
 launcher's companion carries this same package, so a project with both
 installed sees one registry and one set of built-ins, never two.
@@ -98,7 +118,7 @@ installed sees one registry and one set of built-ins, never two.
 `op.FNS_COMMANDREGISTRY.Commands()` returns the full list; `Run(key, args)`
 invokes one. `RescanTools()` re-harvests after a tool's command set changes at
 runtime, `Shadowed()` lists what canonical-id arbitration withheld and what
-beat it, and `Version()` reports the contract version (1.9.0 as of this
+beat it, and `Version()` reports the contract version (1.11.0 as of this
 writing) so a consumer can tell which fields it can rely on.
 
 Unknown fields are ignored, in both directions. A consumer

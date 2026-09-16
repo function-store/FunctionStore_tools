@@ -109,6 +109,12 @@ they wrap, run on Enter without prompting, and can be starred. A preset over a
 hidden command still runs, since saving it was the opt-in. Ctrl+H on a preset
 deletes it.
 
+**Tools with several copies.** When a tool is placed more than once, each
+copy's commands carry its label, as in `Freeze scope · Main out` and
+`Freeze scope · Preview`, and the label is searchable. A preset saved from one
+of those rows runs on that copy only; a preset over the command itself lists
+once per copy. Stars and hidden flags cover the command on every copy.
+
 ## Commands tab
 
 The palette contributes a **Commands** tab to [Hub](/docs/fns-hub/):
