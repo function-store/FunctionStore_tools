@@ -825,11 +825,7 @@
   "FNS_OpFamily": {
    "category": "Surfaces",
    "description": "The FNS tab in the OP Create dialog: an operator family whose members are FNS tools placed from the store as one node each, with stubs for projects that travel and in-place updates that keep retained parameters and state. Built with TDFam.",
-   "fits": [
-    "network",
-    "speed",
-    "visual"
-   ]
+   "companion": "family"
   },
   "FNS_RandomCHOP": {
    "category": "Control",

@@ -287,6 +287,10 @@ a.chip.plus:hover { border-color: var(--accent); }
 .sum .n { font-size: 15px; font-weight: 700; }
 .sum .muted { font-size: 13px; color: var(--text-faint); }
 .sum-count { display: flex; align-items: baseline; gap: 8px; }
+/* the FNS tab switch: shown only while a family operator is ticked */
+.famopt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+  color: var(--text-dim); cursor: pointer; white-space: nowrap; }
+.famopt input { margin: 0; accent-color: var(--accent); }
 
 /* ── dialogs ── */
 dialog {
@@ -517,6 +521,7 @@ body.app .bar-act { display: flex; align-items: center; gap: 10px; margin-left: 
 body.app .bar-act .n { font-size: 14px; font-weight: 700; }
 body.app .bar-act .muted { font-size: 12px; color: var(--text-faint); white-space: nowrap; }
 body.app .bar-act #deps { font-size: 12px; color: var(--text-faint); white-space: nowrap; }
+body.app .bar-act .famopt { font-size: 12px; }
 body.app .plusrail .rail-acc { display: inline-flex; align-items: center; gap: 6px; }
 body.app .plusrail .rail-acc:has(> [hidden]) { display: none; }
 body.app .plusrail .rail-acc:has(> .acct:empty) { display: none; }
@@ -667,6 +672,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   <div class="sum">
     <span class="sum-count"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span></span>
     <span class="muted" id="deps"></span>
+    <label class="famopt" id="famopt" hidden data-tip="The FNS family operators you tick also appear on an FNS tab in the OP Create dialog, placed as one node each. Untick to keep them in the palette only; turn it off later the same way.">
+      <input type="checkbox" id="famchk"> Add FNS tab to OP Create</label>
     <span class="acct" id="acct"></span>
     <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Join on Patreon ↗</a>
     <button class="btn btn-quiet" id="recheck" hidden>Check again</button>
@@ -931,7 +938,11 @@ function fnsBoot() {
     return;
   }
 
-  var tools = M.packages.filter(function (p) { return p.kind === 'tool'; });
+  // A companion (manifest `companion`, the FNS operator family) is never
+  // picked: the installer adds it exactly when a family member is in the
+  // selection. Every list a pick can come from goes through pickable().
+  function pickable(p) { return !!p && p.kind === 'tool' && !p.companion; }
+  var tools = M.packages.filter(pickable);
   var core = M.packages.filter(function (p) { return p.kind === 'core'; });
   var byName = {};
   M.packages.forEach(function (p) { byName[p.name] = p; });
@@ -952,7 +963,7 @@ function fnsBoot() {
   // installed there, so unchecking an installed tool means remove.
   // Static mode keeps the localStorage nicety.
   var installedNow = (window.FNS_INSTALLED || []).filter(function (n) {
-    return byName[n] && byName[n].kind === 'tool';
+    return pickable(byName[n]);
   });
   // What this machine installed last (the root's roaming config, read by
   // the installer on a bare root only). A first run starts from it, so
@@ -960,7 +971,7 @@ function fnsBoot() {
   var last = firstrun && window.FNS_LAST && window.FNS_LAST.packages
     ? window.FNS_LAST : null;
   var lastNames = last ? last.packages.filter(function (n) {
-    return byName[n] && byName[n].kind === 'tool';
+    return pickable(byName[n]);
   }) : [];
   if (last && !lastNames.length) last = null;   // nothing the catalog still knows
   var wantBind = null;   // rides on the selection only when "like last time" was chosen
@@ -970,12 +981,29 @@ function fnsBoot() {
   // install; still locked -> selection() keeps them out of the plan and
   // the chip says why. Absent on the site flavor by construction.
   var wantedStill = (window.FNS_WANTED || []).filter(function (n) {
-    return byName[n] && byName[n].kind === 'tool';
+    return pickable(byName[n]);
   });
   var picked = served
     ? new Set((last ? lastNames : installedNow).concat(wantedStill))
     : new Set(JSON.parse(stored('fns.pick', null) || '[]')
-               .filter(function (n) { return byName[n]; }));
+               .filter(function (n) { return pickable(byName[n]); }));
+  // The FNS operator family (the manifest's `companion`) is optional: the
+  // family operators can live in the palette without an FNS tab in the OP
+  // Create dialog. Served, the switch starts from the project: members
+  // installed without the family means it was turned off. A first run
+  // starts from the last install's record, the site from this browser.
+  var companions = M.packages.filter(function (p) {
+    return p && p.companion === 'family';
+  }).map(function (p) { return p.name; });
+  var rawInstalled = window.FNS_INSTALLED || [];
+  var familyHere = rawInstalled.some(function (n) { return companions.indexOf(n) >= 0; });
+  var membersHere = rawInstalled.some(function (n) { return byName[n] && byName[n].family; });
+  var familyOn = served
+    ? (last && typeof last.family === 'boolean' ? last.family : (familyHere || !membersHere))
+    : stored('fns.family', '1') !== '0';
+  function memberPicked() {
+    return Array.from(picked).some(function (n) { return byName[n] && byName[n].family; });
+  }
 
   var meta = [
     tools.length + ' tools',
@@ -1605,15 +1633,21 @@ function fnsBoot() {
     // server's answer, and this page has not asked it.
     if (plusLocked) notes.push(plusLocked + ' locked (Patreon)');
     if (paneSel) notes.push(paneSel + (paneSel === 1 ? ' spawns' : ' spawn') + ' into your network');
+    var famMember = companions.length > 0 && memberPicked();
+    document.getElementById('famopt').hidden = !famMember;
+    document.getElementById('famchk').checked = familyOn;
+    // the family leaves with the switch off or the last member unticked
+    var famGoes = served && familyHere && !(famMember && familyOn);
+    if (famGoes) notes.push('FNS tab removed');
     document.getElementById('deps').textContent = notes.join(' · ');
     var save = document.getElementById('save');
     if (served && locked) {
       save.textContent = 'Locked (source checkout)';
       save.disabled = true;
     } else if (served) {
-      save.textContent = removals ? 'Apply changes…' : 'Review install…';
+      save.textContent = (removals || famGoes) ? 'Apply changes…' : 'Review install…';
       // removals alone are actionable even with nothing picked
-      save.disabled = picked.size === 0 && removals === 0;
+      save.disabled = picked.size === 0 && removals === 0 && !famGoes;
     } else {
       save.disabled = picked.size === 0;
     }
@@ -1816,6 +1850,9 @@ function fnsBoot() {
       install: Array.from(need).sort().concat(chosen.filter(installable))
     };
     if (wantBind) sel.bind = wantBind;
+    // said whenever the release has a family, so the installer never
+    // has to guess (InstallerExt.FamilyWanted)
+    if (companions.length) sel.family = familyOn;
     return sel;
   }
 
@@ -1827,6 +1864,11 @@ function fnsBoot() {
   });
   document.getElementById('none').addEventListener('click', function () {
     picked.clear(); save(); render();
+  });
+  document.getElementById('famchk').addEventListener('change', function (e) {
+    familyOn = e.target.checked;
+    try { localStorage.setItem('fns.family', familyOn ? '1' : '0'); } catch (err) { /* nicety */ }
+    render();
   });
   // Dark is the default in every flavor -- it matches both the site and
   // TouchDesigner. The toggle is a light escape hatch, and it is hidden on
@@ -1896,7 +1938,7 @@ function fnsBoot() {
     });
   }
   var starter = (M.starter || []).filter(function (n) {
-    return byName[n] && byName[n].kind === 'tool';
+    return pickable(byName[n]);
   });
   // Curated bundles from the catalog (manifest `presets`): named starting
   // points offered between Recommended and Everything. Filtered against
@@ -1907,7 +1949,7 @@ function fnsBoot() {
     return {name: String((b && b.name) || ''),
             blurb: String((b && b.blurb) || ''),
             packages: ((b && b.packages) || []).filter(function (n) {
-              return byName[n] && byName[n].kind === 'tool';
+              return pickable(byName[n]);
             })};
   }).filter(function (b) { return b.name && b.packages.length; });
   // --- the questionnaire ---------------------------------------------
@@ -2253,7 +2295,10 @@ function fnsBoot() {
           post('/install', '{}', installOrPoll);
         });
     }
-    preLast.onclick = function () { installNow(lastNames, last && last.bind); };
+    preLast.onclick = function () {
+      if (last && typeof last.family === 'boolean') familyOn = last.family;
+      installNow(lastNames, last && last.bind);
+    };
     pre.onclick = function () { choose(starter); };
     preQuiz.onclick = function () { quizStart(function (names) { choose(names, null, true); }); };
     document.getElementById('pre-all').onclick = function () {
@@ -2519,13 +2564,16 @@ function fnsBoot() {
       "H = {'User-Agent': 'FNSTools-Install'}",
       "SEL = " + JSON.stringify(freePicks),
       "PLUS = " + JSON.stringify(plusPicks),
+      // the FNS operator family rides along with a free family pick unless
+      // the switch is off (the installer's plan would drop it otherwise)
+      "FAM = " + (familyOn ? 'True' : 'False'),
       "m = requests.get('" + rolling + "', headers=H, timeout=30).json()",
       "idx = {p['name']: p for p in m['packages']}",
       "miss = [t for t in SEL + PLUS if t not in idx]",
       "assert not miss, 'not in release %s: %s' % (m['release'], ', '.join(miss))",
       "rail = m.get('rails', {}).get('FNSTools.tox')",
       "assert rail, 'release %s publishes no bootstrap' % m['release']",
-      "names = m['core'] + SEL",
+      "names = m['core'] + SEL + ([p['name'] for p in m['packages'] if p.get('companion') == 'family'] if FAM and any(idx[t].get('family') for t in SEL) else [])",
       "blobs = {t: requests.get(idx[t]['artifact']['url'], headers=H, timeout=120).content for t in names}",
       "boot = requests.get(rail['url'], headers=H, timeout=120).content",
       "bad = [t for t in names if hashlib.sha256(blobs[t]).hexdigest() != idx[t]['artifact']['sha256']] + ([] if hashlib.sha256(boot).hexdigest() == rail['sha256'] else ['FNSTools.tox'])",
@@ -2535,7 +2583,7 @@ function fnsBoot() {
       "_ = [open(os.path.join(st, t + '.tox'), 'wb').write(blobs[t]) for t in names]",
       "_ = open(os.path.join(st, 'manifest.json'), 'w').write(json.dumps(m, indent=1))",
       "sp = os.path.join(st, 'selection.json').replace(chr(92), '/')",
-      "_ = open(sp, 'w').write(json.dumps({'schema': 1, 'toolkit': m['toolkit']['name'], 'core': m['core'], 'tools': SEL + PLUS, 'install': names}, indent=1))",
+      "_ = open(sp, 'w').write(json.dumps({'schema': 1, 'toolkit': m['toolkit']['name'], 'core': m['core'], 'tools': SEL + PLUS, 'install': names, 'family': FAM}, indent=1))",
       "f = os.path.join(tempfile.gettempdir(), 'FNSTools.tox')",
       "_ = open(f, 'wb').write(boot)",
       "root = op('/').loadTox(f)",
@@ -3079,6 +3127,7 @@ function fnsBoot() {
       act.className = 'bar-act';
       act.appendChild(sum.querySelector('.sum-count'));
       act.appendChild(document.getElementById('deps'));
+      act.appendChild(document.getElementById('famopt'));
       act.appendChild(document.getElementById('save'));
       bar.appendChild(act);
       if (rail) {
