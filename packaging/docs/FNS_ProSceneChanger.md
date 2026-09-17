@@ -1,6 +1,6 @@
 ---
-package: FNS_SimpleSceneChanger
-summary: 'Switch between any number of TOP scenes with a crossfade, a fade through black, a cut or a hands-on A/B fader, cooking only the scenes you can see. ProSceneChanger, its own package, adds per-scene timing, a cue table, CHOP output blending and fleet follow.'
+package: FNS_ProSceneChanger
+summary: 'The Pro scene changer: everything SimpleSceneChanger does, plus per-scene timing and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, and fleet follow. Its own package, beside the simple one.'
 features:
   - name: Contents
     anchor: contents
@@ -25,6 +25,10 @@ features:
   - name: Troubleshooting and notes
     anchor: troubleshooting-and-notes
 ---
+
+## Base and Pro
+
+ProSceneChanger is the Pro package of the scene changer family. Everything below applies to it as it does to SimpleSceneChanger; the section at the end says what it adds. The two install side by side under their own names and find each other in the same fleet.
 
 ## Contents
 1. Quick start
@@ -280,8 +284,6 @@ Setting the Select parameter from Python is equivalent to using the dialog.
   code edit or reinit mid-transition cannot leave a scene cooking forever.
 - Unload never touches locked operators, so a frozen (locked) TOP inside a scene survives.
 
-## The Pro package
-
-ProSceneChanger is the Pro package of this family: per-scene modes, fade times and easing, a cue table, CHOP output blending and fleet follow, at the Pro tier, installed under its own name beside this one. Both take part in the same fleet.
+## What the Pro package adds
 
 The full manual for both builds, with every parameter, lives on the product site: https://simplescenechanger.vercel.app/

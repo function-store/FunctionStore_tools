@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.24",
+ "release": "v3.2.25",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -8622,6 +8622,643 @@
     "page": "About"
    }
   ],
+  "FNS_ProSceneChanger": [
+   {
+    "name": "Active",
+    "label": "Active",
+    "style": "Toggle",
+    "help": "Master switch. Off: no transitions happen, every scene COMP is allowed to cook and node colours are restored. On: reconciles to the current Select.",
+    "default": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Select",
+    "label": "Select",
+    "style": "Int",
+    "help": "Index of the scene to show, counting from 0; Loop Type decides what happens outside 0..Num Scenes-1. Drive it with a constant, an expression, a bind or a CHOP export. A change during a running transition restarts it toward the new scene; choosing the visible scene cancels it.",
+    "default": 0,
+    "page": "Custom"
+   },
+   {
+    "name": "Selectmenu",
+    "label": "Select Menu",
+    "style": "Menu",
+    "help": "Pick the scene by name. Mirrors Select when Select is a constant or bind.",
+    "default": "",
+    "menu": [],
+    "page": "Custom"
+   },
+   {
+    "name": "Looptype",
+    "label": "Loop Type",
+    "style": "Menu",
+    "help": "How Select values outside 0..Num Scenes-1 are handled: Clamp holds at the ends, Loop wraps around (modulo), Zigzag bounces back and forth.",
+    "default": "loop",
+    "menu": [
+     {
+      "name": "clamp",
+      "label": "Clamp"
+     },
+     {
+      "name": "loop",
+      "label": "Loop"
+     },
+     {
+      "name": "zigzag",
+      "label": "Zigzag"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Currentselect",
+    "label": "Current Select",
+    "style": "Menu",
+    "help": "Read-only: the scene currently visible (updated when a transition completes).",
+    "default": "",
+    "readonly": true,
+    "menu": [],
+    "page": "Custom"
+   },
+   {
+    "name": "Numscenes",
+    "label": "Num Scenes",
+    "style": "Int",
+    "help": "Read-only: the number of scenes, one per Inputs block (a wired connector or a TOP / COMP reference).",
+    "default": 0,
+    "readonly": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Progress",
+    "label": "Progress",
+    "style": "Float",
+    "help": "Read-only: 0-1 progress of the running transition (across both halves in Fade Through Black).",
+    "default": 0.0,
+    "readonly": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Finishtransition",
+    "label": "Finish Transition",
+    "style": "Pulse",
+    "help": "Complete the switch under way right now: a running crossfade or fade lands on its target, a Pre-Roll cuts straight to the scene it was warming, and a half-moved A/B Fader completes. Does nothing when idle. Python: FinishTransition().",
+    "page": "Custom"
+   },
+   {
+    "name": "Switchmode",
+    "label": "Switch Mode",
+    "style": "Menu",
+    "help": "How a scene change is performed. Crossfade blends over Crossfade Length; Fade Through Black fades the old scene out (Fade Out Time) then the new in (Fade In Time); Cut switches instantly; the two A/B Fader modes are driven by the Fader parameter like a DJ crossfader: the end the Fader rests at shows the current scene, moving it to the other end switches to the Select scene, and that end becomes the new resting end.",
+    "default": "cross",
+    "section": true,
+    "menu": [
+     {
+      "name": "cross",
+      "label": "Crossfade"
+     },
+     {
+      "name": "fade",
+      "label": "Fade Through Black"
+     },
+     {
+      "name": "cut",
+      "label": "Cut"
+     },
+     {
+      "name": "manual",
+      "label": "A/B Fader Crossfade"
+     },
+     {
+      "name": "manualfade",
+      "label": "A/B Fader Through Black"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Length",
+    "label": "Crossfade Length",
+    "style": "Float",
+    "help": "Duration in seconds of a crossfade (Switch Mode = Crossfade). A scene COMP with a 'Fadeintime' custom parameter overrides it for that scene.",
+    "default": 10.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Easing",
+    "label": "Easing",
+    "style": "Menu",
+    "help": "Easing curve for timed transitions: the crossfade, and both halves of Fade Through Black. Not used by the A/B Fader modes. A scene COMP can override it with Fadeincurve / Fadeoutcurve custom parameters.",
+    "default": "Linear",
+    "menu": [
+     {
+      "name": "Linear",
+      "label": "Linear"
+     },
+     {
+      "name": "InSine",
+      "label": "InSine"
+     },
+     {
+      "name": "OutSine",
+      "label": "OutSine"
+     },
+     {
+      "name": "InOutSine",
+      "label": "InOutSine"
+     },
+     {
+      "name": "InQuad",
+      "label": "InQuad"
+     },
+     {
+      "name": "OutQuad",
+      "label": "OutQuad"
+     },
+     {
+      "name": "InOutQuad",
+      "label": "InOutQuad"
+     },
+     {
+      "name": "InCubic",
+      "label": "InCubic"
+     },
+     {
+      "name": "OutCubic",
+      "label": "OutCubic"
+     },
+     {
+      "name": "InOutCubic",
+      "label": "InOutCubic"
+     },
+     {
+      "name": "InQuart",
+      "label": "InQuart"
+     },
+     {
+      "name": "OutQuart",
+      "label": "OutQuart"
+     },
+     {
+      "name": "InOutQuart",
+      "label": "InOutQuart"
+     },
+     {
+      "name": "InQuint",
+      "label": "InQuint"
+     },
+     {
+      "name": "OutQuint",
+      "label": "OutQuint"
+     },
+     {
+      "name": "InOutQuint",
+      "label": "InOutQuint"
+     },
+     {
+      "name": "InExpo",
+      "label": "InExpo"
+     },
+     {
+      "name": "OutExpo",
+      "label": "OutExpo"
+     },
+     {
+      "name": "InOutExpo",
+      "label": "InOutExpo"
+     },
+     {
+      "name": "InCirc",
+      "label": "InCirc"
+     },
+     {
+      "name": "OutCirc",
+      "label": "OutCirc"
+     },
+     {
+      "name": "InOutCirc",
+      "label": "InOutCirc"
+     },
+     {
+      "name": "InBack",
+      "label": "InBack"
+     },
+     {
+      "name": "OutBack",
+      "label": "OutBack"
+     },
+     {
+      "name": "InOutBack",
+      "label": "InOutBack"
+     },
+     {
+      "name": "InElastic",
+      "label": "InElastic"
+     },
+     {
+      "name": "OutElastic",
+      "label": "OutElastic"
+     },
+     {
+      "name": "InOutElastic",
+      "label": "InOutElastic"
+     },
+     {
+      "name": "InBounce",
+      "label": "InBounce"
+     },
+     {
+      "name": "OutBounce",
+      "label": "OutBounce"
+     },
+     {
+      "name": "InOutBounce",
+      "label": "InOutBounce"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Fadeouttime",
+    "label": "Fade Out Time",
+    "style": "Float",
+    "help": "Seconds to fade the outgoing scene to black in Fade Through Black mode. A scene COMP with its own 'Fadeouttime' custom parameter overrides this.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Fadeintime",
+    "label": "Fade In Time",
+    "style": "Float",
+    "help": "Seconds to fade the incoming scene up from black in Fade Through Black mode. A scene COMP with its own 'Fadeintime' custom parameter overrides this (in Crossfade mode it overrides Crossfade Length).",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Fadestyle",
+    "label": "Fade Style",
+    "style": "Menu",
+    "help": "What 'black' means in Fade Through Black mode: To Black drives RGB to black and keeps alpha (opaque black); To Transparent fades opacity so the output becomes transparent.",
+    "default": "black",
+    "menu": [
+     {
+      "name": "black",
+      "label": "To Black (keep alpha)"
+     },
+     {
+      "name": "transparent",
+      "label": "To Transparent"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Fader",
+    "label": "A/B Fader",
+    "style": "Float",
+    "help": "Manual transition control in the A/B Fader modes. Whichever end (0 or 1) the Fader rests at is the current scene. Set Select to the next scene, then move the Fader to the opposite end: the blend (or the fade through black) follows the Fader and the switch completes on arrival, so the opposite end becomes the new resting end. Turning back before arriving cancels; changing Select mid-way re-targets. Drive it from a physical fader or a CHOP.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Auto",
+    "label": "Auto Advance",
+    "style": "Toggle",
+    "help": "Switch to the next scene every Interval. Off pauses the countdown where it is; choosing a scene by hand (Select, Select Menu, Switch()) restarts it from that scene.",
+    "default": false,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Autoadvanceon",
+    "label": "Advance On",
+    "style": "Menu",
+    "help": "Timer: switch every Interval. A/B Fader: each time the A/B Fader completes a switch, Select moves to the next scene (in Order and Direction), so the next push of the Fader goes there. Only in the two A/B Fader modes.",
+    "default": "timer",
+    "menu": [
+     {
+      "name": "timer",
+      "label": "Timer"
+     },
+     {
+      "name": "fader",
+      "label": "A/B Fader"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Autointerval",
+    "label": "Interval",
+    "style": "Float",
+    "help": "Seconds between switches, the transition included: every Interval the next scene starts to arrive.",
+    "default": 10.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Autoorder",
+    "label": "Order",
+    "style": "Menu",
+    "help": "Sequential steps through the scenes in Direction; Loop Type decides the ends (Clamp stops, Loop wraps, Zigzag turns round). Random shows every other scene once, in a shuffled order, before any repeats.",
+    "default": "sequential",
+    "menu": [
+     {
+      "name": "sequential",
+      "label": "Sequential"
+     },
+     {
+      "name": "random",
+      "label": "Random"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Autodirection",
+    "label": "Direction",
+    "style": "Menu",
+    "help": "Sequential order: step to the next (Forward) or previous (Back) scene index.",
+    "default": "forward",
+    "menu": [
+     {
+      "name": "forward",
+      "label": "Forward"
+     },
+     {
+      "name": "back",
+      "label": "Back"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Autoseed",
+    "label": "Random Seed",
+    "style": "Int",
+    "help": "Random order: the same seed always gives the same sequence of shuffles.",
+    "default": 0,
+    "page": "Custom"
+   },
+   {
+    "name": "Autonext",
+    "label": "Next Switch In",
+    "style": "Float",
+    "help": "Read-only: seconds until Auto Advance switches.",
+    "default": 0.0,
+    "readonly": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Res",
+    "label": "Res",
+    "style": "XYZW",
+    "help": "Output resolution of the changer: width and height in pixels.",
+    "size": 2,
+    "default": 1920.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Inputs",
+    "label": "Inputs",
+    "style": "Sequence",
+    "help": "The scenes, one block each. Add blocks for more scenes; each block is one scene index, counting from 0.",
+    "default": 0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Inputs0top",
+    "label": "TOP",
+    "style": "OP",
+    "help": "Scene source: a TOP is shown as it is; a COMP shows its Out TOP, otherwise a display-flagged TOP inside it, otherwise its right-most TOP. A reference takes precedence over a wire on the same input connector.",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Inputs1top",
+    "label": "TOP",
+    "style": "OP",
+    "help": "Scene source: a TOP is shown as it is; a COMP shows its Out TOP, otherwise a display-flagged TOP inside it, otherwise its right-most TOP. A reference takes precedence over a wire on the same input connector.",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Inputs2top",
+    "label": "TOP",
+    "style": "OP",
+    "help": "Scene source: a TOP is shown as it is; a COMP shows its Out TOP, otherwise a display-flagged TOP inside it, otherwise its right-most TOP. A reference takes precedence over a wire on the same input connector.",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Controlcook",
+    "label": "Control Cook",
+    "style": "Toggle",
+    "help": "When on, only the scenes that need to cook are allowed to: the visible one, the incoming one during a transition, one warming up for its Pre-Roll and ones still in their Outro. Every other scene COMP has cooking disabled. Bare TOP scenes are never touched.",
+    "default": false,
+    "page": "Cooking"
+   },
+   {
+    "name": "Preroll",
+    "label": "Pre-Roll (start cooking before switch)",
+    "style": "Float",
+    "help": "Seconds the target scene cooks before its transition starts. When Select changes, the target COMP is allowed to cook immediately and the switch itself is delayed by this much, so feedback loops, movies or particle systems are warm when they appear. Changing Select again during the pre-roll re-targets it; choosing the visible scene cancels it. In the A/B Fader modes any value above 0 simply warms the chosen scene as soon as Select changes.",
+    "default": 0.0,
+    "page": "Cooking"
+   },
+   {
+    "name": "Outro",
+    "label": "Outro (keep cooking after switch)",
+    "style": "Float",
+    "help": "Seconds the outgoing scene keeps cooking after the switch has completed, so an exit animation can finish off-screen. When the time is up the scene is uncooked and unloaded as usual (unless it has become visible again).",
+    "default": 0.0,
+    "page": "Cooking"
+   },
+   {
+    "name": "Unload",
+    "label": "Unload",
+    "style": "Toggle",
+    "help": "When a scene stops cooking, release its CPU/GPU memory (TOPs, CHOPs, SOPs, movie caches) and free POP GPU memory, paced by Unload Budget.",
+    "default": false,
+    "section": true,
+    "page": "Cooking"
+   },
+   {
+    "name": "Unloadmethod",
+    "label": "Unload Method",
+    "style": "Menu",
+    "help": "How an uncooked scene's memory is released. Progressive uses COMP.progressiveUnload() paced by Unload Budget and covers every node type including POPs. Immediate calls unload() on each unlocked TOP in a single frame.",
+    "default": "progressive",
+    "menu": [
+     {
+      "name": "progressive",
+      "label": "Progressive (COMP.progressiveUnload)"
+     },
+     {
+      "name": "legacy",
+      "label": "Immediate per-TOP unload"
+     }
+    ],
+    "page": "Cooking"
+   },
+   {
+    "name": "Unloadbudget",
+    "label": "Unload Budget (ms/frame)",
+    "style": "Float",
+    "help": "Milliseconds per frame spent releasing an uncooked scene's CPU/GPU memory (COMP.progressiveUnload). Spreads the unload over several frames so a heavy scene never hitches the frame it stops cooking. 0 unloads everything in a single frame.",
+    "default": 2.0,
+    "page": "Cooking"
+   },
+   {
+    "name": "Reverseinputs",
+    "label": "Reverse Inputs",
+    "style": "Pulse",
+    "help": "Reconnect the wired inputs in reverse order. Applies to inputs wired into the connectors, not to the Inputs sequence TOP references.",
+    "page": "Inputs"
+   },
+   {
+    "name": "Randomizeinputs",
+    "label": "Randomize Inputs",
+    "style": "Pulse",
+    "help": "Reconnect the wired inputs in a random order.",
+    "page": "Inputs"
+   },
+   {
+    "name": "Nodeytoorder",
+    "label": "NodeY to Order (reconnect)",
+    "style": "Pulse",
+    "help": "Reconnect the wired inputs so the input order matches their top-to-bottom position in the network editor.",
+    "page": "Inputs"
+   },
+   {
+    "name": "Ordertonodey",
+    "label": "Order to NodeY (swap)",
+    "style": "Pulse",
+    "help": "Swap the wired inputs' node positions so top-to-bottom matches the input order (input 0 on top).",
+    "page": "Inputs"
+   },
+   {
+    "name": "Positiontoorder",
+    "label": "^ automatic",
+    "style": "Toggle",
+    "help": "Keep NodeY to Order applied automatically: whenever a wired input COMP is moved in the network editor, the inputs are reconnected to match.",
+    "default": false,
+    "page": "Inputs"
+   },
+   {
+    "name": "Aligninputs",
+    "label": "Align Inputs (retoggle)",
+    "style": "Toggle",
+    "help": "While on, the wired input COMPs are kept stacked in one column beside the changer (input 0 on top) using Alignment Mode and Adjust Offset; changing either re-aligns immediately, and so does a wiring change. Turn it off and on again to re-align after moving things by hand.",
+    "default": false,
+    "section": true,
+    "page": "Inputs"
+   },
+   {
+    "name": "Alignmentmode",
+    "label": "Alignment Mode",
+    "style": "Menu",
+    "help": "Where the column sits relative to the changer: Top aligns the first input with the changer's top edge, Center centres the column, Bottom aligns the last input with the changer's bottom edge.",
+    "default": "Center",
+    "menu": [
+     {
+      "name": "Top",
+      "label": "Top"
+     },
+     {
+      "name": "Center",
+      "label": "Center"
+     },
+     {
+      "name": "Bottom",
+      "label": "Bottom"
+     }
+    ],
+    "page": "Inputs"
+   },
+   {
+    "name": "Adjust",
+    "label": "Adjust Offset (X, Y, YGap)",
+    "style": "XYZW",
+    "help": "Align Inputs offsets in network units: X offset of the column from the changer, Y offset, and the vertical gap between inputs.",
+    "size": 3,
+    "default": -500.0,
+    "page": "Inputs"
+   },
+   {
+    "name": "Colorize",
+    "label": "Colorize Scenes",
+    "style": "Toggle",
+    "help": "Tint the scene COMPs in the network editor: the visible (and incoming) scene gets On Color, the others Off Color. Original colours are restored when turned off.",
+    "default": true,
+    "section": true,
+    "page": "Inputs"
+   },
+   {
+    "name": "Oncolor",
+    "label": "On Color",
+    "style": "RGBA",
+    "help": "Node colour of the visible scene COMP while Colorize is on.",
+    "size": 3,
+    "default": 0.1,
+    "page": "Inputs"
+   },
+   {
+    "name": "Offcolor",
+    "label": "Off Color",
+    "style": "RGBA",
+    "help": "Node colour of the idle scene COMPs while Colorize is on.",
+    "size": 3,
+    "default": 0.4,
+    "page": "Inputs"
+   },
+   {
+    "name": "Keeporiginal",
+    "label": "Off = Keep Original Color",
+    "style": "Toggle",
+    "help": "When on, idle scenes get their own original node colour back instead of Off Color. The original colour of each scene COMP is remembered the first time it is tinted, so it can always be restored.",
+    "default": false,
+    "page": "Inputs"
+   },
+   {
+    "name": "Callbacks",
+    "label": "Callbacks",
+    "style": "DAT",
+    "help": "The DAT holding your callback functions (onPrerollStart, onTransitionStart, onSelectionChange, ...). It points at the built-in template, which does nothing, until you use Create Callbacks.",
+    "default": "",
+    "page": "Callbacks"
+   },
+   {
+    "name": "Createcallbacks",
+    "label": "Create Callbacks",
+    "style": "Pulse",
+    "help": "Create an editable callbacks DAT next to the changer, with every callback documented inside, and point Callbacks at it.",
+    "page": "Callbacks"
+   },
+   {
+    "name": "Opendocs",
+    "label": "Open Documentation",
+    "style": "Pulse",
+    "help": "Open the built-in documentation (the 'help' Text DAT inside the component) in a viewer window.",
+    "page": "About"
+   },
+   {
+    "name": "Openauthor",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open the author's page in your browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Version of the SimpleSceneChanger package. FNSTools compares it to the published release to offer updates.",
+    "default": "0.1.0",
+    "page": "About"
+   }
+  ],
   "FNS_QuickCollapse": [
    {
     "name": "Active",
@@ -13455,6 +14092,7 @@
   "FNS_PreviewPanel": [
    "panebar"
   ],
+  "FNS_ProSceneChanger": [],
   "FNS_QuickCollapse": [],
   "FNS_QuickPane": [],
   "FNS_QuickTime": [

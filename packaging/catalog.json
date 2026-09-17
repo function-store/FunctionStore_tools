@@ -760,21 +760,23 @@
    "category": "Media & Output",
    "description": "Scene changer for TOP outputs: wire your scenes in, then cut, fade or ease between them by select, timer, A/B fader or CHOP, with cooking control so only the scenes on screen cook. Base and Pro instances find each other and can follow a leader across screens.",
    "placement": "pane",
-   "variants": {
-    "pro": {
-     "summary": "adds per-scene modes, fade times and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, and fleet follow with scene offset and sync timing.",
-     "withhold": [
-      "ExtSimpleSceneChangerPro.py"
-     ],
-     "access": "8291595"
-    }
-   },
    "fits": [
     "live",
     "show",
     "visual"
    ],
    "access": "8323905"
+  },
+  "FNS_ProSceneChanger": {
+   "category": "Media & Output",
+   "description": "The Pro scene changer: everything SimpleSceneChanger does, plus per-scene modes, fade times and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, and fleet follow with scene offset and sync timing. Runs beside the simple one in the same fleet.",
+   "placement": "pane",
+   "fits": [
+    "live",
+    "show",
+    "visual"
+   ],
+   "access": "8291595"
   },
   "FNS_SwitchTools": {
    "category": "Network",
