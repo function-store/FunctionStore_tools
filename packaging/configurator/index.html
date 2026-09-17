@@ -215,6 +215,12 @@ a.help:hover { color: var(--accent); }
 .chip.hint {
   background: var(--warn-dim); border-color: rgba(251,146,60,0.3); color: var(--warn);
 }
+/* a priced family product: a trial, then its own licence -- not the
+   Patreon gate (that chip is .plus), and not free either */
+.chip.trial {
+  background: transparent; border-color: rgba(251,191,36,0.35); color: var(--accent);
+}
+a.chip.trial:hover { border-color: var(--accent); color: var(--accent-bright); }
 /* state chips (the updates list, install reports) */
 .chip.ok { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.3); color: var(--green); }
 .chip.warn { background: var(--warn-dim); border-color: rgba(253,186,116,0.35); color: var(--warn); }
@@ -1035,6 +1041,10 @@ function fnsBoot() {
   // gated; absent means free, which is what a manifest published before
   // gating existed carries.
   function isPlus(p) { return !!p.access && p.access !== 'free'; }
+  // A priced family product (TDXMap): installs for everyone, so it is
+  // not Patreon-gated here, but it is not free either -- a trial, then
+  // its own licence. The manifest carries the words; this only shows them.
+  function pricingOf(p) { return p.pricing && p.pricing.summary ? p.pricing : null; }
 
   // The name a reader sees: the manifest's `title` (build_manifest.PublicName,
   // the package name minus a leading FNS_). `name` stays the identity in
@@ -1215,6 +1225,13 @@ function fnsBoot() {
       }
       pl.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pl);
+    }
+    var pr = pricingOf(p);
+    if (pr) {
+      var pc = pr.url ? docsLink(pr.url, pr.summary, 'chip trial') : chip(pr.summary, 'trial');
+      if (pr.detail) pc.setAttribute('data-tip', pr.detail);
+      pc.addEventListener('click', function (e) { e.stopPropagation(); });
+      chips.appendChild(pc);
     }
     // a pane-placed package is a reusable component: it spawns into the
     // network you are working in, not into the toolkit container
@@ -1444,7 +1461,8 @@ function fnsBoot() {
       // package list could not answer before.
       var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
       return (p.name + ' ' + titleOf(p) + ' ' + (p.description || '') + ' '
-              + (p.category || '') + ' ' + surf)
+              + (p.category || '') + ' ' + surf
+              + (pricingOf(p) ? ' trial ' + pricingOf(p).summary : ''))
              .toLowerCase().indexOf(q) !== -1;
     }
     listEl.textContent = '';
@@ -1653,8 +1671,15 @@ function fnsBoot() {
     try { d.showModal(); } catch (e) { d.setAttribute('open', ''); }
   }
   // What a starting point may select: everything this account can install.
-  function autoPick(names) {
-    return names.filter(function (n) { return !lockedPatreon([n]).length; });
+  // A family product (its own product, its own licence: catalog `source`
+  // or `pricing`) is never ticked FOR the user (owner, 2026-09-17); they
+  // tick it themselves. Set up like last time passes `own`: that list is
+  // the user's, so what they had stays in.
+  function handPick(p) { return !!(p && (p.foreign || pricingOf(p))); }
+  function autoPick(names, own) {
+    return names.filter(function (n) {
+      return !lockedPatreon([n]).length && (own || !handPick(byName[n]));
+    });
   }
   // The welcome leads with what is free (owner, 2026-09-16: the first step
   // must not discourage). Every number and tier label is read from the
@@ -1665,34 +1690,33 @@ function fnsBoot() {
     if (!counts || !authEl) return;
     refreshAccountOnce();
     var plus = tools.filter(isPlus);
-    var free = tools.length - plus.length;
+    var priced = tools.filter(function (p) { return !isPlus(p) && pricingOf(p); });
+    var free = tools.length - plus.length - priced.length;
     var locked = plus.filter(function (p) { return !installable(p.name); });
     counts.textContent = '';
     authEl.textContent = '';
     authEl.hidden = true;
     counts.hidden = false;
+    // One sentence of counts, no names (owner, 2026-09-17: the earlier
+    // one was verbose, and more products will follow TDXMap's scheme):
+    // "38 tools are free, 1 has a free trial, and 7 come with Patreon."
     var lead = document.createElement('b');
-    if (!plus.length) {
-      lead.textContent = 'All ' + free + ' tools are free';
-      counts.appendChild(lead);
-      counts.appendChild(document.createTextNode(', and they all install from here.'));
-      return;
+    var parts = [];
+    if (priced.length) {
+      parts.push(priced.length + (priced.length === 1 ? ' has' : ' have') + ' a free trial');
     }
-    if (!locked.length) {
-      lead.textContent = free + ' tools are free';
-      counts.appendChild(lead);
-      counts.appendChild(document.createTextNode(', and your Patreon tier adds '
-        + plus.length + ' more. All ' + tools.length + ' are ready to install.'));
-      return;
+    if (plus.length) {
+      parts.push(locked.length
+        ? locked.length + ' come with Patreon'
+        : 'your Patreon tier adds ' + plus.length);
     }
-    var tier = lowestTier(locked);
-    var examples = locked.slice(0, 3).map(titleOf);
-    lead.textContent = free + ' tools are free';
+    lead.textContent = (parts.length ? '' : 'All ') + free + ' tools are free';
     counts.appendChild(lead);
-    counts.appendChild(document.createTextNode(', and they all install from here. '
-      + locked.length + ' more come with Patreon' + (tier ? ' from the ' + tier + ' tier' : '')
-      + (locked.length > examples.length ? ', among them ' : ': ')
-      + joinNames(examples) + '.'));
+    var rest = parts.length > 1
+      ? parts.slice(0, -1).join(', ') + ', and ' + parts[parts.length - 1]
+      : parts.join('');
+    counts.appendChild(document.createTextNode((rest ? ', ' + rest : '') + '.'));
+    if (!locked.length) return;
     authEl.hidden = false;
     var join = authActions.join || (FNS_DOCS + '/patreon/');
     if (hasAuthRail && !account && authActions.signIn) {
@@ -1954,7 +1978,10 @@ function fnsBoot() {
     prog.textContent = 'Your set';
     // Counted on what the set TICKS: a Patreon match the account cannot
     // install starts unticked and is named in the box below as "more".
-    var readyMain = split.main.filter(function (r) { return installable(r.name); }).length;
+    // A family product in the set is offered unticked too: never picked
+    // for the reader, only by them.
+    function ticks(r) { return installable(r.name) && !handPick(byName[r.name]); }
+    var readyMain = split.main.filter(ticks).length;
     prompt.textContent = split.main.length
       ? (readyMain ? readyMain + ' tool' + (readyMain === 1 ? '' : 's') + ' for how you work'
                    : 'These fit how you work')
@@ -1997,6 +2024,9 @@ function fnsBoot() {
         nm.appendChild(chip(tierLabel(p.access)
           ? 'Patreon:' + tierLabel(p.access) : 'Patreon', 'plus'));
       }
+      if (pricingOf(p)) {
+        nm.appendChild(chip(pricingOf(p).summary, 'trial'));
+      }
       [['help_url', 'docs ↗'], ['homepage', 'site ↗'], ['changelog_url', 'changelog ↗']]
         .forEach(function (k) {
           if (!p[k[0]]) return;
@@ -2023,7 +2053,7 @@ function fnsBoot() {
     // A Patreon tool the reader cannot get yet is still offered, unticked:
     // ticked by default it read as part of the install for a signed-out
     // reader, who then watched an install that could never include it.
-    split.main.forEach(function (r) { res.appendChild(resultRow(r, installable(r.name))); });
+    split.main.forEach(function (r) { res.appendChild(resultRow(r, ticks(r))); });
     // A Plus tool in the set is the moment a reader would otherwise be
     // surprised at install time. Say what it is and what happens, and
     // offer the one-click way out. Counted on what is NOT installable
@@ -2120,7 +2150,7 @@ function fnsBoot() {
       var gone = last.packages.filter(function (n) { return !byName[n]; }).length;
       var when = String(last.when || '').slice(0, 10);
       document.getElementById('pre-last-desc').textContent =
-        autoPick(lastNames).length + ' tools, as in ' + (last.project || 'your last project') +
+        autoPick(lastNames, true).length + ' tools, as in ' + (last.project || 'your last project') +
         (when ? ' on ' + when : '') +
         (gone ? ' (' + gone + ' no longer in the catalog)' : '') + '.';
     }
@@ -2157,16 +2187,16 @@ function fnsBoot() {
     // this account cannot install yet (owner, 2026-09-16). `explicit` is a
     // list whose ticks the reader made, the questionnaire's result, and
     // passes through as it is.
-    function choose(names, bind, explicit) {
+    function choose(names, bind, explicit, own) {
       wantBind = bind || null;
-      applyPreset(explicit ? names : autoPick(names)); w.close(); dismiss();
+      applyPreset(explicit ? names : autoPick(names, own)); w.close(); dismiss();
     }
     // "Like last time" is the one card that IS the confirmation: the list
     // is the user's own, from a project they saved, so the click plans
     // and installs in one go instead of parking them on a review dialog.
     // Served only; the site has no server and never shows this card.
     function installNow(names, bind) {
-      choose(names, bind);
+      choose(names, bind, false, true);
       if (!served || locked) return;
       setStep(3);
       installPolls = 0; installCancelled = false;

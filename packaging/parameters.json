@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.21",
+ "release": "v3.2.22",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -8943,6 +8943,14 @@
     "label": "Show Notes After Update",
     "style": "Toggle",
     "help": "After an update lands, the next project open shows a one-time popup with that release's notes. Turn this off to skip the popup; the notes stay readable on the Hub's Updates tab. Roams with your settings.",
+    "default": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Keepstore",
+    "label": "Keep the Whole Release in the Store",
+    "style": "Toggle",
+    "help": "After an install or an update pass, also download the rest of the release into this machine's store (about 12 MB), so Pick Tools works offline and everything the store can offer is already here. Off: only what you install is fetched.",
     "default": true,
     "page": "Custom"
    },

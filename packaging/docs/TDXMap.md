@@ -1,6 +1,6 @@
 ---
 package: TDXMap
-summary: 'MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Its own product, installable from the picker.'
+summary: 'MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Its own product with its own licence, a 14-day trial then Base or Pro, installable from the picker.'
 features:
   - name: What it is
     anchor: what-it-is
@@ -38,7 +38,9 @@ TDXMap keeps itself current. The toolkit's Updates view lists it as
 TDXMap preferences footer, which downloads the new build and reloads it
 in place.
 
-The free tier needs a one-time sign-in; Pro features unlock with a
-membership or a licence key, and a 14-day Pro trial is available inside
-the tool. See [licensing](https://tdxmap.functionstore.xyz/license/) on
-the product site.
+TDXMap is not free. A 14-day trial of Pro runs once per computer; after
+it the mapping editor needs a Function Store Patreon membership at the
+Base or Pro tier, or a Gumroad lifetime key. Live MIDI to parameters
+keeps working without one, and your mappings are kept. See
+[licensing](https://tdxmap.functionstore.xyz/license/) on the product
+site.

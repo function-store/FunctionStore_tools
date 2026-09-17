@@ -743,7 +743,12 @@
     "live",
     "show",
     "params"
-   ]
+   ],
+   "pricing": {
+    "summary": "14-day trial, then Base or Pro",
+    "detail": "A free 14-day trial of Pro, once per computer. After it the mapping editor needs a Function Store Patreon membership at the Base or Pro tier, or a Gumroad lifetime key; live MIDI to parameters keeps working without one, and your mappings are kept.",
+    "url": "https://tdxmap.functionstore.xyz/license/"
+   }
   }
  }
 }

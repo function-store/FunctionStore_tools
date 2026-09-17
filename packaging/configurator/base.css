@@ -197,6 +197,12 @@ a.help:hover { color: var(--accent); }
 .chip.hint {
   background: var(--warn-dim); border-color: rgba(251,146,60,0.3); color: var(--warn);
 }
+/* a priced family product: a trial, then its own licence -- not the
+   Patreon gate (that chip is .plus), and not free either */
+.chip.trial {
+  background: transparent; border-color: rgba(251,191,36,0.35); color: var(--accent);
+}
+a.chip.trial:hover { border-color: var(--accent); color: var(--accent-bright); }
 /* state chips (the updates list, install reports) */
 .chip.ok { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.3); color: var(--green); }
 .chip.warn { background: var(--warn-dim); border-color: rgba(253,186,116,0.35); color: var(--warn); }

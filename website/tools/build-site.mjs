@@ -256,6 +256,15 @@ const unlockRoute = (name) => {
 const tierMark = (name) => (tierOf(name) ? `Patreon:${tierOf(name)}` : 'Patreon');
 /** The row marker for one package: PLUS_MARK with the tier in it. */
 const plusMark = (name) => `<span class="plus-mark" title="Unlocks with ${esc(unlockRoute(name))}">${esc(tierMark(name))}</span>`;
+// A priced family product (catalog `pricing`): not Patreon-gated, installs
+// for everyone, and not free -- a trial, then its own licence. The words
+// are the catalog's; the site only shows them beside the Patreon mark.
+const pricingOf = (name) => (curated[name] && curated[name].pricing && curated[name].pricing.summary)
+  ? curated[name].pricing : null;
+const trialMark = (name) => {
+  const pr = pricingOf(name);
+  return pr ? `<span class="plus-mark trial" title="${esc(pr.detail || pr.summary)}">${esc(pr.summary)}</span>` : '';
+};
 
 // Curated site content: the other Function Store products. Site-only —
 // packaging/ never reads it. One source, injected into both the landing page
@@ -850,7 +859,7 @@ function sidebar(currentSlug) {
       .filter((p) => p.category === cat)
       .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
     const items = inCat
-      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}</a></li>`)
+      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${trialMark(p.name)}</a></li>`)
       .join('\n');
     if (!items) return '';
     return sideGroup(GLYPH[cat] || '·', cat, items, inCat.length);
@@ -918,6 +927,10 @@ for (const p of pages) {
   if (isPlus(p.name)) {
     badges.push(`<a class="badge badge-cat" href="/patreon/" title="Unlocks with ${esc(unlockRoute(p.name))}">◆ ${esc(tierMark(p.name))}</a>`);
   }
+  const pricing = pricingOf(p.name);
+  if (pricing) {
+    badges.push(`<a class="badge badge-cat" href="${esc(pricing.url || p.homepage || '#')}" target="_blank" rel="noopener" title="${esc(pricing.detail || '')}">${esc(pricing.summary)}</a>`);
+  }
   // Where it shows up, before anything else about it: this is the question
   // a reader scanning the docs actually has.
   for (const sid of surfacesOf(p.name)) {
@@ -969,6 +982,14 @@ for (const p of pages) {
     <p class="plus-note-actions">
       <a class="btn btn-primary" href="${PATREON}" target="_blank" rel="noopener">Join on Patreon →</a>
       <a class="btn btn-secondary" href="/patreon/">How unlocking works →</a>
+    </p>
+  </div>` : '';
+  // A priced family product says what it costs on its own page too, in
+  // the catalog's words, with the way to its own licence page.
+  const trialNote = !isPlus(p.name) && pricing ? `<div class="plus-note">
+    <p><strong>${esc(p.title)} is a family product with its own licence.</strong> ${esc(pricing.detail || pricing.summary)}</p>
+    <p class="plus-note-actions">
+      <a class="btn btn-secondary" href="${esc(pricing.url || p.homepage || '#')}" target="_blank" rel="noopener">Licensing →</a>
     </p>
   </div>` : '';
 
@@ -1051,7 +1072,7 @@ ${sidebar(p.slug)}
   <h1>${esc(p.title)}</h1>
   ${p.description ? `<p class="lede">${esc(p.description)}</p>` : ''}
   <p class="badges">${badges.join(' ')}</p>
-  ${plusNote}
+  ${plusNote}${trialNote}
   ${undocumented}
   ${video}
   ${onThisPage}
@@ -1179,7 +1200,7 @@ const indexGroups = displayCategories.map((cat) => {
     .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }))
     .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/" data-surfaces="${
         esc(surfacesOf(p.name).join(' ')) || 'none'}">
-        <strong>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}</strong>
+        <strong>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${trialMark(p.name)}</strong>
         <span>${esc(p.description || p.meta.summary)}</span>
       </a>`).join('\n');
   if (!items) return '';
@@ -1269,7 +1290,7 @@ const grid = displayCategories.map((cat) => {
     .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
   const items = inCat.map((p) => `          <div class="feat">
             <div class="feat-icon" aria-hidden="true">${GLYPH[cat] || '·'}</div>
-            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.title)}</a>${isPlus(p.name) ? plusMark(p.name) : ''}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
+            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.title)}</a>${isPlus(p.name) ? plusMark(p.name) : ''}${trialMark(p.name)}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
           </div>`).join('\n');
   if (!items) return '';
   const plusHere = inCat.filter((p) => isPlus(p.name)).length;
