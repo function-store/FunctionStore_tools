@@ -287,10 +287,6 @@ a.chip.plus:hover { border-color: var(--accent); }
 .sum .n { font-size: 15px; font-weight: 700; }
 .sum .muted { font-size: 13px; color: var(--text-faint); }
 .sum-count { display: flex; align-items: baseline; gap: 8px; }
-/* the FNS tab switch: shown only while a family operator is ticked */
-.famopt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
-  color: var(--text-dim); cursor: pointer; white-space: nowrap; }
-.famopt input { margin: 0; accent-color: var(--accent); }
 
 /* ── dialogs ── */
 dialog {
@@ -521,7 +517,6 @@ body.app .bar-act { display: flex; align-items: center; gap: 10px; margin-left: 
 body.app .bar-act .n { font-size: 14px; font-weight: 700; }
 body.app .bar-act .muted { font-size: 12px; color: var(--text-faint); white-space: nowrap; }
 body.app .bar-act #deps { font-size: 12px; color: var(--text-faint); white-space: nowrap; }
-body.app .bar-act .famopt { font-size: 12px; }
 body.app .plusrail .rail-acc { display: inline-flex; align-items: center; gap: 6px; }
 body.app .plusrail .rail-acc:has(> [hidden]) { display: none; }
 body.app .plusrail .rail-acc:has(> .acct:empty) { display: none; }
@@ -540,6 +535,15 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 /* FNS:UIBASE:END */
 
   /* ── page-specific: the storefront shell ── */
+
+  /* The FNS tab switch, shown only while a family operator is ticked.
+     Page-specific, and it lives DOWN HERE on purpose: it spent v3.2.30
+     to v3.2.33 inside the FNS:UIBASE block above, which sync_base.py
+     regenerates wholesale from base.css, so the next sync deleted it. */
+  .famopt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
+    color: var(--text-dim); cursor: pointer; white-space: nowrap; }
+  .famopt input { margin: 0; accent-color: var(--accent); }
+  body.app .bar-act .famopt { font-size: 12px; }
   html { scroll-padding-top: calc(var(--stick) + 72px); scroll-behavior: smooth; }
   body {
     background: var(--bg); color: var(--text);
