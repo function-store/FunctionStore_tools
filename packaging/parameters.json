@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.22",
+ "release": "v3.2.23",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -4055,6 +4055,1164 @@
     "page": "About"
    }
   ],
+  "FNS_CamSequencer": [
+   {
+    "name": "Append",
+    "label": "Append",
+    "style": "Pulse",
+    "help": "",
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Replace",
+    "label": "Replace",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Insert",
+    "label": "Insert",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Remove",
+    "label": "Remove",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Init",
+    "label": "Init",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Playmode",
+    "label": "Mode",
+    "style": "Menu",
+    "help": "How the camera presets are played back. Select scrubs a playhead through the table, easing each preset into the next. A to B morphs between two chosen presets. Spline fits a periodic curve through every preset. Mix blends ALL of them at once by weight -- see the Mix page.",
+    "default": "select",
+    "section": true,
+    "menu": [
+     {
+      "name": "select",
+      "label": "Select (scrub)"
+     },
+     {
+      "name": "anytoany",
+      "label": "A to B"
+     },
+     {
+      "name": "spline",
+      "label": "Spline"
+     },
+     {
+      "name": "mix",
+      "label": "Mix (weights)"
+     }
+    ],
+    "page": "Seq"
+   },
+   {
+    "name": "Override",
+    "label": "Override",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Easing",
+    "label": "Easing",
+    "style": "Menu",
+    "help": "",
+    "default": "Linear",
+    "menu": [
+     {
+      "name": "Linear",
+      "label": "Linear"
+     },
+     {
+      "name": "InSine",
+      "label": "InSine"
+     },
+     {
+      "name": "OutSine",
+      "label": "OutSine"
+     },
+     {
+      "name": "InOutSine",
+      "label": "InOutSine"
+     },
+     {
+      "name": "InQuad",
+      "label": "InQuad"
+     },
+     {
+      "name": "OutQuad",
+      "label": "OutQuad"
+     },
+     {
+      "name": "InOutQuad",
+      "label": "InOutQuad"
+     },
+     {
+      "name": "InCubic",
+      "label": "InCubic"
+     },
+     {
+      "name": "OutCubic",
+      "label": "OutCubic"
+     },
+     {
+      "name": "InOutCubic",
+      "label": "InOutCubic"
+     },
+     {
+      "name": "InQuart",
+      "label": "InQuart"
+     },
+     {
+      "name": "OutQuart",
+      "label": "OutQuart"
+     },
+     {
+      "name": "InOutQuart",
+      "label": "InOutQuart"
+     },
+     {
+      "name": "InQuint",
+      "label": "InQuint"
+     },
+     {
+      "name": "OutQuint",
+      "label": "OutQuint"
+     },
+     {
+      "name": "InOutQuint",
+      "label": "InOutQuint"
+     },
+     {
+      "name": "InExpo",
+      "label": "InExpo"
+     },
+     {
+      "name": "OutExpo",
+      "label": "OutExpo"
+     },
+     {
+      "name": "InOutExpo",
+      "label": "InOutExpo"
+     },
+     {
+      "name": "InCirc",
+      "label": "InCirc"
+     },
+     {
+      "name": "OutCirc",
+      "label": "OutCirc"
+     },
+     {
+      "name": "InOutCirc",
+      "label": "InOutCirc"
+     },
+     {
+      "name": "InBack",
+      "label": "InBack"
+     },
+     {
+      "name": "OutBack",
+      "label": "OutBack"
+     },
+     {
+      "name": "InOutBack",
+      "label": "InOutBack"
+     },
+     {
+      "name": "InElastic",
+      "label": "InElastic"
+     },
+     {
+      "name": "OutElastic",
+      "label": "OutElastic"
+     },
+     {
+      "name": "InOutElastic",
+      "label": "InOutElastic"
+     },
+     {
+      "name": "InBounce",
+      "label": "InBounce"
+     },
+     {
+      "name": "OutBounce",
+      "label": "OutBounce"
+     },
+     {
+      "name": "InOutBounce",
+      "label": "InOutBounce"
+     },
+     {
+      "name": "CustomEase",
+      "label": "CustomEase"
+     }
+    ],
+    "page": "Seq"
+   },
+   {
+    "name": "Rotmode",
+    "label": "Rotation Blend",
+    "style": "Menu",
+    "help": "How rotation triples (rx/ry/rz, Rotx/Roty/Rotz...) and single angle columns (rotate, roll, hue, phase...) blend between presets. Euler (legacy): each channel eased on its own, exactly as before. Slerp (shortest): triples blended in quaternion space and angles along the shortest arc - a 0 to 350 deg yaw now turns -10 deg, not +350. Slerp (preserve winding): quaternion blend for triples, but any sweep authored beyond 180 deg keeps going the long way; single angles follow the authored sweep.",
+    "default": "slerp",
+    "section": true,
+    "menu": [
+     {
+      "name": "euler",
+      "label": "Euler (legacy)"
+     },
+     {
+      "name": "slerp",
+      "label": "Slerp (shortest)"
+     },
+     {
+      "name": "slerplong",
+      "label": "Slerp (preserve winding)"
+     }
+    ],
+    "page": "Seq"
+   },
+   {
+    "name": "Select",
+    "label": "Select",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Preseta",
+    "label": "Preset A",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "page": "Seq"
+   },
+   {
+    "name": "Presetb",
+    "label": "Preset B",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "page": "Seq"
+   },
+   {
+    "name": "Selany",
+    "label": "Select",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Seq"
+   },
+   {
+    "name": "Length",
+    "label": "Length",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "readonly": true,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Bind",
+    "label": "Bind",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Lookatmode",
+    "label": "Look At Mode",
+    "style": "Menu",
+    "help": "How the Look At is sequenced. Transform: the Look At object itself is one op whose transform the second sequencer moves (the historical behaviour). Targets: each camera preset stores a Look At OBJECT (the Look At Target par, captured as a column); the aim glides between the two objects of a transition with its easing and follows them live. The camera's own Look At is pointed at the aim null created next to this component -- anything you drop on it is adopted as Look At Target.",
+    "default": "transform",
+    "section": true,
+    "menu": [
+     {
+      "name": "transform",
+      "label": "Transform (move the target)"
+     },
+     {
+      "name": "targets",
+      "label": "Targets (object per preset)"
+     }
+    ],
+    "page": "Seq"
+   },
+   {
+    "name": "Lookattarget",
+    "label": "Look At Target",
+    "style": "COMP",
+    "help": "The object THIS camera preset should look at (Targets mode). Set it (or just drop the object onto the camera's own Look At -- it is adopted here automatically), then Append/Replace: it is captured with the preset. During a blend the aim glides from the previous preset's object to this one and follows both live.",
+    "default": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Camviewport",
+    "label": "Camera Viewport",
+    "style": "COMP",
+    "help": "A palette cameraViewport to sequence instead of this camera. Leave empty and drop this component INSIDE a cameraViewport to use that one automatically. While a viewport is in charge, OpSeq_cam sequences the mirror pars below (the viewport keeps its pose as a matrix, not on tx/rx) and the Look At sequencer idles. Switching modes keeps each mode's presets (they are stashed and brought back).",
+    "default": "",
+    "page": "Viewport"
+   },
+   {
+    "name": "Followviewport",
+    "label": "Follow Viewport",
+    "style": "Toggle",
+    "help": "This camera renders the viewport's view (its Pre-Transform follows the viewport matrix), so a Render TOP can keep using this camera in either mode. Clear this camera's Look At and keep its Translate/Rotate at zero.",
+    "default": false,
+    "page": "Viewport"
+   },
+   {
+    "name": "Pos",
+    "label": "Position",
+    "style": "XYZW",
+    "help": "Viewport camera position, mirrored from the cameraViewport. Edit to move it; navigating the viewport writes it back.",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Viewport"
+   },
+   {
+    "name": "Rot",
+    "label": "Rotate",
+    "style": "XYZW",
+    "help": "Viewport camera rotation in degrees (XYZ order, the palette's own convention), kept in -180..180. Blends as a quaternion in the Slerp modes.",
+    "size": 3,
+    "default": 0.0,
+    "page": "Viewport"
+   },
+   {
+    "name": "Pivot",
+    "label": "Pivot",
+    "style": "XYZW",
+    "help": "The viewport's tumble pivot (world space). Recalling a preset restores it, so the next tumble orbits the same point the preset was made around.",
+    "size": 3,
+    "default": 0.0,
+    "page": "Viewport"
+   },
+   {
+    "name": "Fov",
+    "label": "FOV",
+    "style": "Float",
+    "help": "The viewport camera's Field of View (its fov par), mirrored so it can be sequenced too (effective with a FOV View Angle Method).",
+    "default": 45.0,
+    "page": "Viewport"
+   },
+   {
+    "name": "Readcamera",
+    "label": "Read Camera",
+    "style": "Pulse",
+    "help": "Re-link the viewport (its Transform DAT is pointed at transform_table inside this component) and copy its current state into the pars above.",
+    "section": true,
+    "page": "Viewport"
+   },
+   {
+    "name": "Open",
+    "label": "Open Cam Presets",
+    "style": "Pulse",
+    "help": "",
+    "page": "Presets"
+   },
+   {
+    "name": "Open2",
+    "label": "Open Lookat Presets",
+    "style": "Pulse",
+    "help": "",
+    "page": "Presets"
+   },
+   {
+    "name": "Campresetsrepo",
+    "label": "Camera Presets",
+    "style": "OP",
+    "help": "Table DAT holding the camera presets. Defaults to the prefab inside OpSeq_cam; press Create to clone it next to this component (docked, relocatable, externalizable) and point here.",
+    "default": "",
+    "section": true,
+    "page": "Presets"
+   },
+   {
+    "name": "Campresetsrepocreate",
+    "label": "Create",
+    "style": "Pulse",
+    "help": "Clone the camera presets prefab next to this component and use that clone as the live repo.",
+    "page": "Presets"
+   },
+   {
+    "name": "Viewportpresetsrepo",
+    "label": "Viewport Presets",
+    "style": "OP",
+    "help": "Table DAT holding the presets used in viewport mode (Position / Rotate / Pivot / FOV of the cameraViewport). Separate from Camera Presets, so switching modes never touches the other table. Defaults to the prefab inside OpSeq_cam; press Create to clone it next to this component and point here.",
+    "default": "",
+    "section": true,
+    "page": "Presets"
+   },
+   {
+    "name": "Viewportpresetsrepocreate",
+    "label": "Create",
+    "style": "Pulse",
+    "help": "Clone the viewport presets prefab next to this component and use that clone as the live repo.",
+    "page": "Presets"
+   },
+   {
+    "name": "Lookatpresetsrepo",
+    "label": "Look At Presets",
+    "style": "OP",
+    "help": "Table DAT holding the Look At target presets. Defaults to the prefab inside OpSeq_lookat; press Create to clone it next to this component and point here.",
+    "default": "",
+    "section": true,
+    "page": "Presets"
+   },
+   {
+    "name": "Lookatpresetsrepocreate",
+    "label": "Create",
+    "style": "Pulse",
+    "help": "Clone the Look At presets prefab next to this component and use that clone as the live repo.",
+    "page": "Presets"
+   },
+   {
+    "name": "Active",
+    "label": "Active",
+    "style": "Toggle",
+    "help": "Let the controller fly the camera and drive the sequencer. Off mutes every mapped control without losing the mapping (learning still works).",
+    "default": true,
+    "page": "Control"
+   },
+   {
+    "name": "Flymode",
+    "label": "Fly Mode",
+    "style": "Menu",
+    "help": "How the sticks move the camera when the Orbit button is NOT held. Free-fly: Forward / Strafe move along the camera's own axes, Rise is world up, Yaw / Pitch turn the camera. Orbit: the tether the Orbit button gives you, held permanently -- around the viewport's tumble pivot, the Look At target, or the point Orbit Distance ahead. A Look At target always locks the aim, and then Yaw takes you round the subject and Pitch reels you in either way; free-fly additionally leaves Forward / Strafe / Rise free to go anywhere, while Orbit pins them to the sphere and is the only place you can arc over the top at a fixed radius.",
+    "default": "free",
+    "section": true,
+    "menu": [
+     {
+      "name": "free",
+      "label": "Free-fly"
+     },
+     {
+      "name": "orbit",
+      "label": "Orbit"
+     }
+    ],
+    "page": "Control"
+   },
+   {
+    "name": "Flystatus",
+    "label": "Flying",
+    "style": "Str",
+    "help": "What the sticks are doing right now, and around what. Orbit needs something to orbit: the Orbit button picks one when you press it, and Fly Mode = Orbit uses a Look At target (or the viewport tumble pivot) if there is one. With neither, it says so and flies free rather than orbiting an invisible point ahead of you.",
+    "default": "",
+    "readonly": true,
+    "page": "Control"
+   },
+   {
+    "name": "Levelheading",
+    "label": "Level Heading",
+    "style": "Toggle",
+    "help": "With a Look At set, the camera flies along its nose -- and its nose points at the target, so an object above or below you bakes a climb into \"forward\" that you never asked for (geo1 sits 0.7 up, which tilts forward by 8 degrees and lifts you 2 units in three seconds). This takes the heading level when it is first set, so setting a Look At never changes your flight elevation; climb deliberately with Rise, or by pitching the heading first. Off, forward points wherever the camera is looking.",
+    "default": true,
+    "page": "Control"
+   },
+   {
+    "name": "Movespeed",
+    "label": "Move Speed",
+    "style": "Float",
+    "help": "Units per second the camera travels at full deflection of Forward / Strafe / Rise, dollying, or closing on a subject with Pitch under a Look At.",
+    "default": 2.0,
+    "section": true,
+    "page": "Control"
+   },
+   {
+    "name": "Dollyspeed",
+    "label": "Dolly Speed",
+    "style": "Float",
+    "help": "Units per second at full deflection when a control changes your DISTANCE to what you are locked onto, rather than moving you through the world: Pitch under a Look At, and Forward while orbiting. Separate from Move Speed because closing a gap is a much shorter journey than crossing a room -- at Move Speed a 5-unit standoff can vanish in a second, which reads as twitchy next to the circling on the same stick. Turn it down for a slow push in; leave it equal to Move Speed to keep them in step.",
+    "default": 2.0,
+    "page": "Control"
+   },
+   {
+    "name": "Turnspeed",
+    "label": "Turn Speed",
+    "style": "Float",
+    "help": "Degrees per second at full deflection of Yaw / Pitch -- turning the camera, or going round a subject when a Look At locks the aim.",
+    "default": 90.0,
+    "page": "Control"
+   },
+   {
+    "name": "Rollspeed",
+    "label": "Roll Speed",
+    "style": "Float",
+    "help": "Degrees per second at full deflection of the Roll axis.",
+    "default": 60.0,
+    "page": "Control"
+   },
+   {
+    "name": "Zoomspeed",
+    "label": "Zoom Speed",
+    "style": "Float",
+    "help": "Zoom rate at full deflection of Zoom: degrees of FOV per second for a perspective camera, percent per second of the Ortho Width (orthographic) or Focal Length (Focal Length / Aperture method).",
+    "default": 30.0,
+    "page": "Control"
+   },
+   {
+    "name": "Orbitdistance",
+    "label": "Orbit Distance",
+    "style": "Float",
+    "help": "Orbiting with nothing picked (the Orbit button pressed at empty space, or Fly Mode Orbit without a Look At / viewport pivot): the camera orbits a point this far ahead of it. Dolly moves that point with the camera, so the value follows.",
+    "default": 5.0,
+    "page": "Control"
+   },
+   {
+    "name": "Invertpitch",
+    "label": "Invert Pitch",
+    "style": "Toggle",
+    "help": "Flip the Pitch axis (push forward to look down, flight-sim style).",
+    "default": false,
+    "page": "Control"
+   },
+   {
+    "name": "Resetpivot",
+    "label": "Reset Pivot",
+    "style": "Pulse",
+    "help": "Zero this camera's Pivot (Xform page px/py/pz) without moving the view -- the translate takes over what the pivot contributed -- so Yaw / Pitch turn the camera in place. A pivot left behind by an earlier edit or recalled from a preset makes a turn swing the camera around that point instead. In viewport mode this puts the tumble pivot at the camera, so tumbling becomes looking around.",
+    "page": "Control"
+   },
+   {
+    "name": "Rendertop",
+    "label": "Render TOP",
+    "style": "TOP",
+    "help": "The Render TOP this camera renders through, used for picking (Pick Pivot, Teleport, Collision sample the centre pixel of it). Leave empty to auto-detect: the first Render TOP whose Camera is this component (or its cameraViewport in viewport mode).",
+    "default": "",
+    "section": true,
+    "page": "Control"
+   },
+   {
+    "name": "Orbithold",
+    "label": "Orbit (hold)",
+    "style": "Toggle",
+    "help": "The Orbit button from here: on = pressed (pick the pivot and orbit), off = released.",
+    "default": false,
+    "page": "Control"
+   },
+   {
+    "name": "Lookatnow",
+    "label": "Look At Pick Now",
+    "style": "Pulse",
+    "help": "Look At Pick from here (same as the mapped button): aim at the object in the centre, or release the current Look At.",
+    "page": "Control"
+   },
+   {
+    "name": "Aimtime",
+    "label": "Look At Capture",
+    "style": "Float",
+    "help": "Seconds for the camera to swing onto a target when Look At Pick grabs it. A Look At aims at the object's ORIGIN, which is rarely exactly where you were looking, so grabbing one instantly snaps the view -- this eases it across instead. 0 restores the instant snap. Releasing is always seamless: the aim you had is kept.",
+    "default": 0.35,
+    "page": "Control"
+   },
+   {
+    "name": "Modeblend",
+    "label": "Mode Blend",
+    "style": "Float",
+    "help": "Seconds to ease the camera from one way of moving into another. Free flight, a Look At and an orbit read the sticks differently -- holding yaw sweeps you around a subject in one and spins you on the spot in another -- so taking a target or letting one go swaps your motion on a single frame. This rounds that corner, entering and leaving alike. 0 switches instantly.",
+    "default": 0.25,
+    "page": "Control"
+   },
+   {
+    "name": "Teleportnow",
+    "label": "Teleport Now",
+    "style": "Pulse",
+    "help": "Teleport from here (same as the mapped button).",
+    "page": "Control"
+   },
+   {
+    "name": "Teleportdistance",
+    "label": "Teleport Distance",
+    "style": "Float",
+    "help": "How far from the hit surface, along its normal, Teleport puts the camera.",
+    "default": 1.0,
+    "page": "Control"
+   },
+   {
+    "name": "Levelnow",
+    "label": "Level Horizon Now",
+    "style": "Pulse",
+    "help": "Level the horizon now: roll back to 0, position and aim unchanged.",
+    "page": "Control"
+   },
+   {
+    "name": "Collision",
+    "label": "Collision",
+    "style": "Toggle",
+    "help": "Keep a continuous centre pick while flying forward / dollying and stop Stand-off short of whatever is ahead. Frustum only -- nothing guards the sides or the back. Costs one extra pick render per frame while moving forward.",
+    "default": false,
+    "section": true,
+    "page": "Control"
+   },
+   {
+    "name": "Standoff",
+    "label": "Stand-off",
+    "style": "Float",
+    "help": "Collision: the closest the camera gets to the surface ahead. Never 0: a camera allowed right onto the surface picks the far side next frame and walks through (floor 0.05). Keep it above the camera's Near clip or the surface is clipped away when you reach it.",
+    "default": 0.5,
+    "page": "Control"
+   },
+   {
+    "name": "Deadzone",
+    "label": "Dead Zone",
+    "style": "Float",
+    "help": "Axis travel around the centre that counts as centred (fraction of full deflection); the rest is rescaled so full deflection still reaches full speed. The internal Joystick CHOP has its own dead zone as well.",
+    "default": 0.1,
+    "section": true,
+    "page": "Control"
+   },
+   {
+    "name": "Smoothing",
+    "label": "Control Smoothing",
+    "style": "Toggle",
+    "help": "Ramp the sticks in and out instead of snapping, through a Lag CHOP on the source. The single biggest change to how flying feels. Buttons are read before the lag, so presses stay instant.",
+    "default": true,
+    "section": true,
+    "page": "Control"
+   },
+   {
+    "name": "Smoothtime",
+    "label": "Smoothing Time",
+    "style": "Float",
+    "help": "Seconds for a control to reach full deflection, and to fall back to centre. 0.1 is crisp, 0.4 is heavy.",
+    "default": 0.18,
+    "page": "Control"
+   },
+   {
+    "name": "Scrubspeed",
+    "label": "Scrub Speed",
+    "style": "Float",
+    "help": "Presets per second Select travels at full deflection of Scrub. Negative flips the direction.",
+    "default": 1.0,
+    "page": "Control"
+   },
+   {
+    "name": "Turbulence",
+    "label": "Turbulence",
+    "style": "Toggle",
+    "help": "A constant small wander on the camera angles, as if the air were never quite still. Handheld life for a locked-off shot.",
+    "default": false,
+    "section": true,
+    "page": "Control"
+   },
+   {
+    "name": "Turbamount",
+    "label": "Turbulence Amount",
+    "style": "Float",
+    "help": "Degrees of wander. A fraction of a degree already reads; note it moves the rotation pars, so a preset captured mid-gust keeps that much of it.",
+    "default": 0.5,
+    "page": "Control"
+   },
+   {
+    "name": "Surfacecollide",
+    "label": "Surface Collision",
+    "style": "Toggle",
+    "help": "Stop flown motion at any surface in its way -- floors included: the probe fires along the direction you are actually moving, so descending into terrain lands on this the same way flying into a wall does. Off by default: it costs a render and a pick per frame you are moving. Preset recalls are never constrained -- collision applies to FLOWN motion only, so playback stays scene-independent.",
+    "default": false,
+    "section": true,
+    "page": "Control"
+   },
+   {
+    "name": "Turbspeed",
+    "label": "Turbulence Speed",
+    "style": "Float",
+    "help": "How quickly the air moves around. 0.5 is a lazy drift, 3 is a rough day.",
+    "default": 0.6,
+    "page": "Control"
+   },
+   {
+    "name": "Surfacestandoff",
+    "label": "Stand-off",
+    "style": "Float",
+    "help": "How far from a surface you are stopped, measured PERPENDICULAR to it, in scene units. Keep it above the Near clip or the camera pokes through visually before it stops.",
+    "default": 0.4,
+    "page": "Control"
+   },
+   {
+    "name": "Surfaceslide",
+    "label": "Slide",
+    "style": "Float",
+    "help": "What happens when you meet a surface at an angle. 1 keeps the part of your movement that runs along it -- corridors and hillsides stay flyable; 0 stops you dead.",
+    "default": 1.0,
+    "page": "Control"
+   },
+   {
+    "name": "Surfacegeo",
+    "label": "Collision Geometry",
+    "style": "COMP",
+    "help": "What the collision probe can hit. Empty means whatever the Render TOP renders, so it follows the scene by itself.",
+    "default": "",
+    "page": "Control"
+   },
+   {
+    "name": "Source",
+    "label": "Source CHOP",
+    "style": "CHOP",
+    "help": "The CHOP whose channels are the controls: a Joystick CHOP, a MIDI In, an OSC In, anything. Leave empty to use the internal Joystick CHOP (joystick_internal inside this component: first game controller found, axes -1..1, buttons b1..b32).",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Learnstatus",
+    "label": "Learn Status",
+    "style": "Str",
+    "help": "What learn mode is waiting for, or the last mapping made.",
+    "default": "",
+    "readonly": true,
+    "page": "Mapping"
+   },
+   {
+    "name": "Learntimeout",
+    "label": "Learn Timeout",
+    "style": "Float",
+    "help": "Learning an axis, once the + control has been mapped and RELEASED: seconds to wait for the opposite control before keeping the + channel alone. 0 = wait until you move the + control again or press Learn again.",
+    "default": 1.0,
+    "page": "Mapping"
+   },
+   {
+    "name": "Axiscentre",
+    "label": "Axis Centre",
+    "style": "Float",
+    "help": "Resting value assumed for a channel that was typed in rather than learned (learned channels keep their own in table_axisrest): 0 for the internal joystick and any -1..1 source, 0.5 for a 0..1 stick axis, 0 for a 0..1 trigger.",
+    "default": 0.0,
+    "page": "Mapping"
+   },
+   {
+    "name": "Forwardchannel",
+    "label": "Forward + Channel",
+    "style": "Str",
+    "help": "Source channel for Forward: forward / back (free-fly) or dolly towards / away from the pivot (orbit). One bipolar stick axis: put its channel here and leave the - channel empty. Two one-way controls (a trigger pair, two bumpers, two buttons): this is the one that drives the + direction, the - channel drives the other. Press Learn and move the control, or type a channel name (then Axis Centre is its resting value).",
+    "default": "",
+    "section": true,
+    "page": "Mapping"
+   },
+   {
+    "name": "Forwardnegchannel",
+    "label": "Forward - Channel",
+    "style": "Str",
+    "help": "Optional second channel that drives Forward the other way (the other trigger / bumper / button). Leave empty when the + channel is a stick that goes both ways.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Forwardlearn",
+    "label": "Learn Forward",
+    "style": "Pulse",
+    "help": "Listen: move the control for the + direction of Forward. Then EITHER press the opposite control (other trigger / bumper / button: it becomes the - channel), OR move the same control again / press Learn Forward again to keep that single control for both directions. Resting values are recorded in table_axisrest.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Strafechannel",
+    "label": "Strafe + Channel",
+    "style": "Str",
+    "help": "Source channel for Strafe: right / left (free-fly) or pan camera and pivot sideways (orbit). One bipolar stick axis: put its channel here and leave the - channel empty. Two one-way controls (a trigger pair, two bumpers, two buttons): this is the one that drives the + direction, the - channel drives the other. Press Learn and move the control, or type a channel name (then Axis Centre is its resting value).",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Strafenegchannel",
+    "label": "Strafe - Channel",
+    "style": "Str",
+    "help": "Optional second channel that drives Strafe the other way (the other trigger / bumper / button). Leave empty when the + channel is a stick that goes both ways.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Strafelearn",
+    "label": "Learn Strafe",
+    "style": "Pulse",
+    "help": "Listen: move the control for the + direction of Strafe. Then EITHER press the opposite control (other trigger / bumper / button: it becomes the - channel), OR move the same control again / press Learn Strafe again to keep that single control for both directions. Resting values are recorded in table_axisrest.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Risechannel",
+    "label": "Rise + Channel",
+    "style": "Str",
+    "help": "Source channel for Rise: up / down along world up (free-fly) or pan camera and pivot up / down (orbit). One bipolar stick axis: put its channel here and leave the - channel empty. Two one-way controls (a trigger pair, two bumpers, two buttons): this is the one that drives the + direction, the - channel drives the other. Press Learn and move the control, or type a channel name (then Axis Centre is its resting value).",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Risenegchannel",
+    "label": "Rise - Channel",
+    "style": "Str",
+    "help": "Optional second channel that drives Rise the other way (the other trigger / bumper / button). Leave empty when the + channel is a stick that goes both ways.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Riselearn",
+    "label": "Learn Rise",
+    "style": "Pulse",
+    "help": "Listen: move the control for the + direction of Rise. Then EITHER press the opposite control (other trigger / bumper / button: it becomes the - channel), OR move the same control again / press Learn Rise again to keep that single control for both directions. Resting values are recorded in table_axisrest.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Yawchannel",
+    "label": "Yaw + Channel",
+    "style": "Str",
+    "help": "Source channel for Yaw: turn right / left (free-fly) or orbit around the pivot (orbit). One bipolar stick axis: put its channel here and leave the - channel empty. Two one-way controls (a trigger pair, two bumpers, two buttons): this is the one that drives the + direction, the - channel drives the other. Press Learn and move the control, or type a channel name (then Axis Centre is its resting value).",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Yawnegchannel",
+    "label": "Yaw - Channel",
+    "style": "Str",
+    "help": "Optional second channel that drives Yaw the other way (the other trigger / bumper / button). Leave empty when the + channel is a stick that goes both ways.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Yawlearn",
+    "label": "Learn Yaw",
+    "style": "Pulse",
+    "help": "Listen: move the control for the + direction of Yaw. Then EITHER press the opposite control (other trigger / bumper / button: it becomes the - channel), OR move the same control again / press Learn Yaw again to keep that single control for both directions. Resting values are recorded in table_axisrest.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Pitchchannel",
+    "label": "Pitch + Channel",
+    "style": "Str",
+    "help": "Source channel for Pitch: look up / down (free-fly) or orbit over / under the pivot (orbit); stops short of straight up / down. One bipolar stick axis: put its channel here and leave the - channel empty. Two one-way controls (a trigger pair, two bumpers, two buttons): this is the one that drives the + direction, the - channel drives the other. Press Learn and move the control, or type a channel name (then Axis Centre is its resting value).",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Pitchnegchannel",
+    "label": "Pitch - Channel",
+    "style": "Str",
+    "help": "Optional second channel that drives Pitch the other way (the other trigger / bumper / button). Leave empty when the + channel is a stick that goes both ways.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Pitchlearn",
+    "label": "Learn Pitch",
+    "style": "Pulse",
+    "help": "Listen: move the control for the + direction of Pitch. Then EITHER press the opposite control (other trigger / bumper / button: it becomes the - channel), OR move the same control again / press Learn Pitch again to keep that single control for both directions. Resting values are recorded in table_axisrest.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Rollchannel",
+    "label": "Roll + Channel",
+    "style": "Str",
+    "help": "Control that banks the camera RIGHT. On its own it is an always-live axis -- a stick, or a bumper here with the other bumper as the - channel. With a Roll Modifier mapped it becomes gated instead: point it at a control you already use for something else (Strafe, Yaw...) and that control only banks while the modifier is held.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Rollnegchannel",
+    "label": "Roll - Channel",
+    "style": "Str",
+    "help": "Optional opposite control, banking LEFT -- the second bumper / trigger / button of a one-way pair.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Rolllearn",
+    "label": "Learn Roll",
+    "style": "Pulse",
+    "help": "Press, then move the control that should bank right; then the opposite control, or wait, exactly like the other axes.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Rollmodchannel",
+    "label": "Roll Modifier Channel",
+    "style": "Str",
+    "help": "Optional button that gates Roll. While it is HELD, the Roll channels mean Roll and any other axis sharing those channels is suppressed -- so one control can strafe (or yaw) normally and bank while the button is down. While it is up, Roll does nothing. Leave empty to have Roll always live on its own control.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Rollmodlearn",
+    "label": "Learn Roll Modifier",
+    "style": "Pulse",
+    "help": "Press, then press the button to use as the roll modifier. Map Roll itself to the control it should borrow.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Zoomchannel",
+    "label": "Zoom + Channel",
+    "style": "Str",
+    "help": "Source channel that zooms: narrows (push) / widens (pull) whatever the projection really uses -- FOV for a perspective camera (Focal Length when the Viewing Angle Method is Focal Length / Aperture), Ortho Width for an orthographic one, both during a persp/ortho blend, the viewport FOV in viewport mode.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Zoomnegchannel",
+    "label": "Zoom - Channel",
+    "style": "Str",
+    "help": "Optional second channel that drives Zoom the other way (the other trigger / bumper / button). Leave empty when the + channel is a stick that goes both ways.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Zoomlearn",
+    "label": "Learn Zoom",
+    "style": "Pulse",
+    "help": "Listen: move the control for the + direction of Zoom. Then EITHER press the opposite control (other trigger / bumper / button: it becomes the - channel), OR move the same control again / press Learn Zoom again to keep that single control for both directions. Resting values are recorded in table_axisrest.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Orbitchannel",
+    "label": "Orbit Channel",
+    "style": "Str",
+    "help": "Source button held to orbit: on press the point at the centre of the view becomes the pivot (nothing there: the point Orbit Distance ahead); while held, Yaw / Pitch tumble around it, Forward dollies, Strafe / Rise pan; on release the camera is free again from where that left it. Viewport mode: the press also sets the tumble pivot.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Orbitlearn",
+    "label": "Learn Orbit",
+    "style": "Pulse",
+    "help": "Listen for the next control pressed on the source and map it to Orbit.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Lookatchannel",
+    "label": "Look At Pick Channel",
+    "style": "Str",
+    "help": "Source button, toggles a Look At tether: with none set, this camera's Look At becomes the object at the centre of the view (the Geometry COMP that was hit) -- the aim is locked, Yaw / Pitch orbit it, Forward dollies. Press it again to release (while it holds you cannot look at nothing, so there is no sky-clear). Viewport mode (no Look At): sets the tumble pivot instead.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Lookatlearn",
+    "label": "Learn Look At Pick",
+    "style": "Pulse",
+    "help": "Listen for the next control pressed on the source and map it to Look At Pick.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Teleportchannel",
+    "label": "Teleport Channel",
+    "style": "Str",
+    "help": "Source channel whose rising edge moves the camera to the point at the centre of the view, stood off Teleport Distance along the surface normal, orientation kept.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Teleportlearn",
+    "label": "Learn Teleport",
+    "style": "Pulse",
+    "help": "Listen for the next control pressed on the source and map it to Teleport.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Levelchannel",
+    "label": "Level Horizon Channel",
+    "style": "Str",
+    "help": "Optional button that takes the roll back out (rz to 0) without moving the camera or its aim.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Levellearn",
+    "label": "Learn Level Horizon",
+    "style": "Pulse",
+    "help": "Press, then press the button that should level the horizon.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Scrubchannel",
+    "label": "Scrub + Channel",
+    "style": "Str",
+    "help": "Source control that scrubs Select forwards through the presets while held: a stick axis (leave the - channel empty) or one of a pair (a bumper: the - channel is the other one). Wraps around the sequence.",
+    "default": "",
+    "section": true,
+    "page": "Mapping"
+   },
+   {
+    "name": "Scrubnegchannel",
+    "label": "Scrub - Channel",
+    "style": "Str",
+    "help": "Optional second control that scrubs Select backwards (the other bumper / button). Leave empty when the + channel is a stick that goes both ways.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Scrublearn",
+    "label": "Learn Scrub",
+    "style": "Pulse",
+    "help": "Listen: move the control for the + direction of Scrub. Then EITHER press the opposite control (other trigger / bumper / button: it becomes the - channel), OR move the same control again / press Learn Scrub again to keep that single control for both directions. Resting values are recorded in table_axisrest.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Nextchannel",
+    "label": "Next Channel",
+    "style": "Str",
+    "help": "Source channel whose rising edge (a button press) moves Select to the next whole preset, wrapping at the end. Type a channel name or press Learn Next and hit the button.",
+    "default": "",
+    "section": true,
+    "page": "Mapping"
+   },
+   {
+    "name": "Nextlearn",
+    "label": "Learn Next",
+    "style": "Pulse",
+    "help": "Listen for the next control pressed on the source and map it to Next.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Prevchannel",
+    "label": "Prev Channel",
+    "style": "Str",
+    "help": "Source channel whose rising edge moves Select to the previous whole preset, wrapping at the start.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Prevlearn",
+    "label": "Learn Prev",
+    "style": "Pulse",
+    "help": "Listen for the next control pressed on the source and map it to Prev.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Capturechannel",
+    "label": "Capture Channel",
+    "style": "Str",
+    "help": "Source channel whose rising edge appends a new preset from the current state (same as the Seq page Append pulse). Fly somewhere, press it.",
+    "default": "",
+    "page": "Mapping"
+   },
+   {
+    "name": "Capturelearn",
+    "label": "Learn Capture",
+    "style": "Pulse",
+    "help": "Listen for the next control pressed on the source and map it to Capture.",
+    "page": "Mapping"
+   },
+   {
+    "name": "Presetchannels",
+    "label": "Preset Channels",
+    "style": "Str",
+    "help": "Space-separated source channels that jump straight to a preset: the first listed recalls preset 0, the second preset 1, and so on. Build it with Learn Presets or type the names.",
+    "default": "",
+    "section": true,
+    "page": "Mapping"
+   },
+   {
+    "name": "Presetslearn",
+    "label": "Learn Presets",
+    "style": "Toggle",
+    "help": "While on, every new button pressed on the source is appended to Preset Channels in the order pressed. Turn off to finish.",
+    "default": false,
+    "page": "Mapping"
+   },
+   {
+    "name": "Mixchop",
+    "label": "Weights",
+    "style": "CHOP",
+    "help": "CHOP carrying the mix weights, one value per preset. Drives both inner sequencers -- the camera presets and the look-at targets.",
+    "default": "",
+    "section": true,
+    "page": "Mix"
+   },
+   {
+    "name": "Mixmap",
+    "label": "Map",
+    "style": "Menu",
+    "help": "How the source values land on the presets. Exact: one value per preset, extra values trimmed and missing presets left at zero -- for a fader bank that matches the table. Stretch: the source is resampled across the whole table, so a handful of channels smear over every preset.",
+    "default": "exact",
+    "menu": [
+     {
+      "name": "exact",
+      "label": "Exact (one per preset)"
+     },
+     {
+      "name": "stretch",
+      "label": "Stretch across presets"
+     }
+    ],
+    "page": "Mix"
+   },
+   {
+    "name": "Mixaxis",
+    "label": "Read",
+    "style": "Menu",
+    "help": "Which axis of the source CHOP carries the weights. Auto reads the samples of a single-channel CHOP, and one value per channel for anything else.",
+    "default": "auto",
+    "menu": [
+     {
+      "name": "auto",
+      "label": "Auto"
+     },
+     {
+      "name": "channels",
+      "label": "One per channel"
+     },
+     {
+      "name": "samples",
+      "label": "Samples of first channel"
+     }
+    ],
+    "page": "Mix"
+   },
+   {
+    "name": "Callbacks",
+    "label": "Callbacks",
+    "style": "DAT",
+    "help": "",
+    "default": "",
+    "page": "Callbacks"
+   },
+   {
+    "name": "Createcallbacks",
+    "label": "Create Callbacks",
+    "style": "Pulse",
+    "help": "",
+    "page": "Callbacks"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "The version the FNS updater compares against the store; bumped by the release flow.",
+    "default": "",
+    "page": "About"
+   },
+   {
+    "name": "Patreon",
+    "label": "Patreon",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Readme",
+    "label": "Open README",
+    "style": "Pulse",
+    "help": "Open the README: what the two inner sequencers do, every Seq/Presets page control, rotation blending and Look At.",
+    "page": "About"
+   }
+  ],
   "FNS_Collect": [
    {
     "name": "Collectui",
@@ -5563,6 +6721,134 @@
    }
   ],
   "FNS_Misc": [],
+  "FNS_MixSequencer": [
+   {
+    "name": "Sequencer",
+    "label": "Sequencer",
+    "style": "COMP",
+    "help": "The OpSequencer this matrix authors for -- used by Sync Columns (match the weight columns to its Length) and, later, the UI row labels. Playback needs only the CHOP: wire out1 into that sequencer's Weights CHOP with its Mode on Mix.",
+    "default": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Stepselect",
+    "label": "Step Select",
+    "style": "Float",
+    "help": "The playhead, in steps. Whole numbers are a step's weights exactly; fractions crossfade into the next step with its EASE curve; wraps over the step count. Drive it from a CHOP, the list, or Python -- nothing in here owns a clock.",
+    "default": 0.0,
+    "page": "Seq"
+   },
+   {
+    "name": "Nextstep",
+    "label": "Next Step",
+    "style": "Pulse",
+    "help": "Step the playhead to the next whole step, wrapping.",
+    "page": "Seq"
+   },
+   {
+    "name": "Prevstep",
+    "label": "Prev Step",
+    "style": "Pulse",
+    "help": "Step the playhead to the previous whole step, wrapping.",
+    "page": "Seq"
+   },
+   {
+    "name": "Appendstep",
+    "label": "Append Step",
+    "style": "Pulse",
+    "help": "Append the playhead's CURRENT (eased) weight vector as a new last step -- sound a blend by scrubbing, then keep it.",
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Removestep",
+    "label": "Remove Step",
+    "style": "Pulse",
+    "help": "Remove the step under the playhead.",
+    "page": "Seq"
+   },
+   {
+    "name": "Initsteps",
+    "label": "Init Steps",
+    "style": "Pulse",
+    "help": "Wipe the sequence and leave one one-hot step on preset 0.",
+    "page": "Seq"
+   },
+   {
+    "name": "Onehotpreset",
+    "label": "One-Hot Preset",
+    "style": "Int",
+    "help": "The preset index Set One-Hot writes into the step under the playhead.",
+    "default": 0,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Onehotnow",
+    "label": "Set One-Hot",
+    "style": "Pulse",
+    "help": "Make the step under the playhead a pure recall of One-Hot Preset: 1 there, 0 everywhere else. A run of one-hot steps is a cue list -- any preset, any order.",
+    "page": "Seq"
+   },
+   {
+    "name": "Presetcount",
+    "label": "Preset Count",
+    "style": "Int",
+    "help": "How many weight columns (w0..wN) the steps carry -- one per preset of the target sequencer, keyed by preset index. Trimming drops the highest indices.",
+    "default": 8,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Synccolumns",
+    "label": "Sync Columns",
+    "style": "Pulse",
+    "help": "Set Preset Count from the Sequencer's Length.",
+    "page": "Seq"
+   },
+   {
+    "name": "Steps",
+    "label": "Steps",
+    "style": "Int",
+    "help": "Read-only: number of steps in the sequence.",
+    "default": 0,
+    "readonly": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Mixstatus",
+    "label": "Status",
+    "style": "Str",
+    "help": "Read-only: the last thing the matrix did for you.",
+    "default": "",
+    "readonly": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Stepsrepo",
+    "label": "Steps",
+    "style": "OP",
+    "help": "The table DAT holding the steps. By default the prefab inside this component, so sequences save with it. Create clones it next to this component and points here, so sequences live in your project (relocatable, externalizable, git-friendly).",
+    "default": "",
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Stepsrepocreate",
+    "label": "Create",
+    "style": "Pulse",
+    "help": "Clone the steps table next to this component and point Steps at it.",
+    "page": "Seq"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "The version the FNS updater compares against the store; bumped by the release flow.",
+    "default": "",
+    "page": "About"
+   }
+  ],
   "FNS_NavbarRegistry": [
    {
     "name": "Comp",
@@ -5880,6 +7166,816 @@
     "help": "Modifier keys to hold while creating an operator to be offered the alternatives registered for its type (space-separated: alt, ctrl, shift, cmd). Without the keys the operator is created as normal. Applies on the /sys global; the master holds the value the global is promoted with.",
     "default": "alt ctrl",
     "page": "Alternatives"
+   }
+  ],
+  "FNS_OpSequencer": [
+   {
+    "name": "Append",
+    "label": "Append",
+    "style": "Pulse",
+    "help": "",
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Replace",
+    "label": "Replace",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Insert",
+    "label": "Insert",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Remove",
+    "label": "Remove",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Init",
+    "label": "Init",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Playmode",
+    "label": "Mode",
+    "style": "Menu",
+    "help": "How the presets are played back. Select scrubs a playhead through the table, easing each preset into the next. A to B morphs between two chosen presets. Spline fits a periodic curve through every preset. Mix blends ALL of them at once by weight -- see the Mix page.",
+    "default": "select",
+    "section": true,
+    "menu": [
+     {
+      "name": "select",
+      "label": "Select (scrub)"
+     },
+     {
+      "name": "anytoany",
+      "label": "A to B"
+     },
+     {
+      "name": "spline",
+      "label": "Spline"
+     },
+     {
+      "name": "mix",
+      "label": "Mix (weights)"
+     }
+    ],
+    "page": "Seq"
+   },
+   {
+    "name": "Override",
+    "label": "Override",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Easing",
+    "label": "Easing",
+    "style": "Menu",
+    "help": "",
+    "default": "Linear",
+    "menu": [
+     {
+      "name": "Linear",
+      "label": "Linear"
+     },
+     {
+      "name": "InSine",
+      "label": "InSine"
+     },
+     {
+      "name": "OutSine",
+      "label": "OutSine"
+     },
+     {
+      "name": "InOutSine",
+      "label": "InOutSine"
+     },
+     {
+      "name": "InQuad",
+      "label": "InQuad"
+     },
+     {
+      "name": "OutQuad",
+      "label": "OutQuad"
+     },
+     {
+      "name": "InOutQuad",
+      "label": "InOutQuad"
+     },
+     {
+      "name": "InCubic",
+      "label": "InCubic"
+     },
+     {
+      "name": "OutCubic",
+      "label": "OutCubic"
+     },
+     {
+      "name": "InOutCubic",
+      "label": "InOutCubic"
+     },
+     {
+      "name": "InQuart",
+      "label": "InQuart"
+     },
+     {
+      "name": "OutQuart",
+      "label": "OutQuart"
+     },
+     {
+      "name": "InOutQuart",
+      "label": "InOutQuart"
+     },
+     {
+      "name": "InQuint",
+      "label": "InQuint"
+     },
+     {
+      "name": "OutQuint",
+      "label": "OutQuint"
+     },
+     {
+      "name": "InOutQuint",
+      "label": "InOutQuint"
+     },
+     {
+      "name": "InExpo",
+      "label": "InExpo"
+     },
+     {
+      "name": "OutExpo",
+      "label": "OutExpo"
+     },
+     {
+      "name": "InOutExpo",
+      "label": "InOutExpo"
+     },
+     {
+      "name": "InCirc",
+      "label": "InCirc"
+     },
+     {
+      "name": "OutCirc",
+      "label": "OutCirc"
+     },
+     {
+      "name": "InOutCirc",
+      "label": "InOutCirc"
+     },
+     {
+      "name": "InBack",
+      "label": "InBack"
+     },
+     {
+      "name": "OutBack",
+      "label": "OutBack"
+     },
+     {
+      "name": "InOutBack",
+      "label": "InOutBack"
+     },
+     {
+      "name": "InElastic",
+      "label": "InElastic"
+     },
+     {
+      "name": "OutElastic",
+      "label": "OutElastic"
+     },
+     {
+      "name": "InOutElastic",
+      "label": "InOutElastic"
+     },
+     {
+      "name": "InBounce",
+      "label": "InBounce"
+     },
+     {
+      "name": "OutBounce",
+      "label": "OutBounce"
+     },
+     {
+      "name": "InOutBounce",
+      "label": "InOutBounce"
+     },
+     {
+      "name": "CustomEase",
+      "label": "CustomEase"
+     }
+    ],
+    "page": "Seq"
+   },
+   {
+    "name": "Rotmode",
+    "label": "Rotation Blend",
+    "style": "Menu",
+    "help": "How rotation triples (rx/ry/rz, Rotx/Roty/Rotz...) and single angle columns (rotate, roll, hue, phase...) blend between presets. Euler (legacy): each channel eased on its own, exactly as before. Slerp (shortest): triples blended in quaternion space and angles along the shortest arc - a 0 to 350 deg yaw now turns -10 deg, not +350. Slerp (preserve winding): quaternion blend for triples, but any sweep authored beyond 180 deg keeps going the long way; single angles follow the authored sweep.",
+    "default": "slerp",
+    "section": true,
+    "menu": [
+     {
+      "name": "euler",
+      "label": "Euler (legacy)"
+     },
+     {
+      "name": "slerp",
+      "label": "Slerp (shortest)"
+     },
+     {
+      "name": "slerplong",
+      "label": "Slerp (preserve winding)"
+     }
+    ],
+    "page": "Seq"
+   },
+   {
+    "name": "Rotgroups",
+    "label": "Rotation Groups",
+    "style": "Str",
+    "help": "Extra rotation tuplet bases to blend as quaternions, space separated and case-exact (e.g. \"Spin Tilt\" for Spinx Spiny Spinz and Tiltx Tilty Tiltz). Complete x/y/z triples named r, R, Rot, Rotate or Rotation (any case) are detected automatically. Only complete triples are grouped.",
+    "default": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Periodic",
+    "label": "Periodic Columns",
+    "style": "Str",
+    "help": "Single angle-like columns to blend along the shortest arc, space separated and case-exact, as name or name:period (e.g. \"Twist Offset:1\"). rotate, roll, angle*, hue* and a lone rx/Rotz are detected automatically as degrees (360), phase* as 0..1. Applies in the Slerp blend modes; Euler (legacy) leaves them as plain numbers.",
+    "default": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Select",
+    "label": "Select",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Select1",
+    "label": "Preset A",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "page": "Seq"
+   },
+   {
+    "name": "Select2",
+    "label": "Preset B",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "page": "Seq"
+   },
+   {
+    "name": "Selany",
+    "label": "Select",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Seq"
+   },
+   {
+    "name": "Length",
+    "label": "Length",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "readonly": true,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Op",
+    "label": "OP",
+    "style": "OP",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Bind",
+    "label": "Bind",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Seq"
+   },
+   {
+    "name": "Reset",
+    "label": "Reset",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Prunestale",
+    "label": "Prune Stale Columns",
+    "style": "Pulse",
+    "help": "Drop preset columns whose parameter no longer exists on the target operator (e.g. a custom parameter deleted in the Component Editor). The table is backed up first; RestorePresets() undoes it.",
+    "page": "Seq"
+   },
+   {
+    "name": "Presetsrepo",
+    "label": "Presets",
+    "style": "OP",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Presetsrepocreate",
+    "label": "Create",
+    "style": "Pulse",
+    "help": "",
+    "page": "Seq"
+   },
+   {
+    "name": "Mixsource",
+    "label": "Weights From",
+    "style": "Menu",
+    "help": "Where the per-preset weights come from. Parameters: the Mix blocks below. CHOP: the Weights CHOP, one value per preset. Parameters x CHOP: the blocks act as a per-preset trim or enable and the CHOP drives on top of them.",
+    "default": "params",
+    "section": true,
+    "menu": [
+     {
+      "name": "params",
+      "label": "Parameters"
+     },
+     {
+      "name": "chop",
+      "label": "CHOP"
+     },
+     {
+      "name": "both",
+      "label": "Parameters x CHOP"
+     }
+    ],
+    "page": "Mix"
+   },
+   {
+    "name": "Mixchop",
+    "label": "Weights",
+    "style": "CHOP",
+    "help": "CHOP carrying the mix weights, one value per preset. Leave blank to use whatever is wired into the component's second CHOP input.",
+    "default": "",
+    "section": true,
+    "page": "Mix"
+   },
+   {
+    "name": "Mixmap",
+    "label": "Map",
+    "style": "Menu",
+    "help": "How the source values land on the presets. Exact: one value per preset, extra values trimmed and missing presets left at zero -- for a fader bank that matches the table. Stretch: the source is resampled across the whole table, so a handful of channels smear over every preset.",
+    "default": "exact",
+    "menu": [
+     {
+      "name": "exact",
+      "label": "Exact (one per preset)"
+     },
+     {
+      "name": "stretch",
+      "label": "Stretch across presets"
+     }
+    ],
+    "page": "Mix"
+   },
+   {
+    "name": "Mixaxis",
+    "label": "Read",
+    "style": "Menu",
+    "help": "Which axis of the source CHOP carries the weights. Auto reads the samples of a single-channel CHOP, and one value per channel for anything else.",
+    "default": "auto",
+    "menu": [
+     {
+      "name": "auto",
+      "label": "Auto"
+     },
+     {
+      "name": "channels",
+      "label": "One per channel"
+     },
+     {
+      "name": "samples",
+      "label": "Samples of first channel"
+     }
+    ],
+    "page": "Mix"
+   },
+   {
+    "name": "Mixpopulate",
+    "label": "Populate All Presets",
+    "style": "Pulse",
+    "help": "Rebuild the Mix blocks as one per preset, in order. Weights already dialled for a preset are preserved.",
+    "page": "Mix"
+   },
+   {
+    "name": "Mixclear",
+    "label": "Clear Blocks",
+    "style": "Pulse",
+    "help": "Drop back to a single empty block. Use it to mix a handful of presets instead of the whole table.",
+    "page": "Mix"
+   },
+   {
+    "name": "Mix",
+    "label": "Mix",
+    "style": "Sequence",
+    "help": "",
+    "default": 0,
+    "page": "Mix"
+   },
+   {
+    "name": "Mix0preset",
+    "label": "Preset",
+    "style": "Int",
+    "help": "Which preset this block weights, by its index in the list.",
+    "default": 0,
+    "page": "Mix"
+   },
+   {
+    "name": "Mix0weight",
+    "label": "Weight",
+    "style": "Float",
+    "help": "How hard this preset pulls. Relative to the other blocks under Normalize; a share of 1 under Base residual.",
+    "default": 0.0,
+    "page": "Mix"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "The version the FNS updater compares against the store; bumped by the release flow.",
+    "default": "",
+    "page": "About"
+   },
+   {
+    "name": "Patreon",
+    "label": "Patreon",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Readme",
+    "label": "Open README",
+    "style": "Pulse",
+    "help": "Open the README: workflow, every parameter, the preset list, rotation blending and the presets table.",
+    "page": "About"
+   },
+   {
+    "name": "Easepreset",
+    "label": "Preset",
+    "style": "Int",
+    "help": "The preset these controls edit -- follows the selected row.",
+    "default": 0,
+    "page": "Easing"
+   },
+   {
+    "name": "Baseease",
+    "label": "Base Easing",
+    "style": "Menu",
+    "help": "Easing used when morphing INTO the selected preset. Every parameter without an override below follows this curve.",
+    "default": "Linear",
+    "menu": [
+     {
+      "name": "Linear",
+      "label": "Linear"
+     },
+     {
+      "name": "InSine",
+      "label": "InSine"
+     },
+     {
+      "name": "OutSine",
+      "label": "OutSine"
+     },
+     {
+      "name": "InOutSine",
+      "label": "InOutSine"
+     },
+     {
+      "name": "InQuad",
+      "label": "InQuad"
+     },
+     {
+      "name": "OutQuad",
+      "label": "OutQuad"
+     },
+     {
+      "name": "InOutQuad",
+      "label": "InOutQuad"
+     },
+     {
+      "name": "InCubic",
+      "label": "InCubic"
+     },
+     {
+      "name": "OutCubic",
+      "label": "OutCubic"
+     },
+     {
+      "name": "InOutCubic",
+      "label": "InOutCubic"
+     },
+     {
+      "name": "InQuart",
+      "label": "InQuart"
+     },
+     {
+      "name": "OutQuart",
+      "label": "OutQuart"
+     },
+     {
+      "name": "InOutQuart",
+      "label": "InOutQuart"
+     },
+     {
+      "name": "InQuint",
+      "label": "InQuint"
+     },
+     {
+      "name": "OutQuint",
+      "label": "OutQuint"
+     },
+     {
+      "name": "InOutQuint",
+      "label": "InOutQuint"
+     },
+     {
+      "name": "InExpo",
+      "label": "InExpo"
+     },
+     {
+      "name": "OutExpo",
+      "label": "OutExpo"
+     },
+     {
+      "name": "InOutExpo",
+      "label": "InOutExpo"
+     },
+     {
+      "name": "InCirc",
+      "label": "InCirc"
+     },
+     {
+      "name": "OutCirc",
+      "label": "OutCirc"
+     },
+     {
+      "name": "InOutCirc",
+      "label": "InOutCirc"
+     },
+     {
+      "name": "InBack",
+      "label": "InBack"
+     },
+     {
+      "name": "OutBack",
+      "label": "OutBack"
+     },
+     {
+      "name": "InOutBack",
+      "label": "InOutBack"
+     },
+     {
+      "name": "InElastic",
+      "label": "InElastic"
+     },
+     {
+      "name": "OutElastic",
+      "label": "OutElastic"
+     },
+     {
+      "name": "InOutElastic",
+      "label": "InOutElastic"
+     },
+     {
+      "name": "InBounce",
+      "label": "InBounce"
+     },
+     {
+      "name": "OutBounce",
+      "label": "OutBounce"
+     },
+     {
+      "name": "InOutBounce",
+      "label": "InOutBounce"
+     },
+     {
+      "name": "CustomEase",
+      "label": "CustomEase"
+     }
+    ],
+    "page": "Easing"
+   },
+   {
+    "name": "Ovr",
+    "label": "Overrides",
+    "style": "Sequence",
+    "help": "",
+    "default": 0,
+    "page": "Easing"
+   },
+   {
+    "name": "Ovr0par",
+    "label": "Parameter",
+    "style": "Menu",
+    "help": "Parameter this override re-eases (- = row inactive). Rotation triples appear as their base name and ease as one arc.",
+    "default": "-",
+    "menu": [
+     {
+      "name": "-",
+      "label": "-"
+     },
+     {
+      "name": "r",
+      "label": "r"
+     },
+     {
+      "name": "tx",
+      "label": "tx"
+     },
+     {
+      "name": "ty",
+      "label": "ty"
+     },
+     {
+      "name": "tz",
+      "label": "tz"
+     }
+    ],
+    "page": "Easing"
+   },
+   {
+    "name": "Ovr0ease",
+    "label": "Easing",
+    "style": "Menu",
+    "help": "Easing curve for this parameter alone, morphing into the selected preset.",
+    "default": "Linear",
+    "menu": [
+     {
+      "name": "Linear",
+      "label": "Linear"
+     },
+     {
+      "name": "InSine",
+      "label": "InSine"
+     },
+     {
+      "name": "OutSine",
+      "label": "OutSine"
+     },
+     {
+      "name": "InOutSine",
+      "label": "InOutSine"
+     },
+     {
+      "name": "InQuad",
+      "label": "InQuad"
+     },
+     {
+      "name": "OutQuad",
+      "label": "OutQuad"
+     },
+     {
+      "name": "InOutQuad",
+      "label": "InOutQuad"
+     },
+     {
+      "name": "InCubic",
+      "label": "InCubic"
+     },
+     {
+      "name": "OutCubic",
+      "label": "OutCubic"
+     },
+     {
+      "name": "InOutCubic",
+      "label": "InOutCubic"
+     },
+     {
+      "name": "InQuart",
+      "label": "InQuart"
+     },
+     {
+      "name": "OutQuart",
+      "label": "OutQuart"
+     },
+     {
+      "name": "InOutQuart",
+      "label": "InOutQuart"
+     },
+     {
+      "name": "InQuint",
+      "label": "InQuint"
+     },
+     {
+      "name": "OutQuint",
+      "label": "OutQuint"
+     },
+     {
+      "name": "InOutQuint",
+      "label": "InOutQuint"
+     },
+     {
+      "name": "InExpo",
+      "label": "InExpo"
+     },
+     {
+      "name": "OutExpo",
+      "label": "OutExpo"
+     },
+     {
+      "name": "InOutExpo",
+      "label": "InOutExpo"
+     },
+     {
+      "name": "InCirc",
+      "label": "InCirc"
+     },
+     {
+      "name": "OutCirc",
+      "label": "OutCirc"
+     },
+     {
+      "name": "InOutCirc",
+      "label": "InOutCirc"
+     },
+     {
+      "name": "InBack",
+      "label": "InBack"
+     },
+     {
+      "name": "OutBack",
+      "label": "OutBack"
+     },
+     {
+      "name": "InOutBack",
+      "label": "InOutBack"
+     },
+     {
+      "name": "InElastic",
+      "label": "InElastic"
+     },
+     {
+      "name": "OutElastic",
+      "label": "OutElastic"
+     },
+     {
+      "name": "InOutElastic",
+      "label": "InOutElastic"
+     },
+     {
+      "name": "InBounce",
+      "label": "InBounce"
+     },
+     {
+      "name": "OutBounce",
+      "label": "OutBounce"
+     },
+     {
+      "name": "InOutBounce",
+      "label": "InOutBounce"
+     },
+     {
+      "name": "CustomEase",
+      "label": "CustomEase"
+     }
+    ],
+    "page": "Easing"
+   },
+   {
+    "name": "Clearovr",
+    "label": "Clear Overrides",
+    "style": "Pulse",
+    "help": "Remove every per-parameter override from the selected preset; the base easing stays.",
+    "page": "Easing"
+   },
+   {
+    "name": "Showeasing",
+    "label": "Show Easing Panel",
+    "style": "Toggle",
+    "help": "Show or hide the easing strip in the panel UI.",
+    "default": true,
+    "page": "Easing"
    }
   ],
   "FNS_OpTemplates": [
@@ -10288,6 +12384,7 @@
    "mainmenu",
    "toolbar"
   ],
+  "FNS_CamSequencer": [],
   "FNS_Collect": [],
   "FNS_ColorUI": [
    "console",
@@ -10333,6 +12430,7 @@
   "FNS_Misc": [
    "toolbar"
   ],
+  "FNS_MixSequencer": [],
   "FNS_NavbarRegistry": [],
   "FNS_OpenExt": [],
   "FNS_OpMenuMods": [
@@ -10340,6 +12438,7 @@
    "opmenu"
   ],
   "FNS_OpMenuRegistry": [],
+  "FNS_OpSequencer": [],
   "FNS_OpTemplates": [
    "opmenu",
    "toolbar"
@@ -10973,11 +13072,19 @@
    "readonly": true
   },
   {
+   "name": "Author",
+   "label": "Author",
+   "style": "Str",
+   "help": "",
+   "default": "Function Store @function.str",
+   "readonly": true
+  },
+  {
    "name": "Version",
    "label": "Version",
    "style": "Str",
    "help": "FNS_CommandKit version.",
-   "default": "1.0.0",
+   "default": "",
    "readonly": true
   },
   {

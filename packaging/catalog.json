@@ -722,6 +722,40 @@
     "speed"
    ]
   },
+  "FNS_OpSequencer": {
+   "category": "Parameters",
+   "description": "Preset sequencer for one operator: store any number of its parameter states in a table, then scrub, jump or morph between them with easing, or mix them by weight from a CHOP. Drop the operator on the panel and drag parameters in to add columns.",
+   "placement": "pane",
+   "fits": [
+    "live",
+    "show",
+    "params",
+    "art"
+   ],
+   "access": "8323905"
+  },
+  "FNS_CamSequencer": {
+   "category": "Control",
+   "description": "A camera with two preset sequencers inside, one for its transform and lens and one for the Look At target: frame it, append, scrub or drive it from a CHOP, fly it with a joystick, or take over a palette camera viewport.",
+   "placement": "pane",
+   "fits": [
+    "live",
+    "show",
+    "visual"
+   ],
+   "access": "8323905"
+  },
+  "FNS_MixSequencer": {
+   "category": "Parameters",
+   "description": "A step sequencer of mixes for OpSequencer: every step is a weight vector over a sequencer's presets, the playhead crossfades between steps with easing, and the result rides out as one channel per preset. A run of one-hot steps is a cue list.",
+   "placement": "pane",
+   "fits": [
+    "live",
+    "show",
+    "params"
+   ],
+   "access": "8323905"
+  },
   "TDXMap": {
    "category": "Control",
    "description": "MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode, easing curves, slot and modify modes.",
