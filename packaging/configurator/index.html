@@ -3055,6 +3055,48 @@ function fnsBoot() {
   }
   render();
   loadRecommends();
+  // A store manifest was served and the installer is checking the bucket
+  // for a newer release (InstallerExt._checkManifest). When the release
+  // moved: reload by itself if nothing has been picked or opened since the
+  // page loaded, otherwise say so and offer the reload.
+  if (served && window.FNS_CHECKING) watchCatalog();
+  function watchCatalog() {
+    var picksAtLoad = Array.from(picked).sort().join(',');
+    var tries = 0;
+    function busy() {
+      if (Array.from(picked).sort().join(',') !== picksAtLoad) return true;
+      return !!document.querySelector('dialog[open]:not(#welcome)');
+    }
+    function offer(release) {
+      if (document.getElementById('catalog-new')) return;
+      var box = document.createElement('div');
+      box.className = 'note';
+      box.id = 'catalog-new';
+      box.style.margin = '10px 0';
+      box.appendChild(document.createTextNode(
+        'A newer release (' + release + ') is out. This list still shows the one this machine had. '));
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn';
+      btn.textContent = 'Reload the list';
+      btn.addEventListener('click', function () { location.reload(); });
+      box.appendChild(btn);
+      var sub = document.getElementById('sub');
+      sub.parentNode.insertBefore(box, sub.nextSibling);
+    }
+    function poll() {
+      tries++;
+      fetch('/manifest/release', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d.checking && tries < 30) { setTimeout(poll, 2000); return; }
+          if (!d.release || !M.release || d.release === M.release) return;
+          if (busy()) offer(d.release); else location.reload();
+        })
+        .catch(function () { if (tries < 3) setTimeout(poll, 2000); });
+    }
+    setTimeout(poll, 1500);
+  }
   if (firstrun) {
     if (sessionFlag('fns.welcomed')) setStep(2); else showWelcome();
   } else if (!served && !FNS_EMBEDDED && !stored('fns.visited', null)) {
