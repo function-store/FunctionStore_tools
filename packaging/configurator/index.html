@@ -698,6 +698,7 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   <div class="dlg-actions">
     <a class="bar-docs" id="dlgdocs" target="_blank" rel="noopener">Installation notes ↗</a>
     <span class="spacer"></span>
+    <button class="btn btn-secondary" id="dlgreload" hidden>Reload picker</button>
     <button class="btn btn-quiet" id="close">Close</button>
     <button class="btn btn-primary" id="docopy" hidden>Copy</button>
     <button class="btn btn-primary" id="doinstall" hidden>Install</button>
@@ -1894,6 +1895,9 @@ function fnsBoot() {
     return sel;
   }
 
+  document.getElementById('dlgreload').addEventListener('click', function () {
+    location.reload();
+  });
   document.getElementById('alldocs').href = FNS_DOCS + '/docs/';
   document.getElementById('dlgdocs').href = FNS_DOCS + '/#get';
   document.getElementById('q').addEventListener('input', render);
@@ -2561,7 +2565,11 @@ function fnsBoot() {
     out.hidden = true;
   }
 
-  function showDialog(text, installable, hint) {
+  // The panel this page runs in inside TouchDesigner has no browser
+  // chrome, so a page that asks to be reloaded asks for something the
+  // reader cannot do (field report 2026-09-17). Every auth wait carries
+  // this button; nothing else shows it.
+  function showDialog(text, installable, hint, reloadable) {
     var dlg = document.getElementById('dlg');
     document.getElementById('out').textContent = text;
     document.getElementById('out').hidden = false;
@@ -2570,6 +2578,7 @@ function fnsBoot() {
     document.getElementById('doinstall').hidden = !installable;
     document.getElementById('docopy').hidden = true;
     document.getElementById('doopen').hidden = true;
+    document.getElementById('dlgreload').hidden = !reloadable;
     document.getElementById('dlghint').textContent = hint || HINTS.selection;
     if (!dlg.open) dlg.showModal();
   }
@@ -2859,18 +2868,33 @@ function fnsBoot() {
     // the chips are rendered from FNS_ACCOUNT at load, so a reload is
     // the honest refresh (previously the dialog said "reload in a
     // moment" and nothing ever did).
-    var before = JSON.stringify((account && account.products) || null)
-      + '|' + String(!(account && account.connected === false));
+    function acctSig(a) {
+      return JSON.stringify((a && a.products) || null)
+        + '|' + String(!(a && a.connected === false))
+        + '|' + String((a && a.label) || '')
+        + '|' + String((a && a.checked_at) || 0);
+    }
+    var before = acctSig(account);
     var authPolls = 0;
+    // Ten minutes, not one: the wait is a browser round trip through
+    // Patreon on whatever device the person reaches for, and a watcher
+    // that gave up after 60 seconds left the page frozen on "finish in
+    // your browser" for good (field report 2026-09-17).
     function watchAuth() {
-      if (++authPolls > 40) { return; }        // ~60s, then give up quietly
+      if (++authPolls > 400) {
+        showDialog('Still waiting for the browser. Sign in there, then '
+                   + 'reload the picker.', false, undefined, true);
+        return;
+      }
       setTimeout(function () {
         fetch('/auth/status').then(function (r) { return r.json(); })
           .then(function (st) {
-            // products OR the connection state changed: both redraw the
-            // header (a recheck that finds the Patreon link gone must turn
-            // Check again into Sign in again)
-            if (JSON.stringify(st.products || null) + '|' + String(st.connected !== false) !== before) {
+            // ANY change to the record: products, the connection state,
+            // the account label, or the moment the gate last confirmed
+            // it. A sign-in on an account entitled to nothing changes no
+            // products, and watching products alone waited for a change
+            // that could never come.
+            if (acctSig(st) !== before) {
               showDialog((st.status || 'Done.') + '\nRefreshing the picker…', false);
               setTimeout(function () { location.reload(); }, 900);
               return;
@@ -2880,9 +2904,14 @@ function fnsBoot() {
             // stopping on the first of those froze the dialog there
             // while the sign-in completed behind it
             if (st.status && !/checking|waiting|finishing/i.test(st.status)) {
-              showDialog(st.status, false);
+              showDialog(st.status, false, undefined, true);
               return;
             }
+            var secs = Math.round(authPolls * 1.5);
+            showDialog((st.status || 'Waiting for the browser…')
+                       + '\nStill waiting, ' + secs + 's. You can leave this '
+                       + 'open; it refreshes by itself when the sign-in lands.',
+                       false, undefined, true);
             watchAuth();
           })
           .catch(function () { watchAuth(); });
