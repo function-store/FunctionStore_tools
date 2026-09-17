@@ -1699,8 +1699,11 @@ function fnsBoot() {
       ? 'Upgrade your Patreon tier ↗' : 'Become a supporter ↗';
     var signin = document.getElementById('patreonsignin');
     var recheck = document.getElementById('patreonrecheck');
-    signin.hidden = !(hasAuthRail && !account && authActions.signIn);
-    recheck.hidden = !(hasAuthRail && account && authActions.recheck);
+    // a dead Patreon grant is signed in on paper only: offer the way back in
+    var reconnect = !!(account && account.connected === false);
+    signin.hidden = !(hasAuthRail && (!account || reconnect) && authActions.signIn);
+    if (reconnect) signin.textContent = 'Sign in again with Patreon';
+    recheck.hidden = !(hasAuthRail && account && !reconnect && authActions.recheck);
     function done() { try { d.close(); } catch (e) { /* already closed */ } }
     signin.onclick = function () { done(); authActions.signIn(); };
     recheck.onclick = function () { done(); authActions.recheck(); };
@@ -2718,7 +2721,22 @@ function fnsBoot() {
       // someone becomes a customer, so it gets BOTH doors: join, and -- for
       // anyone who already did -- a check that skips the gate's cache.
       if (!n && support) { support.hidden = false; }
-      if (recheck) {
+      if (account.connected === false) {
+        // The gate said this install's Patreon link is gone. Check again
+        // can never succeed here, and without this the page had no way in
+        // at all (field report 2026-09-17): offer the sign-in instead.
+        el.appendChild(document.createTextNode(' · Patreon link lost'));
+        if (btn) {
+          btn.textContent = 'Sign in again with Patreon';
+          btn.hidden = false;
+          btn.addEventListener('click', function () {
+            post('/auth/signin', '{}', function (res) {
+              showDialog(res.text, false);
+              if (res.ok) watchAuth();
+            });
+          });
+        }
+      } else if (recheck) {
         recheck.hidden = false;
         recheck.addEventListener('click', function () {
           post('/auth/recheck', '{}', function (res) {
@@ -2749,14 +2767,18 @@ function fnsBoot() {
     // the chips are rendered from FNS_ACCOUNT at load, so a reload is
     // the honest refresh (previously the dialog said "reload in a
     // moment" and nothing ever did).
-    var before = JSON.stringify((account && account.products) || null);
+    var before = JSON.stringify((account && account.products) || null)
+      + '|' + String(!(account && account.connected === false));
     var authPolls = 0;
     function watchAuth() {
       if (++authPolls > 40) { return; }        // ~60s, then give up quietly
       setTimeout(function () {
         fetch('/auth/status').then(function (r) { return r.json(); })
           .then(function (st) {
-            if (JSON.stringify(st.products || null) !== before) {
+            // products OR the connection state changed: both redraw the
+            // header (a recheck that finds the Patreon link gone must turn
+            // Check again into Sign in again)
+            if (JSON.stringify(st.products || null) + '|' + String(st.connected !== false) !== before) {
               showDialog((st.status || 'Done.') + '\nRefreshing the picker…', false);
               setTimeout(function () { location.reload(); }, 900);
               return;
