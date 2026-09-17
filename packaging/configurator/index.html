@@ -917,6 +917,21 @@ function fnsBoot() {
   // The sign-in, recheck and join doors, filled in by the account block
   // below when this flavor has an auth rail. The welcome and the Patreon
   // dialog open the same doors the header does, so there is one flow.
+  // An account that entitles NOTHING is, to the person looking at it, the
+  // same as signed out: it can install nothing and it may not be theirs at
+  // all (a machine session adopted from another Function Store product --
+  // field report 2026-09-17, a Mac where the launcher's session had no
+  // Patreon link). Every surface that speaks about Patreon offers the way
+  // in whenever this is true, beside the join and the recheck, because all
+  // three are plausible remedies and only the user knows which.
+  function signInWanted() {
+    return !account || account.connected === false
+      || !((account.products || []).length);
+  }
+  function signInLabel() {
+    return (account && account.connected === false)
+      ? 'Sign in again with Patreon' : 'Sign in with Patreon';
+  }
   var authActions = {};
   function entitled(p) {
     return !!(account && (account.products || []).indexOf(p.name) >= 0);
@@ -1712,7 +1727,14 @@ function fnsBoot() {
       ? titleOf(pkgs[0]) + ' comes with Patreon'
       : pkgs.length + ' of these come with Patreon';
     var text;
-    if (hasAuthRail && account) {
+    if (hasAuthRail && account && signInWanted()) {
+      // A session that entitles nothing is not a tier problem: it may not
+      // be this person's account at all (an adopted machine session), so
+      // say what is true and let the buttons offer both remedies.
+      text = (one ? 'It unlocks' : 'They unlock') + at + '. This install is '
+        + 'signed in to a Patreon account that includes '
+        + (one ? 'no packages' : 'none of them') + '.';
+    } else if (hasAuthRail && account) {
       text = 'Your Patreon tier does not include ' + (one ? 'it' : 'them')
         + ' yet. ' + (one ? 'It unlocks' : 'They unlock') + at + '.';
     } else if (hasAuthRail) {
@@ -1733,10 +1755,12 @@ function fnsBoot() {
       ? 'Upgrade your Patreon tier ↗' : 'Become a supporter ↗';
     var signin = document.getElementById('patreonsignin');
     var recheck = document.getElementById('patreonrecheck');
-    // a dead Patreon grant is signed in on paper only: offer the way back in
+    // Signed in on paper only -- a dead grant, or a session that entitles
+    // nothing -- still needs the way in; a live session that entitles
+    // nothing keeps I just pledged beside it.
     var reconnect = !!(account && account.connected === false);
-    signin.hidden = !(hasAuthRail && (!account || reconnect) && authActions.signIn);
-    if (reconnect) signin.textContent = 'Sign in again with Patreon';
+    signin.hidden = !(hasAuthRail && signInWanted() && authActions.signIn);
+    signin.textContent = signInLabel();
     recheck.hidden = !(hasAuthRail && account && !reconnect && authActions.recheck);
     function done() { try { d.close(); } catch (e) { /* already closed */ } }
     signin.onclick = function () { done(); authActions.signIn(); };
@@ -1796,14 +1820,28 @@ function fnsBoot() {
     if (!locked.length) return;
     authEl.hidden = false;
     var join = authActions.join || (FNS_DOCS + '/patreon/');
-    if (hasAuthRail && !account && authActions.signIn) {
-      authEl.appendChild(document.createTextNode('Already a supporter? '));
+    if (hasAuthRail && signInWanted() && authActions.signIn) {
+      authEl.appendChild(document.createTextNode(
+        (account && account.connected === false)
+          ? 'This install\'s Patreon link is gone. '
+          : 'Already a supporter? '));
       var a = document.createElement('a');
       a.href = '#';
-      a.textContent = 'Sign in with Patreon';
+      a.textContent = signInLabel();
       a.addEventListener('click', function (e) { e.preventDefault(); authActions.signIn(); });
       authEl.appendChild(a);
-      authEl.appendChild(document.createTextNode(' to add your tools.'));
+      authEl.appendChild(document.createTextNode(' to add your tools. '));
+      authEl.appendChild(docsLink(join, account && account.tier
+                                  ? 'Upgrade your tier ↗' : 'Become a supporter ↗', ''));
+      // a session that entitles nothing can also be one that just pledged
+      if (account && account.connected !== false && authActions.recheck) {
+        authEl.appendChild(document.createTextNode(' · '));
+        var rc0 = document.createElement('a');
+        rc0.href = '#';
+        rc0.textContent = 'I just pledged';
+        rc0.addEventListener('click', function (e) { e.preventDefault(); authActions.recheck(); });
+        authEl.appendChild(rc0);
+      }
     } else if (hasAuthRail && account) {
       authEl.appendChild(document.createTextNode('Your Patreon tier does not include them yet. '));
       authEl.appendChild(docsLink(join, account.tier ? 'Upgrade your tier ↗' : 'Become a supporter ↗', ''));
@@ -2729,6 +2767,12 @@ function fnsBoot() {
         if (res.ok) watchAuth();
       });
     };
+    function doSignIn() {
+      post('/auth/signin', '{}', function (res) {
+        showDialog(res.text, false);
+        if (res.ok) watchAuth();
+      });
+    }
     if (support) {
       support.href = join;
       // Someone already paying is not asked to "become" anything: a
@@ -2770,21 +2814,26 @@ function fnsBoot() {
       // anyone who already did -- a check that skips the gate's cache.
       if (!n && support) { support.hidden = false; }
       if (account.connected === false) {
-        // The gate said this install's Patreon link is gone. Check again
-        // can never succeed here, and without this the page had no way in
-        // at all (field report 2026-09-17): offer the sign-in instead.
         el.appendChild(document.createTextNode(' · Patreon link lost'));
-        if (btn) {
-          btn.textContent = 'Sign in again with Patreon';
-          btn.hidden = false;
-          btn.addEventListener('click', function () {
-            post('/auth/signin', '{}', function (res) {
-              showDialog(res.text, false);
-              if (res.ok) watchAuth();
-            });
-          });
-        }
-      } else if (recheck) {
+      } else if (!(account.products || []).length) {
+        // Signed in and entitled to nothing: say so plainly. It is also
+        // what an adopted machine session looks like, which is not
+        // necessarily this person's account at all.
+        el.appendChild(document.createTextNode(' · no Patreon packages on this session'));
+      }
+      // The way in is offered whenever the session entitles nothing, and
+      // an entitled session still gets a quiet way to switch accounts --
+      // signing out in FNS_Updater is not a route a picker may rely on.
+      if (btn && signInWanted()) {
+        btn.textContent = signInLabel();
+        btn.hidden = false;
+        btn.addEventListener('click', doSignIn);
+      } else if (btn) {
+        btn.textContent = 'Use a different account';
+        btn.hidden = false;
+        btn.addEventListener('click', doSignIn);
+      }
+      if (recheck && account.connected !== false) {
         recheck.hidden = false;
         recheck.addEventListener('click', function () {
           post('/auth/recheck', '{}', function (res) {
@@ -2800,12 +2849,7 @@ function fnsBoot() {
       if (support) { support.hidden = false; }
       if (btn) {
         btn.hidden = false;
-        btn.addEventListener('click', function () {
-          post('/auth/signin', '{}', function (res) {
-            showDialog(res.text, false);
-            if (res.ok) watchAuth();
-          });
-        });
+        btn.addEventListener('click', doSignIn);
       }
     }
 
