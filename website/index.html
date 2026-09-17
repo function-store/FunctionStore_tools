@@ -1403,24 +1403,21 @@
 </footer>
 
 <script>
-  // Upgrade the download buttons from latest/ to the pinned release.
+  // The download buttons stay on latest/, the mutable human alias upload.py
+  // publishes beside every release, and NOTHING rewrites them.
   //
-  // The bucket sends Access-Control-Allow-Origin for this site, so this
-  // fetch succeeds and visitors get reproducible URLs -- the exact bytes
-  // the manifest names, rather than an alias that moves under them. It is
-  // an upgrade, not the mechanism: if it ever fails the static hrefs below
-  // still resolve, because latest/ is always a release that exists.
+  // They used to be upgraded on load to the pinned release path, for
+  // reproducible URLs. A release path is immutable, so a tab opened before
+  // a release kept handing out the previous bootstrap however often it was
+  // clicked, with nothing on the page to say so (field report 2026-09-17:
+  // a fresh drop was still the previous build, and only a page refresh
+  // fixed it). latest/ cannot go stale that way. The pinned URL is still
+  // the reproducible one and still published: it is in the manifest and in
+  // the docs, where a reader asks for it deliberately.
   //
-  // The static hrefs point at latest/, the mutable human aliases upload.py
-  // publishes beside each release -- so a release never leaves the download
-  // buttons pointing at bytes that are no longer current, with no rebuild.
-  // Installs still resolve pinned: when the fetch below succeeds it upgrades
-  // every href to the release the manifest names, which is the reproducible
-  // URL. Until the bucket sends CORS the static latest/ href is what serves.
+  // The manifest fetch stays, for the tool count alone.
   (function () {
     var BASE = 'https://storage.functionstore.tools/fnstools';
-    var BOOTSTRAP = 'FNSTools.tox';
-    var INSTALLER = 'FNS_Installer.tox';
 
     function setAll(sel, fn) {
       Array.prototype.forEach.call(document.querySelectorAll(sel), fn);
@@ -1430,13 +1427,6 @@
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (m) {
         if (!m || !m.release) return;
-        var base = m.base_url || BASE;
-        setAll('.js-fns-download', function (a) {
-          a.href = base + '/' + m.release + '/' + BOOTSTRAP;
-        });
-        setAll('.js-fns-installer', function (a) {
-          a.href = base + '/' + m.release + '/' + INSTALLER;
-        });
         if (m.packages && m.packages.length) {
           setAll('.js-fns-count', function (s) {
             s.textContent = String(m.packages.length);
