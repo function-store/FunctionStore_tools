@@ -1337,20 +1337,40 @@ function fnsBoot() {
    *  picker simply shows no community section, which costs the user
    *  nothing, and must never block the packages they came for. */
   function loadRecommends() {
-    var base = String((window.FNS_MANIFEST || {}).base_url || '').replace(/\/+$/, '');
-    if (!base) return;
-    fetch(base + '/recommendations.json', { cache: 'no-store' })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (doc) {
-        if (!doc || !Array.isArray(doc.tools) || !doc.tools.length) return;
-        window.FNS_RECOMMENDS = doc.tools.filter(function (t) {
+    // Served by the installer, the list comes from the installer: the
+    // bucket sends no CORS headers, so a 127.0.0.1 page cannot fetch it
+    // there. The installer relays the store copy the updater downloads and
+    // answers `retry` while a refresh of that copy is under way.
+    var url;
+    if (served) {
+      url = '/recommendations.json';
+    } else {
+      var base = String((window.FNS_MANIFEST || {}).base_url || '').replace(/\/+$/, '');
+      if (!base) return;
+      url = base + '/recommendations.json';
+    }
+    var tries = 0;
+    function ask() {
+      tries++;
+      fetch(url, { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (doc) {
+          if (!doc) return;
+          if (served && doc.retry && tries < 8) setTimeout(ask, 3000);
           // Belt and braces: never render a row without a name and an
           // https link, whatever the file says.
-          return t && t.name && String(t.url || '').indexOf('https://') === 0;
-        });
-        render();
-      })
-      .catch(function () { /* offline, or no list published yet */ });
+          var list = (Array.isArray(doc.tools) ? doc.tools : []).filter(function (t) {
+            return t && t.name && String(t.url || '').indexOf('https://') === 0;
+          });
+          // an empty answer still re-renders when rows were showing: that
+          // is how a removed recommendation leaves the page
+          if (!list.length && !(window.FNS_RECOMMENDS || []).length) return;
+          window.FNS_RECOMMENDS = list;
+          render();
+        })
+        .catch(function () { /* offline, or no list published yet */ });
+    }
+    ask();
   }
 
   function coreCard(p) {

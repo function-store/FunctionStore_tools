@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.27",
+ "release": "v3.2.28",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -7279,7 +7279,36 @@
     "help": "",
     "default": "",
     "section": true,
-    "menu": [],
+    "menu": [
+     {
+      "name": "random",
+      "label": "random"
+     },
+     {
+      "name": "proscenechanger",
+      "label": "proscenechanger"
+     },
+     {
+      "name": "camsequencer",
+      "label": "camsequencer"
+     },
+     {
+      "name": "simplescenechanger",
+      "label": "simplescenechanger"
+     },
+     {
+      "name": "opsequencer",
+      "label": "opsequencer"
+     },
+     {
+      "name": "switchtools",
+      "label": "switchtools"
+     },
+     {
+      "name": "mixsequencer",
+      "label": "mixsequencer"
+     }
+    ],
     "page": "Stubs"
    },
    {
