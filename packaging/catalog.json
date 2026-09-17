@@ -285,7 +285,8 @@
     "screen",
     "live",
     "visual"
-   ]
+   ],
+   "recommended": true
   },
   "FNS_Collect": {
    "category": "Workflow",
@@ -379,7 +380,8 @@
     "audio",
     "live",
     "visual"
-   ]
+   ],
+   "recommended": true
   },
   "FNS_HotkeyManager": {
    "category": "Workflow",
@@ -590,7 +592,8 @@
     "live",
     "tidy",
     "speed"
-   ]
+   ],
+   "recommended": true
   },
   "FNS_SearchPalette": {
    "category": "Workflow",
@@ -631,7 +634,8 @@
    "fits": [
     "network",
     "speed"
-   ]
+   ],
+   "recommended": true
   },
   "FNS_TimelineRegistry": {
    "category": "Core",
@@ -708,7 +712,8 @@
     "art",
     "speed",
     "network"
-   ]
+   ],
+   "recommended": true
   },
   "QuickMarks": {
    "category": "Network",

@@ -1,6 +1,9 @@
 ---
 package: FNS_BorderlessTD
-summary: Hide the window's title bar and the timeline for a cleaner TouchDesigner, on a key each.
+summary: 'Hide the window''s title bar and the timeline for a cleaner TouchDesigner, on a key each.'
+features:
+  - name: BorderlessTD
+    anchor: borderlesstd
 hotkeys:
   - keys: F7
     does: Show or hide the window's title bar (Windows only)
@@ -8,10 +11,8 @@ hotkeys:
     does: Show or hide the timeline
 # Bound on the tool's keyboardin through a list expression, which
 # HotkeyManager cannot discover; see the "fixed key" sentence below.
-fixed_keys: [Shift+Esc]
-features:
-  - name: BorderlessTD
-    anchor: borderlesstd
+fixed_keys:
+  - Shift+Esc
 ---
 
 ## BorderlessTD
