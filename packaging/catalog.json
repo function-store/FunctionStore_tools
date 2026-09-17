@@ -816,6 +816,26 @@
     "detail": "A free 14-day trial of Pro, once per computer. After it the mapping editor needs a Function Store Patreon membership at the Base or Pro tier, or a Gumroad lifetime key; live MIDI to parameters keeps working without one, and your mappings are kept.",
     "url": "https://tdxmap.functionstore.xyz/license/"
    }
+  },
+  "FNS_OpFamily": {
+   "category": "Surfaces",
+   "description": "The FNS tab in the OP Create dialog: an operator family whose members are FNS tools placed from the store as one node each, with stubs for projects that travel and in-place updates that keep retained parameters and state. Built with TDFam.",
+   "fits": [
+    "network",
+    "speed",
+    "visual"
+   ]
+  },
+  "FNS_RandomCHOP": {
+   "category": "Control",
+   "description": "A random-value CHOP: uniform or normal distributions, unique re-rolls with a tolerance and history, a Markov chain mode, weights from an input and a trigger input, generated per channel or per sample. The first member of the FNS operator family and an alternative for the Noise CHOP.",
+   "placement": "pane",
+   "fits": [
+    "live",
+    "art",
+    "speed"
+   ],
+   "access": "8323905"
   }
  }
 }

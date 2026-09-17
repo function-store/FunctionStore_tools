@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.25",
+ "release": "v3.2.26",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -5195,7 +5195,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "",
+    "default": "3.0.1",
     "page": "About"
    },
    {
@@ -6845,7 +6845,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "",
+    "default": "1.0.1",
     "page": "About"
    }
   ],
@@ -7014,6 +7014,330 @@
     "style": "Str",
     "help": "Key that opens the selected COMP's promoted extension in your external editor. The default is an expression that picks the right keys per platform. Typing a plain value over it pins the tool to one OS.",
     "default": "",
+    "page": "About"
+   }
+  ],
+  "FNS_OpFamily": [
+   {
+    "name": "Family",
+    "label": "Family Name",
+    "style": "Str",
+    "help": "",
+    "default": "",
+    "page": "Family"
+   },
+   {
+    "name": "Version",
+    "label": "Version",
+    "style": "Str",
+    "help": "",
+    "default": "",
+    "readonly": true,
+    "section": true,
+    "page": "Family"
+   },
+   {
+    "name": "Install",
+    "label": "Install",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "section": true,
+    "page": "Family"
+   },
+   {
+    "name": "Installonstart",
+    "label": "Install On Start",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "page": "Family"
+   },
+   {
+    "name": "Color",
+    "label": "Color",
+    "style": "RGBA",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Family"
+   },
+   {
+    "name": "Index",
+    "label": "Index",
+    "style": "Int",
+    "help": "",
+    "default": 9,
+    "page": "Family"
+   },
+   {
+    "name": "Compatibletypes",
+    "label": "Compatible Op Families",
+    "style": "StrMenu",
+    "help": "",
+    "default": "",
+    "section": true,
+    "menu": [
+     {
+      "name": "COMP",
+      "label": "COMP"
+     },
+     {
+      "name": "TOP",
+      "label": "TOP"
+     },
+     {
+      "name": "CHOP",
+      "label": "CHOP"
+     },
+     {
+      "name": "SOP",
+      "label": "SOP"
+     },
+     {
+      "name": "POP",
+      "label": "POP"
+     },
+     {
+      "name": "MAT",
+      "label": "MAT"
+     },
+     {
+      "name": "DAT",
+      "label": "DAT"
+     },
+     {
+      "name": "FNS",
+      "label": "FNS"
+     }
+    ],
+    "page": "Family"
+   },
+   {
+    "name": "Opcomp",
+    "label": "Op Comp",
+    "style": "COMP",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Family"
+   },
+   {
+    "name": "Createopcomp",
+    "label": "Create Op Comp",
+    "style": "Pulse",
+    "help": "",
+    "page": "Family"
+   },
+   {
+    "name": "Opfolder",
+    "label": " [ .tox ] Op Folder",
+    "style": "Folder",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Family"
+   },
+   {
+    "name": "Colorfileops",
+    "label": "Color .tox from Folder",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Family"
+   },
+   {
+    "name": "Namingconvention",
+    "label": "Version Regex Match",
+    "style": "StrMenu",
+    "help": "",
+    "default": "",
+    "readonly": true,
+    "menu": [
+     {
+      "name": "(.+)_v(\\d+\\.\\d+\\.\\d+)\\.tox$",
+      "label": "name_vX.Y.Z (default)"
+     },
+     {
+      "name": "(.+)_(\\d+\\.\\d+\\.\\d+)\\.tox$",
+      "label": "name_X.Y.Z"
+     },
+     {
+      "name": "(.+)-(\\d+\\.\\d+\\.\\d+)\\.tox$",
+      "label": "name-X.Y.Z"
+     },
+     {
+      "name": "No versioning",
+      "label": "No versioning"
+     }
+    ],
+    "page": "Family"
+   },
+   {
+    "name": "Ensuremanifests",
+    "label": "Ensure Manifests",
+    "style": "Pulse",
+    "help": "",
+    "section": true,
+    "page": "Family"
+   },
+   {
+    "name": "Famuicomp",
+    "label": "FamUI COMP",
+    "style": "COMP",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Family"
+   },
+   {
+    "name": "Createstuball",
+    "label": "Create Stubs For All",
+    "style": "Pulse",
+    "help": "",
+    "page": "Stubs"
+   },
+   {
+    "name": "Replacestuball",
+    "label": "Replace Stubs For All",
+    "style": "Pulse",
+    "help": "",
+    "page": "Stubs"
+   },
+   {
+    "name": "Updateall",
+    "label": "Update All",
+    "style": "Pulse",
+    "help": "",
+    "page": "Stubs"
+   },
+   {
+    "name": "Targetop",
+    "label": "Target Op",
+    "style": "OP",
+    "help": "Operator to stub or stub to replace",
+    "default": "",
+    "section": true,
+    "page": "Stubs"
+   },
+   {
+    "name": "Createstubop",
+    "label": "Create Stub For Op",
+    "style": "Pulse",
+    "help": "Create stub for target operator",
+    "page": "Stubs"
+   },
+   {
+    "name": "Replacestubop",
+    "label": "Replace Stub For Op",
+    "style": "Pulse",
+    "help": "Replace target stub with full operator",
+    "page": "Stubs"
+   },
+   {
+    "name": "Updateop",
+    "label": "Update Op",
+    "style": "Pulse",
+    "help": "",
+    "page": "Stubs"
+   },
+   {
+    "name": "Targetcomp",
+    "label": "Target Comp",
+    "style": "OP",
+    "help": "Network container to process",
+    "default": "",
+    "section": true,
+    "page": "Stubs"
+   },
+   {
+    "name": "Createstubscomp",
+    "label": "Create Stubs In Comp",
+    "style": "Pulse",
+    "help": "Stub all operators in target network",
+    "page": "Stubs"
+   },
+   {
+    "name": "Replacestubcomp",
+    "label": "Replace Stubs In Comp",
+    "style": "Pulse",
+    "help": "Regenerate all stubs in target network",
+    "page": "Stubs"
+   },
+   {
+    "name": "Updatecomp",
+    "label": "Update Ops In Comp",
+    "style": "Pulse",
+    "help": "",
+    "page": "Stubs"
+   },
+   {
+    "name": "Targettype",
+    "label": "Target Type",
+    "style": "StrMenu",
+    "help": "",
+    "default": "",
+    "section": true,
+    "menu": [],
+    "page": "Stubs"
+   },
+   {
+    "name": "Updatetype",
+    "label": "Update Type",
+    "style": "Pulse",
+    "help": "",
+    "page": "Stubs"
+   },
+   {
+    "name": "Callbackdat",
+    "label": "Callback DAT",
+    "style": "DAT",
+    "help": "",
+    "default": "",
+    "page": "Callbacks"
+   },
+   {
+    "name": "Createcallbacks",
+    "label": "Create Callbacks",
+    "style": "Pulse",
+    "help": "",
+    "page": "Callbacks"
+   },
+   {
+    "name": "About",
+    "label": "About",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "License",
+    "label": "License",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Devmode",
+    "label": "Dev Mode",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "About"
+   },
+   {
+    "name": "Tdfamcreators0support",
+    "label": "Support",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Tdfamcreators1support",
+    "label": "Support",
+    "style": "Pulse",
+    "help": "",
     "page": "About"
    }
   ],
@@ -7623,7 +7947,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "",
+    "default": "1.16.1",
     "page": "About"
    },
    {
@@ -9360,6 +9684,182 @@
     "label": "Link",
     "style": "Pulse",
     "help": "Open the author's page in your browser.",
+    "page": "About"
+   }
+  ],
+  "FNS_RandomCHOP": [
+   {
+    "name": "Samples",
+    "label": "Samples",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "section": true,
+    "page": "Random"
+   },
+   {
+    "name": "Channelname",
+    "label": "Channel Name",
+    "style": "Str",
+    "help": "",
+    "default": "",
+    "page": "Random"
+   },
+   {
+    "name": "Perchannelpersample",
+    "label": "Per Channel / Per Sample",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Random"
+   },
+   {
+    "name": "Intfloat",
+    "label": "Int / Float",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Random"
+   },
+   {
+    "name": "Seed",
+    "label": "Seed",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Random"
+   },
+   {
+    "name": "Uniformdist",
+    "label": "Uniform Dist",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Random"
+   },
+   {
+    "name": "Range",
+    "label": "Range",
+    "style": "Float",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Random"
+   },
+   {
+    "name": "Unique",
+    "label": "Unique",
+    "style": "Toggle",
+    "help": "Makes sure subsequent generations are different values",
+    "default": false,
+    "page": "Random"
+   },
+   {
+    "name": "Tolerance",
+    "label": "Tolerance",
+    "style": "Float",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Random"
+   },
+   {
+    "name": "Prevncheck",
+    "label": "Prev N Check",
+    "style": "Int",
+    "help": "",
+    "default": 1,
+    "page": "Random"
+   },
+   {
+    "name": "Normaldist",
+    "label": "Normal Dist",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Random"
+   },
+   {
+    "name": "Userange",
+    "label": "Use Range",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Random"
+   },
+   {
+    "name": "Normrange",
+    "label": "Range",
+    "style": "Float",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Random"
+   },
+   {
+    "name": "Mean",
+    "label": "Mean",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Random"
+   },
+   {
+    "name": "Spread",
+    "label": "Spread",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Random"
+   },
+   {
+    "name": "Skew",
+    "label": "Skew",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Random"
+   },
+   {
+    "name": "Kurtosis",
+    "label": "Kurtosis",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Random"
+   },
+   {
+    "name": "Markovchain",
+    "label": "Markov Chain",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Random"
+   },
+   {
+    "name": "Resetchain",
+    "label": "Reset Chain",
+    "style": "Pulse",
+    "help": "",
+    "page": "Random"
+   },
+   {
+    "name": "Generate",
+    "label": "Generate",
+    "style": "Pulse",
+    "help": "",
+    "section": true,
+    "page": "Random"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
     "page": "About"
    }
   ],
@@ -11410,7 +11910,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "",
+    "default": "1.1.1",
     "page": "About"
    },
    {
@@ -14064,6 +14564,7 @@
   "FNS_MixSequencer": [],
   "FNS_NavbarRegistry": [],
   "FNS_OpenExt": [],
+  "FNS_OpFamily": [],
   "FNS_OpMenuMods": [
    "hub",
    "opmenu"
@@ -14097,6 +14598,9 @@
   "FNS_QuickPane": [],
   "FNS_QuickTime": [
    "toolbar"
+  ],
+  "FNS_RandomCHOP": [
+   "opmenu"
   ],
   "FNS_Remote": [
    "toolbar"
@@ -14510,6 +15014,14 @@
     }
    }
   ],
+  "FNS_RandomCHOP": [
+   {
+    "surface": "opmenu",
+    "widget": "FNS_RandomCHOP",
+    "label": "randomCHOP",
+    "order": 0
+   }
+  ],
   "FNS_Remote": [
    {
     "surface": "toolbar",
@@ -14720,6 +15232,39 @@
    "help": "FNS_CommandKit version.",
    "default": "",
    "readonly": true
+  },
+  {
+   "name": "Tdfamcreators",
+   "label": "TDFam Creators",
+   "style": "Sequence",
+   "help": "",
+   "default": 0,
+   "readonly": true
+  },
+  {
+   "name": "Tdfamcreators0name",
+   "label": "Name",
+   "style": "Str",
+   "help": "",
+   "default": "",
+   "readonly": true
+  },
+  {
+   "name": "Tdfamcreators1name",
+   "label": "Name",
+   "style": "Str",
+   "help": "",
+   "default": "",
+   "readonly": true
+  },
+  {
+   "name": "Packageversion",
+   "label": "Package Version",
+   "style": "Str",
+   "help": "",
+   "default": "",
+   "readonly": true,
+   "section": true
   },
   {
    "name": "Pkgvariant",

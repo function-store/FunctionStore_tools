@@ -243,12 +243,59 @@ function curatedExtras(entry) {
     // for the input. Derived at manifest build for a live package with an
     // op-menu host (a curated list there is a preflight problem).
     alternatives_for: (Array.isArray(entry.alternatives_for) ? entry.alternatives_for : []).join(' '),
+    // an FNS family member's block, curated here ONLY for a foreign
+    // package; a live package carries it in its FamManifest and the editor
+    // writes that through /api/td/familywrite (docs/OperatorFamilyFromStore.md)
+    family: entry.family && typeof entry.family === 'object' && !Array.isArray(entry.family)
+      ? entry.family : null,
   };
 }
 
 /** Apply the editor's curated fields onto a catalog entry, enforcing the
  *  allowed-on rules. Returns an error string, or '' when applied. Stored
  *  as presence throughout: an unset field leaves no key behind. */
+const FAMILY_GROUPS = ['COMP', 'TOP', 'CHOP', 'SOP', 'MAT', 'DAT', 'POP'];
+
+/** A curated `family` block, normalised the way build_manifest reads it:
+ *  presence throughout, lowercase type (TDFam looks the type up verbatim in
+ *  a lowercased cache). Returns [block, error]. */
+function normaliseFamily(f) {
+  if (!f || typeof f !== 'object' || Array.isArray(f)) return [null, 'family must be an object'];
+  const out = {};
+  const type = String(f.op_type || '').trim();
+  if (!/^[a-z][a-z0-9_]*$/.test(type)) {
+    return [null, `family type "${type}" must be a lowercase word like scenechanger`];
+  }
+  out.op_type = type;
+  const name = String(f.op_name || '').trim();
+  if (name && !/^[A-Za-z][A-Za-z0-9_]*$/.test(name)) return [null, `family name "${name}" must be a word`];
+  if (name && name !== type) out.op_name = name;
+  for (const k of ['op_label', 'summary']) {
+    const v = String(f[k] || '').trim();
+    if (v) out[k] = v;
+  }
+  const group = String(f.op_group || '').trim();
+  if (group && !FAMILY_GROUPS.includes(group)) return [null, `family group "${group}" is not one of ${FAMILY_GROUPS.join(', ')}`];
+  if (group) out.op_group = group;
+  out.is_filter = !!f.is_filter;
+  for (const k of ['compatible_types', 'search_words']) {
+    const raw = typeof f[k] === 'string' ? f[k].replace(/,/g, ' ').split(/\s+/) : (Array.isArray(f[k]) ? f[k] : []);
+    const list = raw.map((x) => String(x).trim()).filter(Boolean);
+    if (k === 'compatible_types') {
+      const bad = list.filter((t) => !FAMILY_GROUPS.includes(t));
+      if (bad.length) return [null, `family compatible types ${bad.join(', ')} are not operator families`];
+    }
+    if (list.length) out[k] = list;
+  }
+  for (const k of ['par_retain', 'state_retain', 'shortcuts']) {
+    const v = f[k];
+    if (v === undefined || v === null) continue;
+    if (typeof v !== 'object' || Array.isArray(v)) return [null, `family ${k} must be a JSON object`];
+    if (Object.keys(v).length) out[k] = v;
+  }
+  return [out, ''];
+}
+
 function applyCurated(entry, body) {
   const setOrDelete = (k, v) => { if (v) entry[k] = v; else delete entry[k]; };
   if (body.author !== undefined) {
@@ -305,6 +352,23 @@ function applyCurated(entry, body) {
       return 'min_td_build looks like 2025.33070';
     }
     setOrDelete(k, v);
+  }
+  // FNS family membership: curated in the catalog for a foreign package
+  // only. A live package's block is derived from its FamManifest, and a
+  // curated block beside one is a preflight problem, so it is refused here.
+  if (body.family !== undefined) {
+    if (!body.family) {
+      delete entry.family;
+    } else {
+      if (!foreign) {
+        return 'family is curated only on a foreign package; a live package carries it in its FamManifest (Write to the tool)';
+      }
+      const [block, err] = normaliseFamily(body.family);
+      if (err) return err;
+      const placement = typeof body.placement === 'string' ? body.placement : entry.placement;
+      if (placement === 'root') return 'a family member is placed into the working network (Current network), never at the root';
+      entry.family = block;
+    }
   }
   return '';
 }
@@ -610,7 +674,7 @@ const server = http.createServer(async (req, res) => {
           cat = readCatalog();
         }
 
-        const curatedKeys = ['author', 'source', 'alternatives_for', ...LINK_KEYS, ...FOREIGN_ONLY];
+        const curatedKeys = ['author', 'source', 'alternatives_for', 'family', ...LINK_KEYS, ...FOREIGN_ONLY];
         if (typeof body.category === 'string' || typeof body.description === 'string'
             || typeof body.recommended === 'boolean'
             || typeof body.placement === 'string'

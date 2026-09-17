@@ -472,6 +472,138 @@ function markDirty() {
   $('#revert').disabled = !changed;
 }
 
+// ---------------------------------------------------------------- FNS family
+// docs/OperatorFamilyFromStore.md. A live package's family facts live in its
+// FamManifest, so the form reads /api/td/familyread and writes
+// /api/td/familywrite (FNS_CMS PI-saves the tool); a foreign package's block
+// rides the normal catalog save.
+function famToFields(f) {
+  const x = f || {};
+  $('#fam-type').value = x.op_type || '';
+  $('#fam-name').value = x.op_name || '';
+  $('#fam-label').value = x.op_label || '';
+  $('#fam-group').value = x.op_group || '';
+  $('#fam-filter').checked = !!x.is_filter;
+  $('#fam-compat').value = (x.compatible_types || []).join(' ');
+  $('#fam-words').value = (x.search_words || []).join(' ');
+  $('#fam-summary').value = x.summary || '';
+  const js = (v) => (v && Object.keys(v).length ? JSON.stringify(v, null, 2) : '');
+  $('#fam-parretain').value = js(x.par_retain);
+  $('#fam-stateretain').value = js(x.state_retain);
+  $('#fam-shortcuts').value = js(x.shortcuts);
+}
+
+function famFromFields() {
+  const words = (id) => $(id).value.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
+  const obj = (id, label) => {
+    const t = $(id).value.trim();
+    if (!t) return {};
+    let v;
+    try { v = JSON.parse(t); } catch (e) { throw new Error(`${label} is not JSON: ${e.message}`); }
+    if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error(`${label} must be a JSON object`);
+    return v;
+  };
+  const type = $('#fam-type').value.trim();
+  if (!/^[a-z][a-z0-9_]*$/.test(type)) throw new Error('Type must be a lowercase word like scenechanger');
+  return {
+    op_type: type,
+    op_name: $('#fam-name').value.trim(),
+    op_label: $('#fam-label').value.trim(),
+    op_group: $('#fam-group').value,
+    is_filter: $('#fam-filter').checked,
+    compatible_types: words('#fam-compat'),
+    search_words: words('#fam-words'),
+    summary: $('#fam-summary').value.trim(),
+    par_retain: obj('#fam-parretain', 'ParRetain'),
+    state_retain: obj('#fam-stateretain', 'StateRetain'),
+    shortcuts: obj('#fam-shortcuts', 'Shortcuts'),
+  };
+}
+
+function famShowProblems(list) {
+  $('#fam-problems').textContent = (list && list.length) ? 'Preflight would refuse: ' + list.join('; ') : '';
+}
+
+async function bindFamily(d) {
+  const on = $('#fam-on');
+  const fields = $('#fam-fields');
+  const write = $('#fam-write');
+  const state = $('#fam-state');
+  const inputs = fields.querySelectorAll('input, select, textarea');
+  famShowProblems([]);
+  if (d.foreign) {
+    // catalog curation: the block is part of the draft and saves with it
+    on.checked = !!d.family;
+    fields.hidden = !d.family;
+    famToFields(d.family);
+    state.textContent = 'Foreign package: saved in catalog.json with the rest of this form.';
+    const sync = () => {
+      if (!on.checked) { d.family = null; markDirty(); return; }
+      try { d.family = famFromFields(); famShowProblems([]); markDirty(); }
+      catch (e) { famShowProblems([e.message]); }
+    };
+    on.onchange = () => { fields.hidden = !on.checked; sync(); };
+    inputs.forEach((i) => { i.oninput = sync; i.onchange = sync; });
+    return;
+  }
+  // a live package: the tool is the source of truth
+  on.disabled = true;
+  inputs.forEach((i) => { i.disabled = true; });
+  state.textContent = 'Reading the tool...';
+  let r;
+  try {
+    r = await api('/api/td/familyread', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: d.name }),
+    });
+  } catch (e) {
+    fields.hidden = true;
+    state.textContent = 'TouchDesigner is not connected, so this cannot be edited: a live package keeps its family facts in its FamManifest, inside the tool. (' + e.message + ')';
+    return;
+  }
+  if (draft !== d) return;   // another package was opened meanwhile
+  on.disabled = false;
+  inputs.forEach((i) => { i.disabled = false; });
+  on.checked = !!r.member;
+  fields.hidden = !r.member;
+  write.hidden = false;
+  famToFields(r.family);
+  famShowProblems(r.problems);
+  const raw = r.raw || {};
+  if (Object.keys(raw).length) {
+    famShowProblems(['unreadable in the tool: ' + Object.keys(raw).join(', ') + ' (fix and write again)']);
+  }
+  state.textContent = r.member
+    ? 'Live package: Write to the tool updates its FamManifest and saves the package.'
+    : 'Live package, not a member. Tick the box, fill in the type, then Write to the tool.';
+  on.onchange = () => { fields.hidden = !on.checked; };
+  write.onclick = async () => {
+    let family = null;
+    if (on.checked) {
+      try { family = famFromFields(); } catch (e) { famShowProblems([e.message]); return; }
+    } else if (r.member && !confirm(`Remove ${d.name} from the FNS family?\n\nIts FamManifest is deleted and the package is saved.`)) {
+      return;
+    }
+    write.disabled = true;
+    try {
+      const w = await api('/api/td/familywrite', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: d.name, family }),
+      });
+      r = { member: w.member, family: w.family };
+      famShowProblems(w.problems);
+      toast(w.member ? `${d.name}: FamManifest written and saved` : `${d.name}: left the FNS family`, w.ok === false ? 'err' : 'ok');
+      state.textContent = w.member
+        ? 'Live package: Write to the tool updates its FamManifest and saves the package.'
+        : 'Live package, not a member. Tick the box, fill in the type, then Write to the tool.';
+    } catch (e) {
+      toast(e.message, 'err');
+    } finally {
+      write.disabled = false;
+    }
+  };
+}
+
 function renderEditor() {
   const d = draft;
   const cats = STATE.categories.map((c) =>
@@ -517,6 +649,32 @@ function renderEditor() {
     <div class="field">
       <label for="alternatives_for">Alternative for <span class="hint">— operator types this tool stands in for, separated by spaces (moviefileinTOP ndiinTOP). Creating one of those types with the alternatives shortcut held offers this tool, from the store when it is not in the project. A live package that carries an op-menu host derives this from its own onAlternatives(); leave it empty there.</span></label>
       <input type="text" id="alternatives_for" placeholder="moviefileinTOP ndiinTOP" />
+    </div>
+
+    <div class="field" id="fam">
+      <label><input type="checkbox" id="fam-on" /> FNS family operator <span class="hint">— listed on the FNS tab of the OP Create dialog, placed as one node, with stubs and in-place updates. A live package keeps this in its own FamManifest: this section reads and writes the tool and saves it. A foreign package keeps it in catalog.json with the rest of this form. Membership implies Current network.</span></label>
+      <div class="hint" id="fam-state"></div>
+      <div id="fam-fields" hidden>
+        <div class="row">
+          <div class="field"><label for="fam-type">Type <span class="hint">— lowercase, unique in the family (scenechanger)</span></label><input type="text" id="fam-type" placeholder="scenechanger" /></div>
+          <div class="field"><label for="fam-name">Name <span class="hint">— names the placed operator (sceneChanger)</span></label><input type="text" id="fam-name" placeholder="sceneChanger" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="fam-label">Label <span class="hint">— shown on the tab</span></label><input type="text" id="fam-label" placeholder="Scene Changer" /></div>
+          <div class="field"><label for="fam-group">Group <span class="hint">— the column it sits in</span></label><select id="fam-group"><option value="">—</option><option>COMP</option><option>TOP</option><option>CHOP</option><option>SOP</option><option>MAT</option><option>DAT</option><option>POP</option></select></div>
+        </div>
+        <label><input type="checkbox" id="fam-filter" /> Filter <span class="hint">— takes an input (a filter), rather than generating one</span></label>
+        <div class="row">
+          <div class="field"><label for="fam-compat">Compatible types <span class="hint">— operator families it wires to, separated by spaces</span></label><input type="text" id="fam-compat" placeholder="TOP CHOP" /></div>
+          <div class="field"><label for="fam-words">Search words <span class="hint">— extra words the dialog's search matches</span></label><input type="text" id="fam-words" placeholder="scene crossfade" /></div>
+        </div>
+        <div class="field"><label for="fam-summary">Summary <span class="hint">— the hover help on the tab</span></label><textarea id="fam-summary" rows="2"></textarea></div>
+        <div class="field"><label for="fam-parretain">ParRetain <span class="hint">— JSON: which parameters survive a stub or an update</span></label><textarea id="fam-parretain" rows="3" class="mono" placeholder="{}"></textarea></div>
+        <div class="field"><label for="fam-stateretain">StateRetain <span class="hint">— JSON: extension storage, COMP storage and DAT contents that survive</span></label><textarea id="fam-stateretain" rows="3" class="mono" placeholder="{}"></textarea></div>
+        <div class="field"><label for="fam-shortcuts">Shortcuts <span class="hint">— JSON: {"ctrl.shift.b": "Bypass"}</span></label><textarea id="fam-shortcuts" rows="2" class="mono" placeholder="{}"></textarea></div>
+      </div>
+      <div class="hint" id="fam-problems"></div>
+      <button type="button" id="fam-write" hidden>Write to the tool</button>
     </div>
 
     <div class="field">
@@ -696,6 +854,7 @@ function renderEditor() {
   $('#min_td_build').oninput = (e) => { d.min_td_build = e.target.value.trim(); markDirty(); };
   $('#help_url').oninput = (e) => { d.help_url = e.target.value.trim(); markDirty(); };
   $('#alternatives_for').oninput = (e) => { d.alternatives_for = e.target.value.trim(); markDirty(); };
+  bindFamily(d);
 
   let previewTimer;
   $('#body').oninput = (e) => {
@@ -1828,6 +1987,9 @@ async function save() {
         help_url: draft.help_url || '',
         min_td_build: draft.min_td_build || '',
         alternatives_for: draft.alternatives_for || '',
+        // only a foreign package's block rides the catalog save; undefined
+        // drops out of the JSON, so a live package never touches the key
+        family: draft.foreign ? (draft.family || null) : undefined,
         data: draft.data,
         body: draft.body,
         mtime: current.mtime,

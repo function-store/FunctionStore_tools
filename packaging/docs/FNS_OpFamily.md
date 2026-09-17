@@ -1,0 +1,65 @@
+---
+package: FNS_OpFamily
+summary: 'The FNS tab in the OP Create dialog: an operator family whose members are FNS tools placed from the store as one node each, with stubs for projects that travel and in-place updates. Built with TDFam.'
+features:
+  - name: What it is
+    anchor: what-it-is
+  - name: Where the operators come from
+    anchor: where-the-operators-come-from
+  - name: Stubs and updates
+    anchor: stubs-and-updates
+  - name: Parameters
+    anchor: parameters
+  - name: Credits
+    anchor: credits
+---
+
+## What it is
+
+Open the OP Create dialog and there is an **FNS** tab beside COMP, TOP, CHOP and the rest. Every entry on it is an FNS tool that reads as one operator: inputs on the left, outputs on the right, its own parameters, placed into the network you are working in like any stock type. Random, SimpleSceneChanger, ProSceneChanger, SwitchTools, MixSequencer, OpSequencer and CamSequencer are the first members.
+
+The family is the same component wherever it runs: this package is a TDFam family named `FNS`, colour black, installed on project start, and its registry promotes itself to `/sys` the way TDFam designs it.
+
+## Where the operators come from
+
+Members are not embedded in this package. They are the packages you already know, mirrored from the machine's store into the family's operator folder (`FNStools_ext/family/FNS/` in your palette folder), one versioned tox per member with a manifest beside it. The FNS updater keeps that folder in step with the store: every install and update pass that leaves the store complete runs the sync, so the FNS tab lists every member the machine holds, and only those.
+
+Because the store only holds the packages your account is entitled to, a Pro-tier member appears on the tab for Pro members and not for Base members, with no extra gate anywhere. A member you never installed is still on the tab once the store holds it, since the store is complete by default (see the updater's Keep the Whole Release in the Store toggle).
+
+A member can also be an operator alternative: create a Noise CHOP with the alternatives shortcut held and Random is offered. Two doors, one tox.
+
+## Stubs and updates
+
+Two things a pane package could not do before:
+
+- **Stubs.** Before a project travels to a machine without the toolkit, stub the FNS operators: each placed member becomes a light placeholder that keeps its wiring, position, retained parameters and retained state. On a machine with the family, replace the stubs and the real operators come back. Both are commands on this package.
+- **Updates in place.** A placed member is frozen at its spawn version. Update Family Operators upgrades every placed member to the newest version in the family folder, applying each member's retained parameters and state.
+
+Which parameters and which state survive a stub or an update is declared per member in its manifest.
+
+The same three actions, plus a resync of the family folder, are quick-launch commands: **Stub Family Operators**, **Replace Family Stubs**, **Update Family Operators** and **Sync Family From Store**. They act without dialogs and report what they did, and each can be limited to the network you are looking at. The toolkit's own copies of the members are never stubbed or updated this way, by these commands or by the pulses below: those copies belong to the FNS updater.
+
+## Parameters
+
+### Family
+
+- **Family** (Str): the family name shown as the tab. `FNS`.
+- **Version** (Str): the family version TDFam stamps into every member manifest. Not the package version.
+- **Install** (Toggle): registers the family and installs the tab.
+- **Install On Start** (Toggle): install when the project opens.
+- **Color** (RGB): the colour placed members get in the network.
+- **Op Folder** (Folder): the operator folder the tab lists. The updater sets and maintains it.
+- **Naming Convention** (Str): the filename pattern that gives each tox its name and version.
+
+### Stubs
+
+- **Create Stubs (All)**, **Replace Stubs (All)**, **Update (All)** (Pulse): stub, replace or update every placed member in the project.
+- **Target Op**, **Target Comp**, **Target Type**: the same three actions scoped to one operator, one network or one type.
+
+### About
+
+- **Package Version** (Str): the package version the FNS updater compares against the release manifest.
+
+## Credits
+
+Built with [TDFam](https://github.com/dotsimulate/TDFam) by Lyell Hintz (dotsimulate) and Dan Molnar (Function Store), Apache-2.0. The licence and notice ship inside the package.
