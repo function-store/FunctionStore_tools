@@ -261,6 +261,16 @@ const plusMark = (name) => `<span class="plus-mark" title="Unlocks with ${esc(un
 // are the catalog's; the site only shows them beside the Patreon mark.
 const pricingOf = (name) => (curated[name] && curated[name].pricing && curated[name].pricing.summary)
   ? curated[name].pricing : null;
+// A tier variant (docs/TierVariants.md): the build above the entry tier,
+// on the same row and page. The words are the catalog's summary; the
+// tier name is the manifest's ladder, like every other tier word here.
+const variantsOf = (name) => {
+  const v = curated[name] && curated[name].variants;
+  return v && typeof v === 'object' ? Object.keys(v).sort().map((vid) => ({ vid, ...(v[vid] || {}) })) : [];
+};
+const variantTier = (v) => ROUTES.tiers[String(v.access)] || v.vid;
+const variantMark = (name) => variantsOf(name).map((v) =>
+  `<span class="plus-mark" title="${esc((v.summary ? v.summary + ' ' : '') + 'Unlocks at the ' + variantTier(v) + ' tier or higher')}">${esc(variantTier(v))} build</span>`).join('');
 const trialMark = (name) => {
   const pr = pricingOf(name);
   return pr ? `<span class="plus-mark trial" title="${esc(pr.detail || pr.summary)}">${esc(pr.summary)}</span>` : '';
@@ -859,7 +869,7 @@ function sidebar(currentSlug) {
       .filter((p) => p.category === cat)
       .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
     const items = inCat
-      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${trialMark(p.name)}</a></li>`)
+      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${variantMark(p.name)}${trialMark(p.name)}</a></li>`)
       .join('\n');
     if (!items) return '';
     return sideGroup(GLYPH[cat] || '·', cat, items, inCat.length);
@@ -927,6 +937,9 @@ for (const p of pages) {
   if (isPlus(p.name)) {
     badges.push(`<a class="badge badge-cat" href="/patreon/" title="Unlocks with ${esc(unlockRoute(p.name))}">◆ ${esc(tierMark(p.name))}</a>`);
   }
+  for (const v of variantsOf(p.name)) {
+    badges.push(`<a class="badge badge-cat" href="/patreon/" title="${esc('Unlocks at the ' + variantTier(v) + ' tier or higher')}">◆ ${esc(variantTier(v))} build</a>`);
+  }
   const pricing = pricingOf(p.name);
   if (pricing) {
     badges.push(`<a class="badge badge-cat" href="${esc(pricing.url || p.homepage || '#')}" target="_blank" rel="noopener" title="${esc(pricing.detail || '')}">${esc(pricing.summary)}</a>`);
@@ -986,6 +999,11 @@ for (const p of pages) {
   </div>` : '';
   // A priced family product says what it costs on its own page too, in
   // the catalog's words, with the way to its own licence page.
+  // one package, one page: the build above the entry tier is a paragraph
+  // here, never a second page (docs/TierVariants.md)
+  const variantNote = variantsOf(p.name).length ? `<div class="plus-note">
+    ${variantsOf(p.name).map((v) => `<p><strong>The ${esc(variantTier(v))} build</strong> ${esc(v.summary || 'adds more')}. It unlocks at the ${esc(variantTier(v))} tier or higher and installs in place of the ${esc(tierOf(p.name) || 'Base')} build; the picker lands whichever build your account holds.</p>`).join('\n    ')}
+  </div>` : '';
   const trialNote = !isPlus(p.name) && pricing ? `<div class="plus-note">
     <p><strong>${esc(p.title)} is a family product with its own licence.</strong> ${esc(pricing.detail || pricing.summary)}</p>
     <p class="plus-note-actions">
@@ -1072,7 +1090,7 @@ ${sidebar(p.slug)}
   <h1>${esc(p.title)}</h1>
   ${p.description ? `<p class="lede">${esc(p.description)}</p>` : ''}
   <p class="badges">${badges.join(' ')}</p>
-  ${plusNote}${trialNote}
+  ${plusNote}${variantNote}${trialNote}
   ${undocumented}
   ${video}
   ${onThisPage}
@@ -1200,7 +1218,7 @@ const indexGroups = displayCategories.map((cat) => {
     .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }))
     .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/" data-surfaces="${
         esc(surfacesOf(p.name).join(' ')) || 'none'}">
-        <strong>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${trialMark(p.name)}</strong>
+        <strong>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${variantMark(p.name)}${trialMark(p.name)}</strong>
         <span>${esc(p.description || p.meta.summary)}</span>
       </a>`).join('\n');
   if (!items) return '';
@@ -1290,7 +1308,7 @@ const grid = displayCategories.map((cat) => {
     .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
   const items = inCat.map((p) => `          <div class="feat">
             <div class="feat-icon" aria-hidden="true">${GLYPH[cat] || '·'}</div>
-            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.title)}</a>${isPlus(p.name) ? plusMark(p.name) : ''}${trialMark(p.name)}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
+            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.title)}</a>${isPlus(p.name) ? plusMark(p.name) : ''}${variantMark(p.name)}${trialMark(p.name)}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
           </div>`).join('\n');
   if (!items) return '';
   const plusHere = inCat.filter((p) => isPlus(p.name)).length;

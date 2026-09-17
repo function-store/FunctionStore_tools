@@ -1226,6 +1226,23 @@ function fnsBoot() {
       pl.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pl);
     }
+    // A tier variant (docs/TierVariants.md): one row, one card, and the
+    // build above the entry tier shown on it -- an upgrade for the tier
+    // below, 'yours' for an account that holds it. The installer lands the
+    // highest build the account holds; nothing here is picked separately.
+    Object.keys(p.variants || {}).sort().forEach(function (vid) {
+      var v = p.variants[vid] || {};
+      var vtier = tierLabel(v.access) || vid;
+      var vown = !!(account && (account.products || []).indexOf(p.name + '.' + vid) >= 0);
+      var vlabel = vtier + ' build' + (!account ? '' : (vown ? ' · yours' : ' · upgrade'));
+      var vc = docsLink(FNS_DOCS + '/patreon/', vlabel,
+        'chip plus' + (!account ? '' : (vown ? ' own' : ' locked')));
+      vc.setAttribute('data-tip', (v.summary ? v.summary + ' ' : '')
+        + 'The ' + vtier + ' tier or higher gets this build; it installs in place of the '
+        + (tierLabel(p.access) || 'Base') + ' build.');
+      vc.addEventListener('click', function (e) { e.stopPropagation(); });
+      chips.appendChild(vc);
+    });
     var pr = pricingOf(p);
     if (pr) {
       var pc = pr.url ? docsLink(pr.url, pr.summary, 'chip trial') : chip(pr.summary, 'trial');
@@ -1462,7 +1479,10 @@ function fnsBoot() {
       var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
       return (p.name + ' ' + titleOf(p) + ' ' + (p.description || '') + ' '
               + (p.category || '') + ' ' + surf
-              + (pricingOf(p) ? ' trial ' + pricingOf(p).summary : ''))
+              + (pricingOf(p) ? ' trial ' + pricingOf(p).summary : '')
+              + Object.keys(p.variants || {}).map(function (vid) {
+                  return ' ' + vid + ' ' + ((p.variants[vid] || {}).summary || '');
+                }).join(''))
              .toLowerCase().indexOf(q) !== -1;
     }
     listEl.textContent = '';

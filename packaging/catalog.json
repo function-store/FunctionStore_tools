@@ -756,6 +756,37 @@
    ],
    "access": "8323905"
   },
+  "FNS_SimpleSceneChanger": {
+   "category": "Media & Output",
+   "description": "Scene changer for TOP outputs: wire your scenes in, then cut, fade or ease between them by select, timer, A/B fader or CHOP, with cooking control so only the scenes on screen cook. Base and Pro instances find each other and can follow a leader across screens.",
+   "placement": "pane",
+   "variants": {
+    "pro": {
+     "summary": "adds per-scene modes, fade times and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, and fleet follow with scene offset and sync timing.",
+     "withhold": [
+      "ExtSimpleSceneChangerPro.py"
+     ],
+     "access": "8291595"
+    }
+   },
+   "fits": [
+    "live",
+    "show",
+    "visual"
+   ],
+   "access": "8323905"
+  },
+  "FNS_SwitchTools": {
+   "category": "Network",
+   "description": "A companion for any Switch, Cross or multi-input operator: index by slider, menu or bind, loop or clamp, colour the live input, cook only the inputs in use and unload the rest from the GPU, plus reorder, reverse, randomize and align the inputs.",
+   "placement": "pane",
+   "fits": [
+    "live",
+    "show",
+    "speed"
+   ],
+   "access": "8323905"
+  },
   "TDXMap": {
    "category": "Control",
    "description": "MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode, easing curves, slot and modify modes.",
