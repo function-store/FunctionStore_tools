@@ -638,11 +638,12 @@ function renderEditor() {
     </div>
 
     <div class="field">
-      <label for="placement">Installs into <span class="hint">— where the installer lands it. Toolkit: a child of the toolkit container, update-tracked in place. Network root: beside the toolkit container — a known address, so it updates and removes like a toolkit tool. Current network: a reusable component spawned into the network the user is working in; instances stay at their spawn version. Lives in catalog.json; ships with the next release’s manifest.</span></label>
+      <label for="placement">Installs into <span class="hint">— where the installer lands it. Toolkit: a child of the toolkit container, update-tracked in place. Network root: beside the toolkit container — a known address, so it updates and removes like a toolkit tool. Current network: a reusable component spawned into the network the user is working in; instances stay at their spawn version. Not placed: nothing is put anywhere — the install downloads it and records it, and the user reaches it from the FNS tab of the OP Create dialog or from the family folder on disk. This is what an FNS family member wants. Lives in catalog.json; ships with the next release’s manifest.</span></label>
       <select id="placement">
         <option value="">Toolkit container (default)</option>
         <option value="root">Network root — beside the toolkit container</option>
         <option value="pane">Current network — spawns where the user is working</option>
+        <option value="none">Not placed — on disk only, reached from the FNS tab / OpTemplates</option>
       </select>
     </div>
 

@@ -92,7 +92,7 @@ The page is one file with three lives. The installer serves it; the same file wo
 
 ### The store is a mirror
 
-Downloads land in a machine-wide store, `FNStools_ext/store` inside your user palette folder. Nothing in it is anyone's work: a file whose hash disagrees with the store's manifest is stale cache, so a refresh re-downloads it and the installer refuses to load it. Artifacts arrive in a staging file and replace the store copy only after their checksum passes, so a failed or refused fetch leaves the previous good bytes untouched. A connection that never opens produces no callback at all in TouchDesigner's downloader, so a stall watchdog closes that hole.
+Downloads land in a machine-wide store, `FNSTools/store` inside your user palette folder. Nothing in it is anyone's work: a file whose hash disagrees with the store's manifest is stale cache, so a refresh re-downloads it and the installer refuses to load it. Artifacts arrive in a staging file and replace the store copy only after their checksum passes, so a failed or refused fetch leaves the previous good bytes untouched. A connection that never opens produces no callback at all in TouchDesigner's downloader, so a stall watchdog closes that hole.
 
 Because the store is machine-wide and the installer only ever installs from it, a machine that has synced once installs with no network. The launcher's offline path is built on that property (below).
 
@@ -180,7 +180,7 @@ The parameter set reconciles itself: new parameters arrive, retired ones leave, 
 
 ## Where settings live
 
-There are two stores, and the project file is the default one. A tool's custom parameters, the configurators' state tables and stored values live in the `.toe` and survive every save with no registry involved. The [ConfigRegistry](/docs/fns-configregistry/) adds a machine-global overlay: one aggregated JSON in your user palette, `FNStools_ext/config/FNStools_config.json`, applied once per session about thirty frames after each tool registers. That single deferred apply at boot is the only moment local state is at risk; every save and every mid-session edit leaves the project file authoritative.
+There are two stores, and the project file is the default one. A tool's custom parameters, the configurators' state tables and stored values live in the `.toe` and survive every save with no registry involved. The [ConfigRegistry](/docs/fns-configregistry/) adds a machine-global overlay: one aggregated JSON in your user palette, `FNSTools/config/FNStools_config.json`, applied once per session about thirty frames after each tool registers. That single deferred apply at boot is the only moment local state is at risk; every save and every mid-session edit leaves the project file authoritative.
 
 A menu on the toolkit root, Config Scope, decides whether the overlay exists at all. `global` (the default) roams; `project` never reads and never writes the file, so the project carries everything with no sidecar. Every host carries a guarded copy of that choice, and a tool released on its own, with no toolkit root, reads `project`, because shared roaming without the toolkit would be a surprise.
 

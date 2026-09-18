@@ -366,7 +366,13 @@ function applyCurated(entry, body) {
       const [block, err] = normaliseFamily(body.family);
       if (err) return err;
       const placement = typeof body.placement === 'string' ? body.placement : entry.placement;
-      if (placement === 'root') return 'a family member is placed into the working network (Current network), never at the root';
+      // A family member is reached from the FNS tab of the OP Create dialog
+      // and from the family folder on disk, so it is NOT placed at install
+      // (owner 2026-09-18). 'none' is its placement; 'pane' and 'root' both
+      // put a copy somewhere, which is the thing being stopped.
+      if (placement === 'root' || placement === 'pane') {
+        return 'a family member is not placed at install: it is reached from the FNS tab of the OP Create dialog, so its placement is "none"';
+      }
       entry.family = block;
     }
   }
@@ -702,7 +708,7 @@ const server = http.createServer(async (req, res) => {
           // the default (toolkit container) stays a two-line entry.
           if (typeof body.placement === 'string') {
             const pl = body.placement.trim();
-            if (pl && pl !== 'pane' && pl !== 'root') {
+            if (pl && pl !== 'pane' && pl !== 'root' && pl !== 'none') {
               return json(res, 400, { error: `unknown placement "${pl}"` });
             }
             if (pl) entry.placement = pl;

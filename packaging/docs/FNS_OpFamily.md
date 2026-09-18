@@ -26,7 +26,7 @@ The family is the same component wherever it runs: this package is a TDFam famil
 
 ## Where the operators come from
 
-Members are not embedded in this package. They are the packages you already know, mirrored from the machine's store into the family's operator folder (`FNStools_ext/family/FNS/` in your palette folder), one versioned tox per member with a manifest beside it. The FNS updater keeps that folder in step with the store: every install and update pass that leaves the store complete runs the sync, so the FNS tab lists every member the machine holds, and only those.
+Members are not embedded in this package. They are the packages you already know, mirrored from the machine's store into the family's operator folder (`FNSTools/FNS/` in your palette folder), one tox per member under its plain name with a manifest beside it. The same folder shows up in TouchDesigner's own Palette as `FNSTools > FNS`. The FNS updater keeps that folder in step with the store: every install and update pass that leaves the store complete runs the sync, so the FNS tab lists every member the machine holds, and only those.
 
 Because the store only holds the packages your account is entitled to, a Pro-tier member appears on the tab for Pro members and not for Base members, with no extra gate anywhere. A member you never installed is still on the tab once the store holds it, since the store is complete by default (see the updater's Keep the Whole Release in the Store toggle).
 

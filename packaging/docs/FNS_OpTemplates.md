@@ -85,7 +85,7 @@ If those are not present, or simply inserting an OP Chain, assumptions are made:
 
 One library is active at a time, and `Library Scope` says where it lives:
 
-- **Global** (the historical default): one `.tox` in your **User Palette** folder (`FNStools_ext/OpTemplates/`), shared by every project on this machine. Saving writes that file.
+- **Global** (the historical default): one `.tox` in your **User Palette** folder (`FNSTools/OpTemplates/`), shared by every project on this machine. Saving writes that file.
 - **Project**: a component named `OpTemplatesLibrary` at the network root, next to the FNSTools container. It saves with the project file and stays through toolkit updates, because it lives outside the tool.
 - **Follow config scope** (the default): global or project, whatever the toolkit's `Config Scope` setting says, so a project-scoped install keeps its templates in the project without a second decision.
 
@@ -99,7 +99,7 @@ The `Templates` parameter shows the library the scope resolved to and is read-on
 
 Since workfiles saved in TD2023 cannot be opened in earlier versions, template .toxes are created separately with `_2023` appended to them, and they are only synced to TD2023 project files.
 
-To migrate your current default templates to 2023 on Windows navigate to `%USERPROFILE%\Documents\Derivative\Palette\FNSTools_ext\OpTemplates` and make a copy of `OpTemplates1.tox` and rename it `OpTemplates1_2023.tox`, then restart your project file. The steps are the same for Mac, just locate your `Palette` folder!
+To migrate your current default templates to 2023 on Windows navigate to `%USERPROFILE%\Documents\Derivative\Palette\FNSTools\OpTemplates` and make a copy of `OpTemplates1.tox` and rename it `OpTemplates1_2023.tox`, then restart your project file. The steps are the same for Mac, just locate your `Palette` folder!
 
 ##### Known issues
 
