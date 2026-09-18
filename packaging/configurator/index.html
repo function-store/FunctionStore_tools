@@ -1330,6 +1330,12 @@ function fnsBoot() {
     if (p.placement === 'root') {
       chips.appendChild(chip('lands at your network root', 'hint'));
     }
+    // 'none' places nothing at all: a family member is reached from the
+    // FNS tab of the OP Create dialog, so the install makes it available
+    // rather than putting a copy anywhere.
+    if (p.placement === 'none') {
+      chips.appendChild(chip('from the FNS tab, not placed', 'hint'));
+    }
     // Surfaces ride the tooltip, not the card: at a glance a card is a
     // name and a line, and "Toolbar button / Pane bar button" on every
     // other card was most of the noise. They stay searchable (match()
