@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.37",
+ "release": "v3.2.38",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -5195,7 +5195,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "3.0.1",
+    "default": "3.0.2",
     "page": "About"
    },
    {
@@ -6845,7 +6845,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "1.0.1",
+    "default": "1.0.2",
     "page": "About"
    }
   ],
@@ -7947,7 +7947,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "1.16.1",
+    "default": "1.16.2",
     "page": "About"
    },
    {
@@ -11910,7 +11910,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "1.1.1",
+    "default": "1.1.2",
     "page": "About"
    },
    {
