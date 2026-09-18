@@ -304,7 +304,19 @@ dialog::backdrop { background: rgba(0,0,0,0.7); }
   font-size: 12px; line-height: 1.6; color: var(--text-dim);
   white-space: pre-wrap; word-break: break-word;
 }
-.dlg-actions { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+/* The action row stays reachable however long the dialog gets: the
+   <dialog> element is the scroller, so the row sticks to its bottom edge
+   instead of sitting under the fold. An install plan of 51 chips put
+   Install off screen entirely (field report 2026-09-18). It spans the
+   dialog's padding so the panel reads as a footer, and on a dialog short
+   enough not to scroll a sticky box lays out exactly where it always did. */
+.dlg-actions {
+  display: flex; gap: 10px; align-items: center; margin-top: 16px;
+  position: sticky; bottom: 0; z-index: 1;
+  margin-left: -24px; margin-right: -24px; margin-bottom: -20px;
+  padding: 12px 24px 20px;
+  background: var(--bg-1); border-top: 1px solid var(--border);
+}
 /* the done state: a check in the title, the report as a count and chips */
 .dlg.done h3 { display: flex; align-items: center; gap: 10px; }
 .dlg.done h3::before {
@@ -898,11 +910,23 @@ function fnsBoot() {
   // FNS_SERVED) once the refresh lands.
   if (window.FNS_REFRESHING) {
     if (window.FNS_FIRSTRUN) heroFirstRun();
-    listEl.innerHTML = '<div class="empty">' +
-      (window.FNS_FIRSTRUN ? 'First run: fetching the package catalog '
-                           : 'Downloading the package catalog ') +
-      'from the bucket…<br>this page refreshes itself.</div>';
-    document.getElementById('sub').textContent = 'refreshing store…';
+    // The refresh can REFUSE to start. Promising that the page refreshes
+    // itself is then a lie the reader cannot get past, and the reason used
+    // to ship as a JS comment nobody sees (field report 2026-09-18).
+    var refuse = String(window.FNS_REFRESH_ERROR || '');
+    listEl.replaceChildren();
+    var note = document.createElement('div');
+    note.className = 'empty';
+    if (refuse) {
+      note.textContent = 'The package catalog could not be fetched: ' + refuse;
+    } else {
+      note.innerHTML = (window.FNS_FIRSTRUN ? 'First run: fetching the package catalog '
+                                            : 'Downloading the package catalog ') +
+        'from the bucket…<br>this page refreshes itself.';
+    }
+    listEl.appendChild(note);
+    document.getElementById('sub').textContent =
+      refuse ? 'store refresh refused' : 'refreshing store…';
     return;
   }
   var served = !!window.FNS_SERVED;
