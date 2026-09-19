@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.43",
+ "release": "v3.2.45",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -5195,7 +5195,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "3.0.4",
+    "default": "3.0.5",
     "page": "About"
    },
    {
@@ -7059,7 +7059,7 @@
     "style": "RGBA",
     "help": "",
     "size": 3,
-    "default": 0.0,
+    "default": 0.5,
     "section": true,
     "page": "Family"
    },
