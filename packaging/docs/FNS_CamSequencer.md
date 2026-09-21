@@ -184,6 +184,11 @@ Source CHOP   the CHOP whose channels are the controls. Empty = the
               controller found, axes -1..1, buttons b1..b32). Point it
               at a MIDI In, OSC In, Keyboard In, your own Joystick CHOP
               or a Constant CHOP instead -- any channels will do.
+              The internal one stays switched off until it has a
+              reader: it arms while a Learn is listening, and once a
+              channel is mapped with Active on. A project that never
+              maps a controller never polls for one (3.0.5). If you plug
+              a controller in and nothing moves, map an axis first.
 Active        mutes every mapped control without losing the mapping.
 Learn Status  what learn mode is waiting for / the last mapping made.
 
