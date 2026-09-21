@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.45",
+ "release": "v3.2.46",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -5601,7 +5601,7 @@
     "name": "Configfile",
     "label": "Config File",
     "style": "File",
-    "help": "Override the config file location. Empty = the user palette default (FNStools_ext/config/FNStools_config.json). Evaluated by the /sys global; set it on the FNS_Config master so promotion carries it.",
+    "help": "Override the config file location. Empty = the user palette default (FNSTools/config/FNStools_config.json). Evaluated by the /sys global; set it on the FNS_Config master so promotion carries it.",
     "default": "",
     "page": "Config"
    },

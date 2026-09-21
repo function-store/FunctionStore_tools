@@ -2659,7 +2659,18 @@ function fnsBoot() {
       "boot = requests.get(rail['url'], headers=H, timeout=120).content",
       "bad = [t for t in names if hashlib.sha256(blobs[t]).hexdigest() != idx[t]['artifact']['sha256']] + ([] if hashlib.sha256(boot).hexdigest() == rail['sha256'] else ['FNSTools.tox'])",
       "assert not bad, 'checksum mismatch: %s' % ', '.join(bad)",
-      "st = os.path.join(app.userPaletteFolder, 'FNStools_ext', 'store')",
+      // The store folder name must track InstallerExt._fnsPaletteRoot's
+      // PALETTE_DIR. This said 'FNStools_ext' until 2026-09-21, three days
+      // after v3.2.42 renamed the folder to 'FNSTools', and the paste rail
+      // was broken the whole time: the bootstrap's first read migrates a
+      // legacy folder, so everything written here either moved (clean
+      // machine: the selection file this snippet hands to the installer
+      // stopped resolving) or lost to the incumbent (a machine that had
+      // installed before: its OLD manifest.json won the merge and the fresh
+      // download was deleted, which is the stale-catalog failure of v3.2.43
+      // arriving by a different door). Writing to the NEW name puts this
+      // paste on the winning side of that merge and moves nothing.
+      "st = os.path.join(app.userPaletteFolder, 'FNSTools', 'store')",
       "os.makedirs(st, exist_ok=True)",
       "_ = [open(os.path.join(st, t + '.tox'), 'wb').write(blobs[t]) for t in names]",
       "_ = open(os.path.join(st, 'manifest.json'), 'w').write(json.dumps(m, indent=1))",
