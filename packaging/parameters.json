@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.47",
+ "release": "v3.2.48",
  "td_build": "2025.33070",
  "packages": {
   "FNS_AltSelect": [
@@ -13169,7 +13169,7 @@
     "name": "Shownotes",
     "label": "Show Notes After Update",
     "style": "Toggle",
-    "help": "After an update lands, the next project open shows a one-time popup with that release's notes. Turn this off to skip the popup; the notes stay readable on the Hub's Updates tab. Roams with your settings.",
+    "help": "After an update pass finishes, the Textport gets one line naming the release and its notes. Turn this off to skip it; the notes stay readable on the Hub's Updates tab either way. This is never a popup and never fires on project start. Roams with your settings.",
     "default": true,
     "page": "Custom"
    },
