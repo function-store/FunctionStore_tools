@@ -412,6 +412,7 @@ function renderList() {
           tier ? tier.label.toUpperCase() : 'PLUS'}</span>` : '') +
         (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
         (p.nopick ? '<span class="tag tag-net" title="Explicit pick only: no Select all, preset, bundle or questionnaire ever ticks it">PICK</span>' : '') +
+        (p.placeonce ? '<span class="tag tag-net" title="The picker offers Place in this project only, never carried into the next (FNS family members get it without the flag)">PLACE</span>' : '') +
         (p.placement === 'pane' ? '<span class="tag tag-net" title="Installs into the network the user is working in">NET</span>' : '') +
         (p.placement === 'root' ? '<span class="tag tag-net" title="Installs at the network root, beside the toolkit container">ROOT</span>' : '') +
         (p.foreign ? '<span class="tag tag-net" title="Foreign package: bytes and version owned upstream, mirrored by foreign_sync.py">FOREIGN</span>' : '') +
@@ -641,6 +642,8 @@ function renderEditor() {
     <div class="field">
       <label class="check"><input type="checkbox" id="nopick" /> Explicit pick only
         <span class="hint">— a normal card that installs and updates, but no bulk selection ever ticks it: not Select all, Everything, Recommended, a bundle or the questionnaire. For hardware-specific integrations. Cannot be combined with Recommended. Lives in catalog.json as <code>nopick</code>; ships with the next release’s manifest.</span></label>
+      <label class="check"><input type="checkbox" id="placeonce" /> Can be placed without joining the setup
+        <span class="hint">— the picker card offers “place in this project only” beside the tick: the tool lands and updates here, but “Set up like last time” never brings it into the next project. The tick still works for anyone who wants it every time. Lives in catalog.json as <code>placeonce</code>; ships with the next release’s manifest.</span></label>
     </div>
 
     <div class="field">
@@ -810,6 +813,7 @@ function renderEditor() {
   }
   $('#recommended').checked = !!d.recommended;
   $('#nopick').checked = !!d.nopick;
+  $('#placeonce').checked = !!d.placeonce;
   $('#placement').value = d.placement || '';
   $('#summary').value = d.data.summary || '';
   $('#author-name').value = (d.author && d.author.name) || '';
@@ -831,6 +835,7 @@ function renderEditor() {
   $('#description').oninput = (e) => { d.description = e.target.value; markDirty(); };
   $('#recommended').onchange = (e) => { d.recommended = e.target.checked; markDirty(); renderList(); };
   $('#nopick').onchange = (e) => { d.nopick = e.target.checked; markDirty(); renderList(); };
+  $('#placeonce').onchange = (e) => { d.placeonce = e.target.checked; markDirty(); renderList(); };
   $('#placement').onchange = (e) => { d.placement = e.target.value; markDirty(); renderList(); };
   $('#summary').oninput = (e) => { setData('summary', e.target.value.trim()); };
   $('#video').oninput = (e) => { setData('video', e.target.value.trim()); };
@@ -1988,6 +1993,7 @@ async function save() {
         description: draft.description,
         recommended: !!draft.recommended,
         nopick: !!draft.nopick,
+        placeonce: !!draft.placeonce,
         placement: draft.placement || '',
         author: draft.author || null,
         homepage: draft.homepage || '',

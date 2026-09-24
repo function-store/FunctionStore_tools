@@ -594,8 +594,11 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   /* inside the manager the bar must stay one line: flex-wrap breaks on
      the search field's 240px BASIS, not its 150px minimum, so the field
      starts small and grows, and the action never wraps */
-  body.app .cfg-bar input[type=search] { flex: 1 1 150px; }
-  body.app .cfg-bar .bar-act { flex: 0 0 auto; white-space: nowrap; }
+  body.app .cfg-bar .qwrap { flex: 1 1 150px; min-width: 130px; }
+  /* with the filters beside it the manager's bar may take two rows on a
+     narrow panel; the action then keeps to the right end of the second */
+  body.app .cfg-bar .bar-act { flex: 0 0 auto; white-space: nowrap; margin-left: auto; }
+  body.app .seg button, body.app .tog { padding: 4px 9px; font-size: 12px; }
   /* Inside the manager the category rail stays a chip row at every width:
      the side-rail layout the site uses past 1000px spends a 212px column
      on seven chips and leaves it empty below them, and the cards need
@@ -624,6 +627,186 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 
   .note { margin: 22px 0 8px; }
 
+  /* Place (docs/PlaceOnce.md): a button, not a label -- in this project only.
+     A placed card is lifted like a ticked one, with a dashed edge so "here,
+     but not in my setup" never reads as ticked. */
+  .chip.placebtn {
+    cursor: pointer; font-family: inherit;
+    background: transparent; border-style: dashed; color: var(--text-dim);
+  }
+  .chip.placebtn:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.placebtn.on {
+    border-style: solid; border-color: rgba(251,191,36,0.4);
+    background: var(--accent-dim); color: var(--accent);
+  }
+  .card.placed { border-style: dashed; border-color: var(--border-strong); background: var(--bg-2); }
+
+  /* ── the filter deck: search, access, selected, new ── */
+  .cfg-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .bar-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .bar-find .bar-docs { padding: 0 2px; }
+  .sum-left { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; flex: 1 1 240px; min-width: 0; }
+  .sum-left #deps { font-size: 12.5px; }
+  .sum-left #deps:empty { display: none; }
+  .sum > .spacer { flex: 0 0 0; }
+  .qwrap { position: relative; flex: 1 1 260px; min-width: 170px; display: flex; }
+  .qwrap input[type=search] { flex: 1 1 auto; width: 100%; min-width: 0; padding-right: 34px; }
+  .qkey {
+    position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+    padding: 0 6px; border-radius: 5px; border: 1px solid var(--border-strong);
+    font-size: 11px; line-height: 18px; color: var(--text-faint); pointer-events: none;
+  }
+  .qwrap input:focus + .qkey, .qwrap input:not(:placeholder-shown) + .qkey { display: none; }
+  .seg {
+    display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px;
+    background: var(--bg-1); border: 1px solid var(--border);
+  }
+  .seg button, .tog {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 11px; border-radius: 7px; border: 1px solid transparent;
+    background: transparent; color: var(--text-dim); font: inherit; font-size: 13px;
+    font-weight: 500; cursor: pointer; white-space: nowrap;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .seg button:hover, .tog:hover { color: var(--text); }
+  .seg button.on { background: var(--bg-3); color: var(--text); border-color: var(--border-strong); }
+  .seg button[data-access="plus"].on { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+  .seg .dia { color: var(--accent); font-size: 10px; }
+  .seg .k, .tog .k {
+    font-size: 11.5px; color: var(--text-faint); font-variant-numeric: tabular-nums;
+  }
+  .seg button.on .k, .tog.on .k { color: inherit; opacity: .75; }
+  .tog { border-color: var(--border); border-radius: 999px; padding: 6px 12px; }
+  .tog.on { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .tog:disabled { opacity: .45; cursor: default; }
+  .seg button:focus-visible, .tog:focus-visible, .linkbtn:focus-visible, .fpill:focus-visible,
+  .cat-toggle:focus-visible, .sum-count:focus-visible, .tchip:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  /* ── the results line: what the list shows, and bulk actions on it ── */
+  .resline {
+    display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap;
+    margin: 16px 0 2px; min-height: 28px; font-size: 13px; color: var(--text-dim);
+  }
+  .res-text { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .res-filters { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+  .fpill {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px;
+    border-radius: 999px; border: 1px solid var(--border-strong); background: var(--bg-2);
+    color: var(--text-dim); font: inherit; font-size: 12px; cursor: pointer;
+  }
+  .fpill span { color: var(--text-faint); font-size: 14px; line-height: 1; }
+  .fpill:hover { border-color: var(--accent); color: var(--text); }
+  .fpill:hover span { color: var(--accent); }
+  .linkbtn {
+    background: none; border: 0; padding: 2px 4px; font: inherit; font-size: 13px;
+    color: var(--accent); cursor: pointer; border-radius: 4px;
+  }
+  .linkbtn:hover { color: var(--accent-bright); text-decoration: underline; text-underline-offset: 3px; }
+  .linkbtn:disabled { color: var(--text-faint); cursor: default; text-decoration: none; opacity: .6; }
+
+  /* ── sections: a real toggle, a section action, gated tools last ── */
+  .cat-head { gap: 10px 14px; }
+  .cat-toggle {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1 1 320px;
+    min-width: 0; padding: 0; margin: 0; background: none; border: 0; border-radius: 6px;
+    color: inherit; font: inherit; text-align: left; cursor: pointer;
+  }
+  .cat-act { font-size: 12.5px; color: var(--text-faint); white-space: nowrap; }
+  .cat-head:hover .cat-act, .cat-act:focus-visible { color: var(--accent); }
+  .tier-div {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin: 18px 0 10px; font-size: 12px;
+  }
+  .tier-div::after { content: ''; flex: 1 1 40px; border-top: 1px solid var(--border); }
+  .tier-div .lbl {
+    color: var(--accent); font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    font-size: 11px;
+  }
+  .tier-div .dia { font-size: 9px; }
+  .tier-div .sub { color: var(--text-faint); }
+  .cat-body .tier-div + .grid { margin-top: 0; }
+  .catnav a.none { opacity: .4; pointer-events: none; }
+  /* the deck is two rows now: the rail and the jump targets clear it */
+  html { scroll-padding-top: calc(var(--stick) + 140px); }
+  @media (min-width: 1000px) {
+    .layout > .catnav {
+      top: calc(var(--stick) + 136px);
+      max-height: calc(100vh - var(--stick) - 160px);
+    }
+  }
+
+  /* ── cards: selection you can see from across the room ── */
+  #list .card { position: relative; }
+  #list .card.on {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, var(--accent-dim) 0%, var(--bg-2) 85%);
+  }
+  #list .card.on:hover { background: linear-gradient(180deg, var(--accent-dim) 0%, var(--bg-3) 85%); }
+  #list .card.placed { border-color: var(--accent); border-style: dashed; }
+  #list .card.removing { border-color: var(--err); border-style: dashed; }
+  #list .card.removing .tt { text-decoration: line-through; text-decoration-color: var(--err); }
+  #list .card input { width: 17px; height: 17px; margin-top: 2px; }
+  #list .card.plus .body { padding-right: 12px; }
+  #list .card.plus::after {
+    content: '◆'; position: absolute; top: 9px; right: 11px;
+    font-size: 9px; color: var(--accent); opacity: .7;
+  }
+  #list .card.plus.own::after { opacity: 1; }
+  .name .tt { min-width: 0; }
+  .name > .tt + a.help, .name > .badge + a.help { margin-left: auto; }
+  .name a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+  .name a.help:hover { color: var(--accent); }
+  .badge {
+    display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    align-self: center;
+  }
+  /* where a package lands is information, not a warning */
+  .chip.where { background: transparent; border-color: var(--border); color: var(--text-faint); }
+  .badge.new { color: var(--green); border: 1px solid var(--green); opacity: .9; }
+
+  /* ── the footer count opens the selection tray ── */
+  .sum-count {
+    background: none; border: 0; padding: 4px 6px; margin: -4px -6px; border-radius: 8px;
+    font: inherit; color: var(--text); cursor: pointer;
+  }
+  .sum-count:hover { background: var(--bg-2); }
+  .sum-count .caret { font-size: 13px; color: var(--text-faint); transition: transform .15s ease; }
+  .sum-count[aria-expanded="true"] .caret { transform: rotate(180deg); }
+  .tray {
+    position: absolute; left: 0; right: 0; bottom: calc(100% + 8px);
+    max-height: min(52vh, 460px); overflow: auto; padding: 14px 16px 16px;
+    background: var(--bg-1); border: 1px solid var(--border-strong); border-radius: 12px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  }
+  .tray.drop {
+    top: calc(100% + 6px); bottom: auto; left: auto; right: 0; width: min(560px, 92vw); z-index: 9;
+  }
+  body.app .cfg-bar .bar-act { position: relative; }
+  .tray-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 14px; }
+  .tray-sub {
+    margin: 12px 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  .tray-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tchip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+    border-radius: 999px; border: 1px solid var(--border-strong); background: var(--bg-2);
+    color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer;
+  }
+  .tchip .x { color: var(--text-faint); }
+  .tchip:hover { border-color: var(--err); }
+  .tchip:hover .x { color: var(--err); }
+  .tchip.plus { border-color: var(--accent); }
+  .tchip.placed { border-style: dashed; }
+  .tchip.gone { color: var(--text-dim); text-decoration: line-through; text-decoration-color: var(--err); }
+  .tchip.gone:hover { border-color: var(--green); text-decoration: none; }
+  .tchip.gone:hover .x { color: var(--green); }
+  .tray-empty { margin: 6px 0 0; font-size: 13px; color: var(--text-dim); }
+  .empty p { margin: 0 0 14px; }
+
   /* ── framed inside the FNS console: the console's chrome carries the
      identity and the tabs, so the picker drops its hero and reads as a
      native panel (the script also sets body.app for the dense metrics). ── */
@@ -634,6 +817,13 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   @media (max-width: 640px) {
     .cfg-hero { padding: 32px 0 20px; }
     .grid { grid-template-columns: 1fr; }
+    .qwrap { flex-basis: 100%; }
+    .seg { flex: 1 1 auto; }
+    .seg button { flex: 1 1 auto; justify-content: center; padding: 6px 8px; }
+    .cfg-bar .spacer { display: none; }
+    .cat-act { display: none; }
+    /* a phone cannot spare the deck's height for the whole scroll */
+    .cfg-bar { position: static; }
     /* The rail is stuck to the bottom of a phone screen and the labels are
        too long to share a row, so each button gets one -- kept as tight as
        a tap target allows, because every pixel here is list the reader
@@ -665,14 +855,25 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   </section>
 
   <div class="cfg-bar">
-    <input type="search" id="q" placeholder="Filter by name, description or category…" autocomplete="off">
+   <div class="bar-row bar-find">
+    <div class="qwrap">
+      <input type="search" id="q" placeholder="Search tools, descriptions, categories…" autocomplete="off" aria-label="Search tools">
+      <kbd class="qkey" aria-hidden="true">/</kbd>
+    </div>
     <button class="btn btn-secondary" id="wizard">Guided setup</button>
-    <button class="btn btn-quiet" id="all">Select all</button>
-    <button class="btn btn-quiet" id="none">Clear</button>
-    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" data-tip="Show only the tools that unlock with Patreon">◆ Patreon only</button>
     <button class="btn btn-quiet" id="theme" data-tip="Toggle theme" aria-label="Toggle theme">◐</button>
-    <span class="spacer"></span>
-    <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
+    <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Docs ↗</a>
+   </div>
+   <div class="bar-row bar-filters">
+    <div class="seg" id="access" role="group" aria-label="Show tools by access" hidden>
+      <button type="button" data-access="all" aria-pressed="true">All <span class="k"></span></button>
+      <button type="button" data-access="free" aria-pressed="false" data-tip="Tools anyone can install">Free <span class="k"></span></button>
+      <button type="button" data-access="plus" aria-pressed="false" data-tip="Tools that unlock with a Patreon tier"><span class="dia" aria-hidden="true">◆</span> Patreon <span class="k"></span></button>
+    </div>
+    <button type="button" class="tog" id="selonly" aria-pressed="false" data-tip="Show only what you have ticked or placed">Selected <span class="k"></span></button>
+    <button type="button" class="tog" id="placeonly" aria-pressed="false" hidden data-tip="Tools you drop into a network as nodes, like the FNS family operators, rather than toolkit services">Placeable <span class="k"></span></button>
+    <button type="button" class="tog" id="newonly" aria-pressed="false" hidden data-tip="Packages that are new in the current release line">New <span class="k"></span></button>
+   </div>
   </div>
 
   <div class="layout">
@@ -680,16 +881,33 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <div class="content">
       <div class="note" id="corenote" hidden></div>
       <div class="plusrail" id="plusrail"></div>
+      <div class="resline" id="resline">
+        <span class="res-text" id="restext" aria-live="polite"></span>
+        <span class="res-filters" id="resfilters"></span>
+        <span class="spacer"></span>
+        <button type="button" class="linkbtn" id="all">Select all</button>
+        <button type="button" class="linkbtn" id="none">Clear</button>
+      </div>
       <div id="list"></div>
-      <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
+      <div class="empty" id="empty" hidden>
+        <p id="emptytext">Nothing matches these filters.</p>
+        <button type="button" class="btn btn-secondary" id="resetview">Show every tool</button>
+      </div>
     </div>
   </div>
 
   <div class="sum">
-    <span class="sum-count"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span></span>
+    <div class="tray" id="tray" hidden>
+      <div class="tray-head"><b>Your selection</b><span class="spacer"></span>
+        <button type="button" class="linkbtn" id="trayclose">Close</button></div>
+      <div class="tray-body" id="traybody"></div>
+    </div>
+    <div class="sum-left">
+    <button type="button" class="sum-count" id="traybtn" aria-expanded="false" aria-controls="tray" data-tip="See and edit everything you picked"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span> <span class="caret" aria-hidden="true">▴</span></button>
     <span class="muted" id="deps"></span>
     <label class="famopt" id="famopt" hidden data-tip="The FNS family operators you tick also appear on an FNS tab in the OP Create dialog, placed as one node each. Untick to keep them in the palette only; turn it off later the same way.">
       <input type="checkbox" id="famchk"> Add FNS tab to OP Create</label>
+    </div>
     <span class="acct" id="acct"></span>
     <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Join on Patreon ↗</a>
     <button class="btn btn-quiet" id="recheck" hidden>Check again</button>
@@ -1036,6 +1254,21 @@ function fnsBoot() {
   var wantedStill = (window.FNS_WANTED || []).filter(function (n) {
     return pickable(byName[n]);
   });
+  // PLACE (docs/PlaceOnce.md): a `placeonce` package can be placed into
+  // THIS project without joining the setup, so "Set up like last time"
+  // never brings it into the next one. Served only: the site has no
+  // project. `placing` starts from what the project holds placed-only, and
+  // leaving a name out of it on Apply takes that tool out again.
+  var placedNow = served ? (window.FNS_PLACED || []).filter(function (n) {
+    return pickable(byName[n]);
+  }) : [];
+  var placing = new Set(placedNow);
+  // The Place button: a package the catalog flags `placeonce`, and every
+  // FNS family member by default (owner decision 2026-09-24: a family op
+  // is dropped into networks as often as you like, so it should never have
+  // to join the setup to be used once). The installer places any tool the
+  // selection's `place` list names; this is the only gate.
+  function placeable(p) { return served && !!(p && (p.placeonce || p.family)); }
   var picked = served
     ? new Set((last ? lastNames : installedNow).concat(wantedStill))
     : new Set(JSON.parse(stored('fns.pick', null) || '[]')
@@ -1197,33 +1430,59 @@ function fnsBoot() {
     return 'they install once you sign in as a supporter inside TouchDesigner; '
       + 'everything else installs right away.';
   }
-  // The Plus-only filter: the list narrows to the supporter extras, every
-  // section with one opens, the core footnote and the other creators'
-  // links step aside. Same shape as a search, so the same rules apply.
-  var plusOnly = false;
-  function setPlusOnly(on) {
-    plusOnly = !!on;
-    var b = document.getElementById('plusonly');
-    if (b) {
-      b.classList.toggle('on', plusOnly);
-      b.setAttribute('aria-pressed', plusOnly ? 'true' : 'false');
-    }
-    var l = document.getElementById('plusrail-only');
-    if (l) l.textContent = plusOnly ? 'Show everything' : 'Show only Patreon tools';
+  // --- the view: what the list shows ------------------------------------
+  // Three filters beside the search, remembered per browser like the fold
+  // state: access (all / free / plus), only what is selected, only what is
+  // new. Any of them narrows the list the way a search does, so the same
+  // rules apply: every section with a hit opens, and the core footnote and
+  // the other creators' links step aside.
+  var VIEW_KEY = 'fns.view';
+  var view = {access: 'all', sel: false, fresh: false, once: false};
+  try {
+    var rawView = JSON.parse(stored(VIEW_KEY, 'null') || 'null');
+    if (rawView && ['all', 'free', 'plus'].indexOf(rawView.access) >= 0) view.access = rawView.access;
+    // "selected only" is a review mode, not a place to land in: a reload
+    // that opened on an empty-looking list would read as a lost selection
+  } catch (e) { /* defaults */ }
+  function setView(patch) {
+    Object.keys(patch).forEach(function (k) { view[k] = patch[k]; });
+    try { localStorage.setItem(VIEW_KEY, JSON.stringify({access: view.access})); } catch (e) { /* nicety */ }
     render();
+  }
+  function narrowed() { return view.access !== 'all' || view.sel || view.fresh || view.once; }
+  // Placeable: a tool you drop into a network as nodes rather than a
+  // service living in the toolkit container -- an FNS family member, a
+  // package that spawns into your network or at its root, or one the
+  // catalog flags `placeonce`. Every such card already carries a chip
+  // saying where it lands, so the filter needs no badge of its own.
+  function isPlaceable(p) {
+    return !!(p && (p.placeonce || p.family || p.placement === 'pane' || p.placement === 'root'));
+  }
+  // A package this release line introduced: the manifest's per-package
+  // note starts "new package" (build_manifest attributes it on the version
+  // that first ships, and it rides until the package's next version).
+  function isNew(p) { return /^new package/i.test(String(p.whatsnew || '')); }
+  function chosenHere(p) { return picked.has(p.name) || placing.has(p.name); }
+  function accessOk(p, access) {
+    if (access === 'free') return !isPlus(p);
+    if (access === 'plus') return isPlus(p);
+    return true;
   }
 
   function card(p) {
     var on = picked.has(p.name);
     var el = document.createElement('label');
-    el.className = 'card' + (on ? ' on' : '') + (isPlus(p) ? ' plus' : '')
+    var placed = !on && placing.has(p.name);
+    el.className = 'card' + (on ? ' on' : '') + (placed ? ' placed' : '')
+      + (isPlus(p) ? ' plus' : '')
       + (isPlus(p) && entitled(p) ? ' own' : '') + (p.minor ? ' minor' : '');
     el.setAttribute('data-name', p.name);
 
     var cb = document.createElement('input');
     cb.type = 'checkbox'; cb.checked = on;
     cb.addEventListener('change', function () {
-      if (cb.checked) picked.add(p.name); else picked.delete(p.name);
+      if (cb.checked) { picked.add(p.name); placing.delete(p.name); }
+      else picked.delete(p.name);
       save(); render();
       // A Patreon tool this account cannot install yet is said out loud at
       // the tick, not discovered at install time.
@@ -1239,7 +1498,16 @@ function fnsBoot() {
 
     var name = document.createElement('div');
     name.className = 'name';
-    name.appendChild(document.createTextNode(titleOf(p)));
+    var tt = document.createElement('span');
+    tt.className = 'tt';
+    tt.textContent = titleOf(p);
+    name.appendChild(tt);
+    if (isNew(p)) {
+      var nb = document.createElement('span');
+      nb.className = 'badge new';
+      nb.textContent = 'New';
+      name.appendChild(nb);
+    }
     if (p.help_url) {
       var a = docsLink(p.help_url, 'docs ↗', 'help');
       // The card is a <label>: without this the docs link would also toggle
@@ -1282,6 +1550,16 @@ function fnsBoot() {
 
     var chips = document.createElement('div');
     chips.className = 'chips';
+    // Served, the card says what Apply will do to THIS project: keep it,
+    // add it, or take it out. A pick the account cannot install yet says
+    // nothing here -- its Patreon chip already says locked.
+    if (served) {
+      var here = installedNow.indexOf(p.name) >= 0 || placedNow.indexOf(p.name) >= 0;
+      var wants = on || placed;
+      if (here && wants) chips.appendChild(chip('installed', 'ok'));
+      else if (!here && wants && !lockedPatreon([p.name]).length) chips.appendChild(chip('will install', 'up'));
+      else if (here && !wants) { chips.appendChild(chip('will be removed', 'err')); el.classList.add('removing'); }
+    }
     // a foreign package with its own updater: the picker installs it once,
     // the tool keeps itself current from then on
     if (p.updates === 'self') {
@@ -1331,19 +1609,42 @@ function fnsBoot() {
       pc.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pc);
     }
+    // Place: into this project only, never carried into the next one.
+    // The tick stays the way to have it in every project.
+    if (placeable(p) && !on) {
+      var pb = document.createElement('button');
+      pb.type = 'button';
+      pb.className = 'chip placebtn' + (placed ? ' on' : '');
+      pb.textContent = placed
+        ? (placedNow.indexOf(p.name) >= 0 ? 'placed here · undo' : 'will be placed · undo')
+        : 'place in this project only';
+      pb.setAttribute('data-tip', placed
+        ? 'In this project only: not part of your setup, so a new project does not get it. Undo removes it on Apply.'
+        : 'Put it in this project without adding it to your setup: "Set up like last time" will not bring it into the next project. Tick the card instead to have it every time.');
+      // the card is a <label>: without both, the press would also tick it
+      pb.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        if (placing.has(p.name)) placing.delete(p.name); else placing.add(p.name);
+        render();
+        if (placing.has(p.name) && lockedPatreon([p.name]).length) {
+          askPatreon([p.name], function () { placing.delete(p.name); render(); });
+        }
+      });
+      chips.appendChild(pb);
+    }
     // a pane-placed package is a reusable component: it spawns into the
     // network you are working in, not into the toolkit container
     if (p.placement === 'pane') {
-      chips.appendChild(chip('lands in your working network', 'hint'));
+      chips.appendChild(chip('lands in your working network', 'where'));
     }
     if (p.placement === 'root') {
-      chips.appendChild(chip('lands at your network root', 'hint'));
+      chips.appendChild(chip('lands at your network root', 'where'));
     }
     // 'none' places nothing at all: a family member is reached from the
     // FNS tab of the OP Create dialog, so the install makes it available
     // rather than putting a copy anywhere.
     if (p.placement === 'none') {
-      chips.appendChild(chip('from the FNS tab, not placed', 'hint'));
+      chips.appendChild(chip('ticked: waits in the FNS tab', 'where'));
     }
     // Surfaces ride the tooltip, not the card: at a glance a card is a
     // name and a line, and "Toolbar button / Pane bar button" on every
@@ -1352,7 +1653,8 @@ function fnsBoot() {
     // the manifest's surface_meta.
     var surf = (p.surfaces || []).map(surfaceLabel);
     el.setAttribute('data-tip', (p.description || '')
-      + (surf.length ? '\n\nAdds: ' + surf.join(', ') : ''));
+      + (surf.length ? '\n\nAdds: ' + surf.join(', ') : '')
+      + (p.whatsnew ? '\n\nLatest (' + (p.version || '') + '): ' + p.whatsnew : ''));
     // an integration whose partner is not selected: say so plainly rather
     // than blocking the choice -- these degrade by design
     (p.integrates_with || []).forEach(function (t) {
@@ -1487,7 +1789,7 @@ function fnsBoot() {
    *  chevron) that toggles the body, and the body itself. The section id
    *  is the quick-nav's anchor. `open` overrides the fold state (a filter
    *  match forces a section open). */
-  function section(cat, countNode, bodyNodes, open) {
+  function section(cat, countNode, bodyNodes, open, items) {
     var sec = document.createElement('section');
     var isOn = (typeof open === 'boolean') ? open : isOpen(cat);
     sec.className = 'cat-sec' + (isOn ? '' : ' closed') + (quiet(cat) ? ' quiet' : '');
@@ -1495,25 +1797,60 @@ function fnsBoot() {
     sec.setAttribute('data-cat', cat);
     var head = document.createElement('div');
     head.className = 'cat-head';
-    head.setAttribute('role', 'button');
-    head.setAttribute('aria-expanded', isOn ? 'true' : 'false');
+    // The toggle is a real button (keyboard, screen readers); the head
+    // around it stays clickable for the mouse, and the actions beside it
+    // are siblings rather than controls nested inside a control.
+    var tog = document.createElement('button');
+    tog.type = 'button';
+    tog.className = 'cat-toggle';
+    tog.setAttribute('aria-expanded', isOn ? 'true' : 'false');
+    tog.setAttribute('aria-controls', sec.id + '-body');
     var m = metaOf(cat);
     var g = document.createElement('span');
     g.className = 'cat-glyph'; g.setAttribute('aria-hidden', 'true');
     g.textContent = m.glyph || '·';
-    head.appendChild(g);
+    tog.appendChild(g);
     var nm = document.createElement('span');
     nm.className = 'cat-name'; nm.textContent = cat;
-    head.appendChild(nm);
+    tog.appendChild(nm);
     var pitch = document.createElement('span');
     pitch.className = 'cat-pitch'; pitch.textContent = m.pitch || '';
-    head.appendChild(pitch);
+    tog.appendChild(pitch);
     if (countNode) {
       var c = document.createElement('span');
       c.className = 'cat-count';
       if (typeof countNode === 'string') c.textContent = countNode;
       else c.appendChild(countNode);
-      head.appendChild(c);
+      tog.appendChild(c);
+    }
+    head.appendChild(tog);
+    // Select the section's shown tools in one press (the bulk rule holds:
+    // nopick cards are never ticked in bulk), or clear them when all are.
+    var bulk = (items || []).filter(bulkPickable);
+    if (bulk.length > 1) {
+      var allOn = bulk.every(function (p) { return picked.has(p.name); });
+      var sa = document.createElement('button');
+      sa.type = 'button';
+      sa.className = 'linkbtn cat-act';
+      sa.textContent = allOn ? 'Clear section' : 'Select section';
+      sa.setAttribute('data-tip', allOn ? 'Untick every tool shown in ' + cat
+                                        : 'Tick every tool shown in ' + cat);
+      sa.addEventListener('click', function (e) {
+        e.stopPropagation();
+        bulk.forEach(function (p) {
+          if (allOn) picked.delete(p.name); else { picked.add(p.name); placing.delete(p.name); }
+        });
+        save(); render();
+        if (!allOn) {
+          var lockedHere = lockedPatreon(bulk.map(function (p) { return p.name; }));
+          if (lockedHere.length) {
+            askPatreon(lockedHere, function () {
+              lockedHere.forEach(function (n) { picked.delete(n); }); save(); render();
+            });
+          }
+        }
+      });
+      head.appendChild(sa);
     }
     if (cat !== 'From other creators') {
       var dl = docsLink(FNS_DOCS + '/docs/#' + catSlug(cat), 'docs ↗', 'cat-docs');
@@ -1527,13 +1864,67 @@ function fnsBoot() {
     head.addEventListener('click', function () {
       setOpen(cat, sec.classList.contains('closed'));
       render();
+      // the render rebuilt the section: keep the keyboard where it was
+      var again = document.querySelector('#' + sec.id + ' .cat-toggle');
+      if (again && document.activeElement === document.body) again.focus({preventScroll: true});
     });
     sec.appendChild(head);
     var body = document.createElement('div');
     body.className = 'cat-body';
+    body.id = sec.id + '-body';
     bodyNodes.forEach(function (n) { body.appendChild(n); });
     sec.appendChild(body);
     return sec;
+  }
+
+  /** A section's body: the free tools first, then the Patreon ones behind
+   *  a quiet divider, each group with its full cards before its minor
+   *  ones. Gated last is the rule in every section, so a reader meets
+   *  what they can install before what they would unlock. */
+  function sectionBody(items) {
+    var nodes = [];
+    function grids(list) {
+      var major = list.filter(function (p) { return !p.minor; }).sort(byTitle);
+      var small = list.filter(function (p) { return !!p.minor; }).sort(byTitle);
+      if (major.length) {
+        var g = document.createElement('div');
+        g.className = 'grid';
+        major.forEach(function (p) { g.appendChild(card(p)); });
+        nodes.push(g);
+      }
+      // Minor tools go in their own denser grid: a footnote to the group,
+      // not more of the same list.
+      if (small.length) {
+        var gm = document.createElement('div');
+        gm.className = 'grid compact';
+        small.forEach(function (p) { gm.appendChild(card(p)); });
+        nodes.push(gm);
+      }
+    }
+    var free = items.filter(function (p) { return !isPlus(p); });
+    var gated = items.filter(isPlus);
+    grids(free);
+    if (gated.length) {
+      if (free.length) {
+        var dv = document.createElement('div');
+        dv.className = 'tier-div';
+        var own = account ? gated.filter(entitled).length : 0;
+        var tier = lowestTier(gated);
+        var lead = document.createElement('span');
+        lead.className = 'lbl';
+        lead.innerHTML = '<span class="dia" aria-hidden="true">◆</span> With Patreon';
+        dv.appendChild(lead);
+        var sub = document.createElement('span');
+        sub.className = 'sub';
+        sub.textContent = gated.length + (gated.length === 1 ? ' tool' : ' tools')
+          + (tier ? ' · from the ' + tier + ' tier' : '')
+          + (own ? ' · ' + own + ' unlocked for you' : '');
+        dv.appendChild(sub);
+        nodes.push(dv);
+      }
+      grids(gated);
+    }
+    return nodes;
   }
 
   /** "k selected" in accent, then "of N tools": the count a closed
@@ -1558,10 +1949,16 @@ function fnsBoot() {
     if (!nav) return;
     Array.prototype.forEach.call(nav.querySelectorAll('a[data-cat]'), function (a) {
       var cat = a.getAttribute('data-cat');
+      // under a search or a filter the rail counts what is shown, and a
+      // category with nothing to show goes quiet rather than jumping to
+      // a section that is not there
+      var pool = (document.getElementById('q').value.trim() || narrowed()) ? shownTools : tools;
       var n = cat === 'Core' ? core.length
-        : tools.filter(function (p) { return p.category === cat; }).length;
+        : pool.filter(function (p) { return p.category === cat; }).length;
       var sel = cat === 'Core' ? 0
-        : tools.filter(function (p) { return p.category === cat && picked.has(p.name); }).length;
+        : pool.filter(function (p) { return p.category === cat && picked.has(p.name); }).length;
+      a.classList.toggle('none', !n);
+      if (!n) a.setAttribute('aria-disabled', 'true'); else a.removeAttribute('aria-disabled');
       var cnt = a.querySelector('.n');
       cnt.textContent = '';
       if (sel) {
@@ -1575,62 +1972,55 @@ function fnsBoot() {
     });
   }
 
+  var shownTools = [];
+  var coreNoteEl = document.getElementById('corenote');
+  /** The search text a package answers to: names, description, category,
+   *  the surfaces it adds, a trial and its tier builds. */
+  function shownText(p) {
+    // Surfaces are searchable: "toolbar" is how someone asks for the
+    // tools that put a button somewhere, and it is a question the
+    // package list could not answer before.
+    var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
+    return (p.name + ' ' + titleOf(p) + ' ' + (p.description || '') + ' '
+            + (p.category || '') + ' ' + surf
+            + (pricingOf(p) ? ' trial ' + pricingOf(p).summary : '')
+            + Object.keys(p.variants || {}).map(function (vid) {
+                return ' ' + vid + ' ' + ((p.variants[vid] || {}).summary || '');
+              }).join(''))
+           .toLowerCase();
+  }
+  function matchText(p, q) { return !q || shownText(p).indexOf(q) !== -1; }
   function render() {
     var q = document.getElementById('q').value.trim().toLowerCase();
     function match(p) {
-      if (plusOnly && !isPlus(p)) return false;
-      if (!q) return true;
-      // Surfaces are searchable: "toolbar" is how someone asks for the
-      // tools that put a button somewhere, and it is a question the
-      // package list could not answer before.
-      var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
-      return (p.name + ' ' + titleOf(p) + ' ' + (p.description || '') + ' '
-              + (p.category || '') + ' ' + surf
-              + (pricingOf(p) ? ' trial ' + pricingOf(p).summary : '')
-              + Object.keys(p.variants || {}).map(function (vid) {
-                  return ' ' + vid + ' ' + ((p.variants[vid] || {}).summary || '');
-                }).join(''))
-             .toLowerCase().indexOf(q) !== -1;
+      return accessOk(p, view.access) && (!view.sel || chosenHere(p))
+        && (!view.fresh || isNew(p)) && (!view.once || isPlaceable(p)) && matchText(p, q);
     }
     listEl.textContent = '';
     var shown = 0;
     var cats = allCats();
+    var filtering = !!q || narrowed();
+    var visible = [];
 
     cats.forEach(function (cat) {
       if (cat === 'Core') return;
       var items = tools.filter(function (p) { return p.category === cat && match(p); });
       if (!items.length) return;
       shown += items.length;
+      visible = visible.concat(items);
       var sel = items.filter(function (p) { return picked.has(p.name); }).length;
-      // Minor tools rank after everything else in their category and go in
-      // their own denser grid. Splitting the grids rather than just sorting
-      // is what makes them read as a footnote to the category instead of
-      // more of the same list.
-      var major = items.filter(function (p) { return !p.minor; });
-      var small = items.filter(function (p) { return !!p.minor; });
-      var nodes = [];
-      if (major.length) {
-        var g = document.createElement('div');
-        g.className = 'grid';
-        major.sort(byTitle).forEach(function (p) { g.appendChild(card(p)); });
-        nodes.push(g);
-      }
-      if (small.length) {
-        var gm = document.createElement('div');
-        gm.className = 'grid compact';
-        small.sort(byTitle).forEach(function (p) { gm.appendChild(card(p)); });
-        nodes.push(gm);
-      }
       // a filter match opens the section: a hit hidden behind a fold is
       // a search that looks like it found nothing
       listEl.appendChild(section(cat, countText(sel, items.length,
-        items.length === 1 ? 'tool' : 'tools'), nodes, (q || plusOnly) ? true : undefined));
+        items.length === 1 ? 'tool' : 'tools'), sectionBody(items),
+        filtering ? true : undefined, items));
     });
+    shownTools = visible;
 
     // Tools by OTHER creators. Rendered LAST and never selectable: these are
     // links to someone else's download page, not packages. Nothing here
     // enters `picked`, so the install plan cannot see them.
-    var recs = (plusOnly ? [] : (window.FNS_RECOMMENDS || [])).filter(function (r) {
+    var recs = (narrowed() ? [] : (window.FNS_RECOMMENDS || [])).filter(function (r) {
       if (!q) return true;
       return (r.name + ' ' + (r.author || '') + ' ' + (r.description || ''))
         .toLowerCase().indexOf(q) !== -1;
@@ -1642,14 +2032,14 @@ function fnsBoot() {
       recs.forEach(function (r) { gr.appendChild(recCard(r)); });
       listEl.appendChild(section('From other creators',
         recs.length + ' link' + (recs.length === 1 ? '' : 's'), [gr],
-        (q || plusOnly) ? true : undefined));
+        filtering ? true : undefined));
     }
 
     // Core, last and quiet: plumbing that installs with any selection.
     // Nobody picks it, so it is a folded footnote, not a section a
     // reader has to get past.
-    if (!q && !plusOnly) {
-      var coreNote = document.getElementById('corenote');
+    if (!filtering) {
+      var coreNote = coreNoteEl;
       var coreNodes = [];
       if (coreNote) { coreNote.hidden = false; coreNodes.push(coreNote); }
       var g0 = document.createElement('div');
@@ -1660,7 +2050,7 @@ function fnsBoot() {
     }
     updateNav();
 
-    document.getElementById('empty').hidden = shown > 0 || !(q || plusOnly);
+    document.getElementById('empty').hidden = shown > 0 || !filtering;
     document.getElementById('cnt').textContent = picked.size;
     var need = new Set();
     picked.forEach(function (n) {
@@ -1669,6 +2059,14 @@ function fnsBoot() {
     var removals = served ? installedNow.filter(function (n) {
       return !picked.has(n);
     }).length : 0;
+    // placed-only tools: newly placed, and placed ones the user undid
+    var toPlace = Array.from(placing).filter(function (n) {
+      return !picked.has(n) && placedNow.indexOf(n) < 0;
+    }).length;
+    var unplaced = placedNow.filter(function (n) {
+      return !picked.has(n) && !placing.has(n);
+    }).length;
+    removals += unplaced;
     var plusSel = Array.from(picked).filter(function (n) {
       return byName[n] && isPlus(byName[n]);
     });
@@ -1692,6 +2090,7 @@ function fnsBoot() {
     // server's answer, and this page has not asked it.
     if (plusLocked) notes.push(plusLocked + ' locked (Patreon)');
     if (paneSel) notes.push(paneSel + (paneSel === 1 ? ' spawns' : ' spawn') + ' into your network');
+    if (toPlace) notes.push(toPlace + ' placed in this project only');
     var famMember = companions.length > 0 && memberPicked();
     document.getElementById('famopt').hidden = !famMember;
     document.getElementById('famchk').checked = familyOn;
@@ -1705,10 +2104,161 @@ function fnsBoot() {
       save.disabled = true;
     } else if (served) {
       save.textContent = (removals || famGoes) ? 'Apply changes…' : 'Review install…';
-      // removals alone are actionable even with nothing picked
-      save.disabled = picked.size === 0 && removals === 0 && !famGoes;
+      // removals (and places) alone are actionable even with nothing picked
+      save.disabled = picked.size === 0 && removals === 0 && !famGoes && !toPlace;
     } else {
       save.disabled = picked.size === 0;
+    }
+    renderControls(q);
+    renderTray();
+  }
+
+  /** The filter deck and the results line follow every render: counts on
+   *  the three access choices (under the search and the other filters),
+   *  a sentence saying what the list shows, a chip per active filter, and
+   *  Select/Clear that act on exactly what is shown. */
+  function renderControls(q) {
+    function rest(p) {
+      if (view.sel && !chosenHere(p)) return false;
+      if (view.fresh && !isNew(p)) return false;
+      if (view.once && !isPlaceable(p)) return false;
+      return matchText(p, q);
+    }
+    var seg = document.getElementById('access');
+    if (seg) {
+      Array.prototype.forEach.call(seg.querySelectorAll('button[data-access]'), function (b) {
+        var a = b.getAttribute('data-access');
+        var on = view.access === a;
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.classList.toggle('on', on);
+        b.querySelector('.k').textContent = tools.filter(function (p) {
+          return accessOk(p, a) && rest(p);
+        }).length;
+      });
+    }
+    var so = document.getElementById('selonly');
+    var chosen = tools.filter(chosenHere).length;
+    so.setAttribute('aria-pressed', view.sel ? 'true' : 'false');
+    so.classList.toggle('on', view.sel);
+    so.querySelector('.k').textContent = chosen;
+    so.disabled = !chosen && !view.sel;
+    var no = document.getElementById('newonly');
+    var fresh = tools.filter(isNew).length;
+    no.hidden = !fresh;
+    no.setAttribute('aria-pressed', view.fresh ? 'true' : 'false');
+    no.classList.toggle('on', view.fresh);
+    no.querySelector('.k').textContent = fresh;
+    var po = document.getElementById('placeonly');
+    var once = tools.filter(isPlaceable).length;
+    po.hidden = !once;
+    po.setAttribute('aria-pressed', view.once ? 'true' : 'false');
+    po.classList.toggle('on', view.once);
+    po.querySelector('.k').textContent = once;
+
+    var n = shownTools.length;
+    var kind = view.access === 'free' ? 'free ' : (view.access === 'plus' ? 'Patreon ' : '');
+    var what = (view.fresh ? 'new ' : '') + kind + (n === 1 ? 'tool' : 'tools')
+      + (view.once ? ' you can place' : '');
+    var text = (!q && !narrowed())
+      ? 'All ' + n + ' tools'
+      : n + ' ' + what + (view.sel ? ' you picked' : '') + (q ? ' matching \u201c' + q + '\u201d' : '');
+    document.getElementById('restext').textContent = text;
+
+    var fl = document.getElementById('resfilters');
+    fl.textContent = '';
+    function pill(label, clear) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'fpill';
+      b.appendChild(document.createTextNode(label + ' '));
+      var x = document.createElement('span');
+      x.setAttribute('aria-hidden', 'true');
+      x.textContent = '\u00d7';
+      b.appendChild(x);
+      b.setAttribute('aria-label', 'Remove filter: ' + label);
+      b.addEventListener('click', clear);
+      fl.appendChild(b);
+    }
+    if (q) pill('\u201c' + q + '\u201d', function () { document.getElementById('q').value = ''; render(); });
+    if (view.access === 'free') pill('Free', function () { setView({access: 'all'}); });
+    if (view.access === 'plus') pill('Patreon', function () { setView({access: 'all'}); });
+    if (view.sel) pill('Selected', function () { setView({sel: false}); });
+    if (view.fresh) pill('New', function () { setView({fresh: false}); });
+    if (view.once) pill('Placeable', function () { setView({once: false}); });
+
+    // an empty list says where the hits went, when another access has them
+    var other = view.access === 'all' ? 0 : tools.filter(function (p) {
+      return !accessOk(p, view.access) && rest(p);
+    }).length;
+    document.getElementById('emptytext').textContent = other
+      ? 'No ' + (view.access === 'free' ? 'free' : 'Patreon') + ' tools match. '
+        + other + ' ' + (view.access === 'free' ? 'Patreon' : 'free')
+        + (other === 1 ? ' tool does.' : ' tools do.')
+      : 'Nothing matches these filters.';
+
+    // Select / Clear speak for the list in front of the reader
+    var scoped = !!q || narrowed();
+    var allBtn = document.getElementById('all');
+    var noneBtn = document.getElementById('none');
+    allBtn.textContent = scoped ? 'Select shown' : 'Select all';
+    noneBtn.textContent = scoped ? 'Clear shown' : 'Clear';
+    allBtn.disabled = !shownTools.filter(bulkPickable).some(function (p) { return !picked.has(p.name); });
+    noneBtn.disabled = !(scoped ? shownTools : tools).some(function (p) { return picked.has(p.name); });
+  }
+
+  /** The selection tray above the footer: every pick as a chip, grouped
+   *  by what Apply will do with it; pressing a chip undoes that pick. */
+  function renderTray() {
+    var tray = document.getElementById('tray');
+    var body = document.getElementById('traybody');
+    if (!tray || !body) return;
+    var btn = document.getElementById('traybtn');
+    if (btn) btn.setAttribute('aria-expanded', tray.hidden ? 'false' : 'true');
+    if (tray.hidden) return;
+    body.textContent = '';
+    function group(label, names, cls, undo, tip, mark) {
+      if (!names.length) return;
+      var h = document.createElement('div');
+      h.className = 'tray-sub';
+      h.textContent = label + ' \u00b7 ' + names.length;
+      body.appendChild(h);
+      var row = document.createElement('div');
+      row.className = 'tray-row';
+      names.slice().sort(function (a, b) {
+        return titleOfName(a).localeCompare(titleOfName(b), 'en', {sensitivity: 'base'});
+      }).forEach(function (nm) {
+        var c = document.createElement('button');
+        c.type = 'button';
+        c.className = 'tchip' + (cls ? ' ' + cls : '')
+          + (byName[nm] && isPlus(byName[nm]) ? ' plus' : '');
+        c.appendChild(document.createTextNode(titleOfName(nm) + ' '));
+        var x = document.createElement('span');
+        x.className = 'x';
+        x.setAttribute('aria-hidden', 'true');
+        x.textContent = mark;
+        c.appendChild(x);
+        c.setAttribute('aria-label', tip + ': ' + titleOfName(nm));
+        c.addEventListener('click', function () { undo(nm); save(); render(); });
+        row.appendChild(c);
+      });
+      body.appendChild(row);
+    }
+    var pickedList = Array.from(picked).filter(function (n) { return byName[n]; });
+    var placedList = Array.from(placing).filter(function (n) { return !picked.has(n) && byName[n]; });
+    var leaving = served ? installedNow.concat(placedNow).filter(function (n) {
+      return !picked.has(n) && !placing.has(n) && byName[n];
+    }) : [];
+    group('Ticked', pickedList, '', function (n) { picked.delete(n); }, 'Untick', '\u00d7');
+    group('In this project only', placedList, 'placed', function (n) { placing.delete(n); },
+          'Undo place', '\u00d7');
+    group('Will be removed', leaving, 'gone', function (n) {
+      if (placedNow.indexOf(n) >= 0) placing.add(n); else picked.add(n);
+    }, 'Keep', '\u21ba');
+    if (!body.children.length) {
+      var e = document.createElement('p');
+      e.className = 'tray-empty';
+      e.textContent = 'Nothing picked yet. Tick a card, or start from Guided setup.';
+      body.appendChild(e);
     }
   }
 
@@ -1932,6 +2482,14 @@ function fnsBoot() {
       install: Array.from(need).sort().concat(chosen.filter(installable))
     };
     if (wantBind) sel.bind = wantBind;
+    // said whenever served, even empty: an absent key tells the installer
+    // this writer knows nothing of placed tools and they must be kept,
+    // while a present one is the whole placed set (docs/PlaceOnce.md)
+    if (served) {
+      sel.place = Array.from(placing).filter(function (n) {
+        return !picked.has(n) && installable(n);
+      }).sort();
+    }
     // said whenever the release has a family, so the installer never
     // has to guess (InstallerExt.FamilyWanted)
     if (companions.length) sel.family = familyOn;
@@ -1944,11 +2502,58 @@ function fnsBoot() {
   document.getElementById('alldocs').href = FNS_DOCS + '/docs/';
   document.getElementById('dlgdocs').href = FNS_DOCS + '/#get';
   document.getElementById('q').addEventListener('input', render);
+  // Select all / Clear act on what is SHOWN: with the list narrowed to
+  // the free tools, "Select shown" ticks those and nothing hidden. The
+  // bulk rule holds either way -- only bulkTools are ever ticked in bulk.
   document.getElementById('all').addEventListener('click', function () {
-    bulkTools.forEach(function (p) { picked.add(p.name); }); save(); render();
+    var inView = {};
+    shownTools.forEach(function (p) { inView[p.name] = true; });
+    bulkTools.filter(function (p) { return inView[p.name]; })
+      .forEach(function (p) { picked.add(p.name); placing.delete(p.name); });
+    save(); render();
   });
   document.getElementById('none').addEventListener('click', function () {
-    picked.clear(); save(); render();
+    if (document.getElementById('q').value.trim() || narrowed()) {
+      shownTools.forEach(function (p) { picked.delete(p.name); });
+    } else {
+      picked.clear();
+    }
+    save(); render();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#access button[data-access]'), function (b) {
+    b.addEventListener('click', function () { setView({access: b.getAttribute('data-access')}); });
+  });
+  document.getElementById('selonly').addEventListener('click', function () { setView({sel: !view.sel}); });
+  document.getElementById('newonly').addEventListener('click', function () { setView({fresh: !view.fresh}); });
+  document.getElementById('placeonly').addEventListener('click', function () { setView({once: !view.once}); });
+  document.getElementById('resetview').addEventListener('click', function () {
+    document.getElementById('q').value = '';
+    setView({access: 'all', sel: false, fresh: false, once: false});
+  });
+  // the tray: the footer's count opens it, Close and Escape shut it
+  function setTray(on) {
+    var tray = document.getElementById('tray');
+    if (!tray) return;
+    tray.hidden = !on;
+    renderTray();
+  }
+  document.getElementById('traybtn').addEventListener('click', function () {
+    setTray(document.getElementById('tray').hidden);
+  });
+  document.getElementById('trayclose').addEventListener('click', function () { setTray(false); });
+  // "/" jumps to the search from anywhere but a text field; Escape in
+  // the search clears it, and elsewhere closes the tray
+  document.addEventListener('keydown', function (e) {
+    var t = e.target;
+    var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    if (e.key === '/' && !typing && !document.querySelector('dialog[open]')) {
+      e.preventDefault();
+      document.getElementById('q').focus();
+    } else if (e.key === 'Escape' && t && t.id === 'q' && t.value) {
+      t.value = ''; render();
+    } else if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
+      setTray(false);
+    }
   });
   document.getElementById('famchk').addEventListener('change', function (e) {
     familyOn = e.target.checked;
@@ -3206,7 +3811,7 @@ function fnsBoot() {
     var rail = document.getElementById('plusrail');
     if (!rail) return;
     var plus = tools.filter(isPlus);
-    if (!plus.length) { rail.hidden = true; return; }
+    if (!plus.length) { rail.hidden = true; view.access = 'all'; return; }
     var mark = document.createElement('span');
     mark.className = 'mark';
     mark.setAttribute('aria-hidden', 'true');
@@ -3221,20 +3826,19 @@ function fnsBoot() {
       + plusReality();
     if (FNS_EMBEDDED) {
       // inside the manager the strip is one quiet line; the full sentence
-      // rides as a tooltip, and the toolbar's Plus-only button does the filter
+      // rides as a tooltip, and the toolbar's access filter narrows the list
       rail.setAttribute('data-tip', sentence);
       rail.appendChild(document.createTextNode(
-        plus.length + ' supporter extra' + (plus.length === 1 ? '' : 's') + ' below. '));
+        plus.length + ' supporter extra' + (plus.length === 1 ? '' : 's')
+        + ', listed last in each section. '));
     } else {
-      rail.appendChild(document.createTextNode(sentence + ' '));
+      rail.appendChild(document.createTextNode(sentence
+        + ' They are listed last in each section. '));
     }
     rail.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗'));
-    var pob = document.getElementById('plusonly');
-    if (pob) {
-      pob.hidden = false;
-      pob.textContent = '◆ Patreon only (' + plus.length + ')';
-      pob.addEventListener('click', function () { setPlusOnly(!plusOnly); });
-    }
+    // the access filter only means something when both kinds exist
+    var seg = document.getElementById('access');
+    if (seg && plus.length < tools.length) seg.hidden = false;
   })();
 
   if (FNS_EMBEDDED) {
@@ -3253,10 +3857,14 @@ function fnsBoot() {
       var act = document.createElement('div');
       act.className = 'bar-act';
       act.appendChild(sum.querySelector('.sum-count'));
+      // the tray drops down from the count instead of rising from the
+      // footer, which goes
+      var trayEl = document.getElementById('tray');
+      if (trayEl) { trayEl.classList.add('drop'); act.appendChild(trayEl); }
       act.appendChild(document.getElementById('deps'));
       act.appendChild(document.getElementById('famopt'));
       act.appendChild(document.getElementById('save'));
-      bar.appendChild(act);
+      (bar.querySelector('.bar-find') || bar).appendChild(act);
       if (rail) {
         ['acct', 'support', 'recheck', 'signin', 'redeem'].forEach(function (id) {
           var el = document.getElementById(id);

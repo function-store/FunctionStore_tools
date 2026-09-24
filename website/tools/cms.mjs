@@ -390,6 +390,7 @@ function loadPackage(cat, name) {
     description: cat.packages[name].description || '',
     recommended: !!cat.packages[name].recommended,
     nopick: cat.packages[name].nopick === true,
+    placeonce: cat.packages[name].placeonce === true,
     // `access` is the ENTRY tier id, or absent for a free package.
     // Editable here now: the ladder supplies real named tiers, so nothing
     // is invented, and gate_package keeps the two files in step.
@@ -420,6 +421,7 @@ function state() {
         description: cat.packages[n].description || '',
         recommended: !!cat.packages[n].recommended,
         nopick: cat.packages[n].nopick === true,
+        placeonce: cat.packages[n].placeonce === true,
         access: String(cat.packages[n].access || ''),
         plus: Boolean(cat.packages[n].access) && cat.packages[n].access !== 'free',
         placement: String(cat.packages[n].placement || ''),
@@ -686,6 +688,7 @@ const server = http.createServer(async (req, res) => {
         if (typeof body.category === 'string' || typeof body.description === 'string'
             || typeof body.recommended === 'boolean'
             || typeof body.nopick === 'boolean'
+            || typeof body.placeonce === 'boolean'
             || typeof body.placement === 'string'
             || curatedKeys.some((k) => body[k] !== undefined)) {
           const entry = cat.packages[name];
@@ -714,6 +717,13 @@ const server = http.createServer(async (req, res) => {
           if (typeof body.nopick === 'boolean') {
             if (body.nopick) entry.nopick = true;
             else delete entry.nopick;
+          }
+          // Place once (docs/PlaceOnce.md): the picker card offers Place
+          // beside the tick -- into this project only, never carried into the
+          // next one by "Set up like last time". Presence-style like nopick.
+          if (typeof body.placeonce === 'boolean') {
+            if (body.placeonce) entry.placeonce = true;
+            else delete entry.placeonce;
           }
           if (entry.nopick && entry.recommended) {
             return json(res, 400, { error: 'an explicit-pick-only package cannot be Recommended: the Recommended set is a bulk selection' });

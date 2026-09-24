@@ -15,6 +15,7 @@
   "category_meta may also carry `deprioritized: true`: a category that is plumbing, shown LAST on the website and never opened by default. It does not reorder `categories`; the installer picker also shows it last, folded and quiet, and leaves it off its category rail.",
   "A package's `minor: true` marks a small convenience that should not compete for attention with the tools someone came for: the picker ranks it LAST inside its own category and draws it in a denser, lighter card. It is never hidden and never moved out of its category -- it is a real package someone may want, and a picker that hides packages lies about what the toolkit contains. Curation, not a measure of size: set it by whether the tool would be noise to someone scanning for the thing they came for.",
   "A package's `nopick: true` makes it explicit-pick only: a real package with a normal card in the picker and on the site, installable and updatable, but LEFT OUT of every bulk selection -- Select all, the Everything preset, Recommended (so it cannot also carry `recommended`), the bundles in `presets` (dropped and reported) and the guided-setup questionnaire (its `fits` never match). It arrives only when someone ticks it, and nothing removes a tick they made. For hardware-specific integrations and anything else that must never land because someone asked for everything. true or absent; preflight refuses any other value.",
+  "A package's `placeonce: true` gives its picker card a second action beside the tick: place in this project only. A placed tool lands and updates here like any other, but its install record says remember = 0, so the root's last_install never carries it and \"Set up like last time\" never brings it into the next project. The tick still works for anyone who wants it every time. true or absent; preflight refuses any other value. docs/PlaceOnce.md.",
   "author {name, url}, homepage and changelog_url are CURATED on any package (presentation facts; the manifest carries them to the picker byline and the website badge -- the ONE home for credit, doc frontmatter `credit` is refused). A `source` block {manifest, tox?, package?} makes an entry FOREIGN: bytes and version owned upstream, mirrored by packaging/foreign_sync.py into dist/ and pinned in foreign.lock.json, never exported from a live COMP. Only a foreign entry may carry updates (self|store), help_url and min_td_build -- on a live package those have live authorities. See docs/ForeignPackages.md.",
   "`alternatives_for` is DERIVED for a live package that carries an FNS_OpMenuRegistry host (build_manifest calls its onAlternatives()); it may be CURATED, in the content CMS or here, on a foreign entry and on a live package with NO op-menu host: a list of operator types the package is an alternative for (a curated list beside a host is a preflight problem). The op-menu registry offers a store tox for those types when the package is not in the project, and places it from disk.",
   "`quiz` is the guided setup's questionnaire: questions with options, each option carrying tags; a package's `fits` names the tags it answers. The picker recommends every tool whose fits meet the chosen tags, best matches first. build_manifest validates both (an option tag no package fits is reported). Content, so it is authored on the cms.mjs side like presets.",
@@ -821,7 +822,8 @@
     "summary": "14-day trial, then Base or Pro",
     "detail": "A free 14-day trial of Pro, once per computer. After it the mapping editor needs a Function Store Patreon membership at the Base or Pro tier, or a Gumroad lifetime key; live MIDI to parameters keeps working without one, and your mappings are kept.",
     "url": "https://tdxmap.functionstore.xyz/license/"
-   }
+   },
+   "placeonce": true
   },
   "FNS_OpFamily": {
    "category": "Surfaces",
@@ -1002,7 +1004,8 @@
    "fits": [
     "live",
     "params"
-   ]
+   ],
+   "placeonce": true
   },
   "FeedbackDisplace": {
    "category": "Media & Output",

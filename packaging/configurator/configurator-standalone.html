@@ -594,8 +594,11 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   /* inside the manager the bar must stay one line: flex-wrap breaks on
      the search field's 240px BASIS, not its 150px minimum, so the field
      starts small and grows, and the action never wraps */
-  body.app .cfg-bar input[type=search] { flex: 1 1 150px; }
-  body.app .cfg-bar .bar-act { flex: 0 0 auto; white-space: nowrap; }
+  body.app .cfg-bar .qwrap { flex: 1 1 150px; min-width: 130px; }
+  /* with the filters beside it the manager's bar may take two rows on a
+     narrow panel; the action then keeps to the right end of the second */
+  body.app .cfg-bar .bar-act { flex: 0 0 auto; white-space: nowrap; margin-left: auto; }
+  body.app .seg button, body.app .tog { padding: 4px 9px; font-size: 12px; }
   /* Inside the manager the category rail stays a chip row at every width:
      the side-rail layout the site uses past 1000px spends a 212px column
      on seven chips and leaves it empty below them, and the cards need
@@ -624,6 +627,186 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 
   .note { margin: 22px 0 8px; }
 
+  /* Place (docs/PlaceOnce.md): a button, not a label -- in this project only.
+     A placed card is lifted like a ticked one, with a dashed edge so "here,
+     but not in my setup" never reads as ticked. */
+  .chip.placebtn {
+    cursor: pointer; font-family: inherit;
+    background: transparent; border-style: dashed; color: var(--text-dim);
+  }
+  .chip.placebtn:hover { border-color: var(--accent); color: var(--accent); }
+  .chip.placebtn.on {
+    border-style: solid; border-color: rgba(251,191,36,0.4);
+    background: var(--accent-dim); color: var(--accent);
+  }
+  .card.placed { border-style: dashed; border-color: var(--border-strong); background: var(--bg-2); }
+
+  /* ── the filter deck: search, access, selected, new ── */
+  .cfg-bar { flex-direction: column; align-items: stretch; gap: 8px; }
+  .bar-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .bar-find .bar-docs { padding: 0 2px; }
+  .sum-left { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; flex: 1 1 240px; min-width: 0; }
+  .sum-left #deps { font-size: 12.5px; }
+  .sum-left #deps:empty { display: none; }
+  .sum > .spacer { flex: 0 0 0; }
+  .qwrap { position: relative; flex: 1 1 260px; min-width: 170px; display: flex; }
+  .qwrap input[type=search] { flex: 1 1 auto; width: 100%; min-width: 0; padding-right: 34px; }
+  .qkey {
+    position: absolute; right: 9px; top: 50%; transform: translateY(-50%);
+    padding: 0 6px; border-radius: 5px; border: 1px solid var(--border-strong);
+    font-size: 11px; line-height: 18px; color: var(--text-faint); pointer-events: none;
+  }
+  .qwrap input:focus + .qkey, .qwrap input:not(:placeholder-shown) + .qkey { display: none; }
+  .seg {
+    display: inline-flex; padding: 3px; gap: 2px; border-radius: 10px;
+    background: var(--bg-1); border: 1px solid var(--border);
+  }
+  .seg button, .tog {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 11px; border-radius: 7px; border: 1px solid transparent;
+    background: transparent; color: var(--text-dim); font: inherit; font-size: 13px;
+    font-weight: 500; cursor: pointer; white-space: nowrap;
+    transition: background .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .seg button:hover, .tog:hover { color: var(--text); }
+  .seg button.on { background: var(--bg-3); color: var(--text); border-color: var(--border-strong); }
+  .seg button[data-access="plus"].on { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+  .seg .dia { color: var(--accent); font-size: 10px; }
+  .seg .k, .tog .k {
+    font-size: 11.5px; color: var(--text-faint); font-variant-numeric: tabular-nums;
+  }
+  .seg button.on .k, .tog.on .k { color: inherit; opacity: .75; }
+  .tog { border-color: var(--border); border-radius: 999px; padding: 6px 12px; }
+  .tog.on { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+  .tog:disabled { opacity: .45; cursor: default; }
+  .seg button:focus-visible, .tog:focus-visible, .linkbtn:focus-visible, .fpill:focus-visible,
+  .cat-toggle:focus-visible, .sum-count:focus-visible, .tchip:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  /* ── the results line: what the list shows, and bulk actions on it ── */
+  .resline {
+    display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap;
+    margin: 16px 0 2px; min-height: 28px; font-size: 13px; color: var(--text-dim);
+  }
+  .res-text { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .res-filters { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+  .fpill {
+    display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px;
+    border-radius: 999px; border: 1px solid var(--border-strong); background: var(--bg-2);
+    color: var(--text-dim); font: inherit; font-size: 12px; cursor: pointer;
+  }
+  .fpill span { color: var(--text-faint); font-size: 14px; line-height: 1; }
+  .fpill:hover { border-color: var(--accent); color: var(--text); }
+  .fpill:hover span { color: var(--accent); }
+  .linkbtn {
+    background: none; border: 0; padding: 2px 4px; font: inherit; font-size: 13px;
+    color: var(--accent); cursor: pointer; border-radius: 4px;
+  }
+  .linkbtn:hover { color: var(--accent-bright); text-decoration: underline; text-underline-offset: 3px; }
+  .linkbtn:disabled { color: var(--text-faint); cursor: default; text-decoration: none; opacity: .6; }
+
+  /* ── sections: a real toggle, a section action, gated tools last ── */
+  .cat-head { gap: 10px 14px; }
+  .cat-toggle {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1 1 320px;
+    min-width: 0; padding: 0; margin: 0; background: none; border: 0; border-radius: 6px;
+    color: inherit; font: inherit; text-align: left; cursor: pointer;
+  }
+  .cat-act { font-size: 12.5px; color: var(--text-faint); white-space: nowrap; }
+  .cat-head:hover .cat-act, .cat-act:focus-visible { color: var(--accent); }
+  .tier-div {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin: 18px 0 10px; font-size: 12px;
+  }
+  .tier-div::after { content: ''; flex: 1 1 40px; border-top: 1px solid var(--border); }
+  .tier-div .lbl {
+    color: var(--accent); font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    font-size: 11px;
+  }
+  .tier-div .dia { font-size: 9px; }
+  .tier-div .sub { color: var(--text-faint); }
+  .cat-body .tier-div + .grid { margin-top: 0; }
+  .catnav a.none { opacity: .4; pointer-events: none; }
+  /* the deck is two rows now: the rail and the jump targets clear it */
+  html { scroll-padding-top: calc(var(--stick) + 140px); }
+  @media (min-width: 1000px) {
+    .layout > .catnav {
+      top: calc(var(--stick) + 136px);
+      max-height: calc(100vh - var(--stick) - 160px);
+    }
+  }
+
+  /* ── cards: selection you can see from across the room ── */
+  #list .card { position: relative; }
+  #list .card.on {
+    border-color: var(--accent);
+    background: linear-gradient(180deg, var(--accent-dim) 0%, var(--bg-2) 85%);
+  }
+  #list .card.on:hover { background: linear-gradient(180deg, var(--accent-dim) 0%, var(--bg-3) 85%); }
+  #list .card.placed { border-color: var(--accent); border-style: dashed; }
+  #list .card.removing { border-color: var(--err); border-style: dashed; }
+  #list .card.removing .tt { text-decoration: line-through; text-decoration-color: var(--err); }
+  #list .card input { width: 17px; height: 17px; margin-top: 2px; }
+  #list .card.plus .body { padding-right: 12px; }
+  #list .card.plus::after {
+    content: '◆'; position: absolute; top: 9px; right: 11px;
+    font-size: 9px; color: var(--accent); opacity: .7;
+  }
+  #list .card.plus.own::after { opacity: 1; }
+  .name .tt { min-width: 0; }
+  .name > .tt + a.help, .name > .badge + a.help { margin-left: auto; }
+  .name a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+  .name a.help:hover { color: var(--accent); }
+  .badge {
+    display: inline-flex; align-items: center; padding: 1px 6px; border-radius: 4px;
+    font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+    align-self: center;
+  }
+  /* where a package lands is information, not a warning */
+  .chip.where { background: transparent; border-color: var(--border); color: var(--text-faint); }
+  .badge.new { color: var(--green); border: 1px solid var(--green); opacity: .9; }
+
+  /* ── the footer count opens the selection tray ── */
+  .sum-count {
+    background: none; border: 0; padding: 4px 6px; margin: -4px -6px; border-radius: 8px;
+    font: inherit; color: var(--text); cursor: pointer;
+  }
+  .sum-count:hover { background: var(--bg-2); }
+  .sum-count .caret { font-size: 13px; color: var(--text-faint); transition: transform .15s ease; }
+  .sum-count[aria-expanded="true"] .caret { transform: rotate(180deg); }
+  .tray {
+    position: absolute; left: 0; right: 0; bottom: calc(100% + 8px);
+    max-height: min(52vh, 460px); overflow: auto; padding: 14px 16px 16px;
+    background: var(--bg-1); border: 1px solid var(--border-strong); border-radius: 12px;
+    box-shadow: 0 18px 50px rgba(0,0,0,.45);
+  }
+  .tray.drop {
+    top: calc(100% + 6px); bottom: auto; left: auto; right: 0; width: min(560px, 92vw); z-index: 9;
+  }
+  body.app .cfg-bar .bar-act { position: relative; }
+  .tray-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 14px; }
+  .tray-sub {
+    margin: 12px 0 6px; font-size: 11px; font-weight: 600; letter-spacing: .05em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  .tray-row { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tchip {
+    display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+    border-radius: 999px; border: 1px solid var(--border-strong); background: var(--bg-2);
+    color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer;
+  }
+  .tchip .x { color: var(--text-faint); }
+  .tchip:hover { border-color: var(--err); }
+  .tchip:hover .x { color: var(--err); }
+  .tchip.plus { border-color: var(--accent); }
+  .tchip.placed { border-style: dashed; }
+  .tchip.gone { color: var(--text-dim); text-decoration: line-through; text-decoration-color: var(--err); }
+  .tchip.gone:hover { border-color: var(--green); text-decoration: none; }
+  .tchip.gone:hover .x { color: var(--green); }
+  .tray-empty { margin: 6px 0 0; font-size: 13px; color: var(--text-dim); }
+  .empty p { margin: 0 0 14px; }
+
   /* ── framed inside the FNS console: the console's chrome carries the
      identity and the tabs, so the picker drops its hero and reads as a
      native panel (the script also sets body.app for the dense metrics). ── */
@@ -634,6 +817,13 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   @media (max-width: 640px) {
     .cfg-hero { padding: 32px 0 20px; }
     .grid { grid-template-columns: 1fr; }
+    .qwrap { flex-basis: 100%; }
+    .seg { flex: 1 1 auto; }
+    .seg button { flex: 1 1 auto; justify-content: center; padding: 6px 8px; }
+    .cfg-bar .spacer { display: none; }
+    .cat-act { display: none; }
+    /* a phone cannot spare the deck's height for the whole scroll */
+    .cfg-bar { position: static; }
     /* The rail is stuck to the bottom of a phone screen and the labels are
        too long to share a row, so each button gets one -- kept as tight as
        a tap target allows, because every pixel here is list the reader
@@ -665,14 +855,25 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   </section>
 
   <div class="cfg-bar">
-    <input type="search" id="q" placeholder="Filter by name, description or category…" autocomplete="off">
+   <div class="bar-row bar-find">
+    <div class="qwrap">
+      <input type="search" id="q" placeholder="Search tools, descriptions, categories…" autocomplete="off" aria-label="Search tools">
+      <kbd class="qkey" aria-hidden="true">/</kbd>
+    </div>
     <button class="btn btn-secondary" id="wizard">Guided setup</button>
-    <button class="btn btn-quiet" id="all">Select all</button>
-    <button class="btn btn-quiet" id="none">Clear</button>
-    <button class="btn btn-quiet" id="plusonly" hidden aria-pressed="false" data-tip="Show only the tools that unlock with Patreon">◆ Patreon only</button>
     <button class="btn btn-quiet" id="theme" data-tip="Toggle theme" aria-label="Toggle theme">◐</button>
-    <span class="spacer"></span>
-    <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Read the docs ↗</a>
+    <a class="bar-docs" id="alldocs" target="_blank" rel="noopener">Docs ↗</a>
+   </div>
+   <div class="bar-row bar-filters">
+    <div class="seg" id="access" role="group" aria-label="Show tools by access" hidden>
+      <button type="button" data-access="all" aria-pressed="true">All <span class="k"></span></button>
+      <button type="button" data-access="free" aria-pressed="false" data-tip="Tools anyone can install">Free <span class="k"></span></button>
+      <button type="button" data-access="plus" aria-pressed="false" data-tip="Tools that unlock with a Patreon tier"><span class="dia" aria-hidden="true">◆</span> Patreon <span class="k"></span></button>
+    </div>
+    <button type="button" class="tog" id="selonly" aria-pressed="false" data-tip="Show only what you have ticked or placed">Selected <span class="k"></span></button>
+    <button type="button" class="tog" id="placeonly" aria-pressed="false" hidden data-tip="Tools you drop into a network as nodes, like the FNS family operators, rather than toolkit services">Placeable <span class="k"></span></button>
+    <button type="button" class="tog" id="newonly" aria-pressed="false" hidden data-tip="Packages that are new in the current release line">New <span class="k"></span></button>
+   </div>
   </div>
 
   <div class="layout">
@@ -680,16 +881,33 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <div class="content">
       <div class="note" id="corenote" hidden></div>
       <div class="plusrail" id="plusrail"></div>
+      <div class="resline" id="resline">
+        <span class="res-text" id="restext" aria-live="polite"></span>
+        <span class="res-filters" id="resfilters"></span>
+        <span class="spacer"></span>
+        <button type="button" class="linkbtn" id="all">Select all</button>
+        <button type="button" class="linkbtn" id="none">Clear</button>
+      </div>
       <div id="list"></div>
-      <div class="empty" id="empty" hidden>Nothing matches that filter.</div>
+      <div class="empty" id="empty" hidden>
+        <p id="emptytext">Nothing matches these filters.</p>
+        <button type="button" class="btn btn-secondary" id="resetview">Show every tool</button>
+      </div>
     </div>
   </div>
 
   <div class="sum">
-    <span class="sum-count"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span></span>
+    <div class="tray" id="tray" hidden>
+      <div class="tray-head"><b>Your selection</b><span class="spacer"></span>
+        <button type="button" class="linkbtn" id="trayclose">Close</button></div>
+      <div class="tray-body" id="traybody"></div>
+    </div>
+    <div class="sum-left">
+    <button type="button" class="sum-count" id="traybtn" aria-expanded="false" aria-controls="tray" data-tip="See and edit everything you picked"><span class="n" id="cnt">0</span> <span class="muted">tools selected</span> <span class="caret" aria-hidden="true">▴</span></button>
     <span class="muted" id="deps"></span>
     <label class="famopt" id="famopt" hidden data-tip="The FNS family operators you tick also appear on an FNS tab in the OP Create dialog, placed as one node each. Untick to keep them in the palette only; turn it off later the same way.">
       <input type="checkbox" id="famchk"> Add FNS tab to OP Create</label>
+    </div>
     <span class="acct" id="acct"></span>
     <a class="btn btn-quiet" id="support" target="_blank" rel="noopener" hidden>Join on Patreon ↗</a>
     <button class="btn btn-quiet" id="recheck" hidden>Check again</button>
@@ -771,8 +989,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 <script>
 window.FNS_MANIFEST = {
  "schema": 1,
- "release": "v3.2.53",
- "notes": "Every parameter of every tool now has a tooltip, and the tool pages on functionstore.tools document each control from it.",
+ "release": "v3.2.54",
+ "notes": "The tool picker is redesigned. Patreon tools now sit last in every section, behind a \"With Patreon\" divider. Beside the search, All / Free / Patreon narrows the list, with a count on each choice. Selected shows only what you picked, and New shows the packages new in this release line. A results line names what is shown, with a removable chip per filter, and Select all / Clear act on exactly that list. Each section has its own Select section. Inside TouchDesigner each card says whether Apply will install it, keep it or remove it. The count in the footer opens a tray of everything you picked, grouped by what Apply does with it. Section headers work from the keyboard, and \"/\" jumps to the search.\n\nSome tools can now be placed in one project without becoming part of your setup: their cards carry \"place in this project only\", and \"Set up like last time\" leaves them out of the next project. Every FNS family operator has it, and so do TDXMap and ParHoverMIDI_VSN1. The picker's new Placeable filter lists the tools you drop into a network as nodes.",
  "channel": "stable",
  "base_url": "https://storage.functionstore.tools/fnstools",
  "toolkit": {
@@ -1007,7 +1225,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ChopBank.tox",
     "bytes": 167766,
     "sha256": "b4883797add65a133ca41905f2e83f97c9c4c33f1cc16975030b0e89f0064e7d",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ChopBank.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ChopBank.tox"
    }
   },
   {
@@ -1071,7 +1289,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ChopProcess.tox",
     "bytes": 102174,
     "sha256": "ea662629f940ee2cd2d99b222ac375a16ed15df3f867d2ef163d8429a87c355f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ChopProcess.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ChopProcess.tox"
    }
   },
   {
@@ -1133,7 +1351,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/CircularDistortionTOP.tox",
     "bytes": 26374,
     "sha256": "159575baaeaecc212abf0d4e631d6e4db568464b7edab260e552e8f288f28034",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/CircularDistortionTOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/CircularDistortionTOP.tox"
    }
   },
   {
@@ -1186,7 +1404,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ColorGen.tox",
     "bytes": 2926,
     "sha256": "2cf532d4df80eea30610629bb35eb7a341134dddd72f2af80b98118e7e0f8994",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ColorGen.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ColorGen.tox"
    }
   },
   {
@@ -1240,7 +1458,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ColorGenPro.tox",
     "bytes": 6022,
     "sha256": "cc6334c3aa7a5a266cfed72cb3e9ab62fbb240cc8e97a35d67e9bb906d1bf5a0",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ColorGenPro.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ColorGenPro.tox"
    }
   },
   {
@@ -1294,7 +1512,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ComplexMix.tox",
     "bytes": 8902,
     "sha256": "3dc9185d95b8f531dd6716c53fce9af6252f64c26ed582f238123db6300542e2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ComplexMix.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ComplexMix.tox"
    }
   },
   {
@@ -1348,7 +1566,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ComplexOp.tox",
     "bytes": 11070,
     "sha256": "cce17f44cc64cffd4dc3928b096e15ad8abb4ccfea6f626e1c255736ddf9c9a4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ComplexOp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ComplexOp.tox"
    }
   },
   {
@@ -1409,7 +1627,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ConstantCHOP.tox",
     "bytes": 150422,
     "sha256": "0fa747a79ca9dbfe1c43a337bd99aa7baa76ca95171a0bd539a5c40e4c116571",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ConstantCHOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ConstantCHOP.tox"
    }
   },
   {
@@ -1464,7 +1682,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/EaseInterpolator.tox",
     "bytes": 6254,
     "sha256": "d019bb2321f1ef0a6de995ce782d95ea7bc272fbb7411c76f92ba930c8ed55cb",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/EaseInterpolator.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/EaseInterpolator.tox"
    }
   },
   {
@@ -1524,7 +1742,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ExpressionPOP.tox",
     "bytes": 140502,
     "sha256": "6c1f6d19a227bd309cdfb401f9712d0005cb9ff932b2d17248c5ca71b133c5e5",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ExpressionPOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ExpressionPOP.tox"
    }
   },
   {
@@ -1593,7 +1811,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FeedbackDisplace.tox",
     "bytes": 104446,
     "sha256": "03d94b4cbdec6ae21f1647425c37c9472d4d93ffb395f2c3d41c57428bbdbd5b",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FeedbackDisplace.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FeedbackDisplace.tox"
    }
   },
   {
@@ -1648,7 +1866,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FloatDataRecorder.tox",
     "bytes": 5286,
     "sha256": "6cf375a667f3e3b42eb54fcd48a575095d4d1548401fc892521eef4ff479263a",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FloatDataRecorder.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FloatDataRecorder.tox"
    }
   },
   {
@@ -1683,7 +1901,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AltSelect.tox",
     "bytes": 120182,
     "sha256": "64ea2ac0b1ecd3212697c05ab098433848a3949596b9b961ce2d6376fd50f3f4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_AltSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_AltSelect.tox"
    }
   },
   {
@@ -1719,7 +1937,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AutoCombine.tox",
     "bytes": 134486,
     "sha256": "c0ff47677be656670f936b2d010b06ccf58c22645abfdce8bd3110c5a6e94f87",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_AutoCombine.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_AutoCombine.tox"
    }
   },
   {
@@ -1755,7 +1973,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_AutoRes.tox",
     "bytes": 136702,
     "sha256": "c58ad41ccf190759a6c62e50d5a5c259b0db873509c0313dc7627ac0f78cca9b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_AutoRes.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_AutoRes.tox"
    }
   },
   {
@@ -1801,7 +2019,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Autosave.tox",
     "bytes": 121950,
     "sha256": "d15acc1e273483924f35eefb08b3314b7bff21bd8b30d654ccff05ee92b75cd3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Autosave.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Autosave.tox"
    }
   },
   {
@@ -1839,7 +2057,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BackupCleaner.tox",
     "bytes": 377238,
     "sha256": "aa45261e58c5362fc207b92d8f468dd34c7258d393a97ea4c12cb393bc3fa317",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_BackupCleaner.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_BackupCleaner.tox"
    }
   },
   {
@@ -1912,7 +2130,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BeatMod.tox",
     "bytes": 517080,
     "sha256": "1f0204f11ff0900dd7c9cb7ae32d96858e6f9d681e1e14a308ab19de0399f1b7",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_BeatMod.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_BeatMod.tox"
    }
   },
   {
@@ -1965,7 +2183,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_BorderlessTD.tox",
     "bytes": 352342,
     "sha256": "61057da73f2f2e9195573f63ab1f26c658a3b5a2848f65a4e90e56a4e5062ecb",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_BorderlessTD.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_BorderlessTD.tox"
    }
   },
   {
@@ -2032,7 +2250,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CamSequencer.tox",
     "bytes": 340194,
     "sha256": "e04de539f6424549e12d6deccdf5babc8fd5b94ba8d3ffc7ec9f79135b6651f3",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_CamSequencer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_CamSequencer.tox"
    }
   },
   {
@@ -2076,7 +2294,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Collect.tox",
     "bytes": 35966,
     "sha256": "677c46531c11e10b6c4c3394d58ec035a3efa1622ba8a42c44f4bb8efa07fafa",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_Collect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_Collect.tox"
    }
   },
   {
@@ -2117,7 +2335,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ColorUI.tox",
     "bytes": 290118,
     "sha256": "9676c7d65bc54456eb5a960f71eb355f0d9dcf00d3908754f951ad368d80c20b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ColorUI.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ColorUI.tox"
    }
   },
   {
@@ -2150,7 +2368,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandKit.tox",
     "bytes": 30382,
     "sha256": "b64323d3886bc7506dfcba3b49c2438eca6aa5920aa7720bf4c8360b15bf9718",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_CommandKit.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_CommandKit.tox"
    }
   },
   {
@@ -2197,7 +2415,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandPalette.tox",
     "bytes": 337718,
     "sha256": "087f0a7b6986aebad5bbe0166dc7c120da0d63bec74c739ab35aa77729de24ca",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_CommandPalette.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_CommandPalette.tox"
    }
   },
   {
@@ -2226,7 +2444,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandRegistry.tox",
     "bytes": 89694,
     "sha256": "a407013fd42f75981884f2752fea819ab44e61fdd98d7811e550d9d873095680",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_CommandRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_CommandRegistry.tox"
    }
   },
   {
@@ -2258,7 +2476,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ConfigHost.tox",
     "bytes": 91686,
     "sha256": "8dbeeded864154a6108dfdbcb1aa7f92000c03a967cef98185c47ee2e4538a30",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ConfigHost.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ConfigHost.tox"
    }
   },
   {
@@ -2287,7 +2505,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ConfigRegistry.tox",
     "bytes": 92086,
     "sha256": "b258351af3089b6fb5c09a995c7cc03ca1c1e7a39eab6b8e32ddc8eb8c87f223",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ConfigRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ConfigRegistry.tox"
    }
   },
   {
@@ -2316,7 +2534,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Console.tox",
     "bytes": 103606,
     "sha256": "aac59ce2ed3bcbbe5cbda96b787e66f85462d74f99bdd3443dd222b9c5dbf303",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Console.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Console.tox"
    }
   },
   {
@@ -2408,7 +2626,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CustomParTools.tox",
     "bytes": 1125906,
     "sha256": "05449172c2af5bf124389fb9ed1ad49ca7f6c27d76bffc7dae9f7c0e235bab95",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_CustomParTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_CustomParTools.tox"
    }
   },
   {
@@ -2457,7 +2675,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ExprHotStrings.tox",
     "bytes": 183782,
     "sha256": "af1e58d4f2dbc84dd157351979c5a952d96edd359e8d6279571adef5113132ee",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ExprHotStrings.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ExprHotStrings.tox"
    }
   },
   {
@@ -2496,7 +2714,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_GlobalOutSelect.tox",
     "bytes": 272886,
     "sha256": "604523d8c34e443a00b7a75f64353fea70132b6fd5ad913997133e481ef97e55",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_GlobalOutSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_GlobalOutSelect.tox"
    }
   },
   {
@@ -2535,7 +2753,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_GlobalVolControl.tox",
     "bytes": 254142,
     "sha256": "5dc7cbaec6b28e7e219b9b22671e7f6e00bd35a7ca3aaef2ce691b3068cc66a3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_GlobalVolControl.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_GlobalVolControl.tox"
    }
   },
   {
@@ -2588,7 +2806,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
     "bytes": 256318,
     "sha256": "aee0406b608cdb2ba339478aaed984d556aca20f012feded760b803ae26786c5",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_HotkeyManager.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -2620,7 +2838,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Hub.tox",
     "bytes": 1015506,
     "sha256": "3d88aa0ed64c4c2dedffeccd4e7beaa1ad79c4872e9625664cb86cdd23a4edc0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Hub.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Hub.tox"
    }
   },
   {
@@ -2649,7 +2867,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HubRegistry.tox",
     "bytes": 77046,
     "sha256": "0f015893ffaf4bf7463e45ca80e6b60d2ed2831c67f8e0ad4edaa0390b7bf0b7",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_HubRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_HubRegistry.tox"
    }
   },
   {
@@ -2683,7 +2901,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HydroHomie.tox",
     "bytes": 195222,
     "sha256": "9b1b5d03239ec591df683afd2bca7b1a3144ee7b4066fc011f66b4fc35c5b77f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_HydroHomie.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_HydroHomie.tox"
    }
   },
   {
@@ -2724,7 +2942,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_iopBrowser.tox",
     "bytes": 236614,
     "sha256": "4705860d12dbae4e45836644ec95b83e4cc87f11465f1f7ad0908db1ce17dc48",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_iopBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_iopBrowser.tox"
    }
   },
   {
@@ -2755,7 +2973,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MainMenuRegistry.tox",
     "bytes": 83198,
     "sha256": "a99db4ab635ad96440b50156907163ac7f5974c1ce9e8fa5d08c49cfa80fbdf5",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_MainMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_MainMenuRegistry.tox"
    }
   },
   {
@@ -2799,7 +3017,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MediaBrowser.tox",
     "bytes": 42398,
     "sha256": "bb33aea5b7fb7fb342cc9e43b8464fb64e12b34b6796af8895fad9b99e8ba365",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_MediaBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_MediaBrowser.tox"
    }
   },
   {
@@ -2839,7 +3057,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Misc.tox",
     "bytes": 305462,
     "sha256": "3e1922584077dd109569498751ac495b04093bbac92496aa87d87f174135e626",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Misc.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Misc.tox"
    }
   },
   {
@@ -2892,7 +3110,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MixSequencer.tox",
     "bytes": 52518,
     "sha256": "9b9b9da500322308be3c2fc7fc960eb30b4e4d9b5d1b4102292ea4106be70371",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_MixSequencer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_MixSequencer.tox"
    }
   },
   {
@@ -2923,7 +3141,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_NavbarRegistry.tox",
     "bytes": 86006,
     "sha256": "962bd4b3310d5e09fc9c837335fa2258a404f4345d2e54618501536b95dd0f8e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_NavbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_NavbarRegistry.tox"
    }
   },
   {
@@ -2965,7 +3183,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpenExt.tox",
     "bytes": 119470,
     "sha256": "dbc1e2b60bba3b2342bce8a5108115ca473d9bad477ffcb640c2007e989acb47",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpenExt.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpenExt.tox"
    }
   },
   {
@@ -2997,7 +3215,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpFamily.tox",
     "bytes": 232214,
     "sha256": "58f20a95e9ac79c92b4ab728e006ada512415660690a403ef4312785ff379711",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpFamily.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpFamily.tox"
    }
   },
   {
@@ -3047,7 +3265,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenuMods.tox",
     "bytes": 345518,
     "sha256": "ac500fec1017ef7fef6afbb018661a12ff4c3f177342732556144951c6670da6",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpMenuMods.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpMenuMods.tox"
    }
   },
   {
@@ -3078,7 +3296,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenuRegistry.tox",
     "bytes": 97374,
     "sha256": "3a0b74dac6bb53c1bc7b6ce6cd555207f1615dfda8bf84adbd83c6d2ba5309f8",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpMenuRegistry.tox"
    }
   },
   {
@@ -3131,7 +3349,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpSequencer.tox",
     "bytes": 127398,
     "sha256": "de138bf5a517af151a2c3272ea2f95751655b2c8663bb3469ed216fb0ded7fb2",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_OpSequencer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_OpSequencer.tox"
    }
   },
   {
@@ -3238,7 +3456,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpTemplates.tox",
     "bytes": 380224,
     "sha256": "6baaa06cc08effcada2e5d8cb368555fcbb0ab43b3da7065e800f53fd181707c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpTemplates.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpTemplates.tox"
    }
   },
   {
@@ -3280,7 +3498,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpToClipboard.tox",
     "bytes": 121942,
     "sha256": "3e40f67f3f21aac6eafead19f158adace13e222e42ed4816a182be05ab7f3c14",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpToClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpToClipboard.tox"
    }
   },
   {
@@ -3320,7 +3538,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Output.tox",
     "bytes": 190742,
     "sha256": "3851e108a3eb7e4a57d8e8c5ec7913c9a597acd6a44b206499316364edd65399",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Output.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Output.tox"
    }
   },
   {
@@ -3349,7 +3567,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaletteRegistry.tox",
     "bytes": 81614,
     "sha256": "f1a5fc8f713591c456eb9de2bd70f252dffcaf536c11629db9253f053c41c78d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_PaletteRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_PaletteRegistry.tox"
    }
   },
   {
@@ -3378,7 +3596,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaneTypeRegistry.tox",
     "bytes": 171494,
     "sha256": "96bd022e2c34558b7dd55b3cc0bb603fbf15016b02bab6dd84419756ff5a9e54",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_PaneTypeRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_PaneTypeRegistry.tox"
    }
   },
   {
@@ -3419,7 +3637,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParentHierarchy.tox",
     "bytes": 204974,
     "sha256": "dc5f3d23e9d744a35e0f8fe95c464c9a160a4fa37b16ef301e9836c4697050f2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ParentHierarchy.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ParentHierarchy.tox"
    }
   },
   {
@@ -3464,7 +3682,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParOPDrop.tox",
     "bytes": 184822,
     "sha256": "83f3eef75422c99b2d8e311d0ccbb1e0efeccbe2197e2dee28d2c875983eba11",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ParOPDrop.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ParOPDrop.tox"
    }
   },
   {
@@ -3524,7 +3742,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ParRandomizer.tox",
     "bytes": 181878,
     "sha256": "d2c66abb8f3ca604158332a440928538340140b00e375d745d76b7f777d17b97",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ParRandomizer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ParRandomizer.tox"
    }
   },
   {
@@ -3649,7 +3867,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PreviewPanel.tox",
     "bytes": 792594,
     "sha256": "8f017a729025a5f7d9424d106b4331ab7afe1c21b993c105cc2d208d11119269",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_PreviewPanel.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_PreviewPanel.tox"
    }
   },
   {
@@ -3704,7 +3922,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ProSceneChanger.tox",
     "bytes": 111982,
     "sha256": "be6189c17ec416821f437e84dd07f15832152ebe2f6280295e83568e4137c1d8",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_ProSceneChanger.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_ProSceneChanger.tox"
    }
   },
   {
@@ -3751,7 +3969,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickCollapse.tox",
     "bytes": 133758,
     "sha256": "9bc62b2e9a2b0dc1c37ea0d62b27313f3c8c5dd3cb27882ad7dcfdef0952c012",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_QuickCollapse.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_QuickCollapse.tox"
    }
   },
   {
@@ -3792,7 +4010,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickPane.tox",
     "bytes": 122686,
     "sha256": "58803c485f8199f14985c8ee043bbb545ede0a28fea228baeeafa147b19f9b71",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_QuickPane.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_QuickPane.tox"
    }
   },
   {
@@ -3831,7 +4049,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_QuickTime.tox",
     "bytes": 178014,
     "sha256": "a2ce3d87b49f45d9581b770e5499ccc5367b29cc16fc42dd535580f774bf3f47",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_QuickTime.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_QuickTime.tox"
    }
   },
   {
@@ -3904,7 +4122,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_RandomCHOP.tox",
     "bytes": 128486,
     "sha256": "caefb788acf9790616e0b3bf4827840ed19dd282612147fc609a92b7e81dd10f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_RandomCHOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_RandomCHOP.tox"
    }
   },
   {
@@ -3954,7 +4172,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Remote.tox",
     "bytes": 256086,
     "sha256": "e04164256a3a8ea92a1d4a7b2dc8f9914edace21ae1676858d8b3f66ebaf4514",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_Remote.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_Remote.tox"
    }
   },
   {
@@ -4020,7 +4238,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ResetPLS.tox",
     "bytes": 199190,
     "sha256": "54f4e67e3afb5f8de9d760cccd9c944036bcda7a87d5b81b60f844b976ed10a4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ResetPLS.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ResetPLS.tox"
    }
   },
   {
@@ -4066,7 +4284,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SearchPalette.tox",
     "bytes": 120062,
     "sha256": "e94aa508600cf71510ef31097a3fac69a8258fa37e8db9eacd4160f8e3713329",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_SearchPalette.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_SearchPalette.tox"
    }
   },
   {
@@ -4106,7 +4324,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SetSmoothness.tox",
     "bytes": 238622,
     "sha256": "f6c060e3ac1289eaec4c07927427cda817308cfc44c004fbeabadf3d06444f09",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_SetSmoothness.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_SetSmoothness.tox"
    }
   },
   {
@@ -4160,7 +4378,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SimpleSceneChanger.tox",
     "bytes": 92966,
     "sha256": "ec71a0a0dcf35df1904d2e9c13158bd4b2da9b66464087975de0d79c2aeaf249",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_SimpleSceneChanger.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_SimpleSceneChanger.tox"
    }
   },
   {
@@ -4204,7 +4422,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SwapOps.tox",
     "bytes": 179870,
     "sha256": "3519b02829b16212dfc1ccc5b4392c0ea97abada23426862e3c8c79c8e7b5e92",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_SwapOps.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_SwapOps.tox"
    }
   },
   {
@@ -4245,7 +4463,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SwitchOPs.tox",
     "bytes": 120078,
     "sha256": "f01507400af426778b41562fa9ae273ddedb8e75c1652fe513571631e60da821",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_SwitchOPs.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_SwitchOPs.tox"
    }
   },
   {
@@ -4299,7 +4517,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_SwitchTools.tox",
     "bytes": 116894,
     "sha256": "5fa7541c77a18af0018db5fcdb8eced884260f5a4083c8afaff33380e475e538",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_SwitchTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_SwitchTools.tox"
    }
   },
   {
@@ -4328,7 +4546,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineRegistry.tox",
     "bytes": 90598,
     "sha256": "2a3ea415a3c731d2065e8509f0a1d0f6568d4a33f5c58dac81912976f9b52efd",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_TimelineRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_TimelineRegistry.tox"
    }
   },
   {
@@ -4407,7 +4625,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineTools.tox",
     "bytes": 363038,
     "sha256": "b47d0bf3010a020396ae31ff010a456749a1d5a3c521d45f5dde91cb7bfedf7f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_TimelineTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_TimelineTools.tox"
    }
   },
   {
@@ -4438,7 +4656,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ToolbarRegistry.tox",
     "bytes": 78742,
     "sha256": "50cf9568486f666fb2ca7ad1f6b2a1a77bdeb48f8cd902510145ab7aa5e4664f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ToolbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ToolbarRegistry.tox"
    }
   },
   {
@@ -4467,7 +4685,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Updater.tox",
     "bytes": 196462,
     "sha256": "cae0f56872b93702a460026e7a9332ee50edf6c0b025aa6818643c2f5351b928",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Updater.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Updater.tox"
    }
   },
   {
@@ -4512,7 +4730,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_VSCodeTools.tox",
     "bytes": 710104,
     "sha256": "c5d29a045b1ef3c79c1fe987abacc1be8cb97bdcebd8d36465ba6fe9e0db1bd1",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_VSCodeTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_VSCodeTools.tox"
    }
   },
   {
@@ -4568,7 +4786,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/InfinityCHOP.tox",
     "bytes": 3438,
     "sha256": "068aef449c3f4a7a407f6d52c78f13c324ab4877a3d2d7ae6754dfe917bae0bb",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/InfinityCHOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/InfinityCHOP.tox"
    }
   },
   {
@@ -4621,7 +4839,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/InstanceTrailer.tox",
     "bytes": 11606,
     "sha256": "be1594fea6b2466aa7b7caea1365f7d0c2b59365b6acbc2499389ecb4e5ec483",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/InstanceTrailer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/InstanceTrailer.tox"
    }
   },
   {
@@ -4673,7 +4891,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/KinectSinglePlayer.tox",
     "bytes": 12566,
     "sha256": "c2c07e38602eb1e14cbdc1f2987502939cf4988263cb9cfc78f30ae35f3adee2",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/KinectSinglePlayer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/KinectSinglePlayer.tox"
    }
   },
   {
@@ -4729,7 +4947,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/LayerSep3D.tox",
     "bytes": 44134,
     "sha256": "a64ee29e0b84895a131c8fe7fd0da775c53f0034d64120b8b50c89568189e713",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/LayerSep3D.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/LayerSep3D.tox"
    }
   },
   {
@@ -4781,7 +4999,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/LinkOPs.tox",
     "bytes": 4350,
     "sha256": "4975bb75fce5766d2dbf5f2b0993d744b9c5a5e03761d302842500deb1d2f3f1",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/LinkOPs.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/LinkOPs.tox"
    }
   },
   {
@@ -4834,7 +5052,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/MaskDraw.tox",
     "bytes": 111894,
     "sha256": "64c2197e3e1420129e55eb73a18f1c1903668886e7f066a6c6f06aa1b0ebf0cd",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/MaskDraw.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/MaskDraw.tox"
    }
   },
   {
@@ -4880,7 +5098,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/midiMapper.tox",
     "bytes": 327086,
     "sha256": "5eac8868bd0a3ee0e5450bf00596669cb96c619ff684a03aa825d9784f03cb93",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/midiMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/midiMapper.tox"
    }
   },
   {
@@ -4935,7 +5153,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/MoveDetectDir.tox",
     "bytes": 6846,
     "sha256": "59bcf9bb0811755a79d96d13f2a2b99bf016f2813a972a4bbefbb6b8fa6b089d",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/MoveDetectDir.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/MoveDetectDir.tox"
    }
   },
   {
@@ -4988,7 +5206,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/OpenOp.tox",
     "bytes": 2150,
     "sha256": "1d04193a3ef69a73102d30b9da5e10f0a602a8d89f641fb4997b434ec1c87c30",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/OpenOp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/OpenOp.tox"
    }
   },
   {
@@ -5032,7 +5250,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/oscMapper.tox",
     "bytes": 231846,
     "sha256": "60de4ba6b7126ab419ac4c68a76765640f05705ab564ddc5481479bfac5c28d0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/oscMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/oscMapper.tox"
    }
   },
   {
@@ -5088,7 +5306,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/Particles2D_POP.tox",
     "bytes": 18598,
     "sha256": "48f02af7bf196e9b13d9266c6654f89b7e42f7ed79498fe6116e5b479282e9db",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/Particles2D_POP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/Particles2D_POP.tox"
    }
   },
   {
@@ -5182,7 +5400,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ParticlesGpuUltimate.tox",
     "bytes": 601360,
     "sha256": "8b91fd4432586260140065bfb2b485fddc41874128ae0b2422e0e3c8e1dd2ec9",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ParticlesGpuUltimate.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ParticlesGpuUltimate.tox"
    }
   },
   {
@@ -5228,7 +5446,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/PasteFromClipboard.tox",
     "bytes": 205870,
     "sha256": "ed6c974f691fe94d36908f1c1764fe7e65f4375ce43d5aa865d8717435f4d565",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/PasteFromClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/PasteFromClipboard.tox"
    }
   },
   {
@@ -5304,7 +5522,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/PrismTOP.tox",
     "bytes": 109758,
     "sha256": "d4488648a37861e0f5ad993f69b05b8bece5920e37744b0cc01081d1f5a1c5db",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/PrismTOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/PrismTOP.tox"
    }
   },
   {
@@ -5349,7 +5567,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/QuickMarks.tox",
     "bytes": 123350,
     "sha256": "931ae28a73957fcd4be2a2c5692462813bd42d76da6b68d190f8c36408e4c336",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/QuickMarks.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/QuickMarks.tox"
    }
   },
   {
@@ -5401,7 +5619,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/RealRamp.tox",
     "bytes": 3422,
     "sha256": "d30a1c0b9763c97adc2984f487e5d929503b36004634c290b817443273369a09",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/RealRamp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/RealRamp.tox"
    }
   },
   {
@@ -5452,7 +5670,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/SeqMod.tox",
     "bytes": 16774,
     "sha256": "4ceccaa6f7ccbbda4e23eb987551f16a298fda80e9adcfc70ced2863f361a758",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/SeqMod.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/SeqMod.tox"
    }
   },
   {
@@ -5544,7 +5762,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/SlideShow.tox",
     "bytes": 10950,
     "sha256": "7e1d0a26f32bfc31b9fb3ca3c7bee4389cbc2ce323d8864a7a9186a4858cf9cc",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/SlideShow.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/SlideShow.tox"
    }
   },
   {
@@ -5584,7 +5802,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ThresholdColor.tox",
     "bytes": 100598,
     "sha256": "3dc4ac249c3dc3482aa86d7dbabe3e195adc8906f21ef8b16c396e813258df8f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ThresholdColor.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ThresholdColor.tox"
    }
   },
   {
@@ -5653,7 +5871,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/TopToMidi.tox",
     "bytes": 186926,
     "sha256": "b5557a18f4df9c4aaf6dc2e4bd8be45099ffd14b2560281542a215782947dc2a",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/TopToMidi.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/TopToMidi.tox"
    }
   },
   {
@@ -5687,6 +5905,7 @@ window.FNS_MANIFEST = {
    },
    "placement": "root",
    "nopick": true,
+   "placeonce": true,
    "author": {
     "name": "Function Store",
     "url": "https://www.functionstore.xyz/link-in-bio"
@@ -5697,7 +5916,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ParHoverMIDI_VSN1.tox",
     "bytes": 362816,
     "sha256": "eaab30dc48f656e2408be67c01626426f61ce2feb0b9256f1a64d163c1f064d0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ParHoverMIDI_VSN1.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ParHoverMIDI_VSN1.tox"
    }
   },
   {
@@ -5735,6 +5954,7 @@ window.FNS_MANIFEST = {
     "detail": "A free 14-day trial of Pro, once per computer. After it the mapping editor needs a Function Store Patreon membership at the Base or Pro tier, or a Gumroad lifetime key; live MIDI to parameters keeps working without one, and your mappings are kept.",
     "url": "https://tdxmap.functionstore.xyz/license/"
    },
+   "placeonce": true,
    "author": {
     "name": "Function Store",
     "url": "https://tdxmap.functionstore.xyz"
@@ -5745,7 +5965,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/TDXMap.tox",
     "bytes": 934742,
     "sha256": "339116402eff423173e944862f7f623c3cede0c1593b6a5ac2328d87a65ac4ba",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/TDXMap.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/TDXMap.tox"
    }
   }
  ],
@@ -6172,6 +6392,21 @@ function fnsBoot() {
   var wantedStill = (window.FNS_WANTED || []).filter(function (n) {
     return pickable(byName[n]);
   });
+  // PLACE (docs/PlaceOnce.md): a `placeonce` package can be placed into
+  // THIS project without joining the setup, so "Set up like last time"
+  // never brings it into the next one. Served only: the site has no
+  // project. `placing` starts from what the project holds placed-only, and
+  // leaving a name out of it on Apply takes that tool out again.
+  var placedNow = served ? (window.FNS_PLACED || []).filter(function (n) {
+    return pickable(byName[n]);
+  }) : [];
+  var placing = new Set(placedNow);
+  // The Place button: a package the catalog flags `placeonce`, and every
+  // FNS family member by default (owner decision 2026-09-24: a family op
+  // is dropped into networks as often as you like, so it should never have
+  // to join the setup to be used once). The installer places any tool the
+  // selection's `place` list names; this is the only gate.
+  function placeable(p) { return served && !!(p && (p.placeonce || p.family)); }
   var picked = served
     ? new Set((last ? lastNames : installedNow).concat(wantedStill))
     : new Set(JSON.parse(stored('fns.pick', null) || '[]')
@@ -6333,33 +6568,59 @@ function fnsBoot() {
     return 'they install once you sign in as a supporter inside TouchDesigner; '
       + 'everything else installs right away.';
   }
-  // The Plus-only filter: the list narrows to the supporter extras, every
-  // section with one opens, the core footnote and the other creators'
-  // links step aside. Same shape as a search, so the same rules apply.
-  var plusOnly = false;
-  function setPlusOnly(on) {
-    plusOnly = !!on;
-    var b = document.getElementById('plusonly');
-    if (b) {
-      b.classList.toggle('on', plusOnly);
-      b.setAttribute('aria-pressed', plusOnly ? 'true' : 'false');
-    }
-    var l = document.getElementById('plusrail-only');
-    if (l) l.textContent = plusOnly ? 'Show everything' : 'Show only Patreon tools';
+  // --- the view: what the list shows ------------------------------------
+  // Three filters beside the search, remembered per browser like the fold
+  // state: access (all / free / plus), only what is selected, only what is
+  // new. Any of them narrows the list the way a search does, so the same
+  // rules apply: every section with a hit opens, and the core footnote and
+  // the other creators' links step aside.
+  var VIEW_KEY = 'fns.view';
+  var view = {access: 'all', sel: false, fresh: false, once: false};
+  try {
+    var rawView = JSON.parse(stored(VIEW_KEY, 'null') || 'null');
+    if (rawView && ['all', 'free', 'plus'].indexOf(rawView.access) >= 0) view.access = rawView.access;
+    // "selected only" is a review mode, not a place to land in: a reload
+    // that opened on an empty-looking list would read as a lost selection
+  } catch (e) { /* defaults */ }
+  function setView(patch) {
+    Object.keys(patch).forEach(function (k) { view[k] = patch[k]; });
+    try { localStorage.setItem(VIEW_KEY, JSON.stringify({access: view.access})); } catch (e) { /* nicety */ }
     render();
+  }
+  function narrowed() { return view.access !== 'all' || view.sel || view.fresh || view.once; }
+  // Placeable: a tool you drop into a network as nodes rather than a
+  // service living in the toolkit container -- an FNS family member, a
+  // package that spawns into your network or at its root, or one the
+  // catalog flags `placeonce`. Every such card already carries a chip
+  // saying where it lands, so the filter needs no badge of its own.
+  function isPlaceable(p) {
+    return !!(p && (p.placeonce || p.family || p.placement === 'pane' || p.placement === 'root'));
+  }
+  // A package this release line introduced: the manifest's per-package
+  // note starts "new package" (build_manifest attributes it on the version
+  // that first ships, and it rides until the package's next version).
+  function isNew(p) { return /^new package/i.test(String(p.whatsnew || '')); }
+  function chosenHere(p) { return picked.has(p.name) || placing.has(p.name); }
+  function accessOk(p, access) {
+    if (access === 'free') return !isPlus(p);
+    if (access === 'plus') return isPlus(p);
+    return true;
   }
 
   function card(p) {
     var on = picked.has(p.name);
     var el = document.createElement('label');
-    el.className = 'card' + (on ? ' on' : '') + (isPlus(p) ? ' plus' : '')
+    var placed = !on && placing.has(p.name);
+    el.className = 'card' + (on ? ' on' : '') + (placed ? ' placed' : '')
+      + (isPlus(p) ? ' plus' : '')
       + (isPlus(p) && entitled(p) ? ' own' : '') + (p.minor ? ' minor' : '');
     el.setAttribute('data-name', p.name);
 
     var cb = document.createElement('input');
     cb.type = 'checkbox'; cb.checked = on;
     cb.addEventListener('change', function () {
-      if (cb.checked) picked.add(p.name); else picked.delete(p.name);
+      if (cb.checked) { picked.add(p.name); placing.delete(p.name); }
+      else picked.delete(p.name);
       save(); render();
       // A Patreon tool this account cannot install yet is said out loud at
       // the tick, not discovered at install time.
@@ -6375,7 +6636,16 @@ function fnsBoot() {
 
     var name = document.createElement('div');
     name.className = 'name';
-    name.appendChild(document.createTextNode(titleOf(p)));
+    var tt = document.createElement('span');
+    tt.className = 'tt';
+    tt.textContent = titleOf(p);
+    name.appendChild(tt);
+    if (isNew(p)) {
+      var nb = document.createElement('span');
+      nb.className = 'badge new';
+      nb.textContent = 'New';
+      name.appendChild(nb);
+    }
     if (p.help_url) {
       var a = docsLink(p.help_url, 'docs ↗', 'help');
       // The card is a <label>: without this the docs link would also toggle
@@ -6418,6 +6688,16 @@ function fnsBoot() {
 
     var chips = document.createElement('div');
     chips.className = 'chips';
+    // Served, the card says what Apply will do to THIS project: keep it,
+    // add it, or take it out. A pick the account cannot install yet says
+    // nothing here -- its Patreon chip already says locked.
+    if (served) {
+      var here = installedNow.indexOf(p.name) >= 0 || placedNow.indexOf(p.name) >= 0;
+      var wants = on || placed;
+      if (here && wants) chips.appendChild(chip('installed', 'ok'));
+      else if (!here && wants && !lockedPatreon([p.name]).length) chips.appendChild(chip('will install', 'up'));
+      else if (here && !wants) { chips.appendChild(chip('will be removed', 'err')); el.classList.add('removing'); }
+    }
     // a foreign package with its own updater: the picker installs it once,
     // the tool keeps itself current from then on
     if (p.updates === 'self') {
@@ -6467,19 +6747,42 @@ function fnsBoot() {
       pc.addEventListener('click', function (e) { e.stopPropagation(); });
       chips.appendChild(pc);
     }
+    // Place: into this project only, never carried into the next one.
+    // The tick stays the way to have it in every project.
+    if (placeable(p) && !on) {
+      var pb = document.createElement('button');
+      pb.type = 'button';
+      pb.className = 'chip placebtn' + (placed ? ' on' : '');
+      pb.textContent = placed
+        ? (placedNow.indexOf(p.name) >= 0 ? 'placed here · undo' : 'will be placed · undo')
+        : 'place in this project only';
+      pb.setAttribute('data-tip', placed
+        ? 'In this project only: not part of your setup, so a new project does not get it. Undo removes it on Apply.'
+        : 'Put it in this project without adding it to your setup: "Set up like last time" will not bring it into the next project. Tick the card instead to have it every time.');
+      // the card is a <label>: without both, the press would also tick it
+      pb.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        if (placing.has(p.name)) placing.delete(p.name); else placing.add(p.name);
+        render();
+        if (placing.has(p.name) && lockedPatreon([p.name]).length) {
+          askPatreon([p.name], function () { placing.delete(p.name); render(); });
+        }
+      });
+      chips.appendChild(pb);
+    }
     // a pane-placed package is a reusable component: it spawns into the
     // network you are working in, not into the toolkit container
     if (p.placement === 'pane') {
-      chips.appendChild(chip('lands in your working network', 'hint'));
+      chips.appendChild(chip('lands in your working network', 'where'));
     }
     if (p.placement === 'root') {
-      chips.appendChild(chip('lands at your network root', 'hint'));
+      chips.appendChild(chip('lands at your network root', 'where'));
     }
     // 'none' places nothing at all: a family member is reached from the
     // FNS tab of the OP Create dialog, so the install makes it available
     // rather than putting a copy anywhere.
     if (p.placement === 'none') {
-      chips.appendChild(chip('from the FNS tab, not placed', 'hint'));
+      chips.appendChild(chip('ticked: waits in the FNS tab', 'where'));
     }
     // Surfaces ride the tooltip, not the card: at a glance a card is a
     // name and a line, and "Toolbar button / Pane bar button" on every
@@ -6488,7 +6791,8 @@ function fnsBoot() {
     // the manifest's surface_meta.
     var surf = (p.surfaces || []).map(surfaceLabel);
     el.setAttribute('data-tip', (p.description || '')
-      + (surf.length ? '\n\nAdds: ' + surf.join(', ') : ''));
+      + (surf.length ? '\n\nAdds: ' + surf.join(', ') : '')
+      + (p.whatsnew ? '\n\nLatest (' + (p.version || '') + '): ' + p.whatsnew : ''));
     // an integration whose partner is not selected: say so plainly rather
     // than blocking the choice -- these degrade by design
     (p.integrates_with || []).forEach(function (t) {
@@ -6623,7 +6927,7 @@ function fnsBoot() {
    *  chevron) that toggles the body, and the body itself. The section id
    *  is the quick-nav's anchor. `open` overrides the fold state (a filter
    *  match forces a section open). */
-  function section(cat, countNode, bodyNodes, open) {
+  function section(cat, countNode, bodyNodes, open, items) {
     var sec = document.createElement('section');
     var isOn = (typeof open === 'boolean') ? open : isOpen(cat);
     sec.className = 'cat-sec' + (isOn ? '' : ' closed') + (quiet(cat) ? ' quiet' : '');
@@ -6631,25 +6935,60 @@ function fnsBoot() {
     sec.setAttribute('data-cat', cat);
     var head = document.createElement('div');
     head.className = 'cat-head';
-    head.setAttribute('role', 'button');
-    head.setAttribute('aria-expanded', isOn ? 'true' : 'false');
+    // The toggle is a real button (keyboard, screen readers); the head
+    // around it stays clickable for the mouse, and the actions beside it
+    // are siblings rather than controls nested inside a control.
+    var tog = document.createElement('button');
+    tog.type = 'button';
+    tog.className = 'cat-toggle';
+    tog.setAttribute('aria-expanded', isOn ? 'true' : 'false');
+    tog.setAttribute('aria-controls', sec.id + '-body');
     var m = metaOf(cat);
     var g = document.createElement('span');
     g.className = 'cat-glyph'; g.setAttribute('aria-hidden', 'true');
     g.textContent = m.glyph || '·';
-    head.appendChild(g);
+    tog.appendChild(g);
     var nm = document.createElement('span');
     nm.className = 'cat-name'; nm.textContent = cat;
-    head.appendChild(nm);
+    tog.appendChild(nm);
     var pitch = document.createElement('span');
     pitch.className = 'cat-pitch'; pitch.textContent = m.pitch || '';
-    head.appendChild(pitch);
+    tog.appendChild(pitch);
     if (countNode) {
       var c = document.createElement('span');
       c.className = 'cat-count';
       if (typeof countNode === 'string') c.textContent = countNode;
       else c.appendChild(countNode);
-      head.appendChild(c);
+      tog.appendChild(c);
+    }
+    head.appendChild(tog);
+    // Select the section's shown tools in one press (the bulk rule holds:
+    // nopick cards are never ticked in bulk), or clear them when all are.
+    var bulk = (items || []).filter(bulkPickable);
+    if (bulk.length > 1) {
+      var allOn = bulk.every(function (p) { return picked.has(p.name); });
+      var sa = document.createElement('button');
+      sa.type = 'button';
+      sa.className = 'linkbtn cat-act';
+      sa.textContent = allOn ? 'Clear section' : 'Select section';
+      sa.setAttribute('data-tip', allOn ? 'Untick every tool shown in ' + cat
+                                        : 'Tick every tool shown in ' + cat);
+      sa.addEventListener('click', function (e) {
+        e.stopPropagation();
+        bulk.forEach(function (p) {
+          if (allOn) picked.delete(p.name); else { picked.add(p.name); placing.delete(p.name); }
+        });
+        save(); render();
+        if (!allOn) {
+          var lockedHere = lockedPatreon(bulk.map(function (p) { return p.name; }));
+          if (lockedHere.length) {
+            askPatreon(lockedHere, function () {
+              lockedHere.forEach(function (n) { picked.delete(n); }); save(); render();
+            });
+          }
+        }
+      });
+      head.appendChild(sa);
     }
     if (cat !== 'From other creators') {
       var dl = docsLink(FNS_DOCS + '/docs/#' + catSlug(cat), 'docs ↗', 'cat-docs');
@@ -6663,13 +7002,67 @@ function fnsBoot() {
     head.addEventListener('click', function () {
       setOpen(cat, sec.classList.contains('closed'));
       render();
+      // the render rebuilt the section: keep the keyboard where it was
+      var again = document.querySelector('#' + sec.id + ' .cat-toggle');
+      if (again && document.activeElement === document.body) again.focus({preventScroll: true});
     });
     sec.appendChild(head);
     var body = document.createElement('div');
     body.className = 'cat-body';
+    body.id = sec.id + '-body';
     bodyNodes.forEach(function (n) { body.appendChild(n); });
     sec.appendChild(body);
     return sec;
+  }
+
+  /** A section's body: the free tools first, then the Patreon ones behind
+   *  a quiet divider, each group with its full cards before its minor
+   *  ones. Gated last is the rule in every section, so a reader meets
+   *  what they can install before what they would unlock. */
+  function sectionBody(items) {
+    var nodes = [];
+    function grids(list) {
+      var major = list.filter(function (p) { return !p.minor; }).sort(byTitle);
+      var small = list.filter(function (p) { return !!p.minor; }).sort(byTitle);
+      if (major.length) {
+        var g = document.createElement('div');
+        g.className = 'grid';
+        major.forEach(function (p) { g.appendChild(card(p)); });
+        nodes.push(g);
+      }
+      // Minor tools go in their own denser grid: a footnote to the group,
+      // not more of the same list.
+      if (small.length) {
+        var gm = document.createElement('div');
+        gm.className = 'grid compact';
+        small.forEach(function (p) { gm.appendChild(card(p)); });
+        nodes.push(gm);
+      }
+    }
+    var free = items.filter(function (p) { return !isPlus(p); });
+    var gated = items.filter(isPlus);
+    grids(free);
+    if (gated.length) {
+      if (free.length) {
+        var dv = document.createElement('div');
+        dv.className = 'tier-div';
+        var own = account ? gated.filter(entitled).length : 0;
+        var tier = lowestTier(gated);
+        var lead = document.createElement('span');
+        lead.className = 'lbl';
+        lead.innerHTML = '<span class="dia" aria-hidden="true">◆</span> With Patreon';
+        dv.appendChild(lead);
+        var sub = document.createElement('span');
+        sub.className = 'sub';
+        sub.textContent = gated.length + (gated.length === 1 ? ' tool' : ' tools')
+          + (tier ? ' · from the ' + tier + ' tier' : '')
+          + (own ? ' · ' + own + ' unlocked for you' : '');
+        dv.appendChild(sub);
+        nodes.push(dv);
+      }
+      grids(gated);
+    }
+    return nodes;
   }
 
   /** "k selected" in accent, then "of N tools": the count a closed
@@ -6694,10 +7087,16 @@ function fnsBoot() {
     if (!nav) return;
     Array.prototype.forEach.call(nav.querySelectorAll('a[data-cat]'), function (a) {
       var cat = a.getAttribute('data-cat');
+      // under a search or a filter the rail counts what is shown, and a
+      // category with nothing to show goes quiet rather than jumping to
+      // a section that is not there
+      var pool = (document.getElementById('q').value.trim() || narrowed()) ? shownTools : tools;
       var n = cat === 'Core' ? core.length
-        : tools.filter(function (p) { return p.category === cat; }).length;
+        : pool.filter(function (p) { return p.category === cat; }).length;
       var sel = cat === 'Core' ? 0
-        : tools.filter(function (p) { return p.category === cat && picked.has(p.name); }).length;
+        : pool.filter(function (p) { return p.category === cat && picked.has(p.name); }).length;
+      a.classList.toggle('none', !n);
+      if (!n) a.setAttribute('aria-disabled', 'true'); else a.removeAttribute('aria-disabled');
       var cnt = a.querySelector('.n');
       cnt.textContent = '';
       if (sel) {
@@ -6711,62 +7110,55 @@ function fnsBoot() {
     });
   }
 
+  var shownTools = [];
+  var coreNoteEl = document.getElementById('corenote');
+  /** The search text a package answers to: names, description, category,
+   *  the surfaces it adds, a trial and its tier builds. */
+  function shownText(p) {
+    // Surfaces are searchable: "toolbar" is how someone asks for the
+    // tools that put a button somewhere, and it is a question the
+    // package list could not answer before.
+    var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
+    return (p.name + ' ' + titleOf(p) + ' ' + (p.description || '') + ' '
+            + (p.category || '') + ' ' + surf
+            + (pricingOf(p) ? ' trial ' + pricingOf(p).summary : '')
+            + Object.keys(p.variants || {}).map(function (vid) {
+                return ' ' + vid + ' ' + ((p.variants[vid] || {}).summary || '');
+              }).join(''))
+           .toLowerCase();
+  }
+  function matchText(p, q) { return !q || shownText(p).indexOf(q) !== -1; }
   function render() {
     var q = document.getElementById('q').value.trim().toLowerCase();
     function match(p) {
-      if (plusOnly && !isPlus(p)) return false;
-      if (!q) return true;
-      // Surfaces are searchable: "toolbar" is how someone asks for the
-      // tools that put a button somewhere, and it is a question the
-      // package list could not answer before.
-      var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
-      return (p.name + ' ' + titleOf(p) + ' ' + (p.description || '') + ' '
-              + (p.category || '') + ' ' + surf
-              + (pricingOf(p) ? ' trial ' + pricingOf(p).summary : '')
-              + Object.keys(p.variants || {}).map(function (vid) {
-                  return ' ' + vid + ' ' + ((p.variants[vid] || {}).summary || '');
-                }).join(''))
-             .toLowerCase().indexOf(q) !== -1;
+      return accessOk(p, view.access) && (!view.sel || chosenHere(p))
+        && (!view.fresh || isNew(p)) && (!view.once || isPlaceable(p)) && matchText(p, q);
     }
     listEl.textContent = '';
     var shown = 0;
     var cats = allCats();
+    var filtering = !!q || narrowed();
+    var visible = [];
 
     cats.forEach(function (cat) {
       if (cat === 'Core') return;
       var items = tools.filter(function (p) { return p.category === cat && match(p); });
       if (!items.length) return;
       shown += items.length;
+      visible = visible.concat(items);
       var sel = items.filter(function (p) { return picked.has(p.name); }).length;
-      // Minor tools rank after everything else in their category and go in
-      // their own denser grid. Splitting the grids rather than just sorting
-      // is what makes them read as a footnote to the category instead of
-      // more of the same list.
-      var major = items.filter(function (p) { return !p.minor; });
-      var small = items.filter(function (p) { return !!p.minor; });
-      var nodes = [];
-      if (major.length) {
-        var g = document.createElement('div');
-        g.className = 'grid';
-        major.sort(byTitle).forEach(function (p) { g.appendChild(card(p)); });
-        nodes.push(g);
-      }
-      if (small.length) {
-        var gm = document.createElement('div');
-        gm.className = 'grid compact';
-        small.sort(byTitle).forEach(function (p) { gm.appendChild(card(p)); });
-        nodes.push(gm);
-      }
       // a filter match opens the section: a hit hidden behind a fold is
       // a search that looks like it found nothing
       listEl.appendChild(section(cat, countText(sel, items.length,
-        items.length === 1 ? 'tool' : 'tools'), nodes, (q || plusOnly) ? true : undefined));
+        items.length === 1 ? 'tool' : 'tools'), sectionBody(items),
+        filtering ? true : undefined, items));
     });
+    shownTools = visible;
 
     // Tools by OTHER creators. Rendered LAST and never selectable: these are
     // links to someone else's download page, not packages. Nothing here
     // enters `picked`, so the install plan cannot see them.
-    var recs = (plusOnly ? [] : (window.FNS_RECOMMENDS || [])).filter(function (r) {
+    var recs = (narrowed() ? [] : (window.FNS_RECOMMENDS || [])).filter(function (r) {
       if (!q) return true;
       return (r.name + ' ' + (r.author || '') + ' ' + (r.description || ''))
         .toLowerCase().indexOf(q) !== -1;
@@ -6778,14 +7170,14 @@ function fnsBoot() {
       recs.forEach(function (r) { gr.appendChild(recCard(r)); });
       listEl.appendChild(section('From other creators',
         recs.length + ' link' + (recs.length === 1 ? '' : 's'), [gr],
-        (q || plusOnly) ? true : undefined));
+        filtering ? true : undefined));
     }
 
     // Core, last and quiet: plumbing that installs with any selection.
     // Nobody picks it, so it is a folded footnote, not a section a
     // reader has to get past.
-    if (!q && !plusOnly) {
-      var coreNote = document.getElementById('corenote');
+    if (!filtering) {
+      var coreNote = coreNoteEl;
       var coreNodes = [];
       if (coreNote) { coreNote.hidden = false; coreNodes.push(coreNote); }
       var g0 = document.createElement('div');
@@ -6796,7 +7188,7 @@ function fnsBoot() {
     }
     updateNav();
 
-    document.getElementById('empty').hidden = shown > 0 || !(q || plusOnly);
+    document.getElementById('empty').hidden = shown > 0 || !filtering;
     document.getElementById('cnt').textContent = picked.size;
     var need = new Set();
     picked.forEach(function (n) {
@@ -6805,6 +7197,14 @@ function fnsBoot() {
     var removals = served ? installedNow.filter(function (n) {
       return !picked.has(n);
     }).length : 0;
+    // placed-only tools: newly placed, and placed ones the user undid
+    var toPlace = Array.from(placing).filter(function (n) {
+      return !picked.has(n) && placedNow.indexOf(n) < 0;
+    }).length;
+    var unplaced = placedNow.filter(function (n) {
+      return !picked.has(n) && !placing.has(n);
+    }).length;
+    removals += unplaced;
     var plusSel = Array.from(picked).filter(function (n) {
       return byName[n] && isPlus(byName[n]);
     });
@@ -6828,6 +7228,7 @@ function fnsBoot() {
     // server's answer, and this page has not asked it.
     if (plusLocked) notes.push(plusLocked + ' locked (Patreon)');
     if (paneSel) notes.push(paneSel + (paneSel === 1 ? ' spawns' : ' spawn') + ' into your network');
+    if (toPlace) notes.push(toPlace + ' placed in this project only');
     var famMember = companions.length > 0 && memberPicked();
     document.getElementById('famopt').hidden = !famMember;
     document.getElementById('famchk').checked = familyOn;
@@ -6841,10 +7242,161 @@ function fnsBoot() {
       save.disabled = true;
     } else if (served) {
       save.textContent = (removals || famGoes) ? 'Apply changes…' : 'Review install…';
-      // removals alone are actionable even with nothing picked
-      save.disabled = picked.size === 0 && removals === 0 && !famGoes;
+      // removals (and places) alone are actionable even with nothing picked
+      save.disabled = picked.size === 0 && removals === 0 && !famGoes && !toPlace;
     } else {
       save.disabled = picked.size === 0;
+    }
+    renderControls(q);
+    renderTray();
+  }
+
+  /** The filter deck and the results line follow every render: counts on
+   *  the three access choices (under the search and the other filters),
+   *  a sentence saying what the list shows, a chip per active filter, and
+   *  Select/Clear that act on exactly what is shown. */
+  function renderControls(q) {
+    function rest(p) {
+      if (view.sel && !chosenHere(p)) return false;
+      if (view.fresh && !isNew(p)) return false;
+      if (view.once && !isPlaceable(p)) return false;
+      return matchText(p, q);
+    }
+    var seg = document.getElementById('access');
+    if (seg) {
+      Array.prototype.forEach.call(seg.querySelectorAll('button[data-access]'), function (b) {
+        var a = b.getAttribute('data-access');
+        var on = view.access === a;
+        b.setAttribute('aria-pressed', on ? 'true' : 'false');
+        b.classList.toggle('on', on);
+        b.querySelector('.k').textContent = tools.filter(function (p) {
+          return accessOk(p, a) && rest(p);
+        }).length;
+      });
+    }
+    var so = document.getElementById('selonly');
+    var chosen = tools.filter(chosenHere).length;
+    so.setAttribute('aria-pressed', view.sel ? 'true' : 'false');
+    so.classList.toggle('on', view.sel);
+    so.querySelector('.k').textContent = chosen;
+    so.disabled = !chosen && !view.sel;
+    var no = document.getElementById('newonly');
+    var fresh = tools.filter(isNew).length;
+    no.hidden = !fresh;
+    no.setAttribute('aria-pressed', view.fresh ? 'true' : 'false');
+    no.classList.toggle('on', view.fresh);
+    no.querySelector('.k').textContent = fresh;
+    var po = document.getElementById('placeonly');
+    var once = tools.filter(isPlaceable).length;
+    po.hidden = !once;
+    po.setAttribute('aria-pressed', view.once ? 'true' : 'false');
+    po.classList.toggle('on', view.once);
+    po.querySelector('.k').textContent = once;
+
+    var n = shownTools.length;
+    var kind = view.access === 'free' ? 'free ' : (view.access === 'plus' ? 'Patreon ' : '');
+    var what = (view.fresh ? 'new ' : '') + kind + (n === 1 ? 'tool' : 'tools')
+      + (view.once ? ' you can place' : '');
+    var text = (!q && !narrowed())
+      ? 'All ' + n + ' tools'
+      : n + ' ' + what + (view.sel ? ' you picked' : '') + (q ? ' matching \u201c' + q + '\u201d' : '');
+    document.getElementById('restext').textContent = text;
+
+    var fl = document.getElementById('resfilters');
+    fl.textContent = '';
+    function pill(label, clear) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'fpill';
+      b.appendChild(document.createTextNode(label + ' '));
+      var x = document.createElement('span');
+      x.setAttribute('aria-hidden', 'true');
+      x.textContent = '\u00d7';
+      b.appendChild(x);
+      b.setAttribute('aria-label', 'Remove filter: ' + label);
+      b.addEventListener('click', clear);
+      fl.appendChild(b);
+    }
+    if (q) pill('\u201c' + q + '\u201d', function () { document.getElementById('q').value = ''; render(); });
+    if (view.access === 'free') pill('Free', function () { setView({access: 'all'}); });
+    if (view.access === 'plus') pill('Patreon', function () { setView({access: 'all'}); });
+    if (view.sel) pill('Selected', function () { setView({sel: false}); });
+    if (view.fresh) pill('New', function () { setView({fresh: false}); });
+    if (view.once) pill('Placeable', function () { setView({once: false}); });
+
+    // an empty list says where the hits went, when another access has them
+    var other = view.access === 'all' ? 0 : tools.filter(function (p) {
+      return !accessOk(p, view.access) && rest(p);
+    }).length;
+    document.getElementById('emptytext').textContent = other
+      ? 'No ' + (view.access === 'free' ? 'free' : 'Patreon') + ' tools match. '
+        + other + ' ' + (view.access === 'free' ? 'Patreon' : 'free')
+        + (other === 1 ? ' tool does.' : ' tools do.')
+      : 'Nothing matches these filters.';
+
+    // Select / Clear speak for the list in front of the reader
+    var scoped = !!q || narrowed();
+    var allBtn = document.getElementById('all');
+    var noneBtn = document.getElementById('none');
+    allBtn.textContent = scoped ? 'Select shown' : 'Select all';
+    noneBtn.textContent = scoped ? 'Clear shown' : 'Clear';
+    allBtn.disabled = !shownTools.filter(bulkPickable).some(function (p) { return !picked.has(p.name); });
+    noneBtn.disabled = !(scoped ? shownTools : tools).some(function (p) { return picked.has(p.name); });
+  }
+
+  /** The selection tray above the footer: every pick as a chip, grouped
+   *  by what Apply will do with it; pressing a chip undoes that pick. */
+  function renderTray() {
+    var tray = document.getElementById('tray');
+    var body = document.getElementById('traybody');
+    if (!tray || !body) return;
+    var btn = document.getElementById('traybtn');
+    if (btn) btn.setAttribute('aria-expanded', tray.hidden ? 'false' : 'true');
+    if (tray.hidden) return;
+    body.textContent = '';
+    function group(label, names, cls, undo, tip, mark) {
+      if (!names.length) return;
+      var h = document.createElement('div');
+      h.className = 'tray-sub';
+      h.textContent = label + ' \u00b7 ' + names.length;
+      body.appendChild(h);
+      var row = document.createElement('div');
+      row.className = 'tray-row';
+      names.slice().sort(function (a, b) {
+        return titleOfName(a).localeCompare(titleOfName(b), 'en', {sensitivity: 'base'});
+      }).forEach(function (nm) {
+        var c = document.createElement('button');
+        c.type = 'button';
+        c.className = 'tchip' + (cls ? ' ' + cls : '')
+          + (byName[nm] && isPlus(byName[nm]) ? ' plus' : '');
+        c.appendChild(document.createTextNode(titleOfName(nm) + ' '));
+        var x = document.createElement('span');
+        x.className = 'x';
+        x.setAttribute('aria-hidden', 'true');
+        x.textContent = mark;
+        c.appendChild(x);
+        c.setAttribute('aria-label', tip + ': ' + titleOfName(nm));
+        c.addEventListener('click', function () { undo(nm); save(); render(); });
+        row.appendChild(c);
+      });
+      body.appendChild(row);
+    }
+    var pickedList = Array.from(picked).filter(function (n) { return byName[n]; });
+    var placedList = Array.from(placing).filter(function (n) { return !picked.has(n) && byName[n]; });
+    var leaving = served ? installedNow.concat(placedNow).filter(function (n) {
+      return !picked.has(n) && !placing.has(n) && byName[n];
+    }) : [];
+    group('Ticked', pickedList, '', function (n) { picked.delete(n); }, 'Untick', '\u00d7');
+    group('In this project only', placedList, 'placed', function (n) { placing.delete(n); },
+          'Undo place', '\u00d7');
+    group('Will be removed', leaving, 'gone', function (n) {
+      if (placedNow.indexOf(n) >= 0) placing.add(n); else picked.add(n);
+    }, 'Keep', '\u21ba');
+    if (!body.children.length) {
+      var e = document.createElement('p');
+      e.className = 'tray-empty';
+      e.textContent = 'Nothing picked yet. Tick a card, or start from Guided setup.';
+      body.appendChild(e);
     }
   }
 
@@ -7068,6 +7620,14 @@ function fnsBoot() {
       install: Array.from(need).sort().concat(chosen.filter(installable))
     };
     if (wantBind) sel.bind = wantBind;
+    // said whenever served, even empty: an absent key tells the installer
+    // this writer knows nothing of placed tools and they must be kept,
+    // while a present one is the whole placed set (docs/PlaceOnce.md)
+    if (served) {
+      sel.place = Array.from(placing).filter(function (n) {
+        return !picked.has(n) && installable(n);
+      }).sort();
+    }
     // said whenever the release has a family, so the installer never
     // has to guess (InstallerExt.FamilyWanted)
     if (companions.length) sel.family = familyOn;
@@ -7080,11 +7640,58 @@ function fnsBoot() {
   document.getElementById('alldocs').href = FNS_DOCS + '/docs/';
   document.getElementById('dlgdocs').href = FNS_DOCS + '/#get';
   document.getElementById('q').addEventListener('input', render);
+  // Select all / Clear act on what is SHOWN: with the list narrowed to
+  // the free tools, "Select shown" ticks those and nothing hidden. The
+  // bulk rule holds either way -- only bulkTools are ever ticked in bulk.
   document.getElementById('all').addEventListener('click', function () {
-    bulkTools.forEach(function (p) { picked.add(p.name); }); save(); render();
+    var inView = {};
+    shownTools.forEach(function (p) { inView[p.name] = true; });
+    bulkTools.filter(function (p) { return inView[p.name]; })
+      .forEach(function (p) { picked.add(p.name); placing.delete(p.name); });
+    save(); render();
   });
   document.getElementById('none').addEventListener('click', function () {
-    picked.clear(); save(); render();
+    if (document.getElementById('q').value.trim() || narrowed()) {
+      shownTools.forEach(function (p) { picked.delete(p.name); });
+    } else {
+      picked.clear();
+    }
+    save(); render();
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#access button[data-access]'), function (b) {
+    b.addEventListener('click', function () { setView({access: b.getAttribute('data-access')}); });
+  });
+  document.getElementById('selonly').addEventListener('click', function () { setView({sel: !view.sel}); });
+  document.getElementById('newonly').addEventListener('click', function () { setView({fresh: !view.fresh}); });
+  document.getElementById('placeonly').addEventListener('click', function () { setView({once: !view.once}); });
+  document.getElementById('resetview').addEventListener('click', function () {
+    document.getElementById('q').value = '';
+    setView({access: 'all', sel: false, fresh: false, once: false});
+  });
+  // the tray: the footer's count opens it, Close and Escape shut it
+  function setTray(on) {
+    var tray = document.getElementById('tray');
+    if (!tray) return;
+    tray.hidden = !on;
+    renderTray();
+  }
+  document.getElementById('traybtn').addEventListener('click', function () {
+    setTray(document.getElementById('tray').hidden);
+  });
+  document.getElementById('trayclose').addEventListener('click', function () { setTray(false); });
+  // "/" jumps to the search from anywhere but a text field; Escape in
+  // the search clears it, and elsewhere closes the tray
+  document.addEventListener('keydown', function (e) {
+    var t = e.target;
+    var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+    if (e.key === '/' && !typing && !document.querySelector('dialog[open]')) {
+      e.preventDefault();
+      document.getElementById('q').focus();
+    } else if (e.key === 'Escape' && t && t.id === 'q' && t.value) {
+      t.value = ''; render();
+    } else if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
+      setTray(false);
+    }
   });
   document.getElementById('famchk').addEventListener('change', function (e) {
     familyOn = e.target.checked;
@@ -8342,7 +8949,7 @@ function fnsBoot() {
     var rail = document.getElementById('plusrail');
     if (!rail) return;
     var plus = tools.filter(isPlus);
-    if (!plus.length) { rail.hidden = true; return; }
+    if (!plus.length) { rail.hidden = true; view.access = 'all'; return; }
     var mark = document.createElement('span');
     mark.className = 'mark';
     mark.setAttribute('aria-hidden', 'true');
@@ -8357,20 +8964,19 @@ function fnsBoot() {
       + plusReality();
     if (FNS_EMBEDDED) {
       // inside the manager the strip is one quiet line; the full sentence
-      // rides as a tooltip, and the toolbar's Plus-only button does the filter
+      // rides as a tooltip, and the toolbar's access filter narrows the list
       rail.setAttribute('data-tip', sentence);
       rail.appendChild(document.createTextNode(
-        plus.length + ' supporter extra' + (plus.length === 1 ? '' : 's') + ' below. '));
+        plus.length + ' supporter extra' + (plus.length === 1 ? '' : 's')
+        + ', listed last in each section. '));
     } else {
-      rail.appendChild(document.createTextNode(sentence + ' '));
+      rail.appendChild(document.createTextNode(sentence
+        + ' They are listed last in each section. '));
     }
     rail.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗'));
-    var pob = document.getElementById('plusonly');
-    if (pob) {
-      pob.hidden = false;
-      pob.textContent = '◆ Patreon only (' + plus.length + ')';
-      pob.addEventListener('click', function () { setPlusOnly(!plusOnly); });
-    }
+    // the access filter only means something when both kinds exist
+    var seg = document.getElementById('access');
+    if (seg && plus.length < tools.length) seg.hidden = false;
   })();
 
   if (FNS_EMBEDDED) {
@@ -8389,10 +8995,14 @@ function fnsBoot() {
       var act = document.createElement('div');
       act.className = 'bar-act';
       act.appendChild(sum.querySelector('.sum-count'));
+      // the tray drops down from the count instead of rising from the
+      // footer, which goes
+      var trayEl = document.getElementById('tray');
+      if (trayEl) { trayEl.classList.add('drop'); act.appendChild(trayEl); }
       act.appendChild(document.getElementById('deps'));
       act.appendChild(document.getElementById('famopt'));
       act.appendChild(document.getElementById('save'));
-      bar.appendChild(act);
+      (bar.querySelector('.bar-find') || bar).appendChild(act);
       if (rail) {
         ['acct', 'support', 'recheck', 'signin', 'redeem'].forEach(function (id) {
           var el = document.getElementById(id);
