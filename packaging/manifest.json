@@ -1,7 +1,7 @@
 {
  "schema": 1,
- "release": "v3.2.52",
- "notes": "",
+ "release": "v3.2.53",
+ "notes": "Every parameter of every tool now has a tooltip, and the tool pages on functionstore.tools document each control from it.",
  "channel": "stable",
  "base_url": "https://storage.functionstore.tools/fnstools",
  "toolkit": {
@@ -236,7 +236,7 @@
     "path": "packaging/dist/ChopBank.tox",
     "bytes": 167766,
     "sha256": "b4883797add65a133ca41905f2e83f97c9c4c33f1cc16975030b0e89f0064e7d",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/ChopBank.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ChopBank.tox"
    }
   },
   {
@@ -300,7 +300,7 @@
     "path": "packaging/dist/ChopProcess.tox",
     "bytes": 102174,
     "sha256": "ea662629f940ee2cd2d99b222ac375a16ed15df3f867d2ef163d8429a87c355f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/ChopProcess.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ChopProcess.tox"
    }
   },
   {
@@ -309,7 +309,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "A circular distortion for images: rings of displacement around a centre you place, with phase, frequency, amplitude and a mode blend, and a choice of how the input extends past its edge.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/circulardistortiontop/",
    "surfaces": [],
    "shortcut": "",
@@ -357,12 +357,12 @@
      "circular"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). Rings of displacement around a centre you place, with phase, frequency, amplitude and a mode blend.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/CircularDistortionTOP.tox",
-    "bytes": 26054,
-    "sha256": "0f30bb2a4c4ac78c1407f41e9898fb798869ba0b25db0902d439ad684851033e",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/CircularDistortionTOP.tox"
+    "bytes": 26374,
+    "sha256": "159575baaeaecc212abf0d4e631d6e4db568464b7edab260e552e8f288f28034",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/CircularDistortionTOP.tox"
    }
   },
   {
@@ -415,7 +415,7 @@
     "path": "packaging/dist/ColorGen.tox",
     "bytes": 2926,
     "sha256": "2cf532d4df80eea30610629bb35eb7a341134dddd72f2af80b98118e7e0f8994",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/ColorGen.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ColorGen.tox"
    }
   },
   {
@@ -469,7 +469,7 @@
     "path": "packaging/dist/ColorGenPro.tox",
     "bytes": 6022,
     "sha256": "cc6334c3aa7a5a266cfed72cb3e9ab62fbb240cc8e97a35d67e9bb906d1bf5a0",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/ColorGenPro.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ColorGenPro.tox"
    }
   },
   {
@@ -523,7 +523,7 @@
     "path": "packaging/dist/ComplexMix.tox",
     "bytes": 8902,
     "sha256": "3dc9185d95b8f531dd6716c53fce9af6252f64c26ed582f238123db6300542e2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/ComplexMix.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ComplexMix.tox"
    }
   },
   {
@@ -577,7 +577,7 @@
     "path": "packaging/dist/ComplexOp.tox",
     "bytes": 11070,
     "sha256": "cce17f44cc64cffd4dc3928b096e15ad8abb4ccfea6f626e1c255736ddf9c9a4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/ComplexOp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ComplexOp.tox"
    }
   },
   {
@@ -638,7 +638,7 @@
     "path": "packaging/dist/ConstantCHOP.tox",
     "bytes": 150422,
     "sha256": "0fa747a79ca9dbfe1c43a337bd99aa7baa76ca95171a0bd539a5c40e4c116571",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/ConstantCHOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ConstantCHOP.tox"
    }
   },
   {
@@ -647,7 +647,7 @@
    "kind": "tool",
    "category": "Control",
    "description": "Crossfades between two CHOPs through an easing curve: thirty classic easings from sine to bounce, or a custom curve from a third input, all driven by one Select value.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/easeinterpolator/",
    "surfaces": [],
    "shortcut": "",
@@ -688,12 +688,12 @@
      "curve"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). Crossfades two CHOPs through an easing curve: thirty classic easings or a custom curve from a third input, driven by one Select value.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/EaseInterpolator.tox",
-    "bytes": 6142,
-    "sha256": "44fdc60693160b22bd4be34b9041cab46268568543682a3a43e6c4158fc3a346",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/EaseInterpolator.tox"
+    "bytes": 6254,
+    "sha256": "d019bb2321f1ef0a6de995ce782d95ea7bc272fbb7411c76f92ba930c8ed55cb",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/EaseInterpolator.tox"
    }
   },
   {
@@ -702,7 +702,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "Per-point attribute expressions for POPs: write lines like P = P + N * 0.1 and they compile to a GLSL compute shader, with local variables carried between lines. An alternative for the Math Combine POP.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/expressionpop/",
    "surfaces": [
     "opmenu"
@@ -748,12 +748,12 @@
      "vex"
     ]
    },
-   "whatsnew": "new package (free, FNS operator family). Per-point attribute expressions compiled to a GLSL compute shader; an alternative for the Math Combine POP.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/ExpressionPOP.tox",
-    "bytes": 140286,
-    "sha256": "a414bc06c4764570c8c3e193567feb84faf2fbd4c86e04ed284786d70d23a740",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/ExpressionPOP.tox"
+    "bytes": 140502,
+    "sha256": "6c1f6d19a227bd309cdfb401f9712d0005cb9ff932b2d17248c5ca71b133c5e5",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ExpressionPOP.tox"
    }
   },
   {
@@ -762,7 +762,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "A feedback loop with a displace stage inside it: opacity, crossfade, filter size, displacement driven by a built-in noise or a second input, a per-pass transform, reset and a dry/wet mix. An alternative for the Feedback TOP.",
-   "version": "1.0.1",
+   "version": "1.0.2",
    "help_url": "https://functionstore.tools/docs/feedbackdisplace/",
    "surfaces": [
     "opmenu"
@@ -817,12 +817,12 @@
      "loop"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). A feedback loop with a displace stage inside it, driven by a built-in noise or a second input, with a per-pass transform and a dry/wet mix; the alternative for the Feedback TOP.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FeedbackDisplace.tox",
-    "bytes": 104038,
-    "sha256": "8fedbbbd41db8357220a2866c4dd6d75d4f3d801676881bfd16795556a7aa0ca",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FeedbackDisplace.tox"
+    "bytes": 104446,
+    "sha256": "03d94b4cbdec6ae21f1647425c37c9472d4d93ffb395f2c3d41c57428bbdbd5b",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FeedbackDisplace.tox"
    }
   },
   {
@@ -831,11 +831,11 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "Records a float texture such as a depth point cloud, a colour texture and a CHOP to files in sync, then plays the three back together against the timeline with a frame offset.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/floatdatarecorder/",
    "surfaces": [],
    "shortcut": "",
-   "ops": 41,
+   "ops": 42,
    "requires": [],
    "access": "8323905",
    "key_available": false,
@@ -872,12 +872,12 @@
      "capture"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). Records a float texture, a colour texture and a CHOP in sync and plays the three back against the timeline.",
+   "whatsnew": "no missing-file error when a project opens before anything has been recorded; the CHOP player stays bypassed until its clip exists.",
    "artifact": {
     "path": "packaging/dist/FloatDataRecorder.tox",
-    "bytes": 4494,
-    "sha256": "4150373726065bf36c79f4c0a8afa5e36c9639c7a047768e3ef40464732005e1",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FloatDataRecorder.tox"
+    "bytes": 5286,
+    "sha256": "6cf375a667f3e3b42eb54fcd48a575095d4d1548401fc892521eef4ff479263a",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FloatDataRecorder.tox"
    }
   },
   {
@@ -912,7 +912,7 @@
     "path": "packaging/dist/FNS_AltSelect.tox",
     "bytes": 120182,
     "sha256": "64ea2ac0b1ecd3212697c05ab098433848a3949596b9b961ce2d6376fd50f3f4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_AltSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_AltSelect.tox"
    }
   },
   {
@@ -948,7 +948,7 @@
     "path": "packaging/dist/FNS_AutoCombine.tox",
     "bytes": 134486,
     "sha256": "c0ff47677be656670f936b2d010b06ccf58c22645abfdce8bd3110c5a6e94f87",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_AutoCombine.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_AutoCombine.tox"
    }
   },
   {
@@ -984,7 +984,7 @@
     "path": "packaging/dist/FNS_AutoRes.tox",
     "bytes": 136702,
     "sha256": "c58ad41ccf190759a6c62e50d5a5c259b0db873509c0313dc7627ac0f78cca9b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_AutoRes.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_AutoRes.tox"
    }
   },
   {
@@ -1030,7 +1030,7 @@
     "path": "packaging/dist/FNS_Autosave.tox",
     "bytes": 121950,
     "sha256": "d15acc1e273483924f35eefb08b3314b7bff21bd8b30d654ccff05ee92b75cd3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_Autosave.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Autosave.tox"
    }
   },
   {
@@ -1039,7 +1039,7 @@
    "kind": "tool",
    "category": "Workflow",
    "description": "Every .toe backup TouchDesigner has written under a folder, grouped by the project that made them, with their size and an estimate of the hours they represent; send the ones you are done with to the recycle bin, or delete them outright.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-backupcleaner/",
    "surfaces": [
     "hub"
@@ -1063,12 +1063,12 @@
     "tidy",
     "visual"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_BackupCleaner.tox",
-    "bytes": 377046,
-    "sha256": "4a57fd208ed07ba41a6401898f925c0fb411b72dfa2a1678b1ccd766ed376739",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_BackupCleaner.tox"
+    "bytes": 377238,
+    "sha256": "aa45261e58c5362fc207b92d8f468dd34c7258d393a97ea4c12cb393bc3fa317",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_BackupCleaner.tox"
    }
   },
   {
@@ -1141,7 +1141,7 @@
     "path": "packaging/dist/FNS_BeatMod.tox",
     "bytes": 517080,
     "sha256": "1f0204f11ff0900dd7c9cb7ae32d96858e6f9d681e1e14a308ab19de0399f1b7",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_BeatMod.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_BeatMod.tox"
    }
   },
   {
@@ -1194,7 +1194,7 @@
     "path": "packaging/dist/FNS_BorderlessTD.tox",
     "bytes": 352342,
     "sha256": "61057da73f2f2e9195573f63ab1f26c658a3b5a2848f65a4e90e56a4e5062ecb",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_BorderlessTD.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_BorderlessTD.tox"
    }
   },
   {
@@ -1203,7 +1203,7 @@
    "kind": "tool",
    "category": "Control",
    "description": "A camera with two preset sequencers inside, one for its transform and lens and one for the Look At target: frame it, append, scrub or drive it from a CHOP, fly it with a joystick, or take over a palette camera viewport.",
-   "version": "3.0.8",
+   "version": "3.0.9",
    "help_url": "https://functionstore.tools/docs/fns-camsequencer/",
    "surfaces": [],
    "shortcut": "",
@@ -1256,12 +1256,12 @@
      "morph"
     ]
    },
-   "whatsnew": "",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_CamSequencer.tox",
-    "bytes": 339554,
-    "sha256": "584b487a15952f840a643f9aef0aa5b6070ab532f4b6f96dbffe7099694d3418",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_CamSequencer.tox"
+    "bytes": 340194,
+    "sha256": "e04de539f6424549e12d6deccdf5babc8fd5b94ba8d3ffc7ec9f79135b6651f3",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_CamSequencer.tox"
    }
   },
   {
@@ -1305,7 +1305,7 @@
     "path": "packaging/dist/FNS_Collect.tox",
     "bytes": 35966,
     "sha256": "677c46531c11e10b6c4c3394d58ec035a3efa1622ba8a42c44f4bb8efa07fafa",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_Collect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_Collect.tox"
    }
   },
   {
@@ -1346,7 +1346,7 @@
     "path": "packaging/dist/FNS_ColorUI.tox",
     "bytes": 290118,
     "sha256": "9676c7d65bc54456eb5a960f71eb355f0d9dcf00d3908754f951ad368d80c20b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ColorUI.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ColorUI.tox"
    }
   },
   {
@@ -1379,7 +1379,7 @@
     "path": "packaging/dist/FNS_CommandKit.tox",
     "bytes": 30382,
     "sha256": "b64323d3886bc7506dfcba3b49c2438eca6aa5920aa7720bf4c8360b15bf9718",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_CommandKit.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_CommandKit.tox"
    }
   },
   {
@@ -1388,7 +1388,7 @@
    "kind": "tool",
    "category": "Surfaces",
    "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in Hub.",
-   "version": "3.2.9",
+   "version": "3.2.10",
    "help_url": "https://functionstore.tools/docs/fns-commandpalette/",
    "surfaces": [
     "hub"
@@ -1421,12 +1421,12 @@
     "learn",
     "dev"
    ],
-   "whatsnew": "commands you run often now rank higher (Rank By Usage, on by default). The bonus fades with a 14-day half-life, never outranks a better match or a favourite, and is shared with the TDXLU launcher. Clear usage on the Commands tab forgets the palette's history.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_CommandPalette.tox",
-    "bytes": 337486,
-    "sha256": "4048506dbab46084d75e3833703f129cf0d595d3db0177507a16f4cc339aac0d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_CommandPalette.tox"
+    "bytes": 337718,
+    "sha256": "087f0a7b6986aebad5bbe0166dc7c120da0d63bec74c739ab35aa77729de24ca",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_CommandPalette.tox"
    }
   },
   {
@@ -1455,7 +1455,7 @@
     "path": "packaging/dist/FNS_CommandRegistry.tox",
     "bytes": 89694,
     "sha256": "a407013fd42f75981884f2752fea819ab44e61fdd98d7811e550d9d873095680",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_CommandRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_CommandRegistry.tox"
    }
   },
   {
@@ -1487,7 +1487,7 @@
     "path": "packaging/dist/FNS_ConfigHost.tox",
     "bytes": 91686,
     "sha256": "8dbeeded864154a6108dfdbcb1aa7f92000c03a967cef98185c47ee2e4538a30",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ConfigHost.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ConfigHost.tox"
    }
   },
   {
@@ -1516,7 +1516,7 @@
     "path": "packaging/dist/FNS_ConfigRegistry.tox",
     "bytes": 92086,
     "sha256": "b258351af3089b6fb5c09a995c7cc03ca1c1e7a39eab6b8e32ddc8eb8c87f223",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ConfigRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ConfigRegistry.tox"
    }
   },
   {
@@ -1545,7 +1545,7 @@
     "path": "packaging/dist/FNS_Console.tox",
     "bytes": 103606,
     "sha256": "aac59ce2ed3bcbbe5cbda96b787e66f85462d74f99bdd3443dd222b9c5dbf303",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_Console.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Console.tox"
    }
   },
   {
@@ -1637,7 +1637,7 @@
     "path": "packaging/dist/FNS_CustomParTools.tox",
     "bytes": 1125906,
     "sha256": "05449172c2af5bf124389fb9ed1ad49ca7f6c27d76bffc7dae9f7c0e235bab95",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_CustomParTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_CustomParTools.tox"
    }
   },
   {
@@ -1686,7 +1686,7 @@
     "path": "packaging/dist/FNS_ExprHotStrings.tox",
     "bytes": 183782,
     "sha256": "af1e58d4f2dbc84dd157351979c5a952d96edd359e8d6279571adef5113132ee",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ExprHotStrings.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ExprHotStrings.tox"
    }
   },
   {
@@ -1725,7 +1725,7 @@
     "path": "packaging/dist/FNS_GlobalOutSelect.tox",
     "bytes": 272886,
     "sha256": "604523d8c34e443a00b7a75f64353fea70132b6fd5ad913997133e481ef97e55",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_GlobalOutSelect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_GlobalOutSelect.tox"
    }
   },
   {
@@ -1764,7 +1764,7 @@
     "path": "packaging/dist/FNS_GlobalVolControl.tox",
     "bytes": 254142,
     "sha256": "5dc7cbaec6b28e7e219b9b22671e7f6e00bd35a7ca3aaef2ce691b3068cc66a3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_GlobalVolControl.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_GlobalVolControl.tox"
    }
   },
   {
@@ -1817,7 +1817,7 @@
     "path": "packaging/dist/FNS_HotkeyManager.tox",
     "bytes": 256318,
     "sha256": "aee0406b608cdb2ba339478aaed984d556aca20f012feded760b803ae26786c5",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_HotkeyManager.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -1849,7 +1849,7 @@
     "path": "packaging/dist/FNS_Hub.tox",
     "bytes": 1015506,
     "sha256": "3d88aa0ed64c4c2dedffeccd4e7beaa1ad79c4872e9625664cb86cdd23a4edc0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_Hub.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Hub.tox"
    }
   },
   {
@@ -1878,7 +1878,7 @@
     "path": "packaging/dist/FNS_HubRegistry.tox",
     "bytes": 77046,
     "sha256": "0f015893ffaf4bf7463e45ca80e6b60d2ed2831c67f8e0ad4edaa0390b7bf0b7",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_HubRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_HubRegistry.tox"
    }
   },
   {
@@ -1912,7 +1912,7 @@
     "path": "packaging/dist/FNS_HydroHomie.tox",
     "bytes": 195222,
     "sha256": "9b1b5d03239ec591df683afd2bca7b1a3144ee7b4066fc011f66b4fc35c5b77f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_HydroHomie.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_HydroHomie.tox"
    }
   },
   {
@@ -1953,7 +1953,7 @@
     "path": "packaging/dist/FNS_iopBrowser.tox",
     "bytes": 236614,
     "sha256": "4705860d12dbae4e45836644ec95b83e4cc87f11465f1f7ad0908db1ce17dc48",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_iopBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_iopBrowser.tox"
    }
   },
   {
@@ -1984,7 +1984,7 @@
     "path": "packaging/dist/FNS_MainMenuRegistry.tox",
     "bytes": 83198,
     "sha256": "a99db4ab635ad96440b50156907163ac7f5974c1ce9e8fa5d08c49cfa80fbdf5",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_MainMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_MainMenuRegistry.tox"
    }
   },
   {
@@ -2028,7 +2028,7 @@
     "path": "packaging/dist/FNS_MediaBrowser.tox",
     "bytes": 42398,
     "sha256": "bb33aea5b7fb7fb342cc9e43b8464fb64e12b34b6796af8895fad9b99e8ba365",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_MediaBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_MediaBrowser.tox"
    }
   },
   {
@@ -2068,7 +2068,7 @@
     "path": "packaging/dist/FNS_Misc.tox",
     "bytes": 305462,
     "sha256": "3e1922584077dd109569498751ac495b04093bbac92496aa87d87f174135e626",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_Misc.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Misc.tox"
    }
   },
   {
@@ -2121,7 +2121,7 @@
     "path": "packaging/dist/FNS_MixSequencer.tox",
     "bytes": 52518,
     "sha256": "9b9b9da500322308be3c2fc7fc960eb30b4e4d9b5d1b4102292ea4106be70371",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_MixSequencer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_MixSequencer.tox"
    }
   },
   {
@@ -2152,7 +2152,7 @@
     "path": "packaging/dist/FNS_NavbarRegistry.tox",
     "bytes": 86006,
     "sha256": "962bd4b3310d5e09fc9c837335fa2258a404f4345d2e54618501536b95dd0f8e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_NavbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_NavbarRegistry.tox"
    }
   },
   {
@@ -2194,7 +2194,7 @@
     "path": "packaging/dist/FNS_OpenExt.tox",
     "bytes": 119470,
     "sha256": "dbc1e2b60bba3b2342bce8a5108115ca473d9bad477ffcb640c2007e989acb47",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_OpenExt.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpenExt.tox"
    }
   },
   {
@@ -2203,7 +2203,7 @@
    "kind": "tool",
    "category": "Surfaces",
    "description": "The FNS tab in the OP Create dialog: an operator family whose members are FNS tools placed from the store as one node each, with stubs for projects that travel and in-place updates that keep retained parameters and state. Built with TDFam.",
-   "version": "0.1.5",
+   "version": "0.1.6",
    "help_url": "https://functionstore.tools/docs/fns-opfamily/",
    "surfaces": [],
    "shortcut": "",
@@ -2221,12 +2221,12 @@
    "min_td_build": "2025.33070",
    "hotkeys": [],
    "companion": "family",
-   "whatsnew": "",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_OpFamily.tox",
-    "bytes": 231702,
-    "sha256": "802115c9dcb53a9c16565aeeea7843d44e0a76aa4f196048ef75c8f4b49ceff8",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_OpFamily.tox"
+    "bytes": 232214,
+    "sha256": "58f20a95e9ac79c92b4ab728e006ada512415660690a403ef4312785ff379711",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpFamily.tox"
    }
   },
   {
@@ -2276,7 +2276,7 @@
     "path": "packaging/dist/FNS_OpMenuMods.tox",
     "bytes": 345518,
     "sha256": "ac500fec1017ef7fef6afbb018661a12ff4c3f177342732556144951c6670da6",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_OpMenuMods.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpMenuMods.tox"
    }
   },
   {
@@ -2307,7 +2307,7 @@
     "path": "packaging/dist/FNS_OpMenuRegistry.tox",
     "bytes": 97374,
     "sha256": "3a0b74dac6bb53c1bc7b6ce6cd555207f1615dfda8bf84adbd83c6d2ba5309f8",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_OpMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpMenuRegistry.tox"
    }
   },
   {
@@ -2316,7 +2316,7 @@
    "kind": "tool",
    "category": "Parameters",
    "description": "Preset sequencer for one operator: store any number of its parameter states in a table, then scrub, jump or morph between them with easing, or mix them by weight from a CHOP. Drop the operator on the panel and drag parameters in to add columns.",
-   "version": "1.16.6",
+   "version": "1.16.7",
    "help_url": "https://functionstore.tools/docs/fns-opsequencer/",
    "surfaces": [],
    "shortcut": "",
@@ -2355,12 +2355,12 @@
      "parameters"
     ]
    },
-   "whatsnew": "",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_OpSequencer.tox",
-    "bytes": 127094,
-    "sha256": "f7689777aca605459ba5d1ca86bb952cf8f20e129141a948056659240b791202",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_OpSequencer.tox"
+    "bytes": 127398,
+    "sha256": "de138bf5a517af151a2c3272ea2f95751655b2c8663bb3469ed216fb0ded7fb2",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_OpSequencer.tox"
    }
   },
   {
@@ -2467,7 +2467,7 @@
     "path": "packaging/dist/FNS_OpTemplates.tox",
     "bytes": 380224,
     "sha256": "6baaa06cc08effcada2e5d8cb368555fcbb0ab43b3da7065e800f53fd181707c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_OpTemplates.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpTemplates.tox"
    }
   },
   {
@@ -2509,7 +2509,7 @@
     "path": "packaging/dist/FNS_OpToClipboard.tox",
     "bytes": 121942,
     "sha256": "3e40f67f3f21aac6eafead19f158adace13e222e42ed4816a182be05ab7f3c14",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_OpToClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_OpToClipboard.tox"
    }
   },
   {
@@ -2549,7 +2549,7 @@
     "path": "packaging/dist/FNS_Output.tox",
     "bytes": 190742,
     "sha256": "3851e108a3eb7e4a57d8e8c5ec7913c9a597acd6a44b206499316364edd65399",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_Output.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Output.tox"
    }
   },
   {
@@ -2578,7 +2578,7 @@
     "path": "packaging/dist/FNS_PaletteRegistry.tox",
     "bytes": 81614,
     "sha256": "f1a5fc8f713591c456eb9de2bd70f252dffcaf536c11629db9253f053c41c78d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_PaletteRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_PaletteRegistry.tox"
    }
   },
   {
@@ -2607,7 +2607,7 @@
     "path": "packaging/dist/FNS_PaneTypeRegistry.tox",
     "bytes": 171494,
     "sha256": "96bd022e2c34558b7dd55b3cc0bb603fbf15016b02bab6dd84419756ff5a9e54",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_PaneTypeRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_PaneTypeRegistry.tox"
    }
   },
   {
@@ -2648,7 +2648,7 @@
     "path": "packaging/dist/FNS_ParentHierarchy.tox",
     "bytes": 204974,
     "sha256": "dc5f3d23e9d744a35e0f8fe95c464c9a160a4fa37b16ef301e9836c4697050f2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ParentHierarchy.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ParentHierarchy.tox"
    }
   },
   {
@@ -2693,7 +2693,7 @@
     "path": "packaging/dist/FNS_ParOPDrop.tox",
     "bytes": 184822,
     "sha256": "83f3eef75422c99b2d8e311d0ccbb1e0efeccbe2197e2dee28d2c875983eba11",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ParOPDrop.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ParOPDrop.tox"
    }
   },
   {
@@ -2753,7 +2753,7 @@
     "path": "packaging/dist/FNS_ParRandomizer.tox",
     "bytes": 181878,
     "sha256": "d2c66abb8f3ca604158332a440928538340140b00e375d745d76b7f777d17b97",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ParRandomizer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ParRandomizer.tox"
    }
   },
   {
@@ -2762,7 +2762,7 @@
    "kind": "tool",
    "category": "Surfaces",
    "description": "A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-previewpanel/",
    "surfaces": [
     "panebar"
@@ -2873,12 +2873,12 @@
     "screen",
     "learn"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_PreviewPanel.tox",
-    "bytes": 792522,
-    "sha256": "d4f76e9dd991aafc7c8209f5bb4d0cdbf02104c349e0d61a67a035704955f0e3",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_PreviewPanel.tox"
+    "bytes": 792594,
+    "sha256": "8f017a729025a5f7d9424d106b4331ab7afe1c21b993c105cc2d208d11119269",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_PreviewPanel.tox"
    }
   },
   {
@@ -2887,7 +2887,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "The Pro scene changer: everything SimpleSceneChanger does, plus per-scene modes, fade times and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, and fleet follow with scene offset and sync timing. Runs beside the simple one in the same fleet.",
-   "version": "1.0.3",
+   "version": "1.0.4",
    "help_url": "https://functionstore.tools/docs/fns-proscenechanger/",
    "surfaces": [],
    "shortcut": "",
@@ -2928,12 +2928,12 @@
      "fleet"
     ]
    },
-   "whatsnew": "",
+   "whatsnew": "runs the shared parameter helper (same two fixes); its helper was bound to FNS_SimpleSceneChanger's files, so an edit in one tool could overwrite the other.",
    "artifact": {
     "path": "packaging/dist/FNS_ProSceneChanger.tox",
-    "bytes": 111374,
-    "sha256": "943013685bacf7c0ba3a83218a26ce9c520aa81e7920b3ab6493693ae8fdbe0e",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_ProSceneChanger.tox"
+    "bytes": 111982,
+    "sha256": "be6189c17ec416821f437e84dd07f15832152ebe2f6280295e83568e4137c1d8",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_ProSceneChanger.tox"
    }
   },
   {
@@ -2980,7 +2980,7 @@
     "path": "packaging/dist/FNS_QuickCollapse.tox",
     "bytes": 133758,
     "sha256": "9bc62b2e9a2b0dc1c37ea0d62b27313f3c8c5dd3cb27882ad7dcfdef0952c012",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_QuickCollapse.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_QuickCollapse.tox"
    }
   },
   {
@@ -3021,7 +3021,7 @@
     "path": "packaging/dist/FNS_QuickPane.tox",
     "bytes": 122686,
     "sha256": "58803c485f8199f14985c8ee043bbb545ede0a28fea228baeeafa147b19f9b71",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_QuickPane.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_QuickPane.tox"
    }
   },
   {
@@ -3060,7 +3060,7 @@
     "path": "packaging/dist/FNS_QuickTime.tox",
     "bytes": 178014,
     "sha256": "a2ce3d87b49f45d9581b770e5499ccc5367b29cc16fc42dd535580f774bf3f47",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_QuickTime.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_QuickTime.tox"
    }
   },
   {
@@ -3069,7 +3069,7 @@
    "kind": "tool",
    "category": "Control",
    "description": "A random-value CHOP: uniform or normal distributions, unique re-rolls with a tolerance and history, a Markov chain mode, weights from an input and a trigger input, generated per channel or per sample. The first member of the FNS operator family and an alternative for the Noise CHOP.",
-   "version": "1.0.3",
+   "version": "1.0.4",
    "help_url": "https://functionstore.tools/docs/fns-randomchop/",
    "surfaces": [
     "opmenu"
@@ -3128,12 +3128,12 @@
      "markov"
     ]
    },
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_RandomCHOP.tox",
-    "bytes": 127990,
-    "sha256": "17321ee6aaa24def20b78e583d3593ad2cd0c77dd764bf8443cd3ef7f1d4014a",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_RandomCHOP.tox"
+    "bytes": 128486,
+    "sha256": "caefb788acf9790616e0b3bf4827840ed19dd282612147fc609a92b7e81dd10f",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_RandomCHOP.tox"
    }
   },
   {
@@ -3142,7 +3142,7 @@
    "kind": "tool",
    "category": "Control",
    "description": "Control the project from your phone over your own network: parameter pages, a perform window and multi-touch, paired by QR with no cloud and no account.",
-   "version": "3.2.8",
+   "version": "3.2.9",
    "help_url": "https://functionstore.tools/docs/fns-remote/",
    "surfaces": [
     "toolbar"
@@ -3178,12 +3178,12 @@
     "live",
     "params"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_Remote.tox",
-    "bytes": 256038,
-    "sha256": "9ffb8df1190df1662a2ea20fbd84266d1fc8fb53d1ffee244b6b8c451f315e76",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_Remote.tox"
+    "bytes": 256086,
+    "sha256": "e04164256a3a8ea92a1d4a7b2dc8f9914edace21ae1676858d8b3f66ebaf4514",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_Remote.tox"
    }
   },
   {
@@ -3249,7 +3249,7 @@
     "path": "packaging/dist/FNS_ResetPLS.tox",
     "bytes": 199190,
     "sha256": "54f4e67e3afb5f8de9d760cccd9c944036bcda7a87d5b81b60f844b976ed10a4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ResetPLS.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ResetPLS.tox"
    }
   },
   {
@@ -3295,7 +3295,7 @@
     "path": "packaging/dist/FNS_SearchPalette.tox",
     "bytes": 120062,
     "sha256": "e94aa508600cf71510ef31097a3fac69a8258fa37e8db9eacd4160f8e3713329",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_SearchPalette.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_SearchPalette.tox"
    }
   },
   {
@@ -3335,7 +3335,7 @@
     "path": "packaging/dist/FNS_SetSmoothness.tox",
     "bytes": 238622,
     "sha256": "f6c060e3ac1289eaec4c07927427cda817308cfc44c004fbeabadf3d06444f09",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_SetSmoothness.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_SetSmoothness.tox"
    }
   },
   {
@@ -3344,7 +3344,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "Scene changer for TOP outputs: wire your scenes in, then cut, fade or ease between them by select, timer, A/B fader or CHOP, with cooking control so only the scenes on screen cook. Base and Pro instances find each other and can follow a leader across screens.",
-   "version": "1.0.4",
+   "version": "1.0.5",
    "help_url": "https://functionstore.tools/docs/fns-simplescenechanger/",
    "surfaces": [],
    "shortcut": "",
@@ -3384,12 +3384,12 @@
      "fade"
     ]
    },
-   "whatsnew": "",
+   "whatsnew": "runs the shared parameter helper, so the first parameter change on a freshly placed copy is no longer lost and shrinking a parameter sequence no longer raises an error.",
    "artifact": {
     "path": "packaging/dist/FNS_SimpleSceneChanger.tox",
-    "bytes": 92366,
-    "sha256": "6e2127aba33d8d30192a21feaddf0e617a3806f527b81ec6c08e0c65b12695ec",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_SimpleSceneChanger.tox"
+    "bytes": 92966,
+    "sha256": "ec71a0a0dcf35df1904d2e9c13158bd4b2da9b66464087975de0d79c2aeaf249",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_SimpleSceneChanger.tox"
    }
   },
   {
@@ -3433,7 +3433,7 @@
     "path": "packaging/dist/FNS_SwapOps.tox",
     "bytes": 179870,
     "sha256": "3519b02829b16212dfc1ccc5b4392c0ea97abada23426862e3c8c79c8e7b5e92",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_SwapOps.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_SwapOps.tox"
    }
   },
   {
@@ -3474,7 +3474,7 @@
     "path": "packaging/dist/FNS_SwitchOPs.tox",
     "bytes": 120078,
     "sha256": "f01507400af426778b41562fa9ae273ddedb8e75c1652fe513571631e60da821",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_SwitchOPs.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_SwitchOPs.tox"
    }
   },
   {
@@ -3483,7 +3483,7 @@
    "kind": "tool",
    "category": "Network",
    "description": "A companion for any Switch, Cross or multi-input operator: index by slider, menu or bind, loop or clamp, colour the live input, cook only the inputs in use and unload the rest from the GPU, plus reorder, reverse, randomize and align the inputs.",
-   "version": "1.1.3",
+   "version": "1.1.4",
    "help_url": "https://functionstore.tools/docs/fns-switchtools/",
    "surfaces": [],
    "shortcut": "",
@@ -3523,12 +3523,12 @@
      "unload"
     ]
    },
-   "whatsnew": "",
+   "whatsnew": "runs the shared parameter helper, so the first parameter change on a freshly placed copy is no longer lost and shrinking a parameter sequence no longer raises an error.",
    "artifact": {
     "path": "packaging/dist/FNS_SwitchTools.tox",
-    "bytes": 81614,
-    "sha256": "74fa8957db74520242a629ade87a1588c8dcc408a6d0769c21d8f7e58e576fba",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_SwitchTools.tox"
+    "bytes": 116894,
+    "sha256": "5fa7541c77a18af0018db5fcdb8eced884260f5a4083c8afaff33380e475e538",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_SwitchTools.tox"
    }
   },
   {
@@ -3557,7 +3557,7 @@
     "path": "packaging/dist/FNS_TimelineRegistry.tox",
     "bytes": 90598,
     "sha256": "2a3ea415a3c731d2065e8509f0a1d0f6568d4a33f5c58dac81912976f9b52efd",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_TimelineRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_TimelineRegistry.tox"
    }
   },
   {
@@ -3566,7 +3566,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip, a waveform and your editor's markers. Key any operators' parameters into an Animation COMP with one press, and play them back from it.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-timelinetools/",
    "surfaces": [
     "timeline"
@@ -3631,12 +3631,12 @@
     "visual",
     "art"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_TimelineTools.tox",
-    "bytes": 363014,
-    "sha256": "88054fc6badbcaf8815a3575a8a8cd458e3a9cc7b92979a3654c75975bd8fc07",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/FNS_TimelineTools.tox"
+    "bytes": 363038,
+    "sha256": "b47d0bf3010a020396ae31ff010a456749a1d5a3c521d45f5dde91cb7bfedf7f",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/FNS_TimelineTools.tox"
    }
   },
   {
@@ -3667,7 +3667,7 @@
     "path": "packaging/dist/FNS_ToolbarRegistry.tox",
     "bytes": 78742,
     "sha256": "50cf9568486f666fb2ca7ad1f6b2a1a77bdeb48f8cd902510145ab7aa5e4664f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_ToolbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_ToolbarRegistry.tox"
    }
   },
   {
@@ -3696,7 +3696,7 @@
     "path": "packaging/dist/FNS_Updater.tox",
     "bytes": 196462,
     "sha256": "cae0f56872b93702a460026e7a9332ee50edf6c0b025aa6818643c2f5351b928",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_Updater.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_Updater.tox"
    }
   },
   {
@@ -3741,7 +3741,7 @@
     "path": "packaging/dist/FNS_VSCodeTools.tox",
     "bytes": 710104,
     "sha256": "c5d29a045b1ef3c79c1fe987abacc1be8cb97bdcebd8d36465ba6fe9e0db1bd1",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/FNS_VSCodeTools.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/FNS_VSCodeTools.tox"
    }
   },
   {
@@ -3797,7 +3797,7 @@
     "path": "packaging/dist/InfinityCHOP.tox",
     "bytes": 3438,
     "sha256": "068aef449c3f4a7a407f6d52c78f13c324ab4877a3d2d7ae6754dfe917bae0bb",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/InfinityCHOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/InfinityCHOP.tox"
    }
   },
   {
@@ -3850,7 +3850,7 @@
     "path": "packaging/dist/InstanceTrailer.tox",
     "bytes": 11606,
     "sha256": "be1594fea6b2466aa7b7caea1365f7d0c2b59365b6acbc2499389ecb4e5ec483",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/InstanceTrailer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/InstanceTrailer.tox"
    }
   },
   {
@@ -3902,7 +3902,7 @@
     "path": "packaging/dist/KinectSinglePlayer.tox",
     "bytes": 12566,
     "sha256": "c2c07e38602eb1e14cbdc1f2987502939cf4988263cb9cfc78f30ae35f3adee2",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/KinectSinglePlayer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/KinectSinglePlayer.tox"
    }
   },
   {
@@ -3958,7 +3958,7 @@
     "path": "packaging/dist/LayerSep3D.tox",
     "bytes": 44134,
     "sha256": "a64ee29e0b84895a131c8fe7fd0da775c53f0034d64120b8b50c89568189e713",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/LayerSep3D.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/LayerSep3D.tox"
    }
   },
   {
@@ -4010,7 +4010,7 @@
     "path": "packaging/dist/LinkOPs.tox",
     "bytes": 4350,
     "sha256": "4975bb75fce5766d2dbf5f2b0993d744b9c5a5e03761d302842500deb1d2f3f1",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/LinkOPs.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/LinkOPs.tox"
    }
   },
   {
@@ -4019,7 +4019,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "Draw a mask with the mouse straight onto the image: a panel you paint in, with the mask and the masked image as outputs, a lock and a reset.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/maskdraw/",
    "surfaces": [],
    "shortcut": "",
@@ -4058,12 +4058,12 @@
      "matte"
     ]
    },
-   "whatsnew": "new package (Pro, FNS operator family). Draw a mask with the mouse straight onto the image; Save Mask With Project bakes the mask into the component so it survives a reopen.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/MaskDraw.tox",
-    "bytes": 111886,
-    "sha256": "2b6b13ecb810ce95598d8e419a67a8affb3e3074b5820425b9d3b7fa17a56a09",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/MaskDraw.tox"
+    "bytes": 111894,
+    "sha256": "64c2197e3e1420129e55eb73a18f1c1903668886e7f066a6c6f06aa1b0ebf0cd",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/MaskDraw.tox"
    }
   },
   {
@@ -4109,7 +4109,7 @@
     "path": "packaging/dist/midiMapper.tox",
     "bytes": 327086,
     "sha256": "5eac8868bd0a3ee0e5450bf00596669cb96c619ff684a03aa825d9784f03cb93",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/midiMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/midiMapper.tox"
    }
   },
   {
@@ -4118,7 +4118,7 @@
    "kind": "tool",
    "category": "Control",
    "description": "Reads which way things move in a camera or any image with optical flow and turns it into left/right and down/up channels, with thresholds, inversion and filtering, for swipe and gesture triggers.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/movedetectdir/",
    "surfaces": [],
    "shortcut": "",
@@ -4159,12 +4159,12 @@
      "swipe"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). Optical flow turned into left/right and down/up channels, with thresholds, inversion and filtering, for swipe and gesture triggers.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/MoveDetectDir.tox",
-    "bytes": 6542,
-    "sha256": "d75e8ee107ee9f395f6d5c729d33f322b49ced0d593332e7d0cb37874d9465cf",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/MoveDetectDir.tox"
+    "bytes": 6846,
+    "sha256": "59bcf9bb0811755a79d96d13f2a2b99bf016f2813a972a4bbefbb6b8fa6b089d",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/MoveDetectDir.tox"
    }
   },
   {
@@ -4217,7 +4217,7 @@
     "path": "packaging/dist/OpenOp.tox",
     "bytes": 2150,
     "sha256": "1d04193a3ef69a73102d30b9da5e10f0a602a8d89f641fb4997b434ec1c87c30",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/OpenOp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/OpenOp.tox"
    }
   },
   {
@@ -4261,7 +4261,7 @@
     "path": "packaging/dist/oscMapper.tox",
     "bytes": 231846,
     "sha256": "60de4ba6b7126ab419ac4c68a76765640f05705ab564ddc5481479bfac5c28d0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/oscMapper.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/oscMapper.tox"
    }
   },
   {
@@ -4270,7 +4270,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "A 2D particle simulation as a POP loop: a source image emits particles, curl noise and wind effectors steer them with lookup ranges, trails stretch them, and the loop rides out as points for your own render.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/particles2d-pop/",
    "surfaces": [],
    "shortcut": "",
@@ -4312,12 +4312,12 @@
      "loop"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). A 2D particle simulation as a POP loop: a source image emits, curl noise and wind steer, trails stretch, points ride out for your own render.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/Particles2D_POP.tox",
-    "bytes": 18102,
-    "sha256": "84e55f536b121933df2f08cae6e53838304d9ddc9098e2c07234166658aee7d8",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/Particles2D_POP.tox"
+    "bytes": 18598,
+    "sha256": "48f02af7bf196e9b13d9266c6654f89b7e42f7ed79498fe6116e5b479282e9db",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/Particles2D_POP.tox"
    }
   },
   {
@@ -4326,7 +4326,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "A GPU particle system driven by images: a thresholded source emits particles, look, life, turbulence, wind and force fields shape them, a fluid simulation can carry them, with raw colour, position and optical-flow inputs and one rendered output.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/particlesgpuultimate/",
    "surfaces": [],
    "shortcut": "",
@@ -4406,12 +4406,12 @@
      "emitter"
     ]
    },
-   "whatsnew": "new package (Pro, FNS operator family). A GPU particle system driven by images, with look, life, turbulence, wind and force fields and a fluid simulation.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/ParticlesGpuUltimate.tox",
-    "bytes": 599992,
-    "sha256": "f528123f231464beb3df31a23337ba403140e8b8e16b6090e4a7a06a51f24731",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/ParticlesGpuUltimate.tox"
+    "bytes": 601360,
+    "sha256": "8b91fd4432586260140065bfb2b485fddc41874128ae0b2422e0e3c8e1dd2ec9",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/ParticlesGpuUltimate.tox"
    }
   },
   {
@@ -4457,7 +4457,7 @@
     "path": "packaging/dist/PasteFromClipboard.tox",
     "bytes": 205870,
     "sha256": "ed6c974f691fe94d36908f1c1764fe7e65f4375ce43d5aa865d8717435f4d565",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/PasteFromClipboard.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/PasteFromClipboard.tox"
    }
   },
   {
@@ -4466,7 +4466,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "A kaleidoscopic prism: the input rendered through instanced, rotating polygon facets in up to three ring patterns, with softness, a chromatic distortion pass, fit and transform, and a dry/wet mix. An alternative for the Tile TOP and the Mirror TOP.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/prismtop/",
    "surfaces": [
     "opmenu"
@@ -4528,12 +4528,12 @@
      "chromatic"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). A kaleidoscopic prism that renders the input through instanced rotating facets in up to three ring patterns, with a chromatic distortion pass and a dry/wet mix; an alternative for the Tile TOP and the Mirror TOP.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/PrismTOP.tox",
-    "bytes": 109278,
-    "sha256": "0fa7e3681eb27399d6b2edb2f971185333f13cd78f9f0c8f9bf3b0111a8efde4",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/PrismTOP.tox"
+    "bytes": 109758,
+    "sha256": "d4488648a37861e0f5ad993f69b05b8bece5920e37744b0cc01081d1f5a1c5db",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/PrismTOP.tox"
    }
   },
   {
@@ -4578,7 +4578,7 @@
     "path": "packaging/dist/QuickMarks.tox",
     "bytes": 123350,
     "sha256": "931ae28a73957fcd4be2a2c5692462813bd42d76da6b68d190f8c36408e4c336",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/QuickMarks.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/QuickMarks.tox"
    }
   },
   {
@@ -4630,7 +4630,7 @@
     "path": "packaging/dist/RealRamp.tox",
     "bytes": 3422,
     "sha256": "d30a1c0b9763c97adc2984f487e5d929503b36004634c290b817443273369a09",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/RealRamp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/RealRamp.tox"
    }
   },
   {
@@ -4681,7 +4681,7 @@
     "path": "packaging/dist/SeqMod.tox",
     "bytes": 16774,
     "sha256": "4ceccaa6f7ccbbda4e23eb987551f16a298fda80e9adcfc70ced2863f361a758",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/SeqMod.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/SeqMod.tox"
    }
   },
   {
@@ -4690,7 +4690,7 @@
    "kind": "tool",
    "category": "Media & Output",
    "description": "A slideshow of a folder of images: timed or stepped with next and previous, in order or random, with a crossfade between slides and a fitted output resolution.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/slideshow/",
    "surfaces": [],
    "shortcut": "",
@@ -4768,12 +4768,12 @@
      "photos"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). A folder of images played timed or stepped, in order or random, with a crossfade between slides.",
+   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/SlideShow.tox",
-    "bytes": 10694,
-    "sha256": "19febb4b9893cc4de439d60b7d1e32e492603e5ab1cedfa80ce83475342e31ef",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/SlideShow.tox"
+    "bytes": 10950,
+    "sha256": "7e1d0a26f32bfc31b9fb3ca3c7bee4389cbc2ce323d8864a7a9186a4858cf9cc",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/SlideShow.tox"
    }
   },
   {
@@ -4813,7 +4813,7 @@
     "path": "packaging/dist/ThresholdColor.tox",
     "bytes": 100598,
     "sha256": "3dc4ac249c3dc3482aa86d7dbabe3e195adc8906f21ef8b16c396e813258df8f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/ThresholdColor.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ThresholdColor.tox"
    }
   },
   {
@@ -4882,7 +4882,7 @@
     "path": "packaging/dist/TopToMidi.tox",
     "bytes": 186926,
     "sha256": "b5557a18f4df9c4aaf6dc2e4bd8be45099ffd14b2560281542a215782947dc2a",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.52/TopToMidi.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.53/TopToMidi.tox"
    }
   },
   {
@@ -4926,7 +4926,7 @@
     "path": "packaging/dist/ParHoverMIDI_VSN1.tox",
     "bytes": 362816,
     "sha256": "eaab30dc48f656e2408be67c01626426f61ce2feb0b9256f1a64d163c1f064d0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/ParHoverMIDI_VSN1.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/ParHoverMIDI_VSN1.tox"
    }
   },
   {
@@ -4974,7 +4974,7 @@
     "path": "packaging/dist/TDXMap.tox",
     "bytes": 934742,
     "sha256": "339116402eff423173e944862f7f623c3cede0c1593b6a5ac2328d87a65ac4ba",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.52/TDXMap.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.53/TDXMap.tox"
    }
   }
  ],
