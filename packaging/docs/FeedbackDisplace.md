@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and output
     anchor: inputs-and-output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -21,24 +19,3 @@ It is the alternative for the Feedback TOP: create a Feedback TOP with the alter
 - **in1** (TOP): the image fed into the loop.
 - **in_displace** (TOP): optional; a displacement map that replaces the built-in noise.
 - **out1** (TOP): the loop's output, mixed with the input by Dry / Wet Mix.
-
-## Parameters
-
-### Feedback
-
-- **Operation** (Menu): the composite operation that lays the new frame over the loop.
-- **Opacity** (Float): how much of the previous pass survives; close to 1 for long trails.
-- **Cross** (Float): crossfade between the input and the loop before compositing.
-- **Filter Size** (Int): the blur applied inside the loop each pass.
-- **Aspect Correct** (Toggle): keep the displacement isotropic on non-square images.
-- **Displace Weight** (Float, two values): the strength of the displacement in x and y.
-- **Source Midpoint** (Float, two values): the displace map value that means no displacement.
-- **UV Weight** (Float): how much the displacement follows the map's own UV.
-- **Displace Period**, **Displace Amplitude**, **Displace Speed** (Float): the built-in noise that drives the displacement when nothing is wired into the second input.
-- **T** (Float, two values), **Rotate** (Float), **Scale** (Float, two values): the transform applied to the loop every pass, for drift, spin and zoom.
-- **Reset** (Momentary): clear the loop while held.
-- **Dry / Wet Mix** (Float): 0 is the input, 1 is the loop.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

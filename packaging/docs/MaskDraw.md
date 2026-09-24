@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and outputs
     anchor: inputs-and-outputs
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -23,21 +21,3 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 - **in1** (TOP): the image to draw over.
 - **out_mask** (TOP): the drawn mask.
 - **out_masked** (TOP): the input inside the painted area.
-
-## Parameters
-
-### Custom
-
-- **Active** (Toggle): the panel accepts strokes.
-- **Showinput** (Toggle): show the input image under the strokes.
-- **Showmask** (Toggle): show the mask itself in the panel.
-- **Debug** (Toggle): show the panel's internal state.
-- **Display** (Toggle): the panel's display flag.
-- **Reset** (Toggle): clear the mask.
-- **Lock** (Toggle): ignore strokes, erasing and Reset; the mask stays as it is until unlocked.
-- **Save Mask With Project** (Toggle): bake the mask into the component on every project save and restore it on open. Off by default.
-- **Bake Mask Now** (Pulse): capture the current mask into the component immediately; only with Save Mask With Project on.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

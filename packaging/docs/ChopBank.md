@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Input and output
     anchor: input-and-output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -24,28 +22,3 @@ It is an alternative for the Math CHOP and for the Constant CHOP: create either 
 
 - **in1** (CHOP): the channels to process.
 - **out1** (CHOP): one processed channel per block.
-
-## Parameters
-
-### Bank
-
-- **In Scope** (Str): which input channels the bank takes, as a pattern. Asked only when the input has more than one channel.
-- **Gain Pre**, **Gain Post** (Float): gain on every channel before and after the bank.
-- **Snap Input** (Pulse): rebuild the bank from the input, one block per channel.
-- **Bank** (Sequence): one block per channel, each with:
-  - **Name** (Str): the input channel it processes and its output name.
-  - **Value** (Float): the value it outputs while no input channel matches it.
-  - **Type** (Menu), **From Range**, **To Range** (Float, two values each): what happens outside the range, and the mapping from one range to the other.
-  - **Zero Below** (Toggle): output 0 at the bottom of the From Range. Only with Type set to clamp.
-  - **Exponent Value** (Float): the curve between the ranges.
-  - **Lag** (Float, two values): seconds to glide up and down.
-  - **Is Speed** (Toggle), **Limit Type** (Menu), **Minimum**, **Maximum**, **Reset Value** (Float), **Reset** (Toggle), **Reset Pulse** (Pulse): the speed mode and its running total.
-
-### Common
-
-- **Promote to Property** (Toggle): expose each block as a property on the node.
-- **Property Prefix** (Str): put in front of every property name.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

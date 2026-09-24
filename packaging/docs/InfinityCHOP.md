@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Output
     anchor: output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -23,23 +21,3 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 ## Output
 
 - **out1** (CHOP): two channels, **tx** and **ty**, with one sample per point.
-
-## Parameters
-
-### Curve
-
-- **Samples** (Int): 1 is a travelling point, and more draw the curve as that many points.
-- **Span** (Float): how much of the curve the samples cover, in loops. 1 is the whole closed curve, and less is a trail. Active with more than one sample.
-- **Shape** (Float): 0 is a circle, 1 is the infinity loop, and values between morph.
-- **Frequency** (Float, two values): how many times X and Y swing per loop. Equal whole numbers keep the plain shape, and other whole numbers make Lissajous figures.
-- **Cross Frequency** (Float): the cosine that folds Y into the loop's crossing. Active when Shape is above 0.
-- **Pinch Frequency** (Float, two values): the pinch that narrows X and Y toward the crossing. Active when Shape is above 0.
-- **Phase** (Float): where on the curve the first point sits, in loops.
-- **Speed** (Float): loops per second. 0 holds still, and negative runs backwards.
-- **Reset** (Pulse): return the travelled distance to zero.
-- **Size** (Float, two values): half the width and height of the curve in the output values.
-- **Center** (Float, two values): the centre of the curve.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

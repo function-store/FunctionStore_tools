@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and output
     anchor: inputs-and-output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -24,14 +22,3 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 - **in2** (CHOP): the channels at Select 1.
 - **in_custom_ease** (CHOP): optional; the curve used when Easing is Custom Ease.
 - **out1** (CHOP): the eased blend of the two inputs.
-
-## Parameters
-
-### Seq
-
-- **Easing** (Menu): the curve the blend follows, from Linear through the In, Out and In-Out forms of Sine, Quad, Cubic, Quart, Quint, Expo, Circ, Back, Elastic and Bounce, or Custom Ease.
-- **Select** (Float): the position of the blend, 0 for the first input and 1 for the second.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

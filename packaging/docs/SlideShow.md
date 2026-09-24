@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Output
     anchor: output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -19,19 +17,3 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 ## Output
 
 - **out1** (TOP): the current slide, crossfading into the next.
-
-## Parameters
-
-### Custom
-
-- **Res** (Float, two values): the output resolution, 1920 by 1080 unless you set it.
-- **Folder** (Folder): the folder of images to play.
-- **Select** (Int): the slide shown now. Next, Prev and the timer set it, and you can set it yourself too.
-- **Period** (Float): seconds per slide. Zero stops the timer so the slides change only on Next and Prev.
-- **Crossfade Opacity** (Float): how strongly the previous slide lingers through the crossfade.
-- **Random** (Toggle): shuffle the order.
-- **Next**, **Prev** (Pulse): step forward or back one slide.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

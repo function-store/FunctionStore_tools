@@ -6,8 +6,8 @@ features:
     anchor: what-it-is
   - name: Inputs and outputs
     anchor: inputs-and-outputs
-  - name: Parameters
-    anchor: parameters
+  - name: Palette behavior
+    anchor: palette-behavior
 ---
 
 ## What it is
@@ -22,19 +22,6 @@ It is the Pro sibling of ColorGen, which shapes its palette with a phase step an
 - **out_col** (TOP): the palette strip.
 - **out_lookup** (TOP): the input coloured through the palette.
 
-## Parameters
+## Palette behavior
 
-### Custom
-
-- **Length** (Int): how many colours the palette holds.
-- **Input Smoothness** (Menu): the sampling filter of the input.
-- **Blackout** (Float, 0 to 1): what share of the length is black; enables the soften parameters.
-- **Reductive** (Float, 0 to 1): at 0 the blackout extends the palette length, at 1 it keeps the length and takes from the colours.
-- **Soften Black** (Float, 0 to 1, 0 is a hard edge), **Soften Exponent** (Float), **Soften Extend** (Menu: Mirror, Zero/Hold, Repeat): the soft edge around the blackout and how it extends.
-- **a (Offset)**, **b (Amplitude)**, **c (Period)**, **d (Phase)**, **e (Exponent)** (Float, three values each): the per channel coefficients of the palette formula. The palette is clamped at zero before the exponent, so an offset below the amplitude cannot produce invalid pixels.
-- **RGBD Mode** (Toggle), **Offset**, **Amplitude**, **Exponent** (Float): generate the three d (Phase) values from one offset, amplitude and exponent instead of typing them.
-- **Default** (Pulse): restore the shipped coefficients and the RGBD values.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.
+The palette is clamped at zero before the exponent is applied. An offset below the amplitude therefore clips the troughs to black rather than producing invalid pixels.

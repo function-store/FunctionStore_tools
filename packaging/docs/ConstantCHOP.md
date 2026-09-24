@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Input and outputs
     anchor: input-and-outputs
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -25,20 +23,3 @@ It is the alternative for the Constant CHOP: create a Constant CHOP with the alt
 - **in1** (CHOP): optional; the channels Snap Input copies from.
 - **out1** (CHOP): the numeric constants as channels.
 - **out2** (DAT): every constant as a table of names and values.
-
-## Parameters
-
-### Constant
-
-- **Type** (Menu): the kind of value every constant holds.
-- **Constant** (Sequence): one block per constant, each with a **Name** (Str) and a **Value** of the chosen type.
-
-### Common
-
-- **Snap Input** (Pulse): replace the constants with the input's channels. Float and Int only.
-- **Promote to Property** (Toggle): expose each constant as a property on the node.
-- **Property Prefix** (Str): put in front of every property name.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

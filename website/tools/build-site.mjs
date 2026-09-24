@@ -13,6 +13,7 @@
 // hand-authored may live there -- docs.css and docs.js sit at website/.
 
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import matter from 'gray-matter';
@@ -397,6 +398,16 @@ for (const p of pages) {
   const ids = new Set();
   p.html = md.render(p.body);
   for (const m of p.html.matchAll(/<h[2-6][^>]*\sid="([^"]+)"/g)) ids.add(m[1]);
+  const mode = p.meta.parameter_reference || 'generated';
+  if (!['generated', 'authored'].includes(mode)) {
+    fail(`${p.file}: parameter_reference must be generated or authored`);
+  }
+  if (mode === 'authored' && !ids.has('parameters')) {
+    fail(`${p.file}: authored parameter_reference needs a ## Parameters section`);
+  }
+  if (mode === 'generated' && ids.has('parameters') && (PARAMS.packages || {})[p.name]?.length) {
+    fail(`${p.file}: duplicate Parameters references; remove the handwritten list or set parameter_reference: authored`);
+  }
   anchorsOf.set(p.slug, ids);
 }
 
@@ -514,6 +525,8 @@ const navLinks = [
   ['/patreon/', 'Patreon'],
 ];
 
+const docsStyleVersion = createHash('sha256').update(fs.readFileSync(path.join(WEB, 'docs.css'))).digest('hex').slice(0, 12);
+
 function head(title, description, canonical) {
   return `<!doctype html>
 <html lang="en">
@@ -541,7 +554,7 @@ function head(title, description, canonical) {
      placeholder overran the 244px sidebar and was clipped mid-word. -->
 <link rel="stylesheet" href="/docs/pagefind/pagefind-ui.css" onerror="this.remove()">
 <link rel="stylesheet" href="/site-nav.css">
-<link rel="stylesheet" href="/docs.css">
+<link rel="stylesheet" href="/docs.css?v=${docsStyleVersion}">
 </head>
 <body>`;
 }
@@ -760,6 +773,7 @@ ${table}
  *  every package are not repeated here -- they are described once, on the
  *  shared reference. */
 function parametersSection(p) {
+  if (p.meta.parameter_reference === 'authored') return '';
   const rows = (PARAMS.packages || {})[p.name] || [];
   if (!rows.length) return '';
   // A doc that already hand-wrote a "Parameters" heading owns that anchor.
@@ -863,13 +877,41 @@ ${rows}
 </section>`;
 }
 
+// Sidebar access is a compact annotation; full terms remain on the tool page.
+function sidebarAccess(name) {
+  const pricing = pricingOf(name);
+  const variants = variantsOf(name);
+  const detail = [];
+  if (isPlus(name)) detail.push(`Unlocks with ${unlockRoute(name)}.`);
+  if (pricing) detail.push(pricing.detail || pricing.summary);
+  for (const v of variants) {
+    detail.push(`${variantTier(v)} build: ${v.summary || 'Unlocks at the ' + variantTier(v) + ' tier or higher.'}`);
+  }
+  if (!detail.length) return null;
+  const label = pricing ? (/trial/i.test(pricing.summary) ? 'Trial' : 'Licence')
+    : isPlus(name) ? (tierOf(name) || 'Paid') + (variants.length ? '+' : '')
+    : `${variantTier(variants[0])} option`;
+  return { label, detail: detail.join(' ') };
+}
+
+// Keep free entries first in docs navigation and category listings.
+// A free tool with an optional paid variant remains in the free group.
+const docsToolOrder = (a, b) =>
+  Number(isPlus(a.name) || Boolean(pricingOf(a.name)))
+  - Number(isPlus(b.name) || Boolean(pricingOf(b.name)))
+  || a.title.localeCompare(b.title, 'en', { sensitivity: 'base' });
+
 function sidebar(currentSlug) {
   const groups = displayCategories.map((cat) => {
     const inCat = pages
       .filter((p) => p.category === cat)
-      .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
+      .sort(docsToolOrder);
     const items = inCat
-      .map((p) => `      <li><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${variantMark(p.name)}${trialMark(p.name)}</a></li>`)
+      .map((p) => {
+        const access = sidebarAccess(p.name);
+        const hintId = `side-access-${p.slug}`;
+        return `      <li class="side-tool"><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}${access ? ` aria-describedby="${hintId}"` : ''}><span class="side-tool-name">${esc(p.title)}</span>${access ? `<span class="side-access" aria-hidden="true">${esc(access.label)}</span>` : ''}</a>${access ? `<span class="side-access-detail" id="${hintId}" role="tooltip">${esc(access.detail)}</span>` : ''}</li>`;
+      })
       .join('\n');
     if (!items) return '';
     return sideGroup(GLYPH[cat] || '·', cat, items, inCat.length);
@@ -1016,7 +1058,7 @@ for (const p of pages) {
     ? `<img class="feat-icon" src="/docs/assets/icons/${esc(f.icon)}" alt="" `
       + `width="18" height="18" decoding="async" />` : '');
 
-  const parAnchor = (PARAMS.packages || {})[p.name]?.length
+  const parAnchor = p.meta.parameter_reference !== 'authored' && (PARAMS.packages || {})[p.name]?.length
     ? ((anchorsOf.get(p.slug) || new Set()).has('parameters')
         ? 'parameter-reference' : 'parameters')
     : '';
@@ -1215,7 +1257,7 @@ const referenceCards = guideCardSection('reference', '§', 'Reference',
 const indexGroups = displayCategories.map((cat) => {
   const items = pages
     .filter((p) => p.category === cat)
-    .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }))
+    .sort(docsToolOrder)
     .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/" data-surfaces="${
         esc(surfacesOf(p.name).join(' ')) || 'none'}">
         <strong>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${variantMark(p.name)}${trialMark(p.name)}</strong>
@@ -1641,7 +1683,7 @@ if (fs.existsSync(cfgSrc)) {
     + `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n`
     + `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">\n`
     + `<link rel="stylesheet" href="/site-nav.css">\n`
-    + `<link rel="stylesheet" href="/docs.css">\n`
+    + `<link rel="stylesheet" href="/docs.css?v=${docsStyleVersion}">\n`
     + `<title>`);
 
   for (const [marker, markup] of [

@@ -8,8 +8,6 @@ features:
     anchor: where-the-operators-come-from
   - name: Stubs and updates
     anchor: stubs-and-updates
-  - name: Parameters
-    anchor: parameters
   - name: Credits
     anchor: credits
 ---
@@ -42,27 +40,6 @@ Two things a pane package could not do before:
 Which parameters and which state survive a stub or an update is declared per member in its manifest.
 
 The same three actions, plus a resync of the family folder, are quick-launch commands: **Stub Family Operators**, **Replace Family Stubs**, **Update Family Operators** and **Sync Family From Store**. A fifth, **Remove Operator Family**, takes the tab away (see above). They act without dialogs and report what they did, and each can be limited to the network you are looking at. The toolkit's own copies of the members are never stubbed or updated this way, by these commands or by the pulses below: those copies belong to the FNS updater.
-
-## Parameters
-
-### Family
-
-- **Family** (Str): the family name shown as the tab. `FNS`.
-- **Version** (Str): the family version TDFam stamps into every member manifest. Not the package version.
-- **Install** (Toggle): registers the family and installs the tab.
-- **Install On Start** (Toggle): install when the project opens.
-- **Color** (RGB): the colour placed members get in the network.
-- **Op Folder** (Folder): the operator folder the tab lists. The updater sets and maintains it.
-- **Naming Convention** (Str): the filename pattern that gives each tox its name and version.
-
-### Stubs
-
-- **Create Stubs (All)**, **Replace Stubs (All)**, **Update (All)** (Pulse): stub, replace or update every placed member in the project.
-- **Target Op**, **Target Comp**, **Target Type**: the same three actions scoped to one operator, one network or one type.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.
 
 ## Credits
 

@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and output
     anchor: inputs-and-output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -22,17 +20,3 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 
 - **in1** (TOP): the image to watch, usually a camera.
 - **out1** (CHOP): two channels, **LR** for left and right movement and **DU** for down and up.
-
-## Parameters
-
-### Custom
-
-- **Input Filter Size** (Int): how much the input is blurred before the flow is measured, which smooths out noise.
-- **Optflow Lambda** (Float), **OptFlow Threshold** (Float): the optical flow's smoothing and the smallest flow it counts.
-- **Move Threshold X**, **Move Threshold Y** (Float): how much movement it takes before a direction registers on each axis.
-- **Inverse X**, **Inverse Y** (Toggle): flip the direction on an axis, for a mirrored camera.
-- **Filter Width** (Float): how much the output channels are smoothed over time.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

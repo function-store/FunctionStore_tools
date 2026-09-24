@@ -384,3 +384,15 @@ repo. Replace both and delete the script.
 into `-`. If one changes, `help_url` starts pointing at 404s. The heading
 slugifier is duplicated the same way (`slugify` in this build script and
 in the seeder).
+
+## Parameter references
+
+Each tool page has one parameter reference. The default is the generated table
+from `packaging/parameters.json`; keep the Markdown for setup, examples and
+behavior that needs explanation across several controls.
+
+When a handwritten reference contains descriptions missing from the parameter
+export, set `parameter_reference: authored` in its frontmatter and keep its
+`## Parameters` section. This suppresses the generated table and its duplicate
+contents link. Remove that setting and the handwritten list once the exported
+parameter help covers it. The build rejects pages that would show both lists.

@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and outputs
     anchor: inputs-and-outputs
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -24,16 +22,3 @@ It is the alternative for the Math Combine POP: create a Math Combine POP with t
 - **out_pop** (POP): the points with the expressions applied.
 - **out_code** (DAT): the generated shader code.
 - **out_info** (DAT): the compile result.
-
-## Parameters
-
-### Custom
-
-- **Expr** (Sequence): one block per line. Each has an **Attribute Expression** (Str), the line itself, and **OutAttr/Local** (Toggle): off writes an output attribute, on declares or updates a local variable.
-- **Info** (Str): the compile result, so a typo shows up right on the parameter page.
-- **Out Attrs** (Str): the attributes the shader writes, read from the compute stage.
-- **View** (Menu): what the node's viewer shows: the POP, the generated code, or the compile info.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

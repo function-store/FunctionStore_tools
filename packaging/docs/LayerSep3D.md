@@ -6,8 +6,8 @@ features:
     anchor: what-it-is
   - name: Inputs and outputs
     anchor: inputs-and-outputs
-  - name: Parameters
-    anchor: parameters
+  - name: Layer edges
+    anchor: layer-edges
 ---
 
 ## What it is
@@ -23,28 +23,6 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 - **in_threshold**, **in_softness**, **in_mix** (CHOP): optional per layer curves that override the parameter curves.
 - **out_layers** (TOP): the layer stack as a 2D texture array or 3D texture, for your own instancing.
 
-## Parameters
+## Layer edges
 
-### Custom
-
-- **Layers** (Int): how many slices, at least 2. The range is divided into that many bands, so every layer receives part of the image.
-- **Reverse Layer Order** (Toggle): mirror the slice order along Z.
-- **Open** (Pulse): open the internal control panel.
-- **Mode** (Menu): the channel sliced: Luminance, Red, Green, Blue, Alpha, RGB or RGBA Avg, Max, Min.
-- **Threshold** group (Threshold Offset, Amplitude, Range, Power, Phase, and a Threshold CHOP): the per layer threshold curve, or a CHOP that overrides it.
-- **Softness** group (Softness Offset, Amplitude, Power, Phase, and a Softness CHOP): the per layer edge softness; edge j between layers j-1 and j uses softness j-1.
-- **Mix** group (Mix Amplitude, Offset, Power, Phase, and a Mix CHOP): how much of the colour input each layer shows.
-- **Texture Index** group (Invert, Phase, Exponent, Period, Randomize, Single, Select): how the layer index maps to the curves, with a single layer pick.
-
-### Transform
-
-- **Z**, **Scale**, **Rotation** groups (offset, amplitude, power, phase, invert): the per layer instance transform. These can be overridden in the instancing.
-
-### Common
-
-- **Type** (Menu): 2D Texture Array or 3D Texture for the layer output.
-- **Instancetexfilter** (Menu): the texture filter used on the instances.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.
+The edge between layers j-1 and j uses softness j-1. Per-layer Z, scale and rotation can also be overridden in the instancing.

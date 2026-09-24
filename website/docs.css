@@ -756,3 +756,13 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
 .docs-index .doc-cat h2 { font-size: 19px; margin-bottom: 14px; }
 .docs-index .docs-index-note { max-width: 65ch; }
 @media (max-width: 600px) { .docs-layout .doc-cards { grid-template-columns: 1fr; } }
+
+/* Tool names lead; access information occupies a quiet, aligned column. */
+.side-tool { position: relative; }
+.side-group .side-tool > a { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.side-tool-name { min-width: 0; }
+.side-access { flex-shrink: 0; font-size: 10px; font-weight: 500; line-height: 1.4; color: #b9aa7b; white-space: nowrap; }
+.side-tool > a:hover .side-access, .side-tool > a:focus-visible .side-access { color: var(--accent); }
+.side-access-detail { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 5; padding: 10px 12px; background: var(--bg-2); border: 1px solid var(--border-strong); border-radius: 3px; color: var(--text); font-size: 12px; font-weight: 400; line-height: 1.5; box-shadow: 0 4px 12px #0006; }
+.side-tool:hover .side-access-detail, .side-tool:focus-within .side-access-detail { display: block; }
+.side-tool > a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }

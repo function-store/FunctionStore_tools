@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and output
     anchor: inputs-and-output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -20,18 +18,3 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 
 - **in1** (TOP): the image to distort.
 - **out1** (TOP): the distorted image.
-
-## Parameters
-
-### Custom
-
-- **Center** (Float, two values): the point the rings are centred on.
-- **Phase** (Float): the position of the rings; animate it to make them travel.
-- **Frequency** (Float): how many rings across the image.
-- **Amplitude** (Float): how far the pixels are displaced.
-- **Mode** (Float): a blend between the distortion's two characters.
-- **Input Extend Mode Uv** (Menu): what a displaced sample returns past the image edge.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Callbacks
     anchor: callbacks
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -26,20 +24,3 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 - `OnRemoveBlock(seqBlock_idx)`: a block was removed; the index it had.
 
 Retargeting the tool to another COMP or sequence does not fire them. Errors raised inside a callback are reported on SeqMod itself.
-
-## Parameters
-
-### Custom
-
-- **COMP** (COMP): the component that owns the sequence.
-- **Seq Name** (Str): the sequence's name, the part before the block index.
-- **ParNames** (Str): read-only; the block parameter names as one space separated list, as patterns (`Items*name Items*level`).
-
-### Callbacks
-
-- **Callbacks** (DAT): the callbacks DAT.
-- **Create Callbacks** (Pulse): create it from the template.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

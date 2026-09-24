@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and outputs
     anchor: inputs-and-outputs
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -25,23 +23,3 @@ It is a member of the FNS operator family: pick it from the **FNS** tab of the O
 - **in3** (TOP): the colour texture to record.
 - **out_pointcloud** (TOP), **out_color** (TOP): the played-back textures.
 - **out2** (CHOP): the played-back channels.
-
-## Parameters
-
-### Record
-
-- **Texture File**, **Color Texture File** (File): the movies the two textures are written to.
-- **CHOP File** (File): where the channels are saved when recording stops; a name with no extension gets `.bclip`.
-- **Rec** (Toggle): record while on.
-
-### Play
-
-- **Texture File**, **Color Texture File**, **CHOP File** (File): the recordings to play back.
-- **Play Offset Frames** (Int): shift the playback against the timeline.
-- **Reload** (Pulse): reload the three files, and look again for a CHOP file that was missing.
-- **Sync Timeline** (Pulse): set the timeline's length to the recording's.
-- **Play** (Toggle): output the recordings. Off, and always while recording, the outputs pass the live inputs through.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

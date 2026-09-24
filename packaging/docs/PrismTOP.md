@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and output
     anchor: inputs-and-output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -20,29 +18,3 @@ It is the alternative for the Tile TOP and the Mirror TOP: create either with th
 
 - **in1** (TOP): the image to refract.
 - **out1** (TOP): the prism, mixed with the input by Dry/Wet.
-
-## Parameters
-
-### Custom
-
-- **Res** (Int, two values): the render resolution.
-- **Operation** (Menu): the composite operation that lays the facets over the original.
-- **Orig Opac** (Float) and **Orig Scale** (Float): the opacity and scale of the original image underneath the facets.
-- **Fit** (Menu): how the input fits the facets: Fill, Fit Horizontal, Fit Vertical, Fit Best, Fit Outside, Native Resolution.
-- **Translate** (Float, two values), **Scale** (Float), **Rotate** (Float): the transform of the facet layer.
-- **Sides** (Int): the polygon's number of sides.
-- **Softness** (Float): the soft edge of each facet.
-- **Rot Sin Amp**, **Rot Sin Phase** (Float): a sine swing added to the rotation.
-- **Dry/Wet** (Float): 0 is the input, 1 is the prism.
-
-### Patterns
-
-- **Pattern** (Sequence): up to three rings of facets, each with **Instances** (Int), **Radius**, **Instance Scale**, **Phase** and **Alpha** (Float).
-
-### Chroma
-
-- **Layers** (Int), **Chromatic** (Float), **Distortion** (Float): the chromatic distortion pass, how many colour layers it splits into and how far they spread.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.

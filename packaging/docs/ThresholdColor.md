@@ -6,8 +6,6 @@ features:
     anchor: what-it-is
   - name: Inputs and output
     anchor: inputs-and-output
-  - name: Parameters
-    anchor: parameters
 ---
 
 ## What it is
@@ -20,17 +18,3 @@ It is the alternative for the Threshold TOP: create a Threshold TOP with the alt
 
 - **in1** (TOP): the image to threshold.
 - **out1** (TOP): the image with only the passing pixels, in colour.
-
-## Parameters
-
-### Custom
-
-- **Comparator** (Menu): the test that removes a pixel: Less, Greater, Less or Equal, Greater or Equal, Equal, Not Equal. With Less, pixels whose tested value is below Threshold go black.
-- **RGB** (Menu): the value the test reads: Luminance, Red, Green, Blue, Alpha, RGB Average, RGBA Average, RGB Maximum, RGBA Maximum.
-- **Threshold** (Float): the value compared against.
-- **Alpha** (Menu): Same as RGB makes removed pixels transparent too; One keeps the alpha at 1.
-- **Soften** (Float): the width of the soft edge around the threshold; pixels near it fade to black instead of cutting hard.
-
-### About
-
-- **Package Version** (Str): the package version the FNS updater compares against the release manifest.
