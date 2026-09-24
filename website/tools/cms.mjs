@@ -389,6 +389,7 @@ function loadPackage(cat, name) {
     category: cat.packages[name].category,
     description: cat.packages[name].description || '',
     recommended: !!cat.packages[name].recommended,
+    nopick: cat.packages[name].nopick === true,
     // `access` is the ENTRY tier id, or absent for a free package.
     // Editable here now: the ladder supplies real named tiers, so nothing
     // is invented, and gate_package keeps the two files in step.
@@ -418,6 +419,7 @@ function state() {
         name: n, category: cat.packages[n].category,
         description: cat.packages[n].description || '',
         recommended: !!cat.packages[n].recommended,
+        nopick: cat.packages[n].nopick === true,
         access: String(cat.packages[n].access || ''),
         plus: Boolean(cat.packages[n].access) && cat.packages[n].access !== 'free',
         placement: String(cat.packages[n].placement || ''),
@@ -683,6 +685,7 @@ const server = http.createServer(async (req, res) => {
         const curatedKeys = ['author', 'source', 'alternatives_for', 'family', ...LINK_KEYS, ...FOREIGN_ONLY];
         if (typeof body.category === 'string' || typeof body.description === 'string'
             || typeof body.recommended === 'boolean'
+            || typeof body.nopick === 'boolean'
             || typeof body.placement === 'string'
             || curatedKeys.some((k) => body[k] !== undefined)) {
           const entry = cat.packages[name];
@@ -703,6 +706,17 @@ const server = http.createServer(async (req, res) => {
           if (typeof body.recommended === 'boolean') {
             if (body.recommended) entry.recommended = true;
             else delete entry.recommended;
+          }
+          // Explicit pick only: no bulk selection (Select all, Everything,
+          // Recommended, bundles, the questionnaire) ever ticks it. Stored
+          // as presence like `recommended`; the pair is refused, the same
+          // rule preflight enforces (build_manifest.CatalogProblems).
+          if (typeof body.nopick === 'boolean') {
+            if (body.nopick) entry.nopick = true;
+            else delete entry.nopick;
+          }
+          if (entry.nopick && entry.recommended) {
+            return json(res, 400, { error: 'an explicit-pick-only package cannot be Recommended: the Recommended set is a bulk selection' });
           }
           // Where the installer lands the package. Stored as presence:
           // the default (toolkit container) stays a two-line entry.

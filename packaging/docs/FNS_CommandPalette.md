@@ -101,6 +101,13 @@ their tier. Ctrl+H hides the selected command from the palette; the Commands
 tab shows it again. Alt+Up and Alt+Down cycle the queries you have run
 before.
 
+**Rank by usage.** Commands you run often rank higher, on by default. The
+lift fades over a couple of weeks of not using a command, and it only breaks
+ties between similar matches: a better match or a starred row still wins.
+Runs from the TDXLU launcher's quick launch count too. Turn it off with
+**Rank By Usage** on the tool's Palette page; your runs are still recorded,
+so turning it back on picks up where you left off.
+
 **Presets.** Alt+S saves the selected command under a name of your own. Press
 it in the middle of a parameter walk and the values entered so far are baked
 in, the rest taking their defaults, so `Set volume` with `level=0.5` becomes a
@@ -121,7 +128,9 @@ The palette contributes a **Commands** tab to [Hub](/docs/fns-hub/):
 every registered command, hidden ones included, with its tool and context.
 Click **Star** to star it and **Hidden** to hide or show it; your choice
 beats the tool's own default in both directions. A filter field narrows the
-list, Refresh rebuilds it, and Open palette does what the hotkey does.
+list, Refresh rebuilds it, and Open palette does what the hotkey does. Clear
+usage forgets the palette's run history; the launcher's history still counts
+until you clear it there.
 TouchDesigner's built-in commands show `built-in` in their Context cell.
 
 ## Hotkey and persistence

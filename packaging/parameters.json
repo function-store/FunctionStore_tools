@@ -1,8 +1,2670 @@
 {
  "schema": 1,
- "release": "v3.2.50",
+ "release": "v3.2.52",
  "td_build": "2025.33070",
  "packages": {
+  "ChopBank": [
+   {
+    "name": "Scope",
+    "label": "In Scope",
+    "style": "Str",
+    "help": "Which input channels the bank takes, as a pattern like fader* . Only asked when the input has more than one channel.",
+    "default": "*",
+    "readonly": true,
+    "page": "Bank"
+   },
+   {
+    "name": "Mastergainpre",
+    "label": "Gain Pre",
+    "style": "Float",
+    "help": "Gain on every input channel before the bank processes it.",
+    "default": 1.0,
+    "page": "Bank"
+   },
+   {
+    "name": "Mastergainpost",
+    "label": "Gain Post",
+    "style": "Float",
+    "help": "Gain on every output channel after the bank.",
+    "default": 1.0,
+    "page": "Bank"
+   },
+   {
+    "name": "Snapinput",
+    "label": "Snap Input",
+    "style": "Pulse",
+    "help": "Rebuild the bank from the input: one block per channel, named after it and holding its current value.",
+    "page": "Bank"
+   },
+   {
+    "name": "Bank",
+    "label": "Bank",
+    "style": "Sequence",
+    "help": "One block per channel. Add a block to process one more channel.",
+    "default": 0,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0name",
+    "label": "Name",
+    "style": "Str",
+    "help": "The input channel this block processes, and its output name. Empty takes the channel at this block's position. A name the input does not have makes a new channel from Value.",
+    "default": "",
+    "section": true,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0value",
+    "label": "Value",
+    "style": "Float",
+    "help": "The value this block outputs while no input channel matches it.",
+    "default": 0.0,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0math",
+    "label": "Math",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0type",
+    "label": "Type",
+    "style": "Menu",
+    "help": "What happens outside the From Range: off lets values through, clamp holds them at the ends, loop wraps them round, zigzag bounces them back.",
+    "default": "off",
+    "section": true,
+    "menu": [
+     {
+      "name": "off",
+      "label": "Off"
+     },
+     {
+      "name": "clamp",
+      "label": "Clamp"
+     },
+     {
+      "name": "loop",
+      "label": "Loop"
+     },
+     {
+      "name": "zigzag",
+      "label": "Zigzag"
+     }
+    ],
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0fromrange",
+    "label": "From Range",
+    "style": "Float",
+    "help": "The input range. With Type set to clamp, loop or zigzag this is also the limit.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0torange",
+    "label": "To Range",
+    "style": "Float",
+    "help": "The output range the From Range maps onto.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0zerobelow",
+    "label": "Zero Below",
+    "style": "Toggle",
+    "help": "Output 0 while the input sits at the bottom of the From Range, instead of the bottom of the To Range. Only with Type set to clamp.",
+    "default": false,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0expval",
+    "label": "Exponent Value",
+    "style": "Float",
+    "help": "Exponent for the curve between the ranges: 1 is linear, above 1 eases in, below 1 eases out.",
+    "default": 1.0,
+    "section": true,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0lag",
+    "label": "Lag",
+    "style": "Float",
+    "help": "Seconds to glide up and down toward a new value.",
+    "size": 2,
+    "default": 0.0,
+    "section": true,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0speed1",
+    "label": "Speed",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0isspeed",
+    "label": "Is Speed",
+    "style": "Toggle",
+    "help": "Treat the processed value as a speed and output its running total instead, so a held input keeps moving.",
+    "default": false,
+    "section": true,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0limittype",
+    "label": "Limit Type",
+    "style": "Menu",
+    "help": "What happens when the running total leaves Minimum and Maximum.",
+    "default": "off",
+    "menu": [
+     {
+      "name": "off",
+      "label": "Off"
+     },
+     {
+      "name": "clamp",
+      "label": "Clamp"
+     },
+     {
+      "name": "loop",
+      "label": "Loop"
+     },
+     {
+      "name": "zigzag",
+      "label": "Zigzag"
+     }
+    ],
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0min",
+    "label": "Minimum",
+    "style": "Float",
+    "help": "Lower limit for the running total.",
+    "default": 0.0,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0max",
+    "label": "Maximum",
+    "style": "Float",
+    "help": "Upper limit for the running total.",
+    "default": 1.0,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0resetvalue",
+    "label": "Reset Value",
+    "style": "Float",
+    "help": "The value the running total returns to on reset.",
+    "default": 0.0,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0reset",
+    "label": "Reset",
+    "style": "Toggle",
+    "help": "Hold the running total at the Reset Value while on.",
+    "default": false,
+    "page": "Bank"
+   },
+   {
+    "name": "Bank0resetpulse",
+    "label": "Reset Pulse",
+    "style": "Pulse",
+    "help": "Return the running total to the Reset Value once.",
+    "page": "Bank"
+   },
+   {
+    "name": "Promote",
+    "label": "Promote to Property",
+    "style": "Toggle",
+    "help": "Expose each block as a property on this COMP, named after the block, that reads and sets its Value.",
+    "default": true,
+    "page": "Common"
+   },
+   {
+    "name": "Header",
+    "label": "To get/set values as .{prefix}{name}",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Common"
+   },
+   {
+    "name": "Prefix",
+    "label": "Property Prefix",
+    "style": "Str",
+    "help": "Put in front of every property name, to keep them clear of other names on the COMP.",
+    "default": "C_",
+    "page": "Common"
+   },
+   {
+    "name": "Author",
+    "label": "Author: Function Store (@function.str)",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Common"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this tool's page on the FNS docs site.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "The package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ChopProcess": [
+   {
+    "name": "Value",
+    "label": "Value",
+    "style": "Float",
+    "help": "The value to process when nothing is wired into the input.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Name",
+    "label": "Name",
+    "style": "Str",
+    "help": "Rename the output channels: names separated by spaces, one per channel, or a pattern like chan[1-4]. Empty keeps the input's names.",
+    "default": "",
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Type",
+    "label": "Type",
+    "style": "Menu",
+    "help": "What happens outside the From Range: off lets values through, clamp holds them at the ends, loop wraps them round, zigzag bounces them back.",
+    "default": "off",
+    "section": true,
+    "menu": [
+     {
+      "name": "off",
+      "label": "Off"
+     },
+     {
+      "name": "clamp",
+      "label": "Clamp"
+     },
+     {
+      "name": "loop",
+      "label": "Loop"
+     },
+     {
+      "name": "zigzag",
+      "label": "Zigzag"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Fromrange",
+    "label": "From Range",
+    "style": "Float",
+    "help": "The input range. With Type set to clamp, loop or zigzag this is also the limit.",
+    "size": 2,
+    "default": -1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Torange",
+    "label": "To Range",
+    "style": "Float",
+    "help": "The output range the From Range maps onto.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Zerobelow",
+    "label": "Zero Below",
+    "style": "Toggle",
+    "help": "Output 0 while the input sits at the bottom of the From Range, instead of the bottom of the To Range. Only with Type set to clamp.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Expval",
+    "label": "Exponent Value",
+    "style": "Float",
+    "help": "Exponent for the curve between the ranges: 1 is linear, above 1 eases in, below 1 eases out.",
+    "default": 2.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Lag",
+    "label": "Lag",
+    "style": "Float",
+    "help": "Seconds to glide up and down toward a new value.",
+    "size": 2,
+    "default": 0.2,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Speed",
+    "label": "Speed",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Isspeed",
+    "label": "Is Speed",
+    "style": "Toggle",
+    "help": "Treat the processed value as a speed and output its running total instead, so a held input keeps moving.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Limittype",
+    "label": "Limit Type",
+    "style": "Menu",
+    "help": "What happens when the running total leaves Minimum and Maximum.",
+    "default": "off",
+    "menu": [
+     {
+      "name": "off",
+      "label": "Off"
+     },
+     {
+      "name": "clamp",
+      "label": "Clamp"
+     },
+     {
+      "name": "loop",
+      "label": "Loop"
+     },
+     {
+      "name": "zigzag",
+      "label": "Zigzag"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Min",
+    "label": "Minimum",
+    "style": "Float",
+    "help": "Lower limit for the running total.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Max",
+    "label": "Maximum",
+    "style": "Float",
+    "help": "Upper limit for the running total.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Resetvalue",
+    "label": "Reset Value",
+    "style": "Float",
+    "help": "The value the running total returns to on reset.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Reset",
+    "label": "Reset",
+    "style": "Toggle",
+    "help": "Hold the running total at the Reset Value while on.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Resetpulse",
+    "label": "Reset Pulse",
+    "style": "Pulse",
+    "help": "Return the running total to the Reset Value once.",
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Who made this tool.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this tool's page on the FNS docs site.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "The package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "CircularDistortionTOP": [
+   {
+    "name": "Center",
+    "label": "Center",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 0.5,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Phase",
+    "label": "Phase",
+    "style": "Float",
+    "help": "",
+    "default": 0.5,
+    "page": "Custom"
+   },
+   {
+    "name": "Frequency",
+    "label": "Frequency",
+    "style": "Float",
+    "help": "",
+    "default": 0.5,
+    "page": "Custom"
+   },
+   {
+    "name": "Amplitude",
+    "label": "Amplitude",
+    "style": "Float",
+    "help": "",
+    "default": 0.5,
+    "page": "Custom"
+   },
+   {
+    "name": "Mode",
+    "label": "Mode",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Inputextenduv",
+    "label": "Input Extend Mode Uv",
+    "style": "Menu",
+    "help": "",
+    "default": "mirror",
+    "menu": [
+     {
+      "name": "hold",
+      "label": "Hold"
+     },
+     {
+      "name": "zero",
+      "label": "Zero"
+     },
+     {
+      "name": "repeat",
+      "label": "Repeat"
+     },
+     {
+      "name": "mirror",
+      "label": "Mirror"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Openauthor",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ColorGen": [
+   {
+    "name": "Length",
+    "label": "Length",
+    "style": "Int",
+    "help": "Number of colours in the palette: the width in pixels of out_col, and of the fallback ramp that feeds the lookup when nothing is connected to the input.",
+    "default": 255,
+    "page": "Custom"
+   },
+   {
+    "name": "Phasestep",
+    "label": "Phase Step per Channel",
+    "style": "Float",
+    "help": "Phase offset between the R, G and B curves: R stays put, B is shifted by twice this many palette cycles, G by a share of that set by Exponent Shift. 0 keeps the channels in step (greys).",
+    "default": 0.101,
+    "page": "Custom"
+   },
+   {
+    "name": "Phase",
+    "label": "Phase",
+    "style": "Float",
+    "help": "Scrolls all three curves along the palette. 1 is one full cycle and lands back where it started; 0.5 mirrors the palette. Animate it to cycle the colours.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Expval",
+    "label": "Exponent Shift",
+    "style": "Float",
+    "help": "Exponent that places G's phase between R and B: 1 puts it halfway, higher values move it toward R, values below 1 toward B.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Expval1",
+    "label": "Exponent R",
+    "style": "Float",
+    "help": "Exponent shaping the red curve along the palette: 1 is linear, higher values keep the channel dark for longer, below 1 brightens it early.",
+    "default": 1.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Expval2",
+    "label": "Exponent G",
+    "style": "Float",
+    "help": "Exponent shaping the green curve along the palette: 1 is linear, higher values keep the channel dark for longer, below 1 brightens it early.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Expval3",
+    "label": "Exponent B",
+    "style": "Float",
+    "help": "Exponent shaping the blue curve along the palette: 1 is linear, higher values keep the channel dark for longer, below 1 brightens it early.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Package author.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this package's documentation page in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ColorGenPro": [
+   {
+    "name": "Length",
+    "label": "Length",
+    "style": "Int",
+    "help": "Number of colours in the palette (the width of out_col). Blackout with Reductive at 0 adds its share on top of this.",
+    "default": 256,
+    "page": "Custom"
+   },
+   {
+    "name": "Inputfiltertype",
+    "label": "Input Smoothness",
+    "style": "Menu",
+    "help": "Sampling filter the lookup uses on the input image: Nearest picks exact palette entries, Linear blends between neighbours.",
+    "default": "linear",
+    "menu": [
+     {
+      "name": "nearest",
+      "label": "Nearest Pixel"
+     },
+     {
+      "name": "linear",
+      "label": "Interpolate Pixels"
+     },
+     {
+      "name": "mipmap",
+      "label": "Mipmap Pixels"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Blackout",
+    "label": "Blackout",
+    "style": "Float",
+    "help": "Share of the palette (0 to 1) that fades to black at its start. Reductive decides whether that share is added to the length or taken from the colours; above 0 it enables the Soften parameters.",
+    "default": 0.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Lensubtract",
+    "label": "Reductive",
+    "style": "Float",
+    "help": "How Blackout makes room: 0 extends the palette by the blackout share, 1 keeps Length and takes the blackout from the colours.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Blacksoften",
+    "label": "Soften Black",
+    "style": "Float",
+    "help": "Width of the fade from black into the palette, as a share of the blackout region. 0 is a hard edge, 1 fades across the whole region.",
+    "default": 0.5,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Softenexponent",
+    "label": "Soften Exponent",
+    "style": "Float",
+    "help": "Curve of the black fade: 1 is linear, higher values stay dark longer, below 1 brighten early.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Softenextend",
+    "label": "Soften Extend",
+    "style": "Menu",
+    "help": "What the palette does inside the blackout region under the fade: Mirror reflects it, Zero/Hold holds the first colour, Repeat continues the cycle backwards.",
+    "default": "Zero",
+    "menu": [
+     {
+      "name": "Mirror",
+      "label": "Mirror"
+     },
+     {
+      "name": "Zero",
+      "label": "Zero/Hold"
+     },
+     {
+      "name": "Repeat",
+      "label": "Repeat"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Header",
+    "label": "pow(a + b*cos( 2PI * (c*t+d) ), e)",
+    "style": "Header",
+    "help": "The cosine palette formula each channel follows; t runs 0 to 1 along the palette.",
+    "default": "",
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "A",
+    "label": "a (Offset)",
+    "style": "Float",
+    "help": "a (Offset) for red, green, blue: the base brightness the cosine swings around.",
+    "size": 3,
+    "default": 0.5,
+    "page": "Custom"
+   },
+   {
+    "name": "B",
+    "label": "b (Amplitude)",
+    "style": "Float",
+    "help": "b (Amplitude) for red, green, blue: how far the cosine swings above and below a. Values above a clip to black at the troughs.",
+    "size": 3,
+    "default": 0.5,
+    "page": "Custom"
+   },
+   {
+    "name": "C",
+    "label": "c (Period)",
+    "style": "Float",
+    "help": "c (Period) for red, green, blue: how many colour cycles fit along the palette.",
+    "size": 3,
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "D",
+    "label": "d (Phase)",
+    "style": "Float",
+    "help": "d (Phase) for red, green, blue: shifts each channel's cycle; offsetting the three is what makes hues. Driven by Offset, Amplitude and Exponent while RGBD Mode is on.",
+    "size": 3,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "E",
+    "label": "e (Exponent)",
+    "style": "Float",
+    "help": "e (Exponent) for red, green, blue: gamma on each channel; above 1 deepens, below 1 lifts.",
+    "size": 3,
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Rgbdmode",
+    "label": "RGBD Mode",
+    "style": "Toggle",
+    "help": "Drive the three d (Phase) values from Offset, Amplitude and Exponent instead of setting them by hand. Switching it on restores the shipped coefficients first.",
+    "default": false,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Offset",
+    "label": "Offset",
+    "style": "Float",
+    "help": "RGBD Mode: phase of the red channel; green and blue follow from it.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Amplitude",
+    "label": "Amplitude",
+    "style": "Float",
+    "help": "RGBD Mode: phase spread from red to blue. 0 puts all three channels in phase (greys).",
+    "default": 0.2,
+    "page": "Custom"
+   },
+   {
+    "name": "Exponent",
+    "label": "Exponent",
+    "style": "Float",
+    "help": "RGBD Mode: where green sits between red and blue in the spread: 1 halfway, higher values toward red.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Default",
+    "label": "Default",
+    "style": "Pulse",
+    "help": "Restore the shipped coefficients (a, b, c, d, e) and the RGBD Offset, Amplitude and Exponent. Parameters driven by an expression are left alone.",
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Package author.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this package's documentation page in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ComplexMix": [
+   {
+    "name": "Operation",
+    "label": "Operation",
+    "style": "Menu",
+    "help": "How the two complex operands (input 2 = Op1, input 3 = Op2, read from their red/green channels) combine: either one alone, or complex add, subtract, multiply, divide or power.",
+    "default": "Add",
+    "section": true,
+    "menu": [
+     {
+      "name": "Op1",
+      "label": "Op1"
+     },
+     {
+      "name": "Op2",
+      "label": "Op2"
+     },
+     {
+      "name": "Add",
+      "label": "Add"
+     },
+     {
+      "name": "Subtract",
+      "label": "Subtract"
+     },
+     {
+      "name": "Multiply",
+      "label": "Multiply"
+     },
+     {
+      "name": "Divide",
+      "label": "Divide"
+     },
+     {
+      "name": "Power1**2",
+      "label": "Power1**2"
+     },
+     {
+      "name": "Power2**1",
+      "label": "Power2**1"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Weighting",
+    "label": "Weighting",
+    "style": "Toggle",
+    "help": "Scales Op1 by (1 - Fn Weight) and Op2 by Fn Weight before they combine. Not used by Op1 only / Op2 only.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Fnweight",
+    "label": "Fn Weight",
+    "style": "Float",
+    "help": "Balance between the operands when Weighting is on: 0 is all Op1, 1 is all Op2.",
+    "default": 0.5,
+    "page": "Custom"
+   },
+   {
+    "name": "Aspect",
+    "label": "Aspect",
+    "style": "Toggle",
+    "help": "Applies the transform in aspect-corrected space so rotation and scale stay round on non-square outputs.",
+    "default": false,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Xord",
+    "label": "Transform Order",
+    "style": "Menu",
+    "help": "Order in which the transform applies scale, rotate and translate to the combined coordinates.",
+    "default": "srt",
+    "section": true,
+    "menu": [
+     {
+      "name": "srt",
+      "label": "Scale Rotate Translate"
+     },
+     {
+      "name": "str",
+      "label": "Scale Translate Rotate"
+     },
+     {
+      "name": "rst",
+      "label": "Rotate Scale Translate"
+     },
+     {
+      "name": "rts",
+      "label": "Rotate Translate Scale"
+     },
+     {
+      "name": "tsr",
+      "label": "Translate Scale Rotate"
+     },
+     {
+      "name": "trs",
+      "label": "Translate Rotate Scale"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Mixtrans",
+    "label": "Trans",
+    "style": "Float",
+    "help": "Moves the combined coordinates along x and y.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Rot",
+    "label": "Rot",
+    "style": "Float",
+    "help": "Rotates the combined coordinates by this many degrees around the pivot.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Mixscale",
+    "label": "Scale",
+    "style": "Float",
+    "help": "Scales the combined coordinates along x and y; larger values zoom in.",
+    "size": 2,
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Pivot",
+    "label": "Pivot",
+    "style": "Float",
+    "help": "Pivot (x, y): the point that rotation and scale happen around.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Mode",
+    "label": "Extend",
+    "style": "Menu",
+    "help": "How input 1 is sampled where the coordinates leave 0..1: Hold the edge pixels, Zero (transparent black), Repeat the image, or Mirror it.",
+    "default": "Mirror",
+    "section": true,
+    "menu": [
+     {
+      "name": "Hold",
+      "label": "Hold"
+     },
+     {
+      "name": "Zero",
+      "label": "Zero"
+     },
+     {
+      "name": "Repeat",
+      "label": "Repeat"
+     },
+     {
+      "name": "Mirror",
+      "label": "Mirror"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Blend",
+    "label": "Blend",
+    "style": "Float",
+    "help": "Mix between plain screen coordinates (0, input 1 unchanged) and the combined, transformed coordinates (1).",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Resolution",
+    "label": "Resolution",
+    "style": "Int",
+    "help": "Width and height of the built-in UV map used when nothing is wired into input 1. Disabled while input 1 is connected; the output then takes its resolution.",
+    "size": 2,
+    "default": 1280,
+    "readonly": true,
+    "page": "Common"
+   },
+   {
+    "name": "Inputfiltertype",
+    "label": "Input Smoothness",
+    "style": "Menu",
+    "help": "Filtering used when sampling the inputs.",
+    "default": "linear",
+    "menu": [
+     {
+      "name": "nearest",
+      "label": "Nearest Pixel"
+     },
+     {
+      "name": "linear",
+      "label": "Interpolate Pixels"
+     },
+     {
+      "name": "mipmap",
+      "label": "Mipmap Pixels"
+     }
+    ],
+    "page": "Common"
+   },
+   {
+    "name": "Filtertype",
+    "label": "Viewer Smoothness",
+    "style": "Menu",
+    "help": "Filtering used when the output is displayed at another resolution.",
+    "default": "linear",
+    "menu": [
+     {
+      "name": "useinput",
+      "label": "Use Input"
+     },
+     {
+      "name": "nearest",
+      "label": "Nearest Pixel"
+     },
+     {
+      "name": "linear",
+      "label": "Interpolate Pixels"
+     },
+     {
+      "name": "mipmap",
+      "label": "Mipmap Pixels"
+     }
+    ],
+    "page": "Common"
+   },
+   {
+    "name": "Format",
+    "label": "Pixel Format",
+    "style": "Menu",
+    "help": "Pixel format of the outputs. Keep a float format when the UV output feeds another Complex tool or a Remap, or the coordinates are quantised.",
+    "default": "useinput",
+    "menu": [
+     {
+      "name": "useinput",
+      "label": "Use Input"
+     },
+     {
+      "name": "rgba8fixed",
+      "label": "8-bit fixed (RGBA)"
+     },
+     {
+      "name": "rgba16float",
+      "label": "16-bit float (RGBA)"
+     },
+     {
+      "name": "rgba32float",
+      "label": "32-bit float (RGBA)"
+     },
+     {
+      "name": "rgb10a2fixed",
+      "label": "10-bit RGB, 2-bit Alpha fixed (RGBA)"
+     },
+     {
+      "name": "rgba16fixed",
+      "label": "16-bit fixed (RGBA)"
+     },
+     {
+      "name": "rgba11float",
+      "label": "11-bit float (RGB), Positive Values Only"
+     },
+     {
+      "name": "mono8fixed",
+      "label": "8-bit fixed (Mono)"
+     },
+     {
+      "name": "mono16fixed",
+      "label": "16-bit fixed (Mono)"
+     },
+     {
+      "name": "mono16float",
+      "label": "16-bit float (Mono)"
+     },
+     {
+      "name": "mono32float",
+      "label": "32-bit float (Mono)"
+     },
+     {
+      "name": "rg8fixed",
+      "label": "8-bit fixed (RG)"
+     },
+     {
+      "name": "rg16fixed",
+      "label": "16-bit fixed (RG)"
+     },
+     {
+      "name": "rg16float",
+      "label": "16-bit float (RG)"
+     },
+     {
+      "name": "rg32float",
+      "label": "32-bit float (RG)"
+     },
+     {
+      "name": "a8fixed",
+      "label": "8-bit fixed (A)"
+     },
+     {
+      "name": "a16fixed",
+      "label": "16-bit fixed (A)"
+     },
+     {
+      "name": "a16float",
+      "label": "16-bit float (A)"
+     },
+     {
+      "name": "a32float",
+      "label": "32-bit float (A)"
+     },
+     {
+      "name": "monoalpha8fixed",
+      "label": "8-bit fixed (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha16fixed",
+      "label": "16-bit fixed (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha16float",
+      "label": "16-bit float (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha32float",
+      "label": "32-bit float (Mono+Alpha)"
+     }
+    ],
+    "page": "Common"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ComplexOp": [
+   {
+    "name": "Uv",
+    "label": "Operand/Map",
+    "style": "Toggle",
+    "help": "On: the input is an image, warped through the function over a screen-space complex plane (Center/Aspect apply). Off: the input red/green channels ARE the complex operand, for chaining the UV output of another Complex Op.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Op",
+    "label": "Op",
+    "style": "Menu",
+    "help": "The complex function applied to z. None passes z through, so only the transforms and Extend act.",
+    "default": "none",
+    "section": true,
+    "menu": [
+     {
+      "name": "none",
+      "label": "none"
+     },
+     {
+      "name": "csqr",
+      "label": "csqr"
+     },
+     {
+      "name": "csqrt",
+      "label": "csqrt"
+     },
+     {
+      "name": "cexp",
+      "label": "cexp"
+     },
+     {
+      "name": "clog",
+      "label": "clog"
+     },
+     {
+      "name": "cinv",
+      "label": "cinv"
+     },
+     {
+      "name": "cabs2",
+      "label": "cabs2"
+     },
+     {
+      "name": "cconj",
+      "label": "cconj"
+     },
+     {
+      "name": "csin",
+      "label": "csin"
+     },
+     {
+      "name": "ccos",
+      "label": "ccos"
+     },
+     {
+      "name": "ctan",
+      "label": "ctan"
+     },
+     {
+      "name": "ccot",
+      "label": "ccot"
+     },
+     {
+      "name": "csinh",
+      "label": "csinh"
+     },
+     {
+      "name": "ccosh",
+      "label": "ccosh"
+     },
+     {
+      "name": "ctanh",
+      "label": "ctanh"
+     },
+     {
+      "name": "ccoth",
+      "label": "ccoth"
+     },
+     {
+      "name": "casin",
+      "label": "casin"
+     },
+     {
+      "name": "cacos",
+      "label": "cacos"
+     },
+     {
+      "name": "catan",
+      "label": "catan"
+     },
+     {
+      "name": "cacot",
+      "label": "cacot"
+     },
+     {
+      "name": "casinh",
+      "label": "casinh"
+     },
+     {
+      "name": "cacosh",
+      "label": "cacosh"
+     },
+     {
+      "name": "catanh",
+      "label": "catanh"
+     },
+     {
+      "name": "cacoth",
+      "label": "cacoth"
+     },
+     {
+      "name": "cpolar",
+      "label": "cpolar"
+     },
+     {
+      "name": "cpow",
+      "label": "cpow"
+     },
+     {
+      "name": "cconst",
+      "label": "cconst"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Power",
+    "label": "Power",
+    "style": "Float",
+    "help": "Base of the logarithm for Logarithm, or the exponent n for Power (z^n). Enabled only for those two functions.",
+    "default": 2.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Const",
+    "label": "Const",
+    "style": "Float",
+    "help": "Real and imaginary part of the constant returned by the Constant function (enabled only for Constant).",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Opiter",
+    "label": "Op Iter",
+    "style": "Int",
+    "help": "How many times the function is applied in a row (1-64). Higher values fold the image further; Boundary can stop the iteration early.",
+    "default": 1,
+    "page": "Custom"
+   },
+   {
+    "name": "Center",
+    "label": "Center UV",
+    "style": "Toggle",
+    "help": "Map mode only. Puts the complex origin at the image centre (z runs -1..1) instead of the bottom-left corner (0..1). With Op None the result is the image tiled by the Extend mode.",
+    "default": false,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Aspect",
+    "label": "Aspect",
+    "style": "Toggle",
+    "help": "Map mode only. Scales the complex plane by the image aspect so circles stay round on non-square images.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Xord",
+    "label": "Transform Order",
+    "style": "Menu",
+    "help": "Order in which the pre transform applies scale, rotate and translate to z before the function.",
+    "default": "srt",
+    "section": true,
+    "menu": [
+     {
+      "name": "srt",
+      "label": "Scale Rotate Translate"
+     },
+     {
+      "name": "str",
+      "label": "Scale Translate Rotate"
+     },
+     {
+      "name": "rst",
+      "label": "Rotate Scale Translate"
+     },
+     {
+      "name": "rts",
+      "label": "Rotate Translate Scale"
+     },
+     {
+      "name": "tsr",
+      "label": "Translate Scale Rotate"
+     },
+     {
+      "name": "trs",
+      "label": "Translate Rotate Scale"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Optrans",
+    "label": "Trans",
+    "style": "Float",
+    "help": "Pre transform: moves z along x and y before the function.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Rot",
+    "label": "Rot",
+    "style": "Float",
+    "help": "Pre transform: rotates z by this many degrees before the function.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Opscale",
+    "label": "Scale",
+    "style": "Float",
+    "help": "Pre transform: scales z along x and y before the function.",
+    "size": 2,
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Pivot",
+    "label": "Pivot",
+    "style": "Float",
+    "help": "Pre transform pivot (x, y): the point that rotation and scale happen around.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Xord2",
+    "label": "Post Transform Order",
+    "style": "Menu",
+    "help": "Order in which the post transform applies scale, rotate and translate to the result of the function.",
+    "default": "srt",
+    "section": true,
+    "menu": [
+     {
+      "name": "srt",
+      "label": "Scale Rotate Translate"
+     },
+     {
+      "name": "str",
+      "label": "Scale Translate Rotate"
+     },
+     {
+      "name": "rst",
+      "label": "Rotate Scale Translate"
+     },
+     {
+      "name": "rts",
+      "label": "Rotate Translate Scale"
+     },
+     {
+      "name": "tsr",
+      "label": "Translate Scale Rotate"
+     },
+     {
+      "name": "trs",
+      "label": "Translate Rotate Scale"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Posttrans",
+    "label": "Post Trans",
+    "style": "Float",
+    "help": "Post transform: moves the result along x and y after the function.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Postrot",
+    "label": "Post Rot",
+    "style": "Float",
+    "help": "Post transform: rotates the result by this many degrees after the function.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Postscale",
+    "label": "Post Scale",
+    "style": "Float",
+    "help": "Post transform: scales the result along x and y after the function.",
+    "size": 2,
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Postpivot",
+    "label": "Post Pivot",
+    "style": "Float",
+    "help": "Post transform pivot (x, y): the point that rotation and scale happen around.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Boundary",
+    "label": "Boundary",
+    "style": "Float",
+    "help": "Escape radius: iteration stops once |z| exceeds this value, keeping the last value inside. 0 disables the test.",
+    "default": 0.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Borders",
+    "label": "Borders",
+    "style": "Float",
+    "help": "Start of the soft edge for the borders output (third output), which shows the mapped image only near the edges of each repeated tile: 0.5 is the tile centre, 1 the tile edge.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Mode",
+    "label": "Extend",
+    "style": "Menu",
+    "help": "How the image is sampled where the warped coordinates leave 0..1: Hold the edge pixels, Zero (transparent black), Repeat the image, or Mirror it.",
+    "default": "Mirror",
+    "section": true,
+    "menu": [
+     {
+      "name": "Hold",
+      "label": "Hold"
+     },
+     {
+      "name": "Zero",
+      "label": "Zero"
+     },
+     {
+      "name": "Repeat",
+      "label": "Repeat"
+     },
+     {
+      "name": "Mirror",
+      "label": "Mirror"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Blend",
+    "label": "Blend",
+    "style": "Float",
+    "help": "Mix between the unwarped coordinates (0) and the warped ones (1).",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Resolution",
+    "label": "Resolution",
+    "style": "Int",
+    "help": "Width and height of the built-in UV map used when nothing is wired into the input. Disabled while an input is connected; the output then takes the input resolution.",
+    "size": 2,
+    "default": 1280,
+    "page": "Common"
+   },
+   {
+    "name": "Inputfiltertype",
+    "label": "Input Smoothness",
+    "style": "Menu",
+    "help": "Filtering used when sampling the input image.",
+    "default": "linear",
+    "section": true,
+    "menu": [
+     {
+      "name": "nearest",
+      "label": "Nearest Pixel"
+     },
+     {
+      "name": "linear",
+      "label": "Interpolate Pixels"
+     },
+     {
+      "name": "mipmap",
+      "label": "Mipmap Pixels"
+     }
+    ],
+    "page": "Common"
+   },
+   {
+    "name": "Filtertype",
+    "label": "Viewer Smoothness",
+    "style": "Menu",
+    "help": "Filtering used when the output is displayed at another resolution.",
+    "default": "linear",
+    "menu": [
+     {
+      "name": "useinput",
+      "label": "Use Input"
+     },
+     {
+      "name": "nearest",
+      "label": "Nearest Pixel"
+     },
+     {
+      "name": "linear",
+      "label": "Interpolate Pixels"
+     },
+     {
+      "name": "mipmap",
+      "label": "Mipmap Pixels"
+     }
+    ],
+    "page": "Common"
+   },
+   {
+    "name": "Format",
+    "label": "Pixel Format",
+    "style": "Menu",
+    "help": "Pixel format of the outputs. Keep a float format when the UV output feeds another Complex Op or a Remap, or the coordinates are quantised.",
+    "default": "useinput",
+    "menu": [
+     {
+      "name": "useinput",
+      "label": "Use Input"
+     },
+     {
+      "name": "rgba8fixed",
+      "label": "8-bit fixed (RGBA)"
+     },
+     {
+      "name": "rgba16float",
+      "label": "16-bit float (RGBA)"
+     },
+     {
+      "name": "rgba32float",
+      "label": "32-bit float (RGBA)"
+     },
+     {
+      "name": "rgb10a2fixed",
+      "label": "10-bit RGB, 2-bit Alpha fixed (RGBA)"
+     },
+     {
+      "name": "rgba16fixed",
+      "label": "16-bit fixed (RGBA)"
+     },
+     {
+      "name": "rgba11float",
+      "label": "11-bit float (RGB), Positive Values Only"
+     },
+     {
+      "name": "mono8fixed",
+      "label": "8-bit fixed (Mono)"
+     },
+     {
+      "name": "mono16fixed",
+      "label": "16-bit fixed (Mono)"
+     },
+     {
+      "name": "mono16float",
+      "label": "16-bit float (Mono)"
+     },
+     {
+      "name": "mono32float",
+      "label": "32-bit float (Mono)"
+     },
+     {
+      "name": "rg8fixed",
+      "label": "8-bit fixed (RG)"
+     },
+     {
+      "name": "rg16fixed",
+      "label": "16-bit fixed (RG)"
+     },
+     {
+      "name": "rg16float",
+      "label": "16-bit float (RG)"
+     },
+     {
+      "name": "rg32float",
+      "label": "32-bit float (RG)"
+     },
+     {
+      "name": "a8fixed",
+      "label": "8-bit fixed (A)"
+     },
+     {
+      "name": "a16fixed",
+      "label": "16-bit fixed (A)"
+     },
+     {
+      "name": "a16float",
+      "label": "16-bit float (A)"
+     },
+     {
+      "name": "a32float",
+      "label": "32-bit float (A)"
+     },
+     {
+      "name": "monoalpha8fixed",
+      "label": "8-bit fixed (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha16fixed",
+      "label": "16-bit fixed (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha16float",
+      "label": "16-bit float (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha32float",
+      "label": "32-bit float (Mono+Alpha)"
+     }
+    ],
+    "page": "Common"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ConstantCHOP": [
+   {
+    "name": "Type",
+    "label": "Type",
+    "style": "Menu",
+    "help": "The kind of value every constant holds. Numbers, toggles and tuples come out of the CHOP output; text, paths and operator references come out of the DAT output. Switching keeps each value where it converts.",
+    "default": "Float",
+    "menu": [
+     {
+      "name": "Float",
+      "label": "Float"
+     },
+     {
+      "name": "Int",
+      "label": "Int"
+     },
+     {
+      "name": "Toggle",
+      "label": "Toggle"
+     },
+     {
+      "name": "Momentary",
+      "label": "Momentary"
+     },
+     {
+      "name": "XYZW",
+      "label": "XYZW"
+     },
+     {
+      "name": "RGBA",
+      "label": "RGBA"
+     },
+     {
+      "name": "UVW",
+      "label": "UVW"
+     },
+     {
+      "name": "WH",
+      "label": "WH"
+     },
+     {
+      "name": "Str",
+      "label": "Str"
+     },
+     {
+      "name": "StrMenu",
+      "label": "Str Menu"
+     },
+     {
+      "name": "File",
+      "label": "File"
+     },
+     {
+      "name": "FileSave",
+      "label": "File Save"
+     },
+     {
+      "name": "Folder",
+      "label": "Folder"
+     },
+     {
+      "name": "Python",
+      "label": "Python"
+     },
+     {
+      "name": "Object",
+      "label": "Object"
+     },
+     {
+      "name": "OP",
+      "label": "OP"
+     },
+     {
+      "name": "COMP",
+      "label": "COMP"
+     },
+     {
+      "name": "PanelCOMP",
+      "label": "Panel COMP"
+     },
+     {
+      "name": "TOP",
+      "label": "TOP"
+     },
+     {
+      "name": "TOPMulti",
+      "label": "TOP Multi"
+     },
+     {
+      "name": "CHOP",
+      "label": "CHOP"
+     },
+     {
+      "name": "SOP",
+      "label": "SOP"
+     },
+     {
+      "name": "POP",
+      "label": "POP"
+     },
+     {
+      "name": "MAT",
+      "label": "MAT"
+     },
+     {
+      "name": "DAT",
+      "label": "DAT"
+     }
+    ],
+    "page": "Constant"
+   },
+   {
+    "name": "Constant",
+    "label": "Constant",
+    "style": "Sequence",
+    "help": "One block per constant: add or remove blocks here.",
+    "default": 0,
+    "page": "Constant"
+   },
+   {
+    "name": "Constant0name",
+    "label": "Name",
+    "style": "Str",
+    "help": "The channel name, and the property name when Promote to Property is on.",
+    "default": "",
+    "page": "Constant"
+   },
+   {
+    "name": "Constant0value",
+    "label": "Value",
+    "style": "Float",
+    "help": "The constant's value.",
+    "default": 0.0,
+    "page": "Constant"
+   },
+   {
+    "name": "Snapinput",
+    "label": "Snap Input",
+    "style": "Pulse",
+    "help": "Replace the constants with the channels wired into the input: one block per channel, named and valued from it. Float and Int only.",
+    "page": "Common"
+   },
+   {
+    "name": "Promote",
+    "label": "Promote to Property",
+    "style": "Toggle",
+    "help": "Expose each constant as a property on this COMP, so op(...).Name reads and sets its value and Name_out reads the output.",
+    "default": true,
+    "page": "Common"
+   },
+   {
+    "name": "Header",
+    "label": "To get/set values as .{prefix}{name}",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Common"
+   },
+   {
+    "name": "Prefix",
+    "label": "Property Prefix",
+    "style": "Str",
+    "help": "Put in front of every property name, to keep them clear of other names on the COMP.",
+    "default": "C_",
+    "page": "Common"
+   },
+   {
+    "name": "Author",
+    "label": "Author: Function Store (@function.str)",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Common"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this tool's page on the FNS docs site.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "The package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "EaseInterpolator": [
+   {
+    "name": "Easing",
+    "label": "Easing",
+    "style": "Menu",
+    "help": "",
+    "default": "Linear",
+    "menu": [
+     {
+      "name": "Linear",
+      "label": "Linear"
+     },
+     {
+      "name": "InSine",
+      "label": "InSine"
+     },
+     {
+      "name": "OutSine",
+      "label": "OutSine"
+     },
+     {
+      "name": "InOutSine",
+      "label": "InOutSine"
+     },
+     {
+      "name": "InQuad",
+      "label": "InQuad"
+     },
+     {
+      "name": "OutQuad",
+      "label": "OutQuad"
+     },
+     {
+      "name": "InOutQuad",
+      "label": "InOutQuad"
+     },
+     {
+      "name": "InCubic",
+      "label": "InCubic"
+     },
+     {
+      "name": "OutCubic",
+      "label": "OutCubic"
+     },
+     {
+      "name": "InOutCubic",
+      "label": "InOutCubic"
+     },
+     {
+      "name": "InQuart",
+      "label": "InQuart"
+     },
+     {
+      "name": "OutQuart",
+      "label": "OutQuart"
+     },
+     {
+      "name": "InOutQuart",
+      "label": "InOutQuart"
+     },
+     {
+      "name": "InQuint",
+      "label": "InQuint"
+     },
+     {
+      "name": "OutQuint",
+      "label": "OutQuint"
+     },
+     {
+      "name": "InOutQuint",
+      "label": "InOutQuint"
+     },
+     {
+      "name": "InExpo",
+      "label": "InExpo"
+     },
+     {
+      "name": "OutExpo",
+      "label": "OutExpo"
+     },
+     {
+      "name": "InOutExpo",
+      "label": "InOutExpo"
+     },
+     {
+      "name": "InCirc",
+      "label": "InCirc"
+     },
+     {
+      "name": "OutCirc",
+      "label": "OutCirc"
+     },
+     {
+      "name": "InOutCirc",
+      "label": "InOutCirc"
+     },
+     {
+      "name": "InBack",
+      "label": "InBack"
+     },
+     {
+      "name": "OutBack",
+      "label": "OutBack"
+     },
+     {
+      "name": "InOutBack",
+      "label": "InOutBack"
+     },
+     {
+      "name": "InElastic",
+      "label": "InElastic"
+     },
+     {
+      "name": "OutElastic",
+      "label": "OutElastic"
+     },
+     {
+      "name": "InOutElastic",
+      "label": "InOutElastic"
+     },
+     {
+      "name": "InBounce",
+      "label": "InBounce"
+     },
+     {
+      "name": "OutBounce",
+      "label": "OutBounce"
+     },
+     {
+      "name": "InOutBounce",
+      "label": "InOutBounce"
+     },
+     {
+      "name": "CustomEase",
+      "label": "CustomEase"
+     }
+    ],
+    "page": "Seq"
+   },
+   {
+    "name": "Select",
+    "label": "Select",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "Seq"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ExpressionPOP": [
+   {
+    "name": "Expr",
+    "label": "Expr",
+    "style": "Sequence",
+    "help": "",
+    "default": 0,
+    "page": "Custom"
+   },
+   {
+    "name": "Expr0expression",
+    "label": "Attribute Expression",
+    "style": "Str",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Expr0leftmode",
+    "label": "OutAttr/Local",
+    "style": "Toggle",
+    "help": "local needs type declaration like vec3 etc, but then are reusable in consequent blocks",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Info",
+    "label": "Info",
+    "style": "Str",
+    "help": "",
+    "default": "",
+    "readonly": true,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Outattrs",
+    "label": "Out Attrs",
+    "style": "Str",
+    "help": "",
+    "default": "",
+    "readonly": true,
+    "page": "Custom"
+   },
+   {
+    "name": "View",
+    "label": "View",
+    "style": "Menu",
+    "help": "",
+    "default": "pop",
+    "section": true,
+    "menu": [
+     {
+      "name": "pop",
+      "label": "POP"
+     },
+     {
+      "name": "code",
+      "label": "Code"
+     },
+     {
+      "name": "info",
+      "label": "Info"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Openauthor",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "FeedbackDisplace": [
+   {
+    "name": "Operand",
+    "label": "Operation",
+    "style": "Menu",
+    "help": "",
+    "default": "multiply",
+    "menu": [
+     {
+      "name": "add",
+      "label": "Add"
+     },
+     {
+      "name": "atop",
+      "label": "Atop"
+     },
+     {
+      "name": "average",
+      "label": "Average"
+     },
+     {
+      "name": "brightest",
+      "label": "Brightest"
+     },
+     {
+      "name": "burncolor",
+      "label": "Burn Color"
+     },
+     {
+      "name": "burnlinear",
+      "label": "Burn Linear"
+     },
+     {
+      "name": "chromadifference",
+      "label": "Chroma Difference"
+     },
+     {
+      "name": "color",
+      "label": "Color"
+     },
+     {
+      "name": "darkercolor",
+      "label": "Darker Color"
+     },
+     {
+      "name": "difference",
+      "label": "Difference"
+     },
+     {
+      "name": "dimmest",
+      "label": "Dimmest"
+     },
+     {
+      "name": "divide",
+      "label": "Divide"
+     },
+     {
+      "name": "dodge",
+      "label": "Dodge"
+     },
+     {
+      "name": "exclude",
+      "label": "Exclude"
+     },
+     {
+      "name": "freeze",
+      "label": "Freeze"
+     },
+     {
+      "name": "glow",
+      "label": "Glow"
+     },
+     {
+      "name": "hardlight",
+      "label": "Hard Light"
+     },
+     {
+      "name": "hardmix",
+      "label": "Hard Mix"
+     },
+     {
+      "name": "heat",
+      "label": "Heat"
+     },
+     {
+      "name": "hue",
+      "label": "Hue"
+     },
+     {
+      "name": "inside",
+      "label": "Inside"
+     },
+     {
+      "name": "insideluminance",
+      "label": "Inside Luminance"
+     },
+     {
+      "name": "inverse",
+      "label": "Inverse"
+     },
+     {
+      "name": "lightercolor",
+      "label": "Lighter Color"
+     },
+     {
+      "name": "luminancedifference",
+      "label": "Luminance Difference"
+     },
+     {
+      "name": "maximum",
+      "label": "Maximum"
+     },
+     {
+      "name": "minimum",
+      "label": "Minimum"
+     },
+     {
+      "name": "multiply",
+      "label": "Multiply"
+     },
+     {
+      "name": "negate",
+      "label": "Negate"
+     },
+     {
+      "name": "outside",
+      "label": "Outside"
+     },
+     {
+      "name": "outsideluminance",
+      "label": "Outside Luminance"
+     },
+     {
+      "name": "over",
+      "label": "Over"
+     },
+     {
+      "name": "overlay",
+      "label": "Overlay"
+     },
+     {
+      "name": "pinlight",
+      "label": "Pinlight"
+     },
+     {
+      "name": "reflect",
+      "label": "Reflect"
+     },
+     {
+      "name": "screen",
+      "label": "Screen"
+     },
+     {
+      "name": "softlight",
+      "label": "Soft Light"
+     },
+     {
+      "name": "linearlight",
+      "label": "Linear Light"
+     },
+     {
+      "name": "stencilluminance",
+      "label": "Stencil Luminance"
+     },
+     {
+      "name": "subtract",
+      "label": "Subtract"
+     },
+     {
+      "name": "subtractive",
+      "label": "Subtractive"
+     },
+     {
+      "name": "under",
+      "label": "Under"
+     },
+     {
+      "name": "vividlight",
+      "label": "Vivid Light"
+     },
+     {
+      "name": "xor",
+      "label": "Xor"
+     },
+     {
+      "name": "yfilm",
+      "label": "Y Film"
+     },
+     {
+      "name": "zfilm",
+      "label": "Z Film"
+     }
+    ],
+    "page": "Feedback"
+   },
+   {
+    "name": "Opacity",
+    "label": "Opacity",
+    "style": "Float",
+    "help": "",
+    "default": 0.9,
+    "section": true,
+    "page": "Feedback"
+   },
+   {
+    "name": "Cross",
+    "label": "Cross",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Feedback"
+   },
+   {
+    "name": "Size",
+    "label": "Filter Size",
+    "style": "Int",
+    "help": "",
+    "default": 1,
+    "page": "Feedback"
+   },
+   {
+    "name": "Aspectcorrect",
+    "label": "Aspect Correct",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "section": true,
+    "page": "Feedback"
+   },
+   {
+    "name": "Displaceweight",
+    "label": "Displace Weight",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Feedback"
+   },
+   {
+    "name": "Midpoint",
+    "label": "Source Midpoint",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 0.5,
+    "page": "Feedback"
+   },
+   {
+    "name": "Uvweight",
+    "label": "UV Weight",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Feedback"
+   },
+   {
+    "name": "Period",
+    "label": "Displace Period",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "section": true,
+    "page": "Feedback"
+   },
+   {
+    "name": "Amp",
+    "label": "Displace Amplitude",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Feedback"
+   },
+   {
+    "name": "Displacespeed",
+    "label": "Displace Speed",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Feedback"
+   },
+   {
+    "name": "T",
+    "label": "T",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "section": true,
+    "page": "Feedback"
+   },
+   {
+    "name": "Rotate",
+    "label": "Rotate",
+    "style": "XYZW",
+    "help": "",
+    "default": 0.0,
+    "page": "Feedback"
+   },
+   {
+    "name": "S",
+    "label": "Scale",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 1.0,
+    "page": "Feedback"
+   },
+   {
+    "name": "Reset",
+    "label": "Reset",
+    "style": "Momentary",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Feedback"
+   },
+   {
+    "name": "Drywet",
+    "label": "Dry / Wet Mix",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Feedback"
+   },
+   {
+    "name": "Help",
+    "label": "Help",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.1",
+    "page": "About"
+   }
+  ],
+  "FloatDataRecorder": [
+   {
+    "name": "Recordheader",
+    "label": "Record",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Texfile",
+    "label": "Texture File",
+    "style": "File",
+    "help": "",
+    "default": "'TDMovieOut' + me.fileSuffix",
+    "page": "Custom"
+   },
+   {
+    "name": "Texfile2",
+    "label": "Color Texture File",
+    "style": "File",
+    "help": "",
+    "default": "'TDMovieOut' + me.fileSuffix",
+    "page": "Custom"
+   },
+   {
+    "name": "Chopfile",
+    "label": "CHOP File",
+    "style": "File",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Rec",
+    "label": "Rec",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Playheader",
+    "label": "Play",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Opentexforplay",
+    "label": "Texture File",
+    "style": "File",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Opentexforplay2",
+    "label": "Color Texture File",
+    "style": "File",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Openchopforplay",
+    "label": "CHOP File",
+    "style": "File",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Offset",
+    "label": "Play Offset Frames",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "page": "Custom"
+   },
+   {
+    "name": "Reload",
+    "label": "Reload",
+    "style": "Pulse",
+    "help": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Synctimeline",
+    "label": "Sync Timeline",
+    "style": "Pulse",
+    "help": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Play",
+    "label": "Play",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
   "FNS_AltSelect": [
    {
     "name": "Active",
@@ -5195,7 +7857,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "3.0.7",
+    "default": "3.0.8",
     "page": "About"
    },
    {
@@ -5428,6 +8090,14 @@
     "style": "Str",
     "help": "Legacy store of presets from before the shared curation file; adopted into that file on first read, then emptied.",
     "default": "[]",
+    "page": "Palette"
+   },
+   {
+    "name": "Rankbyusage",
+    "label": "Rank By Usage",
+    "style": "Toggle",
+    "help": "Commands you run often rank higher: a small bonus that fades with a 14-day half-life and breaks ties between similar matches, never above a better match or a favourite. Usage is shared with the TDXLU launcher (command-usage.json) and recorded even when this is off.",
+    "default": true,
     "page": "Palette"
    },
    {
@@ -6845,7 +9515,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "1.0.5",
+    "default": "1.0.6",
     "page": "About"
    }
   ],
@@ -7947,7 +10617,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "1.16.5",
+    "default": "1.16.6",
     "page": "About"
    },
    {
@@ -10750,6 +13420,23 @@
     "page": "TD-SearchPalette"
    },
    {
+    "name": "Autohide",
+    "label": "Hide Palette When Idle",
+    "style": "Toggle",
+    "help": "Close the palette browser after it has gone unused for the number of minutes below. Unused means the mouse is outside the palette and nothing is being typed into the search field. Off by default; the palette stays open until you close it.",
+    "default": false,
+    "section": true,
+    "page": "TD-SearchPalette"
+   },
+   {
+    "name": "Autohideminutes",
+    "label": "Hide After (Minutes)",
+    "style": "Float",
+    "help": "Minutes without interaction before the palette browser closes, when Hide Palette When Idle is on. The countdown restarts whenever the mouse enters the palette or the search field is typed into.",
+    "default": 5.0,
+    "page": "TD-SearchPalette"
+   },
+   {
     "name": "Githubpage",
     "label": "Github Page",
     "style": "Pulse",
@@ -11910,7 +14597,7 @@
     "label": "Package Version",
     "style": "Str",
     "help": "The version the FNS updater compares against the store; bumped by the release flow.",
-    "default": "1.1.2",
+    "default": "1.1.3",
     "page": "About"
    },
    {
@@ -13469,6 +16156,960 @@
     "page": "About"
    }
   ],
+  "InfinityCHOP": [
+   {
+    "name": "Samples",
+    "label": "Samples",
+    "style": "Int",
+    "help": "How many points come out. 1 is a single point travelling along the curve; more draw the curve itself as that many samples.",
+    "default": 1,
+    "section": true,
+    "page": "Curve"
+   },
+   {
+    "name": "Span",
+    "label": "Span",
+    "style": "Float",
+    "help": "How much of the curve the samples cover, in loops. 1 draws the whole closed curve; less draws a trail behind the leading point.",
+    "default": 1.0,
+    "page": "Curve"
+   },
+   {
+    "name": "Shape",
+    "label": "Shape",
+    "style": "Float",
+    "help": "The curve: 0 is a circle, 1 is the infinity loop, and values between morph one into the other.",
+    "default": 1.0,
+    "section": true,
+    "page": "Curve"
+   },
+   {
+    "name": "Freq",
+    "label": "Frequency",
+    "style": "XYZW",
+    "help": "How many times X and Y swing per loop. Equal whole numbers keep the plain shape; other whole numbers make Lissajous figures.",
+    "size": 2,
+    "default": 1.0,
+    "page": "Curve"
+   },
+   {
+    "name": "Crossfreq",
+    "label": "Cross Frequency",
+    "style": "Float",
+    "help": "Frequency of the cosine that folds Y into the crossing of the infinity loop. Only acts when Shape is above 0.",
+    "default": 1.0,
+    "page": "Curve"
+   },
+   {
+    "name": "Pinchfreq",
+    "label": "Pinch Frequency",
+    "style": "XYZW",
+    "help": "Frequency of the pinch that narrows X and Y toward the crossing. Only acts when Shape is above 0.",
+    "size": 2,
+    "default": 1.0,
+    "page": "Curve"
+   },
+   {
+    "name": "Phase",
+    "label": "Phase",
+    "style": "Float",
+    "help": "Where on the curve the first point sits, in loops: 0.5 is halfway round. Add to it to drive the position yourself.",
+    "default": 0.0,
+    "section": true,
+    "page": "Curve"
+   },
+   {
+    "name": "Speed",
+    "label": "Speed",
+    "style": "Float",
+    "help": "Loops per second the curve travels on its own. 0 holds still; negative runs backwards.",
+    "default": 0.1,
+    "page": "Curve"
+   },
+   {
+    "name": "Reset",
+    "label": "Reset",
+    "style": "Pulse",
+    "help": "Return the travelled distance to zero, so the point is back at Phase.",
+    "page": "Curve"
+   },
+   {
+    "name": "Size",
+    "label": "Size",
+    "style": "XYZW",
+    "help": "Half the width and height of the curve in the output values: 0.5 spans -0.5 to 0.5 around the centre.",
+    "size": 2,
+    "default": 0.5,
+    "section": true,
+    "page": "Curve"
+   },
+   {
+    "name": "Center",
+    "label": "Center",
+    "style": "XYZW",
+    "help": "The centre of the curve in the output values.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Curve"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Who made this tool.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this tool's page on the FNS docs site.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "The package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "InstanceTrailer": [
+   {
+    "name": "Depth",
+    "label": "Depth",
+    "style": "Int",
+    "help": "Number of delayed copies (instances) drawn in the trail, the live frame included.",
+    "default": 10,
+    "page": "Custom"
+   },
+   {
+    "name": "Maxcachesize",
+    "label": "Max Cache Size",
+    "style": "Int",
+    "help": "Frames the cache holds. The trail cannot reach further back than this; larger values use more GPU memory.",
+    "default": 300,
+    "page": "Custom"
+   },
+   {
+    "name": "Cachesize",
+    "label": "Cache Size",
+    "style": "Int",
+    "help": "How many frames back the oldest copy reaches. Clamped to Max Cache Size: the cache holds nothing further back, so a larger value would read empty slots.",
+    "default": 300,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Direction",
+    "label": "Direction",
+    "style": "Float",
+    "help": "Direction and strength of the time offset, -1 to 1. Positive values delay the copies into the past, negative values reverse the order; at +-1 the oldest copy reaches Cache Size frames back.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Expval",
+    "label": "Exponent Value",
+    "style": "Float",
+    "help": "Exponent that spaces the delays: 1 is even spacing, higher values bunch the copies near the live frame. 0 puts every copy on the same frame.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Align",
+    "label": "Align",
+    "style": "Menu",
+    "help": "How the copies are arranged in the output layout.",
+    "default": "verttb",
+    "section": true,
+    "menu": [
+     {
+      "name": "horizlr",
+      "label": "Left to Right"
+     },
+     {
+      "name": "horizrl",
+      "label": "Right to Left"
+     },
+     {
+      "name": "verttb",
+      "label": "Top to Bottom"
+     },
+     {
+      "name": "vertbt",
+      "label": "Bottom to Top"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Recreateall",
+    "label": "Recreate All Operators",
+    "style": "Pulse",
+    "help": "Rebuild every replicated copy, for example after changing Depth by a large amount.",
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this package's documentation page in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "KinectSinglePlayer": [
+   {
+    "name": "Kinectdata",
+    "label": "Kinect Data",
+    "style": "CHOP",
+    "help": "Kinect CHOP (or any CHOP with Kinect-style channels such as p1/spine:tx, p1/id) to pick the single player from. Output channels follow the locked template in null1 (TouchDesigner Kinect v2 names with world, depth-space, bone rotation and length channels); input channels outside that set are not passed through.",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Joint",
+    "label": "Joint",
+    "style": "Str",
+    "help": "Kinect joint tested against the bounds, matched as the whole joint name (p<N>/<Joint>:tx/ty/tz), so 'spine' does not also catch 'spine_mid'. TouchDesigner's Kinect CHOP names: hip, spine, neck, head, shoulder_c, shoulder_l/_r, elbow_l/_r, wrist_l/_r, hand_l/_r, hip_l/_r, knee_l/_r, ankle_l/_r, foot_l/_r.",
+    "default": "spine",
+    "page": "Custom"
+   },
+   {
+    "name": "Boundx",
+    "label": "X Bounds",
+    "style": "Float",
+    "help": "X range (min, max) in metres, Kinect camera space (0 = straight in front of the sensor). The joint must sit inside it for the player to count as in range.",
+    "size": 2,
+    "default": -0.5,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Boundy",
+    "label": "Y Bounds",
+    "style": "Float",
+    "help": "Y range (min, max) in metres, Kinect camera space (0 = sensor height, + = up). The joint must sit inside it for the player to count as in range.",
+    "size": 2,
+    "default": -1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Boundz",
+    "label": "Z Bounds",
+    "style": "Float",
+    "help": "Z range (min, max) in metres: distance in front of the sensor (Kinect reports 0.5 to about 4.5). The joint must sit inside it for the player to count as in range.",
+    "size": 2,
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Author of this package.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Opens this package's page on the FNS docs site in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Version of this package, set by the release tooling. Read it to tell which build is installed.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "LayerSep3D": [
+   {
+    "name": "Layers",
+    "label": "Layers",
+    "style": "Int",
+    "help": "Number of layers the input is split into (the depth of the output texture and the number of instanced quads). The threshold range is divided into this many equal bands, one per layer. Minimum 2.",
+    "default": 10,
+    "page": "Custom"
+   },
+   {
+    "name": "Reverse",
+    "label": "Reverse Layer Order",
+    "style": "Toggle",
+    "help": "Flips the order of the layers in the output texture: layer 0 becomes the brightest band instead of the darkest.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Open",
+    "label": "Open Material",
+    "style": "Pulse",
+    "help": "Opens the parameter dialog of the material the layers are rendered with.",
+    "page": "Custom"
+   },
+   {
+    "name": "Mode",
+    "label": "Mode",
+    "style": "Menu",
+    "help": "Which value of the mask pixel is compared against the thresholds: luminance, a single channel, or an average, maximum or minimum of the channels.",
+    "default": "luminanc",
+    "section": true,
+    "menu": [
+     {
+      "name": "luminanc",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbavg",
+      "label": "RGB Avg"
+     },
+     {
+      "name": "rgbaavg",
+      "label": "RGBA Avg"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Max"
+     },
+     {
+      "name": "rgbamax",
+      "label": "RGBA Max"
+     },
+     {
+      "name": "rgbmin",
+      "label": "RGB Min"
+     },
+     {
+      "name": "rgbamin",
+      "label": "RGBA Min"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Thoffs",
+    "label": "Threshold Offset",
+    "style": "Float",
+    "help": "Added to every layer threshold before the range mapping. Positive values push all band edges up.",
+    "default": 0.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Thamp",
+    "label": "Threshold Amplitude",
+    "style": "Float",
+    "help": "Scales the spread of the thresholds. 1 spreads the bands over the whole range, smaller values squeeze them toward the bottom, negative values reverse the ramp.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Thrange",
+    "label": "Threshold Range",
+    "style": "Float",
+    "help": "Mask values (min, max) the layers are spread across. The range is split into Layers equal bands: the first layer also takes everything below the range, the last layer everything above its lower edge.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Threshpow",
+    "label": "Threshold Power",
+    "style": "Float",
+    "help": "Exponent applied to the threshold ramp. 1 = equal bands, above 1 = thinner bands at the bottom, below 1 = thinner bands at the top.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Thphase",
+    "label": "Threshold Phase",
+    "style": "Float",
+    "help": "Rotates the threshold ramp across the layers (0 to 1), so the band order wraps around.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Threshold",
+    "label": "Threshold CHOP (override)",
+    "style": "CHOP",
+    "help": "Optional CHOP with one sample per layer that replaces the generated thresholds. Leave empty to use the Threshold parameters above (a CHOP wired to the threshold input also overrides them).",
+    "default": "None",
+    "page": "Custom"
+   },
+   {
+    "name": "Softoffset",
+    "label": "Softness Offset",
+    "style": "Float",
+    "help": "Softness added to every layer edge. Softness is the width of the blend between neighbouring layers, in mask units.",
+    "default": 0.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Softamp",
+    "label": "Softness Amplitude",
+    "style": "Float",
+    "help": "How much the softness ramps across the layers, from 0 at the first layer to this value at the last.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Softpow",
+    "label": "Softness Power",
+    "style": "Float",
+    "help": "Exponent applied to the softness ramp across the layers.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Softphase",
+    "label": "Softness Phase",
+    "style": "Float",
+    "help": "Rotates the softness ramp across the layers (0 to 1).",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Softness",
+    "label": "Softness CHOP (override)",
+    "style": "CHOP",
+    "help": "Optional CHOP with one sample per layer that replaces the generated softness values.",
+    "default": "None",
+    "page": "Custom"
+   },
+   {
+    "name": "Mixamp",
+    "label": "Mix Amplitude",
+    "style": "Float",
+    "help": "How much of the content above each layer is left in it, ramped across the layers. 0 = each layer holds only its own band.",
+    "default": 0.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Mixoffset",
+    "label": "Mix Offset",
+    "style": "Float",
+    "help": "Mix added to every layer. 1 keeps everything from the layer upward in each slice.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Mixpow",
+    "label": "Mix Power",
+    "style": "Float",
+    "help": "Exponent applied to the mix ramp across the layers.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Mixphase",
+    "label": "Mix Phase",
+    "style": "Float",
+    "help": "Rotates the mix ramp across the layers (0 to 1).",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Mix",
+    "label": "Mix CHOP (override)",
+    "style": "CHOP",
+    "help": "Optional CHOP with one sample per layer that replaces the generated mix values.",
+    "default": "None",
+    "page": "Custom"
+   },
+   {
+    "name": "Lookupindex",
+    "label": "Texture Index",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Invert2",
+    "label": "Invert Texture Index",
+    "style": "Float",
+    "help": "Blends the texture index each quad samples from normal (0) to reversed (1), so the quad order and the layer order can run against each other.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Phase",
+    "label": "Texture Index Phase",
+    "style": "Float",
+    "help": "Shifts which layer each instanced quad samples, as a phase of the index ramp.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Expval",
+    "label": "Texture Index Exponent",
+    "style": "Float",
+    "help": "Exponent applied to the texture index ramp. 1 = one layer per quad in order; other values bunch the layers toward one end.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Period",
+    "label": "Texture Index Period",
+    "style": "Float",
+    "help": "Period of the texture index ramp across the quads. 1 = each layer once; smaller values repeat the layer sequence.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Randomize",
+    "label": "Randomize Seed",
+    "style": "Float",
+    "help": "When above 0, shuffles which layer each quad samples, using this value as the seed. 0 = no shuffle.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Single",
+    "label": "Single Layer",
+    "style": "Toggle",
+    "help": "Every quad samples the same layer, chosen by Select.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Select",
+    "label": "Select Layer",
+    "style": "Float",
+    "help": "The layer every quad shows while Single Layer is on (0 = first layer).",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Thesecanbeoverriddenintheinstancing",
+    "label": "These can be overridden in the instancing...",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Transform"
+   },
+   {
+    "name": "Tzoffset",
+    "label": "Z Offset",
+    "style": "Float",
+    "help": "Z position added to every quad.",
+    "default": 0.0,
+    "section": true,
+    "page": "Transform"
+   },
+   {
+    "name": "Tzamplitude",
+    "label": "Z Amplitude",
+    "style": "Float",
+    "help": "Total Z spread of the quads, from the first layer to the last.",
+    "default": 1.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Tzpow",
+    "label": "Z Power",
+    "style": "Float",
+    "help": "Exponent applied to the Z spread, so the quads bunch toward the front or the back.",
+    "default": 1.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Tzphase",
+    "label": "Z Phase",
+    "style": "Float",
+    "help": "Rotates the Z ramp across the quads (0 to 1).",
+    "default": 0.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Scaleoffset",
+    "label": "Scale Offset",
+    "style": "Float",
+    "help": "Uniform scale of every quad (1 = original size).",
+    "default": 1.0,
+    "section": true,
+    "page": "Transform"
+   },
+   {
+    "name": "Scaleamplitude",
+    "label": "Scale Amplitude",
+    "style": "Float",
+    "help": "How much the scale ramps across the quads, added on top of Scale Offset.",
+    "default": 0.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Scalepow",
+    "label": "Scale Power",
+    "style": "Float",
+    "help": "Exponent applied to the scale ramp across the quads.",
+    "default": 1.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Scalephase",
+    "label": "Scale Phase",
+    "style": "Float",
+    "help": "Rotates the scale ramp across the quads (0 to 1).",
+    "default": 0.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Rotoffset",
+    "label": "Rotation Offset",
+    "style": "Float",
+    "help": "Z rotation in degrees added to every quad.",
+    "default": 0.0,
+    "section": true,
+    "page": "Transform"
+   },
+   {
+    "name": "Rotamplitude",
+    "label": "Rotation Amplitude",
+    "style": "Float",
+    "help": "How many degrees the rotation ramps across the quads.",
+    "default": 0.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Rotpow",
+    "label": "Rotation Power",
+    "style": "Float",
+    "help": "Exponent applied to the rotation ramp across the quads.",
+    "default": 1.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Rotinvert",
+    "label": "Rotation Invert",
+    "style": "Float",
+    "help": "Blends the rotation ramp from normal (0) to reversed (1).",
+    "default": 0.0,
+    "page": "Transform"
+   },
+   {
+    "name": "Type",
+    "label": "Output Type",
+    "style": "Menu",
+    "help": "2D Texture Array keeps each layer as its own slice (smooth mipmaps); 3D Texture lets the instance texture index interpolate between layers.",
+    "default": "texture2darray",
+    "section": true,
+    "menu": [
+     {
+      "name": "texture2darray",
+      "label": "2D Texture Array"
+     },
+     {
+      "name": "texture3d",
+      "label": "3D Texture"
+     }
+    ],
+    "page": "Common"
+   },
+   {
+    "name": "Header",
+    "label": "^ 2D: allows for smooth Mipmap pixels",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Common"
+   },
+   {
+    "name": "Header2",
+    "label": "^ 3D: allows for layer interpolation (Tex Idx)",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Common"
+   },
+   {
+    "name": "Instancetexfilter",
+    "label": "Filter",
+    "style": "Menu",
+    "help": "Texture filtering used when the quads sample the layer texture.",
+    "default": "mipmaplinear",
+    "section": true,
+    "menu": [
+     {
+      "name": "nearest",
+      "label": "Nearest"
+     },
+     {
+      "name": "linear",
+      "label": "Linear"
+     },
+     {
+      "name": "mipmaplinear",
+      "label": "Mipmap Linear"
+     }
+    ],
+    "page": "Common"
+   },
+   {
+    "name": "Authorname",
+    "label": "Author",
+    "style": "Str",
+    "help": "Author of the component.",
+    "default": "Function Store (@function.str)",
+    "readonly": true,
+    "section": true,
+    "page": "Common"
+   },
+   {
+    "name": "Openauthor",
+    "label": "Author Link",
+    "style": "Pulse",
+    "help": "Opens the author page in the browser.",
+    "page": "Common"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Author of this package.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Opens this package's page on the FNS docs site in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Version of this package, set by the release tooling. Read it to tell which build is installed.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "LinkOPs": [
+   {
+    "name": "Active",
+    "label": "Active",
+    "style": "Toggle",
+    "help": "Master switch. When off, parameter changes are no longer propagated between the linked operators.",
+    "default": true,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Ops",
+    "label": "OPs",
+    "style": "Str",
+    "help": "Space-separated operator name patterns (wildcards allowed, e.g. noise* level1) to link, searched in the network LinkOPs sits in.",
+    "default": "",
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Except",
+    "label": "Except",
+    "style": "Str",
+    "help": "Space-separated operator name patterns to leave out of the link even when they match Ops.",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Parexcept",
+    "label": "Par Except",
+    "style": "Str",
+    "help": "Space-separated parameter name patterns (e.g. t? seed) that are never propagated.",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Auto",
+    "label": "Auto",
+    "style": "Toggle",
+    "help": "Keep the list of linked operators up to date automatically as operators are added, renamed or removed.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Sync",
+    "label": "Sync",
+    "style": "Pulse",
+    "help": "Rescan the network for operators matching Ops now. Use this when Auto is off.",
+    "page": "Custom"
+   },
+   {
+    "name": "Constantonly",
+    "label": "Constant Only",
+    "style": "Toggle",
+    "help": "Only propagate between parameters that are in constant mode on both sides; expressions, exports and binds are left alone.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Package author.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this package's documentation page in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "MaskDraw": [
+   {
+    "name": "Active",
+    "label": "Active",
+    "style": "Toggle",
+    "help": "Enables drawing. Off hides the brush and ignores the mouse; the painted mask is kept.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Radius",
+    "label": "Radius",
+    "style": "Float",
+    "help": "",
+    "default": 0.1,
+    "page": "Custom"
+   },
+   {
+    "name": "Showinput",
+    "label": "Show Input",
+    "style": "Toggle",
+    "help": "Shows the input image in the display panel behind the mask. Off shows the input only inside the painted area.",
+    "default": false,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Showmask",
+    "label": "Show Mask",
+    "style": "Toggle",
+    "help": "Draws the painted mask (white) over the image in the display panel.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Debug",
+    "label": "Show Brush",
+    "style": "Toggle",
+    "help": "Shows the brush outline (red) under the pointer in the display panel.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Display",
+    "label": "Display UI",
+    "style": "Toggle",
+    "help": "Shows the button bar in the display panel. Ctrl + middle-click in the panel toggles it.",
+    "default": true,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Reset",
+    "label": "Reset",
+    "style": "Toggle",
+    "help": "While on, clears the painted mask. A middle-click in the panel does the same. Ignored while Lock is on.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Lock",
+    "label": "Lock",
+    "style": "Toggle",
+    "help": "Freezes the painted mask: new strokes, erasing and Reset are ignored until it is turned off. The mask lives in a feedback loop, so it is not saved with the file.",
+    "default": false,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Savemask",
+    "label": "Save Mask With Project",
+    "style": "Toggle",
+    "help": "On: the current mask is baked into the component on every project save (and by Bake Mask Now), so it is restored when the project is reopened. Off (default): the mask lives only in the session and nothing is written into the file.",
+    "default": false,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Bakemask",
+    "label": "Bake Mask Now",
+    "style": "Pulse",
+    "help": "Capture the current mask into the component now, without waiting for a project save. Only with Save Mask With Project on.",
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Author of this package.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Opens this package's page on the FNS docs site in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Version of this package, set by the release tooling. Read it to tell which build is installed.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
   "midiMapper": [
    {
     "name": "Id",
@@ -13531,6 +17172,152 @@
     "style": "Pulse",
     "help": "Create a mapping table and point the parameter above at it.",
     "page": "Repositorie"
+   }
+  ],
+  "MoveDetectDir": [
+   {
+    "name": "Size",
+    "label": "Input Filter Size",
+    "style": "Int",
+    "help": "",
+    "default": 7,
+    "page": "Custom"
+   },
+   {
+    "name": "Lambda",
+    "label": "Optflow Lambda",
+    "style": "Float",
+    "help": "",
+    "default": 0.1,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Threshold",
+    "label": "OptFlow Threshold",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Movethresholdx",
+    "label": "Move Threshold X",
+    "style": "Float",
+    "help": "",
+    "default": 300.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Movethresholdy",
+    "label": "Move Threshold Y",
+    "style": "Float",
+    "help": "",
+    "default": 300.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Inversex",
+    "label": "Inverse X",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Inversey",
+    "label": "Inverse Y",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Width",
+    "label": "Filter Width",
+    "style": "Float",
+    "help": "",
+    "default": 0.2,
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "OpenOp": [
+   {
+    "name": "Op",
+    "label": "OP",
+    "style": "OP",
+    "help": "The operator(s) to open: drag one or more operators onto this field, or type several paths separated by spaces. A bare name is a sibling of OpenOp; a child of OpenOp needs './name'.",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Parwindow",
+    "label": "Par Window",
+    "style": "Toggle",
+    "help": "Open the parameter window of the operator when Open is pulsed.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Viewerwindow",
+    "label": "Viewer Window",
+    "style": "Toggle",
+    "help": "Open a floating viewer of the operator when Open is pulsed.",
+    "default": false,
+    "page": "Custom"
+   },
+   {
+    "name": "Open",
+    "label": "Open",
+    "style": "Pulse",
+    "help": "Open the windows enabled above for the operator(s) in Op.",
+    "page": "Custom"
+   },
+   {
+    "name": "Open2",
+    "label": "ReadMe",
+    "style": "Pulse",
+    "help": "Open this tool's readme.",
+    "page": "Info"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this package's documentation page in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
    }
   ],
   "oscMapper": [
@@ -13674,6 +17461,1873 @@
     "page": "Repositorie"
    }
   ],
+  "Particles2D_POP": [
+   {
+    "name": "Particles",
+    "label": "Particles",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Startpulse",
+    "label": "Start Pulse",
+    "style": "Pulse",
+    "help": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Maxparticles",
+    "label": "Maximum Particles",
+    "style": "Int",
+    "help": "",
+    "default": 921600,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Birthrate",
+    "label": "Birthrate",
+    "style": "Float",
+    "help": "",
+    "default": 50000.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Life",
+    "label": "Life",
+    "style": "Float",
+    "help": "",
+    "default": 2.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Lifevariance",
+    "label": "Life Variance",
+    "style": "Float",
+    "help": "",
+    "default": 0.5,
+    "page": "Custom"
+   },
+   {
+    "name": "Initmass",
+    "label": "Initial Mass",
+    "style": "Float",
+    "help": "",
+    "default": 2.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Initdrag",
+    "label": "Initial Drag",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Damping",
+    "label": "Velocity Damping",
+    "style": "Float",
+    "help": "",
+    "default": 0.1,
+    "page": "Custom"
+   },
+   {
+    "name": "Speed2",
+    "label": "Speed",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Trails",
+    "label": "Trails",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Length",
+    "label": "Length",
+    "style": "Float",
+    "help": "",
+    "default": 0.03700000047683716,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Resetpulse",
+    "label": "Reset Pulse",
+    "style": "Pulse",
+    "help": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Curl",
+    "label": "Curl",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.5,
+    "page": "Curl"
+   },
+   {
+    "name": "Speed",
+    "label": "Speed",
+    "style": "XYZW",
+    "help": "",
+    "size": 4,
+    "default": 0.04,
+    "page": "Curl"
+   },
+   {
+    "name": "Opennoise",
+    "label": "Open Curl Noise",
+    "style": "Pulse",
+    "help": "",
+    "page": "Curl"
+   },
+   {
+    "name": "Lookup",
+    "label": "Lookup",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Curl"
+   },
+   {
+    "name": "Rgb",
+    "label": "Rgb",
+    "style": "Menu",
+    "help": "",
+    "default": "luminance",
+    "section": true,
+    "menu": [
+     {
+      "name": "luminance",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbaverage",
+      "label": "RGB Average"
+     },
+     {
+      "name": "average",
+      "label": "RGBA Average"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Maximum"
+     },
+     {
+      "name": "max",
+      "label": "RGBA Maximum"
+     },
+     {
+      "name": "zero",
+      "label": "Zero"
+     },
+     {
+      "name": "one",
+      "label": "One"
+     }
+    ],
+    "page": "Curl"
+   },
+   {
+    "name": "Norm",
+    "label": "Normalize",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "page": "Curl"
+   },
+   {
+    "name": "Fromrange",
+    "label": "Fromrange",
+    "style": "Float",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Curl"
+   },
+   {
+    "name": "Torange",
+    "label": "Torange",
+    "style": "Float",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Curl"
+   },
+   {
+    "name": "Expval",
+    "label": "Exponent Value",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Curl"
+   },
+   {
+    "name": "Updatecurl",
+    "label": "Update",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "section": true,
+    "page": "Curl"
+   },
+   {
+    "name": "Wind",
+    "label": "Wind",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Windvariance",
+    "label": "Variance",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Wind"
+   },
+   {
+    "name": "Windvariancespeed",
+    "label": "Wind Variance Speed",
+    "style": "XYZW",
+    "help": "",
+    "size": 4,
+    "default": 0.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Opennoise2",
+    "label": "Open Variance",
+    "style": "Pulse",
+    "help": "",
+    "page": "Wind"
+   },
+   {
+    "name": "Lookup2",
+    "label": "Lookup",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Wind"
+   },
+   {
+    "name": "Rgbwind",
+    "label": "RGB",
+    "style": "Menu",
+    "help": "",
+    "default": "average",
+    "section": true,
+    "menu": [
+     {
+      "name": "luminance",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbaverage",
+      "label": "RGB Average"
+     },
+     {
+      "name": "average",
+      "label": "RGBA Average"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Maximum"
+     },
+     {
+      "name": "max",
+      "label": "RGBA Maximum"
+     },
+     {
+      "name": "zero",
+      "label": "Zero"
+     },
+     {
+      "name": "one",
+      "label": "One"
+     }
+    ],
+    "page": "Wind"
+   },
+   {
+    "name": "Normwind",
+    "label": "Normalize",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "page": "Wind"
+   },
+   {
+    "name": "Fromrangewind",
+    "label": "From Range",
+    "style": "Float",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Torangewind",
+    "label": "To Range",
+    "style": "Float",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Expvalwind",
+    "label": "Exponent Value",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Updatewind",
+    "label": "Update",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Wind"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ParticlesGpuUltimate": [
+   {
+    "name": "Sourceres",
+    "label": "Source Res",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Source"
+   },
+   {
+    "name": "Sourcethresh",
+    "label": "Source Thresh",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Source"
+   },
+   {
+    "name": "Comparator",
+    "label": "Comparator",
+    "style": "Menu",
+    "help": "",
+    "default": "less",
+    "section": true,
+    "menu": [
+     {
+      "name": "less",
+      "label": "Less"
+     },
+     {
+      "name": "greater",
+      "label": "Greater"
+     },
+     {
+      "name": "lessorequal",
+      "label": "Less or Equal"
+     },
+     {
+      "name": "greaterorequal",
+      "label": "Greater or Equal"
+     },
+     {
+      "name": "equal",
+      "label": "Equal"
+     },
+     {
+      "name": "notequal",
+      "label": "Not Equal"
+     }
+    ],
+    "page": "Source"
+   },
+   {
+    "name": "Sourcethreshold",
+    "label": "Source Threshold",
+    "style": "Float",
+    "help": "",
+    "default": 0.5,
+    "page": "Source"
+   },
+   {
+    "name": "Sourcemix",
+    "label": "Source Mix",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Source"
+   },
+   {
+    "name": "Menu",
+    "label": "OverUnderLay Source",
+    "style": "Menu",
+    "help": "",
+    "default": "Input",
+    "section": true,
+    "menu": [
+     {
+      "name": "Input",
+      "label": "Input"
+     },
+     {
+      "name": "Thresholded",
+      "label": "Thresholded"
+     },
+     {
+      "name": "Fluid",
+      "label": "Fluid"
+     }
+    ],
+    "page": "Source"
+   },
+   {
+    "name": "Sourceunderopac",
+    "label": "Under Opac",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Source"
+   },
+   {
+    "name": "Operand",
+    "label": "Operation",
+    "style": "Menu",
+    "help": "",
+    "default": "multiply",
+    "section": true,
+    "menu": [
+     {
+      "name": "add",
+      "label": "Add"
+     },
+     {
+      "name": "atop",
+      "label": "Atop"
+     },
+     {
+      "name": "average",
+      "label": "Average"
+     },
+     {
+      "name": "brightest",
+      "label": "Brightest"
+     },
+     {
+      "name": "burncolor",
+      "label": "Burn Color"
+     },
+     {
+      "name": "burnlinear",
+      "label": "Burn Linear"
+     },
+     {
+      "name": "chromadifference",
+      "label": "Chroma Difference"
+     },
+     {
+      "name": "color",
+      "label": "Color"
+     },
+     {
+      "name": "darkercolor",
+      "label": "Darker Color"
+     },
+     {
+      "name": "difference",
+      "label": "Difference"
+     },
+     {
+      "name": "dimmest",
+      "label": "Dimmest"
+     },
+     {
+      "name": "divide",
+      "label": "Divide"
+     },
+     {
+      "name": "dodge",
+      "label": "Dodge"
+     },
+     {
+      "name": "exclude",
+      "label": "Exclude"
+     },
+     {
+      "name": "freeze",
+      "label": "Freeze"
+     },
+     {
+      "name": "glow",
+      "label": "Glow"
+     },
+     {
+      "name": "hardlight",
+      "label": "Hard Light"
+     },
+     {
+      "name": "hardmix",
+      "label": "Hard Mix"
+     },
+     {
+      "name": "heat",
+      "label": "Heat"
+     },
+     {
+      "name": "hue",
+      "label": "Hue"
+     },
+     {
+      "name": "inside",
+      "label": "Inside"
+     },
+     {
+      "name": "insideluminance",
+      "label": "Inside Luminance"
+     },
+     {
+      "name": "inverse",
+      "label": "Inverse"
+     },
+     {
+      "name": "lightercolor",
+      "label": "Lighter Color"
+     },
+     {
+      "name": "luminancedifference",
+      "label": "Luminance Difference"
+     },
+     {
+      "name": "maximum",
+      "label": "Maximum"
+     },
+     {
+      "name": "minimum",
+      "label": "Minimum"
+     },
+     {
+      "name": "multiply",
+      "label": "Multiply"
+     },
+     {
+      "name": "negate",
+      "label": "Negate"
+     },
+     {
+      "name": "outside",
+      "label": "Outside"
+     },
+     {
+      "name": "outsideluminance",
+      "label": "Outside Luminance"
+     },
+     {
+      "name": "over",
+      "label": "Over"
+     },
+     {
+      "name": "overlay",
+      "label": "Overlay"
+     },
+     {
+      "name": "pinlight",
+      "label": "Pinlight"
+     },
+     {
+      "name": "reflect",
+      "label": "Reflect"
+     },
+     {
+      "name": "screen",
+      "label": "Screen"
+     },
+     {
+      "name": "softlight",
+      "label": "Soft Light"
+     },
+     {
+      "name": "linearlight",
+      "label": "Linear Light"
+     },
+     {
+      "name": "stencilluminance",
+      "label": "Stencil Luminance"
+     },
+     {
+      "name": "subtract",
+      "label": "Subtract"
+     },
+     {
+      "name": "subtractive",
+      "label": "Subtractive"
+     },
+     {
+      "name": "under",
+      "label": "Under"
+     },
+     {
+      "name": "vividlight",
+      "label": "Vivid Light"
+     },
+     {
+      "name": "xor",
+      "label": "Xor"
+     },
+     {
+      "name": "yfilm",
+      "label": "Y Film"
+     },
+     {
+      "name": "zfilm",
+      "label": "Z Film"
+     }
+    ],
+    "page": "Source"
+   },
+   {
+    "name": "Opacity2",
+    "label": "Opac",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Source"
+   },
+   {
+    "name": "Compover",
+    "label": "Comp Over Background Color",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Source"
+   },
+   {
+    "name": "Bgcolor",
+    "label": "Bgcolor",
+    "style": "RGBA",
+    "help": "",
+    "size": 4,
+    "default": 0.0,
+    "page": "Source"
+   },
+   {
+    "name": "Res",
+    "label": "Render Res",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "pGpu"
+   },
+   {
+    "name": "Create",
+    "label": "Create",
+    "style": "Menu",
+    "help": "Specify how particles are being created. You can either create a certain number of particles all at once or create a certain number of particles on a per frame basis.",
+    "default": "name1",
+    "section": true,
+    "menu": [
+     {
+      "name": "numParticles",
+      "label": "By Total Number of Particles"
+     },
+     {
+      "name": "perFrame",
+      "label": "By Particles per Frame"
+     }
+    ],
+    "page": "pGpu"
+   },
+   {
+    "name": "Maxparticles",
+    "label": "Max Particles in Simulation",
+    "style": "Int",
+    "help": "",
+    "default": 409600,
+    "page": "pGpu"
+   },
+   {
+    "name": "Birth",
+    "label": "Birth",
+    "style": "Int",
+    "help": "The number of particles spawned each frame. Only available when the Create parameter is set to \"By Particles per Frame\".",
+    "default": 10000,
+    "page": "pGpu"
+   },
+   {
+    "name": "Randominitpos",
+    "label": "Random InitPos",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "page": "pGpu"
+   },
+   {
+    "name": "Camera",
+    "label": "Camera",
+    "style": "COMP",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "pGpu"
+   },
+   {
+    "name": "Projectionblend",
+    "label": "Projection Blend",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "pGpu"
+   },
+   {
+    "name": "Light",
+    "label": "Light",
+    "style": "COMP",
+    "help": "",
+    "default": "light1",
+    "page": "pGpu"
+   },
+   {
+    "name": "Hit",
+    "label": "Hit Behaviour",
+    "style": "Menu",
+    "help": "Specify what the particle should do when leaving the bounding box.",
+    "default": "bounce",
+    "section": true,
+    "menu": [
+     {
+      "name": "none",
+      "label": "None"
+     },
+     {
+      "name": "die",
+      "label": "Die on Contact"
+     },
+     {
+      "name": "bounce",
+      "label": "Bounce on Contact"
+     },
+     {
+      "name": "avoid",
+      "label": "Avoid Bounds"
+     },
+     {
+      "name": "stick",
+      "label": "Stick"
+     },
+     {
+      "name": "fade",
+      "label": "Fade Out"
+     }
+    ],
+    "page": "pGpu"
+   },
+   {
+    "name": "Speed",
+    "label": "Speed",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "section": true,
+    "page": "pGpu"
+   },
+   {
+    "name": "Drag",
+    "label": "Drag",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "pGpu"
+   },
+   {
+    "name": "Pause",
+    "label": "Pause",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "pGpu"
+   },
+   {
+    "name": "Reset",
+    "label": "Reset",
+    "style": "Pulse",
+    "help": "Reset the particle system.",
+    "page": "pGpu"
+   },
+   {
+    "name": "Material",
+    "label": "Material",
+    "style": "Menu",
+    "help": "Select which material type should be used for the particle system render.",
+    "default": "constant",
+    "section": true,
+    "menu": [
+     {
+      "name": "constant",
+      "label": "Constant"
+     },
+     {
+      "name": "phong",
+      "label": "Phong"
+     },
+     {
+      "name": "line",
+      "label": "Line"
+     },
+     {
+      "name": "pbr",
+      "label": "PBR"
+     }
+    ],
+    "page": "Look"
+   },
+   {
+    "name": "Open",
+    "label": "Open MAT",
+    "style": "Pulse",
+    "help": "",
+    "page": "Look"
+   },
+   {
+    "name": "Sop",
+    "label": "SOP",
+    "style": "Menu",
+    "help": "",
+    "default": "Point",
+    "section": true,
+    "menu": [
+     {
+      "name": "Point",
+      "label": "Point"
+     },
+     {
+      "name": "Box",
+      "label": "Box"
+     }
+    ],
+    "page": "Look"
+   },
+   {
+    "name": "Particlesizemax",
+    "label": "Particle Size Max",
+    "style": "Float",
+    "help": "Specify the maximum size of the particle.",
+    "default": 1.0,
+    "section": true,
+    "page": "Look"
+   },
+   {
+    "name": "Compositing",
+    "label": "Compositing",
+    "style": "Menu",
+    "help": "",
+    "default": "independent",
+    "section": true,
+    "menu": [
+     {
+      "name": "coverage",
+      "label": "Alpha To Coverage"
+     },
+     {
+      "name": "discard",
+      "label": "Discard Alpha"
+     },
+     {
+      "name": "independent",
+      "label": "Order-Independent Transparency"
+     },
+     {
+      "name": "nodepth",
+      "label": "No Depth Test"
+     }
+    ],
+    "page": "Look"
+   },
+   {
+    "name": "Alphathreshold",
+    "label": "Alpha Threshold",
+    "style": "Float",
+    "help": "",
+    "default": 0.8,
+    "page": "Look"
+   },
+   {
+    "name": "Fade",
+    "label": "Fade",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Look"
+   },
+   {
+    "name": "Fadein",
+    "label": "Fade In",
+    "style": "Float",
+    "help": "Specify the time in seconds a particle fades in after being spawned.",
+    "default": 0.001,
+    "section": true,
+    "page": "Look"
+   },
+   {
+    "name": "Fadeout",
+    "label": "Fade Out",
+    "style": "Float",
+    "help": "Specify the time in seconds a particle fades out before dying.",
+    "default": 1.0,
+    "page": "Look"
+   },
+   {
+    "name": "Fadetocolor",
+    "label": "Fade to Color (Mult Alpha)",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "section": true,
+    "page": "Look"
+   },
+   {
+    "name": "Alphafade",
+    "label": "Fade to Alpha",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Look"
+   },
+   {
+    "name": "Fadetosize",
+    "label": "Fade to Size",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "Look"
+   },
+   {
+    "name": "Coltosizemap",
+    "label": "Col to Size Map",
+    "style": "Menu",
+    "help": "",
+    "default": "red",
+    "section": true,
+    "menu": [
+     {
+      "name": "luminance",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbaverage",
+      "label": "RGB Average"
+     },
+     {
+      "name": "average",
+      "label": "RGBA Average"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Maximum"
+     },
+     {
+      "name": "max",
+      "label": "RGBA Maximum"
+     },
+     {
+      "name": "zero",
+      "label": "Zero"
+     },
+     {
+      "name": "one",
+      "label": "One"
+     }
+    ],
+    "page": "Look"
+   },
+   {
+    "name": "Lumtosize",
+    "label": "Col to Size Cross",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Look"
+   },
+   {
+    "name": "Expval",
+    "label": "Exponent Value",
+    "style": "Float",
+    "help": "",
+    "default": 2.0,
+    "page": "Look"
+   },
+   {
+    "name": "Sizemodinvert",
+    "label": "Size Mod Invert",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Look"
+   },
+   {
+    "name": "Lifetype",
+    "label": "Life Type",
+    "style": "Menu",
+    "help": "",
+    "default": "constant",
+    "section": true,
+    "menu": [
+     {
+      "name": "constant",
+      "label": "Constant"
+     },
+     {
+      "name": "random",
+      "label": "Random"
+     },
+     {
+      "name": "Effector",
+      "label": "Effector"
+     }
+    ],
+    "page": "Life"
+   },
+   {
+    "name": "Life",
+    "label": "Life",
+    "style": "Float",
+    "help": "The number of seconds a particle will be alive.",
+    "default": 2.0,
+    "page": "Life"
+   },
+   {
+    "name": "Lifemax",
+    "label": "Life Max",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Life"
+   },
+   {
+    "name": "Lifevariance",
+    "label": "Lifevariance",
+    "style": "Float",
+    "help": "A delta number of seconds that will be added or subtracted from the expected lifetime, specified in the Life parameter, of a particle.",
+    "default": 2.0,
+    "page": "Life"
+   },
+   {
+    "name": "Expval2",
+    "label": "Exponent Value",
+    "style": "Float",
+    "help": "",
+    "default": 2.0,
+    "section": true,
+    "page": "Life"
+   },
+   {
+    "name": "Torange",
+    "label": "To Range",
+    "style": "Float",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Life"
+   },
+   {
+    "name": "Worksonlywithrandominitposoff",
+    "label": "Works only with Random InitPos=Off",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "section": true,
+    "page": "Life"
+   },
+   {
+    "name": "Randominitpos2",
+    "label": "Random InitPos",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "page": "Life"
+   },
+   {
+    "name": "Effectorswitchlife",
+    "label": "InitPos/CurrPos",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "readonly": true,
+    "page": "Life"
+   },
+   {
+    "name": "Rgb",
+    "label": "RGB",
+    "style": "Menu",
+    "help": "",
+    "default": "red",
+    "menu": [
+     {
+      "name": "luminance",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbaverage",
+      "label": "RGB Average"
+     },
+     {
+      "name": "average",
+      "label": "RGBA Average"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Maximum"
+     },
+     {
+      "name": "max",
+      "label": "RGBA Maximum"
+     },
+     {
+      "name": "zero",
+      "label": "Zero"
+     },
+     {
+      "name": "one",
+      "label": "One"
+     }
+    ],
+    "page": "Life"
+   },
+   {
+    "name": "Turbgain",
+    "label": "Turb Gain",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Turb"
+   },
+   {
+    "name": "Turbexpval",
+    "label": "Trub Effector Exponent",
+    "style": "Float",
+    "help": "",
+    "default": 2.0,
+    "page": "Turb"
+   },
+   {
+    "name": "Turbseed1",
+    "label": "Turb Seed",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "section": true,
+    "page": "Turb"
+   },
+   {
+    "name": "Turbperiod1",
+    "label": "Turb Period",
+    "style": "Float",
+    "help": "",
+    "default": 0.5,
+    "page": "Turb"
+   },
+   {
+    "name": "Turbtrans",
+    "label": "Turb Trans Speed",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "page": "Turb"
+   },
+   {
+    "name": "Rgbturb",
+    "label": "Rgb",
+    "style": "Menu",
+    "help": "",
+    "default": "luminance",
+    "section": true,
+    "menu": [
+     {
+      "name": "luminance",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbaverage",
+      "label": "RGB Average"
+     },
+     {
+      "name": "average",
+      "label": "RGBA Average"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Maximum"
+     },
+     {
+      "name": "max",
+      "label": "RGBA Maximum"
+     },
+     {
+      "name": "zero",
+      "label": "Zero"
+     },
+     {
+      "name": "one",
+      "label": "One"
+     }
+    ],
+    "page": "Turb"
+   },
+   {
+    "name": "Darkside",
+    "label": "Dark Side",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Turb"
+   },
+   {
+    "name": "Turb",
+    "label": "Turb",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Turb"
+   },
+   {
+    "name": "Turbmag",
+    "label": "Turb Mag",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Turb"
+   },
+   {
+    "name": "Brightside",
+    "label": "Bright Side",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Turb"
+   },
+   {
+    "name": "Turb1",
+    "label": "Turb",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Turb"
+   },
+   {
+    "name": "Turbmag1",
+    "label": "Turb Mag",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Turb"
+   },
+   {
+    "name": "Effectorswitchturb",
+    "label": "InitPos/CurrPos",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "section": true,
+    "page": "Turb"
+   },
+   {
+    "name": "Windgain",
+    "label": "Windgain",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Windexpval",
+    "label": "Wind Effector Exponent",
+    "style": "Float",
+    "help": "",
+    "default": 2.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Rgbwind",
+    "label": "Rgb",
+    "style": "Menu",
+    "help": "",
+    "default": "luminance",
+    "section": true,
+    "menu": [
+     {
+      "name": "luminance",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbaverage",
+      "label": "RGB Average"
+     },
+     {
+      "name": "average",
+      "label": "RGBA Average"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Maximum"
+     },
+     {
+      "name": "max",
+      "label": "RGBA Maximum"
+     },
+     {
+      "name": "zero",
+      "label": "Zero"
+     },
+     {
+      "name": "one",
+      "label": "One"
+     }
+    ],
+    "page": "Wind"
+   },
+   {
+    "name": "Darkside2",
+    "label": "Dark Side",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Wind"
+   },
+   {
+    "name": "Wind1",
+    "label": "Wind",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Wind"
+   },
+   {
+    "name": "Windmag1",
+    "label": "WindMag",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Windvariance",
+    "label": "Wind Variance",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "Wind"
+   },
+   {
+    "name": "Brightside2",
+    "label": "Bright Side",
+    "style": "Header",
+    "help": "",
+    "default": "",
+    "page": "Wind"
+   },
+   {
+    "name": "Wind",
+    "label": "Wind",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Wind"
+   },
+   {
+    "name": "Windmag",
+    "label": "WindMag",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Wind"
+   },
+   {
+    "name": "Windvariance1",
+    "label": "Wind Variance",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "Wind"
+   },
+   {
+    "name": "Effectorswitchwind",
+    "label": "InitPos/CurrPos",
+    "style": "Toggle",
+    "help": "",
+    "default": true,
+    "section": true,
+    "page": "Wind"
+   },
+   {
+    "name": "Forces",
+    "label": "Forces",
+    "style": "Sequence",
+    "help": "",
+    "default": 0,
+    "page": "Forces"
+   },
+   {
+    "name": "Forces0forcetype",
+    "label": "Force Type",
+    "style": "Menu",
+    "help": "",
+    "default": "2",
+    "menu": [
+     {
+      "name": "Radial",
+      "label": "Radial"
+     },
+     {
+      "name": "Axial",
+      "label": "Axial"
+     },
+     {
+      "name": "Vortex",
+      "label": "Vortex"
+     },
+     {
+      "name": "Spiral",
+      "label": "Spiral"
+     }
+    ],
+    "page": "Forces"
+   },
+   {
+    "name": "Forces0forcepos",
+    "label": "Forcepos",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Forces"
+   },
+   {
+    "name": "Forces0forceradius",
+    "label": "Force Radius",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "section": true,
+    "page": "Forces"
+   },
+   {
+    "name": "Forces0forceamount",
+    "label": "Force Amount",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Forces"
+   },
+   {
+    "name": "Forces0forcedir",
+    "label": "Forcedir",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Forces"
+   },
+   {
+    "name": "Forces1forcetype",
+    "label": "Force Type",
+    "style": "Menu",
+    "help": "",
+    "default": "2",
+    "menu": [
+     {
+      "name": "Radial",
+      "label": "Radial"
+     },
+     {
+      "name": "Axial",
+      "label": "Axial"
+     },
+     {
+      "name": "Vortex",
+      "label": "Vortex"
+     },
+     {
+      "name": "Spiral",
+      "label": "Spiral"
+     }
+    ],
+    "page": "Forces"
+   },
+   {
+    "name": "Forces1forcepos",
+    "label": "Forcepos",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Forces"
+   },
+   {
+    "name": "Forces1forceradius",
+    "label": "Force Radius",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "section": true,
+    "page": "Forces"
+   },
+   {
+    "name": "Forces1forceamount",
+    "label": "Force Amount",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Forces"
+   },
+   {
+    "name": "Forces1forcedir",
+    "label": "Forcedir",
+    "style": "XYZW",
+    "help": "",
+    "size": 3,
+    "default": 0.0,
+    "section": true,
+    "page": "Forces"
+   },
+   {
+    "name": "Outputres",
+    "label": "Output Res",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 1920.0,
+    "section": true,
+    "page": "FLUID"
+   },
+   {
+    "name": "Simres",
+    "label": "Sim Res",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 256.0,
+    "page": "FLUID"
+   },
+   {
+    "name": "Optflowmag",
+    "label": "Optical Flow Magnitude",
+    "style": "Float",
+    "help": "Magnitude of the optical flow input force.",
+    "default": 0.01,
+    "section": true,
+    "page": "FLUID"
+   },
+   {
+    "name": "Enablefluid",
+    "label": "Enable Fluid",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "FLUID"
+   },
+   {
+    "name": "Progress",
+    "label": "Fluid as Source",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "FLUID"
+   },
+   {
+    "name": "Verticalstrength",
+    "label": "Verticalstrength",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "FLUID"
+   },
+   {
+    "name": "Forcemapvelocitystrength",
+    "label": "Force Map Velocity Strength",
+    "style": "Float",
+    "help": "",
+    "default": 0.5,
+    "page": "FLUID"
+   },
+   {
+    "name": "Outputmaxlum",
+    "label": "Output Max Lum",
+    "style": "Float",
+    "help": "",
+    "default": 1.5,
+    "section": true,
+    "page": "FLUID"
+   },
+   {
+    "name": "Flow1",
+    "label": "Palette Flow",
+    "style": "Float",
+    "help": "",
+    "default": 0.01,
+    "page": "FLUID"
+   },
+   {
+    "name": "Flow2",
+    "label": "Splat Flow",
+    "style": "Float",
+    "help": "",
+    "default": 0.2,
+    "page": "FLUID"
+   },
+   {
+    "name": "Flow3",
+    "label": "Density Flow",
+    "style": "Float",
+    "help": "",
+    "default": 0.2,
+    "page": "FLUID"
+   },
+   {
+    "name": "Decay1",
+    "label": "Decay",
+    "style": "Float",
+    "help": "",
+    "default": 0.001,
+    "page": "FLUID"
+   },
+   {
+    "name": "Pressurepasses",
+    "label": "Pressure Passes",
+    "style": "Int",
+    "help": "",
+    "default": 50,
+    "page": "FLUID"
+   },
+   {
+    "name": "Colordiffusion1",
+    "label": "Color Diffusion",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "FLUID"
+   },
+   {
+    "name": "Velocitydiffusion1",
+    "label": "Velocity Diffusion",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "FLUID"
+   },
+   {
+    "name": "Vorticity1",
+    "label": "Vorticity",
+    "style": "Float",
+    "help": "",
+    "default": 8.0,
+    "page": "FLUID"
+   },
+   {
+    "name": "Pressure1",
+    "label": "Pressure",
+    "style": "Float",
+    "help": "",
+    "default": 0.8,
+    "page": "FLUID"
+   },
+   {
+    "name": "Pulse",
+    "label": "Pulse",
+    "style": "Pulse",
+    "help": "",
+    "section": true,
+    "page": "FLUID"
+   },
+   {
+    "name": "Time",
+    "label": "Time",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "FLUID"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
   "PasteFromClipboard": [
    {
     "name": "Pasteimage",
@@ -13782,6 +19436,506 @@
     "help": "Optional: a ChatTD operator for this component to talk to. Leave it empty unless you use DotSimulate's ChatTD.",
     "default": "",
     "section": true,
+    "page": "About"
+   }
+  ],
+  "PrismTOP": [
+   {
+    "name": "Res",
+    "label": "Res",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 1920.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Operand",
+    "label": "Operation",
+    "style": "Menu",
+    "help": "",
+    "default": "under",
+    "section": true,
+    "menu": [
+     {
+      "name": "add",
+      "label": "Add"
+     },
+     {
+      "name": "atop",
+      "label": "Atop"
+     },
+     {
+      "name": "average",
+      "label": "Average"
+     },
+     {
+      "name": "brightest",
+      "label": "Brightest"
+     },
+     {
+      "name": "burncolor",
+      "label": "Burn Color"
+     },
+     {
+      "name": "burnlinear",
+      "label": "Burn Linear"
+     },
+     {
+      "name": "chromadifference",
+      "label": "Chroma Difference"
+     },
+     {
+      "name": "color",
+      "label": "Color"
+     },
+     {
+      "name": "darkercolor",
+      "label": "Darker Color"
+     },
+     {
+      "name": "difference",
+      "label": "Difference"
+     },
+     {
+      "name": "dimmest",
+      "label": "Dimmest"
+     },
+     {
+      "name": "divide",
+      "label": "Divide"
+     },
+     {
+      "name": "dodge",
+      "label": "Dodge"
+     },
+     {
+      "name": "exclude",
+      "label": "Exclude"
+     },
+     {
+      "name": "freeze",
+      "label": "Freeze"
+     },
+     {
+      "name": "glow",
+      "label": "Glow"
+     },
+     {
+      "name": "hardlight",
+      "label": "Hard Light"
+     },
+     {
+      "name": "hardmix",
+      "label": "Hard Mix"
+     },
+     {
+      "name": "heat",
+      "label": "Heat"
+     },
+     {
+      "name": "hue",
+      "label": "Hue"
+     },
+     {
+      "name": "inside",
+      "label": "Inside"
+     },
+     {
+      "name": "insideluminance",
+      "label": "Inside Luminance"
+     },
+     {
+      "name": "inverse",
+      "label": "Inverse"
+     },
+     {
+      "name": "lightercolor",
+      "label": "Lighter Color"
+     },
+     {
+      "name": "luminancedifference",
+      "label": "Luminance Difference"
+     },
+     {
+      "name": "maximum",
+      "label": "Maximum"
+     },
+     {
+      "name": "minimum",
+      "label": "Minimum"
+     },
+     {
+      "name": "multiply",
+      "label": "Multiply"
+     },
+     {
+      "name": "negate",
+      "label": "Negate"
+     },
+     {
+      "name": "outside",
+      "label": "Outside"
+     },
+     {
+      "name": "outsideluminance",
+      "label": "Outside Luminance"
+     },
+     {
+      "name": "over",
+      "label": "Over"
+     },
+     {
+      "name": "overlay",
+      "label": "Overlay"
+     },
+     {
+      "name": "pinlight",
+      "label": "Pinlight"
+     },
+     {
+      "name": "reflect",
+      "label": "Reflect"
+     },
+     {
+      "name": "screen",
+      "label": "Screen"
+     },
+     {
+      "name": "softlight",
+      "label": "Soft Light"
+     },
+     {
+      "name": "linearlight",
+      "label": "Linear Light"
+     },
+     {
+      "name": "stencilluminance",
+      "label": "Stencil Luminance"
+     },
+     {
+      "name": "subtract",
+      "label": "Subtract"
+     },
+     {
+      "name": "subtractive",
+      "label": "Subtractive"
+     },
+     {
+      "name": "under",
+      "label": "Under"
+     },
+     {
+      "name": "vividlight",
+      "label": "Vivid Light"
+     },
+     {
+      "name": "xor",
+      "label": "Xor"
+     },
+     {
+      "name": "yfilm",
+      "label": "Y Film"
+     },
+     {
+      "name": "zfilm",
+      "label": "Z Film"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Opacity",
+    "label": "Orig Opac",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Middlescale",
+    "label": "Orig Scale",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Fit",
+    "label": "Fit",
+    "style": "Menu",
+    "help": "",
+    "default": "fitoutside",
+    "section": true,
+    "menu": [
+     {
+      "name": "fill",
+      "label": "Fill"
+     },
+     {
+      "name": "fithorz",
+      "label": "Fit Horizontal"
+     },
+     {
+      "name": "fitvert",
+      "label": "Fit Vertical"
+     },
+     {
+      "name": "fitbest",
+      "label": "Fit Best"
+     },
+     {
+      "name": "fitoutside",
+      "label": "Fit Outside"
+     },
+     {
+      "name": "nativeres",
+      "label": "Native Resolution"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "T",
+    "label": "Translate",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Scale",
+    "label": "Scale",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "R",
+    "label": "Rotate",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Sides",
+    "label": "Sides",
+    "style": "Int",
+    "help": "",
+    "default": 6,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Softness",
+    "label": "Softness",
+    "style": "Float",
+    "help": "",
+    "default": 0.09,
+    "page": "Custom"
+   },
+   {
+    "name": "Rotsinamp",
+    "label": "Rot Sin Amp",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Rotsinphase",
+    "label": "Rot Sin Phase",
+    "style": "Float",
+    "help": "",
+    "default": 1165.7533333333333,
+    "page": "Custom"
+   },
+   {
+    "name": "Drywet",
+    "label": "Dry/Wet",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Pattern",
+    "label": "Pattern",
+    "style": "Sequence",
+    "help": "",
+    "default": 0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern0instances",
+    "label": "Instances",
+    "style": "Int",
+    "help": "",
+    "default": 6,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern0radius",
+    "label": "Radius",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern0amp",
+    "label": "Instance Scale",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern0phase",
+    "label": "Phase",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern0alpha",
+    "label": "Alpha",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern1instances",
+    "label": "Instances",
+    "style": "Int",
+    "help": "",
+    "default": 6,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern1radius",
+    "label": "Radius",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern1amp",
+    "label": "Instance Scale",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern1phase",
+    "label": "Phase",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern1alpha",
+    "label": "Alpha",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern2instances",
+    "label": "Instances",
+    "style": "Int",
+    "help": "",
+    "default": 6,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern2radius",
+    "label": "Radius",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern2amp",
+    "label": "Instance Scale",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern2phase",
+    "label": "Phase",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Pattern2alpha",
+    "label": "Alpha",
+    "style": "Float",
+    "help": "",
+    "default": 1.0,
+    "page": "Patterns"
+   },
+   {
+    "name": "Layers",
+    "label": "Layers",
+    "style": "Int",
+    "help": "",
+    "default": 3,
+    "page": "Chroma"
+   },
+   {
+    "name": "Chromatic",
+    "label": "Chromatic",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Chroma"
+   },
+   {
+    "name": "Distortion",
+    "label": "Distortion",
+    "style": "Float",
+    "help": "",
+    "default": 0.0,
+    "page": "Chroma"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
     "page": "About"
    }
   ],
@@ -13986,6 +20140,1044 @@
     "label": "Help",
     "style": "Pulse",
     "help": "Open this tool's documentation page in your browser.",
+    "page": "About"
+   }
+  ],
+  "RealRamp": [
+   {
+    "name": "Resolution",
+    "label": "Resolution",
+    "style": "Int",
+    "help": "Output width and height in pixels when nothing is wired into the input. With an input connected, the ramp takes the input resolution.",
+    "size": 2,
+    "default": 256,
+    "page": "Custom"
+   },
+   {
+    "name": "Type",
+    "label": "Type",
+    "style": "Menu",
+    "help": "Ramp shape: Vertical and Horizontal are linear, Radial sweeps around the centre, Circular grows outward from the centre.",
+    "default": "horiz",
+    "section": true,
+    "menu": [
+     {
+      "name": "vert",
+      "label": "Vertical"
+     },
+     {
+      "name": "horiz",
+      "label": "Horizontal"
+     },
+     {
+      "name": "rad",
+      "label": "Radial"
+     },
+     {
+      "name": "circ",
+      "label": "Circular"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Phase",
+    "label": "Phase",
+    "style": "Float",
+    "help": "Offsets the ramp along its direction, in periods. Constant 0 by default; drive it with an expression or CHOP (e.g. absTime.seconds*0.2) to scroll the ramp.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Period",
+    "label": "Period",
+    "style": "Float",
+    "help": "Length of one ramp cycle in UV units; smaller values repeat the ramp more often. 0 outputs black.",
+    "default": 1.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Extend",
+    "label": "Extend",
+    "style": "Menu",
+    "help": "What happens past one period: Repeat restarts at black, Mirror runs back down for a seamless ping-pong.",
+    "default": "repeat",
+    "menu": [
+     {
+      "name": "repeat",
+      "label": "Repeat"
+     },
+     {
+      "name": "mirror",
+      "label": "Mirror"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Inputfiltertype",
+    "label": "Input Smoothness",
+    "style": "Menu",
+    "help": "Filtering used when sampling a wired input. The ramp itself never samples the input (only its resolution and format are used), so this is kept for SetSmoothness and has no visible effect.",
+    "default": "nearest",
+    "menu": [
+     {
+      "name": "nearest",
+      "label": "Nearest Pixel"
+     },
+     {
+      "name": "linear",
+      "label": "Interpolate Pixels"
+     },
+     {
+      "name": "mipmap",
+      "label": "Mipmap Pixels"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Filtertype",
+    "label": "Viewer Smoothness",
+    "style": "Menu",
+    "help": "Filtering used when the output is displayed at another resolution.",
+    "default": "nearest",
+    "menu": [
+     {
+      "name": "nearest",
+      "label": "Nearest Pixel"
+     },
+     {
+      "name": "linear",
+      "label": "Interpolate Pixels"
+     },
+     {
+      "name": "mipmap",
+      "label": "Mipmap Pixels"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Format",
+    "label": "Pixel Format",
+    "style": "Menu",
+    "help": "Pixel format of the output. Defaults to 32-bit float, which keeps the ramp free of banding; 16-bit float is usually enough, 8-bit shows visible steps. Use Input follows the wired input (8-bit when nothing is wired).",
+    "default": "rgba32float",
+    "menu": [
+     {
+      "name": "useinput",
+      "label": "Use Input"
+     },
+     {
+      "name": "rgba8fixed",
+      "label": "8-bit fixed (RGBA)"
+     },
+     {
+      "name": "rgba16float",
+      "label": "16-bit float (RGBA)"
+     },
+     {
+      "name": "rgba32float",
+      "label": "32-bit float (RGBA)"
+     },
+     {
+      "name": "rgb10a2fixed",
+      "label": "10-bit RGB, 2-bit Alpha fixed (RGBA)"
+     },
+     {
+      "name": "rgba16fixed",
+      "label": "16-bit fixed (RGBA)"
+     },
+     {
+      "name": "rgba11float",
+      "label": "11-bit float (RGB), Positive Values Only"
+     },
+     {
+      "name": "mono8fixed",
+      "label": "8-bit fixed (Mono)"
+     },
+     {
+      "name": "mono16fixed",
+      "label": "16-bit fixed (Mono)"
+     },
+     {
+      "name": "mono16float",
+      "label": "16-bit float (Mono)"
+     },
+     {
+      "name": "mono32float",
+      "label": "32-bit float (Mono)"
+     },
+     {
+      "name": "rg8fixed",
+      "label": "8-bit fixed (RG)"
+     },
+     {
+      "name": "rg16fixed",
+      "label": "16-bit fixed (RG)"
+     },
+     {
+      "name": "rg16float",
+      "label": "16-bit float (RG)"
+     },
+     {
+      "name": "rg32float",
+      "label": "32-bit float (RG)"
+     },
+     {
+      "name": "a8fixed",
+      "label": "8-bit fixed (A)"
+     },
+     {
+      "name": "a16fixed",
+      "label": "16-bit fixed (A)"
+     },
+     {
+      "name": "a16float",
+      "label": "16-bit float (A)"
+     },
+     {
+      "name": "a32float",
+      "label": "32-bit float (A)"
+     },
+     {
+      "name": "monoalpha8fixed",
+      "label": "8-bit fixed (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha16fixed",
+      "label": "16-bit fixed (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha16float",
+      "label": "16-bit float (Mono+Alpha)"
+     },
+     {
+      "name": "monoalpha32float",
+      "label": "32-bit float (Mono+Alpha)"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "SeqMod": [
+   {
+    "name": "Comp",
+    "label": "COMP",
+    "style": "COMP",
+    "help": "The COMP that owns the sequence, resolved like any OP parameter on SeqMod: a bare name ('geo1') is a sibling in the network SeqMod sits in, '..' is that network itself, and a child of SeqMod needs './name'.",
+    "default": "..",
+    "page": "Custom"
+   },
+   {
+    "name": "Seqname",
+    "label": "Seq Name",
+    "style": "Str",
+    "help": "Name of the parameter sequence on the target COMP: the part before the block index (Items for Items0name, Items1name, ...). Empty publishes nothing.",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Parnames",
+    "label": "ParNames",
+    "style": "Str",
+    "help": "Read-only. Every block parameter of the sequence as space-separated patterns (Items*name Items*level), republished whenever blocks are added or removed.",
+    "default": "",
+    "readonly": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Callbacks",
+    "label": "Callbacks",
+    "style": "DAT",
+    "help": "DAT holding OnAddBlock(seqBlock) and OnRemoveBlock(seqBlock_idx). A bare name is a sibling of SeqMod; a DAT inside it needs './name'. Defaults to the built-in no-op template; Create Callbacks makes an editable one.",
+    "default": "",
+    "page": "Callbacks"
+   },
+   {
+    "name": "Createcallbacks",
+    "label": "Create Callbacks",
+    "style": "Pulse",
+    "help": "Create an editable callbacks DAT from the template and point Callbacks at it.",
+    "page": "Callbacks"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "Package author.",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Open this package's documentation page in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Package version the FNS updater compares against the release manifest.",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "SlideShow": [
+   {
+    "name": "Res",
+    "label": "Res",
+    "style": "XYZW",
+    "help": "",
+    "size": 2,
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Folder",
+    "label": "Folder",
+    "style": "Folder",
+    "help": "",
+    "default": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Select",
+    "label": "Select",
+    "style": "Int",
+    "help": "",
+    "default": 0,
+    "page": "Custom"
+   },
+   {
+    "name": "Period",
+    "label": "Period",
+    "style": "Float",
+    "help": "",
+    "default": 10.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Opacity",
+    "label": "Crossfade Opacity",
+    "style": "Float",
+    "help": "",
+    "default": 0.9,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Random",
+    "label": "Random",
+    "style": "Toggle",
+    "help": "",
+    "default": false,
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Next",
+    "label": "Next",
+    "style": "Pulse",
+    "help": "",
+    "section": true,
+    "page": "Custom"
+   },
+   {
+    "name": "Prev",
+    "label": "Prev",
+    "style": "Pulse",
+    "help": "",
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "ThresholdColor": [
+   {
+    "name": "Comparator",
+    "label": "Comparator",
+    "style": "Menu",
+    "help": "The test that REMOVES a pixel (sets it to black): with Less, every pixel whose tested value is below Threshold goes black and the rest keep their colour. Same semantics as the Threshold TOP.",
+    "default": "less",
+    "menu": [
+     {
+      "name": "less",
+      "label": "Less"
+     },
+     {
+      "name": "greater",
+      "label": "Greater"
+     },
+     {
+      "name": "lessorequal",
+      "label": "Less or Equal"
+     },
+     {
+      "name": "greaterorequal",
+      "label": "Greater or Equal"
+     },
+     {
+      "name": "equal",
+      "label": "Equal"
+     },
+     {
+      "name": "notequal",
+      "label": "Not Equal"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Rgb",
+    "label": "RGB",
+    "style": "Menu",
+    "help": "Which value of each pixel is compared against Threshold: luminance, one channel, the RGB or RGBA average, or the RGB or RGBA maximum.",
+    "default": "luminance",
+    "menu": [
+     {
+      "name": "luminance",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbaverage",
+      "label": "RGB Average"
+     },
+     {
+      "name": "average",
+      "label": "RGBA Average"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Maximum"
+     },
+     {
+      "name": "max",
+      "label": "RGBA Maximum"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Threshold",
+    "label": "Threshold",
+    "style": "Float",
+    "help": "The value each pixel is compared against with the Comparator.",
+    "default": 0.5,
+    "page": "Custom"
+   },
+   {
+    "name": "Alpha",
+    "label": "Alpha",
+    "style": "Menu",
+    "help": "Output alpha: Same as RGB multiplies the input alpha by the pass/fail matte (removed pixels become transparent); One keeps the input alpha untouched.",
+    "default": "same",
+    "menu": [
+     {
+      "name": "same",
+      "label": "Same as RGB"
+     },
+     {
+      "name": "one",
+      "label": "One"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Soften",
+    "label": "Soften",
+    "style": "Float",
+    "help": "Width of the soft edge around the threshold; pixels near it fade between their colour and black instead of cutting hard. 0 is a hard cut.",
+    "default": 0.0,
+    "page": "Custom"
+   },
+   {
+    "name": "Author",
+    "label": "Author",
+    "style": "Str",
+    "help": "",
+    "default": "Function Store @function.str",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "",
+    "default": "1.0.0",
+    "page": "About"
+   }
+  ],
+  "TopToMidi": [
+   {
+    "name": "Sampler",
+    "label": "Sampler",
+    "style": "OP",
+    "help": "TOP or SOP operator to define the pixel positions for sampling. These can be animated too, of course!",
+    "default": "",
+    "section": true,
+    "page": "Input"
+   },
+   {
+    "name": "Origo",
+    "label": "Offset 0.5",
+    "style": "Toggle",
+    "help": "By default many SOPs are centered around the origin. This quick toggle shifts the Sampler\u2019s center to (0.5, 0.5).",
+    "default": false,
+    "page": "Input"
+   },
+   {
+    "name": "Open2",
+    "label": "Sample Preview",
+    "style": "Pulse",
+    "help": "Opens a UI window to visualize and manually adjust the sampling points. Move them around with Left-Click+Dragging ; Scale with Scroll-Wheel (or +-), Reset with Middle-Click. It also has some options on the bottom left to always show the points, toggle Offset 0.5 and Reset the adjustments",
+    "page": "Input"
+   },
+   {
+    "name": "Rgb",
+    "label": "Sample Channel",
+    "style": "Menu",
+    "help": "Which attribute of the input image to perform further processing on.",
+    "default": "luminance",
+    "section": true,
+    "menu": [
+     {
+      "name": "luminance",
+      "label": "Luminance"
+     },
+     {
+      "name": "red",
+      "label": "Red"
+     },
+     {
+      "name": "green",
+      "label": "Green"
+     },
+     {
+      "name": "blue",
+      "label": "Blue"
+     },
+     {
+      "name": "alpha",
+      "label": "Alpha"
+     },
+     {
+      "name": "rgbaverage",
+      "label": "RGB Average"
+     },
+     {
+      "name": "average",
+      "label": "RGBA Average"
+     },
+     {
+      "name": "rgbmax",
+      "label": "RGB Maximum"
+     },
+     {
+      "name": "max",
+      "label": "RGBA Maximum"
+     }
+    ],
+    "page": "Input"
+   },
+   {
+    "name": "Thresh",
+    "label": "Threshold",
+    "style": "Float",
+    "help": "Pre-processes the input image by thresholding between two values. This will also have an effect on when a note is triggered in Index Mapping Mode.",
+    "size": 2,
+    "default": 0.0,
+    "page": "Input"
+   },
+   {
+    "name": "Rerange",
+    "label": "Re-Range",
+    "style": "Toggle",
+    "help": "Re-ranges the thresholded image to 0-1. This parameter is only interesting in Value Mapping Mode.",
+    "default": false,
+    "page": "Input"
+   },
+   {
+    "name": "Mode",
+    "label": "Mapping Mode",
+    "style": "Menu",
+    "help": "This is the most important parameter to determine the mapping of pixel values to MIDI notes, before assigning to a Scale. Index: The point/pixel indices of the Sampler determine the pitch of the notes, upon triggered by the sampled value reaching the Threshold. Notes are sustained while in the range. It is important to set a good Threshold with Index mode.\nImportant to note that the number of Steps is determined by the number of points. Be careful not to use big textures or SOPs with many points (anyway MIDI is limited to 128 notes).\nValue: The sampled values determine the pitch of the notes, where the quantization is determined by the Steps parameter.\nIt means if you have identical sampled values they will trigged the same note twice.\nRe-Range of the Threshold is suggested to be kept on usually.\nIn this mode you are more free to set more sampling points!",
+    "default": "0",
+    "section": true,
+    "menu": [
+     {
+      "name": "Index",
+      "label": "Index"
+     },
+     {
+      "name": "Value",
+      "label": "Value"
+     }
+    ],
+    "page": "Input"
+   },
+   {
+    "name": "Triggeroptions",
+    "label": "Trigger Options",
+    "style": "Header",
+    "help": "These parameters can give you more control how often/how long notes are being triggered. Can be very useful in busy scenes.",
+    "default": "",
+    "section": true,
+    "page": "Input"
+   },
+   {
+    "name": "Retriggergatelen",
+    "label": "Re-Trigger Gate Length",
+    "style": "Float",
+    "help": "Overall gate window in seconds. At 0 every trigger passes straight through. Above 0 the sampled pattern is held for this long after a trigger, so a new trigger (or a release) can happen at most once per window; changes that arrive inside the window are applied when it closes.",
+    "default": 0.2,
+    "page": "Input"
+   },
+   {
+    "name": "Triggergatelength",
+    "label": "Trigger Gate Length",
+    "style": "Float",
+    "help": "Seconds a sample point has to stay above the threshold before its note turns on. 0 = immediately.",
+    "default": 0.2,
+    "page": "Input"
+   },
+   {
+    "name": "Minsustain",
+    "label": "Min Sustain Length",
+    "style": "Float",
+    "help": "Minimum seconds a note stays on once triggered, even if the sample point drops below the threshold sooner.",
+    "default": 0.0,
+    "page": "Input"
+   },
+   {
+    "name": "Retrigger",
+    "label": "Re-Trigger Delay",
+    "style": "Float",
+    "help": "Minimum seconds between two triggers of the same note. A new trigger inside this time is ignored.",
+    "default": 0.0,
+    "page": "Input"
+   },
+   {
+    "name": "Scale",
+    "label": "Scale",
+    "style": "Menu",
+    "help": "Determines the Scale Mode the triggered notes are mapped to. Scales determine a number of notes in a Scale, starting from a root note (Key). You can also define Custom Scales which will also show up in the dropdown! MIDI Scale is a special one, see later.",
+    "default": "Major",
+    "section": true,
+    "menu": [
+     {
+      "name": "Major",
+      "label": "Major"
+     },
+     {
+      "name": "NaturalMinor",
+      "label": "NaturalMinor"
+     },
+     {
+      "name": "Chromatic",
+      "label": "Chromatic"
+     },
+     {
+      "name": "WholeTone",
+      "label": "WholeTone"
+     },
+     {
+      "name": "HarmonicMajor",
+      "label": "HarmonicMajor"
+     },
+     {
+      "name": "HarmonicMinor",
+      "label": "HarmonicMinor"
+     },
+     {
+      "name": "MelodicMinor",
+      "label": "MelodicMinor"
+     },
+     {
+      "name": "Bachian",
+      "label": "Bachian"
+     },
+     {
+      "name": "MinorNeapolitan",
+      "label": "MinorNeapolitan"
+     },
+     {
+      "name": "Ionian",
+      "label": "Ionian"
+     },
+     {
+      "name": "Dorian",
+      "label": "Dorian"
+     },
+     {
+      "name": "Phrygian",
+      "label": "Phrygian"
+     },
+     {
+      "name": "Lydian",
+      "label": "Lydian"
+     },
+     {
+      "name": "Mixolydian",
+      "label": "Mixolydian"
+     },
+     {
+      "name": "Aeolian",
+      "label": "Aeolian"
+     },
+     {
+      "name": "Custom1",
+      "label": "Custom1"
+     },
+     {
+      "name": "Custom2",
+      "label": "Custom2"
+     },
+     {
+      "name": "Custom31",
+      "label": "Custom31"
+     },
+     {
+      "name": "MIDI Scale",
+      "label": "MIDI Scale"
+     }
+    ],
+    "page": "Scale"
+   },
+   {
+    "name": "Rootnote",
+    "label": "Key",
+    "style": "StrMenu",
+    "help": "Sets the musical root note of the Scale.\nCan type any musical note notation, even wild things like A#bbb## (thanks to the mingus library). But usually the drop-down list should be more reasonable :)",
+    "default": "",
+    "menu": [
+     {
+      "name": "C",
+      "label": "C"
+     },
+     {
+      "name": "C#",
+      "label": "C#"
+     },
+     {
+      "name": "D",
+      "label": "D"
+     },
+     {
+      "name": "D#",
+      "label": "D#"
+     },
+     {
+      "name": "E",
+      "label": "E"
+     },
+     {
+      "name": "F",
+      "label": "F"
+     },
+     {
+      "name": "F#",
+      "label": "F#"
+     },
+     {
+      "name": "G",
+      "label": "G"
+     },
+     {
+      "name": "G#",
+      "label": "G#"
+     },
+     {
+      "name": "A",
+      "label": "A"
+     },
+     {
+      "name": "A#",
+      "label": "A#"
+     },
+     {
+      "name": "B",
+      "label": "B"
+     }
+    ],
+    "page": "Scale"
+   },
+   {
+    "name": "Octave",
+    "label": "Octave",
+    "style": "Int",
+    "help": "The octave of the root note.",
+    "default": 4,
+    "page": "Scale"
+   },
+   {
+    "name": "Steps",
+    "label": "Steps",
+    "style": "Int",
+    "help": "Number of MIDI notes to generate.\nIn Index mode it is fixed to the number of sampling points.\nIn Value mode it is the \"quantization\" of the pitch determined by the sampled pixel values.",
+    "default": 1,
+    "page": "Scale"
+   },
+   {
+    "name": "Extendmode",
+    "label": "Extend Mode",
+    "style": "Toggle",
+    "help": "When having more steps than the number of notes in the Scale, having this on will extend subsequent steps to the next octaves. Otherwise the same scale notes in the starting octave are repeated.",
+    "default": false,
+    "page": "Scale"
+   },
+   {
+    "name": "Open",
+    "label": "Edit Custom Scales",
+    "style": "Pulse",
+    "help": "Opens a Table DAT where in each column you can define a custom scale name where each note can be defined in the rows below using standard musical notation. For example: C#3.",
+    "page": "Scale"
+   },
+   {
+    "name": "Velocitylookup",
+    "label": "Keytrack Lookup",
+    "style": "CHOP",
+    "help": "A multi-sample CHOP reference which can define the MIDI velocity based on the pitch.",
+    "default": "",
+    "page": "Scale"
+   },
+   {
+    "name": "Midiscale",
+    "label": "MIDI Scale",
+    "style": "Header",
+    "help": "The parameters below are only relevant if Scale is set to MIDI Scale. They allow you to use this component as a live companion musical instrument.",
+    "default": "",
+    "section": true,
+    "page": "Scale"
+   },
+   {
+    "name": "Midiref",
+    "label": "MIDI In CHOP",
+    "style": "CHOP",
+    "help": "Optional MIDI In CHOP (a MIDI keyboard) for MIDI Scale learn and live mode. Empty by default; name a sibling MIDI In CHOP, e.g. midiin1.",
+    "default": "",
+    "page": "Scale"
+   },
+   {
+    "name": "Midilearn",
+    "label": "MIDI Scale Learn",
+    "style": "Toggle",
+    "help": "Can define a Custom Scale by hitting notes one-by-one on your MIDI In instrument.",
+    "default": false,
+    "page": "Scale"
+   },
+   {
+    "name": "Midilive",
+    "label": "MIDI Live",
+    "style": "Toggle",
+    "help": "Follows the keys currently held on the MIDI In CHOP as the scale, in real time (MIDI Scale only), instead of the learned one.",
+    "default": false,
+    "page": "Scale"
+   },
+   {
+    "name": "Liveoctaveoffset",
+    "label": "Live Octave Offset",
+    "style": "Int",
+    "help": "Octaves added to the notes taken live from the MIDI In CHOP while MIDI Live is on, so the tool can play along above (or below) the keys you hold.",
+    "default": 0,
+    "page": "Scale"
+   },
+   {
+    "name": "Syncsteps",
+    "label": "Sync Steps",
+    "style": "Toggle",
+    "help": "Syncs the number of steps to the number of incoming notes. This is not available when Extend Mode is on.",
+    "default": false,
+    "page": "Scale"
+   },
+   {
+    "name": "Randomize",
+    "label": "Randomize",
+    "style": "Toggle",
+    "help": "Randomize the order of notes.",
+    "default": false,
+    "section": true,
+    "page": "Scale"
+   },
+   {
+    "name": "Seed",
+    "label": "Seed",
+    "style": "Int",
+    "help": "Seed of the randomization.",
+    "default": 0,
+    "page": "Scale"
+   },
+   {
+    "name": "Active",
+    "label": "MIDI Active",
+    "style": "Toggle",
+    "help": "Activates MIDI Out CHOP.",
+    "default": true,
+    "section": true,
+    "page": "Output"
+   },
+   {
+    "name": "Midioutchop",
+    "label": "MIDI Out CHOP",
+    "style": "CHOP",
+    "help": "MIDI Out CHOP to send notes to, referenced directly (no Null after it). Empty by default: drop a MIDI Out CHOP beside this tool and name it here, e.g. midiout1 for a sibling.",
+    "default": "",
+    "page": "Output"
+   },
+   {
+    "name": "Ch",
+    "label": "Channel",
+    "style": "Int",
+    "help": "MIDI channel to output notes on.",
+    "default": 0,
+    "page": "Output"
+   },
+   {
+    "name": "Vstactive",
+    "label": "VST Active",
+    "style": "Toggle",
+    "help": "Activates VST CHOP.",
+    "default": false,
+    "section": true,
+    "page": "Output"
+   },
+   {
+    "name": "Vstchop",
+    "label": "VST CHOP",
+    "style": "CHOP",
+    "help": "Optional Audio VST CHOP to play notes on, referenced directly (no Null after it). Empty by default; name a sibling Audio VST CHOP, e.g. audiovst1.",
+    "default": "",
+    "page": "Output"
+   },
+   {
+    "name": "Vstchannel",
+    "label": "Channel",
+    "style": "Int",
+    "help": "VST channel to output notes on.",
+    "default": 1,
+    "page": "Output"
+   },
+   {
+    "name": "Status",
+    "label": "Status",
+    "style": "Str",
+    "help": "Read-only. Whether the Python package mingus (needed for every scale except MIDI Scale) is available, and what to do if it is not.",
+    "default": "",
+    "readonly": true,
+    "page": "Setup"
+   },
+   {
+    "name": "Install",
+    "label": "Install mingus",
+    "style": "Pulse",
+    "help": "Installs mingus into the Python environment linked by TouchDesigner's Python Environment Manager, in the background. Needs a linked Python vEnv; the Status line says when one is missing.",
+    "page": "Setup"
+   },
+   {
+    "name": "Recheck",
+    "label": "Re-check",
+    "style": "Pulse",
+    "help": "Looks for mingus again, e.g. after installing it by hand from the Python Environment Manager CLI.",
+    "page": "Setup"
+   },
+   {
+    "name": "Envhelp",
+    "label": "Python Env Manager Help",
+    "style": "Pulse",
+    "help": "Opens the documentation of TouchDesigner's Python Environment Manager (tdPyEnvManager).",
+    "page": "Setup"
+   },
+   {
+    "name": "Testopenhelp",
+    "label": "Help",
+    "style": "Pulse",
+    "help": "Opens documentation.",
+    "page": "About"
+   },
+   {
+    "name": "Link",
+    "label": "Link",
+    "style": "Pulse",
+    "help": "Opens this package's page on the FNS docs site in the browser.",
+    "page": "About"
+   },
+   {
+    "name": "Pkgversion",
+    "label": "Package Version",
+    "style": "Str",
+    "help": "Version of this package, set by the release tooling. Read it to tell which build is installed.",
+    "default": "1.0.0",
     "page": "About"
    }
   ]
@@ -14501,6 +21693,28 @@
   ]
  },
  "surfaces": {
+  "ChopBank": [
+   "opmenu"
+  ],
+  "ChopProcess": [
+   "opmenu"
+  ],
+  "CircularDistortionTOP": [],
+  "ColorGen": [],
+  "ColorGenPro": [],
+  "ComplexMix": [],
+  "ComplexOp": [],
+  "ConstantCHOP": [
+   "opmenu"
+  ],
+  "EaseInterpolator": [],
+  "ExpressionPOP": [
+   "opmenu"
+  ],
+  "FeedbackDisplace": [
+   "opmenu"
+  ],
+  "FloatDataRecorder": [],
   "FNS_AltSelect": [],
   "FNS_AutoCombine": [],
   "FNS_AutoRes": [],
@@ -14627,17 +21841,77 @@
   "FNS_VSCodeTools": [
    "toolbar"
   ],
+  "InfinityCHOP": [],
+  "InstanceTrailer": [],
+  "KinectSinglePlayer": [],
+  "LayerSep3D": [],
+  "LinkOPs": [],
+  "MaskDraw": [],
   "midiMapper": [
    "hub",
    "toolbar"
   ],
+  "MoveDetectDir": [],
+  "OpenOp": [],
   "oscMapper": [
    "hub"
   ],
+  "Particles2D_POP": [],
+  "ParticlesGpuUltimate": [],
   "PasteFromClipboard": [],
-  "QuickMarks": []
+  "PrismTOP": [
+   "opmenu"
+  ],
+  "QuickMarks": [],
+  "RealRamp": [],
+  "SeqMod": [],
+  "SlideShow": [],
+  "ThresholdColor": [
+   "opmenu"
+  ],
+  "TopToMidi": []
  },
  "surface_entries": {
+  "ChopBank": [
+   {
+    "surface": "opmenu",
+    "widget": "ChopBank",
+    "label": "ChopBank",
+    "order": 0
+   }
+  ],
+  "ChopProcess": [
+   {
+    "surface": "opmenu",
+    "widget": "ChopProcess",
+    "label": "ChopProcess",
+    "order": 0
+   }
+  ],
+  "ConstantCHOP": [
+   {
+    "surface": "opmenu",
+    "widget": "ConstantCHOP",
+    "label": "ConstantCHOP",
+    "order": 0
+   }
+  ],
+  "ExpressionPOP": [
+   {
+    "surface": "opmenu",
+    "widget": "ExpressionPOP",
+    "label": "ExpressionPOP",
+    "order": 0
+   }
+  ],
+  "FeedbackDisplace": [
+   {
+    "surface": "opmenu",
+    "widget": "FeedbackDisplace",
+    "label": "FeedbackDisplace",
+    "order": 0
+   }
+  ],
   "FNS_BackupCleaner": [
    {
     "surface": "hub",
@@ -15139,6 +22413,22 @@
     "label": "oscMapper",
     "order": 100
    }
+  ],
+  "PrismTOP": [
+   {
+    "surface": "opmenu",
+    "widget": "PrismTOP",
+    "label": "PrismTOP",
+    "order": 0
+   }
+  ],
+  "ThresholdColor": [
+   {
+    "surface": "opmenu",
+    "widget": "ThresholdColor",
+    "label": "ThresholdColor",
+    "order": 0
+   }
   ]
  },
  "surface_meta": {
@@ -15185,6 +22475,14 @@
    "readonly": true
   },
   {
+   "name": "Author",
+   "label": "Author",
+   "style": "Str",
+   "help": "Package author.",
+   "default": "Function Store @function.str",
+   "readonly": true
+  },
+  {
    "name": "Pkgversion",
    "label": "Package Version",
    "style": "Str",
@@ -15215,14 +22513,6 @@
    "style": "Str",
    "help": "TouchDesigner build this component was last saved with.",
    "default": "",
-   "readonly": true
-  },
-  {
-   "name": "Author",
-   "label": "Author",
-   "style": "Str",
-   "help": "",
-   "default": "Function Store @function.str",
    "readonly": true
   },
   {

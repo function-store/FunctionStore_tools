@@ -660,7 +660,7 @@
     <ul class="hero-meta">
       <li><span class="dot" aria-hidden="true"></span> TouchDesigner 2025.33070+</li>
       <li>Windows &amp; macOS</li>
-      <li><span class="js-fns-count">67</span> tools, pick what you want</li>
+      <li><span class="js-fns-count">96</span> tools, pick what you want</li>
       <li>MIT licensed</li>
     </ul>
 
@@ -693,7 +693,7 @@
     <div class="section-head">
       <h2>What's in the toolkit</h2>
       <p>
-        <span class="js-fns-count">67</span> packages, each installing on its own. Core goes in as
+        <span class="js-fns-count">96</span> packages, each installing on its own. Core goes in as
         a unit; everything else is optional. Open a category to see what is inside.
       </p>
     </div>
@@ -741,7 +741,7 @@
             <span class="cat-name">Parameters</span>
             <span class="cat-pitch">Promote, bind, randomize and reset, by drag and drop.</span>
           </span>
-          <span class="cat-count">9 tools · 3 Patreon</span>
+          <span class="cat-count">11 tools · 5 Patreon</span>
         </summary>
         <div class="cat-list">
           <div class="feat">
@@ -755,6 +755,10 @@
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">◎</div>
             <div class="feat-text"><strong><a href="/docs/fns-exprhotstrings/">ExprHotStrings</a></strong><span>Abbreviations that expand into TouchDesigner expressions as you type in a parameter field.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◎</div>
+            <div class="feat-text"><strong><a href="/docs/linkops/">LinkOPs</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Links the parameters of several operators so a change on one lands on all of them, with exceptions by operator and by parameter, an automatic mode and a one-shot sync.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">◎</div>
@@ -778,6 +782,10 @@
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">◎</div>
+            <div class="feat-text"><strong><a href="/docs/seqmod/">SeqMod</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Watches a sequence of parameters on any COMP: name the target and the sequence, and the block parameters are published as one list, with a callback for every block added or removed.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">◎</div>
             <div class="feat-text"><strong><a href="/docs/fns-setsmoothness/">SetSmoothness</a></strong><span>Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network.</span></div>
           </div>
         </div>
@@ -789,7 +797,7 @@
             <span class="cat-name">Network</span>
             <span class="cat-pitch">Operator creation, replacement, grouping and network navigation.</span>
           </span>
-          <span class="cat-count">13 tools · 1 Patreon</span>
+          <span class="cat-count">14 tools · 2 Patreon</span>
         </summary>
         <div class="cat-list">
           <div class="feat">
@@ -811,6 +819,10 @@
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⇄</div>
             <div class="feat-text"><strong><a href="/docs/fns-iopbrowser/">iopBrowser</a></strong><span>Browse the internal operators and the OP tree of the network you are in, from a popup opened off the pane bar. One browser instance serves every pane; the bar carries only the button.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⇄</div>
+            <div class="feat-text"><strong><a href="/docs/openop/">OpenOp</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A one-button shortcut to a deeply nested operator: drop it on the field once, then a pulse opens its parameter window, its viewer window, or both.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⇄</div>
@@ -853,12 +865,56 @@
             <span class="cat-name">Media &amp; Output</span>
             <span class="cat-pitch">Media playback, previews and audio and video output.</span>
           </span>
-          <span class="cat-count">6 tools · 4 Patreon</span>
+          <span class="cat-count">23 tools · 17 Patreon</span>
         </summary>
         <div class="cat-list">
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/circulardistortiontop/">CircularDistortionTOP</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A circular distortion for images: rings of displacement around a centre you place, with phase, frequency, amplitude and a mode blend, and a choice of how the input extends past its edge.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/colorgen/">ColorGen</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A colour palette generator: a lookup of any length shaped by a phase step per channel and per channel exponents, with a lookup ramp as a second output.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/colorgenpro/">ColorGenPro</a><span class="plus-mark" title="Unlocks with the Patreon Pro tier or higher">Patreon:Pro</span></strong><span>A cosine palette generator in GLSL: the full coefficient set per channel, an RGB and D mode, blackout and soft regions, and a lookup ramp as a second output.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/complexmix/">ComplexMix</a></strong><span>Combines two UV fields as complex numbers: add, subtract, multiply, divide or raise one to the other, optionally weighted by a third input, then samples an image through the result.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/complexop/">ComplexOp</a></strong><span>Treats the image plane as the complex plane and applies a complex function to it: square, root, exp, log, the trigonometric and hyperbolic families, with iteration, a pre and post transform and a choice of edge handling.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/expressionpop/">ExpressionPOP</a></strong><span>Per-point attribute expressions for POPs: write lines like P = P + N * 0.1 and they compile to a GLSL compute shader, with local variables carried between lines. An alternative for the Math Combine POP.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/feedbackdisplace/">FeedbackDisplace</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A feedback loop with a displace stage inside it: opacity, crossfade, filter size, displacement driven by a built-in noise or a second input, a per-pass transform, reset and a dry/wet mix. An alternative for the Feedback TOP.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/floatdatarecorder/">FloatDataRecorder</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Records a float texture such as a depth point cloud, a colour texture and a CHOP to files in sync, then plays the three back together against the timeline with a frame offset.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
             <div class="feat-text"><strong><a href="/docs/fns-globalvolcontrol/">GlobalVolControl</a></strong><span>Global audio volume control.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/instancetrailer/">InstanceTrailer</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Turns one moving image into a trail of its recent frames: a cache laid out in a row or column with exponent-shaped spacing, plus the offsets as a CHOP for instancing.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/layersep3d/">LayerSep3D</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Slices an image into depth layers by a channel threshold and instances them as a stack in 3D, with per layer threshold, softness, mix, position, scale and rotation driven by curves or CHOPs.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/maskdraw/">MaskDraw</a><span class="plus-mark" title="Unlocks with the Patreon Pro tier or higher">Patreon:Pro</span></strong><span>Draw a mask with the mouse straight onto the image: a panel you paint in, with the mask and the masked image as outputs, a lock and a reset.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">▶</div>
@@ -870,11 +926,35 @@
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/particles2d-pop/">Particles2D_POP</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A 2D particle simulation as a POP loop: a source image emits particles, curl noise and wind effectors steer them with lookup ranges, trails stretch them, and the loop rides out as points for your own render.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/particlesgpuultimate/">ParticlesGpuUltimate</a><span class="plus-mark" title="Unlocks with the Patreon Pro tier or higher">Patreon:Pro</span></strong><span>A GPU particle system driven by images: a thresholded source emits particles, look, life, turbulence, wind and force fields shape them, a fluid simulation can carry them, with raw colour, position and optical-flow inputs and one rendered output.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/prismtop/">PrismTOP</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A kaleidoscopic prism: the input rendered through instanced, rotating polygon facets in up to three ring patterns, with softness, a chromatic distortion pass, fit and transform, and a dry/wet mix. An alternative for the Tile TOP and the Mirror TOP.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
             <div class="feat-text"><strong><a href="/docs/fns-proscenechanger/">ProSceneChanger</a><span class="plus-mark" title="Unlocks with the Patreon Pro tier or higher">Patreon:Pro</span></strong><span>The Pro scene changer: everything SimpleSceneChanger does, plus per-scene modes, fade times and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, and fleet follow with scene offset and sync timing. Runs beside the simple one in the same fleet.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/realramp/">RealRamp</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A GLSL ramp with a true phase and period: vertical, horizontal, radial or circular, repeating or mirroring, so a driven phase never drifts or snaps the way a keyed Ramp TOP can.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
             <div class="feat-text"><strong><a href="/docs/fns-simplescenechanger/">SimpleSceneChanger</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Scene changer for TOP outputs: wire your scenes in, then cut, fade or ease between them by select, timer, A/B fader or CHOP, with cooking control so only the scenes on screen cook. Base and Pro instances find each other and can follow a leader across screens.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/slideshow/">SlideShow</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A slideshow of a folder of images: timed or stepped with next and previous, in order or random, with a crossfade between slides and a fitted output resolution.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">▶</div>
+            <div class="feat-text"><strong><a href="/docs/thresholdcolor/">ThresholdColor</a></strong><span>A Threshold TOP that keeps the colour: pixels that pass the test come through in their original colour with a soft edge. An alternative for the Threshold TOP.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">▶</div>
@@ -889,7 +969,7 @@
             <span class="cat-name">Control</span>
             <span class="cat-pitch">MIDI, OSC and remote parameter control.</span>
           </span>
-          <span class="cat-count">6 tools · 3 Patreon</span>
+          <span class="cat-count">15 tools · 11 Patreon</span>
         </summary>
         <div class="cat-list">
           <div class="feat">
@@ -898,11 +978,43 @@
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/chopbank/">ChopBank</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A bank of channel processors: one block per channel, each with its own range, exponent curve, zero-below, lag and speed mode, built from the input with one Snap Input, with gain before and after and every block promoted as a property. An alternative for the Math CHOP and the Constant CHOP.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/chopprocess/">ChopProcess</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Shapes channels in one node: limit, remap between ranges with an exponent curve, zero at the bottom, lag, and an optional speed mode that turns the result into a running total. An alternative for the Math CHOP.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/constantchop/">ConstantCHOP</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A Constant CHOP with typed values: numbers, toggles, tuples, text, paths or operator references, each promoted as a property you can read and set from Python, and a snap from its input. An alternative for the Constant CHOP.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/easeinterpolator/">EaseInterpolator</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Crossfades between two CHOPs through an easing curve: thirty classic easings from sine to bounce, or a custom curve from a third input, all driven by one Select value.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/infinitychop/">InfinityCHOP</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>A point or a whole curve on one shape that morphs from a circle to the infinity loop: frequency multipliers for Lissajous variations, a trail span, smooth speed with reset, and a size and centre for the output values.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/kinectsingleplayer/">KinectSinglePlayer</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Picks one player out of a Kinect skeleton stream: whoever stands inside the bounds you set becomes the active player, and their joints ride out as clean channels until they leave.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
             <div class="feat-text"><strong><a href="/docs/midimapper/">midiMapper</a></strong><span>Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/movedetectdir/">MoveDetectDir</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Reads which way things move in a camera or any image with optical flow and turns it into left/right and down/up channels, with thresholds, inversion and filtering, for swipe and gesture triggers.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
             <div class="feat-text"><strong><a href="/docs/oscmapper/">oscMapper</a></strong><span>Map OSC messages to parameters. Mappings are saved into the project folder by design.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/parhovermidi-vsn1/">ParHoverMIDI_VSN1</a></strong><span>Adjust any parameter by hovering over it and turning an endless MIDI encoder, built for the Intech Studio VSN1 with screen and LED feedback: parameter slots and banks, ParGroup control, step sizes, shortcuts for reset and clamp, and network zoom when no parameter is under the mouse. Lands at the network root; one instance per project.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⊙</div>
@@ -915,6 +1027,10 @@
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⊙</div>
             <div class="feat-text"><strong><a href="/docs/tdxmap/">TDXMap</a><span class="plus-mark trial" title="A free 14-day trial of Pro, once per computer. After it the mapping editor needs a Function Store Patreon membership at the Base or Pro tier, or a Gumroad lifetime key; live MIDI to parameters keeps working without one, and your mappings are kept.">14-day trial, then Base or Pro</span></strong><span>MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode, easing curves, slot and modify modes.</span></div>
+          </div>
+          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">⊙</div>
+            <div class="feat-text"><strong><a href="/docs/toptomidi/">TopToMidi</a><span class="plus-mark" title="Unlocks with the Patreon Base tier or higher">Patreon:Base</span></strong><span>Samples an image at points you define and turns the pixel values into MIDI notes in a musical scale, with trigger gating, retrigger control, a MIDI-learned custom scale and output to a MIDI Out or VST CHOP.</span></div>
           </div>
         </div>
       </details>
@@ -1167,7 +1283,7 @@
         <span class="cfg-band__eyebrow">Configurator</span>
         <h2>Choose tools online</h2>
         <p>
-          Browse all <span class="js-fns-count">67</span> packages by category, read what each one
+          Browse all <span class="js-fns-count">96</span> packages by category, read what each one
           does, and tick the ones you want. You get a single line to paste into the Textport. It
           installs that selection and nothing else.
         </p>
@@ -1209,7 +1325,7 @@
           <span class="picker__cat">
             <span class="picker__cat-glyph" aria-hidden="true">◎</span>
             Parameters
-            <span class="picker__cat-count">1 of 9 selected</span>
+            <span class="picker__cat-count">1 of 11 selected</span>
           </span>
           <span class="picker__card is-on">
             <span class="picker__box" aria-hidden="true">✓</span>

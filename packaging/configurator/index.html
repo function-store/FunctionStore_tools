@@ -987,6 +987,15 @@ function fnsBoot() {
   // selection. Every list a pick can come from goes through pickable().
   function pickable(p) { return !!p && p.kind === 'tool' && !p.companion; }
   var tools = M.packages.filter(pickable);
+  // A nopick package (manifest `nopick`: a hardware-specific integration,
+  // say) is a real card that installs when ticked, but no bulk selection
+  // ever ticks it: Select all, Everything, Recommended, the bundles and
+  // the questionnaire all draw from bulkPickable(). Lists that ARE the
+  // reader's own ticks (installed, last setup, wanted, stored picks) stay
+  // on pickable(): nothing bulk can put it there, so its presence there
+  // is an individual pick, and nothing here removes one.
+  function bulkPickable(p) { return pickable(p) && !p.nopick; }
+  var bulkTools = tools.filter(bulkPickable);
   var core = M.packages.filter(function (p) { return p.kind === 'core'; });
   var byName = {};
   M.packages.forEach(function (p) { byName[p.name] = p; });
@@ -1936,7 +1945,7 @@ function fnsBoot() {
   document.getElementById('dlgdocs').href = FNS_DOCS + '/#get';
   document.getElementById('q').addEventListener('input', render);
   document.getElementById('all').addEventListener('click', function () {
-    tools.forEach(function (p) { picked.add(p.name); }); save(); render();
+    bulkTools.forEach(function (p) { picked.add(p.name); }); save(); render();
   });
   document.getElementById('none').addEventListener('click', function () {
     picked.clear(); save(); render();
@@ -2014,7 +2023,7 @@ function fnsBoot() {
     });
   }
   var starter = (M.starter || []).filter(function (n) {
-    return pickable(byName[n]);
+    return bulkPickable(byName[n]);
   });
   // Curated bundles from the catalog (manifest `presets`): named starting
   // points offered between Recommended and Everything. Filtered against
@@ -2025,7 +2034,7 @@ function fnsBoot() {
     return {name: String((b && b.name) || ''),
             blurb: String((b && b.blurb) || ''),
             packages: ((b && b.packages) || []).filter(function (n) {
-              return pickable(byName[n]);
+              return bulkPickable(byName[n]);
             })};
   }).filter(function (b) { return b.name && b.packages.length; });
   // --- the questionnaire ---------------------------------------------
@@ -2134,7 +2143,7 @@ function fnsBoot() {
       return;
     }
     // the result: a pre-ticked set with the reasons, editable before use
-    var picks = quizScore(quizAnswers, quiz, tools);
+    var picks = quizScore(quizAnswers, quiz, bulkTools);
     var split = quizSplit(picks);
     prog.textContent = 'Your set';
     // Counted on what the set TICKS: a Patreon match the account cannot
@@ -2323,11 +2332,11 @@ function fnsBoot() {
     document.getElementById('pre-starter-desc').textContent =
       starterReady.length + ' tools, the everyday set: ' +
       starterReady.slice(0, 4).map(titleOfName).join(', ') + (starterReady.length > 4 ? '…' : '');
-    var allReady = autoPick(tools.map(function (p) { return p.name; }));
+    var allReady = autoPick(bulkTools.map(function (p) { return p.name; }));
     document.getElementById('pre-all-desc').textContent =
-      allReady.length < tools.length
+      allReady.length < bulkTools.length
         ? 'All ' + allReady.length + ' tools you can install now. Remove any later from Pick Tools.'
-        : 'All ' + tools.length + ' tools. Remove any later from Pick Tools.';
+        : 'All ' + bulkTools.length + ' tools. Remove any later from Pick Tools.';
     // Esc counts as "pick my own": the page behind is the empty list
     // already, and a welcome that cannot be dismissed is a wall, not a
     // guide. Idempotent and called from every exit on purpose: the
@@ -2378,7 +2387,7 @@ function fnsBoot() {
     pre.onclick = function () { choose(starter); };
     preQuiz.onclick = function () { quizStart(function (names) { choose(names, null, true); }); };
     document.getElementById('pre-all').onclick = function () {
-      choose(tools.map(function (p) { return p.name; }));
+      choose(bulkTools.map(function (p) { return p.name; }));
     };
     document.getElementById('pre-none').onclick = function () { choose([]); };
     // curated bundles render fresh on every open -- the dialog is reused,
