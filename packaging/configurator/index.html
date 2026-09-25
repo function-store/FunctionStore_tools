@@ -807,6 +807,22 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   .tray-empty { margin: 6px 0 0; font-size: 13px; color: var(--text-dim); }
   .empty p { margin: 0 0 14px; }
 
+  /* ── "New since you last looked" ── */
+  .newlist { display: flex; flex-direction: column; gap: 6px; max-height: 52vh; overflow: auto; margin: 4px 0 2px; }
+  .newrow {
+    display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+    padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-2);
+  }
+  .newrow:hover { border-color: var(--border-strong); }
+  .newrow.plus { border-color: rgba(251,191,36,0.3); }
+  .newrow input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
+  .newbody { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .newtop { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+  .newtop b { font-size: 14px; font-weight: 600; }
+  .newmeta { font-size: 12px; color: var(--text-faint); }
+  .newdesc { font-size: 12.5px; color: var(--text-dim); line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
   /* ── framed inside the FNS console: the console's chrome carries the
      identity and the tabs, so the picker drops its hero and reads as a
      native panel (the script also sets body.app for the dense metrics). ── */
@@ -952,6 +968,19 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <button class="btn btn-secondary" id="patreonkeep">Keep it ticked</button>
     <button class="btn btn-secondary" id="patreonrecheck" hidden>I just pledged</button>
     <button class="btn btn-primary" id="patreonsignin" hidden>Sign in with Patreon</button>
+  </div>
+</div></dialog>
+
+<dialog id="newtools"><div class="dlg">
+  <span class="eyebrow">NEW TOOLS</span>
+  <h3 id="newtitle">New since you last looked</h3>
+  <p class="dlg-hint">Tick the ones you want and they join your selection. Nothing installs until you review it.</p>
+  <div class="newlist" id="newlist"></div>
+  <div class="dlg-actions">
+    <button class="btn btn-quiet" id="newlater">Not now</button>
+    <span class="spacer"></span>
+    <button class="btn btn-secondary" id="newshow">Show them in the list</button>
+    <button class="btn btn-primary" id="newadd" disabled>Add the ticked ones</button>
   </div>
 </div></dialog>
 
@@ -1461,7 +1490,138 @@ function fnsBoot() {
   // A package this release line introduced: the manifest's per-package
   // note starts "new package" (build_manifest attributes it on the version
   // that first ships, and it rides until the package's next version).
-  function isNew(p) { return /^new package/i.test(String(p.whatsnew || '')); }
+  function isNew(p) {
+    return unseenAtLoad.has(p.name) || /^new package/i.test(String(p.whatsnew || ''));
+  }
+
+  // --- tools this machine has not been shown -----------------------------
+  // docs/NewToolsAndFamilyFreshness.md, C. Served, the installer decides
+  // (FNS_UNSEEN, from the machine-wide record in the palette). On the site
+  // and the standalone the browser keeps the record. First looks are never
+  // flooded: a first run or a first visit records everything as shown, and
+  // a browser with no record yet starts from the tools this release line
+  // introduced.
+  var SEEN_KEY = 'fns.seen';
+  function writeSeenLocal(names) {
+    try {
+      var prev = JSON.parse(stored(SEEN_KEY, 'null') || 'null') || [];
+      var all = prev.concat(names).filter(function (n, i, a) { return a.indexOf(n) === i; });
+      localStorage.setItem(SEEN_KEY, JSON.stringify(all));
+    } catch (e) { /* nicety */ }
+  }
+  function unseenNow() {
+    if (served) {
+      return (window.FNS_UNSEEN || []).filter(function (n) { return pickable(byName[n]); });
+    }
+    var names = tools.map(function (p) { return p.name; });
+    var seen = null;
+    try { seen = JSON.parse(stored(SEEN_KEY, 'null') || 'null'); } catch (e) { seen = null; }
+    if (!Array.isArray(seen)) {
+      if (!stored('fns.visited', null) || FNS_EMBEDDED) { writeSeenLocal(names); return []; }
+      var fresh = tools.filter(function (p) {
+        return /^new package/i.test(String(p.whatsnew || ''));
+      }).map(function (p) { return p.name; });
+      writeSeenLocal(names.filter(function (n) { return fresh.indexOf(n) < 0; }));
+      return fresh;
+    }
+    return names.filter(function (n) { return seen.indexOf(n) < 0; });
+  }
+  var unseenAtLoad = new Set();
+  try { unseenAtLoad = new Set(unseenNow()); } catch (e) { unseenAtLoad = new Set(); }
+  /** Record these as shown, here and wherever the record lives; the
+   *  console repaints its tab count when told. */
+  function markSeen(names) {
+    if (!names.length) return;
+    if (served) {
+      fetch('/seen', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({names: names})})
+        .then(function () {
+          try { window.parent.postMessage('fns:seen', '*'); } catch (e) { /* no frame */ }
+        })
+        .catch(function () { /* the server is gone; asked again next time */ });
+    } else {
+      writeSeenLocal(names);
+    }
+  }
+  /** The dismissable "New since you last looked" dialog. Either answer
+   *  records the tools as shown, so it opens once per release. */
+  function showNewTools() {
+    var d = document.getElementById('newtools');
+    var list = Array.from(unseenAtLoad).map(function (n) { return byName[n]; })
+      .filter(Boolean).sort(byTitle);
+    if (!d || !list.length) return;
+    var names = list.map(function (p) { return p.name; });
+    document.getElementById('newtitle').textContent = list.length === 1
+      ? 'A new tool since you last looked'
+      : list.length + ' new tools since you last looked';
+    var box = document.getElementById('newlist');
+    box.textContent = '';
+    var chosen = {};
+    var add = document.getElementById('newadd');
+    function sync() {
+      var n = Object.keys(chosen).filter(function (k) { return chosen[k]; }).length;
+      add.disabled = !n;
+      add.textContent = n ? 'Add ' + n + ' to my selection' : 'Add the ticked ones';
+    }
+    list.forEach(function (p) {
+      var row = document.createElement('label');
+      row.className = 'newrow' + (isPlus(p) ? ' plus' : '');
+      var cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = picked.has(p.name);
+      cb.disabled = picked.has(p.name);
+      cb.addEventListener('change', function () { chosen[p.name] = cb.checked; sync(); });
+      row.appendChild(cb);
+      var body = document.createElement('div');
+      body.className = 'newbody';
+      var top = document.createElement('div');
+      top.className = 'newtop';
+      var b = document.createElement('b');
+      b.textContent = titleOf(p);
+      top.appendChild(b);
+      var meta = document.createElement('span');
+      meta.className = 'newmeta';
+      var tier = isPlus(p) ? (tierLabel(p.access) ? 'Patreon:' + tierLabel(p.access) : 'Patreon') : 'free';
+      meta.textContent = (p.category || '') + ' · ' + tier + (picked.has(p.name) ? ' · already picked' : '');
+      top.appendChild(meta);
+      body.appendChild(top);
+      if (p.description) {
+        var ds = document.createElement('div');
+        ds.className = 'newdesc';
+        ds.textContent = p.description;
+        body.appendChild(ds);
+      }
+      row.appendChild(body);
+      box.appendChild(row);
+    });
+    sync();
+    function done() {
+      markSeen(names);
+      try { d.close(); } catch (e) { /* already closed */ }
+    }
+    // Built for the embedded Chromium inside TouchDesigner: every button
+    // acts directly rather than waiting for a close event (see askPatreon).
+    document.getElementById('newlater').onclick = done;
+    document.getElementById('newshow').onclick = function () {
+      done();
+      document.getElementById('q').value = '';
+      setView({access: 'all', sel: false, fresh: true, once: false});
+    };
+    add.onclick = function () {
+      var take = Object.keys(chosen).filter(function (k) { return chosen[k]; });
+      done();
+      take.forEach(function (n) { picked.add(n); placing.delete(n); });
+      save(); render();
+      var locked = lockedPatreon(take);
+      if (locked.length) {
+        askPatreon(locked, function () {
+          locked.forEach(function (n) { picked.delete(n); }); save(); render();
+        });
+      }
+    };
+    d.addEventListener('cancel', function () { markSeen(names); });
+    try { d.showModal(); } catch (e) { d.setAttribute('open', ''); }
+  }
   function chosenHere(p) { return picked.has(p.name) || placing.has(p.name); }
   function accessOk(p, access) {
     if (access === 'free') return !isPlus(p);
@@ -3935,6 +4095,15 @@ function fnsBoot() {
     firstVisit = true;
     wizardOn = true;
     showWelcome();
+  }
+  // Tools this machine has not been shown, once per release: never on a
+  // first run or a first visit (the guided setup is their introduction,
+  // and unseenNow recorded everything as shown), never over another
+  // dialog, never where Apply is refused anyway.
+  if (!firstrun && !firstVisit && unseenAtLoad.size && !(served && locked)) {
+    setTimeout(function () {
+      if (!document.querySelector('dialog[open]')) showNewTools();
+    }, 400);
   }
 }
 

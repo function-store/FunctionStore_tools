@@ -95,11 +95,22 @@ A library that does not exist yet is created from the set that is loaded at that
 
 The `Templates` parameter shows the library the scope resolved to and is read-only. The former `Advanced` mode, where you pointed the tool at any Base COMP in the project, is retired; a component it pointed at is adopted as the project library on the first start after upgrading.
 
-#### TD2023 Migration
+#### Upgrading from an older FNSTools
 
-Since workfiles saved in TD2023 cannot be opened in earlier versions, template .toxes are created separately with `_2023` appended to them, and they are only synced to TD2023 project files.
+Your templates come along on their own. On the first start, the toolkit renames the old `FNStools_ext` palette folder to `FNSTools`, and OpTemplates loads your library from `FNSTools/OpTemplates/`. Before it would ever create a library from the shipped templates, it looks for one you already have and uses the most recently saved:
 
-To migrate your current default templates to 2023 on Windows navigate to `%USERPROFILE%\Documents\Derivative\Palette\FNSTools\OpTemplates` and make a copy of `OpTemplates1.tox` and rename it `OpTemplates1_2023.tox`, then restart your project file. The steps are the same for Mac, just locate your `Palette` folder!
+- the `_2023` copy that TouchDesigner 2023 saved to (`OPTemplates1_2023.tox`),
+- an `OPTemplates2.tox` or higher, which the old `Create New` choice made,
+- a copy the folder migration set aside in `FNSTools/legacy_FNStools_ext/`.
+
+This check also runs once on a machine that already has a library, so a newer set saved under one of those names still wins. Whatever it replaces is kept beside it as `OPTemplates1.before-adopt.tox`, and the textport log names the file it adopted.
+
+Two older setups are not found automatically, because they left no file:
+
+- **Templates you never saved.** The old tool wrote the palette file only when you saved the templates (Middle-Click on the toolbar icon). Edits you only saved with the project live in that project's copy of OpTemplates.
+- **External turned off.** With it off, the templates lived only in the project.
+
+For either, open the old project, copy the templates Base COMP out of the old OpTemplates, and save it as `OPTemplates1.tox` in your palette's `FNSTools/OpTemplates/` folder (Right-Click the COMP, Save Component .tox). Then restart the project.
 
 ##### Known issues
 

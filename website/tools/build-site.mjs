@@ -1655,6 +1655,8 @@ if (fs.existsSync(cfgSrc)) {
     else delete pkg.fits;
   }
   let page = fs.readFileSync(cfgSrc, 'utf8');
+  // The standalone website needs no app-mode label above its heading.
+  page = page.replace(/    <span class="eyebrow">CONFIGURATOR<\/span>\r?\n/, '');
   const tag = '<script src="manifest.js"></script>';
   if (!page.includes(tag)) {
     console.error('packaging/configurator/index.html lost its manifest.js script tag');
