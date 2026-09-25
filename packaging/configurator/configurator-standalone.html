@@ -728,6 +728,19 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   .tier-div .sub { color: var(--text-faint); }
   .cat-body .tier-div + .grid { margin-top: 0; }
   .catnav a.none { opacity: .4; pointer-events: none; }
+  /* the two groups of categories (category_meta.group) */
+  .grp-head {
+    margin: 26px 0 2px; font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  #list > .grp-head:first-child { margin-top: 6px; }
+  .nav-grp {
+    display: block; margin: 12px 0 4px; padding: 0 11px; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint);
+  }
+  .catnav > .nav-grp:first-child { margin-top: 0; }
+  @media (max-width: 999px) { .nav-grp { display: none; } }
+  body.app .nav-grp { display: none; }
   /* the deck is two rows now: the rail and the jump targets clear it */
   html { scroll-padding-top: calc(var(--stick) + 140px); }
   @media (min-width: 1000px) {
@@ -1018,8 +1031,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
 <script>
 window.FNS_MANIFEST = {
  "schema": 1,
- "release": "v3.2.54",
- "notes": "The tool picker is redesigned. Patreon tools now sit last in every section, behind a \"With Patreon\" divider. Beside the search, All / Free / Patreon narrows the list, with a count on each choice. Selected shows only what you picked, and New shows the packages new in this release line. A results line names what is shown, with a removable chip per filter, and Select all / Clear act on exactly that list. Each section has its own Select section. Inside TouchDesigner each card says whether Apply will install it, keep it or remove it. The count in the footer opens a tray of everything you picked, grouped by what Apply does with it. Section headers work from the keyboard, and \"/\" jumps to the search.\n\nSome tools can now be placed in one project without becoming part of your setup: their cards carry \"place in this project only\", and \"Set up like last time\" leaves them out of the next project. Every FNS family operator has it, and so do TDXMap and ParHoverMIDI_VSN1. The picker's new Placeable filter lists the tools you drop into a network as nodes.",
+ "release": "v3.2.55",
+ "notes": "When a release adds tools, the picker says so once: a \"New since you last looked\" window lists them with a tick each, and they keep a New badge. A first install is never shown the whole catalog. The installer also downloads a family operator it has on record but no longer has the file for.\n\nThe tool categories are reorganised into two groups: Working in TouchDesigner (Interface, Network, Parameters, Project, Developer, Miscellaneous) and Making the piece (Time & sequencing, Control & mapping, CHOPs & sensing, Visual, 3D and Particles, Show & output). The picker shows the two groups as headings. Operators moved out of Control and Media & Output into categories of their own, and links to the old docs sections still land on their successors.\n\nThe guided setup's questionnaire separates two meanings that shared one tag: its point-and-click answer now recommends tools with a window, tab or pane to work in, and the image effects, particles and scene changers are recommended to people who make live visuals or generative art.\n\nThe guided setup asks a new question, what you build with: CHOPs, image effects, particles and 3D, sequencing, cameras and sensors, MIDI controllers, OSC or phone control, or scenes and show playback. Each answer leads to its own tools, and \"just the editor tools\" leaves the operators out.",
  "channel": "stable",
  "base_url": "https://storage.functionstore.tools/fnstools",
  "toolkit": {
@@ -1130,13 +1143,18 @@ window.FNS_MANIFEST = {
  ],
  "categories": [
   "Core",
-  "Surfaces",
-  "Parameters",
+  "Interface",
   "Network",
-  "Media & Output",
-  "Control",
-  "Workflow",
-  "Developer"
+  "Parameters",
+  "Project",
+  "Developer",
+  "Miscellaneous",
+  "Time & sequencing",
+  "Control & mapping",
+  "CHOPs & sensing",
+  "Visual",
+  "3D and Particles",
+  "Show & output"
  ],
  "category_meta": {
   "Core": {
@@ -1144,33 +1162,65 @@ window.FNS_MANIFEST = {
    "pitch": "The registries every other tool plugs into. Installed as a unit.",
    "deprioritized": true
   },
-  "Surfaces": {
+  "Interface": {
    "glyph": "\u25a6",
-   "pitch": "Window layout, operator colours, menus and preview panels."
-  },
-  "Parameters": {
-   "glyph": "\u25ce",
-   "pitch": "Promote, bind, randomize and reset, by drag and drop."
+   "pitch": "The window, the menus, the dialogs and the keys.",
+   "group": "Working in TouchDesigner"
   },
   "Network": {
    "glyph": "\u21c4",
-   "pitch": "Operator creation, replacement, grouping and network navigation."
+   "pitch": "Place, find, swap and move between operators.",
+   "group": "Working in TouchDesigner"
   },
-  "Media & Output": {
-   "glyph": "\u25b6",
-   "pitch": "Media playback, previews and audio and video output."
+  "Parameters": {
+   "glyph": "\u25ce",
+   "pitch": "Promote, bind, link, randomize and reference parameters.",
+   "group": "Working in TouchDesigner"
   },
-  "Control": {
-   "glyph": "\u2299",
-   "pitch": "MIDI, OSC and remote parameter control."
-  },
-  "Workflow": {
+  "Project": {
    "glyph": "\u26a1",
-   "pitch": "Project setup, backups and everyday editing shortcuts."
+   "pitch": "Saving, backups, media files and housekeeping.",
+   "group": "Working in TouchDesigner"
   },
   "Developer": {
    "glyph": "\u2328",
-   "pitch": "Python extensions, type stubs and editor integration."
+   "pitch": "Extensions, editor integration and kits for your own tools.",
+   "group": "Working in TouchDesigner"
+  },
+  "Miscellaneous": {
+   "glyph": "\u2726",
+   "pitch": "Small helpers that fit nowhere else.",
+   "group": "Working in TouchDesigner"
+  },
+  "Time & sequencing": {
+   "glyph": "\u25f7",
+   "pitch": "Timelines, tempo, presets and sequences that move over time.",
+   "group": "Making the piece"
+  },
+  "Control & mapping": {
+   "glyph": "\u2299",
+   "pitch": "MIDI, OSC, your phone and hardware controllers.",
+   "group": "Making the piece"
+  },
+  "CHOPs & sensing": {
+   "glyph": "\u223f",
+   "pitch": "CHOP operators: shape, generate and read channels.",
+   "group": "Making the piece"
+  },
+  "Visual": {
+   "glyph": "\u25e7",
+   "pitch": "TOP operators: distort, colour, mask and generate images.",
+   "group": "Making the piece"
+  },
+  "3D and Particles": {
+   "glyph": "\u2042",
+   "pitch": "POP operators, particle systems and 3D stacks.",
+   "group": "Making the piece"
+  },
+  "Show & output": {
+   "glyph": "\u25b6",
+   "pitch": "Scenes, slides, recording, audio and the perform window.",
+   "group": "Making the piece"
   }
  },
  "starter": [
@@ -1196,7 +1246,7 @@ window.FNS_MANIFEST = {
    "name": "ChopBank",
    "title": "ChopBank",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "A bank of channel processors: one block per channel, each with its own range, exponent curve, zero-below, lag and speed mode, built from the input with one Snap Input, with gain before and after and every block promoted as a property. An alternative for the Math CHOP and the Constant CHOP.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/chopbank/",
@@ -1221,7 +1271,8 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "show",
-    "params"
+    "params",
+    "chops"
    ],
    "alternatives_for": [
     "constantCHOP",
@@ -1254,14 +1305,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ChopBank.tox",
     "bytes": 167766,
     "sha256": "b4883797add65a133ca41905f2e83f97c9c4c33f1cc16975030b0e89f0064e7d",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ChopBank.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/ChopBank.tox"
    }
   },
   {
    "name": "ChopProcess",
    "title": "ChopProcess",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Shapes channels in one node: limit, remap between ranges with an exponent curve, zero at the bottom, lag, and an optional speed mode that turns the result into a running total. An alternative for the Math CHOP.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/chopprocess/",
@@ -1286,7 +1337,8 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "show",
-    "params"
+    "params",
+    "chops"
    ],
    "alternatives_for": [
     "mathCHOP"
@@ -1318,14 +1370,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ChopProcess.tox",
     "bytes": 102174,
     "sha256": "ea662629f940ee2cd2d99b222ac375a16ed15df3f867d2ef163d8429a87c355f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ChopProcess.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/ChopProcess.tox"
    }
   },
   {
    "name": "CircularDistortionTOP",
    "title": "CircularDistortionTOP",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A circular distortion for images: rings of displacement around a centre you place, with phase, frequency, amplitude and a mode blend, and a choice of how the input extends past its edge.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/circulardistortiontop/",
@@ -1380,14 +1432,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/CircularDistortionTOP.tox",
     "bytes": 26374,
     "sha256": "159575baaeaecc212abf0d4e631d6e4db568464b7edab260e552e8f288f28034",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/CircularDistortionTOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/CircularDistortionTOP.tox"
    }
   },
   {
    "name": "ColorGen",
    "title": "ColorGen",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A colour palette generator: a lookup of any length shaped by a phase step per channel and per channel exponents, with a lookup ramp as a second output.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/colorgen/",
@@ -1433,14 +1485,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ColorGen.tox",
     "bytes": 2926,
     "sha256": "2cf532d4df80eea30610629bb35eb7a341134dddd72f2af80b98118e7e0f8994",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ColorGen.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/ColorGen.tox"
    }
   },
   {
    "name": "ColorGenPro",
    "title": "ColorGenPro",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A cosine palette generator in GLSL: the full coefficient set per channel, an RGB and D mode, blackout and soft regions, and a lookup ramp as a second output.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/colorgenpro/",
@@ -1487,14 +1539,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ColorGenPro.tox",
     "bytes": 6022,
     "sha256": "cc6334c3aa7a5a266cfed72cb3e9ab62fbb240cc8e97a35d67e9bb906d1bf5a0",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ColorGenPro.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/ColorGenPro.tox"
    }
   },
   {
    "name": "ComplexMix",
    "title": "ComplexMix",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "Combines two UV fields as complex numbers: add, subtract, multiply, divide or raise one to the other, optionally weighted by a third input, then samples an image through the result.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/complexmix/",
@@ -1541,14 +1593,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ComplexMix.tox",
     "bytes": 8902,
     "sha256": "3dc9185d95b8f531dd6716c53fce9af6252f64c26ed582f238123db6300542e2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ComplexMix.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/ComplexMix.tox"
    }
   },
   {
    "name": "ComplexOp",
    "title": "ComplexOp",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "Treats the image plane as the complex plane and applies a complex function to it: square, root, exp, log, the trigonometric and hyperbolic families, with iteration, a pre and post transform and a choice of edge handling.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/complexop/",
@@ -1595,14 +1647,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ComplexOp.tox",
     "bytes": 11070,
     "sha256": "cce17f44cc64cffd4dc3928b096e15ad8abb4ccfea6f626e1c255736ddf9c9a4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ComplexOp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/ComplexOp.tox"
    }
   },
   {
    "name": "ConstantCHOP",
    "title": "ConstantCHOP",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "A Constant CHOP with typed values: numbers, toggles, tuples, text, paths or operator references, each promoted as a property you can read and set from Python, and a snap from its input. An alternative for the Constant CHOP.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/constantchop/",
@@ -1627,7 +1679,8 @@ window.FNS_MANIFEST = {
    "fits": [
     "dev",
     "params",
-    "live"
+    "live",
+    "chops"
    ],
    "alternatives_for": [
     "constantCHOP"
@@ -1656,14 +1709,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ConstantCHOP.tox",
     "bytes": 150422,
     "sha256": "0fa747a79ca9dbfe1c43a337bd99aa7baa76ca95171a0bd539a5c40e4c116571",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ConstantCHOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/ConstantCHOP.tox"
    }
   },
   {
    "name": "EaseInterpolator",
    "title": "EaseInterpolator",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Crossfades between two CHOPs through an easing curve: thirty classic easings from sine to bounce, or a custom curve from a third input, all driven by one Select value.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/easeinterpolator/",
@@ -1684,7 +1737,8 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "art",
-    "show"
+    "show",
+    "chops"
    ],
    "family": {
     "op_type": "easeinterpolator",
@@ -1711,14 +1765,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/EaseInterpolator.tox",
     "bytes": 6254,
     "sha256": "d019bb2321f1ef0a6de995ce782d95ea7bc272fbb7411c76f92ba930c8ed55cb",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/EaseInterpolator.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/EaseInterpolator.tox"
    }
   },
   {
    "name": "ExpressionPOP",
    "title": "ExpressionPOP",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "3D and Particles",
    "description": "Per-point attribute expressions for POPs: write lines like P = P + N * 0.1 and they compile to a GLSL compute shader, with local variables carried between lines. An alternative for the Math Combine POP.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/expressionpop/",
@@ -1742,7 +1796,8 @@ window.FNS_MANIFEST = {
    "placement": "none",
    "fits": [
     "art",
-    "visual"
+    "visual",
+    "particles"
    ],
    "alternatives_for": [
     "mathcombinePOP"
@@ -1771,14 +1826,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ExpressionPOP.tox",
     "bytes": 140502,
     "sha256": "6c1f6d19a227bd309cdfb401f9712d0005cb9ff932b2d17248c5ca71b133c5e5",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ExpressionPOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/ExpressionPOP.tox"
    }
   },
   {
    "name": "FeedbackDisplace",
    "title": "FeedbackDisplace",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A feedback loop with a displace stage inside it: opacity, crossfade, filter size, displacement driven by a built-in noise or a second input, a per-pass transform, reset and a dry/wet mix. An alternative for the Feedback TOP.",
    "version": "1.0.2",
    "help_url": "https://functionstore.tools/docs/feedbackdisplace/",
@@ -1840,14 +1895,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FeedbackDisplace.tox",
     "bytes": 104446,
     "sha256": "03d94b4cbdec6ae21f1647425c37c9472d4d93ffb395f2c3d41c57428bbdbd5b",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FeedbackDisplace.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FeedbackDisplace.tox"
    }
   },
   {
    "name": "FloatDataRecorder",
    "title": "FloatDataRecorder",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "Records a float texture such as a depth point cloud, a colour texture and a CHOP to files in sync, then plays the three back together against the timeline with a frame offset.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/floatdatarecorder/",
@@ -1867,7 +1922,9 @@ window.FNS_MANIFEST = {
    "placement": "none",
    "fits": [
     "show",
-    "art"
+    "art",
+    "visual",
+    "scenes"
    ],
    "family": {
     "op_type": "floatdatarecorder",
@@ -1895,7 +1952,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FloatDataRecorder.tox",
     "bytes": 5286,
     "sha256": "6cf375a667f3e3b42eb54fcd48a575095d4d1548401fc892521eef4ff479263a",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FloatDataRecorder.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FloatDataRecorder.tox"
    }
   },
   {
@@ -1904,7 +1961,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Alternative selection helpers for operators in the network editor.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-altselect/",
    "surfaces": [],
    "shortcut": "ALT_SELECT",
@@ -1925,12 +1982,12 @@ window.FNS_MANIFEST = {
     "network",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_AltSelect.tox",
-    "bytes": 120182,
-    "sha256": "64ea2ac0b1ecd3212697c05ab098433848a3949596b9b961ce2d6376fd50f3f4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_AltSelect.tox"
+    "bytes": 120342,
+    "sha256": "4f1c81d6835cdca91a9550c5c495572dd9e4a1dc3923b15df302d4349cc060df",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_AltSelect.tox"
    }
   },
   {
@@ -1939,7 +1996,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Hold Alt while placing a generator TOP to have it come in pre-set to composite over its input.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-autocombine/",
    "surfaces": [],
    "shortcut": "AUTO_COMBINE",
@@ -1961,12 +2018,12 @@ window.FNS_MANIFEST = {
     "art",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_AutoCombine.tox",
-    "bytes": 134486,
-    "sha256": "c0ff47677be656670f936b2d010b06ccf58c22645abfdce8bd3110c5a6e94f87",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_AutoCombine.tox"
+    "bytes": 134646,
+    "sha256": "0fa41cf8bc4e336c8418607e6bd78d9ee711badd4d5d4c01a6a91bc39039adf8",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_AutoCombine.tox"
    }
   },
   {
@@ -1975,7 +2032,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Hold Alt while placing a generator TOP to have its resolution follow the project (or the panel it sits in) instead of a hardcoded pixel size.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-autores/",
    "surfaces": [],
    "shortcut": "AUTO_RES",
@@ -1997,21 +2054,21 @@ window.FNS_MANIFEST = {
     "speed",
     "show"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_AutoRes.tox",
-    "bytes": 136702,
-    "sha256": "c58ad41ccf190759a6c62e50d5a5c259b0db873509c0313dc7627ac0f78cca9b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_AutoRes.tox"
+    "bytes": 136854,
+    "sha256": "8d553d32172014bc7a36874f6d9b4a408e1528c502023bb870060baf91f7d72c",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_AutoRes.tox"
    }
   },
   {
    "name": "FNS_Autosave",
    "title": "Autosave",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Project",
    "description": "Save the project on a timer without touching the timeline, honouring your increment and backup preferences, and skipping saves while you are performing.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-autosave/",
    "surfaces": [],
    "shortcut": "",
@@ -2043,21 +2100,21 @@ window.FNS_MANIFEST = {
     "show",
     "learn"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Autosave.tox",
-    "bytes": 121950,
-    "sha256": "d15acc1e273483924f35eefb08b3314b7bff21bd8b30d654ccff05ee92b75cd3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Autosave.tox"
+    "bytes": 122094,
+    "sha256": "ebf6a760bccaa9fe664d634f0ed1f62b0ca3a8c78ee05c56e78eb21ea0dae104",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_Autosave.tox"
    }
   },
   {
    "name": "FNS_BackupCleaner",
    "title": "BackupCleaner",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Project",
    "description": "Every .toe backup TouchDesigner has written under a folder, grouped by the project that made them, with their size and an estimate of the hours they represent; send the ones you are done with to the recycle bin, or delete them outright.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-backupcleaner/",
    "surfaces": [
     "hub"
@@ -2079,23 +2136,23 @@ window.FNS_MANIFEST = {
    "hotkeys": [],
    "fits": [
     "tidy",
-    "visual"
+    "ui"
    ],
-   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_BackupCleaner.tox",
-    "bytes": 377238,
-    "sha256": "aa45261e58c5362fc207b92d8f468dd34c7258d393a97ea4c12cb393bc3fa317",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_BackupCleaner.tox"
+    "bytes": 377398,
+    "sha256": "e6135f5104730b1f9af5fe0787ee827b5d519cf541a13667e77744e75c9d97fe",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_BackupCleaner.tox"
    }
   },
   {
    "name": "FNS_BeatMod",
    "title": "BeatMod",
    "kind": "tool",
-   "category": "Parameters",
+   "category": "Time & sequencing",
    "description": "Beat-synced modulation on any parameter or ParGroup, locked to the timeline tempo: a wave, a channel of any CHOP, or a gesture you record by hand, gliding in instead of cutting. Tap tempo sets the global BPM, and a manager lists every modulator in the project.",
-   "version": "3.2.7",
+   "version": "3.2.8",
    "help_url": "https://functionstore.tools/docs/fns-beatmod/",
    "surfaces": [
     "hub"
@@ -2152,23 +2209,24 @@ window.FNS_MANIFEST = {
     "art",
     "audio",
     "speed",
-    "visual"
+    "ui",
+    "time"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_BeatMod.tox",
-    "bytes": 517080,
-    "sha256": "1f0204f11ff0900dd7c9cb7ae32d96858e6f9d681e1e14a308ab19de0399f1b7",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_BeatMod.tox"
+    "bytes": 517240,
+    "sha256": "c6f149d96c8b45717928f2b3eddf35d150b53e9e1c4ba9928bd7093e0fc1e751",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_BeatMod.tox"
    }
   },
   {
    "name": "FNS_BorderlessTD",
    "title": "BorderlessTD",
    "kind": "tool",
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "Borderless TouchDesigner window, plus timeline hiding.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-borderlesstd/",
    "surfaces": [
     "mainmenu",
@@ -2205,21 +2263,21 @@ window.FNS_MANIFEST = {
     "show",
     "screen",
     "live",
-    "visual"
+    "ui"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_BorderlessTD.tox",
-    "bytes": 352342,
-    "sha256": "61057da73f2f2e9195573f63ab1f26c658a3b5a2848f65a4e90e56a4e5062ecb",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_BorderlessTD.tox"
+    "bytes": 352494,
+    "sha256": "e41c713b0b8a21afbb605b3a311adbb5cf05709ff35aee3d852bf6384c52484f",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_BorderlessTD.tox"
    }
   },
   {
    "name": "FNS_CamSequencer",
    "title": "CamSequencer",
    "kind": "tool",
-   "category": "Control",
+   "category": "Time & sequencing",
    "description": "A camera with two preset sequencers inside, one for its transform and lens and one for the Look At target: frame it, append, scrub or drive it from a CHOP, fly it with a joystick, or take over a palette camera viewport.",
    "version": "3.0.9",
    "help_url": "https://functionstore.tools/docs/fns-camsequencer/",
@@ -2254,7 +2312,8 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "show",
-    "visual"
+    "visual",
+    "time"
    ],
    "family": {
     "op_type": "camsequencer",
@@ -2279,14 +2338,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CamSequencer.tox",
     "bytes": 340194,
     "sha256": "e04de539f6424549e12d6deccdf5babc8fd5b94ba8d3ffc7ec9f79135b6651f3",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_CamSequencer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_CamSequencer.tox"
    }
   },
   {
    "name": "FNS_Collect",
    "title": "Collect",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Project",
    "description": "Gather every external file your project references into the project folder and rewrite the parameters to match, so the project travels. Shows the plan before it copies anything.",
    "version": "3.2.3",
    "help_url": "https://functionstore.tools/docs/fns-collect/",
@@ -2323,16 +2382,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_Collect.tox",
     "bytes": 35966,
     "sha256": "677c46531c11e10b6c4c3394d58ec035a3efa1622ba8a42c44f4bb8efa07fafa",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_Collect.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_Collect.tox"
    }
   },
   {
    "name": "FNS_ColorUI",
    "title": "ColorUI",
    "kind": "tool",
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "Operator and family colour palettes, with the active palette roaming through config.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-colorui/",
    "surfaces": [
     "console",
@@ -2355,16 +2414,16 @@ window.FNS_MANIFEST = {
    "min_td_build": "2025.33070",
    "hotkeys": [],
    "fits": [
-    "visual",
     "learn",
-    "screen"
+    "screen",
+    "ui"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ColorUI.tox",
-    "bytes": 290118,
-    "sha256": "9676c7d65bc54456eb5a960f71eb355f0d9dcf00d3908754f951ad368d80c20b",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ColorUI.tox"
+    "bytes": 290606,
+    "sha256": "17c155d188b5ab3c82966ee4da73c967b3cfaf5dd86cf7610dd8ea21701de49d",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ColorUI.tox"
    }
   },
   {
@@ -2397,16 +2456,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandKit.tox",
     "bytes": 30382,
     "sha256": "b64323d3886bc7506dfcba3b49c2438eca6aa5920aa7720bf4c8360b15bf9718",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_CommandKit.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_CommandKit.tox"
    }
   },
   {
    "name": "FNS_CommandPalette",
    "title": "CommandPalette",
    "kind": "tool",
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in Hub.",
-   "version": "3.2.10",
+   "version": "3.2.11",
    "help_url": "https://functionstore.tools/docs/fns-commandpalette/",
    "surfaces": [
     "hub"
@@ -2434,17 +2493,17 @@ window.FNS_MANIFEST = {
    ],
    "fits": [
     "speed",
-    "visual",
     "network",
     "learn",
-    "dev"
+    "dev",
+    "ui"
    ],
-   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
+   "whatsnew": "the palette folder migration keeps the old copy of a file both folders hold under `FNSTools/legacy_FNStools_ext/` instead of deleting it.",
    "artifact": {
     "path": "packaging/dist/FNS_CommandPalette.tox",
-    "bytes": 337718,
-    "sha256": "087f0a7b6986aebad5bbe0166dc7c120da0d63bec74c739ab35aa77729de24ca",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_CommandPalette.tox"
+    "bytes": 338006,
+    "sha256": "bdf7623e5148fa558243ace2c747adb63d964516e4f8c4dbfbe1aa65575a43eb",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_CommandPalette.tox"
    }
   },
   {
@@ -2473,7 +2532,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_CommandRegistry.tox",
     "bytes": 89694,
     "sha256": "a407013fd42f75981884f2752fea819ab44e61fdd98d7811e550d9d873095680",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_CommandRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_CommandRegistry.tox"
    }
   },
   {
@@ -2482,7 +2541,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Developer",
    "description": "A standalone ConfigRegistry host. Drop it into a component to give it roaming settings; its parameters save and reload with your config, with per-parameter and per-page exclusions.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-confighost/",
    "surfaces": [],
    "shortcut": "",
@@ -2500,12 +2559,12 @@ window.FNS_MANIFEST = {
    "fits": [
     "dev"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ConfigHost.tox",
-    "bytes": 91686,
-    "sha256": "8dbeeded864154a6108dfdbcb1aa7f92000c03a967cef98185c47ee2e4538a30",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ConfigHost.tox"
+    "bytes": 91838,
+    "sha256": "3bb8a306598d5f708c5173959271098eda3939fc458d1178e61a3c409237511b",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ConfigHost.tox"
    }
   },
   {
@@ -2514,7 +2573,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "Settings persistence registry: one aggregated JSON in the user palette, so preferences follow you across projects and survive updates. The raw master, promoted to /sys.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-configregistry/",
    "surfaces": [],
    "shortcut": "",
@@ -2529,12 +2588,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "the palette folder migration keeps the old copy of a file both folders hold under `FNSTools/legacy_FNStools_ext/` instead of deleting it.",
    "artifact": {
     "path": "packaging/dist/FNS_ConfigRegistry.tox",
-    "bytes": 92086,
-    "sha256": "b258351af3089b6fb5c09a995c7cc03ca1c1e7a39eab6b8e32ddc8eb8c87f223",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ConfigRegistry.tox"
+    "bytes": 92238,
+    "sha256": "bd76fa1ed5da494f9e812de114a31ee3cc6284319bd69943e89b899ccfc713f5",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ConfigRegistry.tox"
    }
   },
   {
@@ -2543,7 +2602,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "The toolkit's web front, served from inside your project: every tool's settings on one page, the install picker, and any tab a tool contributes. The raw master, promoted to /sys.",
-   "version": "3.2.11",
+   "version": "3.2.12",
    "help_url": "https://functionstore.tools/docs/fns-console/",
    "surfaces": [],
    "shortcut": "",
@@ -2558,12 +2617,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "the Install & remove tab shows how many tools are new since you last looked.",
    "artifact": {
     "path": "packaging/dist/FNS_Console.tox",
-    "bytes": 103606,
-    "sha256": "aac59ce2ed3bcbbe5cbda96b787e66f85462d74f99bdd3443dd222b9c5dbf303",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Console.tox"
+    "bytes": 103950,
+    "sha256": "7fd25d080c01d84fba566927efe1f0470ed6f6a8dcd9a6726fc253adb0e48ab6",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_Console.tox"
    }
   },
   {
@@ -2572,7 +2631,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Promote parameters to a parent with binds or expressions, customize name/label/range on drop, plus extension creation, parent shortcuts, parameter clearing and IOP promotion. Also carries the pane-bar drag-drop hijack and path-cell injection, and four stock-TouchDesigner shortcuts for opening parameters and the COMP editor.",
-   "version": "3.2.6",
+   "version": "3.2.7",
    "help_url": "https://functionstore.tools/docs/fns-custompartools/",
    "surfaces": [
     "navbar",
@@ -2650,12 +2709,12 @@ window.FNS_MANIFEST = {
     "dev",
     "speed"
    ],
-   "whatsnew": "CustomParHelper skips parameters destroyed in the same frame they changed, so shrinking a sequence no longer raises \"Invalid Par object\" in every tool that uses it. CustomParHelper builds a freshly placed tool's extension before routing its first parameter callback, so the first pulse on a new node is no longer lost.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_CustomParTools.tox",
-    "bytes": 1125906,
-    "sha256": "05449172c2af5bf124389fb9ed1ad49ca7f6c27d76bffc7dae9f7c0e235bab95",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_CustomParTools.tox"
+    "bytes": 1126842,
+    "sha256": "b55abc4273258adea38e98feaf8e9b6204e55c6656690d97fe6d7712f8a77cd1",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_CustomParTools.tox"
    }
   },
   {
@@ -2664,7 +2723,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Abbreviations that expand into TouchDesigner expressions as you type in a parameter field.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-exprhotstrings/",
    "surfaces": [
     "hub"
@@ -2699,12 +2758,12 @@ window.FNS_MANIFEST = {
     "speed",
     "dev"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ExprHotStrings.tox",
-    "bytes": 183782,
-    "sha256": "af1e58d4f2dbc84dd157351979c5a952d96edd359e8d6279571adef5113132ee",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ExprHotStrings.tox"
+    "bytes": 183934,
+    "sha256": "df5f339875eab6bf64c5861c668caa4b83c3fd2fd0cda9deef6bb407de1d88c9",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ExprHotStrings.tox"
    }
   },
   {
@@ -2713,7 +2772,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Browse Global OP Shortcuts and the out operators inside them in a tree, and drag any of them into a network as a Select.",
-   "version": "3.2.3",
+   "version": "3.2.4",
    "help_url": "https://functionstore.tools/docs/fns-globaloutselect/",
    "surfaces": [
     "hub"
@@ -2735,24 +2794,24 @@ window.FNS_MANIFEST = {
    "hotkeys": [],
    "fits": [
     "network",
-    "visual",
-    "learn"
+    "learn",
+    "ui"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_GlobalOutSelect.tox",
-    "bytes": 272886,
-    "sha256": "604523d8c34e443a00b7a75f64353fea70132b6fd5ad913997133e481ef97e55",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_GlobalOutSelect.tox"
+    "bytes": 273030,
+    "sha256": "2827d304b637a7381e352b1c674d20102e2b40366642ee0c88840247c9f25d87",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_GlobalOutSelect.tox"
    }
   },
   {
    "name": "FNS_GlobalVolControl",
    "title": "GlobalVolControl",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "Global audio volume control.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-globalvolcontrol/",
    "surfaces": [
     "toolbar"
@@ -2775,23 +2834,23 @@ window.FNS_MANIFEST = {
    "fits": [
     "audio",
     "live",
-    "visual"
+    "ui"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_GlobalVolControl.tox",
-    "bytes": 254142,
-    "sha256": "5dc7cbaec6b28e7e219b9b22671e7f6e00bd35a7ca3aaef2ce691b3068cc66a3",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_GlobalVolControl.tox"
+    "bytes": 254286,
+    "sha256": "aa0ca51a622777e65b72e5c583f3ad3f9a43db1421308bb07c1c33884f90c53a",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_GlobalVolControl.tox"
    }
   },
   {
    "name": "FNS_HotkeyManager",
    "title": "HotkeyManager",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Interface",
    "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-hotkeymanager/",
    "surfaces": [
     "hub"
@@ -2828,14 +2887,14 @@ window.FNS_MANIFEST = {
    "fits": [
     "speed",
     "learn",
-    "visual"
+    "ui"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_HotkeyManager.tox",
-    "bytes": 256318,
-    "sha256": "aee0406b608cdb2ba339478aaed984d556aca20f012feded760b803ae26786c5",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_HotkeyManager.tox"
+    "bytes": 256462,
+    "sha256": "5d6f7aa17ac1229dedfe4ad8fe98ba4e7ea2b35bb052f1a517d4d4ce7a48677f",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_HotkeyManager.tox"
    }
   },
   {
@@ -2844,7 +2903,7 @@ window.FNS_MANIFEST = {
    "kind": "core",
    "category": "Core",
    "description": "The FNS button in TouchDesigner's main-menu bar and the one-stop manager window behind it: the Toolbar, Navbar and Main Menu configurators as tabs, the console, and any tab a tool contributes. Drop a panel COMP on the button to register it into a surface.",
-   "version": "3.2.9",
+   "version": "3.2.10",
    "help_url": "https://functionstore.tools/docs/fns-hub/",
    "surfaces": [
     "hub",
@@ -2862,12 +2921,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Hub.tox",
-    "bytes": 1015506,
-    "sha256": "3d88aa0ed64c4c2dedffeccd4e7beaa1ad79c4872e9625664cb86cdd23a4edc0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Hub.tox"
+    "bytes": 1015626,
+    "sha256": "89bc9b0ca4ba693614d2ab9ca79f73a7e2c3ac2edfd6092802b034708ce11a6d",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_Hub.tox"
    }
   },
   {
@@ -2896,16 +2955,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_HubRegistry.tox",
     "bytes": 77046,
     "sha256": "0f015893ffaf4bf7463e45ca80e6b60d2ed2831c67f8e0ad4edaa0390b7bf0b7",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_HubRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_HubRegistry.tox"
    }
   },
   {
    "name": "FNS_HydroHomie",
    "title": "HydroHomie",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Miscellaneous",
    "description": "A toolbar reminder to drink water at an interval you set. Off by default.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-hydrohomie/",
    "surfaces": [
     "toolbar"
@@ -2925,12 +2984,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_HydroHomie.tox",
-    "bytes": 195222,
-    "sha256": "9b1b5d03239ec591df683afd2bca7b1a3144ee7b4066fc011f66b4fc35c5b77f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_HydroHomie.tox"
+    "bytes": 195262,
+    "sha256": "4b3c4606c25a3d2441f606b36ab5b442f3862aa2ecca2e815605029eb1cd31bf",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_HydroHomie.tox"
    }
   },
   {
@@ -2963,15 +3022,15 @@ window.FNS_MANIFEST = {
    "fits": [
     "network",
     "dev",
-    "visual",
-    "learn"
+    "learn",
+    "ui"
    ],
    "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
    "artifact": {
     "path": "packaging/dist/FNS_iopBrowser.tox",
     "bytes": 236614,
     "sha256": "4705860d12dbae4e45836644ec95b83e4cc87f11465f1f7ad0908db1ce17dc48",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_iopBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_iopBrowser.tox"
    }
   },
   {
@@ -3002,14 +3061,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MainMenuRegistry.tox",
     "bytes": 83198,
     "sha256": "a99db4ab635ad96440b50156907163ac7f5974c1ce9e8fa5d08c49cfa80fbdf5",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_MainMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_MainMenuRegistry.tox"
    }
   },
   {
    "name": "FNS_MediaBrowser",
    "title": "MediaBrowser",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Project",
    "description": "See every media file your project uses and which operator uses it, filter to the missing ones, and replace or repoint them in place.",
    "version": "3.2.3",
    "help_url": "https://functionstore.tools/docs/fns-mediabrowser/",
@@ -3046,16 +3105,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_MediaBrowser.tox",
     "bytes": 42398,
     "sha256": "bb33aea5b7fb7fb342cc9e43b8464fb64e12b34b6796af8895fad9b99e8ba365",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_MediaBrowser.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_MediaBrowser.tox"
    }
   },
   {
    "name": "FNS_Misc",
    "title": "Misc",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Project",
    "description": "Three small toolbar utilities: a Background Viewer toggle for the network's backdrop TOPs and CHOPs, a global Mouse In CHOP you can drag channels from onto parameters, and a Hog CHOP for starving a patch of cook time to see how it copes.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-misc/",
    "surfaces": [
     "toolbar"
@@ -3077,25 +3136,25 @@ window.FNS_MANIFEST = {
    "hotkeys": [],
    "minor": true,
    "fits": [
-    "visual",
     "dev",
-    "network"
+    "network",
+    "ui"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Misc.tox",
-    "bytes": 305462,
-    "sha256": "3e1922584077dd109569498751ac495b04093bbac92496aa87d87f174135e626",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Misc.tox"
+    "bytes": 305598,
+    "sha256": "147450fe5253d9b795b4aeb5e4a4edcfae4f28057ee1c31a7b5abbfdf86e7f82",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_Misc.tox"
    }
   },
   {
    "name": "FNS_MixSequencer",
    "title": "MixSequencer",
    "kind": "tool",
-   "category": "Parameters",
+   "category": "Time & sequencing",
    "description": "A step sequencer of mixes for OpSequencer: every step is a weight vector over a sequencer's presets, the playhead crossfades between steps with easing, and the result rides out as one channel per preset. A run of one-hot steps is a cue list.",
-   "version": "1.0.6",
+   "version": "1.0.7",
    "help_url": "https://functionstore.tools/docs/fns-mixsequencer/",
    "surfaces": [],
    "shortcut": "",
@@ -3114,13 +3173,14 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "show",
-    "params"
+    "params",
+    "time"
    ],
    "family": {
     "op_type": "mixsequencer",
     "op_name": "mixSequencer",
     "op_label": "Mix Sequencer",
-    "op_group": "CHOP",
+    "op_group": "COMP",
     "summary": "A step sequencer of mixes for the OpSequencer family: each step is a weight vector over presets, crossfaded with easing, out as one channel per preset.",
     "is_filter": false,
     "compatible_types": [
@@ -3134,12 +3194,12 @@ window.FNS_MANIFEST = {
      "weights"
     ]
    },
-   "whatsnew": "",
+   "whatsnew": "sits under COMP in the FNS tab of the OP Create dialog.",
    "artifact": {
     "path": "packaging/dist/FNS_MixSequencer.tox",
-    "bytes": 52518,
-    "sha256": "9b9b9da500322308be3c2fc7fc960eb30b4e4d9b5d1b4102292ea4106be70371",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_MixSequencer.tox"
+    "bytes": 52526,
+    "sha256": "c9267ca23b193e82a76a368e33d9cf198950ee5a6633579fc003ced229f80f63",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_MixSequencer.tox"
    }
   },
   {
@@ -3170,7 +3230,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_NavbarRegistry.tox",
     "bytes": 86006,
     "sha256": "962bd4b3310d5e09fc9c837335fa2258a404f4345d2e54618501536b95dd0f8e",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_NavbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_NavbarRegistry.tox"
    }
   },
   {
@@ -3179,7 +3239,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Developer",
    "description": "Open an operator's extension source quickly.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-openext/",
    "surfaces": [],
    "shortcut": "",
@@ -3207,21 +3267,21 @@ window.FNS_MANIFEST = {
     "dev",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "the palette folder migration keeps the old copy of a file both folders hold under `FNSTools/legacy_FNStools_ext/` instead of deleting it.",
    "artifact": {
     "path": "packaging/dist/FNS_OpenExt.tox",
-    "bytes": 119470,
-    "sha256": "dbc1e2b60bba3b2342bce8a5108115ca473d9bad477ffcb640c2007e989acb47",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpenExt.tox"
+    "bytes": 119638,
+    "sha256": "06e2bc4397d22e7dc7815d7a74b9624fa021a4c3e1bc0d206be89a799ca36ba2",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_OpenExt.tox"
    }
   },
   {
    "name": "FNS_OpFamily",
    "title": "OpFamily",
    "kind": "tool",
-   "category": "Surfaces",
+   "category": "Core",
    "description": "The FNS tab in the OP Create dialog: an operator family whose members are FNS tools placed from the store as one node each, with stubs for projects that travel and in-place updates that keep retained parameters and state. Built with TDFam.",
-   "version": "0.1.6",
+   "version": "0.1.7",
    "help_url": "https://functionstore.tools/docs/fns-opfamily/",
    "surfaces": [],
    "shortcut": "",
@@ -3239,21 +3299,21 @@ window.FNS_MANIFEST = {
    "min_td_build": "2025.33070",
    "hotkeys": [],
    "companion": "family",
-   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
+   "whatsnew": "the FNS operator family has a new colour, a brick red (0.569 0.265 0.188), in the OP Create dialog and on its operators.",
    "artifact": {
     "path": "packaging/dist/FNS_OpFamily.tox",
-    "bytes": 232214,
-    "sha256": "58f20a95e9ac79c92b4ab728e006ada512415660690a403ef4312785ff379711",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpFamily.tox"
+    "bytes": 232230,
+    "sha256": "3ee06d5b1bfe2deec90ef30a27c13f5fb0afbfa4f901d4f3be8313030662c4a4",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_OpFamily.tox"
    }
   },
   {
    "name": "FNS_OpMenuMods",
    "title": "OpMenuMods",
    "kind": "tool",
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "OP Create dialog extras: IO filter buttons, your own search keywords per operator type, and acronym search (type m f o for Movie File Out).",
-   "version": "3.2.6",
+   "version": "3.2.7",
    "help_url": "https://functionstore.tools/docs/fns-opmenumods/",
    "surfaces": [
     "hub",
@@ -3287,14 +3347,14 @@ window.FNS_MANIFEST = {
     "network",
     "speed",
     "learn",
-    "visual"
+    "ui"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_OpMenuMods.tox",
-    "bytes": 345518,
-    "sha256": "ac500fec1017ef7fef6afbb018661a12ff4c3f177342732556144951c6670da6",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpMenuMods.tox"
+    "bytes": 345654,
+    "sha256": "e3c665f0d64ddd7114b2d8311df36805418ee3cc65ea7e9e42bd0b1e2f6ab9c5",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_OpMenuMods.tox"
    }
   },
   {
@@ -3325,14 +3385,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpMenuRegistry.tox",
     "bytes": 97374,
     "sha256": "3a0b74dac6bb53c1bc7b6ce6cd555207f1615dfda8bf84adbd83c6d2ba5309f8",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpMenuRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_OpMenuRegistry.tox"
    }
   },
   {
    "name": "FNS_OpSequencer",
    "title": "OpSequencer",
    "kind": "tool",
-   "category": "Parameters",
+   "category": "Time & sequencing",
    "description": "Preset sequencer for one operator: store any number of its parameter states in a table, then scrub, jump or morph between them with easing, or mix them by weight from a CHOP. Drop the operator on the panel and drag parameters in to add columns.",
    "version": "1.16.7",
    "help_url": "https://functionstore.tools/docs/fns-opsequencer/",
@@ -3354,7 +3414,8 @@ window.FNS_MANIFEST = {
     "live",
     "show",
     "params",
-    "art"
+    "art",
+    "time"
    ],
    "family": {
     "op_type": "opsequencer",
@@ -3378,7 +3439,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_OpSequencer.tox",
     "bytes": 127398,
     "sha256": "de138bf5a517af151a2c3272ea2f95751655b2c8663bb3469ed216fb0ded7fb2",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_OpSequencer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_OpSequencer.tox"
    }
   },
   {
@@ -3387,14 +3448,14 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "A library of preconfigured operator templates to drop into a network.",
-   "version": "3.2.6",
+   "version": "3.2.7",
    "help_url": "https://functionstore.tools/docs/fns-optemplates/",
    "surfaces": [
     "opmenu",
     "toolbar"
    ],
    "shortcut": "FNS_OPTEMPLATES",
-   "ops": 510,
+   "ops": 567,
    "requires": [
     "FNS_ConfigRegistry",
     "FNS_OpMenuRegistry",
@@ -3453,6 +3514,24 @@ window.FNS_MANIFEST = {
      "par": "file",
      "kind": "tdinstall",
      "path": "<td>/Samples/Geo/defnull.geo"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP_ortho_sphereline/cam1/file1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "<td>/Samples/Geo/defcam.geo"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP_ortho_sphereline/null1/cross1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "<td>/Samples/Geo/defnull.geo"
+    },
+    {
+     "op": "OPTemplates1/renderTOP/renderTOP_ortho_sphereline/light1/cross1",
+     "par": "file",
+     "kind": "tdinstall",
+     "path": "<td>/Samples/Geo/defnull.geo"
     }
    ],
    "fits": [
@@ -3470,6 +3549,7 @@ window.FNS_MANIFEST = {
     "compTOP",
     "dattoCHOP",
     "displaceTOP",
+    "filterCHOP",
     "lfoCHOP",
     "limitCHOP",
     "moviefileoutTOP",
@@ -3480,12 +3560,12 @@ window.FNS_MANIFEST = {
     "speedCHOP",
     "triggerCHOP"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "finds the template library you already have before creating one from the shipped templates. That covers the `_2023` copy TouchDesigner 2023 saved to, an `OPTemplates2.tox` or higher from the old Create New choice, and a copy the palette folder migration set aside. The most recently saved one wins, and whatever it replaces is kept as `OPTemplates1.before-adopt.tox`.",
    "artifact": {
     "path": "packaging/dist/FNS_OpTemplates.tox",
-    "bytes": 380224,
-    "sha256": "6baaa06cc08effcada2e5d8cb368555fcbb0ab43b3da7065e800f53fd181707c",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpTemplates.tox"
+    "bytes": 382688,
+    "sha256": "a52541e1154fd55f22859c04526cd48b00902cd65251a6b9662e34c435c57fee",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_OpTemplates.tox"
    }
   },
   {
@@ -3494,7 +3574,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-optoclipboard/",
    "surfaces": [],
    "shortcut": "",
@@ -3522,21 +3602,21 @@ window.FNS_MANIFEST = {
     "params",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_OpToClipboard.tox",
-    "bytes": 121942,
-    "sha256": "3e40f67f3f21aac6eafead19f158adace13e222e42ed4816a182be05ab7f3c14",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_OpToClipboard.tox"
+    "bytes": 122094,
+    "sha256": "a92fca7d580b7eccaeb5f1acd28c0608709bf3120bc65353cd8627e0ae9be382",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_OpToClipboard.tox"
    }
   },
   {
    "name": "FNS_Output",
    "title": "Output",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "A toolbar button for the perform window: drop an operator to route it, click to open or close, and switch NDI and Spout/Syphon streaming of the same window.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-output/",
    "surfaces": [
     "toolbar"
@@ -3560,14 +3640,15 @@ window.FNS_MANIFEST = {
     "projector",
     "screen",
     "show",
-    "live"
+    "live",
+    "scenes"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_Output.tox",
-    "bytes": 190742,
-    "sha256": "3851e108a3eb7e4a57d8e8c5ec7913c9a597acd6a44b206499316364edd65399",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Output.tox"
+    "bytes": 190886,
+    "sha256": "3d99663da829030e7f5c5ab0a35e56f1f82092e6470977610e215a21922a7527",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_Output.tox"
    }
   },
   {
@@ -3596,7 +3677,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaletteRegistry.tox",
     "bytes": 81614,
     "sha256": "f1a5fc8f713591c456eb9de2bd70f252dffcaf536c11629db9253f053c41c78d",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_PaletteRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_PaletteRegistry.tox"
    }
   },
   {
@@ -3625,7 +3706,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_PaneTypeRegistry.tox",
     "bytes": 171494,
     "sha256": "96bd022e2c34558b7dd55b3cc0bb603fbf15016b02bab6dd84419756ff5a9e54",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_PaneTypeRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_PaneTypeRegistry.tox"
    }
   },
   {
@@ -3657,16 +3738,16 @@ window.FNS_MANIFEST = {
    "hotkeys": [],
    "fits": [
     "network",
-    "visual",
     "learn",
-    "dev"
+    "dev",
+    "ui"
    ],
    "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
    "artifact": {
     "path": "packaging/dist/FNS_ParentHierarchy.tox",
     "bytes": 204974,
     "sha256": "dc5f3d23e9d744a35e0f8fe95c464c9a160a4fa37b16ef301e9836c4697050f2",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ParentHierarchy.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ParentHierarchy.tox"
    }
   },
   {
@@ -3675,7 +3756,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-paropdrop/",
    "surfaces": [
     "toolbar"
@@ -3706,12 +3787,12 @@ window.FNS_MANIFEST = {
     "dev",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ParOPDrop.tox",
-    "bytes": 184822,
-    "sha256": "83f3eef75422c99b2d8e311d0ccbb1e0efeccbe2197e2dee28d2c875983eba11",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ParOPDrop.tox"
+    "bytes": 184958,
+    "sha256": "048900d5bdc3e7f38bf3926a2dc1931b1004557b30b8ee92d0bc3d4a703d9295",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ParOPDrop.tox"
    }
   },
   {
@@ -3720,7 +3801,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Randomize parameter values within range, for quick exploration.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-parrandomizer/",
    "surfaces": [
     "toolbar"
@@ -3766,19 +3847,19 @@ window.FNS_MANIFEST = {
     "art",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ParRandomizer.tox",
-    "bytes": 181878,
-    "sha256": "d2c66abb8f3ca604158332a440928538340140b00e375d745d76b7f777d17b97",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ParRandomizer.tox"
+    "bytes": 182046,
+    "sha256": "f6b15a5f7f413421493d00ed47dc07bed1fab8ce7babed44f2643ceed56da12a",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ParRandomizer.tox"
    }
   },
   {
    "name": "FNS_PreviewPanel",
    "title": "PreviewPanel",
    "kind": "tool",
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.",
    "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-previewpanel/",
@@ -3886,26 +3967,26 @@ window.FNS_MANIFEST = {
     }
    ],
    "fits": [
-    "visual",
     "art",
     "screen",
-    "learn"
+    "learn",
+    "ui"
    ],
    "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
    "artifact": {
     "path": "packaging/dist/FNS_PreviewPanel.tox",
     "bytes": 792594,
     "sha256": "8f017a729025a5f7d9424d106b4331ab7afe1c21b993c105cc2d208d11119269",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_PreviewPanel.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_PreviewPanel.tox"
    }
   },
   {
    "name": "FNS_ProSceneChanger",
    "title": "ProSceneChanger",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "The Pro scene changer: everything SimpleSceneChanger does, plus per-scene modes, fade times and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, and fleet follow with scene offset and sync timing. Runs beside the simple one in the same fleet.",
-   "version": "1.0.4",
+   "version": "1.0.5",
    "help_url": "https://functionstore.tools/docs/fns-proscenechanger/",
    "surfaces": [],
    "shortcut": "",
@@ -3924,13 +4005,14 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "show",
-    "visual"
+    "visual",
+    "scenes"
    ],
    "family": {
     "op_type": "proscenechanger",
     "op_name": "proSceneChanger",
     "op_label": "Pro Scene Changer",
-    "op_group": "TOP",
+    "op_group": "COMP",
     "summary": "The Pro scene changer: per-scene modes, fade times and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, fleet follow.",
     "is_filter": true,
     "compatible_types": [
@@ -3946,12 +4028,12 @@ window.FNS_MANIFEST = {
      "fleet"
     ]
    },
-   "whatsnew": "runs the shared parameter helper (same two fixes); its helper was bound to FNS_SimpleSceneChanger's files, so an edit in one tool could overwrite the other.",
+   "whatsnew": "sits under COMP in the FNS tab of the OP Create dialog.",
    "artifact": {
     "path": "packaging/dist/FNS_ProSceneChanger.tox",
     "bytes": 111982,
-    "sha256": "be6189c17ec416821f437e84dd07f15832152ebe2f6280295e83568e4137c1d8",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_ProSceneChanger.tox"
+    "sha256": "4d252425c5d4c6e039fdacff7c770aabfc7f96c1f88629423e6bee0419a9e3af",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_ProSceneChanger.tox"
    }
   },
   {
@@ -3960,7 +4042,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Collapse a selection into a component, with an optional customize dialog.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-quickcollapse/",
    "surfaces": [],
    "shortcut": "FNS_QUICKCOLLAPSE",
@@ -3993,21 +4075,21 @@ window.FNS_MANIFEST = {
     "speed",
     "dev"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_QuickCollapse.tox",
-    "bytes": 133758,
-    "sha256": "9bc62b2e9a2b0dc1c37ea0d62b27313f3c8c5dd3cb27882ad7dcfdef0952c012",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_QuickCollapse.tox"
+    "bytes": 133910,
+    "sha256": "2f62c0383afdacfed1b59a3d09c1566bad224fc30752879156d7e81e1d36b523",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_QuickCollapse.tox"
    }
   },
   {
    "name": "FNS_QuickPane",
    "title": "QuickPane",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Interface",
    "description": "Pane layout shortcuts.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-quickpane/",
    "surfaces": [],
    "shortcut": "",
@@ -4034,21 +4116,21 @@ window.FNS_MANIFEST = {
     "speed",
     "network"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_QuickPane.tox",
-    "bytes": 122686,
-    "sha256": "58803c485f8199f14985c8ee043bbb545ede0a28fea228baeeafa147b19f9b71",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_QuickPane.tox"
+    "bytes": 122822,
+    "sha256": "99f8761563d020d60fb62797f9d77c7bb65afa95f78b255a3f66bc98f7aa73dd",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_QuickPane.tox"
    }
   },
   {
    "name": "FNS_QuickTime",
    "title": "QuickTime",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Time & sequencing",
    "description": "A toolbar clock that hands out drag-and-drop time references for parameters: resettable and scalable absTime and absFrame, frame, and a progress value for perfect loops.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-quicktime/",
    "surfaces": [
     "toolbar"
@@ -4071,21 +4153,22 @@ window.FNS_MANIFEST = {
    "fits": [
     "art",
     "params",
-    "visual"
+    "ui",
+    "time"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_QuickTime.tox",
-    "bytes": 178014,
-    "sha256": "a2ce3d87b49f45d9581b770e5499ccc5367b29cc16fc42dd535580f774bf3f47",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_QuickTime.tox"
+    "bytes": 178166,
+    "sha256": "fdb50a11e95d6dcfa68043131f4665eabbfe69312e4ddbdf8a60705e4136df5d",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_QuickTime.tox"
    }
   },
   {
    "name": "FNS_RandomCHOP",
    "title": "RandomCHOP",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "A random-value CHOP: uniform or normal distributions, unique re-rolls with a tolerance and history, a Markov chain mode, weights from an input and a trigger input, generated per channel or per sample. The first member of the FNS operator family and an alternative for the Noise CHOP.",
    "version": "1.0.4",
    "help_url": "https://functionstore.tools/docs/fns-randomchop/",
@@ -4124,7 +4207,8 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "art",
-    "speed"
+    "speed",
+    "chops"
    ],
    "alternatives_for": [
     "noiseCHOP"
@@ -4151,16 +4235,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_RandomCHOP.tox",
     "bytes": 128486,
     "sha256": "caefb788acf9790616e0b3bf4827840ed19dd282612147fc609a92b7e81dd10f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_RandomCHOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_RandomCHOP.tox"
    }
   },
   {
    "name": "FNS_Remote",
    "title": "Remote",
    "kind": "tool",
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "Control the project from your phone over your own network: parameter pages, a perform window and multi-touch, paired by QR with no cloud and no account.",
-   "version": "3.2.9",
+   "version": "3.2.10",
    "help_url": "https://functionstore.tools/docs/fns-remote/",
    "surfaces": [
     "toolbar"
@@ -4194,23 +4278,24 @@ window.FNS_MANIFEST = {
     "phone",
     "show",
     "live",
-    "params"
+    "params",
+    "osc"
    ],
-   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
+   "whatsnew": "the palette folder migration keeps the old copy of a file both folders hold under `FNSTools/legacy_FNStools_ext/` instead of deleting it.",
    "artifact": {
     "path": "packaging/dist/FNS_Remote.tox",
-    "bytes": 256086,
-    "sha256": "e04164256a3a8ea92a1d4a7b2dc8f9914edace21ae1676858d8b3f66ebaf4514",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_Remote.tox"
+    "bytes": 256390,
+    "sha256": "7159807d2dae64235dbdbe868857e81b8127c17a26c0ae6f229c214a22f21266",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_Remote.tox"
    }
   },
   {
    "name": "FNS_ResetPLS",
    "title": "ResetPLS",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Project",
    "description": "Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-resetpls/",
    "surfaces": [
     "toolbar"
@@ -4262,21 +4347,21 @@ window.FNS_MANIFEST = {
     "tidy",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_ResetPLS.tox",
-    "bytes": 199190,
-    "sha256": "54f4e67e3afb5f8de9d760cccd9c944036bcda7a87d5b81b60f844b976ed10a4",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ResetPLS.tox"
+    "bytes": 199342,
+    "sha256": "4ce05134681375d8cde0c041daeca8abb25b17b3edd34b030c5bf51f8ab0bdd2",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ResetPLS.tox"
    }
   },
   {
    "name": "FNS_SearchPalette",
    "title": "SearchPalette",
    "kind": "tool",
-   "category": "Workflow",
+   "category": "Interface",
    "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/fns-searchpalette/",
    "surfaces": [],
    "shortcut": "TDX_SEARCH_PALETTE",
@@ -4306,14 +4391,14 @@ window.FNS_MANIFEST = {
    "fits": [
     "speed",
     "learn",
-    "visual"
+    "ui"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_SearchPalette.tox",
-    "bytes": 120062,
-    "sha256": "e94aa508600cf71510ef31097a3fac69a8258fa37e8db9eacd4160f8e3713329",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_SearchPalette.tox"
+    "bytes": 120222,
+    "sha256": "c3c2f47f202a3ac04e9f588fbe2b606ecf40dd65eb02994f014a4c1c8eddb65e",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_SearchPalette.tox"
    }
   },
   {
@@ -4322,7 +4407,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Parameters",
    "description": "Set Input/Viewer Smoothness on selected TOPs, or on every TOP in the network.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-setsmoothness/",
    "surfaces": [
     "toolbar"
@@ -4348,21 +4433,21 @@ window.FNS_MANIFEST = {
     "screen",
     "params"
    ],
-   "whatsnew": "no longer raises on a COMP that carries only one of the two smoothness parameters; each is assigned only where it exists.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_SetSmoothness.tox",
-    "bytes": 238622,
-    "sha256": "f6c060e3ac1289eaec4c07927427cda817308cfc44c004fbeabadf3d06444f09",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_SetSmoothness.tox"
+    "bytes": 238766,
+    "sha256": "64e1d25a3c6b74faa6e801a4d97657c05995ff235244220cd349cf76701b824b",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_SetSmoothness.tox"
    }
   },
   {
    "name": "FNS_SimpleSceneChanger",
    "title": "SimpleSceneChanger",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "Scene changer for TOP outputs: wire your scenes in, then cut, fade or ease between them by select, timer, A/B fader or CHOP, with cooking control so only the scenes on screen cook. Base and Pro instances find each other and can follow a leader across screens.",
-   "version": "1.0.5",
+   "version": "1.0.6",
    "help_url": "https://functionstore.tools/docs/fns-simplescenechanger/",
    "surfaces": [],
    "shortcut": "",
@@ -4381,13 +4466,14 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "show",
-    "visual"
+    "visual",
+    "scenes"
    ],
    "family": {
     "op_type": "simplescenechanger",
     "op_name": "simpleSceneChanger",
     "op_label": "Simple Scene Changer",
-    "op_group": "TOP",
+    "op_group": "COMP",
     "summary": "Crossfade between input scenes with one index, a fade time and an easing; a CHOP out follows the fade.",
     "is_filter": true,
     "compatible_types": [
@@ -4402,12 +4488,12 @@ window.FNS_MANIFEST = {
      "fade"
     ]
    },
-   "whatsnew": "runs the shared parameter helper, so the first parameter change on a freshly placed copy is no longer lost and shrinking a parameter sequence no longer raises an error.",
+   "whatsnew": "sits under COMP in the FNS tab of the OP Create dialog.",
    "artifact": {
     "path": "packaging/dist/FNS_SimpleSceneChanger.tox",
     "bytes": 92966,
-    "sha256": "ec71a0a0dcf35df1904d2e9c13158bd4b2da9b66464087975de0d79c2aeaf249",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_SimpleSceneChanger.tox"
+    "sha256": "53f86278aa503e099125d10bb1340d685a6f7a186769032d560313bf5f9f96c5",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_SimpleSceneChanger.tox"
    }
   },
   {
@@ -4416,7 +4502,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Swap one operator for another while keeping connections intact.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-swapops/",
    "surfaces": [
     "toolbar"
@@ -4446,12 +4532,12 @@ window.FNS_MANIFEST = {
     "network",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_SwapOps.tox",
-    "bytes": 179870,
-    "sha256": "3519b02829b16212dfc1ccc5b4392c0ea97abada23426862e3c8c79c8e7b5e92",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_SwapOps.tox"
+    "bytes": 180014,
+    "sha256": "a338cacd0a4564925aa4095c6d031c1335550c8b4f36fce7f079791aec367e8c",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_SwapOps.tox"
    }
   },
   {
@@ -4460,7 +4546,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "One hotkey jumps focus back and forth between the last two operators you selected, across networks.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-switchops/",
    "surfaces": [],
    "shortcut": "FNS_SWITCHOP",
@@ -4487,21 +4573,21 @@ window.FNS_MANIFEST = {
     "network",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_SwitchOPs.tox",
-    "bytes": 120078,
-    "sha256": "f01507400af426778b41562fa9ae273ddedb8e75c1652fe513571631e60da821",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_SwitchOPs.tox"
+    "bytes": 120246,
+    "sha256": "484659ec135e2e76b5b99806b4590294e1e28616adb05d9858684cc13b6c4d9c",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_SwitchOPs.tox"
    }
   },
   {
    "name": "FNS_SwitchTools",
    "title": "SwitchTools",
    "kind": "tool",
-   "category": "Network",
+   "category": "Show & output",
    "description": "A companion for any Switch, Cross or multi-input operator: index by slider, menu or bind, loop or clamp, colour the live input, cook only the inputs in use and unload the rest from the GPU, plus reorder, reverse, randomize and align the inputs.",
-   "version": "1.1.4",
+   "version": "1.1.5",
    "help_url": "https://functionstore.tools/docs/fns-switchtools/",
    "surfaces": [],
    "shortcut": "",
@@ -4520,13 +4606,14 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "show",
-    "speed"
+    "speed",
+    "scenes"
    ],
    "family": {
     "op_type": "switchtools",
     "op_name": "switchTools",
     "op_label": "Switch Tools",
-    "op_group": "CHOP",
+    "op_group": "COMP",
     "summary": "A companion for any Switch, Cross or multi-input operator: index by slider, menu or bind, loop or clamp, colour the live input, cook only the inputs in use.",
     "is_filter": true,
     "compatible_types": [
@@ -4541,12 +4628,12 @@ window.FNS_MANIFEST = {
      "unload"
     ]
    },
-   "whatsnew": "runs the shared parameter helper, so the first parameter change on a freshly placed copy is no longer lost and shrinking a parameter sequence no longer raises an error.",
+   "whatsnew": "sits under COMP in the FNS tab of the OP Create dialog.",
    "artifact": {
     "path": "packaging/dist/FNS_SwitchTools.tox",
-    "bytes": 116894,
-    "sha256": "5fa7541c77a18af0018db5fcdb8eced884260f5a4083c8afaff33380e475e538",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_SwitchTools.tox"
+    "bytes": 116902,
+    "sha256": "d27a1c1ba4feaf0c369c371911a2b035e4889aafdb1ac5d6dce20e70636a29c3",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_SwitchTools.tox"
    }
   },
   {
@@ -4575,16 +4662,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_TimelineRegistry.tox",
     "bytes": 90598,
     "sha256": "2a3ea415a3c731d2065e8509f0a1d0f6568d4a33f5c58dac81912976f9b52efd",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_TimelineRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_TimelineRegistry.tox"
    }
   },
   {
    "name": "FNS_TimelineTools",
    "title": "TimelineTools",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Interface",
    "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip, a waveform and your editor's markers. Key any operators' parameters into an Animation COMP with one press, and play them back from it.",
-   "version": "3.2.6",
+   "version": "3.2.7",
    "help_url": "https://functionstore.tools/docs/fns-timelinetools/",
    "surfaces": [
     "timeline"
@@ -4646,15 +4733,16 @@ window.FNS_MANIFEST = {
     "media",
     "audio",
     "params",
-    "visual",
-    "art"
+    "art",
+    "ui",
+    "time"
    ],
-   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_TimelineTools.tox",
-    "bytes": 363038,
-    "sha256": "b47d0bf3010a020396ae31ff010a456749a1d5a3c521d45f5dde91cb7bfedf7f",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/FNS_TimelineTools.tox"
+    "bytes": 363182,
+    "sha256": "965fcd87f43785fc2aaac8c4cbc9beded4a3c5cd471d655efc56ef209efc3156",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/FNS_TimelineTools.tox"
    }
   },
   {
@@ -4685,16 +4773,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/FNS_ToolbarRegistry.tox",
     "bytes": 78742,
     "sha256": "50cf9568486f666fb2ca7ad1f6b2a1a77bdeb48f8cd902510145ab7aa5e4664f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_ToolbarRegistry.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_ToolbarRegistry.tox"
    }
   },
   {
    "name": "FNS_Updater",
    "title": "Updater",
    "kind": "core",
-   "category": "Developer",
+   "category": "Core",
    "description": "In-place toolkit updates, with settings preserved across the replacement.",
-   "version": "3.2.19",
+   "version": "3.2.20",
    "help_url": "https://functionstore.tools/docs/fns-updater/",
    "surfaces": [],
    "shortcut": "FNS_UPDATER",
@@ -4709,12 +4797,12 @@ window.FNS_MANIFEST = {
    "cooking": true,
    "min_td_build": "2025.33070",
    "hotkeys": [],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "the palette folder migration keeps the old copy of a file both folders hold under `FNSTools/legacy_FNStools_ext/` instead of deleting it. Update keeps FNS family operators current. A family operator whose store copy is missing or older than the release is now an update like any other, and the family folder follows. Before this, family operators never updated.",
    "artifact": {
     "path": "packaging/dist/FNS_Updater.tox",
-    "bytes": 196462,
-    "sha256": "cae0f56872b93702a460026e7a9332ee50edf6c0b025aa6818643c2f5351b928",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_Updater.tox"
+    "bytes": 197782,
+    "sha256": "68bf686c641a4e78a73ce16227e0cd2ea498ce33e04e1c112a23bae625c19e0e",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_Updater.tox"
    }
   },
   {
@@ -4723,7 +4811,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Developer",
    "description": "VS Code integration: open externalized scripts, sync files and generate TouchDesigner type stubs.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/fns-vscodetools/",
    "surfaces": [
     "toolbar"
@@ -4754,19 +4842,19 @@ window.FNS_MANIFEST = {
     "speed",
     "tidy"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/FNS_VSCodeTools.tox",
-    "bytes": 710104,
-    "sha256": "c5d29a045b1ef3c79c1fe987abacc1be8cb97bdcebd8d36465ba6fe9e0db1bd1",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/FNS_VSCodeTools.tox"
+    "bytes": 710256,
+    "sha256": "0ebb8addde363068d654707375564974f37088c470f48b61fafb781c3c7e6774",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/FNS_VSCodeTools.tox"
    }
   },
   {
    "name": "InfinityCHOP",
    "title": "InfinityCHOP",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "A point or a whole curve on one shape that morphs from a circle to the infinity loop: frequency multipliers for Lissajous variations, a trail span, smooth speed with reset, and a size and centre for the output values.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/infinitychop/",
@@ -4787,7 +4875,7 @@ window.FNS_MANIFEST = {
    "fits": [
     "live",
     "art",
-    "visual"
+    "chops"
    ],
    "family": {
     "op_type": "infinity",
@@ -4815,14 +4903,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/InfinityCHOP.tox",
     "bytes": 3438,
     "sha256": "068aef449c3f4a7a407f6d52c78f13c324ab4877a3d2d7ae6754dfe917bae0bb",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/InfinityCHOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/InfinityCHOP.tox"
    }
   },
   {
    "name": "InstanceTrailer",
    "title": "InstanceTrailer",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "Turns one moving image into a trail of its recent frames: a cache laid out in a row or column with exponent-shaped spacing, plus the offsets as a CHOP for instancing.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/instancetrailer/",
@@ -4868,14 +4956,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/InstanceTrailer.tox",
     "bytes": 11606,
     "sha256": "be1594fea6b2466aa7b7caea1365f7d0c2b59365b6acbc2499389ecb4e5ec483",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/InstanceTrailer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/InstanceTrailer.tox"
    }
   },
   {
    "name": "KinectSinglePlayer",
    "title": "KinectSinglePlayer",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Picks one player out of a Kinect skeleton stream: whoever stands inside the bounds you set becomes the active player, and their joints ride out as clean channels until they leave.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/kinectsingleplayer/",
@@ -4895,7 +4983,8 @@ window.FNS_MANIFEST = {
    "placement": "none",
    "fits": [
     "show",
-    "live"
+    "live",
+    "sensing"
    ],
    "family": {
     "op_type": "kinectsingleplayer",
@@ -4920,14 +5009,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/KinectSinglePlayer.tox",
     "bytes": 12566,
     "sha256": "c2c07e38602eb1e14cbdc1f2987502939cf4988263cb9cfc78f30ae35f3adee2",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/KinectSinglePlayer.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/KinectSinglePlayer.tox"
    }
   },
   {
    "name": "LayerSep3D",
    "title": "LayerSep3D",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "3D and Particles",
    "description": "Slices an image into depth layers by a channel threshold and instances them as a stack in 3D, with per layer threshold, softness, mix, position, scale and rotation driven by curves or CHOPs.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/layersep3d/",
@@ -4948,7 +5037,8 @@ window.FNS_MANIFEST = {
    "fits": [
     "art",
     "visual",
-    "show"
+    "show",
+    "particles"
    ],
    "family": {
     "op_type": "layersep3d",
@@ -4976,7 +5066,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/LayerSep3D.tox",
     "bytes": 44134,
     "sha256": "a64ee29e0b84895a131c8fe7fd0da775c53f0034d64120b8b50c89568189e713",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/LayerSep3D.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/LayerSep3D.tox"
    }
   },
   {
@@ -5028,14 +5118,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/LinkOPs.tox",
     "bytes": 4350,
     "sha256": "4975bb75fce5766d2dbf5f2b0993d744b9c5a5e03761d302842500deb1d2f3f1",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/LinkOPs.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/LinkOPs.tox"
    }
   },
   {
    "name": "MaskDraw",
    "title": "MaskDraw",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "Draw a mask with the mouse straight onto the image: a panel you paint in, with the mask and the masked image as outputs, a lock and a reset.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/maskdraw/",
@@ -5081,16 +5171,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/MaskDraw.tox",
     "bytes": 111894,
     "sha256": "64c2197e3e1420129e55eb73a18f1c1903668886e7f066a6c6f06aa1b0ebf0cd",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/MaskDraw.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/MaskDraw.tox"
    }
   },
   {
    "name": "midiMapper",
    "title": "midiMapper",
    "kind": "tool",
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/midimapper/",
    "surfaces": [
     "hub",
@@ -5120,21 +5210,22 @@ window.FNS_MANIFEST = {
     "live",
     "show",
     "params",
-    "visual"
+    "ui",
+    "midi"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/midiMapper.tox",
-    "bytes": 327086,
-    "sha256": "5eac8868bd0a3ee0e5450bf00596669cb96c619ff684a03aa825d9784f03cb93",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/midiMapper.tox"
+    "bytes": 327238,
+    "sha256": "9ebf6adc30c6f9454968096a5c60852df3f0ef48478e1bb8ee52105b2de0fa9a",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/midiMapper.tox"
    }
   },
   {
    "name": "MoveDetectDir",
    "title": "MoveDetectDir",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Reads which way things move in a camera or any image with optical flow and turns it into left/right and down/up channels, with thresholds, inversion and filtering, for swipe and gesture triggers.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/movedetectdir/",
@@ -5154,7 +5245,8 @@ window.FNS_MANIFEST = {
    "placement": "none",
    "fits": [
     "show",
-    "live"
+    "live",
+    "sensing"
    ],
    "family": {
     "op_type": "movedetectdir",
@@ -5182,7 +5274,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/MoveDetectDir.tox",
     "bytes": 6846,
     "sha256": "59bcf9bb0811755a79d96d13f2a2b99bf016f2813a972a4bbefbb6b8fa6b089d",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/MoveDetectDir.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/MoveDetectDir.tox"
    }
   },
   {
@@ -5235,16 +5327,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/OpenOp.tox",
     "bytes": 2150,
     "sha256": "1d04193a3ef69a73102d30b9da5e10f0a602a8d89f641fb4997b434ec1c87c30",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/OpenOp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/OpenOp.tox"
    }
   },
   {
    "name": "oscMapper",
    "title": "oscMapper",
    "kind": "tool",
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design.",
-   "version": "3.2.3",
+   "version": "3.2.4",
    "help_url": "https://functionstore.tools/docs/oscmapper/",
    "surfaces": [
     "hub"
@@ -5272,21 +5364,22 @@ window.FNS_MANIFEST = {
     "show",
     "live",
     "params",
-    "visual"
+    "ui",
+    "osc"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/oscMapper.tox",
-    "bytes": 231846,
-    "sha256": "60de4ba6b7126ab419ac4c68a76765640f05705ab564ddc5481479bfac5c28d0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/oscMapper.tox"
+    "bytes": 231998,
+    "sha256": "103858ac3486fb864ebdc177bf2967106a5eb5882cfc1dbd442283857bdf70eb",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/oscMapper.tox"
    }
   },
   {
    "name": "Particles2D_POP",
    "title": "Particles2D_POP",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "3D and Particles",
    "description": "A 2D particle simulation as a POP loop: a source image emits particles, curl noise and wind effectors steer them with lookup ranges, trails stretch them, and the loop rides out as points for your own render.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/particles2d-pop/",
@@ -5307,7 +5400,8 @@ window.FNS_MANIFEST = {
    "fits": [
     "art",
     "live",
-    "visual"
+    "visual",
+    "particles"
    ],
    "family": {
     "op_type": "particles2d",
@@ -5335,14 +5429,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/Particles2D_POP.tox",
     "bytes": 18598,
     "sha256": "48f02af7bf196e9b13d9266c6654f89b7e42f7ed79498fe6116e5b479282e9db",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/Particles2D_POP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/Particles2D_POP.tox"
    }
   },
   {
    "name": "ParticlesGpuUltimate",
    "title": "ParticlesGpuUltimate",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "3D and Particles",
    "description": "A GPU particle system driven by images: a thresholded source emits particles, look, life, turbulence, wind and force fields shape them, a fluid simulation can carry them, with raw colour, position and optical-flow inputs and one rendered output.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/particlesgpuultimate/",
@@ -5402,7 +5496,8 @@ window.FNS_MANIFEST = {
     "art",
     "live",
     "visual",
-    "show"
+    "show",
+    "particles"
    ],
    "family": {
     "op_type": "particlesgpuultimate",
@@ -5429,7 +5524,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ParticlesGpuUltimate.tox",
     "bytes": 601360,
     "sha256": "8b91fd4432586260140065bfb2b485fddc41874128ae0b2422e0e3c8e1dd2ec9",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/ParticlesGpuUltimate.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/ParticlesGpuUltimate.tox"
    }
   },
   {
@@ -5438,7 +5533,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Paste the image on the clipboard into the current network as a Movie File In, a Script TOP or an annotation. Windows only.",
-   "version": "3.2.5",
+   "version": "3.2.6",
    "help_url": "https://functionstore.tools/docs/pastefromclipboard/",
    "surfaces": [],
    "shortcut": "",
@@ -5470,19 +5565,19 @@ window.FNS_MANIFEST = {
     "speed",
     "network"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/PasteFromClipboard.tox",
-    "bytes": 205870,
-    "sha256": "ed6c974f691fe94d36908f1c1764fe7e65f4375ce43d5aa865d8717435f4d565",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/PasteFromClipboard.tox"
+    "bytes": 206030,
+    "sha256": "4af9831e37fec02ec466c96a9d5eeeb6e2cd0757f88aa242a5aaa521767a0c16",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/PasteFromClipboard.tox"
    }
   },
   {
    "name": "PrismTOP",
    "title": "PrismTOP",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A kaleidoscopic prism: the input rendered through instanced, rotating polygon facets in up to three ring patterns, with softness, a chromatic distortion pass, fit and transform, and a dry/wet mix. An alternative for the Tile TOP and the Mirror TOP.",
    "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/prismtop/",
@@ -5551,7 +5646,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/PrismTOP.tox",
     "bytes": 109758,
     "sha256": "d4488648a37861e0f5ad993f69b05b8bece5920e37744b0cc01081d1f5a1c5db",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/PrismTOP.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/PrismTOP.tox"
    }
   },
   {
@@ -5560,7 +5655,7 @@ window.FNS_MANIFEST = {
    "kind": "tool",
    "category": "Network",
    "description": "Bookmark network locations and jump back to them. Bookmarks stay project-local by design.",
-   "version": "3.2.4",
+   "version": "3.2.5",
    "help_url": "https://functionstore.tools/docs/quickmarks/",
    "surfaces": [],
    "shortcut": "",
@@ -5591,19 +5686,19 @@ window.FNS_MANIFEST = {
     "network",
     "speed"
    ],
-   "whatsnew": "the first parameter change on a freshly placed copy is no longer lost, and shrinking a parameter sequence no longer raises an error (shared parameter helper).",
+   "whatsnew": "",
    "artifact": {
     "path": "packaging/dist/QuickMarks.tox",
-    "bytes": 123350,
-    "sha256": "931ae28a73957fcd4be2a2c5692462813bd42d76da6b68d190f8c36408e4c336",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/QuickMarks.tox"
+    "bytes": 123510,
+    "sha256": "be816097eda5b218a52a0de5b5cc0a9982f7f80af3e17a9c1fc148596a00ba19",
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/QuickMarks.tox"
    }
   },
   {
    "name": "RealRamp",
    "title": "RealRamp",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A GLSL ramp with a true phase and period: vertical, horizontal, radial or circular, repeating or mirroring, so a driven phase never drifts or snaps the way a keyed Ramp TOP can.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/realramp/",
@@ -5648,14 +5743,14 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/RealRamp.tox",
     "bytes": 3422,
     "sha256": "d30a1c0b9763c97adc2984f487e5d929503b36004634c290b817443273369a09",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/RealRamp.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/RealRamp.tox"
    }
   },
   {
    "name": "SeqMod",
    "title": "SeqMod",
    "kind": "tool",
-   "category": "Parameters",
+   "category": "Developer",
    "description": "Watches a sequence of parameters on any COMP: name the target and the sequence, and the block parameters are published as one list, with a callback for every block added or removed.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/seqmod/",
@@ -5699,16 +5794,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/SeqMod.tox",
     "bytes": 16774,
     "sha256": "4ceccaa6f7ccbbda4e23eb987551f16a298fda80e9adcfc70ced2863f361a758",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/SeqMod.tox"
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/SeqMod.tox"
    }
   },
   {
    "name": "SlideShow",
    "title": "SlideShow",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "A slideshow of a folder of images: timed or stepped with next and previous, in order or random, with a crossfade between slides and a fitted output resolution.",
-   "version": "1.0.1",
+   "version": "1.0.2",
    "help_url": "https://functionstore.tools/docs/slideshow/",
    "surfaces": [],
    "shortcut": "",
@@ -5765,13 +5860,14 @@ window.FNS_MANIFEST = {
    "fits": [
     "show",
     "live",
-    "visual"
+    "visual",
+    "scenes"
    ],
    "family": {
     "op_type": "slideshow",
     "op_name": "slideShow",
     "op_label": "Slide Show",
-    "op_group": "TOP",
+    "op_group": "COMP",
     "summary": "A slideshow of a folder of images: timed or stepped with next and previous, in order or random, with a crossfade between slides.",
     "is_filter": false,
     "compatible_types": [
@@ -5786,19 +5882,19 @@ window.FNS_MANIFEST = {
      "photos"
     ]
    },
-   "whatsnew": "every parameter has a tooltip, and the docs page describes each control from it.",
+   "whatsnew": "sits under COMP in the FNS tab of the OP Create dialog.",
    "artifact": {
     "path": "packaging/dist/SlideShow.tox",
     "bytes": 10950,
-    "sha256": "7e1d0a26f32bfc31b9fb3ca3c7bee4389cbc2ce323d8864a7a9186a4858cf9cc",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/SlideShow.tox"
+    "sha256": "09a15fe9458b24d0bb3202d804ed6ce20206cb73b21bd7eac48c57a17b0b180e",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/SlideShow.tox"
    }
   },
   {
    "name": "ThresholdColor",
    "title": "ThresholdColor",
    "kind": "tool",
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A Threshold TOP that keeps the colour: pixels that pass the test come through in their original colour with a soft edge. An alternative for the Threshold TOP.",
    "version": "1.0.0",
    "help_url": "https://functionstore.tools/docs/thresholdcolor/",
@@ -5821,7 +5917,8 @@ window.FNS_MANIFEST = {
    "hotkeys": [],
    "fits": [
     "art",
-    "speed"
+    "speed",
+    "visual"
    ],
    "alternatives_for": [
     "thresholdTOP"
@@ -5831,16 +5928,16 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ThresholdColor.tox",
     "bytes": 100598,
     "sha256": "3dc4ac249c3dc3482aa86d7dbabe3e195adc8906f21ef8b16c396e813258df8f",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ThresholdColor.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/ThresholdColor.tox"
    }
   },
   {
    "name": "TopToMidi",
    "title": "TopToMidi",
    "kind": "tool",
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Samples an image at points you define and turns the pixel values into MIDI notes in a musical scale, with trigger gating, retrigger control, a MIDI-learned custom scale and output to a MIDI Out or VST CHOP.",
-   "version": "1.0.0",
+   "version": "1.0.1",
    "help_url": "https://functionstore.tools/docs/toptomidi/",
    "surfaces": [],
    "shortcut": "",
@@ -5873,13 +5970,14 @@ window.FNS_MANIFEST = {
    "fits": [
     "audio",
     "live",
-    "art"
+    "art",
+    "midi"
    ],
    "family": {
     "op_type": "toptomidi",
     "op_name": "topToMidi",
     "op_label": "TOP to MIDI",
-    "op_group": "CHOP",
+    "op_group": "COMP",
     "summary": "Samples an image at points you define and turns the pixel values into MIDI notes in a musical scale, with trigger gating and MIDI or VST output.",
     "is_filter": true,
     "compatible_types": [
@@ -5895,12 +5993,12 @@ window.FNS_MANIFEST = {
      "vst"
     ]
    },
-   "whatsnew": "new package (Base, FNS operator family). Samples an image at points you define and turns the values into MIDI notes in a musical scale.",
+   "whatsnew": "sits under COMP in the FNS tab of the OP Create dialog.",
    "artifact": {
     "path": "packaging/dist/TopToMidi.tox",
-    "bytes": 186926,
-    "sha256": "b5557a18f4df9c4aaf6dc2e4bd8be45099ffd14b2560281542a215782947dc2a",
-    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.54/TopToMidi.tox"
+    "bytes": 186950,
+    "sha256": "9b0054ad7b1580d4ba754a9e1c4b58fd1dea198076b782f942f92cfbf0dae87a",
+    "url": "https://storage.functionstore.tools/fnstools/plus/v3.2.55/TopToMidi.tox"
    }
   },
   {
@@ -5908,7 +6006,7 @@ window.FNS_MANIFEST = {
    "title": "ParHoverMIDI_VSN1",
    "kind": "tool",
    "foreign": true,
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "Adjust any parameter by hovering over it and turning an endless MIDI encoder, built for the Intech Studio VSN1 with screen and LED feedback: parameter slots and banks, ParGroup control, step sizes, shortcuts for reset and clamp, and network zoom when no parameter is under the mouse. Lands at the network root; one instance per project.",
    "version": "1.9.0",
    "help_url": "https://function-store.github.io/TD_ParHoverMIDI_VSN1/",
@@ -5945,7 +6043,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/ParHoverMIDI_VSN1.tox",
     "bytes": 362816,
     "sha256": "eaab30dc48f656e2408be67c01626426f61ce2feb0b9256f1a64d163c1f064d0",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/ParHoverMIDI_VSN1.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/ParHoverMIDI_VSN1.tox"
    }
   },
   {
@@ -5953,7 +6051,7 @@ window.FNS_MANIFEST = {
    "title": "TDXMap",
    "kind": "tool",
    "foreign": true,
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode, easing curves, slot and modify modes.",
    "version": "1.2.0",
    "help_url": "https://tdxmap.functionstore.xyz/docs/",
@@ -5994,7 +6092,7 @@ window.FNS_MANIFEST = {
     "path": "packaging/dist/TDXMap.tox",
     "bytes": 934742,
     "sha256": "339116402eff423173e944862f7f623c3cede0c1593b6a5ac2328d87a65ac4ba",
-    "url": "https://storage.functionstore.tools/fnstools/v3.2.54/TDXMap.tox"
+    "url": "https://storage.functionstore.tools/fnstools/v3.2.55/TDXMap.tox"
    }
   }
  ],
@@ -6011,7 +6109,8 @@ window.FNS_MANIFEST = {
       "tags": [
        "live",
        "media",
-       "audio"
+       "audio",
+       "visual"
       ]
      },
      {
@@ -6030,7 +6129,8 @@ window.FNS_MANIFEST = {
       "tags": [
        "art",
        "params",
-       "network"
+       "network",
+       "visual"
       ]
      },
      {
@@ -6046,8 +6146,76 @@ window.FNS_MANIFEST = {
       "label": "Learning TouchDesigner",
       "tags": [
        "learn",
+       "ui"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "make",
+    "prompt": "What do you build with?",
+    "multi": true,
+    "options": [
+     {
+      "id": "chops",
+      "label": "CHOPs: shaping, generating and smoothing channels",
+      "tags": [
+       "chops"
+      ]
+     },
+     {
+      "id": "image",
+      "label": "Image effects, generators and colour",
+      "tags": [
        "visual"
       ]
+     },
+     {
+      "id": "particles",
+      "label": "Particles and 3D",
+      "tags": [
+       "particles"
+      ]
+     },
+     {
+      "id": "time",
+      "label": "Sequencing, tempo and the timeline",
+      "tags": [
+       "time"
+      ]
+     },
+     {
+      "id": "sensing",
+      "label": "Cameras and sensors, like a Kinect",
+      "tags": [
+       "sensing"
+      ]
+     },
+     {
+      "id": "midi",
+      "label": "MIDI controllers",
+      "tags": [
+       "midi"
+      ]
+     },
+     {
+      "id": "osc",
+      "label": "OSC, or control from a phone or another machine",
+      "tags": [
+       "osc"
+      ]
+     },
+     {
+      "id": "scenes",
+      "label": "Scenes, slides and show playback",
+      "tags": [
+       "scenes"
+      ]
+     },
+     {
+      "id": "editor",
+      "label": "None of these: just the editor tools",
+      "tags": []
      }
     ]
    },
@@ -6065,9 +6233,9 @@ window.FNS_MANIFEST = {
      },
      {
       "id": "visual",
-      "label": "Visual: buttons on the toolbar and pane bar, a manager window",
+      "label": "Point and click: buttons on the toolbar and pane bar, a manager window",
       "tags": [
-       "visual"
+       "ui"
       ]
      },
      {
@@ -7300,10 +7468,23 @@ function fnsBoot() {
     var filtering = !!q || narrowed();
     var visible = [];
 
+    // Categories fall in two groups (catalog `category_meta.<cat>.group`):
+    // the tools that change how TouchDesigner works, and what you build
+    // the piece with. A heading opens each group, drawn only when one of
+    // its sections is shown.
+    var lastGroup = null;
     cats.forEach(function (cat) {
       if (cat === 'Core') return;
       var items = tools.filter(function (p) { return p.category === cat && match(p); });
       if (!items.length) return;
+      var grp = metaOf(cat).group || '';
+      if (grp && grp !== lastGroup) {
+        var gh = document.createElement('h2');
+        gh.className = 'grp-head';
+        gh.textContent = grp;
+        listEl.appendChild(gh);
+      }
+      lastGroup = grp;
       shown += items.length;
       visible = visible.concat(items);
       var sel = items.filter(function (p) { return picked.has(p.name); }).length;
@@ -9065,9 +9246,18 @@ function fnsBoot() {
     var nav = document.getElementById('catnav');
     if (!nav) return;
     // Core is not on the rail: it is plumbing, not a place to go
+    var navGroup = null;
     allCats().filter(function (c) { return !quiet(c); }).forEach(function (cat) {
       var n = tools.filter(function (p) { return p.category === cat; }).length;
       if (!n) return;
+      var ng = metaOf(cat).group || '';
+      if (ng && ng !== navGroup) {
+        var nl = document.createElement('span');
+        nl.className = 'nav-grp';
+        nl.textContent = ng;
+        nav.appendChild(nl);
+      }
+      navGroup = ng;
       var a = document.createElement('a');
       a.href = '#cat-' + catSlug(cat);
       a.setAttribute('data-cat', cat);

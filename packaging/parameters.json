@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.54",
+ "release": "v3.2.55",
  "td_build": "2025.33070",
  "packages": {
   "ChopBank": [
@@ -9373,7 +9373,7 @@
     "style": "RGBA",
     "help": "The family's colour in the OP Create dialog and on its operators.",
     "size": 3,
-    "default": 0.5,
+    "default": 0.5690000057220459,
     "section": true,
     "page": "Family"
    },

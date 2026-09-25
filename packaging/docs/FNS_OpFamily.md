@@ -20,7 +20,7 @@ You never pick it on its own. The installer adds it when you install one of its 
 
 The tab is optional. When you tick a family operator in Pick Tools, the selection bar shows **Add FNS tab to OP Create**. Untick it to keep the operators in your palette only. To turn the tab off later, untick **FNS Tab in OP Create** on the FNSTools page of the toolkit's parameters, untick the same switch in Pick Tools, or run the **Remove Operator Family** quick-launch command. The toggle turns it back on too, as long as at least one family operator is installed. Your FNS tools stay installed either way, and the choice sticks: installing another family operator, or setting up a new project like the last one, keeps the tab off until you tick the switch again.
 
-The family is the same component wherever it runs: this package is a TDFam family named `FNS`, colour black, installed on project start, and its registry promotes itself to `/sys` the way TDFam designs it.
+The family is the same component wherever it runs: this package is a TDFam family named `FNS`, coloured brick red (0.569 0.265 0.188), installed on project start, and its registry promotes itself to `/sys` the way TDFam designs it.
 
 ## Where the operators come from
 

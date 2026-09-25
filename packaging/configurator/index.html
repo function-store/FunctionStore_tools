@@ -728,6 +728,19 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   .tier-div .sub { color: var(--text-faint); }
   .cat-body .tier-div + .grid { margin-top: 0; }
   .catnav a.none { opacity: .4; pointer-events: none; }
+  /* the two groups of categories (category_meta.group) */
+  .grp-head {
+    margin: 26px 0 2px; font-size: 12px; font-weight: 700; letter-spacing: .08em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  #list > .grp-head:first-child { margin-top: 6px; }
+  .nav-grp {
+    display: block; margin: 12px 0 4px; padding: 0 11px; font-size: 10.5px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint);
+  }
+  .catnav > .nav-grp:first-child { margin-top: 0; }
+  @media (max-width: 999px) { .nav-grp { display: none; } }
+  body.app .nav-grp { display: none; }
   /* the deck is two rows now: the rail and the jump targets clear it */
   html { scroll-padding-top: calc(var(--stick) + 140px); }
   @media (min-width: 1000px) {
@@ -2162,10 +2175,23 @@ function fnsBoot() {
     var filtering = !!q || narrowed();
     var visible = [];
 
+    // Categories fall in two groups (catalog `category_meta.<cat>.group`):
+    // the tools that change how TouchDesigner works, and what you build
+    // the piece with. A heading opens each group, drawn only when one of
+    // its sections is shown.
+    var lastGroup = null;
     cats.forEach(function (cat) {
       if (cat === 'Core') return;
       var items = tools.filter(function (p) { return p.category === cat && match(p); });
       if (!items.length) return;
+      var grp = metaOf(cat).group || '';
+      if (grp && grp !== lastGroup) {
+        var gh = document.createElement('h2');
+        gh.className = 'grp-head';
+        gh.textContent = grp;
+        listEl.appendChild(gh);
+      }
+      lastGroup = grp;
       shown += items.length;
       visible = visible.concat(items);
       var sel = items.filter(function (p) { return picked.has(p.name); }).length;
@@ -3927,9 +3953,18 @@ function fnsBoot() {
     var nav = document.getElementById('catnav');
     if (!nav) return;
     // Core is not on the rail: it is plumbing, not a place to go
+    var navGroup = null;
     allCats().filter(function (c) { return !quiet(c); }).forEach(function (cat) {
       var n = tools.filter(function (p) { return p.category === cat; }).length;
       if (!n) return;
+      var ng = metaOf(cat).group || '';
+      if (ng && ng !== navGroup) {
+        var nl = document.createElement('span');
+        nl.className = 'nav-grp';
+        nl.textContent = ng;
+        nav.appendChild(nl);
+      }
+      navGroup = ng;
       var a = document.createElement('a');
       a.href = '#cat-' + catSlug(cat);
       a.setAttribute('data-cat', cat);

@@ -19,17 +19,22 @@
   "author {name, url}, homepage and changelog_url are CURATED on any package (presentation facts; the manifest carries them to the picker byline and the website badge -- the ONE home for credit, doc frontmatter `credit` is refused). A `source` block {manifest, tox?, package?} makes an entry FOREIGN: bytes and version owned upstream, mirrored by packaging/foreign_sync.py into dist/ and pinned in foreign.lock.json, never exported from a live COMP. Only a foreign entry may carry updates (self|store), help_url and min_td_build -- on a live package those have live authorities. See docs/ForeignPackages.md.",
   "`alternatives_for` is DERIVED for a live package that carries an FNS_OpMenuRegistry host (build_manifest calls its onAlternatives()); it may be CURATED, in the content CMS or here, on a foreign entry and on a live package with NO op-menu host: a list of operator types the package is an alternative for (a curated list beside a host is a preflight problem). The op-menu registry offers a store tox for those types when the package is not in the project, and places it from disk.",
   "`quiz` is the guided setup's questionnaire: questions with options, each option carrying tags; a package's `fits` names the tags it answers. The picker recommends every tool whose fits meet the chosen tags, best matches first. build_manifest validates both (an option tag no package fits is reported). Content, so it is authored on the cms.mjs side like presets.",
-  "`fits` rule of thumb: `visual` means the tool's working surface is something you look at or work in (a Hub tab, a pane type, a window, a changed dialog or palette, the editor's look), not that it has a toolbar button; a button that only triggers an action does not earn it. Tags follow the doc and the parameters, not the name."
+  "`fits` rule of thumb: `visual` means the tool makes or processes visuals (an image effect, a particle system, a scene changer, a camera); `ui` means its working surface is something you look at or work in (a Hub tab, a pane type, a window, a changed dialog or palette, the editor's look), not that it has a toolbar button; a button that only triggers an action does not earn it. Tags follow the doc and the parameters, not the name. (Split 2026-09-25: `visual` used to carry the `ui` meaning, and the style question's point-and-click answer recommended image effects.)"
  ],
  "categories": [
   "Core",
-  "Surfaces",
-  "Parameters",
+  "Interface",
   "Network",
-  "Media & Output",
-  "Control",
-  "Workflow",
-  "Developer"
+  "Parameters",
+  "Project",
+  "Developer",
+  "Miscellaneous",
+  "Time & sequencing",
+  "Control & mapping",
+  "CHOPs & sensing",
+  "Visual",
+  "3D and Particles",
+  "Show & output"
  ],
  "category_meta": {
   "Core": {
@@ -37,33 +42,65 @@
    "pitch": "The registries every other tool plugs into. Installed as a unit.",
    "deprioritized": true
   },
-  "Surfaces": {
+  "Interface": {
    "glyph": "▦",
-   "pitch": "Window layout, operator colours, menus and preview panels."
-  },
-  "Parameters": {
-   "glyph": "◎",
-   "pitch": "Promote, bind, randomize and reset, by drag and drop."
+   "pitch": "The window, the menus, the dialogs and the keys.",
+   "group": "Working in TouchDesigner"
   },
   "Network": {
    "glyph": "⇄",
-   "pitch": "Operator creation, replacement, grouping and network navigation."
+   "pitch": "Place, find, swap and move between operators.",
+   "group": "Working in TouchDesigner"
   },
-  "Media & Output": {
-   "glyph": "▶",
-   "pitch": "Media playback, previews and audio and video output."
+  "Parameters": {
+   "glyph": "◎",
+   "pitch": "Promote, bind, link, randomize and reference parameters.",
+   "group": "Working in TouchDesigner"
   },
-  "Control": {
-   "glyph": "⊙",
-   "pitch": "MIDI, OSC and remote parameter control."
-  },
-  "Workflow": {
+  "Project": {
    "glyph": "⚡",
-   "pitch": "Project setup, backups and everyday editing shortcuts."
+   "pitch": "Saving, backups, media files and housekeeping.",
+   "group": "Working in TouchDesigner"
   },
   "Developer": {
    "glyph": "⌨",
-   "pitch": "Python extensions, type stubs and editor integration."
+   "pitch": "Extensions, editor integration and kits for your own tools.",
+   "group": "Working in TouchDesigner"
+  },
+  "Miscellaneous": {
+   "glyph": "✦",
+   "pitch": "Small helpers that fit nowhere else.",
+   "group": "Working in TouchDesigner"
+  },
+  "Time & sequencing": {
+   "glyph": "◷",
+   "pitch": "Timelines, tempo, presets and sequences that move over time.",
+   "group": "Making the piece"
+  },
+  "Control & mapping": {
+   "glyph": "⊙",
+   "pitch": "MIDI, OSC, your phone and hardware controllers.",
+   "group": "Making the piece"
+  },
+  "CHOPs & sensing": {
+   "glyph": "∿",
+   "pitch": "CHOP operators: shape, generate and read channels.",
+   "group": "Making the piece"
+  },
+  "Visual": {
+   "glyph": "◧",
+   "pitch": "TOP operators: distort, colour, mask and generate images.",
+   "group": "Making the piece"
+  },
+  "3D and Particles": {
+   "glyph": "⁂",
+   "pitch": "POP operators, particle systems and 3D stacks.",
+   "group": "Making the piece"
+  },
+  "Show & output": {
+   "glyph": "▶",
+   "pitch": "Scenes, slides, recording, audio and the perform window.",
+   "group": "Making the piece"
   }
  },
  "quiz": {
@@ -79,7 +116,8 @@
       "tags": [
        "live",
        "media",
-       "audio"
+       "audio",
+       "visual"
       ]
      },
      {
@@ -98,7 +136,8 @@
       "tags": [
        "art",
        "params",
-       "network"
+       "network",
+       "visual"
       ]
      },
      {
@@ -114,8 +153,76 @@
       "label": "Learning TouchDesigner",
       "tags": [
        "learn",
+       "ui"
+      ]
+     }
+    ]
+   },
+   {
+    "id": "make",
+    "prompt": "What do you build with?",
+    "multi": true,
+    "options": [
+     {
+      "id": "chops",
+      "label": "CHOPs: shaping, generating and smoothing channels",
+      "tags": [
+       "chops"
+      ]
+     },
+     {
+      "id": "image",
+      "label": "Image effects, generators and colour",
+      "tags": [
        "visual"
       ]
+     },
+     {
+      "id": "particles",
+      "label": "Particles and 3D",
+      "tags": [
+       "particles"
+      ]
+     },
+     {
+      "id": "time",
+      "label": "Sequencing, tempo and the timeline",
+      "tags": [
+       "time"
+      ]
+     },
+     {
+      "id": "sensing",
+      "label": "Cameras and sensors, like a Kinect",
+      "tags": [
+       "sensing"
+      ]
+     },
+     {
+      "id": "midi",
+      "label": "MIDI controllers",
+      "tags": [
+       "midi"
+      ]
+     },
+     {
+      "id": "osc",
+      "label": "OSC, or control from a phone or another machine",
+      "tags": [
+       "osc"
+      ]
+     },
+     {
+      "id": "scenes",
+      "label": "Scenes, slides and show playback",
+      "tags": [
+       "scenes"
+      ]
+     },
+     {
+      "id": "editor",
+      "label": "None of these: just the editor tools",
+      "tags": []
      }
     ]
    },
@@ -133,9 +240,9 @@
      },
      {
       "id": "visual",
-      "label": "Visual: buttons on the toolbar and pane bar, a manager window",
+      "label": "Point and click: buttons on the toolbar and pane bar, a manager window",
       "tags": [
-       "visual"
+       "ui"
       ]
      },
      {
@@ -249,7 +356,7 @@
    ]
   },
   "FNS_Autosave": {
-   "category": "Workflow",
+   "category": "Project",
    "description": "Save the project on a timer without touching the timeline, honouring your increment and backup preferences, and skipping saves while you are performing.",
    "fits": [
     "tidy",
@@ -258,16 +365,16 @@
    ]
   },
   "FNS_BackupCleaner": {
-   "category": "Workflow",
+   "category": "Project",
    "description": "Every .toe backup TouchDesigner has written under a folder, grouped by the project that made them, with their size and an estimate of the hours they represent; send the ones you are done with to the recycle bin, or delete them outright.",
    "access": "8323905",
    "fits": [
     "tidy",
-    "visual"
+    "ui"
    ]
   },
   "FNS_BeatMod": {
-   "category": "Parameters",
+   "category": "Time & sequencing",
    "description": "Beat-synced modulation on any parameter or ParGroup, locked to the timeline tempo: a wave, a channel of any CHOP, or a gesture you record by hand, gliding in instead of cutting. Tap tempo sets the global BPM, and a manager lists every modulator in the project.",
    "access": "8323905",
    "fits": [
@@ -276,22 +383,23 @@
     "art",
     "audio",
     "speed",
-    "visual"
+    "ui",
+    "time"
    ]
   },
   "FNS_BorderlessTD": {
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "Borderless TouchDesigner window, plus timeline hiding.",
    "fits": [
     "show",
     "screen",
     "live",
-    "visual"
+    "ui"
    ],
    "recommended": true
   },
   "FNS_Collect": {
-   "category": "Workflow",
+   "category": "Project",
    "description": "Gather every external file your project references into the project folder and rewrite the parameters to match, so the project travels. Shows the plan before it copies anything.",
    "access": "8323905",
    "fits": [
@@ -301,12 +409,12 @@
    ]
   },
   "FNS_ColorUI": {
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "Operator and family colour palettes, with the active palette roaming through config.",
    "fits": [
-    "visual",
     "learn",
-    "screen"
+    "screen",
+    "ui"
    ]
   },
   "FNS_CommandKit": {
@@ -318,14 +426,14 @@
    ]
   },
   "FNS_CommandPalette": {
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "A command palette inside TouchDesigner: every command your FNS tools declare and TouchDesigner's own palette components in one ranked list, opened with a hotkey and aware of what you are looking at. Manage favourites and hidden commands from its tab in Hub.",
    "fits": [
     "speed",
-    "visual",
     "network",
     "learn",
-    "dev"
+    "dev",
+    "ui"
    ]
   },
   "FNS_CommandRegistry": {
@@ -371,28 +479,28 @@
    "description": "Browse Global OP Shortcuts and the out operators inside them in a tree, and drag any of them into a network as a Select.",
    "fits": [
     "network",
-    "visual",
-    "learn"
+    "learn",
+    "ui"
    ]
   },
   "FNS_GlobalVolControl": {
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "Global audio volume control.",
    "fits": [
     "audio",
     "live",
-    "visual"
+    "ui"
    ],
    "recommended": true
   },
   "FNS_HotkeyManager": {
-   "category": "Workflow",
+   "category": "Interface",
    "description": "Unified hotkey discovery, conflict detection and rebinding UI across the whole toolkit.",
    "recommended": true,
    "fits": [
     "speed",
     "learn",
-    "visual"
+    "ui"
    ]
   },
   "FNS_Hub": {
@@ -404,7 +512,7 @@
    "description": "The registry behind Hub's tab bar: tools contribute native panels, viewers or parameter pages as hub tabs. The raw master, promoted to /sys."
   },
   "FNS_HydroHomie": {
-   "category": "Workflow",
+   "category": "Miscellaneous",
    "description": "A toolbar reminder to drink water at an interval you set. Off by default."
   },
   "FNS_iopBrowser": {
@@ -413,8 +521,8 @@
    "fits": [
     "network",
     "dev",
-    "visual",
-    "learn"
+    "learn",
+    "ui"
    ]
   },
   "FNS_MainMenuRegistry": {
@@ -422,7 +530,7 @@
    "description": "TD main-menu surface registry, including project-name display. The raw master, promoted to /sys."
   },
   "FNS_MediaBrowser": {
-   "category": "Media & Output",
+   "category": "Project",
    "description": "See every media file your project uses and which operator uses it, filter to the missing ones, and replace or repoint them in place.",
    "access": "8323905",
    "fits": [
@@ -432,13 +540,13 @@
    ]
   },
   "FNS_Misc": {
-   "category": "Workflow",
+   "category": "Project",
    "description": "Three small toolbar utilities: a Background Viewer toggle for the network's backdrop TOPs and CHOPs, a global Mouse In CHOP you can drag channels from onto parameters, and a Hog CHOP for starving a patch of cook time to see how it copes.",
    "minor": true,
    "fits": [
-    "visual",
     "dev",
-    "network"
+    "network",
+    "ui"
    ]
   },
   "FNS_NavbarRegistry": {
@@ -455,14 +563,14 @@
    ]
   },
   "FNS_OpMenuMods": {
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "OP Create dialog extras: IO filter buttons, your own search keywords per operator type, and acronym search (type m f o for Movie File Out).",
    "recommended": true,
    "fits": [
     "network",
     "speed",
     "learn",
-    "visual"
+    "ui"
    ]
   },
   "FNS_OpMenuRegistry": {
@@ -490,13 +598,14 @@
    ]
   },
   "FNS_Output": {
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "A toolbar button for the perform window: drop an operator to route it, click to open or close, and switch NDI and Spout/Syphon streaming of the same window.",
    "fits": [
     "projector",
     "screen",
     "show",
-    "live"
+    "live",
+    "scenes"
    ]
   },
   "FNS_PaletteRegistry": {
@@ -512,9 +621,9 @@
    "description": "Hover a parent in the pane-bar path with Alt to see its parent shortcut, global shortcut and internal operators, and Ctrl to see its custom parameters and values. Click any item to copy a reference to it. Adds no button of its own; it works on the path you already have.",
    "fits": [
     "network",
-    "visual",
     "learn",
-    "dev"
+    "dev",
+    "ui"
    ]
   },
   "FNS_ParOPDrop": {
@@ -537,14 +646,14 @@
    ]
   },
   "FNS_PreviewPanel": {
-   "category": "Surfaces",
+   "category": "Interface",
    "description": "A preview pane for whatever you drop on it: TOPs, POPs, SOPs, 3D textures, geometry, panels and other components render in place, and a POP can be opened as a live table or in its own viewer window.",
    "access": "8323905",
    "fits": [
-    "visual",
     "art",
     "screen",
-    "learn"
+    "learn",
+    "ui"
    ]
   },
   "FNS_QuickCollapse": {
@@ -558,7 +667,7 @@
    ]
   },
   "FNS_QuickPane": {
-   "category": "Workflow",
+   "category": "Interface",
    "description": "Pane layout shortcuts.",
    "recommended": true,
    "fits": [
@@ -567,27 +676,29 @@
    ]
   },
   "FNS_QuickTime": {
-   "category": "Workflow",
+   "category": "Time & sequencing",
    "description": "A toolbar clock that hands out drag-and-drop time references for parameters: resettable and scalable absTime and absFrame, frame, and a progress value for perfect loops.",
    "fits": [
     "art",
     "params",
-    "visual"
+    "ui",
+    "time"
    ]
   },
   "FNS_Remote": {
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "Control the project from your phone over your own network: parameter pages, a perform window and multi-touch, paired by QR with no cloud and no account.",
    "access": "8323905",
    "fits": [
     "phone",
     "show",
     "live",
-    "params"
+    "params",
+    "osc"
    ]
   },
   "FNS_ResetPLS": {
-   "category": "Workflow",
+   "category": "Project",
    "description": "Reset stateful operators (feedback, cache, timers, counts) across the project, with a pattern-based exception list. Bound to ctrl+0.",
    "fits": [
     "show",
@@ -598,7 +709,7 @@
    "recommended": true
   },
   "FNS_SearchPalette": {
-   "category": "Workflow",
+   "category": "Interface",
    "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
    "recommended": true,
    "author": {
@@ -608,7 +719,7 @@
    "fits": [
     "speed",
     "learn",
-    "visual"
+    "ui"
    ]
   },
   "FNS_SetSmoothness": {
@@ -644,7 +755,7 @@
    "description": "Publish a widget into TouchDesigner's timeline bar: transport controls beside the stock ones, an entry on the time-properties block, or a full-width strip in the frame-ruler band that gets its own row."
   },
   "FNS_TimelineTools": {
-   "category": "Media & Output",
+   "category": "Interface",
    "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip, a waveform and your editor's markers. Key any operators' parameters into an Animation COMP with one press, and play them back from it.",
    "access": "8323905",
    "license": "",
@@ -654,8 +765,9 @@
     "media",
     "audio",
     "params",
-    "visual",
-    "art"
+    "art",
+    "ui",
+    "time"
    ]
   },
   "FNS_ToolbarRegistry": {
@@ -663,7 +775,7 @@
    "description": "The toolbar surface registry and mirror rail. The raw master, promoted to /sys; clone it to put your own tools on the bar."
   },
   "FNS_Updater": {
-   "category": "Developer",
+   "category": "Core",
    "description": "In-place toolkit updates, with settings preserved across the replacement."
   },
   "FNS_VSCodeTools": {
@@ -676,7 +788,7 @@
    ]
   },
   "midiMapper": {
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "Map MIDI controls to parameters, with a learn mode you drive by dropping a parameter on the toolbar button. Mappings are saved into the project folder by design; the tool's own settings roam through config.",
    "author": {
     "name": "AlphaMoonbase.berlin",
@@ -686,11 +798,12 @@
     "live",
     "show",
     "params",
-    "visual"
+    "ui",
+    "midi"
    ]
   },
   "oscMapper": {
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "Map OSC messages to parameters. Mappings are saved into the project folder by design.",
    "author": {
     "name": "AlphaMoonbase.berlin",
@@ -700,7 +813,8 @@
     "show",
     "live",
     "params",
-    "visual"
+    "ui",
+    "osc"
    ]
   },
   "PasteFromClipboard": {
@@ -730,74 +844,80 @@
    ]
   },
   "FNS_OpSequencer": {
-   "category": "Parameters",
+   "category": "Time & sequencing",
    "description": "Preset sequencer for one operator: store any number of its parameter states in a table, then scrub, jump or morph between them with easing, or mix them by weight from a CHOP. Drop the operator on the panel and drag parameters in to add columns.",
    "placement": "none",
    "fits": [
     "live",
     "show",
     "params",
-    "art"
+    "art",
+    "time"
    ],
    "access": "8323905"
   },
   "FNS_CamSequencer": {
-   "category": "Control",
+   "category": "Time & sequencing",
    "description": "A camera with two preset sequencers inside, one for its transform and lens and one for the Look At target: frame it, append, scrub or drive it from a CHOP, fly it with a joystick, or take over a palette camera viewport.",
    "placement": "none",
    "fits": [
     "live",
     "show",
-    "visual"
+    "visual",
+    "time"
    ],
    "access": "8323905"
   },
   "FNS_MixSequencer": {
-   "category": "Parameters",
+   "category": "Time & sequencing",
    "description": "A step sequencer of mixes for OpSequencer: every step is a weight vector over a sequencer's presets, the playhead crossfades between steps with easing, and the result rides out as one channel per preset. A run of one-hot steps is a cue list.",
    "placement": "none",
    "fits": [
     "live",
     "show",
-    "params"
+    "params",
+    "time"
    ],
    "access": "8323905"
   },
   "FNS_SimpleSceneChanger": {
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "Scene changer for TOP outputs: wire your scenes in, then cut, fade or ease between them by select, timer, A/B fader or CHOP, with cooking control so only the scenes on screen cook. Base and Pro instances find each other and can follow a leader across screens.",
    "placement": "none",
    "fits": [
     "live",
     "show",
-    "visual"
+    "visual",
+    "scenes"
    ],
    "access": "8323905"
   },
   "FNS_ProSceneChanger": {
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "The Pro scene changer: everything SimpleSceneChanger does, plus per-scene modes, fade times and easing, a cue table with play, timeline, timecode and CHOP drivers, CHOP output blending, and fleet follow with scene offset and sync timing. Runs beside the simple one in the same fleet.",
    "placement": "none",
    "fits": [
     "live",
     "show",
-    "visual"
+    "visual",
+    "scenes"
    ],
    "access": "8291595"
   },
   "FNS_SwitchTools": {
-   "category": "Network",
+   "category": "Show & output",
    "description": "A companion for any Switch, Cross or multi-input operator: index by slider, menu or bind, loop or clamp, colour the live input, cook only the inputs in use and unload the rest from the GPU, plus reorder, reverse, randomize and align the inputs.",
    "placement": "none",
    "fits": [
     "live",
     "show",
-    "speed"
+    "speed",
+    "scenes"
    ],
    "access": "8323905"
   },
   "TDXMap": {
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "MIDI controller mapping with a live web UI: multiple devices, banks, Smart Learn, button actions, 14-bit controls. Pro adds smoothing, pickup mode, easing curves, slot and modify modes.",
    "placement": "root",
    "author": {
@@ -816,7 +936,8 @@
    "fits": [
     "live",
     "show",
-    "params"
+    "params",
+    "midi"
    ],
    "pricing": {
     "summary": "14-day trial, then Base or Pro",
@@ -826,23 +947,24 @@
    "placeonce": true
   },
   "FNS_OpFamily": {
-   "category": "Surfaces",
+   "category": "Core",
    "description": "The FNS tab in the OP Create dialog: an operator family whose members are FNS tools placed from the store as one node each, with stubs for projects that travel and in-place updates that keep retained parameters and state. Built with TDFam.",
    "companion": "family"
   },
   "FNS_RandomCHOP": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "A random-value CHOP: uniform or normal distributions, unique re-rolls with a tolerance and history, a Markov chain mode, weights from an input and a trigger input, generated per channel or per sample. The first member of the FNS operator family and an alternative for the Noise CHOP.",
    "placement": "none",
    "fits": [
     "live",
     "art",
-    "speed"
+    "speed",
+    "chops"
    ],
    "access": "8323905"
   },
   "ComplexOp": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "Treats the image plane as the complex plane and applies a complex function to it: square, root, exp, log, the trigonometric and hyperbolic families, with iteration, a pre and post transform and a choice of edge handling.",
    "placement": "none",
    "fits": [
@@ -851,7 +973,7 @@
    ]
   },
   "ComplexMix": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "Combines two UV fields as complex numbers: add, subtract, multiply, divide or raise one to the other, optionally weighted by a third input, then samples an image through the result.",
    "placement": "none",
    "fits": [
@@ -860,15 +982,16 @@
    ]
   },
   "ThresholdColor": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A Threshold TOP that keeps the colour: pixels that pass the test come through in their original colour with a soft edge. An alternative for the Threshold TOP.",
    "fits": [
     "art",
-    "speed"
+    "speed",
+    "visual"
    ]
   },
   "SeqMod": {
-   "category": "Parameters",
+   "category": "Developer",
    "description": "Watches a sequence of parameters on any COMP: name the target and the sequence, and the block parameters are published as one list, with a callback for every block added or removed.",
    "fits": [
     "params",
@@ -899,7 +1022,7 @@
    "placement": "none"
   },
   "RealRamp": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A GLSL ramp with a true phase and period: vertical, horizontal, radial or circular, repeating or mirroring, so a driven phase never drifts or snaps the way a keyed Ramp TOP can.",
    "fits": [
     "art",
@@ -909,7 +1032,7 @@
    "placement": "none"
   },
   "ColorGen": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A colour palette generator: a lookup of any length shaped by a phase step per channel and per channel exponents, with a lookup ramp as a second output.",
    "fits": [
     "art",
@@ -920,18 +1043,19 @@
    "placement": "none"
   },
   "LayerSep3D": {
-   "category": "Media & Output",
+   "category": "3D and Particles",
    "description": "Slices an image into depth layers by a channel threshold and instances them as a stack in 3D, with per layer threshold, softness, mix, position, scale and rotation driven by curves or CHOPs.",
    "fits": [
     "art",
     "visual",
-    "show"
+    "show",
+    "particles"
    ],
    "access": "8323905",
    "placement": "none"
   },
   "InstanceTrailer": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "Turns one moving image into a trail of its recent frames: a cache laid out in a row or column with exponent-shaped spacing, plus the offsets as a CHOP for instancing.",
    "fits": [
     "art",
@@ -941,28 +1065,30 @@
    "placement": "none"
   },
   "TopToMidi": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Samples an image at points you define and turns the pixel values into MIDI notes in a musical scale, with trigger gating, retrigger control, a MIDI-learned custom scale and output to a MIDI Out or VST CHOP.",
    "fits": [
     "audio",
     "live",
-    "art"
+    "art",
+    "midi"
    ],
    "access": "8323905",
    "placement": "none"
   },
   "KinectSinglePlayer": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Picks one player out of a Kinect skeleton stream: whoever stands inside the bounds you set becomes the active player, and their joints ride out as clean channels until they leave.",
    "fits": [
     "show",
-    "live"
+    "live",
+    "sensing"
    ],
    "access": "8323905",
    "placement": "none"
   },
   "MaskDraw": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "Draw a mask with the mouse straight onto the image: a panel you paint in, with the mask and the masked image as outputs, a lock and a reset.",
    "fits": [
     "visual",
@@ -973,7 +1099,7 @@
    "placement": "none"
   },
   "ColorGenPro": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A cosine palette generator in GLSL: the full coefficient set per channel, an RGB and D mode, blackout and soft regions, and a lookup ramp as a second output.",
    "placement": "none",
    "fits": [
@@ -984,7 +1110,7 @@
    "access": "8291595"
   },
   "ParHoverMIDI_VSN1": {
-   "category": "Control",
+   "category": "Control & mapping",
    "description": "Adjust any parameter by hovering over it and turning an endless MIDI encoder, built for the Intech Studio VSN1 with screen and LED feedback: parameter slots and banks, ParGroup control, step sizes, shortcuts for reset and clamp, and network zoom when no parameter is under the mouse. Lands at the network root; one instance per project.",
    "placement": "root",
    "nopick": true,
@@ -1003,12 +1129,13 @@
    "min_td_build": "2023.12120",
    "fits": [
     "live",
-    "params"
+    "params",
+    "midi"
    ],
    "placeonce": true
   },
   "FeedbackDisplace": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A feedback loop with a displace stage inside it: opacity, crossfade, filter size, displacement driven by a built-in noise or a second input, a per-pass transform, reset and a dry/wet mix. An alternative for the Feedback TOP.",
    "placement": "none",
    "fits": [
@@ -1019,7 +1146,7 @@
    "access": "8323905"
   },
   "PrismTOP": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A kaleidoscopic prism: the input rendered through instanced, rotating polygon facets in up to three ring patterns, with softness, a chromatic distortion pass, fit and transform, and a dry/wet mix. An alternative for the Tile TOP and the Mirror TOP.",
    "placement": "none",
    "fits": [
@@ -1030,7 +1157,7 @@
    "access": "8323905"
   },
   "CircularDistortionTOP": {
-   "category": "Media & Output",
+   "category": "Visual",
    "description": "A circular distortion for images: rings of displacement around a centre you place, with phase, frequency, amplitude and a mode blend, and a choice of how the input extends past its edge.",
    "placement": "none",
    "fits": [
@@ -1041,120 +1168,131 @@
    "access": "8323905"
   },
   "ParticlesGpuUltimate": {
-   "category": "Media & Output",
+   "category": "3D and Particles",
    "description": "A GPU particle system driven by images: a thresholded source emits particles, look, life, turbulence, wind and force fields shape them, a fluid simulation can carry them, with raw colour, position and optical-flow inputs and one rendered output.",
    "placement": "none",
    "fits": [
     "art",
     "live",
     "visual",
-    "show"
+    "show",
+    "particles"
    ],
    "access": "8291595"
   },
   "Particles2D_POP": {
-   "category": "Media & Output",
+   "category": "3D and Particles",
    "description": "A 2D particle simulation as a POP loop: a source image emits particles, curl noise and wind effectors steer them with lookup ranges, trails stretch them, and the loop rides out as points for your own render.",
    "placement": "none",
    "fits": [
     "art",
     "live",
-    "visual"
+    "visual",
+    "particles"
    ],
    "access": "8323905"
   },
   "EaseInterpolator": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Crossfades between two CHOPs through an easing curve: thirty classic easings from sine to bounce, or a custom curve from a third input, all driven by one Select value.",
    "placement": "none",
    "fits": [
     "live",
     "art",
-    "show"
+    "show",
+    "chops"
    ],
    "access": "8323905"
   },
   "MoveDetectDir": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Reads which way things move in a camera or any image with optical flow and turns it into left/right and down/up channels, with thresholds, inversion and filtering, for swipe and gesture triggers.",
    "placement": "none",
    "fits": [
     "show",
-    "live"
+    "live",
+    "sensing"
    ],
    "access": "8323905"
   },
   "SlideShow": {
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "A slideshow of a folder of images: timed or stepped with next and previous, in order or random, with a crossfade between slides and a fitted output resolution.",
    "placement": "none",
    "fits": [
     "show",
     "live",
-    "visual"
+    "visual",
+    "scenes"
    ],
    "access": "8323905"
   },
   "FloatDataRecorder": {
-   "category": "Media & Output",
+   "category": "Show & output",
    "description": "Records a float texture such as a depth point cloud, a colour texture and a CHOP to files in sync, then plays the three back together against the timeline with a frame offset.",
    "placement": "none",
    "fits": [
     "show",
-    "art"
+    "art",
+    "visual",
+    "scenes"
    ],
    "access": "8323905"
   },
   "ExpressionPOP": {
-   "category": "Media & Output",
+   "category": "3D and Particles",
    "description": "Per-point attribute expressions for POPs: write lines like P = P + N * 0.1 and they compile to a GLSL compute shader, with local variables carried between lines. An alternative for the Math Combine POP.",
    "placement": "none",
    "fits": [
     "art",
-    "visual"
+    "visual",
+    "particles"
    ]
   },
   "InfinityCHOP": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "A point or a whole curve on one shape that morphs from a circle to the infinity loop: frequency multipliers for Lissajous variations, a trail span, smooth speed with reset, and a size and centre for the output values.",
    "placement": "none",
    "fits": [
     "live",
     "art",
-    "visual"
+    "chops"
    ],
    "access": "8323905"
   },
   "ChopProcess": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "Shapes channels in one node: limit, remap between ranges with an exponent curve, zero at the bottom, lag, and an optional speed mode that turns the result into a running total. An alternative for the Math CHOP.",
    "placement": "none",
    "fits": [
     "live",
     "show",
-    "params"
+    "params",
+    "chops"
    ],
    "access": "8323905"
   },
   "ConstantCHOP": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "A Constant CHOP with typed values: numbers, toggles, tuples, text, paths or operator references, each promoted as a property you can read and set from Python, and a snap from its input. An alternative for the Constant CHOP.",
    "placement": "none",
    "fits": [
     "dev",
     "params",
-    "live"
+    "live",
+    "chops"
    ],
    "access": "8323905"
   },
   "ChopBank": {
-   "category": "Control",
+   "category": "CHOPs & sensing",
    "description": "A bank of channel processors: one block per channel, each with its own range, exponent curve, zero-below, lag and speed mode, built from the input with one Snap Input, with gain before and after and every block promoted as a property. An alternative for the Math CHOP and the Constant CHOP.",
    "placement": "none",
    "fits": [
     "live",
     "show",
-    "params"
+    "params",
+    "chops"
    ],
    "access": "8323905"
   }

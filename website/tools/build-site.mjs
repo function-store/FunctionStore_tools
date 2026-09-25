@@ -1254,6 +1254,18 @@ const guideCards = guideCardSection('guides', '◈', 'Guides',
   guides.filter((g) => g.section === 'guides'));
 const referenceCards = guideCardSection('reference', '§', 'Reference',
   guides.filter((g) => g.section === 'reference'));
+// Categories renamed or split in the 2026-09-25 rethink keep their old
+// anchors, so a saved /docs/#media-output link still lands somewhere
+// sensible: an empty target inside the successor's section.
+const CATEGORY_ALIASES = {
+  'Surfaces': 'Interface',
+  'Workflow': 'Project',
+  'Media & Output': 'Visual',
+  'Control': 'Control & mapping',
+};
+const aliasAnchors = (cat) => Object.entries(CATEGORY_ALIASES)
+  .filter(([old, now]) => now === cat && slugify(old) !== slugify(cat))
+  .map(([old]) => `<span id="${slugify(old)}" class="anchor-alias"></span>`).join('');
 const indexGroups = displayCategories.map((cat) => {
   const items = pages
     .filter((p) => p.category === cat)
@@ -1265,7 +1277,7 @@ const indexGroups = displayCategories.map((cat) => {
       </a>`).join('\n');
   if (!items) return '';
   return `  <section class="doc-cat">
-    <h2 id="${slugify(cat)}"><span class="side-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>${esc(cat)}</h2>
+    ${aliasAnchors(cat)}<h2 id="${slugify(cat)}"><span class="side-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>${esc(cat)}</h2>
     <div class="doc-cards">
 ${items}
     </div>
