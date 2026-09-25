@@ -26,6 +26,7 @@ features:
     anchor: troubleshooting-and-notes
 ---
 
+
 ## Base and Pro
 
 ProSceneChanger is the Pro package of the scene changer family. Everything below applies to it as it does to SimpleSceneChanger; the section at the end says what it adds. The two install side by side under their own names and find each other in the same fleet.

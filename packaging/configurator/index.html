@@ -833,6 +833,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   .newtop { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
   .newtop b { font-size: 14px; font-weight: 600; }
   .newmeta { font-size: 12px; color: var(--text-faint); }
+  .newauto { display: flex; align-items: center; gap: 8px; margin: 10px 0 0; font-size: 12.5px; color: var(--text-dim); cursor: pointer; }
+  .newauto input { accent-color: var(--accent); margin: 0; }
   .newdesc { font-size: 12.5px; color: var(--text-dim); line-height: 1.45;
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
@@ -989,6 +991,7 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   <h3 id="newtitle">New since you last looked</h3>
   <p class="dlg-hint">Tick the ones you want and they join your selection. Nothing installs until you review it.</p>
   <div class="newlist" id="newlist"></div>
+  <label class="newauto"><input type="checkbox" id="newauto" checked> Show this window when tools are added</label>
   <div class="dlg-actions">
     <button class="btn btn-quiet" id="newlater">Not now</button>
     <span class="spacer"></span>
@@ -1241,6 +1244,12 @@ function fnsBoot() {
     document.getElementById('sub').textContent = '';
     return;
   }
+
+  // A package not released yet (manifest `preview`, docs/PreviewPackages.md)
+  // is visible only to an account entitled to it -- the creator's. Taken
+  // out of the manifest here, before any list is built, so no card, bundle,
+  // question, count or announcement can mention it to anyone else.
+  M.packages = M.packages.filter(function (p) { return !p.preview || entitled(p); });
 
   // A companion (manifest `companion`, the FNS operator family) is never
   // picked: the installer adds it exactly when a family member is in the
@@ -1539,6 +1548,20 @@ function fnsBoot() {
     }
     return names.filter(function (n) { return seen.indexOf(n) < 0; });
   }
+  // The preference: does "New since you last looked" open by itself?
+  // Machine-wide when served (the installer's record), per browser here.
+  var announceOn = served ? window.FNS_ANNOUNCE !== false
+                          : stored('fns.announce', null) !== '0';
+  function setAnnounce(on) {
+    announceOn = !!on;
+    if (served) {
+      fetch('/seen', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                      body: JSON.stringify({names: [], announce: announceOn})})
+        .catch(function () { /* the server is gone; the default stands */ });
+    } else {
+      try { localStorage.setItem('fns.announce', announceOn ? '1' : '0'); } catch (e) { /* nicety */ }
+    }
+  }
   var unseenAtLoad = new Set();
   try { unseenAtLoad = new Set(unseenNow()); } catch (e) { unseenAtLoad = new Set(); }
   /** Record these as shown, here and wherever the record lives; the
@@ -1560,8 +1583,13 @@ function fnsBoot() {
    *  records the tools as shown, so it opens once per release. */
   function showNewTools() {
     var d = document.getElementById('newtools');
+    // Only what this viewer can actually get: a Patreon tool they are not
+    // entitled to (signed out, or a tier they do not hold) is never a
+    // reason to interrupt them. It stays unannounced rather than being
+    // marked shown, so it is offered once they sign in and it is theirs;
+    // its card keeps the New badge meanwhile.
     var list = Array.from(unseenAtLoad).map(function (n) { return byName[n]; })
-      .filter(Boolean).sort(byTitle);
+      .filter(function (p) { return p && (!isPlus(p) || entitled(p)); }).sort(byTitle);
     if (!d || !list.length) return;
     var names = list.map(function (p) { return p.name; });
     document.getElementById('newtitle').textContent = list.length === 1
@@ -1608,6 +1636,9 @@ function fnsBoot() {
       box.appendChild(row);
     });
     sync();
+    var auto = document.getElementById('newauto');
+    auto.checked = announceOn;
+    auto.onchange = function () { setAnnounce(auto.checked); };
     function done() {
       markSeen(names);
       try { d.close(); } catch (e) { /* already closed */ }
@@ -1732,6 +1763,11 @@ function fnsBoot() {
       if (here && wants) chips.appendChild(chip('installed', 'ok'));
       else if (!here && wants && !lockedPatreon([p.name]).length) chips.appendChild(chip('will install', 'up'));
       else if (here && !wants) { chips.appendChild(chip('will be removed', 'err')); el.classList.add('removing'); }
+    }
+    if (p.preview) {
+      var pv = chip('preview · only you see this', 'hint');
+      pv.setAttribute('data-tip', 'Not released yet. Only your account can see and install it; release it from the CMS.');
+      chips.appendChild(pv);
     }
     // a foreign package with its own updater: the picker installs it once,
     // the tool keeps itself current from then on
@@ -2371,6 +2407,17 @@ function fnsBoot() {
     if (view.sel) pill('Selected', function () { setView({sel: false}); });
     if (view.fresh) pill('New', function () { setView({fresh: false}); });
     if (view.once) pill('Placeable', function () { setView({once: false}); });
+    // with the New filter on, the window's preference sits beside it, so
+    // someone who turned the window off can find the way back
+    if (view.fresh) {
+      var at = document.createElement('button');
+      at.type = 'button';
+      at.className = 'linkbtn';
+      at.textContent = announceOn ? 'New-tools window: on' : 'New-tools window: off';
+      at.setAttribute('data-tip', 'Whether the picker opens a window listing new tools by itself');
+      at.addEventListener('click', function () { setAnnounce(!announceOn); render(); });
+      fl.appendChild(at);
+    }
 
     // an empty list says where the hits went, when another access has them
     var other = view.access === 'all' ? 0 : tools.filter(function (p) {
@@ -4135,7 +4182,7 @@ function fnsBoot() {
   // first run or a first visit (the guided setup is their introduction,
   // and unseenNow recorded everything as shown), never over another
   // dialog, never where Apply is refused anyway.
-  if (!firstrun && !firstVisit && unseenAtLoad.size && !(served && locked)) {
+  if (!firstrun && !firstVisit && announceOn && unseenAtLoad.size && !(served && locked)) {
     setTimeout(function () {
       if (!document.querySelector('dialog[open]')) showNewTools();
     }, 400);

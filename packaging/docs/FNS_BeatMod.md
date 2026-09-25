@@ -1,19 +1,6 @@
 ---
 package: FNS_BeatMod
 summary: 'Beat-synced modulation on any parameter: a wave, a CHOP channel or a recorded gesture, locked to the timeline tempo, gliding in instead of cutting, with a manager listing every one of them.'
-hotkeys:
-  - keys: alt.g
-    does: LFO on the hovered parameter or group, with the default wave and period
-  - keys: alt.shift.g
-    does: Speed on the hovered parameter or group, a rate counting on from the current value
-  - keys: ctrl.alt.g
-    does: The modulation menu at the mouse for the hovered parameter or group
-  - keys: ctrl.shift.g
-    does: Remove the modulation from the hovered parameter or group, gliding back
-  - keys: alt.t
-    does: Tap tempo
-  - keys: ctrl.alt.r
-    does: 'Record a gesture on the hovered parameter or group: the first change starts it, the key again or a pause ends it, then it loops'
 features:
   - name: Beat Mod
     anchor: beat-mod
@@ -33,6 +20,19 @@ features:
     anchor: the-manager
   - name: Commands
     anchor: commands
+hotkeys:
+  - keys: alt.g
+    does: 'LFO on the hovered parameter or group, with the default wave and period'
+  - keys: alt.shift.g
+    does: 'Speed on the hovered parameter or group, a rate counting on from the current value'
+  - keys: ctrl.alt.g
+    does: The modulation menu at the mouse for the hovered parameter or group
+  - keys: ctrl.shift.g
+    does: 'Remove the modulation from the hovered parameter or group, gliding back'
+  - keys: alt.t
+    does: Tap tempo
+  - keys: ctrl.alt.r
+    does: 'Record a gesture on the hovered parameter or group: the first change starts it, the key again or a pause ends it, then it loops'
 ---
 
 ## Beat Mod

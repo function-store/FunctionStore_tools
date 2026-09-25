@@ -12,6 +12,7 @@ features:
     anchor: notes
 ---
 
+
 A sequencer of MIXES for the opSequencer family. Each STEP is a weight
 vector over a target sequencer's presets; the Step Select playhead
 scrubs across the steps, fractions crossfade into the next step with

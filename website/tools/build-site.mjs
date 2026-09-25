@@ -344,6 +344,18 @@ if (problems.length) {
   process.exit(1);
 }
 
+// A package not released yet (catalog `preview`, docs/PreviewPackages.md)
+// keeps its doc and its catalog entry, so the checks above still hold it
+// to the same standard, but the site says nothing about it: no page, no
+// card, no count, no search entry, until the flag is cleared.
+const previewNames = pages.filter((p) => curated[p.name].preview === true).map((p) => p.name);
+for (let i = pages.length - 1; i >= 0; i--) {
+  if (curated[pages[i].name].preview === true) pages.splice(i, 1);
+}
+if (previewNames.length) {
+  console.log(`preview, not published: ${previewNames.join(', ')}`);
+}
+
 const unknownCategory = pages.filter((p) => !categories.includes(p.category));
 if (unknownCategory.length) {
   console.error('build refused: packages in a category missing from catalog.categories:\n' +
@@ -492,6 +504,14 @@ function checkLinks(html, where, selfSlug) {
 const PARAMS_SLUG = 'common-parameters';
 anchorsOf.set(PARAMS_SLUG, new Set(['registry-sections', 'about']));
 
+// A link to a preview's page (docs/PreviewPackages.md) keeps its words and
+// loses the link: the page is not published until the tool is released.
+const previewSlugs = new Set(previewNames.map(packageSlug));
+const unlinkPreviews = (html) => html.replace(
+  /<a\s+href="\/docs\/([a-z0-9-]+)\/(?:#[^"]*)?"[^>]*>([\s\S]*?)<\/a>/g,
+  (whole, slug, text) => (previewSlugs.has(slug) ? text : whole));
+for (const p of pages) p.html = unlinkPreviews(p.html);
+for (const g of guides) g.html = unlinkPreviews(g.html);
 for (const p of pages) checkLinks(p.html, p.file, p.slug);
 for (const g of guides) checkLinks(g.html, `content/guides/${g.file}`, `guides/${g.slug}`);
 
@@ -1658,6 +1678,12 @@ if (fs.existsSync(cfgSrc)) {
   // access stay the published manifest's). The category list itself
   // comes from the catalog for the same reason.
   manifest.categories = categories;
+  // a preview is published for its owner's signed-in picker only: the
+  // baked copy the site serves never carries it (docs/PreviewPackages.md)
+  manifest.packages = (manifest.packages || []).filter((pkg) => {
+    const row = curated[pkg.name] || curated['FNS_' + pkg.name];
+    return !(row && row.preview === true) && !pkg.preview;
+  });
   for (const pkg of manifest.packages || []) {
     const row = curated[pkg.name] || curated['FNS_' + pkg.name];
     if (!row) continue;

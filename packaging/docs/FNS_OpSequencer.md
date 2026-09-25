@@ -14,7 +14,7 @@ features:
     anchor: per-parameter-easing
   - name: Rotation
     anchor: rotation
-  - name: MIX  (Mode = Mix, plus the Mix page)
+  - name: 'MIX  (Mode = Mix, plus the Mix page)'
     anchor: mix-mode-mix-plus-the-mix-page
   - name: THE MIX BLOCKS
     anchor: the-mix-blocks
@@ -27,6 +27,7 @@ features:
   - name: What's new (2026-08)
     anchor: what-s-new-2026-08
 ---
+
 
 Store any number of parameter states of ONE target operator as presets,
 then scrub, jump or morph between them with easing. Presets live in a

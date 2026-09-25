@@ -1,6 +1,6 @@
 ---
 package: FNS_Collect
-summary: Gather every external file your project references into the project folder, then save
+summary: 'Gather every external file your project references into the project folder, then save'
 features:
   - name: Collect All & Save
     anchor: collect-all-save

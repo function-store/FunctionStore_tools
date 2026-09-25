@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.55",
+ "release": "v3.2.56",
  "td_build": "2025.33070",
  "packages": {
   "ChopBank": [
@@ -21589,7 +21589,7 @@
    "label": "Package Version",
    "style": "Str",
    "help": "The package version the FNS updater compares against the release manifest.",
-   "default": "1.0.0"
+   "default": "1.0.1"
   },
   {
    "name": "Author",

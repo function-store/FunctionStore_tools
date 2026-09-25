@@ -221,6 +221,17 @@ function setAccess(name, tier) {
   return (r.stdout || '').trim();
 }
 
+/** Hold a package back from the public (docs/PreviewPackages.md), or release
+ *  it. Through gate_package for the same reason as setAccess: it writes the
+ *  catalog flag AND the Worker's grants, and the two must agree. */
+function setPreview(name, on) {
+  const r = spawnSync(PYTHON, [GATE_PY, name, on ? '--preview' : '--release'], { encoding: 'utf8' });
+  if (r.status !== 0) {
+    throw new Error((r.stderr || r.stdout || 'gate_package failed').trim());
+  }
+  return (r.stdout || '').trim();
+}
+
 /** The curated link + foreign fields of one catalog entry, normalised for
  *  the editor: strings for text inputs, an object for author, and the
  *  `source` block verbatim. */
@@ -391,6 +402,7 @@ function loadPackage(cat, name) {
     recommended: !!cat.packages[name].recommended,
     nopick: cat.packages[name].nopick === true,
     placeonce: cat.packages[name].placeonce === true,
+    preview: cat.packages[name].preview === true,
     // `access` is the ENTRY tier id, or absent for a free package.
     // Editable here now: the ladder supplies real named tiers, so nothing
     // is invented, and gate_package keeps the two files in step.
@@ -422,6 +434,7 @@ function state() {
         recommended: !!cat.packages[n].recommended,
         nopick: cat.packages[n].nopick === true,
         placeonce: cat.packages[n].placeonce === true,
+        preview: cat.packages[n].preview === true,
         access: String(cat.packages[n].access || ''),
         plus: Boolean(cat.packages[n].access) && cat.packages[n].access !== 'free',
         placement: String(cat.packages[n].placement || ''),
@@ -678,6 +691,17 @@ const server = http.createServer(async (req, res) => {
         if (typeof body.access === 'string') {
           try {
             setAccess(name, body.access.trim());
+          } catch (e) {
+            return json(res, 400, { error: String(e.message || e) });
+          }
+          cat = readCatalog();
+        }
+        // Preview: not released yet. After access, so a save that sets both
+        // leaves the grants of the access it now names (docs/PreviewPackages.md).
+        if (typeof body.preview === 'boolean'
+            && body.preview !== (cat.packages[name].preview === true)) {
+          try {
+            setPreview(name, body.preview);
           } catch (e) {
             return json(res, 400, { error: String(e.message || e) });
           }

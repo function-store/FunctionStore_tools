@@ -1,6 +1,6 @@
 ---
 package: FNS_MediaBrowser
-summary: See every media file your project uses, find the missing ones, and replace them in place
+summary: 'See every media file your project uses, find the missing ones, and replace them in place'
 features:
   - name: The media list
     anchor: the-media-list

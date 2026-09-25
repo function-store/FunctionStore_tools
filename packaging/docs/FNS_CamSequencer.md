@@ -16,7 +16,7 @@ features:
     anchor: control-and-mapping-pages-joystick-controller
   - name: ROLL -- banking the camera
     anchor: roll-banking-the-camera
-  - name: SURFACE COLLISION  (Control page, 2.0)
+  - name: 'SURFACE COLLISION  (Control page, 2.0)'
     anchor: surface-collision-control-page-2-0
   - name: Python api
     anchor: python-api
@@ -25,6 +25,7 @@ features:
   - name: What's new
     anchor: what-s-new
 ---
+
 
 A Camera COMP with two OpSequencers inside: one sequences the camera's
 own transform and lens, the other sequences the Look At target. Every

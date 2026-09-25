@@ -8,6 +8,7 @@ features:
     anchor: output
 ---
 
+
 ## What it is
 
 InfinityCHOP draws one curve, and Shape decides which: at 0 it is a circle, at 1 the infinity loop, and every value between morphs one into the other. Frequency multipliers bend it further into Lissajous figures, and whole numbers keep it closed.

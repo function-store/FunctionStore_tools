@@ -19,7 +19,8 @@
   "author {name, url}, homepage and changelog_url are CURATED on any package (presentation facts; the manifest carries them to the picker byline and the website badge -- the ONE home for credit, doc frontmatter `credit` is refused). A `source` block {manifest, tox?, package?} makes an entry FOREIGN: bytes and version owned upstream, mirrored by packaging/foreign_sync.py into dist/ and pinned in foreign.lock.json, never exported from a live COMP. Only a foreign entry may carry updates (self|store), help_url and min_td_build -- on a live package those have live authorities. See docs/ForeignPackages.md.",
   "`alternatives_for` is DERIVED for a live package that carries an FNS_OpMenuRegistry host (build_manifest calls its onAlternatives()); it may be CURATED, in the content CMS or here, on a foreign entry and on a live package with NO op-menu host: a list of operator types the package is an alternative for (a curated list beside a host is a preflight problem). The op-menu registry offers a store tox for those types when the package is not in the project, and places it from disk.",
   "`quiz` is the guided setup's questionnaire: questions with options, each option carrying tags; a package's `fits` names the tags it answers. The picker recommends every tool whose fits meet the chosen tags, best matches first. build_manifest validates both (an option tag no package fits is reported). Content, so it is authored on the cms.mjs side like presets.",
-  "`fits` rule of thumb: `visual` means the tool makes or processes visuals (an image effect, a particle system, a scene changer, a camera); `ui` means its working surface is something you look at or work in (a Hub tab, a pane type, a window, a changed dialog or palette, the editor's look), not that it has a toolbar button; a button that only triggers an action does not earn it. Tags follow the doc and the parameters, not the name. (Split 2026-09-25: `visual` used to carry the `ui` meaning, and the style question's point-and-click answer recommended image effects.)"
+  "`fits` rule of thumb: `visual` means the tool makes or processes visuals (an image effect, a particle system, a scene changer, a camera); `ui` means its working surface is something you look at or work in (a Hub tab, a pane type, a window, a changed dialog or palette, the editor's look), not that it has a toolbar button; a button that only triggers an action does not earn it. Tags follow the doc and the parameters, not the name. (Split 2026-09-25: `visual` used to carry the `ui` meaning, and the style question's point-and-click answer recommended image effects.)",
+  "`preview: true` (presence-style, set through gate_package.py or the CMS, never by hand) ships the package for the owner's testing only: gated to the pseudo tier `preview`, which the Worker grants the creator account alone, and left out of the site, the picker, the questionnaire, bundles and the new-tools notice for everyone else. `access` keeps the tier it will ship at. docs/PreviewPackages.md."
  ],
  "categories": [
   "Core",
@@ -334,7 +335,8 @@
    "fits": [
     "network",
     "speed"
-   ]
+   ],
+   "recommended": true
   },
   "FNS_AutoCombine": {
    "category": "Network",
@@ -348,7 +350,6 @@
   "FNS_AutoRes": {
    "category": "Network",
    "description": "Hold Alt while placing a generator TOP to have its resolution follow the project (or the panel it sits in) instead of a hardcoded pixel size.",
-   "recommended": true,
    "fits": [
     "network",
     "speed",
@@ -371,7 +372,8 @@
    "fits": [
     "tidy",
     "ui"
-   ]
+   ],
+   "preview": true
   },
   "FNS_BeatMod": {
    "category": "Time & sequencing",
@@ -385,7 +387,8 @@
     "speed",
     "ui",
     "time"
-   ]
+   ],
+   "preview": true
   },
   "FNS_BorderlessTD": {
    "category": "Interface",
@@ -406,7 +409,8 @@
     "tidy",
     "show",
     "media"
-   ]
+   ],
+   "preview": true
   },
   "FNS_ColorUI": {
    "category": "Interface",
@@ -434,7 +438,8 @@
     "learn",
     "dev",
     "ui"
-   ]
+   ],
+   "recommended": true
   },
   "FNS_CommandRegistry": {
    "category": "Core",
@@ -537,7 +542,8 @@
     "media",
     "show",
     "tidy"
-   ]
+   ],
+   "preview": true
   },
   "FNS_Misc": {
    "category": "Project",
@@ -585,12 +591,12 @@
     "art",
     "learn",
     "speed"
-   ]
+   ],
+   "recommended": true
   },
   "FNS_OpToClipboard": {
    "category": "Parameters",
    "description": "Copy the selected operator's reference to the system clipboard, ready to paste into an expression.",
-   "recommended": true,
    "fits": [
     "dev",
     "params",
@@ -629,7 +635,6 @@
   "FNS_ParOPDrop": {
    "category": "Parameters",
    "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey.",
-   "recommended": true,
    "fits": [
     "params",
     "dev",
@@ -654,7 +659,9 @@
     "screen",
     "learn",
     "ui"
-   ]
+   ],
+   "preview": true,
+   "recommended": true
   },
   "FNS_QuickCollapse": {
    "category": "Network",
@@ -695,7 +702,8 @@
     "live",
     "params",
     "osc"
-   ]
+   ],
+   "preview": true
   },
   "FNS_ResetPLS": {
    "category": "Project",
@@ -768,7 +776,8 @@
     "art",
     "ui",
     "time"
-   ]
+   ],
+   "preview": true
   },
   "FNS_ToolbarRegistry": {
    "category": "Core",
@@ -841,7 +850,8 @@
    "fits": [
     "network",
     "speed"
-   ]
+   ],
+   "recommended": true
   },
   "FNS_OpSequencer": {
    "category": "Time & sequencing",
@@ -854,7 +864,8 @@
     "art",
     "time"
    ],
-   "access": "8323905"
+   "access": "8323905",
+   "preview": true
   },
   "FNS_CamSequencer": {
    "category": "Time & sequencing",
@@ -866,7 +877,8 @@
     "visual",
     "time"
    ],
-   "access": "8323905"
+   "access": "8323905",
+   "preview": true
   },
   "FNS_MixSequencer": {
    "category": "Time & sequencing",
@@ -878,7 +890,8 @@
     "params",
     "time"
    ],
-   "access": "8323905"
+   "access": "8323905",
+   "preview": true
   },
   "FNS_SimpleSceneChanger": {
    "category": "Show & output",
@@ -890,7 +903,8 @@
     "visual",
     "scenes"
    ],
-   "access": "8323905"
+   "access": "8323905",
+   "preview": true
   },
   "FNS_ProSceneChanger": {
    "category": "Show & output",
@@ -902,7 +916,8 @@
     "visual",
     "scenes"
    ],
-   "access": "8291595"
+   "access": "8291595",
+   "preview": true
   },
   "FNS_SwitchTools": {
    "category": "Show & output",
@@ -944,7 +959,8 @@
     "detail": "A free 14-day trial of Pro, once per computer. After it the mapping editor needs a Function Store Patreon membership at the Base or Pro tier, or a Gumroad lifetime key; live MIDI to parameters keeps working without one, and your mappings are kept.",
     "url": "https://tdxmap.functionstore.xyz/license/"
    },
-   "placeonce": true
+   "placeonce": true,
+   "nopick": true
   },
   "FNS_OpFamily": {
    "category": "Core",
@@ -961,7 +977,8 @@
     "speed",
     "chops"
    ],
-   "access": "8323905"
+   "access": "8323905",
+   "preview": true
   },
   "ComplexOp": {
    "category": "Visual",
@@ -1258,7 +1275,8 @@
     "art",
     "chops"
    ],
-   "access": "8323905"
+   "access": "8323905",
+   "preview": true
   },
   "ChopProcess": {
    "category": "CHOPs & sensing",

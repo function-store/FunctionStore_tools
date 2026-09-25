@@ -98,6 +98,7 @@
   .tag-todo { background: var(--bg-3); color: var(--text-faint); }
   .tag-rec { background: var(--accent-dim, #2a1f08); color: var(--accent, #fbbf24); }
   .tag-net { background: #0a2a1f; color: #4ade80; }
+  .tag-warn { background: #2a1408; color: #fdba74; }
   /* the tox changed since it last shipped (PI build moved, version not yet) */
   .tag-chg { background: #2a1f08; color: #fdba74; }
   /* Read-only: gating is set in catalog.json, not here. */
@@ -412,6 +413,7 @@ function renderList() {
           tier ? tier.label.toUpperCase() : 'PLUS'}</span>` : '') +
         (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
         (p.nopick ? '<span class="tag tag-net" title="Explicit pick only: no Select all, preset, bundle or questionnaire ever ticks it">PICK</span>' : '') +
+        (p.preview ? '<span class="tag tag-warn" title="Not released yet: only your account sees and installs it">PREVIEW</span>' : '') +
         (p.placeonce ? '<span class="tag tag-net" title="The picker offers Place in this project only, never carried into the next (FNS family members get it without the flag)">PLACE</span>' : '') +
         (p.placement === 'pane' ? '<span class="tag tag-net" title="Installs into the network the user is working in">NET</span>' : '') +
         (p.placement === 'root' ? '<span class="tag tag-net" title="Installs at the network root, beside the toolkit container">ROOT</span>' : '') +
@@ -467,8 +469,17 @@ const textToHotkeys = (txt) => txt.split('\n').map((l) => l.trim()).filter(Boole
                  : { keys: l.slice(0, i).trim(), does: l.slice(i + 1).trim() };
   }).filter((h) => h.keys);
 
+// The tool-side alternatives list (bindAlternatives): what was read, so Save
+// knows whether the tool needs writing. Null when the field is the catalog's.
+let ALT = null;
+const altNorm = (v) => String(v || '').replace(/,/g, ' ').split(/\s+/).filter(Boolean).join(' ');
+function altChanged() {
+  return !!(ALT && ALT.editable && draft && ALT.name === draft.name
+            && altNorm($('#alternatives_for').value) !== altNorm(ALT.loaded));
+}
+
 function markDirty() {
-  const changed = JSON.stringify(draft) !== JSON.stringify(current);
+  const changed = JSON.stringify(draft) !== JSON.stringify(current) || altChanged();
   $('#dirty').classList.toggle('on', changed);
   $('#save').disabled = !changed;
   $('#revert').disabled = !changed;
@@ -524,6 +535,58 @@ function famFromFields() {
 
 function famShowProblems(list) {
   $('#fam-problems').textContent = (list && list.length) ? 'Preflight would refuse: ' + list.join('; ') : '';
+}
+
+// ------------------------------------------------------------ alternatives
+// docs/OpAlternatives.md. A live tool with an op-menu host keeps the types it
+// stands in for in its own `alternatives` table, so the field reads
+// /api/td/altread and writes /api/td/altwrite (FNS_CMS saves the tool). A
+// tool that computes its list (OpTemplates) shows it read-only. A foreign
+// tool, or a live one with no host, keeps the catalog value as before.
+async function bindAlternatives(d) {
+  const input = $('#alternatives_for');
+  const state = $('#alt-state');
+  ALT = null;
+  state.textContent = '';
+  input.disabled = false;
+  if (d.foreign) return;
+  let r;
+  try {
+    r = await api('/api/td/altread', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: d.name }),
+    });
+  } catch (e) {
+    // the reason names the fix (pulse Open on /FNS_CMS, which idles shut)
+    state.textContent = 'Cannot read the tool: ' + e.message + ' A live tool with an op-menu host keeps this list inside the tool.';
+    return;
+  }
+  if (draft !== d || !r.hosted) return;   // another package, or the catalog field applies
+  // the tool is the source: this field no longer feeds the catalog save
+  d.alternatives_for = '';
+  current.alternatives_for = '';
+  input.value = (r.types || []).join(' ');
+  ALT = { name: d.name, editable: !!r.editable, loaded: input.value };
+  if (!r.editable) {
+    input.disabled = true;
+    input.oninput = () => {};
+    state.textContent = 'Computed by the tool (read-only here): it lists what its own library offers.';
+    return;
+  }
+  input.oninput = () => markDirty();
+  state.textContent = 'Read from the tool. Save writes a changed list back: its alternatives table is rewritten and the package saved.';
+}
+
+/** Save's second half: a changed tool-side list is written to the tool. */
+async function saveAlternatives(name) {
+  if (!altChanged()) return null;
+  const w = await api('/api/td/altwrite', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name, types: $('#alternatives_for').value }),
+  });
+  $('#alternatives_for').value = (w.types || []).join(' ');
+  ALT.loaded = $('#alternatives_for').value;
+  return w;
 }
 
 async function bindFamily(d) {
@@ -642,6 +705,8 @@ function renderEditor() {
     <div class="field">
       <label class="check"><input type="checkbox" id="nopick" /> Explicit pick only
         <span class="hint">— a normal card that installs and updates, but no bulk selection ever ticks it: not Select all, Everything, Recommended, a bundle or the questionnaire. For hardware-specific integrations. Cannot be combined with Recommended. Lives in catalog.json as <code>nopick</code>; ships with the next release’s manifest.</span></label>
+      <label class="check"><input type="checkbox" id="preview" /> Preview: not released yet
+        <span class="hint">— ships in the next release for your own testing, but only your signed-in account can see or install it: the site, the picker, the questionnaire and the new-tools notice leave it out for everyone else. Its access above is what it will ship at. Untick to release it; everyone is told about it then. Saving runs gate_package, so publish with <code>wrangler deploy</code>. Lives in catalog.json as <code>preview</code>.</span></label>
       <label class="check"><input type="checkbox" id="placeonce" /> Can be placed without joining the setup
         <span class="hint">— the picker card offers “place in this project only” beside the tick: the tool lands and updates here, but “Set up like last time” never brings it into the next project. The tick still works for anyone who wants it every time. Lives in catalog.json as <code>placeonce</code>; ships with the next release’s manifest.</span></label>
     </div>
@@ -657,8 +722,9 @@ function renderEditor() {
     </div>
 
     <div class="field">
-      <label for="alternatives_for">Alternative for <span class="hint">— operator types this tool stands in for, separated by spaces (moviefileinTOP ndiinTOP). Creating one of those types with the alternatives shortcut held offers this tool, from the store when it is not in the project. A live package that carries an op-menu host derives this from its own onAlternatives(); leave it empty there.</span></label>
+      <label for="alternatives_for">Alternative for <span class="hint">— operator types this tool stands in for, separated by spaces (moviefileinTOP ndiinTOP). Creating one of those types with the alternatives shortcut held offers this tool, from the store when it is not in the project. A live tool with an op-menu host keeps this list in its own <code>alternatives</code> table: this field reads it from TouchDesigner, and Save writes it back to the tool.</span></label>
       <input type="text" id="alternatives_for" placeholder="moviefileinTOP ndiinTOP" />
+      <div class="hint" id="alt-state"></div>
     </div>
 
     <div class="field" id="fam">
@@ -814,6 +880,7 @@ function renderEditor() {
   $('#recommended').checked = !!d.recommended;
   $('#nopick').checked = !!d.nopick;
   $('#placeonce').checked = !!d.placeonce;
+  $('#preview').checked = !!d.preview;
   $('#placement').value = d.placement || '';
   $('#summary').value = d.data.summary || '';
   $('#author-name').value = (d.author && d.author.name) || '';
@@ -836,6 +903,7 @@ function renderEditor() {
   $('#recommended').onchange = (e) => { d.recommended = e.target.checked; markDirty(); renderList(); };
   $('#nopick').onchange = (e) => { d.nopick = e.target.checked; markDirty(); renderList(); };
   $('#placeonce').onchange = (e) => { d.placeonce = e.target.checked; markDirty(); renderList(); };
+  $('#preview').onchange = (e) => { d.preview = e.target.checked; markDirty(); renderList(); };
   $('#placement').onchange = (e) => { d.placement = e.target.value; markDirty(); renderList(); };
   $('#summary').oninput = (e) => { setData('summary', e.target.value.trim()); };
   $('#video').oninput = (e) => { setData('video', e.target.value.trim()); };
@@ -869,6 +937,7 @@ function renderEditor() {
   $('#help_url').oninput = (e) => { d.help_url = e.target.value.trim(); markDirty(); };
   $('#alternatives_for').oninput = (e) => { d.alternatives_for = e.target.value.trim(); markDirty(); };
   bindFamily(d);
+  bindAlternatives(d);
 
   let previewTimer;
   $('#body').oninput = (e) => {
@@ -1994,6 +2063,7 @@ async function save() {
         recommended: !!draft.recommended,
         nopick: !!draft.nopick,
         placeonce: !!draft.placeonce,
+        preview: !!draft.preview,
         placement: draft.placement || '',
         author: draft.author || null,
         homepage: draft.homepage || '',
@@ -2015,9 +2085,18 @@ async function save() {
     draft = JSON.parse(JSON.stringify(saved));
     const idx = STATE.packages.findIndex((p) => p.name === saved.name);
     if (idx >= 0) STATE.packages[idx] = saved;
+    let wroteAlt = null;
+    try {
+      wroteAlt = await saveAlternatives(saved.name);
+    } catch (e) {
+      renderList();
+      markDirty();
+      toast('Saved ' + saved.name + '.md, but the alternatives were not written: ' + e.message, 'err');
+      return;
+    }
     renderList();
     markDirty();
-    toast('Saved ' + saved.name + '.md', 'ok');
+    toast('Saved ' + saved.name + '.md' + (wroteAlt ? ' and its alternatives (tool saved)' : ''), 'ok');
   } catch (e) {
     toast(e.message, 'err');
   }

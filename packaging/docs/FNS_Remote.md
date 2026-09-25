@@ -1,6 +1,6 @@
 ---
 package: FNS_Remote
-summary: Control this project from your phone over your own network, with no cloud and no account
+summary: 'Control this project from your phone over your own network, with no cloud and no account'
 features:
   - name: Pair by QR
     anchor: pair-by-qr
@@ -12,7 +12,7 @@ features:
     anchor: expose-from-the-phone
   - name: The client link
     anchor: the-client-link
-  - name: Off by default, local by default
+  - name: 'Off by default, local by default'
     anchor: off-by-default-local-by-default
 ---
 
