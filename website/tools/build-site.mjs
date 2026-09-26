@@ -615,6 +615,7 @@ const FOOTER = `<footer class="site">
     <div>© 2026 FNSTools · Built for TouchDesigner</div>
     <div class="footer-links">
       <a href="/docs/">Docs</a>
+      <a href="/community/">Community</a>
       <a href="/patreon/">Patreon</a>
       <a href="/privacy/">Privacy</a>
       <a href="/terms/">Terms</a>
@@ -1639,6 +1640,225 @@ ${body}
 </main>
 ${FOOT}`);
   console.log(`built /${slug}/`);
+}
+
+// ------------------------------------------- /community/ — other creators
+//
+// Tools by other people, highlighted like blog posts (docs/CommunityHighlights.md).
+// The rows are packaging/recommendations.json, the list the picker already
+// shows as "From other creators"; packaging/recommendations.py is the
+// validator and runs before every publish. A row with a `slug` is a post:
+// its write-up is website/content/community/<slug>.md, Markdown of any
+// length, and its pictures live in website/content/community/images/.
+// A row with no slug is a card that links straight to the author.
+//
+// Credit sits at the top of every post, before the write-up: the author, a
+// link to them, their terms as they state them, and the line that says we
+// did not make it and do not maintain it.
+const COMMUNITY_SRC = path.join(WEB, 'content', 'community');
+const COMMUNITY_IMAGES = path.join(COMMUNITY_SRC, 'images');
+const COMMUNITY_OUT = path.join(WEB, 'community');
+const RECOMMENDS = path.join(REPO, 'packaging', 'recommendations.json');
+const recommends = fs.existsSync(RECOMMENDS) ? JSON.parse(fs.readFileSync(RECOMMENDS, 'utf8')) : { tools: [] };
+const highlights = (recommends.tools || []).slice();
+
+const PLATFORM_LABEL = {
+  github: 'Get it on GitHub', patreon: 'Get it on Patreon', gumroad: 'Get it on Gumroad',
+  itch: 'Get it on itch.io', pypi: 'Get it on PyPI', other: "Go to the author's page",
+};
+const deliveryOf = (t) => ((t.tdp && Array.isArray(t.tdp.lock) && t.tdp.lock.length) ? 'tdp'
+  : (t.tox_url && /^[0-9a-f]{64}$/.test(String(t.sha256 || '')) ? 'tox' : 'link'));
+const DELIVERY_LABEL = { tdp: 'Python package', tox: '.tox file', link: 'On their site' };
+const fmtDate = (d) => {
+  if (!d) return '';
+  const [y, m, day] = String(d).split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, day)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+};
+const tdpVersion = (t) => {
+  const own = String(t.tdp.package).replace(/[-_.]+/g, '-').toLowerCase();
+  for (const line of t.tdp.lock) {
+    const m = /^([A-Za-z0-9._-]+)(?:\[[^\]]*\])?==(\S+)/.exec(String(line));
+    if (m && m[1].replace(/[-_.]+/g, '-').toLowerCase() === own) return m[2];
+  }
+  return '';
+};
+
+// Write-ups, joined to their rows by filename = slug.
+const communityProblems = [];
+const writeups = new Map();
+if (fs.existsSync(COMMUNITY_SRC)) {
+  for (const file of fs.readdirSync(COMMUNITY_SRC).filter((f) => f.endsWith('.md')).sort()) {
+    const slug = file.replace(/\.md$/, '');
+    const { data, content } = matter(fs.readFileSync(path.join(COMMUNITY_SRC, file), 'utf8'));
+    writeups.set(slug, { file, data, content });
+  }
+}
+const bySlug = new Map(highlights.filter((t) => t.slug).map((t) => [t.slug, t]));
+for (const slug of writeups.keys()) {
+  if (!bySlug.has(slug)) {
+    communityProblems.push(`website/content/community/${slug}.md: no row in packaging/recommendations.json has slug "${slug}"`);
+  }
+}
+for (const t of highlights) {
+  if (t.slug && !writeups.has(t.slug)) {
+    communityProblems.push(`packaging/recommendations.json: ${t.name} has slug "${t.slug}" but website/content/community/${t.slug}.md does not exist`);
+  }
+  if (t.image && !fs.existsSync(path.join(COMMUNITY_IMAGES, t.image))) {
+    communityProblems.push(`packaging/recommendations.json: ${t.name} names image ${t.image}, not found in website/content/community/images/`);
+  }
+}
+const postImageProblems = (html, where) => {
+  for (const m of html.matchAll(/<img[^>]*\ssrc="([^"]+)"/g)) {
+    const src = m[1];
+    if (/^https?:\/\//.test(src)) continue;
+    const local = /^\/community\/images\/([^/?#]+)$/.exec(src);
+    if (!local) {
+      communityProblems.push(`${where}: image ${src} must be /community/images/<file> (posts sit one folder down, so a relative path breaks)`);
+    } else if (!fs.existsSync(path.join(COMMUNITY_IMAGES, local[1]))) {
+      communityProblems.push(`${where}: image ${src} is not in website/content/community/images/`);
+    }
+  }
+};
+
+// Newest first; an undated row after every dated one, then by name.
+highlights.sort((a, b) => (String(b.date || '').localeCompare(String(a.date || '')))
+  || String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }));
+
+const postHref = (t) => (t.slug ? `/community/${t.slug}/` : t.url);
+const isExternal = (t) => !t.slug;
+const imgSrc = (t) => (t.image ? `/community/images/${t.image}` : '');
+
+const posts = highlights.filter((t) => t.slug && writeups.has(t.slug)).map((t) => {
+  const w = writeups.get(t.slug);
+  const html = md.render(w.content);
+  checkLinks(html, `content/community/${w.file}`, null);
+  postImageProblems(html, `content/community/${w.file}`);
+  return { t, w, html, title: String(w.data.title || t.name), summary: String(w.data.summary || t.description || '') };
+});
+
+problems.push(...communityProblems);
+if (problems.length) {
+  console.error('build refused — community highlights:\n' +
+    problems.map((x) => `  - ${x}`).join('\n'));
+  process.exit(1);
+}
+
+function communityCard(t) {
+  const ext = isExternal(t) ? ' target="_blank" rel="noopener"' : '';
+  const img = t.image ? `<img class="cm-card-img" src="${esc(imgSrc(t))}" alt="" loading="lazy" decoding="async" />` : '';
+  const meta = [DELIVERY_LABEL[deliveryOf(t)], fmtDate(t.date)].filter(Boolean).map(esc).join(' · ');
+  return `    <a class="cm-card" href="${esc(postHref(t))}"${ext}>
+      ${img}
+      <span class="cm-card-body">
+        <span class="cm-kind">${meta}</span>
+        <span class="cm-name">${esc(t.name)}${isExternal(t) ? ' ↗' : ''}</span>
+        <span class="cm-by">by ${esc(t.author)}</span>
+        <span class="cm-pitch">${esc(t.description || '')}</span>
+      </span>
+    </a>`;
+}
+
+function creditBox(t) {
+  const author = t.author_url
+    ? `<a href="${esc(t.author_url)}" target="_blank" rel="noopener">${esc(t.author)}</a>`
+    : esc(t.author);
+  const rows = [`<dt>Made by</dt><dd>${author}</dd>`];
+  if (t.author_license) rows.push(`<dt>Terms</dt><dd>${esc(t.author_license)} <span class="cm-faint">(as the author states them)</span></dd>`);
+  const kind = deliveryOf(t);
+  if (kind === 'tox') {
+    rows.push(`<dt>Download</dt><dd><a href="${esc(t.tox_url)}" rel="noopener">${esc(decodeURIComponent(t.tox_url.split('/').pop()))}</a> <span class="cm-faint">sha256 ${esc(t.sha256.slice(0, 12))}…, the file we looked at</span></dd>`);
+  } else if (kind === 'tdp') {
+    const v = tdpVersion(t);
+    rows.push(`<dt>Python package</dt><dd><a href="https://pypi.org/project/${esc(t.tdp.package)}/${v ? `${esc(v)}/` : ''}" target="_blank" rel="noopener"><code>${esc(t.tdp.package)}${v ? `==${esc(v)}` : ''}</code></a> <span class="cm-faint">the version we looked at</span></dd>`);
+    rows.push(`<dt>In TouchDesigner</dt><dd>The FNSTools picker installs exactly these versions into your project's Python environment and places the tool. <span class="cm-faint">No environment yet? It offers to set one up with TouchDesigner's own manager.</span></dd>`);
+  }
+  const cta = PLATFORM_LABEL[t.platform] || PLATFORM_LABEL.other;
+  return `  <aside class="cm-credit" aria-label="Credit">
+    <dl>${rows.join('')}</dl>
+    <p class="cm-disclaimer">Not part of FNSTools. ${esc(t.author)} made it and maintains it; questions and support go to them.</p>
+    <a class="btn btn-primary" href="${esc(t.url)}" target="_blank" rel="noopener">${esc(cta)} ↗</a>
+  </aside>`;
+}
+
+if (fs.existsSync(COMMUNITY_OUT)) fs.rmSync(COMMUNITY_OUT, { recursive: true, force: true });
+fs.mkdirSync(COMMUNITY_OUT, { recursive: true });
+if (fs.existsSync(COMMUNITY_IMAGES)) {
+  fs.mkdirSync(path.join(COMMUNITY_OUT, 'images'), { recursive: true });
+  for (const f of fs.readdirSync(COMMUNITY_IMAGES)) {
+    fs.copyFileSync(path.join(COMMUNITY_IMAGES, f), path.join(COMMUNITY_OUT, 'images', f));
+  }
+}
+
+const COMMUNITY_TITLE = 'Community tools for TouchDesigner | FNSTools';
+const COMMUNITY_DESC = 'TouchDesigner tools by other creators that we think are worth your time. Each is made and maintained by its author.';
+const communityIntro = String(recommends.intro || '').trim();
+fs.writeFileSync(path.join(COMMUNITY_OUT, 'index.html'), `${head(COMMUNITY_TITLE, COMMUNITY_DESC, `${SITE}/community/`)}
+<!-- GENERATED by tools/build-site.mjs from packaging/recommendations.json and website/content/community/ — do not edit here -->
+${header('/community/')}
+<main class="plus-page cm-page">
+  <h1>From the community</h1>
+  <p class="lede">${esc(communityIntro || COMMUNITY_DESC)}</p>
+${highlights.length
+    ? `  <div class="cm-grid">\n${highlights.map(communityCard).join('\n')}\n  </div>`
+    : '  <p class="cm-empty">The first highlights are on their way.</p>'}
+</main>
+${FOOT}`);
+
+for (const p of posts) {
+  const { t } = p;
+  const dir = path.join(COMMUNITY_OUT, t.slug);
+  fs.mkdirSync(dir, { recursive: true });
+  const byline = [`by ${t.author_url ? `<a href="${esc(t.author_url)}" target="_blank" rel="noopener">${esc(t.author)}</a>` : esc(t.author)}`,
+    t.date ? `<time datetime="${esc(t.date)}">${esc(fmtDate(t.date))}</time>` : ''].filter(Boolean).join(' · ');
+  fs.writeFileSync(path.join(dir, 'index.html'), `${head(`${p.title} by ${t.author} | FNSTools community`, p.summary || `${p.title}, a TouchDesigner tool by ${t.author}.`, `${SITE}/community/${t.slug}/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/community/${p.w.file} — do not edit here -->
+${header('/community/')}
+<main class="plus-page cm-page cm-post">
+  <p class="crumbs"><a href="/community/">Community</a></p>
+  <h1>${esc(p.title)}</h1>
+  <p class="cm-byline">${byline}</p>
+${t.image ? `  <img class="cm-hero" src="${esc(imgSrc(t))}" alt="${esc(t.name)}" decoding="async" />\n` : ''}${creditBox(t)}
+  <div class="docs-body">
+${p.html}
+  </div>
+  <p class="cm-back"><a href="/community/">← All community tools</a></p>
+</main>
+${FOOT}`);
+}
+console.log(`built /community/ (${highlights.length} highlight${highlights.length === 1 ? '' : 's'}, ${posts.length} post${posts.length === 1 ? '' : 's'})`);
+
+// The landing page strip: the three newest, only when there is something
+// to show. The markers wrap the whole section so an empty list leaves no
+// heading behind.
+{
+  const landing = path.join(WEB, 'index.html');
+  const src = fs.readFileSync(landing, 'utf8');
+  const re = /(<!-- COMMUNITY:START -->)[\s\S]*?(<!-- COMMUNITY:END -->)/;
+  if (!re.test(src)) {
+    console.error('website/index.html is missing its <!-- COMMUNITY:START --> / <!-- COMMUNITY:END --> markers');
+    process.exit(1);
+  }
+  const latest = highlights.slice(0, 3);
+  const block = latest.length ? `
+<section id="community" style="padding-top: 12px;">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>From the community</h2>
+      <p>Tools by other creators, made and maintained by them.</p>
+    </div>
+    <div class="prod-grid">
+${latest.map((t) => `      <a class="prod" href="${esc(postHref(t))}"${isExternal(t) ? ' target="_blank" rel="noopener"' : ''}>
+        <span class="prod-kind">${esc(DELIVERY_LABEL[deliveryOf(t)])} · by ${esc(t.author)}</span>
+        <span class="prod-name">${esc(t.name)}${isExternal(t) ? ' ↗' : ''}</span>
+        <span class="prod-pitch">${esc(t.description || '')}</span>
+      </a>`).join('\n')}
+    </div>
+    <a href="/community/">All community tools →</a>
+  </div>
+</section>
+` : '\n';
+  const out = src.replace(re, (_m, a, b) => `${a}${block}${b}`);
+  if (out !== src) fs.writeFileSync(landing, out);
 }
 
 // ------------------------------------------------- /get/ — online picker

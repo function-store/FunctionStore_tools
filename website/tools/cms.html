@@ -186,6 +186,19 @@
   .rec-place { display:flex; gap:8px; align-items:center; margin-top:6px; }
   .rec-place input { flex:1; }
   .rec-place .hint { white-space:nowrap; font-size:11px; }
+  .rec-post { margin-top:10px; border-top:1px dashed var(--border, #333); padding-top:8px; }
+  .rec-post > summary { cursor:pointer; font-weight:600; font-size:12.5px; }
+  .rec-post > summary .hint { font-weight:400; margin-left:6px; }
+  .rec-grid { display:grid; grid-template-columns:1fr auto 1fr 1fr; gap:8px; align-items:end; margin:8px 0; }
+  .rec-grid label { display:flex; flex-direction:column; gap:3px; font-size:11.5px; margin:0; }
+  .rec-grid label.wide { grid-column:1 / -1; }
+  .rec-grid label.wide:has(select) { flex-direction:row; align-items:center; gap:8px; }
+  .rec-thumb { display:block; max-width:280px; max-height:160px; border-radius:6px; margin:4px 0 8px; }
+  .rec-md-head { display:flex; gap:8px; align-items:center; margin:8px 0 4px; font-size:12px; }
+  .rec-md-head > span { flex:1; }
+  .rec-md { width:100%; font-size:12.5px; line-height:1.5; }
+  .rec-preview { border:1px solid var(--border, #333); border-radius:6px; padding:10px 14px; margin-top:6px; max-height:420px; overflow:auto; }
+  .rec-preview img { max-width:100%; }
   .cat-row {
     display: grid; grid-template-columns: 22px 52px 1fr 44px 26px;
     gap: 8px; align-items: start;
@@ -1807,12 +1820,50 @@ function openCommunity() {
   if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
       !confirm('Discard unsaved changes to ' + current.name + '?')) return;
   draft = current = null;
+  // Each row carries its write-up while it is edited: `_md` is the text,
+  // `_from` the slug it was loaded under (so a changed slug is a rename).
+  // Both are stripped before the list is sent.
+  const writeups = STATE.communityWriteups || {};
   recDraft = {
     intro: STATE.recommendations.intro,
-    tools: STATE.recommendations.tools.map((t) => ({ ...t })),
+    tools: STATE.recommendations.tools.map((t) => ({
+      ...t,
+      ...(t.slug ? { _from: t.slug, _md: writeups[t.slug] || '' } : {}),
+    })),
   };
   renderCommunity();
   renderList();
+}
+
+const REC_PLATFORMS = ['', 'github', 'patreon', 'gumroad', 'itch', 'pypi', 'other'];
+const slugOf = (name) => String(name || '').toLowerCase().normalize('NFKD')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const writeupStarter = (t) => `---
+title: ${t.name || ''}
+summary: ${String(t.description || '').replace(/\n/g, ' ')}
+---
+
+## What it does
+
+## Why we like it
+
+## Getting it
+`;
+
+/** Accepts a lock the way `uv pip compile --generate-hashes` prints it:
+ *  continuation backslashes, one --hash per line, `# via` comments. */
+function parseLock(text) {
+  const logical = [];
+  let cur = '';
+  for (const rawLine of String(text || '').split(/\r?\n/)) {
+    const line = rawLine.replace(/\s+#.*$/, '').trim();
+    if (!line || line.startsWith('#')) { if (cur && !rawLine.trim().endsWith('\\')) { logical.push(cur); cur = ''; } continue; }
+    const cont = line.endsWith('\\');
+    cur = `${cur} ${cont ? line.slice(0, -1) : line}`.trim();
+    if (!cont) { logical.push(cur); cur = ''; }
+  }
+  if (cur) logical.push(cur);
+  return logical.map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
 }
 
 function renderCommunity() {
@@ -1836,6 +1887,38 @@ function renderCommunity() {
             ? 'pinned ' + (t.pinned_at || '') + ' · ' + t.sha256.slice(0, 12) + '… · ' + t.bytes + ' bytes'
             : 'link only until pinned'}</span>
         </div>
+        <details class="rec-post"${t.slug || t._md ? ' open' : ''}>
+          <summary>Website post ${t.slug ? `<span class="hint">/community/${at(t.slug)}/</span>` : '<span class="hint">none: the card links straight to the author</span>'}</summary>
+          <div class="rec-grid">
+            <label>Slug <input type="text" data-f="slug" value="${at(t.slug)}" placeholder="lowercase-with-hyphens" /></label>
+            <button class="btn" data-slugify title="Make the slug from the name">From name</button>
+            <label>Date <input type="date" data-f="date" value="${at(t.date)}" /></label>
+            <label>Platform <select data-f="platform">${REC_PLATFORMS.map((x) => `<option value="${x}"${(t.platform || '') === x ? ' selected' : ''}>${x || '(none)'}</option>`).join('')}</select></label>
+            <label class="wide">Author's terms <input type="text" data-f="author_license" value="${at(t.author_license)}" placeholder="as they state them, e.g. MIT, CC BY 4.0, personal use only" /></label>
+            <label class="wide">Image <select data-f="image"><option value="">(none)</option>${(STATE.communityImages || []).map((f) => `<option${t.image === f ? ' selected' : ''}>${at(f)}</option>`).join('')}</select>
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-upload hidden />
+              <button class="btn" data-upload-btn>Upload…</button></label>
+          </div>
+          ${t.image ? `<img class="rec-thumb" src="/community/images/${at(t.image)}" alt="" />` : ''}
+          <div class="rec-md-head"><span>Write-up <span class="hint">Markdown, any length. Pictures: <span class="mono">![alt](/community/images/file.png)</span></span></span>
+            ${t._md ? '' : '<button class="btn" data-starter>Start one</button>'}
+            <button class="btn" data-mdpreview>Preview</button></div>
+          <textarea class="rec-md mono" data-md rows="14" placeholder="Needed once there is a slug.">${String(t._md || '').replace(/</g, '&lt;')}</textarea>
+          <div class="rec-preview docs-body" hidden></div>
+        </details>
+        <details class="rec-post"${t.tdp ? ' open' : ''}>
+          <summary>Python package (tdp) <span class="hint">${t.tdp && t.tdp.lock && t.tdp.lock.length ? `${t.tdp.lock.length} pinned requirement${t.tdp.lock.length === 1 ? '' : 's'}` : 'none'}</span></summary>
+          <div class="rec-grid">
+            <label>PyPI package <input type="text" data-tdp="package" value="${at(t.tdp && t.tdp.package)}" placeholder="tdp-Something" /></label>
+            <button class="btn" data-pintdp title="Pin the newest release: module, toxes and the hashed lock">${t.tdp && t.tdp.lock ? 'Re-pin' : 'Pin'}</button>
+            <label>Module <input type="text" data-tdp="module" value="${at(t.tdp && t.tdp.module)}" placeholder="tdpSomething" /></label>
+            <label>Tox <input type="text" data-tdp="tox" value="${at(t.tdp && t.tdp.tox)}" placeholder="a _ToxFiles key; blank = ToxFile" /></label>
+          </div>
+          <label class="wide">Also needs <input type="text" data-tdp="also" value="${at(t.tdp && (t.tdp.also || []).join(' '))}" placeholder="packages it imports but does not declare, e.g. tdp-touchutilcollection" /></label>
+          ${t._toxes && t._toxes.length ? `<p class="hint">Toxes in this package: ${t._toxes.map((k) => `<span class="mono">${at(k)}</span>`).join(', ')}${t._single ? ' (blank Tox = its ToxFile)' : ' (name one in Tox)'}</p>` : ''}
+          <label>Lock <span class="hint">written by Pin; or paste the output of <span class="mono">uv pip compile --generate-hashes</span></span></label>
+          <textarea class="rec-md mono" data-tdp="lock" rows="5" placeholder="tdp-something==1.0.0 --hash=sha256:...">${(t.tdp && t.tdp.lock ? t.tdp.lock.join('\n') : '').replace(/</g, '&lt;')}</textarea>
+        </details>
       </div>
       <button class="icon-x" data-del title="Remove">&times;</button>
     </div>`).join('');
@@ -1843,7 +1926,7 @@ function renderCommunity() {
   $('#editor').innerHTML = `
     <h2 class="pane-title">From other creators</h2>
     <p class="pane-sub">packaging/<span class="mono">recommendations.json</span> &middot; published on its own with <span class="mono">upload.py --recommendations</span>, not with a release</p>
-    <p class="warn">These are <b>links, not packages</b>. Nothing here is downloaded, hashed, installed or updated by FNSTools &mdash; the button opens the author's own page. Links must be https.</p>
+    <p class="warn">These are <b>links, not packages</b>. FNSTools never updates them. A pinned .tox or a locked Python package installs exactly what was checked here, and nothing else. Links must be https. Ask the author before a post goes up, and use their pictures only with their permission.</p>
     <label>Intro <span class="hint">shown above the section</span></label>
     <textarea class="cat-pitch" id="rec-intro" rows="2">${String(recDraft.intro || '').replace(/</g, '&lt;')}</textarea>
     <div id="recrows" style="margin-top:14px">${rows || '<p class="empty">No community tools listed yet.</p>'}</div>
@@ -1857,14 +1940,29 @@ function renderCommunity() {
   $('#rec-intro').oninput = (e) => { recDraft.intro = e.target.value; };
   $('#recrows').oninput = (e) => {
     const row = e.target.closest('.cat-row');
-    if (!row || !e.target.dataset.f) return;
+    if (!row) return;
     const t = recDraft.tools[Number(row.dataset.i)];
+    if (e.target.hasAttribute('data-md')) { t._md = e.target.value; return; }
+    if (e.target.dataset.tdp) {
+      const k = e.target.dataset.tdp;
+      const tdp = { ...(t.tdp || {}) };
+      if (k === 'lock') tdp.lock = parseLock(e.target.value);
+      else if (k === 'also') tdp.also = e.target.value.split(/[\s,]+/).filter(Boolean);
+      else if (e.target.value.trim()) tdp[k] = e.target.value.trim();
+      else delete tdp[k];
+      if (!tdp.lock || !tdp.lock.length) delete tdp.lock;
+      if (!tdp.also || !tdp.also.length) delete tdp.also;
+      if (Object.keys(tdp).length) t.tdp = tdp; else delete t.tdp;
+      return;
+    }
+    if (!e.target.dataset.f) return;
     const v = e.target.value;
     // An empty optional field is DROPPED rather than stored as '' -- the
     // publisher rejects unknown/blank shapes, and a row full of empty
     // strings is noise in the diff git is meant to be the audit trail of.
     const f = e.target.dataset.f;
-    if (v.trim() === '' && ['author_url', 'description', 'tox_url'].includes(f)) {
+    if (v.trim() === '' && ['author_url', 'description', 'tox_url', 'slug', 'date', 'platform',
+                            'author_license', 'image'].includes(f)) {
       delete t[f];
     } else {
       t[f] = v;
@@ -1885,7 +1983,37 @@ function renderCommunity() {
       renderCommunity();
     } else if (e.target.hasAttribute('data-pin')) {
       pinTool(i, e.target);
+    } else if (e.target.hasAttribute('data-pintdp')) {
+      pinTdpRow(i, e.target);
+    } else if (e.target.hasAttribute('data-slugify')) {
+      recDraft.tools[i].slug = slugOf(recDraft.tools[i].name);
+      renderCommunity();
+    } else if (e.target.hasAttribute('data-starter')) {
+      recDraft.tools[i]._md = writeupStarter(recDraft.tools[i]);
+      renderCommunity();
+    } else if (e.target.hasAttribute('data-upload-btn')) {
+      e.preventDefault();
+      row.querySelector('[data-upload]').click();
+    } else if (e.target.hasAttribute('data-mdpreview')) {
+      const box = row.querySelector('.rec-preview');
+      if (!box.hidden) { box.hidden = true; e.target.textContent = 'Preview'; return; }
+      api('/api/render', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ markdown: String(recDraft.tools[i]._md || '').replace(/^---[\s\S]*?\n---\n/, '') }),
+      }).then((r) => { box.innerHTML = r.html; box.hidden = false; e.target.textContent = 'Hide preview'; })
+        .catch((err) => toast(String(err.message || err), 'bad'));
     }
+  };
+  $('#recrows').onchange = (e) => {
+    if (e.target.tagName === 'SELECT' || e.target.type === 'date') {
+      $('#recrows').oninput(e);
+      if (e.target.dataset.f === 'image') renderCommunity();
+      return;
+    }
+    if (!e.target.hasAttribute('data-upload') || !e.target.files.length) return;
+    const row = e.target.closest('.cat-row');
+    const t = recDraft.tools[Number(row.dataset.i)];
+    uploadCommunityImage(t, e.target.files[0]);
   };
   $('#rec-add').onclick = () => {
     recDraft.tools.push({ name: '', author: '', url: '' });
@@ -1931,17 +2059,81 @@ function swapRec(a, b) {
   renderCommunity();
 }
 
+/** Pin a Python package: the newest release's module and toxes, read from
+ *  its wheel, and the full hashed lock (packaging/tdp_pin.py). Refused when
+ *  the lock names a package TouchDesigner ships. */
+async function pinTdpRow(i, btn) {
+  const t = recDraft.tools[i];
+  const pkg = String((t.tdp && t.tdp.package) || '').trim();
+  const also = (t.tdp && t.tdp.also) || [];
+  if (!pkg) { toast('Name the PyPI package first', 'bad'); return; }
+  const was = btn.textContent;
+  btn.textContent = 'Resolving…';
+  btn.disabled = true;
+  try {
+    const r = await api('/api/pin-tdp', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ package: pkg, also }),
+    });
+    const keep = t.tdp && t.tdp.tox && (r.toxes || []).includes(t.tdp.tox) ? t.tdp.tox : '';
+    t.tdp = { package: r.package, module: r.module, lock: r.lock };
+    if (keep) t.tdp.tox = keep;
+    else if (!r.single && (r.toxes || []).length === 1) t.tdp.tox = r.toxes[0];
+    if (also.length) t.tdp.also = also;
+    t._toxes = r.toxes || [];
+    t._single = !!r.single;
+    renderCommunity();
+    toast(`Pinned ${r.package} ${r.version}: ${r.lock.length} requirement${r.lock.length === 1 ? '' : 's'}. Save to keep it.`, 'ok');
+  } catch (e) {
+    btn.textContent = was; btn.disabled = false;
+    toast(String(e.message || e), 'bad');
+  }
+}
+
+/** Store a picture under a name made from the row, and select it. */
+async function uploadCommunityImage(t, file) {
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace('jpeg', 'jpg');
+  const base = slugOf(t.slug || t.name) || 'image';
+  let name = `${base}.${ext}`;
+  for (let n = 2; (STATE.communityImages || []).includes(name); n++) name = `${base}-${n}.${ext}`;
+  try {
+    const data = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).split(',')[1]);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+    const r = await api('/api/community/image', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name, data }),
+    });
+    STATE.communityImages = r.images;
+    t.image = r.name;
+    renderCommunity();
+    toast(`Stored ${r.name}. It goes live with the list.`, 'ok');
+  } catch (e) {
+    toast(String(e.message || e), 'bad');
+  }
+}
+
 async function saveCommunity() {
+  const tools = recDraft.tools.map((t) => {
+    const { _md, _from, _toxes, _single, ...row } = t;
+    return row;
+  });
+  const writeups = recDraft.tools.filter((t) => t.slug).map((t) => ({
+    slug: t.slug, from: t._from || '', markdown: String(t._md || ''),
+  }));
   try {
     STATE = await api('/api/recommendations', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(recDraft),
+      body: JSON.stringify({ intro: recDraft.intro, tools, writeups }),
     });
     recDraft = null;
     $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>';
     renderList();
-    toast('Community list saved — publish it with upload.py --recommendations', 'ok');
+    toast('Community list and write-ups saved. Publish the list with upload.py --recommendations, the posts with the website', 'ok');
   } catch (e) {
     toast(String(e.message || e), 'bad');
   }

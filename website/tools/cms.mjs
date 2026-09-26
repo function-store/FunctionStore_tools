@@ -50,10 +50,146 @@ function writeRecommends(doc) {
   fs.writeFileSync(RECOMMENDS, JSON.stringify(doc, null, 1) + '\n');
 }
 
+// The website posts for those rows (docs/CommunityHighlights.md): one
+// Markdown file per slug, pictures beside them. A write-up whose row is
+// removed is moved to archive/, never deleted -- it may not be in git yet.
+const COMMUNITY = path.join(WEB, 'content', 'community');
+const COMMUNITY_IMAGES = path.join(COMMUNITY, 'images');
+const COMMUNITY_ARCHIVE = path.join(COMMUNITY, 'archive');
+const MAX_IMAGE = 8 * 1024 * 1024;
+
+function readWriteups() {
+  const out = {};
+  if (!fs.existsSync(COMMUNITY)) return out;
+  for (const f of fs.readdirSync(COMMUNITY).filter((x) => x.endsWith('.md'))) {
+    out[f.slice(0, -3)] = fs.readFileSync(path.join(COMMUNITY, f), 'utf8');
+  }
+  return out;
+}
+
+const communityImages = () => (fs.existsSync(COMMUNITY_IMAGES)
+  ? fs.readdirSync(COMMUNITY_IMAGES).filter((f) => REC_IMAGE.test(f)).sort() : []);
+
+/** Save the list and its write-ups as one step. Everything is checked
+ *  before anything is written: a slug with no write-up, a rename onto an
+ *  existing write-up, or an invalid row leaves every file as it was. */
+function saveCommunity(body) {
+  const doc = readRecommends();
+  const next = {
+    ...doc,
+    intro: String(body.intro ?? doc.intro ?? ''),
+    tools: Array.isArray(body.tools) ? body.tools : doc.tools,
+  };
+  const bad = validateRecommends(next);
+  const have = readWriteups();
+  const writeups = Array.isArray(body.writeups) ? body.writeups : [];
+  const bySlug = new Map(writeups.map((w) => [String(w.slug || ''), w]));
+  for (const t of next.tools) {
+    if (!t.slug) continue;
+    const w = bySlug.get(t.slug);
+    const text = w ? String(w.markdown || '') : have[t.slug];
+    if (!String(text || '').trim()) bad.push(`${t.name}: has a slug, so it needs a write-up (or clear the slug)`);
+  }
+  const renames = [];
+  for (const w of writeups) {
+    const slug = String(w.slug || '');
+    const from = String(w.from || '');
+    if (!REC_SLUG.test(slug)) { bad.push(`write-up slug "${slug}" is not lowercase words joined by hyphens`); continue; }
+    if (!next.tools.some((t) => t.slug === slug)) bad.push(`write-up "${slug}" has no row with that slug`);
+    if (from && from !== slug) {
+      if (have[slug] !== undefined && !writeups.some((x) => x.from === slug)) {
+        bad.push(`cannot rename "${from}" to "${slug}": a write-up with that slug already exists`);
+      }
+      renames.push([from, slug]);
+    }
+  }
+  if (bad.length) throw new Error(bad.join('; '));
+
+  writeRecommends(next);
+  fs.mkdirSync(COMMUNITY, { recursive: true });
+  const archive = (slug) => {
+    const src = path.join(COMMUNITY, `${slug}.md`);
+    if (!fs.existsSync(src)) return;
+    fs.mkdirSync(COMMUNITY_ARCHIVE, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    fs.renameSync(src, path.join(COMMUNITY_ARCHIVE, `${slug}.${stamp}.md`));
+  };
+  // A renamed write-up leaves its old file; the new text is written below.
+  for (const [from] of renames) {
+    if (!next.tools.some((t) => t.slug === from)) archive(from);
+  }
+  for (const w of writeups) {
+    const text = String(w.markdown || '');
+    if (!text.trim()) continue;
+    if (have[w.slug] === text) continue;
+    fs.writeFileSync(path.join(COMMUNITY, `${w.slug}.md`), text.endsWith('\n') ? text : `${text}\n`);
+  }
+  const slugs = new Set(next.tools.map((t) => t.slug).filter(Boolean));
+  for (const slug of Object.keys(readWriteups())) {
+    if (!slugs.has(slug)) archive(slug);
+  }
+}
+
+/** Store a picture for a post. The name is checked like a row's `image`,
+ *  and an existing file is never overwritten by accident. */
+function saveCommunityImage(body) {
+  const name = String(body.name || '').toLowerCase();
+  if (!REC_IMAGE.test(name)) throw new Error('name the image in lowercase words joined by hyphens, ending .png, .jpg, .webp or .gif');
+  const buf = Buffer.from(String(body.data || ''), 'base64');
+  if (!buf.length) throw new Error('the image is empty');
+  if (buf.length > MAX_IMAGE) throw new Error(`the image is ${(buf.length / 1048576).toFixed(1)} MB; keep it under 8 MB`);
+  const dst = path.join(COMMUNITY_IMAGES, name);
+  if (fs.existsSync(dst) && !body.replace) throw new Error(`${name} already exists`);
+  fs.mkdirSync(COMMUNITY_IMAGES, { recursive: true });
+  fs.writeFileSync(dst, buf);
+  return name;
+}
+
 const REC_FIELDS = ['name', 'author', 'author_url', 'url', 'description',
                     'category', 'note',
-                    'tox_url', 'sha256', 'bytes', 'pinned_at'];
+                    'tox_url', 'sha256', 'bytes', 'pinned_at',
+                    'slug', 'date', 'image', 'platform', 'author_license', 'tdp'];
 const HEX64 = /^[0-9a-f]{64}$/;
+const REC_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const REC_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const REC_IMAGE = /^[a-z0-9]+(?:-[a-z0-9]+)*\.(?:png|jpg|jpeg|webp|gif)$/;
+const REC_PLATFORMS = ['github', 'patreon', 'gumroad', 'itch', 'pypi', 'other'];
+const PYPI_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/;
+const PY_MODULE = /^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$/;
+const TOX_KEY = /^[A-Za-z_]\w*$/;
+const LOCK_LINE = /^([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)(?:\[[A-Za-z0-9,._-]+\])?==([A-Za-z0-9.+!_-]+)(?:\s*;\s*[A-Za-z0-9_ .'"=<>!~(),]+?)?(?:\s+--hash=sha256:[0-9a-f]{64})+$/;
+const pyCanon = (n) => String(n).replace(/[-_.]+/g, '-').toLowerCase();
+
+/** Mirror of recommendations.py _tdpProblems(). */
+function tdpProblems(where, t) {
+  if (!t || typeof t !== 'object' || Array.isArray(t)) return [`${where}: tdp must be an object`];
+  const out = [];
+  for (const f of Object.keys(t)) {
+    if (!['package', 'module', 'tox', 'lock', 'also'].includes(f)) out.push(`${where}: tdp has an unknown field \`${f}\``);
+  }
+  const also = t.also === undefined ? [] : t.also;
+  if (!Array.isArray(also) || !also.every((a) => PYPI_NAME.test(String(a).trim()))) {
+    out.push(`${where}: tdp.also must be a list of PyPI project names`);
+  }
+  const pkg = String(t.package || '').trim();
+  if (!PYPI_NAME.test(pkg)) out.push(`${where}: tdp.package must be a PyPI project name`);
+  if (!PY_MODULE.test(String(t.module || '').trim())) out.push(`${where}: tdp.module must be the importable module (tdpFoo)`);
+  if ('tox' in t && !TOX_KEY.test(String(t.tox || '').trim())) out.push(`${where}: tdp.tox must name one entry of the package's _ToxFiles`);
+  if (!Array.isArray(t.lock) || !t.lock.length) {
+    out.push(`${where}: tdp needs a lock -- every requirement at one version with its hash (use Pin)`);
+    return out;
+  }
+  const names = new Set();
+  for (const line of t.lock) {
+    const m = LOCK_LINE.exec(String(line).trim());
+    if (!m) { out.push(`${where}: tdp.lock line is not \`name==version --hash=sha256:...\``); continue; }
+    const n = pyCanon(m[1]);
+    if (names.has(n)) out.push(`${where}: tdp.lock names ${m[1]} twice`);
+    names.add(n);
+  }
+  if (pkg && !names.has(pyCanon(pkg))) out.push(`${where}: tdp.lock does not contain ${pkg} itself`);
+  return out;
+}
 
 /** Mirror of packaging/recommendations.py validate(). Kept in step by the
  *  test, not by hope -- the CMS must refuse the same rows the publisher
@@ -63,6 +199,7 @@ function validateRecommends(doc) {
   const tools = (doc && doc.tools) || [];
   if (!Array.isArray(tools)) return ['`tools` must be a list'];
   const seen = new Map();
+  const slugs = new Map();
   tools.forEach((row, i) => {
     const where = row && row.name ? `tools[${i}] (${row.name})` : `tools[${i}]`;
     if (!row || typeof row !== 'object') { bad.push(`${where} is not an object`); return; }
@@ -88,6 +225,20 @@ function validateRecommends(doc) {
       else if (!HEX64.test(sha)) bad.push(`${where}: sha256 must be 64 lowercase hex characters`);
       if (!Number.isInteger(row.bytes) || row.bytes <= 0) bad.push(`${where}: bytes must be a positive integer`);
     }
+    if ('tdp' in row) {
+      bad.push(...tdpProblems(where, row.tdp));
+      if (String(row.tox_url || '').trim()) bad.push(`${where}: a row is a tox or a tdp package, not both`);
+    }
+    const slug = String(row.slug || '').trim();
+    if ('slug' in row && !REC_SLUG.test(slug)) bad.push(`${where}: slug must be lowercase words joined by hyphens`);
+    else if (slug) {
+      if (slugs.has(slug)) bad.push(`${where}: slug ${slug} is also tools[${slugs.get(slug)}]`);
+      slugs.set(slug, i);
+    }
+    if ('date' in row && !REC_DATE.test(String(row.date || ''))) bad.push(`${where}: date must be YYYY-MM-DD`);
+    if ('image' in row && !REC_IMAGE.test(String(row.image || ''))) bad.push(`${where}: image must be a file name in website/content/community/images`);
+    if ('platform' in row && !REC_PLATFORMS.includes(row.platform)) bad.push(`${where}: platform must be one of ${REC_PLATFORMS.join(', ')}`);
+    if (String(row.author_license || '').length > 200) bad.push(`${where}: author_license is over 200 characters; link to it instead`);
     if (String(row.description || '').length > 400) {
       bad.push(`${where}: description is over 400 characters`);
     }
@@ -447,6 +598,8 @@ function state() {
   const rec = readRecommends();
   return {
     recommendations: { intro: rec.intro || '', tools: rec.tools || [] },
+    communityWriteups: readWriteups(),
+    communityImages: communityImages(),
     categories: cat.categories,
     categoryMeta: cat.categories.map((c) => ({
       name: c,
@@ -490,6 +643,30 @@ async function tdBase() {
   return found;
 }
 
+/** Pin a tdp package with packaging/tdp_pin.py: the newest release, its
+ *  module and toxes read from the wheel, the full hashed lock, refused when
+ *  it names a package TouchDesigner ships. */
+function pinTdp(pkg, also) {
+  return new Promise((resolve, reject) => {
+    const args = [path.join(REPO, 'packaging', 'tdp_pin.py'), pkg, '--json'];
+    for (const a of also) args.push('--also', a);
+    const child = spawn(PYTHON, args, { cwd: REPO });
+    let out = '';
+    let err = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { err += d; });
+    child.on('error', (e) => reject(e));
+    child.on('close', () => {
+      try {
+        const r = JSON.parse(out.trim().split('\n').pop());
+        if (r.error) reject(new Error(r.error)); else resolve(r);
+      } catch (e) {
+        reject(new Error((err || out || 'tdp_pin.py gave no answer').trim().slice(-600)));
+      }
+    });
+  });
+}
+
 function runBuild() {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [path.join(HERE, 'build-site.mjs')], {
@@ -508,7 +685,8 @@ function runBuild() {
 const MIME = {
   '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8', '.json': 'application/json',
-  '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
+  '.gif': 'image/gif', '.svg': 'image/svg+xml',
   '.woff2': 'font/woff2', '.ico': 'image/x-icon',
 };
 
@@ -527,7 +705,7 @@ function readBody(req) {
     let data = '';
     req.on('data', (c) => {
       data += c;
-      if (data.length > 4e6) reject(new Error('body too large'));
+      if (data.length > 12e6) reject(new Error('body too large'));
     });
     req.on('end', () => {
       try { resolve(data ? JSON.parse(data) : {}); } catch (e) { reject(e); }
@@ -615,18 +793,48 @@ const server = http.createServer(async (req, res) => {
       }
     }
 
-    if (p === '/api/recommendations' && req.method === 'PUT') {
+    if (p === '/api/pin-tdp' && req.method === 'POST') {
       const body = await readBody(req);
-      const doc = readRecommends();
-      const next = {
-        ...doc,
-        intro: String(body.intro ?? doc.intro ?? ''),
-        tools: Array.isArray(body.tools) ? body.tools : doc.tools,
-      };
-      const bad = validateRecommends(next);
-      if (bad.length) return json(res, 400, { error: bad.join('; ') });
-      writeRecommends(next);
+      const pkg = String(body.package || '').trim();
+      const also = (Array.isArray(body.also) ? body.also : []).map((a) => String(a).trim()).filter(Boolean);
+      if (!PYPI_NAME.test(pkg) || !also.every((a) => PYPI_NAME.test(a))) {
+        return json(res, 400, { error: 'give PyPI project names (letters, digits, - _ .)' });
+      }
+      try {
+        return json(res, 200, await pinTdp(pkg, also));
+      } catch (e) {
+        return json(res, 400, { error: e.message });
+      }
+    }
+
+    if (p === '/api/recommendations' && req.method === 'PUT') {
+      try {
+        saveCommunity(await readBody(req));
+      } catch (e) {
+        return json(res, 400, { error: e.message });
+      }
       return json(res, 200, state());
+    }
+
+    if (p === '/api/community/image' && req.method === 'POST') {
+      try {
+        const name = saveCommunityImage(await readBody(req));
+        return json(res, 200, { name, images: communityImages() });
+      } catch (e) {
+        return json(res, 400, { error: e.message });
+      }
+    }
+
+    if (p.startsWith('/community/images/') && req.method === 'GET') {
+      // the editor's preview of a picture before the site is built
+      const name = decodeURIComponent(p.slice('/community/images/'.length));
+      const full = path.join(COMMUNITY_IMAGES, name);
+      if (!REC_IMAGE.test(name) || !fs.existsSync(full)) {
+        res.writeHead(404, { 'content-type': 'text/plain' });
+        return res.end('not found');
+      }
+      res.writeHead(200, { 'content-type': MIME[path.extname(full).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-store' });
+      return fs.createReadStream(full).pipe(res);
     }
 
     if (p === '/api/render' && req.method === 'POST') {

@@ -148,10 +148,23 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
    page, and the eye had nowhere to land. */
 .card.on { border-color: var(--border-strong); background: var(--bg-2); }
 .card.on .name { color: var(--text); }
-.card.rec { cursor: pointer; text-decoration: none; }
+.card.rec { cursor: default; text-decoration: none; }
 .card.rec:hover { border-color: var(--accent); }
+.card.rec .name a { color: inherit; text-decoration: none; }
+.card.rec .name a:hover { color: var(--accent); }
+a.chip.rec { text-decoration: none; color: inherit; }
 .rec-by { font-size: 12px; opacity: .75; }
 .chip.rec { border-style: dashed; }
+/* an action on a card that is not its selection: Place, Install */
+.chip.placebtn {
+  cursor: pointer; font-family: inherit;
+  background: transparent; border-style: dashed; color: var(--text-dim);
+}
+.chip.placebtn:hover { border-color: var(--accent); color: var(--accent); }
+.chip.placebtn.on {
+  border-style: solid; border-color: rgba(251,191,36,0.4);
+  background: var(--accent-dim); color: var(--accent);
+}
 .card.core { cursor: default; }
 .card.core:hover { border-color: var(--border); background: var(--bg-1); }
 /* A MINOR tool: a small convenience that should not compete for attention

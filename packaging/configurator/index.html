@@ -166,10 +166,23 @@ input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
    page, and the eye had nowhere to land. */
 .card.on { border-color: var(--border-strong); background: var(--bg-2); }
 .card.on .name { color: var(--text); }
-.card.rec { cursor: pointer; text-decoration: none; }
+.card.rec { cursor: default; text-decoration: none; }
 .card.rec:hover { border-color: var(--accent); }
+.card.rec .name a { color: inherit; text-decoration: none; }
+.card.rec .name a:hover { color: var(--accent); }
+a.chip.rec { text-decoration: none; color: inherit; }
 .rec-by { font-size: 12px; opacity: .75; }
 .chip.rec { border-style: dashed; }
+/* an action on a card that is not its selection: Place, Install */
+.chip.placebtn {
+  cursor: pointer; font-family: inherit;
+  background: transparent; border-style: dashed; color: var(--text-dim);
+}
+.chip.placebtn:hover { border-color: var(--accent); color: var(--accent); }
+.chip.placebtn.on {
+  border-style: solid; border-color: rgba(251,191,36,0.4);
+  background: var(--accent-dim); color: var(--accent);
+}
 .card.core { cursor: default; }
 .card.core:hover { border-color: var(--border); background: var(--bg-1); }
 /* A MINOR tool: a small convenience that should not compete for attention
@@ -555,6 +568,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   .famopt { display: inline-flex; align-items: center; gap: 6px; font-size: 13px;
     color: var(--text-dim); cursor: pointer; white-space: nowrap; }
   .famopt input { margin: 0; accent-color: var(--accent); }
+  .bar-filters .fold-all.in-filters { margin-left: auto; gap: 4px; }
+  .bar-filters .fold-all.in-filters .btn { padding: 3px 9px; font-size: 12px; }
   body.app .bar-act .famopt { font-size: 12px; }
   html { scroll-padding-top: calc(var(--stick) + 72px); scroll-behavior: smooth; }
   body {
@@ -599,10 +614,16 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
      narrow panel; the action then keeps to the right end of the second */
   body.app .cfg-bar .bar-act { flex: 0 0 auto; white-space: nowrap; margin-left: auto; }
   body.app .seg button, body.app .tog { padding: 4px 9px; font-size: 12px; }
-  /* Inside the manager the category rail stays a chip row at every width:
-     the side-rail layout the site uses past 1000px spends a 212px column
-     on seven chips and leaves it empty below them, and the cards need
-     that width more. Expand/Collapse ride the row's end as quiet links. */
+  /* Inside the manager the categories are a side rail like the site's once
+     the panel is wide enough (owner, 2026-09-26: twelve categories took two
+     chip rows above the tools), a little narrower than the site's. Below
+     1000px they stay a chip row: the cards need the width more. The
+     console's own browser is 1040px wide by default. */
+  @media (min-width: 1000px) {
+    body.app .layout { grid-template-columns: 184px minmax(0, 1fr); gap: 20px; }
+    body.app .layout > .catnav a { padding: 5px 9px; font-size: 12.5px; }
+  }
+  @media (max-width: 999px) {
   body.app .layout { display: block; }
   body.app .layout > .catnav {
     position: static; display: flex; flex-direction: row; flex-wrap: wrap;
@@ -622,6 +643,8 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     padding: 2px 6px; font-size: 12px; color: var(--text-dim);
   }
   body.app .layout > .catnav .fold-all .btn:hover { color: var(--text); border-color: var(--border); }
+  body.app .nav-gap { display: inline-block; width: 10px; height: auto; }
+  }
   .bar-docs { font-size: 13px; color: var(--text-dim); white-space: nowrap; }
   .bar-docs:hover { color: var(--accent); }
 
@@ -630,15 +653,12 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   /* Place (docs/PlaceOnce.md): a button, not a label -- in this project only.
      A placed card is lifted like a ticked one, with a dashed edge so "here,
      but not in my setup" never reads as ticked. */
-  .chip.placebtn {
-    cursor: pointer; font-family: inherit;
-    background: transparent; border-style: dashed; color: var(--text-dim);
-  }
-  .chip.placebtn:hover { border-color: var(--accent); color: var(--accent); }
-  .chip.placebtn.on {
-    border-style: solid; border-color: rgba(251,191,36,0.4);
-    background: var(--accent-dim); color: var(--accent);
-  }
+  /* Place sits in the card's bottom-right corner */
+  /* the card aligns its children to the top, so the body is stretched to
+     the full card height for the corner to be the same on every card */
+  .body.has-foot { display: flex; flex-direction: column; align-self: stretch; }
+  .card-foot { margin-top: auto; padding-top: 8px; display: flex; justify-content: flex-end; }
+  .community-pointer { margin: 22px 0 8px; color: var(--text-dim); font-size: 13px; }
   .card.placed { border-style: dashed; border-color: var(--border-strong); background: var(--bg-2); }
 
   /* ── the filter deck: search, access, selected, new ── */
@@ -728,19 +748,11 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   .tier-div .sub { color: var(--text-faint); }
   .cat-body .tier-div + .grid { margin-top: 0; }
   .catnav a.none { opacity: .4; pointer-events: none; }
-  /* the two groups of categories (category_meta.group) */
-  .grp-head {
-    margin: 26px 0 2px; font-size: 12px; font-weight: 700; letter-spacing: .08em;
-    text-transform: uppercase; color: var(--text-faint);
-  }
-  #list > .grp-head:first-child { margin-top: 6px; }
-  .nav-grp {
-    display: block; margin: 12px 0 4px; padding: 0 11px; font-size: 10.5px; font-weight: 700;
-    letter-spacing: .08em; text-transform: uppercase; color: var(--text-faint);
-  }
-  .catnav > .nav-grp:first-child { margin-top: 0; }
-  @media (max-width: 999px) { .nav-grp { display: none; } }
-  body.app .nav-grp { display: none; }
+  /* the two groups of categories (category_meta.group): a gap between
+     them, no heading (owner, 2026-09-26) */
+  .grp-gap { height: 0; margin: 22px 0 6px; border-top: 1px solid var(--border); }
+  .nav-gap { display: block; height: 10px; }
+  @media (max-width: 999px) { .nav-gap { display: inline-block; width: 10px; height: auto; } }
   /* the deck is two rows now: the rail and the jump targets clear it */
   html { scroll-padding-top: calc(var(--stick) + 140px); }
   @media (min-width: 1000px) {
@@ -1126,6 +1138,205 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     return node;
   };
 })();
+
+/* Tools by other creators (docs/CommunityHighlights.md): the card and its
+   actions, shared by the console's Community view and anything else that
+   lists them. window.fnsCommunity.card(row, {served}) builds one card;
+   .load({url, served}, cb) fetches the list. A card is never selectable:
+   nothing here enters an install plan. Served inside TouchDesigner, a
+   pinned tox gets Place and a locked Python package gets Install, both
+   answered through the installer's /community/* routes; links open in the
+   system browser through /open (a Web Render ignores target=_blank). */
+(function () {
+  if (window.fnsCommunity) return;
+  var SITE = 'https://functionstore.tools';
+  var PLATFORM = {github: 'on GitHub', patreon: 'on Patreon', gumroad: 'on Gumroad',
+                  itch: 'on itch.io', pypi: 'on PyPI'};
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function pinned(r) { return !!(r && r.tox_url && /^[0-9a-f]{64}$/.test(String(r.sha256 || ''))); }
+  function locked(r) { return !!(r && r.tdp && r.tdp.package && Array.isArray(r.tdp.lock) && r.tdp.lock.length); }
+  function postUrl(r) { return r.slug ? SITE + '/community/' + encodeURIComponent(r.slug) + '/' : ''; }
+  function json(url, body) {
+    var o = body === undefined ? {cache: 'no-store'}
+      : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)};
+    return fetch(url, o).then(function (x) { return x.json(); });
+  }
+
+  function link(href, text, cls, served) {
+    var a = el('a', cls || 'chip rec', text);
+    a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    if (served) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        json('/open', {url: href}).catch(function () {});
+      });
+    }
+    return a;
+  }
+
+  function failed(btn, e, text) {
+    btn.disabled = false;
+    btn.textContent = text;
+    btn.setAttribute('data-tip', String(e && e.message || e));
+  }
+
+  /** Follow the updater's answer for this tool until placed or failed. */
+  function follow(r, btn, maxTries, doneText) {
+    var tries = 0;
+    (function poll() {
+      tries++;
+      json('/community/place').then(function (st) {
+        if (st.name === r.name && st.state === 'placed') {
+          btn.textContent = doneText;
+          btn.setAttribute('data-tip', 'Placed at ' + st.placed + '. Yours to keep: FNSTools never updates it.'
+            + (st.note ? ' ' + st.note : ''));
+          btn.disabled = false;
+        } else if (st.name === r.name && (st.state === 'failed' || st.state === 'noenv')) {
+          throw new Error(st.why);
+        } else if (tries < maxTries) {
+          setTimeout(poll, 1000);
+        } else {
+          throw new Error('no answer yet; check the Textport');
+        }
+      }).catch(function (e) { failed(btn, e, 'failed · retry'); });
+    })();
+  }
+
+  function place(r, btn) {
+    btn.disabled = true;
+    btn.textContent = 'placing…';
+    json('/community/place', {name: r.name}).then(function (a) {
+      if (!a.ok) throw new Error(a.why || 'could not place it');
+      follow(r, btn, 90, 'placed ✓');
+    }).catch(function (e) { failed(btn, e, 'place failed · retry'); });
+  }
+
+  function install(r, btn) {
+    btn.disabled = true;
+    btn.textContent = 'installing…';
+    json('/community/install', {name: r.name}).then(function (a) {
+      if (a.noenv) return offerEnv(btn, a.env || {});
+      if (!a.ok) throw new Error(a.why || 'could not install it');
+      follow(r, btn, 600, 'installed and placed ✓');
+    }).catch(function (e) { failed(btn, e, 'install failed · retry'); });
+  }
+
+  /** No Python environment: offer TouchDesigner's own manager, which shows
+   *  Derivative's disclaimer before it creates one. */
+  function offerEnv(btn, env) {
+    btn.disabled = false;
+    if (env.state === 'creating') {
+      btn.textContent = 'Python environment is being set up · try again';
+      btn.setAttribute('data-tip', env.status || 'TouchDesigner is creating the environment.');
+      return;
+    }
+    btn.textContent = 'set up a Python environment first';
+    btn.setAttribute('data-tip', 'This project has no Python environment for packages yet. This opens '
+      + "TouchDesigner's own environment manager, which asks for your OK (Derivative's disclaimer) "
+      + 'and creates .venv beside your project. Then press Install again.');
+    btn.onclick = function (e) {
+      e.preventDefault(); e.stopPropagation();
+      btn.onclick = null;
+      btn.disabled = true;
+      btn.textContent = 'answer the dialog in TouchDesigner…';
+      json('/community/pyenv', {}).catch(function () {});
+      var tries = 0;
+      (function poll() {
+        tries++;
+        json('/community/pyenv').then(function (st) {
+          if (st.state === 'ready') {
+            btn.disabled = false;
+            btn.textContent = 'environment ready · install';
+            btn.setAttribute('data-tip', 'Python environment at ' + st.env);
+          } else if (st.state === 'error') {
+            failed(btn, new Error(st.status || 'the environment could not be created'), 'environment failed');
+          } else if (tries < 240) {
+            setTimeout(poll, 1500);
+          } else {
+            failed(btn, new Error('no environment yet'), 'no environment · retry');
+          }
+        }).catch(function (e) { failed(btn, e, 'environment failed'); });
+      })();
+    };
+  }
+
+  function actionButton(text, tip, run) {
+    var b = el('button', 'chip placebtn', text);
+    b.type = 'button';
+    b.setAttribute('data-tip', tip);
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (!b.disabled && !b.onclick) run(b);
+    });
+    return b;
+  }
+
+  /** One card. The author is named on it: we are pointing, not shipping. */
+  function card(r, opts) {
+    var served = !!(opts && opts.served);
+    var c = el('div', 'card rec');
+    var body = el('div', 'body');
+    var n = el('div', 'name');
+    var post = postUrl(r);
+    if (post) n.appendChild(link(post, r.name, 'post', served));
+    else n.textContent = r.name;
+    body.appendChild(n);
+    if (r.author) body.appendChild(el('div', 'rec-by', 'by ' + r.author));
+    if (r.description) body.appendChild(el('div', 'desc', r.description));
+    var chips = el('div', 'chips');
+    if (post) chips.appendChild(link(post, 'our write-up ↗', null, served));
+    chips.appendChild(link(r.url, (PLATFORM[r.platform] || 'their site') + ' ↗', null, served));
+    if (served && pinned(r)) {
+      chips.appendChild(actionButton('place in this project',
+        'Downloads the exact file we checked into the network you are working in. '
+        + 'If the author has changed it since, nothing is placed. FNSTools never updates it.',
+        function (b) { place(r, b); }));
+    }
+    if (locked(r)) {
+      if (served) {
+        chips.appendChild(actionButton('install in this project',
+          'A Python package (' + r.tdp.package + '). Installs the exact versions we checked into this '
+          + "project's Python environment, then places the tool in the network you are working in. "
+          + 'FNSTools never updates it.',
+          function (b) { install(r, b); }));
+      } else {
+        chips.appendChild(el('span', 'chip rec', 'Python package'));
+      }
+    }
+    body.appendChild(chips);
+    c.appendChild(body);
+    return c;
+  }
+
+  /** Fetch the list: {intro, tools}. Served, the installer answers `retry`
+   *  while its store copy is being refreshed. Rows without a name or an
+   *  https link are dropped, whatever the file says. */
+  function load(opts, cb) {
+    var tries = 0;
+    (function ask() {
+      tries++;
+      fetch(opts.url, {cache: 'no-store'})
+        .then(function (x) { return x.ok ? x.json() : null; })
+        .then(function (doc) {
+          if (!doc) return cb(null);
+          if (opts.served && doc.retry && tries < 8) setTimeout(ask, 3000);
+          var tools = (Array.isArray(doc.tools) ? doc.tools : []).filter(function (t) {
+            return t && t.name && String(t.url || '').indexOf('https://') === 0;
+          });
+          cb({intro: String(doc.intro || ''), tools: tools});
+        })
+        .catch(function () { cb(null); });
+    })();
+  }
+
+  window.fnsCommunity = {card: card, load: load, pinned: pinned, locked: locked, SITE: SITE};
+})();
 /* FNS:UIBASEJS:END */
 </script>
 <script>
@@ -1364,16 +1575,6 @@ function fnsBoot() {
     'Your saved tool settings re-apply over installs and updates. '));
   note.appendChild(docsLink(FNS_DOCS + '/docs/fns-configregistry/',
                             'How settings persistence works ↗'));
-  if (locked) {
-    var lockEl = document.createElement('div');
-    lockEl.className = 'note';
-    lockEl.style.borderColor = 'rgba(253,186,116,0.5)';
-    var lb = document.createElement('b');
-    lb.textContent = 'Installing is locked here. ';
-    lockEl.appendChild(lb);
-    lockEl.appendChild(document.createTextNode(locked));
-    note.parentNode.insertBefore(lockEl, note);
-  }
 
   // who lights up when this package is present (reverse integrations)
   var enhances = {};
@@ -1819,9 +2020,12 @@ function fnsBoot() {
       chips.appendChild(pc);
     }
     // Place: into this project only, never carried into the next one.
-    // The tick stays the way to have it in every project.
+    // The tick stays the way to have it in every project. It sits in the
+    // card's bottom-right corner, apart from the chips that describe the
+    // tool (owner, 2026-09-26).
+    var pb = null;
     if (placeable(p) && !on) {
-      var pb = document.createElement('button');
+      pb = document.createElement('button');
       pb.type = 'button';
       pb.className = 'chip placebtn' + (placed ? ' on' : '');
       pb.textContent = placed
@@ -1839,7 +2043,6 @@ function fnsBoot() {
           askPatreon([p.name], function () { placing.delete(p.name); render(); });
         }
       });
-      chips.appendChild(pb);
     }
     // a pane-placed package is a reusable component: it spawns into the
     // network you are working in, not into the toolkit container
@@ -1877,6 +2080,13 @@ function fnsBoot() {
       }
     });
     if (chips.children.length) body.appendChild(chips);
+    if (pb) {
+      var foot = document.createElement('div');
+      foot.className = 'card-foot';
+      foot.appendChild(pb);
+      body.appendChild(foot);
+      body.classList.add('has-foot');
+    }
 
     el.appendChild(cb); el.appendChild(body);
     return el;
@@ -1894,39 +2104,25 @@ function fnsBoot() {
     return c;
   }
 
-  /** A tool by someone else. Deliberately NOT a .card: no checkbox, no
-   *  selected state, nothing that can end up in the install plan. The
-   *  author is named ON the card because that is the honest framing --
-   *  we are pointing, not shipping. */
-  function recCard(r) {
-    var el = document.createElement('a');
-    el.className = 'card rec';
-    el.href = r.url;
-    el.target = '_blank';
-    el.rel = 'noopener noreferrer';
-    var body = document.createElement('div');
-    body.className = 'body';
-    var n = document.createElement('div');
-    n.className = 'name';
-    n.appendChild(document.createTextNode(r.name));
-    body.appendChild(n);
-    if (r.author) {
-      var by = document.createElement('div');
-      by.className = 'rec-by';
-      by.textContent = 'by ' + r.author;
-      body.appendChild(by);
-    }
-    if (r.description) {
-      var d = document.createElement('div');
-      d.className = 'desc'; d.textContent = r.description;
-      body.appendChild(d);
-    }
-    var chips = document.createElement('div');
-    chips.className = 'chips';
-    chips.appendChild(chip('opens their site ↗', 'rec'));
-    body.appendChild(chips);
-    el.appendChild(body);
-    return el;
+  /** The one line that says where tools by other creators are. In the
+   *  console it switches to the Community view; elsewhere it opens the
+   *  site's /community/ (in the system browser when served in TD). */
+  function communityPointer(n) {
+    var p = document.createElement('div');
+    p.className = 'community-pointer';
+    p.appendChild(document.createTextNode(n + ' tool' + (n === 1 ? '' : 's') + ' by other creators: '));
+    var a = document.createElement('a');
+    var inConsole = FNS_EMBEDDED && window.parent !== window;
+    a.href = FNS_DOCS + '/community/';
+    a.textContent = inConsole ? 'open Community' : 'see them on the website ↗';
+    if (!inConsole) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+    a.addEventListener('click', function (e) {
+      if (!inConsole) return;
+      e.preventDefault();
+      window.parent.postMessage('fns:community', '*');
+    });
+    p.appendChild(a);
+    return p;
   }
 
   /** Fetched at RUNTIME, not baked into the manifest: the list publishes on
@@ -2213,19 +2409,19 @@ function fnsBoot() {
 
     // Categories fall in two groups (catalog `category_meta.<cat>.group`):
     // the tools that change how TouchDesigner works, and what you build
-    // the piece with. A heading opens each group, drawn only when one of
-    // its sections is shown.
+    // the piece with. The groups keep their order and a gap divides them;
+    // no heading names them (owner, 2026-09-26).
     var lastGroup = null;
     cats.forEach(function (cat) {
       if (cat === 'Core') return;
       var items = tools.filter(function (p) { return p.category === cat && match(p); });
       if (!items.length) return;
       var grp = metaOf(cat).group || '';
-      if (grp && grp !== lastGroup) {
-        var gh = document.createElement('h2');
-        gh.className = 'grp-head';
-        gh.textContent = grp;
-        listEl.appendChild(gh);
+      if (grp && grp !== lastGroup && lastGroup !== null) {
+        var gap = document.createElement('div');
+        gap.className = 'grp-gap';
+        gap.setAttribute('aria-hidden', 'true');
+        listEl.appendChild(gap);
       }
       lastGroup = grp;
       shown += items.length;
@@ -2239,23 +2435,11 @@ function fnsBoot() {
     });
     shownTools = visible;
 
-    // Tools by OTHER creators. Rendered LAST and never selectable: these are
-    // links to someone else's download page, not packages. Nothing here
-    // enters `picked`, so the install plan cannot see them.
-    var recs = (narrowed() ? [] : (window.FNS_RECOMMENDS || [])).filter(function (r) {
-      if (!q) return true;
-      return (r.name + ' ' + (r.author || '') + ' ' + (r.description || ''))
-        .toLowerCase().indexOf(q) !== -1;
-    });
-    if (recs.length) {
-      shown += recs.length;
-      var gr = document.createElement('div');
-      gr.className = 'grid';
-      recs.forEach(function (r) { gr.appendChild(recCard(r)); });
-      listEl.appendChild(section('From other creators',
-        recs.length + ' link' + (recs.length === 1 ? '' : 's'), [gr],
-        filtering ? true : undefined));
-    }
+    // Tools by OTHER creators live in their own place (the console's
+    // Community view, the site's /community/), never among ours: here they
+    // are one line pointing there (docs/CommunityHighlights.md).
+    var recs = narrowed() || filtering ? [] : (window.FNS_RECOMMENDS || []);
+    if (recs.length) listEl.appendChild(communityPointer(recs.length));
 
     // Core, last and quiet: plumbing that installs with any selection.
     // Nobody picks it, so it is a folded footnote, not a section a
@@ -2306,11 +2490,14 @@ function fnsBoot() {
     // Plus pick that waits for an upgrade, a component that lands in the
     // user's own network.
     var notes = [];
-    if (need.size) notes.push('+ ' + need.size + ' core');
+    // core rides the count's tooltip: it installs with anything and
+    // needs no decision, so it does not earn words on the bar
+    document.getElementById('traybtn').setAttribute('data-tip', 'See and edit everything you picked'
+      + (need.size ? ' (plus ' + need.size + ' core, installed with any selection)' : ''));
     if (removals) notes.push(removals + ' to remove');
     // Said here rather than by refusing the tick: entitlement is the
     // server's answer, and this page has not asked it.
-    if (plusLocked) notes.push(plusLocked + ' locked (Patreon)');
+    if (plusLocked) notes.push(plusLocked + ' need Patreon');
     if (paneSel) notes.push(paneSel + (paneSel === 1 ? ' spawns' : ' spawn') + ' into your network');
     if (toPlace) notes.push(toPlace + ' placed in this project only');
     var famMember = companions.length > 0 && memberPicked();
@@ -2323,6 +2510,7 @@ function fnsBoot() {
     var save = document.getElementById('save');
     if (served && locked) {
       save.textContent = 'Locked (source checkout)';
+      save.setAttribute('data-tip', locked);
       save.disabled = true;
     } else if (served) {
       save.textContent = (removals || famGoes) ? 'Apply changes…' : 'Review install…';
@@ -2381,8 +2569,10 @@ function fnsBoot() {
     var kind = view.access === 'free' ? 'free ' : (view.access === 'plus' ? 'Patreon ' : '');
     var what = (view.fresh ? 'new ' : '') + kind + (n === 1 ? 'tool' : 'tools')
       + (view.once ? ' you can place' : '');
+    // Unfiltered, the list needs no caption ("All 68 tools" told nobody
+    // anything, owner 2026-09-26); a search or a filter says what it kept.
     var text = (!q && !narrowed())
-      ? 'All ' + n + ' tools'
+      ? ''
       : n + ' ' + what + (view.sel ? ' you picked' : '') + (q ? ' matching \u201c' + q + '\u201d' : '');
     document.getElementById('restext').textContent = text;
 
@@ -4005,11 +4195,11 @@ function fnsBoot() {
       var n = tools.filter(function (p) { return p.category === cat; }).length;
       if (!n) return;
       var ng = metaOf(cat).group || '';
-      if (ng && ng !== navGroup) {
-        var nl = document.createElement('span');
-        nl.className = 'nav-grp';
-        nl.textContent = ng;
-        nav.appendChild(nl);
+      if (ng && ng !== navGroup && navGroup !== null) {
+        var ngap = document.createElement('span');
+        ngap.className = 'nav-gap';
+        ngap.setAttribute('aria-hidden', 'true');
+        nav.appendChild(ngap);
       }
       navGroup = ng;
       var a = document.createElement('a');
@@ -4043,7 +4233,9 @@ function fnsBoot() {
       b.addEventListener('click', function () { setAllOpen(f[1]); });
       fold.appendChild(b);
     });
-    nav.appendChild(fold);
+    var filterRow = FNS_EMBEDDED && document.querySelector('.bar-filters');
+    if (filterRow) { fold.classList.add('in-filters'); filterRow.appendChild(fold); }
+    else nav.appendChild(fold);
     updateNav();
   })();
   // The Plus rail: name what Plus IS, once, quietly. The free tools are
@@ -4083,6 +4275,45 @@ function fnsBoot() {
     if (seg && plus.length < tools.length) seg.hidden = false;
   })();
 
+  /** Inside the console the Patreon line is one line, and only when
+   *  something needs doing: signed out, the link lost, or an account that
+   *  unlocks none of these. It says which, offers the one action that
+   *  fixes it, and links the explanation. An account that unlocks what it
+   *  should shows nothing (owner, 2026-09-26). */
+  function compactPatreonLine(rail) {
+    var plus = tools.filter(isPlus);
+    var n = account ? (account.products || []).filter(function (x) { return byName[x]; }).length : 0;
+    var state = !plus.length || !hasAuthRail ? 'none-here'
+      : !account ? 'out' : account.connected === false ? 'lost' : !n ? 'empty' : 'ok';
+    if (state === 'none-here' || state === 'ok') { rail.hidden = true; return; }
+    rail.textContent = '';
+    rail.removeAttribute('data-tip');
+    var mark = document.createElement('span');
+    mark.className = 'mark';
+    mark.setAttribute('aria-hidden', 'true');
+    mark.textContent = '◆';
+    rail.appendChild(mark);
+    var b = document.createElement('b');
+    b.textContent = 'Patreon:';
+    rail.appendChild(b);
+    rail.appendChild(document.createTextNode(' ' + (
+      state === 'out' ? plus.length + ' tools unlock with a membership; you are not signed in'
+      : state === 'lost' ? 'the link to your account was lost'
+      : 'your account unlocks none of the ' + plus.length + ' Patreon tools')));
+    var keep = state === 'empty' ? ['recheck', 'support', 'redeem'] : ['signin', 'redeem'];
+    keep.forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el || el.hidden) return;
+      var wrap = document.createElement('span');
+      wrap.className = 'rail-acc';
+      wrap.appendChild(document.createTextNode(' · '));
+      wrap.appendChild(el);
+      rail.appendChild(wrap);
+    });
+    rail.appendChild(document.createTextNode(' · '));
+    rail.appendChild(docsLink(FNS_DOCS + '/patreon/', 'How unlocking works ↗'));
+  }
+
   if (FNS_EMBEDDED) {
     // Inside the manager the action goes where the eye starts: the count
     // and the install button move into the toolbar's right end, the spot
@@ -4107,17 +4338,7 @@ function fnsBoot() {
       act.appendChild(document.getElementById('famopt'));
       act.appendChild(document.getElementById('save'));
       (bar.querySelector('.bar-find') || bar).appendChild(act);
-      if (rail) {
-        ['acct', 'support', 'recheck', 'signin', 'redeem'].forEach(function (id) {
-          var el = document.getElementById(id);
-          if (!el) return;
-          var wrap = document.createElement('span');
-          wrap.className = 'rail-acc';
-          wrap.appendChild(document.createTextNode(' · '));
-          wrap.appendChild(el);
-          rail.appendChild(wrap);
-        });
-      }
+      if (rail) compactPatreonLine(rail);
       sum.remove();
     }
   }

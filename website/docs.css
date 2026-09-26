@@ -766,3 +766,33 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
 .side-access-detail { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 5; padding: 10px 12px; background: var(--bg-2); border: 1px solid var(--border-strong); border-radius: 3px; color: var(--text); font-size: 12px; font-weight: 400; line-height: 1.5; box-shadow: 0 4px 12px #0006; }
 .side-tool:hover .side-access-detail, .side-tool:focus-within .side-access-detail { display: block; }
 .side-tool > a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ───── /community/ — other creators' tools (build-site.mjs) ───── */
+.cm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin: 28px 0; }
+.cm-card {
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--bg-1);
+  color: var(--text); transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cm-card:hover { border-color: var(--border-strong); background: var(--bg-2); color: var(--text); }
+.cm-card-img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--bg-deep); border-bottom: 1px solid var(--border); }
+.cm-card-body { display: block; padding: 18px 20px 20px; }
+.cm-kind { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.cm-name { display: block; font-size: 19px; font-weight: 700; letter-spacing: -0.015em; margin: 8px 0 2px; }
+.cm-card:hover .cm-name { color: var(--accent); }
+.cm-by { display: block; font-size: 13.5px; color: var(--text-dim); margin-bottom: 10px; }
+.cm-pitch { display: block; font-size: 14.5px; color: var(--text-dim); line-height: 1.55; }
+.cm-empty { color: var(--text-faint); }
+.cm-byline { color: var(--text-dim); margin: -4px 0 24px; }
+.cm-hero { display: block; width: 100%; border-radius: 12px; border: 1px solid var(--border); margin: 0 0 24px; }
+.cm-credit { border: 1px solid var(--border); border-radius: 14px; background: var(--bg-1); padding: 20px 22px; margin: 0 0 36px; }
+.cm-credit dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0 0 14px; font-size: 14.5px; }
+.cm-credit dt { color: var(--text-faint); }
+.cm-credit dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.cm-faint { color: var(--text-faint); font-size: 13px; }
+.cm-disclaimer { color: var(--text-dim); font-size: 14px; margin: 0 0 16px; }
+.cm-back { margin-top: 48px; }
+@media (max-width: 560px) {
+  .cm-credit dl { grid-template-columns: 1fr; gap: 2px; }
+  .cm-credit dd { margin-bottom: 8px; }
+}
