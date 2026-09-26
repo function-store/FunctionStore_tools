@@ -1696,6 +1696,13 @@ function fnsBoot() {
     // "selected only" is a review mode, not a place to land in: a reload
     // that opened on an empty-looking list would read as a lost selection
   } catch (e) { /* defaults */ }
+  // A link can open the picker already filtered, and it wins over the
+  // remembered filter: /get/#patreon, /get/#free, /get/#all (owner,
+  // 2026-09-26). Only read on arrival; the category rail's #cat- jumps
+  // are untouched.
+  var HASH_ACCESS = {'#patreon': 'plus', '#plus': 'plus', '#free': 'free', '#all': 'all'};
+  var hashAccess = HASH_ACCESS[String(location.hash || '').toLowerCase()];
+  if (hashAccess) view.access = hashAccess;
   function setView(patch) {
     Object.keys(patch).forEach(function (k) { view[k] = patch[k]; });
     try { localStorage.setItem(VIEW_KEY, JSON.stringify({access: view.access})); } catch (e) { /* nicety */ }

@@ -148,7 +148,7 @@ function saveCommunityImage(body) {
 const REC_FIELDS = ['name', 'author', 'author_url', 'url', 'description',
                     'category', 'note',
                     'tox_url', 'sha256', 'bytes', 'pinned_at',
-                    'slug', 'date', 'image', 'platform', 'author_license', 'tdp'];
+                    'slug', 'date', 'image', 'platform', 'author_license', 'tdp', 'draft'];
 const HEX64 = /^[0-9a-f]{64}$/;
 const REC_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const REC_DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -238,6 +238,7 @@ function validateRecommends(doc) {
     if ('date' in row && !REC_DATE.test(String(row.date || ''))) bad.push(`${where}: date must be YYYY-MM-DD`);
     if ('image' in row && !REC_IMAGE.test(String(row.image || ''))) bad.push(`${where}: image must be a file name in website/content/community/images`);
     if ('platform' in row && !REC_PLATFORMS.includes(row.platform)) bad.push(`${where}: platform must be one of ${REC_PLATFORMS.join(', ')}`);
+    if ('draft' in row && typeof row.draft !== 'boolean') bad.push(`${where}: draft must be true or false`);
     if (String(row.author_license || '').length > 200) bad.push(`${where}: author_license is over 200 characters; link to it instead`);
     if (String(row.description || '').length > 400) {
       bad.push(`${where}: description is over 400 characters`);
@@ -671,6 +672,8 @@ function runBuild() {
   return new Promise((resolve) => {
     const child = spawn(process.execPath, [path.join(HERE, 'build-site.mjs')], {
       cwd: WEB,
+      // the local preview shows community drafts, marked; the public build never does
+      env: { ...process.env, FNS_SHOW_DRAFTS: '1' },
     });
     let out = '';
     child.stdout.on('data', (d) => { out += d; });

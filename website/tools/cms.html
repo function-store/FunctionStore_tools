@@ -1889,6 +1889,8 @@ function renderCommunity() {
         </div>
         <details class="rec-post"${t.slug || t._md ? ' open' : ''}>
           <summary>Website post ${t.slug ? `<span class="hint">/community/${at(t.slug)}/</span>` : '<span class="hint">none: the card links straight to the author</span>'}</summary>
+          <label class="check"><input type="checkbox" data-draft ${t.draft ? 'checked' : ''} /> Draft
+            <span class="hint">still being written: not on the website and not sent to installs</span></label>
           <div class="rec-grid">
             <label>Slug <input type="text" data-f="slug" value="${at(t.slug)}" placeholder="lowercase-with-hyphens" /></label>
             <button class="btn" data-slugify title="Make the slug from the name">From name</button>
@@ -2005,6 +2007,11 @@ function renderCommunity() {
     }
   };
   $('#recrows').onchange = (e) => {
+    if (e.target.hasAttribute('data-draft')) {
+      const t = recDraft.tools[Number(e.target.closest('.cat-row').dataset.i)];
+      if (e.target.checked) t.draft = true; else delete t.draft;
+      return;
+    }
     if (e.target.tagName === 'SELECT' || e.target.type === 'date') {
       $('#recrows').oninput(e);
       if (e.target.dataset.f === 'image') renderCommunity();
