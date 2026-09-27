@@ -1871,8 +1871,8 @@ console.log(`built /community/ (${highlights.length} highlight${highlights.lengt
 // ------------------------------------------------- /get/ — online picker
 //
 // The same configurator the installer serves from inside TD, published as
-// a page: pick tools, copy a one-line Textport install script (or a
-// selection.json for the manual rail). The manifest is BAKED in at build
+// a page: pick tools, copy a one-line Textport install script (and
+// nothing else: no selection.json on the site). The manifest is BAKED in at build
 // time; the page also refreshes it at runtime, which works because the
 // bucket sends Access-Control-Allow-Origin for this host. Prefer the
 // published rolling manifest (it carries the `rails` hashes publish.py

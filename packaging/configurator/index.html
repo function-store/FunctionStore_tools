@@ -3553,14 +3553,14 @@ function fnsBoot() {
       }
     });
   });
-  // The website flavor leads with the paste rail -- a selection.json is
-  // only useful to someone who already has an installer COMP.
+  // On the website the paste line is the one way in: no selection.json
+  // download there (owner, 2026-09-27). The double-clicked local file
+  // keeps it, and the served picker in TD never showed it.
   if (window.FNS_SITE && !served) {
     var script = document.getElementById('script');
     var saveBtn = document.getElementById('save');
     script.className = 'btn btn-primary';
-    saveBtn.className = 'btn btn-secondary';
-    script.parentNode.insertBefore(script, saveBtn.nextSibling);
+    saveBtn.hidden = true;
   }
   // The installer's plan is lines of "name kind state". The review
   // dialog renders it as what will HAPPEN -- installs, removals,
