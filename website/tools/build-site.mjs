@@ -1808,7 +1808,7 @@ fs.writeFileSync(path.join(COMMUNITY_OUT, 'index.html'), `${head(COMMUNITY_TITLE
 ${header('/community/')}
 <main class="plus-page cm-page">
   <h1>From the community</h1>
-  <p class="lede">${esc(communityIntro || COMMUNITY_DESC)}</p>
+  <p class="lede">${communityIntro ? md.renderInline(communityIntro) : esc(COMMUNITY_DESC)}</p>
 ${highlights.length
     ? `  <div class="cm-grid">\n${highlights.map(communityCard).join('\n')}\n  </div>`
     : '  <p class="cm-empty">The first highlights are on their way.</p>'}

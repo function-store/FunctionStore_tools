@@ -26,7 +26,7 @@
   "drift into looking like a package list."
  ],
  "schema": 1,
- "intro": "Tools by other creators in the TouchDesigner community that I use and recommend. Their authors make them, maintain them and support them. Show them some love!",
+ "intro": "While [FNSTools](/#tools) packs a lot of goodies, here are some other tools I use frequently from other creators. Show them some love!",
  "tools": [
   {
    "name": "TauCeti",
