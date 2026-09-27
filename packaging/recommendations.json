@@ -44,8 +44,7 @@
      "tdp-touchutilcollection"
     ]
    },
-   "author_url": "https://plusplus.one",
-   "draft": true
+   "author_url": "https://plusplus.one"
   },
   {
    "name": "QR Code COMP",
@@ -58,8 +57,7 @@
    "tdp": {
     "package": "tdp-QrCodeCOMP",
     "module": "tdpQrCodeCOMP"
-   },
-   "draft": true
+   }
   },
   {
    "name": "EssentiaTD",
@@ -70,8 +68,7 @@
    "author_license": "AGPL-3.0",
    "description": "Real-time and offline audio analysis as native CHOPs, powered by Essentia: spectrum, mel bands, MFCCs, pitch, key, onsets and BPM, and EBU R128 loudness. Windows and macOS.",
    "slug": "essentiatd",
-   "date": "2026-09-26",
-   "draft": true
+   "date": "2026-09-26"
   },
   {
    "name": "Embody",
@@ -82,8 +79,7 @@
    "author_license": "MIT",
    "description": "Externalizes your network to files you can diff and version, and runs an MCP server so AI assistants can build and debug in your live TouchDesigner session.",
    "slug": "embody",
-   "date": "2026-09-26",
-   "draft": true
+   "date": "2026-09-26"
   },
   {
    "name": "TDFam",
@@ -94,8 +90,7 @@
    "author_license": "Apache-2.0",
    "description": "Custom operator families for TouchDesigner: your own tab in the OP Create dialog, manifests, placement, stubs and in-place updates, in one component.",
    "slug": "tdfam",
-   "date": "2026-09-26",
-   "draft": true
+   "date": "2026-09-26"
   },
   {
    "name": "Swaggy Bokeh",
@@ -106,8 +101,7 @@
    "author_license": "GPL-3.0",
    "description": "Physically based depth of field in GLSL, with bokeh, autofocus and a focus overlay. Drop in your scene camera, or composite a render with a depth pass.",
    "slug": "swaggy-bokeh",
-   "date": "2026-09-26",
-   "draft": true
+   "date": "2026-09-26"
   },
   {
    "name": "MediaPipe TouchDesigner",
@@ -118,8 +112,7 @@
    "author_license": "MIT",
    "description": "GPU-accelerated MediaPipe in TouchDesigner, on Mac and PC with no installation: face, hand, pose, object and gesture tracking, segmentation and classification.",
    "slug": "mediapipe-touchdesigner",
-   "date": "2026-09-26",
-   "draft": true
+   "date": "2026-09-26"
   }
  ]
 }

@@ -542,6 +542,7 @@ const navLinks = [
   ['/#get', 'Install'],
   ['/#tools', 'Tools'],
   ['/docs/', 'Docs'],
+  ['/community/', 'Community'],
   ['/patreon/', 'Patreon'],
 ];
 
@@ -585,7 +586,8 @@ function header(current) {
     const ext = href.startsWith('http') ? ' target="_blank" rel="noopener"' : '';
     return `      <a href="${href}"${isCurrent ? ' aria-current="page"' : ''}${ext}>${label}</a>`;
   }).join('\n') +
-  `\n      <a class="btn btn-secondary" href="${GH}" target="_blank" rel="noopener">GitHub</a>`;
+  `\n      <a href="${GH}" target="_blank" rel="noopener">GitHub</a>`
+  + `\n      <a class="btn btn-secondary" href="/get/"${current === '/get/' ? ' aria-current="page"' : ''}>Choose tools</a>`;
   return `<header class="site">
   <div class="site-inner">
     <div class="brand">
@@ -1735,7 +1737,12 @@ const imgSrc = (t) => (t.image ? `/community/images/${t.image}` : '');
 
 const posts = highlights.filter((t) => t.slug && writeups.has(t.slug)).map((t) => {
   const w = writeups.get(t.slug);
-  const html = md.render(w.content);
+  // A section still waiting for its words (a heading followed only by
+  // comments, like the "Why we like it" placeholder) is left out rather
+  // than published as a bare heading.
+  // One heading only: the heading's own text may not run into another.
+  const html = md.render(w.content).replace(
+    /<h2\b[^>]*>(?:(?!<\/h2>)[\s\S])*<\/h2>\s*(?:<!--(?:(?!-->)[\s\S])*-->\s*)*(?=<h2\b|$)/g, '');
   checkLinks(html, `content/community/${w.file}`, null);
   postImageProblems(html, `content/community/${w.file}`);
   return { t, w, html, title: String(w.data.title || t.name), summary: String(w.data.summary || t.description || '') };
