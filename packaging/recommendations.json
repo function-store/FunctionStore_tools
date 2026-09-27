@@ -48,7 +48,7 @@
   },
   {
    "name": "QR Code COMP",
-   "author": "Wieland Hilker",
+   "author": "PlusPlusOneGmbH",
    "url": "https://github.com/PlusPlusOneGmbH/tdp-QrCodeCOMP",
    "description": "Generates QR codes as a TOP from any text or URL.",
    "slug": "qr-code-comp",
@@ -57,7 +57,8 @@
    "tdp": {
     "package": "tdp-QrCodeCOMP",
     "module": "tdpQrCodeCOMP"
-   }
+   },
+   "author_url": "https://plusplus.one"
   },
   {
    "name": "EssentiaTD",
