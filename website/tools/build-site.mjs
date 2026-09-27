@@ -1849,23 +1849,18 @@ console.log(`built /community/ (${highlights.length} highlight${highlights.lengt
     console.error('website/index.html is missing its <!-- COMMUNITY:START --> / <!-- COMMUNITY:END --> markers');
     process.exit(1);
   }
-  // never a draft: this block is committed with website/index.html
-  const latest = highlights.filter((t) => t.draft !== true).slice(0, 3);
-  const block = latest.length ? `
+  // A pointer to the page, no tool picked out (owner, 2026-09-27): the
+  // section names what is there and links it. Never a draft: this block is
+  // committed with website/index.html.
+  const shown = highlights.filter((t) => t.draft !== true);
+  const block = shown.length ? `
 <section id="community" style="padding-top: 12px;">
   <div class="wrap">
     <div class="section-head">
       <h2>From the community</h2>
-      <p>Tools by other creators, made and maintained by them.</p>
+      <p>${shown.length} tools by other creators that pair well with FNSTools, made and maintained by them.</p>
     </div>
-    <div class="prod-grid">
-${latest.map((t) => `      <a class="prod" href="${esc(postHref(t))}"${isExternal(t) ? ' target="_blank" rel="noopener"' : ''}>
-        <span class="prod-kind">${esc(DELIVERY_LABEL[deliveryOf(t)])} · by ${esc(t.author)}</span>
-        <span class="prod-name">${esc(t.name)}${isExternal(t) ? ' ↗' : ''}</span>
-        <span class="prod-pitch">${esc(t.description || '')}</span>
-      </a>`).join('\n')}
-    </div>
-    <a href="/community/">All community tools →</a>
+    <a href="/community/">See the community tools →</a>
   </div>
 </section>
 ` : '\n';
