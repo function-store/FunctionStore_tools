@@ -15,4 +15,4 @@ It also runs Envoy, an MCP server inside TouchDesigner, so AI assistants such as
 
 ## Getting it
 
-Download the `.tox` from its [latest release](https://github.com/dylanroscover/Embody/releases/latest); the [documentation](https://dylanroscover.github.io/Embody/) covers setup. FNSTools itself is developed with Embody.
+Download the `.tox` from its [latest release](https://github.com/dylanroscover/Embody/releases/latest); the [documentation](https://dylanroscover.github.io/Embody/) covers setup.
