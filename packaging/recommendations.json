@@ -31,11 +31,11 @@
   {
    "name": "TauCeti",
    "author": "PlusPlusOneGmbH",
-   "url": "https://github.com/PlusPlusOneGmbH/TauCeti/",
+   "url": "https://github.com/PlusPlusOneGmbH/TauCeti",
    "description": "Preset management and parameter tweening: store, recall and fade between parameter states, with a dashboard, a cue list and a CHOP mapper.",
    "slug": "tauceti",
    "date": "2026-09-26",
-   "platform": "pypi",
+   "platform": "github",
    "tdp": {
     "package": "tdp-TauCeti",
     "module": "tdpTauCeti",
@@ -49,11 +49,11 @@
   {
    "name": "QR Code COMP",
    "author": "Wieland Hilker",
-   "url": "https://pypi.org/project/tdp-QrCodeCOMP/",
+   "url": "https://github.com/PlusPlusOneGmbH/tdp-QrCodeCOMP",
    "description": "Generates QR codes as a TOP from any text or URL.",
    "slug": "qr-code-comp",
    "date": "2026-09-24",
-   "platform": "pypi",
+   "platform": "github",
    "tdp": {
     "package": "tdp-QrCodeCOMP",
     "module": "tdpQrCodeCOMP"
