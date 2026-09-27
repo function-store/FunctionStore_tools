@@ -114,6 +114,26 @@
    "description": "GPU-accelerated MediaPipe in TouchDesigner, on Mac and PC with no installation: face, hand, pose, object and gesture tracking, segmentation and classification.",
    "slug": "mediapipe-touchdesigner",
    "date": "2026-09-26"
+  },
+  {
+   "name": "T3D",
+   "author": "Josef Pelz",
+   "author_url": "https://www.patreon.com/JosefPelz/",
+   "url": "https://www.patreon.com/JosefPelz/",
+   "platform": "patreon",
+   "description": "A family of 48 operators for 3D textures: generate volumes, process them (filters, composites, transforms, optical flow, fluid simulation) and render them (ray-marched volumes, iso-surfaces, volume tracing), all on the GPU.",
+   "slug": "t3d",
+   "date": "2026-09-27"
+  },
+  {
+   "name": "Pathtracer",
+   "author": "Josef Pelz",
+   "author_url": "https://www.patreon.com/JosefPelz/",
+   "url": "https://www.patreon.com/JosefPelz/",
+   "platform": "patreon",
+   "description": "A super performant, well designed path tracer for TouchDesigner.",
+   "slug": "pathtracer",
+   "date": "2026-09-27"
   }
  ]
 }
