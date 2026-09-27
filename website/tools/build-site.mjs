@@ -1786,7 +1786,7 @@ function creditBox(t) {
   const cta = PLATFORM_LABEL[t.platform] || PLATFORM_LABEL.other;
   return `  <aside class="cm-credit" aria-label="Credit">
     <dl>${rows.join('')}</dl>
-    <p class="cm-disclaimer">Not part of FNSTools. ${esc(t.author)} made it and maintains it; questions and support go to them.</p>
+    <p class="cm-disclaimer">Not part of FNSTools. ${esc(t.author)} made it and ${/\sand\s|&|,/.test(t.author) ? 'maintain' : 'maintains'} it; questions and support go to them.</p>
     <a class="btn btn-primary" href="${esc(t.url)}" target="_blank" rel="noopener">${esc(cta)} ↗</a>
   </aside>`;
 }

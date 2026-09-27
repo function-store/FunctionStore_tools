@@ -83,7 +83,7 @@
   },
   {
    "name": "TDFam",
-   "author": "dotsimulate",
+   "author": "dotsimulate and Function Store",
    "author_url": "https://github.com/dotsimulate",
    "url": "https://github.com/dotsimulate/TDFam",
    "platform": "github",
@@ -105,7 +105,7 @@
   },
   {
    "name": "MediaPipe TouchDesigner",
-   "author": "Torin Blankensmith",
+   "author": "Torin Blankensmith and Dom Scott",
    "author_url": "https://github.com/torinmb",
    "url": "https://github.com/torinmb/mediapipe-touchdesigner",
    "platform": "github",
