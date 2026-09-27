@@ -1670,21 +1670,13 @@ const PLATFORM_LABEL = {
   github: 'Get it on GitHub', patreon: 'Get it on Patreon', gumroad: 'Get it on Gumroad',
   itch: 'Get it on itch.io', pypi: 'Get it on PyPI', other: "Go to the author's page",
 };
-const deliveryOf = (t) => ((t.tdp && Array.isArray(t.tdp.lock) && t.tdp.lock.length) ? 'tdp'
+const deliveryOf = (t) => ((t.tdp && t.tdp.package && t.tdp.module) ? 'tdp'
   : (t.tox_url && /^[0-9a-f]{64}$/.test(String(t.sha256 || '')) ? 'tox' : 'link'));
 const DELIVERY_LABEL = { tdp: 'Python package', tox: '.tox file', link: 'On their site' };
 const fmtDate = (d) => {
   if (!d) return '';
   const [y, m, day] = String(d).split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, day)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
-};
-const tdpVersion = (t) => {
-  const own = String(t.tdp.package).replace(/[-_.]+/g, '-').toLowerCase();
-  for (const line of t.tdp.lock) {
-    const m = /^([A-Za-z0-9._-]+)(?:\[[^\]]*\])?==(\S+)/.exec(String(line));
-    if (m && m[1].replace(/[-_.]+/g, '-').toLowerCase() === own) return m[2];
-  }
-  return '';
 };
 
 // Write-ups, joined to their rows by filename = slug.
@@ -1781,9 +1773,8 @@ function creditBox(t) {
   if (kind === 'tox') {
     rows.push(`<dt>Download</dt><dd><a href="${esc(t.tox_url)}" rel="noopener">${esc(decodeURIComponent(t.tox_url.split('/').pop()))}</a> <span class="cm-faint">sha256 ${esc(t.sha256.slice(0, 12))}…, the file we looked at</span></dd>`);
   } else if (kind === 'tdp') {
-    const v = tdpVersion(t);
-    rows.push(`<dt>Python package</dt><dd><a href="https://pypi.org/project/${esc(t.tdp.package)}/${v ? `${esc(v)}/` : ''}" target="_blank" rel="noopener"><code>${esc(t.tdp.package)}${v ? `==${esc(v)}` : ''}</code></a> <span class="cm-faint">the version we looked at</span></dd>`);
-    rows.push(`<dt>In TouchDesigner</dt><dd>The FNSTools picker installs exactly these versions into your project's Python environment and places the tool. <span class="cm-faint">No environment yet? It offers to set one up with TouchDesigner's own manager.</span></dd>`);
+    rows.push(`<dt>Python package</dt><dd><a href="https://pypi.org/project/${esc(t.tdp.package)}/" target="_blank" rel="noopener"><code>${esc(t.tdp.package)}</code></a> <span class="cm-faint">its latest release</span></dd>`);
+    rows.push(`<dt>In TouchDesigner</dt><dd>The FNSTools console installs it into your project's Python environment and places the tool. <span class="cm-faint">No environment yet? It offers to set one up with TouchDesigner's own manager.</span></dd>`);
   }
   const cta = PLATFORM_LABEL[t.platform] || PLATFORM_LABEL.other;
   return `  <aside class="cm-credit" aria-label="Credit">

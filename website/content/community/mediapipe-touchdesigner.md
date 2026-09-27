@@ -15,4 +15,4 @@ The main MediaPipe component runs the models in a built-in browser and outputs a
 
 ## Getting it
 
-Download `release.zip` from the [releases page](https://github.com/torinmb/mediapipe-touchdesigner/releases) and open the example .toe; the components are in its `toxes` folder. When you drag `MediaPipe.tox` into your own project, turn on Enable External .tox, or your .toe grows by the size of the models.
+[Download release.zip](https://github.com/torinmb/mediapipe-touchdesigner/releases/latest/download/release.zip), always the latest release, and open the example .toe; the components are in its `toxes` folder. When you drag `MediaPipe.tox` into your own project, turn on Enable External .tox, or your .toe grows by the size of the models.

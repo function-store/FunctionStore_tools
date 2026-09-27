@@ -15,4 +15,4 @@ Every analyzer takes raw audio and runs its own FFT, and each can work in real t
 
 ## Getting it
 
-EssentiaTD is a set of plugins, not a .tox, so it installs outside your project: an installer for Windows (`EssentiaTD-Setup.exe`) and macOS (`EssentiaTD.pkg`) puts them in your TouchDesigner plugins folder. Restart TouchDesigner afterwards and the operators appear in the OP Create dialog under CHOP. There is also an [interactive guide](https://darienbrito.github.io/EssentiaTD/) to every parameter.
+EssentiaTD is a set of plugins, not a .tox, so it installs outside your project: the installer for [Windows](https://github.com/DarienBrito/EssentiaTD/releases/latest/download/EssentiaTD-Setup.exe) or [macOS](https://github.com/DarienBrito/EssentiaTD/releases/latest/download/EssentiaTD.pkg), always the latest release, puts them in your TouchDesigner plugins folder. Restart TouchDesigner afterwards and the operators appear in the OP Create dialog under CHOP. There is also an [interactive guide](https://darienbrito.github.io/EssentiaTD/) to every parameter.

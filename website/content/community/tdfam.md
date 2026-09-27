@@ -15,4 +15,4 @@ Each operator can carry a manifest (its label, group, version, colour, docs link
 
 ## Getting it
 
-Place it from the FNSTools console's Community tab: it downloads exactly `TDFam_create.tox` from release v1.0.1, which carries the registry inside it. The FNS operator family in FNSTools is built on TDFam.
+[Download TDFam_create.tox](https://github.com/dotsimulate/TDFam/releases/latest/download/TDFam_create.tox), always the latest release. It carries the registry inside it. The FNS operator family in FNSTools is built on TDFam.

@@ -1850,21 +1850,6 @@ summary: ${String(t.description || '').replace(/\n/g, ' ')}
 ## Getting it
 `;
 
-/** Accepts a lock the way `uv pip compile --generate-hashes` prints it:
- *  continuation backslashes, one --hash per line, `# via` comments. */
-function parseLock(text) {
-  const logical = [];
-  let cur = '';
-  for (const rawLine of String(text || '').split(/\r?\n/)) {
-    const line = rawLine.replace(/\s+#.*$/, '').trim();
-    if (!line || line.startsWith('#')) { if (cur && !rawLine.trim().endsWith('\\')) { logical.push(cur); cur = ''; } continue; }
-    const cont = line.endsWith('\\');
-    cur = `${cur} ${cont ? line.slice(0, -1) : line}`.trim();
-    if (!cont) { logical.push(cur); cur = ''; }
-  }
-  if (cur) logical.push(cur);
-  return logical.map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
-}
 
 function renderCommunity() {
   const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
@@ -1909,17 +1894,15 @@ function renderCommunity() {
           <div class="rec-preview docs-body" hidden></div>
         </details>
         <details class="rec-post"${t.tdp ? ' open' : ''}>
-          <summary>Python package (tdp) <span class="hint">${t.tdp && t.tdp.lock && t.tdp.lock.length ? `${t.tdp.lock.length} pinned requirement${t.tdp.lock.length === 1 ? '' : 's'}` : 'none'}</span></summary>
+          <summary>Python package (tdp) <span class="hint">${t.tdp && t.tdp.package ? `${at(t.tdp.package)}, latest from PyPI` : 'none'}</span></summary>
           <div class="rec-grid">
             <label>PyPI package <input type="text" data-tdp="package" value="${at(t.tdp && t.tdp.package)}" placeholder="tdp-Something" /></label>
-            <button class="btn" data-pintdp title="Pin the newest release: module, toxes and the hashed lock">${t.tdp && t.tdp.lock ? 'Re-pin' : 'Pin'}</button>
+            <button class="btn" data-pintdp title="Read the module and toxes from the newest release, and check what it installs">Check</button>
             <label>Module <input type="text" data-tdp="module" value="${at(t.tdp && t.tdp.module)}" placeholder="tdpSomething" /></label>
             <label>Tox <input type="text" data-tdp="tox" value="${at(t.tdp && t.tdp.tox)}" placeholder="a _ToxFiles key; blank = ToxFile" /></label>
           </div>
           <label class="wide">Also needs <input type="text" data-tdp="also" value="${at(t.tdp && (t.tdp.also || []).join(' '))}" placeholder="packages it imports but does not declare, e.g. tdp-touchutilcollection" /></label>
           ${t._toxes && t._toxes.length ? `<p class="hint">Toxes in this package: ${t._toxes.map((k) => `<span class="mono">${at(k)}</span>`).join(', ')}${t._single ? ' (blank Tox = its ToxFile)' : ' (name one in Tox)'}</p>` : ''}
-          <label>Lock <span class="hint">written by Pin; or paste the output of <span class="mono">uv pip compile --generate-hashes</span></span></label>
-          <textarea class="rec-md mono" data-tdp="lock" rows="5" placeholder="tdp-something==1.0.0 --hash=sha256:...">${(t.tdp && t.tdp.lock ? t.tdp.lock.join('\n') : '').replace(/</g, '&lt;')}</textarea>
         </details>
       </div>
       <button class="icon-x" data-del title="Remove">&times;</button>
@@ -1948,11 +1931,9 @@ function renderCommunity() {
     if (e.target.dataset.tdp) {
       const k = e.target.dataset.tdp;
       const tdp = { ...(t.tdp || {}) };
-      if (k === 'lock') tdp.lock = parseLock(e.target.value);
-      else if (k === 'also') tdp.also = e.target.value.split(/[\s,]+/).filter(Boolean);
+      if (k === 'also') tdp.also = e.target.value.split(/[\s,]+/).filter(Boolean);
       else if (e.target.value.trim()) tdp[k] = e.target.value.trim();
       else delete tdp[k];
-      if (!tdp.lock || !tdp.lock.length) delete tdp.lock;
       if (!tdp.also || !tdp.also.length) delete tdp.also;
       if (Object.keys(tdp).length) t.tdp = tdp; else delete t.tdp;
       return;
@@ -2066,9 +2047,9 @@ function swapRec(a, b) {
   renderCommunity();
 }
 
-/** Pin a Python package: the newest release's module and toxes, read from
- *  its wheel, and the full hashed lock (packaging/tdp_pin.py). Refused when
- *  the lock names a package TouchDesigner ships. */
+/** Check a Python package: the newest release's module and toxes, read from
+ *  its wheel, and what it resolves to today (packaging/tdp_pin.py). Refused
+ *  when that includes a package TouchDesigner ships. Nothing is pinned. */
 async function pinTdpRow(i, btn) {
   const t = recDraft.tools[i];
   const pkg = String((t.tdp && t.tdp.package) || '').trim();
@@ -2083,14 +2064,14 @@ async function pinTdpRow(i, btn) {
       body: JSON.stringify({ package: pkg, also }),
     });
     const keep = t.tdp && t.tdp.tox && (r.toxes || []).includes(t.tdp.tox) ? t.tdp.tox : '';
-    t.tdp = { package: r.package, module: r.module, lock: r.lock };
+    t.tdp = { package: r.package, module: r.module };
     if (keep) t.tdp.tox = keep;
     else if (!r.single && (r.toxes || []).length === 1) t.tdp.tox = r.toxes[0];
     if (also.length) t.tdp.also = also;
     t._toxes = r.toxes || [];
     t._single = !!r.single;
     renderCommunity();
-    toast(`Pinned ${r.package} ${r.version}: ${r.lock.length} requirement${r.lock.length === 1 ? '' : 's'}. Save to keep it.`, 'ok');
+    toast(`${r.package} ${r.version} installs ${r.resolves.length} package${r.resolves.length === 1 ? '' : 's'} today: ${r.resolves.join(', ')}. Save to keep it.`, 'ok');
   } catch (e) {
     btn.textContent = was; btn.disabled = false;
     toast(String(e.message || e), 'bad');

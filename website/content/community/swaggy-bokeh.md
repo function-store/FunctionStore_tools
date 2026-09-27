@@ -15,4 +15,4 @@ It has autofocus on a point of the frame, bokeh highlights with rings, edge bias
 
 ## Getting it
 
-Place it from the FNSTools console's Community tab: it downloads exactly `Swaggy_Bokeh_v1_0.tox` from the repository. It dates from 2017; we loaded it in TouchDesigner 2025 and its shaders compile.
+[Download Swaggy_Bokeh_v1_0.tox](https://github.com/OVVO-Studio/TD-Swaggy-Bokeh/raw/master/Swaggy_Bokeh_v1_0.tox) from the repository. It dates from 2017; we loaded it in TouchDesigner 2025 and its shaders compile.

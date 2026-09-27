@@ -157,7 +157,6 @@ const REC_PLATFORMS = ['github', 'patreon', 'gumroad', 'itch', 'pypi', 'other'];
 const PYPI_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/;
 const PY_MODULE = /^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$/;
 const TOX_KEY = /^[A-Za-z_]\w*$/;
-const LOCK_LINE = /^([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)(?:\[[A-Za-z0-9,._-]+\])?==([A-Za-z0-9.+!_-]+)(?:\s*;\s*[A-Za-z0-9_ .'"=<>!~(),]+?)?(?:\s+--hash=sha256:[0-9a-f]{64})+$/;
 const pyCanon = (n) => String(n).replace(/[-_.]+/g, '-').toLowerCase();
 
 /** Mirror of recommendations.py _tdpProblems(). */
@@ -165,7 +164,7 @@ function tdpProblems(where, t) {
   if (!t || typeof t !== 'object' || Array.isArray(t)) return [`${where}: tdp must be an object`];
   const out = [];
   for (const f of Object.keys(t)) {
-    if (!['package', 'module', 'tox', 'lock', 'also'].includes(f)) out.push(`${where}: tdp has an unknown field \`${f}\``);
+    if (!['package', 'module', 'tox', 'also'].includes(f)) out.push(`${where}: tdp has an unknown field \`${f}\``);
   }
   const also = t.also === undefined ? [] : t.also;
   if (!Array.isArray(also) || !also.every((a) => PYPI_NAME.test(String(a).trim()))) {
@@ -175,19 +174,6 @@ function tdpProblems(where, t) {
   if (!PYPI_NAME.test(pkg)) out.push(`${where}: tdp.package must be a PyPI project name`);
   if (!PY_MODULE.test(String(t.module || '').trim())) out.push(`${where}: tdp.module must be the importable module (tdpFoo)`);
   if ('tox' in t && !TOX_KEY.test(String(t.tox || '').trim())) out.push(`${where}: tdp.tox must name one entry of the package's _ToxFiles`);
-  if (!Array.isArray(t.lock) || !t.lock.length) {
-    out.push(`${where}: tdp needs a lock -- every requirement at one version with its hash (use Pin)`);
-    return out;
-  }
-  const names = new Set();
-  for (const line of t.lock) {
-    const m = LOCK_LINE.exec(String(line).trim());
-    if (!m) { out.push(`${where}: tdp.lock line is not \`name==version --hash=sha256:...\``); continue; }
-    const n = pyCanon(m[1]);
-    if (names.has(n)) out.push(`${where}: tdp.lock names ${m[1]} twice`);
-    names.add(n);
-  }
-  if (pkg && !names.has(pyCanon(pkg))) out.push(`${where}: tdp.lock does not contain ${pkg} itself`);
   return out;
 }
 
@@ -644,9 +630,9 @@ async function tdBase() {
   return found;
 }
 
-/** Pin a tdp package with packaging/tdp_pin.py: the newest release, its
- *  module and toxes read from the wheel, the full hashed lock, refused when
- *  it names a package TouchDesigner ships. */
+/** Check a tdp package with packaging/tdp_pin.py: its module and toxes read
+ *  from the newest wheel, and what it resolves to today, refused when that
+ *  includes a package TouchDesigner ships. Nothing is pinned. */
 function pinTdp(pkg, also) {
   return new Promise((resolve, reject) => {
     const args = [path.join(REPO, 'packaging', 'tdp_pin.py'), pkg, '--json'];

@@ -1160,7 +1160,7 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     return n;
   }
   function pinned(r) { return !!(r && r.tox_url && /^[0-9a-f]{64}$/.test(String(r.sha256 || ''))); }
-  function locked(r) { return !!(r && r.tdp && r.tdp.package && Array.isArray(r.tdp.lock) && r.tdp.lock.length); }
+  function locked(r) { return !!(r && r.tdp && r.tdp.package && r.tdp.module); }
   function postUrl(r) { return r.slug ? SITE + '/community/' + encodeURIComponent(r.slug) + '/' : ''; }
   function json(url, body) {
     var o = body === undefined ? {cache: 'no-store'}
@@ -1301,9 +1301,9 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     if (locked(r)) {
       if (served) {
         chips.appendChild(actionButton('install in this project',
-          'A Python package (' + r.tdp.package + '). Installs the exact versions we checked into this '
+          'A Python package (' + r.tdp.package + '). Installs its latest release into this '
           + "project's Python environment, then places the tool in the network you are working in. "
-          + 'FNSTools never updates it.',
+          + 'Refused if it would add a package TouchDesigner ships. FNSTools never updates it.',
           function (b) { install(r, b); }));
       } else {
         chips.appendChild(el('span', 'chip rec', 'Python package'));
