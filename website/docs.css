@@ -730,9 +730,6 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
 /* The two calls to action in a Plus tool's note. */
 .plus-note-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .plus-note-actions .btn { font-size: 13.5px; padding: 9px 16px; }
-.dl-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin: 16px 0; }
-.dl-line .btn { font-size: 13.5px; padding: 9px 16px; }
-.dl-line .hint { font-size: 13px; color: var(--text-dim); }
 
 /* Documentation reading layout. */
 .docs-layout .badge { border-radius: 2px; background: transparent; padding: 2px 7px; }
