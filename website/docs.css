@@ -796,3 +796,7 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
   .cm-credit dl { grid-template-columns: 1fr; gap: 2px; }
   .cm-credit dd { margin-bottom: 8px; }
 }
+
+/* Built with TDFam, on /community/#tdfam */
+.cm-families { margin-top: 56px; scroll-margin-top: 90px; }
+.cm-families > p { color: var(--text-dim); max-width: 68ch; }

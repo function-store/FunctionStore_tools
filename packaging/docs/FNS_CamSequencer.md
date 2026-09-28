@@ -12,6 +12,8 @@ features:
     anchor: look-at-mode-seq-page
   - name: Presets page
     anchor: presets-page
+  - name: On a GeoPilot body
+    anchor: on-a-geopilot-body
   - name: CONTROL AND MAPPING PAGES (joystick / controller)
     anchor: control-and-mapping-pages-joystick-controller
   - name: ROLL -- banking the camera
@@ -35,6 +37,11 @@ control on the Seq page drives BOTH; open either inner sequencer
 It can also take over a palette cameraViewport instead of being the
 camera itself -- see VIEWPORT MODE.
 
+This is the head and the lens. Walking, driving, flight physics, ground
+contact (Stick to Ground, Detach) and jumping live in GeoPilot, the body
+you put this camera on; see ON A GEOPILOT BODY. GeoPilot is a separate
+component and is not part of FNSTools.
+
 ## Quick start
 1. Frame the camera, press APPEND. Move it, press APPEND. Repeat.
 2. Scrub SELECT -- or drive it from a CHOP -- to move through the presets
@@ -44,6 +51,8 @@ camera itself -- see VIEWPORT MODE.
 4. Optional: plug in a game controller and map it on the Control page
    (Learn Forward, move the stick...) to fly the camera and capture
    presets from the pad -- see CONTROL PAGE.
+5. To walk or drive, put it on a GeoPilot body: see ON A GEOPILOT BODY.
+   This camera records how you look; the body records where you went.
 
 ## Seq page
 Append / Replace / Insert / Remove / Init   as in OpSequencer
@@ -154,6 +163,75 @@ Viewport Presets + Create same for viewport mode (Position / Rotate /
                          table for you as well.
 Look At Presets + Create same for the Look At target.
 
+## On a GeoPilot body
+Coming from camSequencer 2.x or older? There, one camera did everything:
+it walked, flew and drove, and its transform WAS where you were. Now the
+work is split. GeoPilot is the body (walking, driving, flight, ground
+contact, jumping) and this component is the head and the lens on top of
+it: looking about, zoom, Look At and its own sequencer. The rest of this
+section is what that changes.
+
+To set it up:
+
+1. Wire this component under the GeoPilot (object connectors).
+
+   Wiring it under the pilot makes the camera the pilot's CHILD. In
+   TouchDesigner a child's Translate and Rotate are measured from its
+   parent, not from the world, so this camera's tx, ty and tz no longer
+   say where you are. They say how far the camera sits from the body
+   ("5 units in front of me"). When the body walks, the camera goes
+   along and its own values do not change.
+2. Set the pilot's Coupling (Coupling page) to Free or Carry, so the
+   pilot's HeadExt and this component don't both write the camera's
+   rotation:
+   - Free: the camera is an offset on the body. Moving this camera
+     moves it relative to the body; the body stays where it is.
+   - Carry (GeoPilot 1.5.0): moving the camera moves the body. Whatever
+     moves the camera (a drag, a typed value, this component's own
+     flying) is handed to the body every frame: position and heading go
+     to the body, and the camera's own tx, ty, tz and ry return to 0.
+     Pitch, roll and lens stay on the camera, and a grounded body lands
+     on the ground at the new spot. The natural pick for a walker.
+3. Point Source CHOP (Control page) at the pilot's head bus,
+   geoPilot1/null_headbus, and type the channel names into the Channel
+   fields: Yaw, Pitch, Roll, Zoom, Scrub, Capture, Next, Prev. Mapping by
+   name needs no Learn.
+
+Under Walking the body consumes Yaw, so the camera only pitches and
+rolls.
+
+What each table records:
+
+- WHERE YOU STOOD goes in the pilot's body table, its OpSeq_body
+  sequencer. Record it with Append on OpSeq_body, or with the mapped
+  Capture button while the pilot's Capture Body Preset is on (the
+  default). The Pilot page's Capture Preset pulse is something else: it
+  saves a vehicle preset (a Body Preset such as Person or City Car).
+- HOW YOU LOOK FROM THE BODY goes in this component's table: pitch,
+  zoom, offset, fov and Look At. The camera's transform is stored
+  RELATIVE TO THE BODY, and walking moves the body, not the camera. So
+  pressing Append here at three places you walked to gives three
+  identical rows: the look did not change, only the body moved. Under
+  Carry the camera's position and heading always return to 0, so its
+  presets hold only the look and the lens.
+
+To replay a walk:
+
+1. Turn on Select Sync (pilot, Presets page).
+2. Record with Capture, not Append. One press appends both tables in
+   step.
+3. Scrub this component's Select: it drives both, the body and the look.
+
+Init, Append or Remove on only ONE of the two sequencers puts them out
+of step: row N of one stops matching row N of the other. Record with
+Capture to keep them together.
+
+The pilot has no Select of its own: its playhead sits inside OpSeq_body,
+reached through the Next and Prev channels or through Select Sync. Its
+'wasd' keyboard layout maps no Capture, Next or Prev keys, so from a
+keyboard you can't record or step the body table; use a mapped
+controller or OpSeq_body's own buttons.
+
 ## CONTROL AND MAPPING PAGES (joystick / controller)
 Two pages, because they are two jobs. MAPPING is which physical control is
 which -- the Source CHOP, a + and a - channel per axis, a Learn pulse for
@@ -200,13 +278,11 @@ now: a Geometry COMP that flies ANYTHING, not only a camera, with the
 same mapping, the same measured numbers and the same pages. Two ways to
 put this camera on a body:
 
-  - wire this component under a GeoPilot (object connectors): rigid
-    coupling, and the pilot's HeadExt drives the free head, the chase
-    spring and the bob.
-  - point Source CHOP at the pilot's head bus (geoPilot1/null_headbus):
-    the channels are named Yaw, Pitch, Roll, Zoom, Scrub, Capture, Next,
-    Prev -- type those names into the Channel fields and you are mapped
-    with nothing to learn.
+  - wire this component under the GeoPilot, set the pilot's Coupling to
+    Free, and point Source CHOP at the pilot's head bus
+    (geoPilot1/null_headbus), mapped by channel name: Yaw, Pitch, Roll,
+    Zoom, Scrub, Capture, Next, Prev. See ON A GEOPILOT BODY, which also
+    covers what each preset table records.
 
 What stays here is the camera-authoring kit: everything below, plus
 SURFACE COLLISION.
@@ -563,6 +639,19 @@ Inner sequencers also have Reset and Prune Stale Columns; both stash
 the table first (RestorePresets() from Python brings it back).
 
 ## What's new
+3.0 (2026-09)
+- Joined FNSTools as FNS_CamSequencer, from the OpSeqDev family, and the
+  FNS operator family (the FNS tab of the OP Create dialog).
+- The game controller is only polled while you map one or have one
+  mapped; a project that never uses a joystick doesn't poll for one.
+- Every parameter has a tooltip, and the camera arrives at 0, 0, 5 with
+  fog off without taking your camera over.
+- ON A GEOPILOT BODY explains the coupling and what each preset table
+  records.
+
+Entries before 2.0.0 describe walking, driving and the other flight
+models as they were then; those moved to GeoPilot in 2.0.
+
 2.0.0 (2026-08)
 - The split. Everything that was a BODY rather than a camera -- the
   Assisted, Forces, Walking and Driving models, Aerobatic, Ground

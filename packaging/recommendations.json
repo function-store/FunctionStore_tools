@@ -135,5 +135,24 @@
    "slug": "pathtracer",
    "date": "2026-09-27"
   }
+ ],
+ "families": [
+  {
+   "name": "FNS",
+   "author": "Function Store",
+   "author_url": "https://functionstore.xyz",
+   "url": "/docs/fns-opfamily/",
+   "description": "The FNS tab in the OP Create dialog: FNS tools placed as one node each, with stubs for projects that travel and in-place updates.",
+   "ours": true
+  },
+  {
+   "name": "T3D",
+   "author": "Josef Pelz",
+   "author_url": "https://www.patreon.com/JosefPelz/",
+   "url": "https://www.patreon.com/JosefPelz/",
+   "description": "Operators for 3D textures: generate, process and render volumes on the GPU.",
+   "ops": 48,
+   "tool": "T3D"
+  }
  ]
 }

@@ -1800,6 +1800,46 @@ if (fs.existsSync(COMMUNITY_IMAGES)) {
   }
 }
 
+// Built with TDFam (docs/CommunityHighlights.md): operator families made
+// with TDFam, on /community/#tdfam. From recommendations.json `families`,
+// edited in the CMS. A family's card opens its tool's post when that post
+// is published, else its own url; `ours` (the FNS family) is counted from
+// the manifest, so the number follows the releases.
+const families = Array.isArray(recommends.families) ? recommends.families : [];
+const fnsFamilyCount = (() => {
+  try {
+    const m = JSON.parse(fs.readFileSync(path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+    return (m.packages || []).filter((p) => p.family && !p.preview).length;
+  } catch (e) {
+    return 0;
+  }
+})();
+const shownPost = (name) => posts.find((p) => p.t.name === name);
+function familyCard(f) {
+  const post = f.tool ? shownPost(f.tool) : null;
+  const href = post ? `/community/${post.t.slug}/` : f.url;
+  const external = /^https?:\/\//.test(href);
+  const n = f.ours ? fnsFamilyCount : f.ops;
+  const meta = n ? esc(`${n} operators`) : '';
+  return `    <a class="cm-card" href="${esc(href)}"${external ? ' target="_blank" rel="noopener"' : ''}>
+      <span class="cm-card-body">
+        <span class="cm-kind">${meta || 'Operator family'}</span>
+        <span class="cm-name">${esc(f.name)}${external ? ' ↗' : ''}</span>
+        <span class="cm-by">by ${esc(f.author)}</span>
+        <span class="cm-pitch">${esc(f.description || '')}</span>
+      </span>
+    </a>`;
+}
+const tdfamPost = shownPost('TDFam');
+const familiesBlock = families.length ? `
+  <section class="cm-families" id="tdfam">
+    <h2>Built with TDFam</h2>
+    <p>${tdfamPost ? `<a href="/community/${tdfamPost.t.slug}/">TDFam</a>` : 'TDFam'} lets you make your own operator family, with its own tab in the OP Create dialog. These families are built with it.</p>
+    <div class="cm-grid">
+${families.map(familyCard).join('\n')}
+    </div>
+  </section>` : '';
+
 const COMMUNITY_TITLE = 'Community tools for TouchDesigner | FNSTools';
 const COMMUNITY_DESC = 'TouchDesigner tools by other creators that we think are worth your time. Each is made and maintained by its author.';
 const communityIntro = String(recommends.intro || '').trim();
@@ -1812,6 +1852,7 @@ ${header('/community/')}
 ${highlights.length
     ? `  <div class="cm-grid">\n${highlights.map(communityCard).join('\n')}\n  </div>`
     : '  <p class="cm-empty">The first highlights are on their way.</p>'}
+${familiesBlock}
 </main>
 ${FOOT}`);
 

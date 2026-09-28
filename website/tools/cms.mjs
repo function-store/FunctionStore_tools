@@ -79,6 +79,7 @@ function saveCommunity(body) {
     ...doc,
     intro: String(body.intro ?? doc.intro ?? ''),
     tools: Array.isArray(body.tools) ? body.tools : doc.tools,
+    families: Array.isArray(body.families) ? body.families : (doc.families || []),
   };
   const bad = validateRecommends(next);
   const have = readWriteups();
@@ -180,6 +181,36 @@ function tdpProblems(where, t) {
 /** Mirror of packaging/recommendations.py validate(). Kept in step by the
  *  test, not by hope -- the CMS must refuse the same rows the publisher
  *  would, or a save looks fine and the upload fails hours later. */
+/** Mirror of recommendations.py _familyProblems(): the Built with TDFam list. */
+const FAMILY_FIELDS = ['name', 'author', 'author_url', 'url', 'description', 'ops', 'tool', 'ours'];
+function familyProblems(families, toolNames) {
+  if (families === undefined || families === null) return [];
+  if (!Array.isArray(families)) return ['`families` must be a list'];
+  const out = [];
+  const seen = new Set();
+  families.forEach((row, i) => {
+    let where = `families[${i}]`;
+    if (!row || typeof row !== 'object' || Array.isArray(row)) { out.push(`${where} is not an object`); return; }
+    const name = String(row.name || '').trim();
+    if (name) where = `${where} (${name})`;
+    for (const f of ['name', 'author', 'url']) if (!String(row[f] || '').trim()) out.push(`${where}: ${f} is required`);
+    for (const f of Object.keys(row)) if (!FAMILY_FIELDS.includes(f)) out.push(`${where}: unknown field \`${f}\``);
+    const url = String(row.url || '').trim();
+    if (url && !(url.startsWith('https://') || url.startsWith('/'))) out.push(`${where}: url must be https, or a page on this site (/...)`);
+    const aurl = String(row.author_url || '').trim();
+    if (aurl && !aurl.startsWith('https://')) out.push(`${where}: author_url must be https`);
+    if ('ops' in row && !(Number.isInteger(row.ops) && row.ops > 0)) out.push(`${where}: ops must be a positive whole number`);
+    if ('ours' in row && typeof row.ours !== 'boolean') out.push(`${where}: ours must be true or false`);
+    if ('tool' in row && !toolNames.has(String(row.tool))) out.push(`${where}: tool is not a row in tools`);
+    if (String(row.description || '').length > 400) out.push(`${where}: description is over 400 characters`);
+    if (name) {
+      if (seen.has(name.toLowerCase())) out.push(`${where}: duplicate name`);
+      seen.add(name.toLowerCase());
+    }
+  });
+  return out;
+}
+
 function validateRecommends(doc) {
   const bad = [];
   const tools = (doc && doc.tools) || [];
@@ -235,6 +266,8 @@ function validateRecommends(doc) {
       else seen.set(k, i);
     }
   });
+  bad.push(...familyProblems(doc && doc.families,
+    new Set(tools.filter((t) => t && typeof t === 'object').map((t) => String(t.name || '')))));
   return bad;
 }
 
@@ -584,7 +617,7 @@ function state() {
   const counts = countByCategory(cat);
   const rec = readRecommends();
   return {
-    recommendations: { intro: rec.intro || '', tools: rec.tools || [] },
+    recommendations: { intro: rec.intro || '', tools: rec.tools || [], families: rec.families || [] },
     communityWriteups: readWriteups(),
     communityImages: communityImages(),
     categories: cat.categories,

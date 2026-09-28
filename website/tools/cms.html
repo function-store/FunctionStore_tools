@@ -1830,6 +1830,7 @@ function openCommunity() {
       ...t,
       ...(t.slug ? { _from: t.slug, _md: writeups[t.slug] || '' } : {}),
     })),
+    families: (STATE.recommendations.families || []).map((f) => ({ ...f })),
   };
   renderCommunity();
   renderList();
@@ -1850,6 +1851,34 @@ summary: ${String(t.description || '').replace(/\n/g, ' ')}
 ## Getting it
 `;
 
+
+/** The Built with TDFam rows: one family each. `tool` picks a community
+ *  row whose post the card opens; `ours` counts the family from the
+ *  manifest (the FNS family). */
+function familyRows() {
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  const names = recDraft.tools.map((t) => t.name).filter(Boolean);
+  return (recDraft.families || []).map((f, i) => `
+    <div class="cat-row fam-row" data-i="${i}" style="grid-template-columns:auto 1fr auto">
+      <div class="cat-move">
+        <button data-fup ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+        <button data-fdown ${i === recDraft.families.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+      </div>
+      <div>
+        <input type="text" data-ff="name" value="${at(f.name)}" placeholder="Family name" />
+        <input type="text" data-ff="author" value="${at(f.author)}" placeholder="Author" />
+        <input type="text" data-ff="url" value="${at(f.url)}" placeholder="https://  or a page on this site, /docs/..." />
+        <input type="text" data-ff="author_url" value="${at(f.author_url)}" placeholder="https://  the author (optional)" />
+        <textarea class="cat-pitch" data-ff="description" rows="2" placeholder="One or two lines. Max 400 characters.">${String(f.description || '').replace(/</g, '&lt;')}</textarea>
+        <div class="rec-grid">
+          <label>Operators <input type="number" min="1" data-ff="ops" value="${at(f.ops)}" placeholder="count" /></label>
+          <label>Card opens the post of <select data-ff="tool"><option value="">(its own link)</option>${names.map((n) => `<option${f.tool === n ? ' selected' : ''}>${at(n)}</option>`).join('')}</select></label>
+          <label class="check"><input type="checkbox" data-ff="ours" ${f.ours ? 'checked' : ''} /> Ours <span class="hint">counted from the release</span></label>
+        </div>
+      </div>
+      <button class="icon-x" data-fdel title="Remove">&times;</button>
+    </div>`).join('');
+}
 
 function renderCommunity() {
   const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
@@ -1915,6 +1944,10 @@ function renderCommunity() {
     <label>Intro <span class="hint">shown above the section</span></label>
     <textarea class="cat-pitch" id="rec-intro" rows="2">${String(recDraft.intro || '').replace(/</g, '&lt;')}</textarea>
     <div id="recrows" style="margin-top:14px">${rows || '<p class="empty">No community tools listed yet.</p>'}</div>
+    <h3 class="pane-title" style="margin-top:28px">Built with TDFam</h3>
+    <p class="pane-sub">Operator families made with TDFam, on the community page at <span class="mono">/community/#tdfam</span>. Website only: installs never download this list.</p>
+    <div id="famrows">${familyRows() || '<p class="empty">No families listed yet.</p>'}</div>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="fam-add">+ Add family</button></div>
     <div style="display:flex;gap:8px;margin-top:16px">
       <button class="btn" id="rec-add">+ Add tool</button>
       <div style="flex:1"></div>
@@ -2002,6 +2035,38 @@ function renderCommunity() {
     const row = e.target.closest('.cat-row');
     const t = recDraft.tools[Number(row.dataset.i)];
     uploadCommunityImage(t, e.target.files[0]);
+  };
+  $('#famrows').oninput = (e) => {
+    const row = e.target.closest('.fam-row');
+    if (!row || !e.target.dataset.ff) return;
+    const f = recDraft.families[Number(row.dataset.i)];
+    const k = e.target.dataset.ff;
+    if (k === 'ours') { if (e.target.checked) f.ours = true; else delete f.ours; return; }
+    if (k === 'ops') {
+      const n = parseInt(e.target.value, 10);
+      if (n > 0) f.ops = n; else delete f.ops;
+      return;
+    }
+    const v = e.target.value;
+    if (v.trim() === '' && ['author_url', 'description', 'tool'].includes(k)) delete f[k]; else f[k] = v;
+  };
+  $('#famrows').onchange = (e) => $('#famrows').oninput(e);
+  $('#famrows').onclick = (e) => {
+    const row = e.target.closest('.fam-row');
+    if (!row) return;
+    const i = Number(row.dataset.i);
+    const fs = recDraft.families;
+    if (e.target.hasAttribute('data-fup') && i > 0) [fs[i - 1], fs[i]] = [fs[i], fs[i - 1]];
+    else if (e.target.hasAttribute('data-fdown') && i < fs.length - 1) [fs[i + 1], fs[i]] = [fs[i], fs[i + 1]];
+    else if (e.target.hasAttribute('data-fdel')) {
+      if (!confirm('Remove the family "' + (fs[i].name || 'this one') + '"?')) return;
+      fs.splice(i, 1);
+    } else return;
+    renderCommunity();
+  };
+  $('#fam-add').onclick = () => {
+    recDraft.families.push({ name: '', author: '', url: '' });
+    renderCommunity();
   };
   $('#rec-add').onclick = () => {
     recDraft.tools.push({ name: '', author: '', url: '' });
@@ -2116,7 +2181,7 @@ async function saveCommunity() {
     STATE = await api('/api/recommendations', {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ intro: recDraft.intro, tools, writeups }),
+      body: JSON.stringify({ intro: recDraft.intro, tools, writeups, families: recDraft.families }),
     });
     recDraft = null;
     $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>';

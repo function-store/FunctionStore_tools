@@ -101,6 +101,11 @@ their tier. Ctrl+H hides the selected command from the palette; the Commands
 tab shows it again. Alt+Up and Alt+Down cycle the queries you have run
 before.
 
+**Only what can run.** A tool that is bypassed or has cooking off does not
+offer its commands until it is back on. A tool that is not in the project but
+that you can install shows as **Install <tool>** with an `INSTALL` badge;
+Enter installs it, downloading it first when needed.
+
 **Rank by usage.** Commands you run often rank higher, on by default. The
 lift fades over a couple of weeks of not using a command, and it only breaks
 ties between similar matches: a better match or a starred row still wins.
