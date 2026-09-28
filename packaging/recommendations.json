@@ -188,7 +188,7 @@
       "author": "Mickey van Olst",
       "author_url": "https://www.patreon.com/MickeyvanOlst",
       "url": "https://www.patreon.com/MickeyvanOlst/posts/meet-aml-macos-167645742",
-      "description": "A macOS ML and AI operator family."
+      "description": "AI and ML on macOS: Apple's built-in pose tracking, masking and image classification, often on the Neural Engine, plus CoreML operators for depth, YOLO, segmentation, Stable Diffusion and 3D mesh generation. Free to download."
     },
     {
       "name": "MCX",
@@ -209,7 +209,7 @@
       "author": "Prismatic",
       "author_url": "https://www.patreon.com/prismaticvisuals",
       "url": "https://www.patreon.com/prismaticvisuals/posts/tox-l2d-operator-155965844",
-      "description": "An operator family for 2D lighting."
+      "description": "Real-time 2D lighting from textures: geometry, materials, lights and renderers in screen space, with SDF raymarching for volumetric global illumination, shadows, refraction and dispersion. Windows and macOS."
     }
   ]
 }
