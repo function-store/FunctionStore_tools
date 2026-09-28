@@ -153,6 +153,21 @@
    "description": "Operators for 3D textures: generate, process and render volumes on the GPU.",
    "ops": 48,
    "tool": "T3D"
+  },
+  {
+   "name": "STOP",
+   "author": "Spiraldiver",
+   "author_url": "https://www.patreon.com/spiraldiver",
+   "url": "https://spiraldiver.com/TouchDesigner/STOP/",
+   "description": "Strudel live-coding as an operator family: wire operators to build a pattern across six groups, and the Strudel Master plays it.",
+   "ops": 139
+  },
+  {
+   "name": "FOP",
+   "author": "Spiraldiver",
+   "author_url": "https://www.patreon.com/spiraldiver",
+   "url": "https://spiraldiver.com/TouchDesigner/FOP/",
+   "description": "A 3D and 4D modular fractal system, announced when it ships."
   }
  ]
 }
