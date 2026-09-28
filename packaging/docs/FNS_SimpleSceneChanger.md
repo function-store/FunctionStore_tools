@@ -218,7 +218,7 @@ With Control Cook on, after every change the changer recomputes which scene COMP
   + scenes still inside their Outro window
 
 Everything else has cooking disabled and, with Unload on, is unloaded a few frames later. Because
-this is recomputed from scratch rather than tracked step by step, an interrupted, restarted or
+this set is recomputed from scratch after every change, an interrupted, restarted or
 dropped transition can never leave a scene cooking forever, and a scene selected again before its
 unload lands simply keeps its memory.
 

@@ -25,9 +25,9 @@ features:
 The console is the one place to look at and steer an installed toolkit
 from a browser: every tool's settings on a single scrollable page, the
 install picker, and any tab a tool decides to contribute. It is served
-from inside your project on `127.0.0.1`, only while you are looking at it,
-and it holds no tool knowledge of its own; every request is routed to
-the component that owns the answer.
+from inside your project on `127.0.0.1`, only while you are looking at it.
+It routes every request to the component that owns the answer, so all
+tool knowledge stays with the tools.
 
 ## Opening it
 
@@ -85,14 +85,13 @@ therefore serves two lives:
 | installed by `FNS_Installer` (bootstrap, picker, Textport rail) | **on**, flipped once at install | off while exposed; the console is the UI |
 | updated by `FNS_Updater` | untouched; your choice persists | follows your choice |
 
-Why not simply ship it on: a registry host bootstraps its own `/sys`
+Why it ships off: a registry host bootstraps its own `/sys`
 global when none exists, which is right for a toolbar button (it *adds*
 a capability) and wrong for the console, whose exposure *removes* a local
 surface. A standalone ColorUI shipped exposed would raise a console nobody
 asked for and switch off its own panel. The rule, for any future surface
 with that property: *a host whose exposure takes a local surface away
-ships dormant and is enabled by the install rail, never by bootstrapping
-itself.*
+ships dormant, and only the install rail enables it.*
 
 The flag is the tool's own **Expose to Console** parameter (its Registry
 page), which the config registry persists, so after the install's one
@@ -120,8 +119,8 @@ like the toolbar, navbar and config registries):
 - **The surface is the server.** The global owns a Web Server DAT
   (`console_server`) that is created on demand, bound to the first free
   port in **36710-36759**, switched on by `Open`, and switched off after
-  **ten idle minutes**. It is never saved into the `.toe` or any package
-  -- `/sys` is rebuilt on every project open. Several open projects each
+  **ten idle minutes**. It is never saved into the `.toe` or any package,
+  since `/sys` is rebuilt on every project open. Several open projects each
   run their own console on their own port.
 - The page (`console_page`) and the request dispatcher
   (`console_server_callbacks`) ride along from the master; the global
@@ -180,7 +179,7 @@ def onConsoleRequest(action, method, body):
     body = parsed JSON of a POST, else None. Return anything JSON-able."""
 ```
 
-What a tool contributes is a **web re-expression of what it owns** --
+What a tool contributes is a **web re-expression of what it owns**:
 tables, parameters, state, talking to the same extension its panel
 talks to. A TouchDesigner panel itself cannot be embedded in a browser.
 

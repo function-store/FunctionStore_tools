@@ -19,7 +19,7 @@ is the other half: it finds those tools, reads their commands out of the live
 class by reflection, validates them, and serves one flat list to whatever is
 present to run them.
 
-Discovery is by tag, not by scanning. A tool that declares commands is tagged
+Discovery works by tag. A tool that declares commands is tagged
 `fnscommands`, so a registry that arrives, or is replaced by a newer version,
 later rediscovers every tool by rescanning tags and re-harvesting. That is why a
 tool can be installed before any consumer exists and still show up the moment
@@ -54,7 +54,7 @@ What a tool declares on top of that is the part a consumer cannot guess:
   ON/OFF and a setter can show its number. Read at query time, so it is never
   stale.
 - **`capability`**: a shared group id that lets a consumer render a family of
-  commands together instead of as loose entries.
+  commands together as one group.
 - **`builtin`**: TouchDesigner's own functionality, so a
   consumer can list it apart. FNS tools do not set it; the registry's own
   built-ins do.
@@ -91,7 +91,7 @@ where no copy carries that label.
 
 Limits are enforced at harvest: 24 commands per tool, 6
 parameters per command, 5 contexts and 8 surfaces per command. A malformed
-declaration is rejected with a reason instead of being served broken.
+declaration is rejected with a reason, so nothing broken is served.
 
 ## Built-in commands
 
@@ -111,7 +111,7 @@ command, the one with the newest package version is served, with every copy of
 that package kept, and the other is set aside and listed by `Shadowed()`, so installing
 a newer registry beside an older one never doubles the list. The TDXL
 launcher's companion carries this same package, so a project with both
-installed sees one registry and one set of built-ins, never two.
+installed sees a single registry and a single set of built-ins.
 
 ## For consumers
 

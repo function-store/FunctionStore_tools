@@ -51,7 +51,7 @@ A tool's settings live in your project file. By default they also roam through o
 
 ## It reaches past the toolkit
 
-Tools announce the actions they can perform, so anything able to run them can also list them: the [command palette](/docs/fns-commandpalette/) inside TouchDesigner, and TDX Launcher Ultra, which asks this installer to place packages instead of dropping files of its own.
+Tools announce the actions they can perform, so anything able to run them can also list them: the [command palette](/docs/fns-commandpalette/) inside TouchDesigner, and TDX Launcher Ultra, which has this installer place every package for it.
 
 Tools marked Patreon need a Patreon membership or a Gumroad licence key to download. Their catalogue entries and documentation are public. [How unlocking works](/patreon/) covers the details.
 

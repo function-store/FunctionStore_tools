@@ -25,8 +25,8 @@ parameters, and writing a value there goes through the same filters and
 persistence as any other change, so the page and the components can never
 disagree.
 
-Nothing in the page is hardcoded: there is no list of tools or parameters
-in the HTML. It asks the registry what exists and renders that, which is
+The page's HTML holds no hardcoded list of tools or parameters. It asks
+the registry what exists and renders that, which is
 why it is always correct for the subset of tools you actually installed
 and never grows dead entries for ones you removed. Each tool's `Registry`
 page is skipped; that is registration plumbing.

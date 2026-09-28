@@ -10,7 +10,7 @@ features:
 
 ## What it is
 
-ChopBank shapes a whole controller in one node. Every block in the Bank is one channel with its own processing: a range to limit and remap it, an exponent curve, Zero Below, a lag, and a speed mode that turns it into a running total. It's the same chain as ChopProcess, set per channel. A fader bank where each fader needs a different range and feel is one node, not eight.
+ChopBank shapes a whole controller in one node. Every block in the Bank is one channel with its own processing: a range to limit and remap it, an exponent curve, Zero Below, a lag, and a speed mode that turns it into a running total. It's the same chain as ChopProcess, set per channel. A bank of eight faders, each with its own range and feel, is one node.
 
 Snap Input builds the bank for you: it makes one block per incoming channel, named after it and holding its current value. A new block starts with the settings of the block before it, so setting up a row of similar faders is quick. With Promote to Property on, each block is also a property on the node, so `op('ChopBank').Fader1` reads and sets that block's Value.
 

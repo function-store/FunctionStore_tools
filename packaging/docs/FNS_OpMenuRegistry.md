@@ -19,8 +19,7 @@ goes back to stock.
 It ships as its own core package, always installed,
 promoted to `/sys` with the global shortcut `op.FNS_OPMENUREGISTRY`.
 
-You do not open this package directly. The user-facing mods that ride on it are
-documented under [OpMenuMods](/docs/fns-opmenumods/#opmenu-mods).
+The user-facing mods that ride on it are documented under [OpMenuMods](/docs/fns-opmenumods/#opmenu-mods).
 
 ## What tools contribute
 

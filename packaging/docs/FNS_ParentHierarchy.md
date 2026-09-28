@@ -25,8 +25,8 @@ values.
 - Right-Clicking on any of the parameters will open the parameter customization
   window of that param
 
-This tool adds **no button** to the pane bar. It reads the path that is already
-there, so the bar stays exactly as long as it was.
+This tool works from the path already shown in the pane bar, so the bar keeps
+its existing buttons and stays exactly as long as it was.
 
 With [iopBrowser](/docs/fns-iopbrowser/) installed, the same hover also lists the
 internal operators in its browser. Without it the hover works exactly as
@@ -49,10 +49,9 @@ to the COMP: methods with their signature, properties, and attributes with their
 type. Move off the row and it folds away again.
 
 Capitalized class constants are left out. TouchDesigner promotes those too, but
-they are a tool's own bookkeeping rather than something you call, and listing
-them buries the methods you came for. The same goes for the accessors
-CustomParHelper generates for each parameter: one row per parameter is not an
-API, and on a tool with forty of them it is all you would see.
+they are a tool's own bookkeeping, and listing them buries the methods you came
+for. The same goes for the accessors CustomParHelper generates for each
+parameter: on a tool with forty parameters, those rows would be all you see.
 
 Clicking copies a reference you can paste straight into an expression or a
 script: an extension row gives `ext.TimelineToolsExt`, and a member gives

@@ -60,7 +60,7 @@ the mappers are configured. The bar comes in two styles (*Tab Bar* on the
 hub's Hub page, roams with your settings): **Rows** wraps fixed-width tabs
 into as many rows as needed; **Strip** is TouchDesigner's single-row folder
 tabs with scroll arrows and a dropdown. Drag a tab onto another tab to reorder
-in either style. There is no close button in either: hide a tab from the contributing tool's *Shown in Hub*
+in either style. Neither style has a close button. Hide a tab from the contributing tool's *Shown in Hub*
 parameter on its Registry page, and bring any hidden tab back from the FNS
 button's right-click menu ("Show …"). Tab order and the active tab roam with
 your settings through [ConfigRegistry](/docs/fns-configregistry/), as do
@@ -73,9 +73,9 @@ Drop any panel COMP on the FNS button (or anywhere on the hub window). The hub
 offers every surface that can take it (Toolbar, Navbar, Main Menu) in a
 small menu; pick one and the COMP receives a self-registering host of that
 surface's registry, placed after the bar's last entry, and appears on the bar
-immediately. A COMP that should live on two surfaces is dropped twice. Nothing
-is copied into the bar: the COMP stays where it is and publishes into the
-registry, exactly like every shipped tool.
+immediately. A COMP that should live on two surfaces is dropped twice. The
+COMP stays where it is and publishes into the registry, exactly like every
+shipped tool.
 
 ## Contributing a tab
 
@@ -85,7 +85,7 @@ A tool that wants a tab in the hub carries a stamped `FNS_HubRegistry` host
 the host out of any shipped tool). Its Registration page names what the tab
 shows: the tool itself or any panel inside it (mirrored into the hub, so the
 tool can live anywhere), a DAT/CHOP/TOP/SOP/POP (shown through an OP Viewer),
-or a parameter page of the tool. Nothing is discovered by scanning: the host
-registers itself when it initializes, so a tool added while the hub is open
+or a parameter page of the tool. The host registers itself when it
+initializes, so a tool added while the hub is open
 simply appears. The developer-facing contract is
 [docs/HubContract.md](https://github.com/function-store/FunctionStore_tools/blob/main/docs/HubContract.md).

@@ -349,7 +349,7 @@
   },
   "FNS_AutoRes": {
    "category": "Network",
-   "description": "Hold Alt while placing a generator TOP to have its resolution follow the project (or the panel it sits in) instead of a hardcoded pixel size.",
+   "description": "Hold Alt while placing a generator TOP to have its resolution follow the project (or the panel it sits in).",
    "fits": [
     "network",
     "speed",
@@ -377,7 +377,7 @@
   },
   "FNS_BeatMod": {
    "category": "Time & sequencing",
-   "description": "Beat-synced modulation on any parameter or ParGroup, locked to the timeline tempo: a wave, a channel of any CHOP, or a gesture you record by hand, gliding in instead of cutting. Tap tempo sets the global BPM, and a manager lists every modulator in the project.",
+   "description": "Beat-synced modulation on any parameter or ParGroup, locked to the timeline tempo: a wave, a channel of any CHOP, or a gesture you record by hand, gliding in smoothly. Tap tempo sets the global BPM, and a manager lists every modulator in the project.",
    "access": "8323905",
    "fits": [
     "live",
@@ -624,7 +624,7 @@
   },
   "FNS_ParentHierarchy": {
    "category": "Network",
-   "description": "Hover a parent in the pane-bar path with Alt to see its parent shortcut, global shortcut and internal operators, and Ctrl to see its custom parameters and values. Click any item to copy a reference to it. Adds no button of its own; it works on the path you already have.",
+   "description": "Hover a parent in the pane-bar path with Alt to see its parent shortcut, global shortcut and internal operators, and Ctrl to see its custom parameters and values. Click any item to copy a reference to it. It works on the path you already have and adds no button of its own.",
    "fits": [
     "network",
     "learn",

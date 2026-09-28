@@ -8,9 +8,9 @@ features:
 
 ## Alt-drag to Select
 
-Hold `Alt` and drag a selected operator away from where it sits. Instead of
-moving, the operator snaps back to its original position and a **Select** of
-the same family appears where you dropped it, already pointed at the original.
+Hold `Alt` and drag a selected operator away from where it sits. The operator
+snaps back to its original position and a **Select** of the same family
+appears where you dropped it, already pointed at the original.
 
 It is the fastest way to reference an operator somewhere else in the network
 without touching the original chain: grab it, pull a copy out, keep working.

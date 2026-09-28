@@ -40,8 +40,8 @@ snapshot of your context before its window can take focus, and a command
 whose context that snapshot satisfies ranks first, most specific first: a
 command about the parameter under your mouse, then one about the current or
 selected operator, then one about the network, then general commands, then
-components. A command whose context is missing is dimmed and refused rather
-than run into nothing. Badges are coloured by kind, and context commands carry
+components. A command whose context is missing is dimmed and
+refused. Badges are coloured by kind, and context commands carry
 a small `par` / `op` / `net` tag so the reason for a row's rank is visible.
 
 Once you type, the words you typed decide the order and the context only
@@ -54,8 +54,7 @@ of the Atlantic are the same word (`randomise` finds Randomize). A hit in the
 title ranks above the same hit in a tool name, and the file path of a
 component only counts when the word is literally in it.
 
-A command that declares parameters does not run on Enter; it walks them one
-at a time. A menu parameter becomes pick rows filtered as you type, the rest a
+Enter on a command that declares parameters walks them one at a time. A menu parameter becomes pick rows filtered as you type, the rest a
 text field whose placeholder names the parameter, its type and its default.
 Enter accepts (empty keeps the default), Left steps back a parameter, Esc
 backs out to the list.
@@ -88,8 +87,8 @@ runs, and the footer shows what it would give you.
 
 **Scope to one extension.** `~ext.` lists the extensions on the subject COMP,
 and `~ext.MyExt.` or the shorter `~MyExt.` lists that one's members. Addressed
-this way the list is everything not starting with an underscore, not just the
-capitalized half: reaching a member through `.ext.MyExt` does not require it to
+this way the list is everything not starting with an underscore, lowercase
+members included: reaching a member through `.ext.MyExt` does not require it to
 be promoted, so the lowercase wiring tier is callable here even though the COMP
 does not expose it. The name is the Extension Name parameter when one is set and
 the class name when it is not, which is what `.ext.` resolves by either way. A method runs through the COMP, so the palette can only

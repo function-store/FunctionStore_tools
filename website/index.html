@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" href="/favicon.png" type="image/png" />
 <link rel="apple-touch-icon" href="/favicon.png" />
-<title>FNSTools — Tools for TouchDesigner</title>
+<title>FNSTools - Tools for TouchDesigner</title>
 <meta name="description" content="FNSTools is a free, open-source toolkit of TouchDesigner workflow tools: operator templates, parameter promotion, MIDI/OSC mapping, network shortcuts and extension helpers. Pick only the tools you want; the installer downloads just those." />
-<meta property="og:title" content="FNSTools — Tools for TouchDesigner" />
+<meta property="og:title" content="FNSTools - Tools for TouchDesigner" />
 <meta property="og:description" content="Operator templates, parameter promotion, MIDI/OSC mapping, network shortcuts and extension helpers for TouchDesigner. Free and open source. Pick only the tools you want." />
 <meta property="og:type" content="website" />
 <meta property="og:image" content="https://functionstore.tools/og-image.png" />
@@ -758,7 +758,7 @@
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⇄</div>
-            <div class="feat-text"><strong><a href="/docs/fns-autores/">AutoRes</a></strong><span>Hold Alt while placing a generator TOP to have its resolution follow the project (or the panel it sits in) instead of a hardcoded pixel size.</span></div>
+            <div class="feat-text"><strong><a href="/docs/fns-autores/">AutoRes</a></strong><span>Hold Alt while placing a generator TOP to have its resolution follow the project (or the panel it sits in).</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⇄</div>
@@ -778,7 +778,7 @@
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⇄</div>
-            <div class="feat-text"><strong><a href="/docs/fns-parenthierarchy/">ParentHierarchy</a></strong><span>Hover a parent in the pane-bar path with Alt to see its parent shortcut, global shortcut and internal operators, and Ctrl to see its custom parameters and values. Click any item to copy a reference to it. Adds no button of its own; it works on the path you already have.</span></div>
+            <div class="feat-text"><strong><a href="/docs/fns-parenthierarchy/">ParentHierarchy</a></strong><span>Hover a parent in the pane-bar path with Alt to see its parent shortcut, global shortcut and internal operators, and Ctrl to see its custom parameters and values. Click any item to copy a reference to it. It works on the path you already have and adds no button of its own.</span></div>
           </div>
           <div class="feat">
             <div class="feat-icon" aria-hidden="true">⇄</div>
@@ -1244,12 +1244,12 @@
         <details class="fold">
           <summary>Where your settings live</summary>
           <div class="fold-body">
-            <p>Preferences do not live in the project file. They go into one aggregated JSON in
-              your user palette, so the way you set a tool up follows you into the next project,
+            <p>Preferences go into one aggregated JSON in your user palette, outside the project
+              file, so the way you set a tool up follows you into the next project,
               and survives the next update.</p>
             <p>MIDI and OSC maps are the deliberate exception: they save into the project folder,
               so they travel with the show.</p>
-            <p>Settings are preserved across a package being replaced, not re-entered afterwards.
+            <p>Settings are preserved when a package is replaced.
               And the registries are promoted masters you can clone, so your own tools can sit on
               the toolbar, nav bar or OP menu too.
               <a href="/docs/fns-configregistry/">How settings persistence works →</a></p>

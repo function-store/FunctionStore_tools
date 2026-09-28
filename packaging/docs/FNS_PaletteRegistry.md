@@ -17,7 +17,7 @@ list, exactly a folder-tab row. This registry puts a tab strip there: TD's own
 *Palette* first, then one tab per contribution, each showing a panel from the
 tool that published it.
 
-Nothing stock is copied, moved or re-expressed. The registry loads TD's own
+The stock palette stays where it is, as it is. The registry loads TD's own
 `folderTabs` widget into the free row and shows each contributed panel through a
 Select COMP mirror; the stock panels only get their display flag toggled while a
 contributed tab is in front. `/ui` is never saved with a project, so the whole
@@ -26,9 +26,9 @@ surface is rebuilt on every load.
 It ships as its own core package, promoted to `/sys` (global shortcut
 `op.FNS_PALETTEREGISTRY`), alongside the other surface registries.
 
-**With nothing contributed it claims nothing at all**: no strip, no mirrors, an
-untouched palette dialog. The surface appears with the first registration and
-disappears with the last.
+**With nothing contributed, the palette dialog stays exactly as TouchDesigner
+ships it.** The strip and its mirrors appear with the first registration and
+disappear with the last.
 
 ## For tool authors
 

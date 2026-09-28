@@ -31,5 +31,5 @@ display flag on every TOP in the network you are in, which is the fast way back
 from a pane full of previews.
 
 All three live on the toolbar. Which widgets sit on the bar, in what order, and
-which are shown is [ToolbarRegistry](/docs/fns-toolbarregistry/)'s business, not
-theirs.
+which are shown is up to
+[ToolbarRegistry](/docs/fns-toolbarregistry/).

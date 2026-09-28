@@ -34,7 +34,7 @@ Otherwise, in case of OP chains, or snippets:
 
 You can define OP snippets for an operator type which will behave the same way as other templates:
 1. Create a **Base COMP** inside the Base COMP named after the `OPType` described above.
-1. You can create any network inside this Base COMP that will be extracted when placing down a template, allowing you e.g. to summon a full render network with geo, camera, light (and whatever you want) instead of placing down only the Render TOP.
+1. You can create any network inside this Base COMP that will be extracted when placing down a template, allowing you e.g. to place down a Render TOP and get a full render network with geo, camera, light (and whatever you want).
 1. Inside this Base COMP you can add another Base COMP, which is the way to substitute an operator with a COMP if your heart desires!
 1. In case of adding or inserting a template snippet between two OPs, you can help the script figure out the input and output node, by adding an In/Out OP to your snippet Base COMP. Otherwise it will have to guess and it might be wrong.
 

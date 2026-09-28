@@ -24,4 +24,4 @@ It is the Pro sibling of ColorGen, which shapes its palette with a phase step an
 
 ## Palette behavior
 
-The palette is clamped at zero before the exponent is applied. An offset below the amplitude therefore clips the troughs to black rather than producing invalid pixels.
+The palette is clamped at zero before the exponent is applied. An offset below the amplitude therefore clips the troughs to black, so no pixel goes invalid.

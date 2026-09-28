@@ -7,7 +7,7 @@ summary: The machinery under the toolkit, explained once. How one dropped file b
 
 [Architecture](/docs/guides/architecture/) is the same story in one page. This one is for the curious: people who want to know why the toolkit behaves the way it does, tool authors who want to ship something through the same rail, and anyone building their own TouchDesigner distribution who would like to borrow the parts that worked. Each tool has its own page for the everyday questions. This one is about the ideas the tools share.
 
-Everything here describes the toolkit as released on 2026-09-08 (v3.1.4). Counts change with every release; the shape does not.
+Everything here describes the toolkit as released on 2026-09-08 (v3.1.4). Counts change with every release; the shape stays the same.
 
 ## The shape in one paragraph
 
@@ -230,7 +230,7 @@ A tool whose bytes and version are owned upstream, by another repository with it
 
 **One family.** The other Function Store products appear on this site from one content file injected into two pages, and TDXMap ships through the store as a foreign package while keeping its own updater and licensing.
 
-The recipe, stated once: TD-native tags that need no registry to exist, guarded lookups that degrade instead of failing, one store that both sides treat as a mirror, one gate, one config folder, and a contract written down on both sides before either side writes a line against it.
+The recipe, stated once: TD-native tags that need no registry to exist, guarded lookups that degrade quietly when their target is missing, one store that both sides treat as a mirror, one gate, one config folder, and a contract written down on both sides before either side writes a line against it.
 
 ## Gated releases: Patreon
 

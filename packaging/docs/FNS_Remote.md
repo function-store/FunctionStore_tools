@@ -20,9 +20,9 @@ features:
 
 Press **Open Pairing** on the component, click the phone button in the
 toolbar, or run the Phone Remote command, and a small window opens inside
-TouchDesigner with the code. Scan it with the phone. Nothing leaves the
-machine to draw it: the code is rendered by the tool itself, there is no
-cloud service in the middle, no account, and nothing to sign into. Each
+TouchDesigner with the code. Scan it with the phone. The code is
+rendered by the tool itself on this machine, and the phone connects to it
+directly, without an account or a cloud service. Each
 machine mints its own access token the first time it serves, and the link
 carries it.
 
@@ -31,9 +31,9 @@ cannot reach a server that listens on this machine alone. When it is off
 the window says so and offers the switch, so pairing is two clicks from
 cold: open, allow LAN, scan.
 
-The token is deliberately **not** a parameter. Parameters travel inside
-the `.toe`, and a token that travels is a token you gave away, so it
-lives beside the toolkit's config on the machine that minted it. **Regenerate
+The token lives beside the toolkit's config on the machine that minted it,
+deliberately outside the component's parameters: parameters travel inside
+the `.toe`, and a token that travels is a token you gave away. **Regenerate
 Token** invalidates every link that was handed out before.
 
 ## What you can drive
@@ -55,8 +55,8 @@ while the remote is serving.
 Drag a component from a network editor onto the button to make it **the**
 component the phone controls. Hold **Alt** while dropping to **add** it
 to the component list instead, so several components are exposed at once.
-A component that is already listed is switched on rather than listed
-twice. Dropping a parameter works too and exposes the component it belongs
+A component that is already listed is switched on and keeps its single
+entry. Dropping a parameter works too and exposes the component it belongs
 to. The exposure is the same one the Control page describes, so the page
 filters and the per-component switch are there when you want them.
 
@@ -74,9 +74,9 @@ the three agree.
 
 There are two links, and the pairing window hands out one at a time.
 The full link is yours. The **client link** is a second code, minted
-beside the first, that opens only the exposed controls: no session
-actions, no browsing the project, and the server refuses those routes on
-it, so hiding them on the page is not what keeps them shut. Turn on
+beside the first, that opens only the exposed controls. The server refuses session
+actions and project browsing on that link, so those routes stay shut
+whatever the page shows. Turn on
 **Pair the Client Link** and the window, its QR code and Click to open
 here switch to the client link; turn it off and they switch back. **Touch
 on Client Link** decides whether that link also gets the touch pad, so a

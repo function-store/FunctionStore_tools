@@ -17,8 +17,8 @@ becomes that thing, with the owner, pane type, window behaviour and callbacks
 the entry declares.
 
 The point is that it survives. An entry is recalled by name, so the pane setup
-you reach for every session is one dropdown pick away instead of a manual split,
-navigate and configure each time.
+you reach for every session, split, navigated and configured, is one dropdown
+pick away.
 
 It ships as its own core package, always installed,
 promoted to `/sys` with the global shortcut `op.FNS_PANETYPEREGISTRY`.

@@ -11,7 +11,7 @@ features:
 ## TDX_SearchPalette
 
 Adds a search field to TouchDesigner's palette browser, so palette
-components can be found by typing instead of scrolling the folder tree.
+components can be found by typing their name.
 This is [Yea Chen's TD-SearchPalette](https://github.com/yeataro/TD-SearchPalette),
 vendored into the toolkit.
 
@@ -25,17 +25,17 @@ pulses on its parameters.
 `ctrl+shift+f` (`cmd+shift+f` on macOS) brings TD's own palette tab to the
 front and focuses the search field, ready to type.
 
-It acts on the palette **in place**. It deliberately does not call
-`ui.openPaletteBrowser()`, which pops the palette out into a floating window
-, so if the browser is closed, the hotkey does nothing and starts no rearranging of
-your workspace.
+It acts on the palette **in place**. `ui.openPaletteBrowser()` would pop the
+palette out into a floating window, so the hotkey deliberately leaves it
+uncalled: if the browser is closed, the hotkey does nothing and starts no
+rearranging of your workspace.
 
 The tab step matters because the search field lives inside the *stock* palette
 list, and any contributed tab hides that list. The hotkey asks whichever
 palette-tab owner is installed to show TD's own tab again
 ([PaletteRegistry](/docs/fns-paletteregistry/) and TDXLU's own injector are
 both feature-detected, neither required), then takes focus one frame later,
-a tab switched back this frame is still hidden.
+because a tab switched back this frame is still hidden.
 
 **Rebindable.** The combo lives on this package's own **Search Hotkey**
 parameter, so it is listed under TDX_SearchPalette in HotkeyManager and can
@@ -55,7 +55,7 @@ had no word navigation.
 Matching goes beyond the original module's prefix search:
 
 - **Substring, case-insensitive**: `blur` finds `hsvBlur`, `radialBlur`
-  and `barrel_blur`, not just names that start with it.
+  and `barrel_blur`, as well as names that start with it.
 - **Multiple words AND together**: `audio an` finds `audioAnalysis`.
 - **Ranked results**: an exact match first, then names starting with the
   query, then names where it starts a word (`blur` puts `hsvBlur` and
@@ -90,6 +90,5 @@ The list stops at 200 rows, so a one-character query returns the 200
 best-ranked components only.
 
 Clicking a folder in the tree clears the search, so the list falls back to
-that folder's own contents instead of leaving a stale query in front of
-what you just picked. The **X** button next to the field still clears it
+that folder's own contents and the old query goes with it. The **X** button next to the field still clears it
 without changing folder.

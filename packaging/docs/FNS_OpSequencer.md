@@ -55,7 +55,7 @@ Prune Stale Columns
          (you will see a warning on the node when that happens)
 
 ## The list
-#        0-based preset index  -  the same number SELECT uses
+#        0-based preset index, the same number SELECT uses
 EASE     easing stored with the preset (used when Override is off)
 click    recall that preset (sets SELECT)
 drag     reorder presets; the index numbers follow the new order
@@ -64,7 +64,7 @@ right-click a cell      easing menu. On EASE: the preset's base easing.
          On a parameter cell: that parameter's own easing for this
          preset (Inherit = follow the row). Overridden cells show in
          bold amber; hover them for the curve name.
-Values are editable in place -- the EASE cell too, as text.
+Values are editable in place. So is the EASE cell, as text.
 
 ## Playback
 Mode     how the presets are played back:
@@ -91,18 +91,18 @@ curve: "InQuad | tx:OutBounce ry:InSine". The base eases every column;
 each par:Easing token re-eases that ONE column for the morph INTO the
 preset. Right-click cells to set them, or type the spec straight into
 the EASE cell. Members of a rotation triple share the triple's BASE
-name (r:OutQuad eases the whole arc -- set it from any of rx/ry/rz).
+name (r:OutQuad eases the whole arc; set it from any of rx/ry/rz).
 Unknown names fall back to the base at blend time, so a typo can never
 break playback. Select and A to B only: Spline fits its own curve and
 Mix is weight-driven, so neither reads easing at all. Override ON
-flattens everything -- overrides included -- to the Easing menu.
+flattens everything, overrides included, to the Easing menu.
 
-The EASING STRIP (panel, below the buttons -- the EASE button hides
+The EASING STRIP (panel, below the buttons; the EASE button hides
 it) and the Easing parameter page are the same controls: they follow
 the selected preset, showing its base easing and one row per override.
 Set a row's Parameter to - to disable it, press + for another row,
 Clear Overrides to drop them all. Everything stays in sync with the
-right-click menus and the EASE cell -- they all read and write the
+right-click menus and the EASE cell: they all read and write the
 same spec.
 
 ## Rotation
@@ -126,9 +126,9 @@ moves and wrap-around angles are where Slerp matters.
 
 ## MIX  (Mode = Mix, plus the Mix page)
 Every preset gets a WEIGHT and they all blend at once, so you can sit
-between four presets at 0.3 / 0.1 / 0.9 / 0.2 instead of only on the
-line between two. Weights come from a CHOP -- a fader bank, an LFO
-bank, a Pattern CHOP, a DAT to CHOP -- or from Python.
+anywhere between four presets, say at 0.3 / 0.1 / 0.9 / 0.2.
+Weights come from a CHOP (a fader bank, an LFO
+bank, a Pattern CHOP, a DAT to CHOP) or from Python.
 
 Weights From
          Parameters       the Mix blocks at the bottom of the page.
@@ -141,7 +141,7 @@ Weights From
 
 ## THE MIX BLOCKS
 Each block names ONE preset and how hard it pulls, so the sequence can
-hold a handful of presets rather than the whole table -- mix presets
+hold just a handful of presets from the table: mix presets
 3, 9 and 20 and leave the other forty-five out of it.
 
 Preset   which preset this block weights, by its index in the list.
@@ -174,15 +174,14 @@ Read     which axis of the source carries the weights. Auto reads the
 Weights are purely RELATIVE. Every column renormalises by the weights
 that actually reached it, so two blocks at 0.1 give the same blend as
 two at 1.0, and one block on its own recalls that preset exactly
-whatever its weight. With nothing pulling, nothing is written -- the
-parameters stay where they are rather than drifting toward some
-remembered state. There is no captured base.
+whatever its weight. With nothing pulling, nothing is written: the
+parameters stay where they are. There is no captured base.
 
 How each kind of column blends:
   numbers     weighted average. A preset that left the cell empty
               drops out and the rest renormalise around it.
-  rotations   rx/ry/rz triples blend as quaternions rather than per
-              channel, whenever Rotation Blend is not Euler. Two
+  rotations   rx/ry/rz triples blend as whole rotations (quaternions)
+              whenever Rotation Blend is not Euler. Two
               presets follow exactly the same arc as A to B; three or
               more use a weighted quaternion average.
   angles      hue, phase, rotate, roll and lone rotation axes take the
@@ -216,11 +215,11 @@ midpoint of a transition.
 
 ## What's new (2026-08)
 - Per-parameter easing: an EASE cell can carry "Base | par:Easing ..."
-  overrides -- right-click any cell for the easing menu. Overridden
+  overrides. Right-click any cell for the easing menu. Overridden
   cells show bold amber; rotation triples ease as one arc.
-- Mix: blend presets at once by weight -- from the Mix blocks, from a
+- Mix: blend presets at once by weight: from the Mix blocks, from a
   CHOP, or the blocks trimming what the CHOP drives. Each block names
-  the preset it weights, so you can mix a handful instead of the whole
+  the preset it weights, so you can mix just a handful from the
   table, and reordering the list carries the weights along with their
   presets. Exact mapping for a fader bank that matches the table,
   Stretch to smear a few channels over the whole thing.
@@ -229,8 +228,7 @@ midpoint of a transition.
   exclusive; the toggles only hid it, and there was no room for a
   fourth. BREAKING: anything referencing par.Spline or par.Anytoany
   needs to read par.Playmode instead.
-- Parameters a mode does not use are greyed out rather than left
-  sitting there doing nothing.
+- Parameters a mode does not use are greyed out.
 - Rotation Blend: rx/ry/rz (and Rx Ry Rz, Rotx Roty Rotz...) blend as
   quaternions along the shortest arc; winding can be preserved.
 - Periodic Columns: hue, phase, rotate, roll and lone rotation axes take

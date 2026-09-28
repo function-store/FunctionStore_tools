@@ -1,6 +1,6 @@
 ---
 package: FNS_BeatMod
-summary: 'Beat-synced modulation on any parameter: a wave, a CHOP channel or a recorded gesture, locked to the timeline tempo, gliding in instead of cutting, with a manager listing every one of them.'
+summary: 'Beat-synced modulation on any parameter: a wave, a CHOP channel or a recorded gesture, locked to the timeline tempo and gliding in smoothly, with a manager listing every one of them.'
 features:
   - name: Beat Mod
     anchor: beat-mod
@@ -38,8 +38,8 @@ hotkeys:
 ## Beat Mod
 
 Hover a parameter, press `Alt+G`, and it starts swinging in time with the
-project's tempo. Hover the group instead, the Translate row rather than one of
-its fields, and the whole group swings, each member on its own channel: what is
+project's tempo. Hover the group instead (the Translate row as a whole)
+and the whole group swings, each member on its own channel: what is
 under the mouse decides, a parameter or a group. `Alt+Shift+G` gives a Speed
 instead, a rate that counts on from the current value. `Ctrl+Shift+G` glides the
 parameter back to where it was and removes the modulator.
@@ -49,7 +49,7 @@ There are three kinds of modulation, and they all arrive the same way. A
 through a chain of shaping. A **recorded gesture** loops something you moved by
 hand. Each one lands as its own small network beside the target operator.
 
-Nothing is cut: the parameter keeps its current value on the first frame and the
+Every change glides: the parameter keeps its current value on the first frame and the
 modulation fades in over the **Default Tween** on the **Tween Curve**, driven by
 the Tweener that ships inside the tool. Removing it is the same glide the other
 way, after which the parameter is a plain constant again. Deleting a modulator
@@ -79,8 +79,8 @@ modulation and those surfaces only affect the visit they are used in. Either
 way, anything you change during a visit to the menu counts as set, so
 hold, set, click still applies what you just set.
 
-**Hold Opens The Settings** turns the held gesture off altogether if you would
-rather every press was a plain click. A channel is the one exception: with holds
+**Hold Opens The Settings** turns the held gesture off altogether if you want
+every press to be a plain click. A channel is the one exception: with holds
 off, clicking it opens the panel, which would otherwise be out of reach.
 
 **Pad Stays Open** is for macOS, where a held button does not track into the
@@ -288,7 +288,7 @@ placed by an older version is recognised by its shape and tagged on the way
 past.
 
 The manager is also a tab in **Hub**, listed as *BeatMod*, so it sits beside
-the other toolkit managers instead of only in its own window. It behaves the
+the other toolkit managers as well as in its own window. It behaves the
 same either way, and it only keeps itself up to date while it is the tab you are
 looking at.
 

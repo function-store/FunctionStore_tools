@@ -35,7 +35,7 @@ A folder row totals everything below it, including its sub-folders:
 - **Count**, how many backup files.
 - **Work Hrs**, an estimate of the time those saves represent. Save timestamps
   are grouped into sessions, a gap of more than an hour starts a new one, and
-  the sessions are added up. This is an estimate, not a record of time spent working.
+  the sessions are added up. The figure is only an estimate of time spent working.
 
 Right-click a row to show that file in your file browser. Click the header of
 the size column to re-scan.

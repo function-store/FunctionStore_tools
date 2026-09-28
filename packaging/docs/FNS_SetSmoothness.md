@@ -10,7 +10,7 @@ features:
 ## Set Input/Viewer Smoothness
 
 Sets the **Input Smoothness** and **Viewer Smoothness** parameters that live on
-every TOP's *Common* page, from a toolbar menu instead of a parameter dialog.
+every TOP's *Common* page, from a toolbar menu.
 
 Click the toolbar button, pick a filtering mode, and it is written to the
 **selected** TOPs. Hold `Alt` while you pick and it goes to **every TOP in the

@@ -16,7 +16,7 @@ The pair it remembers is the **last two operators you selected**, so it works
 across networks: dive into a component to change something, hit the shortcut,
 and you are back where you were without retracing the path.
 
-Nothing to configure: the tool has one hotkey and an **Active** toggle. Rebind
+Configuration is one hotkey and an **Active** toggle. Rebind
 the key from its own parameter or from
 [HotkeyManager](/docs/fns-hotkeymanager/), like every other shortcut in the
 toolkit.

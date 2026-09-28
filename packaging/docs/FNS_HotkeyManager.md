@@ -8,7 +8,7 @@ features:
 
 ## HotkeyManager
 
-A lister UI for discovering, rebinding and de-conflicting hotkeys across the whole project, not just the toolkit. Pulse `Open UI` on the component to open it.
+A lister UI for discovering, rebinding and de-conflicting hotkeys across the whole project, including tools outside the toolkit. Pulse `Open UI` on the component to open it.
 
    - **Discovery** scans every top-level component (except `ui`/`sys`/`local`) for hotkey-bearing `keyboardin` CHOPs/DATs and custom parameters named like a shortcut, and lists them one row per binding: Tool, Path, Par, Hotkey, Default, Persist, Status.
    - **Click a Hotkey cell** to capture a new binding (press the keys; `Esc` cancels). If the combo is already used elsewhere, the row asks for confirmation; press the same keys again to force it.

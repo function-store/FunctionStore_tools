@@ -24,8 +24,8 @@ You can also drop an **operator** on the same button to get its Execute DAT:
 * **Drop a DAT:** creates a DAT Execute DAT watching it
 
 No modifier is needed here. Modifiers on a *parameter* drop choose between three
-possible results; an operator drop has only one, and which channel to watch is
-decided by what you dropped, with no setting involved. The new DAT is created in
+possible results; an operator drop has only one, and what you dropped decides
+which channel to watch. The new DAT is created in
 the network you are looking at, already pointed at its source and with an event
 turned on (Value Change for a CHOP, Table Change for a DAT) so it can fire
 immediately.

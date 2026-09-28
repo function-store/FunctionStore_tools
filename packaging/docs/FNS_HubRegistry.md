@@ -12,14 +12,14 @@ features:
 
 The raw registry that decides what [Hub](/docs/fns-hub/) shows: one entry
 per tab, with its label, order, visibility and what it renders. The hub itself
-holds no tab knowledge; it draws what this registry says, and the registry
+draws whatever this registry says, and the registry
 injects one mirror or viewer per entry into the hub's tab area, prunes the ones
 whose tool is gone, and heals the rest.
 
 It ships as its own core package, promoted to `/sys` (global shortcut
 `op.FNS_HUBREGISTRY`), alongside the six surface registries,
-[Console](/docs/fns-console/) and [Updater](/docs/fns-updater/). You
-normally never touch it directly; the hub is the UI.
+[Console](/docs/fns-console/) and [Updater](/docs/fns-updater/). The hub
+is its UI.
 
 ## For tool authors
 

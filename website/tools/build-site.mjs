@@ -1982,9 +1982,9 @@ if (fs.existsSync(cfgSrc)) {
     `<link rel="icon" href="/favicon.png" type="image/png" />\n`
     + `<link rel="apple-touch-icon" href="/favicon.png" />\n`
     + `<link rel="canonical" href="${SITE}/get/" />\n`
-    + `<meta name="description" content="Pick the FNSTools you want and install them in TouchDesigner with one line. macOS and Windows." />\n`
+    + `<meta name="description" content="Browse the FNSTools toolkit for TouchDesigner, see what each tool does, and keep only the ones you want. Free and open source, macOS and Windows." />\n`
     + `<meta property="og:title" content="Build your FNSTools install" />\n`
-    + `<meta property="og:description" content="Pick the TouchDesigner tools you want and install them with one line." />\n`
+    + `<meta property="og:description" content="Browse every FNSTools tool for TouchDesigner and pick the ones that fit your workflow." />\n`
     + `<meta property="og:type" content="website" />\n`
     + `<meta property="og:image" content="${SITE}/og-image.png" />\n`
     + `<link rel="preconnect" href="https://fonts.googleapis.com">\n`
@@ -2131,6 +2131,20 @@ if (fs.existsSync(cfgSrc)) {
   if (dashy.length) {
     console.log(`note: ${dashy.length} page(s) use an em-dash or " -- " in prose `
       + `(house style is plain punctuation): ${dashy.map((p) => p.name).join(', ')}`);
+  }
+  // Same for the contrast trope. "rather than" is the one form a regex can
+  // catch reliably; "it is not X, it is Y" and "you never X. Y does" need a
+  // human read. A clean note here only means the regex found nothing.
+  const contrasty = [
+    ...pages,
+    ...guides.map((g) => ({ name: `guides/${g.slug}`, body: g.body, description: g.summary })),
+  ].filter((p) => /\brather than\b/i.test(
+    p.body.replace(/<!--[\s\S]*?-->/g, '').replace(/```[\s\S]*?```/g, '')
+      + ' ' + (p.description || '')));
+  if (contrasty.length) {
+    console.log(`note: ${contrasty.length} page(s) say "rather than" in prose `
+      + `(house style states what a thing does, without the foil): `
+      + `${contrasty.map((p) => p.name).join(', ')}`);
   }
   // The same rule for tooltips, which reach the tables verbatim. These live
   // on the parameters inside the components, so the fix is in TouchDesigner

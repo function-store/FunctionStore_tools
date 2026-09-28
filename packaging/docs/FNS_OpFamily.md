@@ -16,7 +16,7 @@ features:
 
 Open the OP Create dialog and there is an **FNS** tab beside COMP, TOP, CHOP and the rest. Every entry on it is an FNS tool that reads as one operator: inputs on the left, outputs on the right, its own parameters, placed into the network you are working in like any stock type. Random, SimpleSceneChanger, ProSceneChanger, SwitchTools, MixSequencer, OpSequencer and CamSequencer are the first members.
 
-You never pick it on its own. The installer adds it when you install one of its operators and removes it when the last of them goes, so a project without FNS operators has no FNS tab and no family registry, and the machine keeps no family folder for it.
+The installer adds the family with the first of its operators and removes it with the last. A project without FNS operators has no FNS tab, no family registry and no family folder.
 
 The tab is optional. When you tick a family operator in Pick Tools, the selection bar shows **Add FNS tab to OP Create**. Untick it to keep the operators in your palette only. To turn the tab off later, untick **FNS Tab in OP Create** on the FNSTools page of the toolkit's parameters, untick the same switch in Pick Tools, or run the **Remove Operator Family** quick-launch command. The toggle turns it back on too, as long as at least one family operator is installed. Your FNS tools stay installed either way, and the choice sticks: installing another family operator, or setting up a new project like the last one, keeps the tab off until you tick the switch again.
 
@@ -24,7 +24,7 @@ The family is the same component wherever it runs: this package is a TDFam famil
 
 ## Where the operators come from
 
-Members are not embedded in this package. They are the packages you already know, mirrored from the machine's store into the family's operator folder (`FNSTools/FNS/` in your palette folder), one tox per member under its plain name with a manifest beside it. The same folder shows up in TouchDesigner's own Palette as `FNSTools > FNS`. The FNS updater keeps that folder in step with the store: every install and update pass that leaves the store complete runs the sync, so the FNS tab lists every member the machine holds, and only those.
+Members are the packages you already know, mirrored from the machine's store into the family's operator folder (`FNSTools/FNS/` in your palette folder), one tox per member under its plain name with a manifest beside it. The same folder shows up in TouchDesigner's own Palette as `FNSTools > FNS`. The FNS updater keeps that folder in step with the store: every install and update pass that leaves the store complete runs the sync, so the FNS tab lists every member the machine holds, and only those.
 
 Because the store only holds the packages your account is entitled to, a Pro-tier member appears on the tab for Pro members and not for Base members, with no extra gate anywhere. A member you never installed is still on the tab once the store holds it, since the store is complete by default (see the updater's Keep the Whole Release in the Store toggle).
 

@@ -43,5 +43,5 @@ page, so it can be configured without opening the host.
 orphans everything saved under the old name; the values remain in the
 file, but the component stops seeing them. Choose it once.
 
-Whether settings roam across all your projects or stay with one is decided by
-ConfigRegistry's scope, not here.
+ConfigRegistry's scope decides whether settings roam across all your
+projects or stay with one.

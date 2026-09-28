@@ -19,11 +19,10 @@ media, and leaves the installation's out.
 
 ## Replacing and repointing
 
-Pick a file and choose another, and the parameter is rewritten in place,
-no hunting through the network for the operator that holds it. A file
+Pick a file and choose another, and the parameter is rewritten in place
+from the list, wherever its operator sits in the network. A file
 picked from inside the project folder is stored project-relative, so the
 swap survives the project moving.
 
-Sequence patterns are preserved as patterns, with no flattening to the first frame,
-and the same relink rules apply that Collect uses, so the two tools never
+Sequence patterns are preserved as patterns, and the same relink rules apply that Collect uses, so the two tools never
 disagree about what a path means.

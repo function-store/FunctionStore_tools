@@ -23,7 +23,7 @@ their playback to the timeline, with no clock of their own,
 and can either resize the timeline to the longest one or trim them to fit the
 range you already have.
 
-That last part is a window, not just a length. A timeline whose range starts at
+Trimming picks a window of the file that lines up with the range. A timeline whose range starts at
 frame 100 is already 99 frames into the song when the range opens, so trimming
 from the beginning of the file would play the right *duration* of the wrong
 *part*. The media window carries an offset as well as a length, and everything
@@ -50,7 +50,7 @@ both: the strip in the timeline's frame-ruler band, and the Animation editor's
 background. The timeline strip gets its own row and takes no height from
 the transport controls.
 
-What it draws is a **composite of three layers**, not a choice between them:
+What it draws is a **composite of three layers**, all drawn together:
 
 - **Filmstrip**: thumbnails sampled evenly across the movie. It is baked once
   on *Build Strip* and then costs nothing; it does not rebuild itself when the
@@ -59,15 +59,14 @@ What it draws is a **composite of three layers**, not a choice between them:
 - **Markers**: vertical coloured lines, in front of both.
 
 Each layer has its own *Show* toggle and opacity, per surface, and each has a
-toggle and slider in the control row. Hiding one is not merely cosmetic: a
+toggle and slider in the control row. Hiding one also saves work: a
 hidden layer stops rendering altogether.
 
 ## The waveform
 
 The Animation editor view is **interactive**. The graph can be zoomed and panned, and
 the waveform stays pinned between the range markers while that happens; it
-scrolls and scales with the view instead of being stretched to whatever is on
-screen.
+scrolls and scales with the view.
 
 The timeline strip is a different shape and a different job: it is 64:1 and
 always holds the whole range, so it works as an overview while the graph view
@@ -91,7 +90,7 @@ vertical coloured line across both surfaces.
 | Final Cut / Resolve XML | any **FCPXML** with markers in it |
 | Audacity | a label track (**Export Labels**), handy for music you cued by ear |
 
-The format is worked out from what is inside the file, not from its extension,
+The format is worked out from what is inside the file, whatever its extension,
 so a marker list saved under the wrong name still loads.
 
 **Timecodes need to know their frame rate.** *Source Frame Rate* is the rate of
@@ -117,7 +116,7 @@ The remaining look controls: *Marker Color* (used for markers whose file carried
 none), *Marker Width* in screen pixels, held steady however far you zoom the
 Animation editor, and *Marker Height* as a share of the surface.
 
-Markers are a list, not a property of the media: the table is yours to edit by
+Markers live in their own list, apart from the media: the table is yours to edit by
 hand, add to, or keep across a media change. *Merge On Load* adds a second file's
 markers to what is already there instead of replacing them.
 
@@ -171,7 +170,7 @@ that to an expression per parameter instead. Off, either way, they go back to
 plain constants at the value they show, so nothing jumps, and the rig goes
 with them. Author with it
 off, play with it on: with Drive on a parameter's value *is* the animation,
-and Keyframe Now says so rather than copying the curve onto itself. A
+and Keyframe Now says so and leaves the curve as it is. A
 parameter already driven by an expression, export or bind of your own is
 left alone.
 

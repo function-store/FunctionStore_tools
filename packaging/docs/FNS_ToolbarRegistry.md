@@ -17,13 +17,13 @@ never leaves a hole or a dead button behind.
 
 It also owns the **mirror rail**: the registry keeps TouchDesigner's own
 bookmark bar (`/ui/dialogs/bookmark_bar`) in step with the registered set, so
-the bar you see is a reflection of the registry, with no pile of copied-in
-button COMPs.
+the bar you see is a reflection of the registry; no button COMPs are copied
+in.
 
 It ships as its own core package, always installed,
 promoted to `/sys` with the global shortcut `op.FNS_TOOLBARREGISTRY`.
 
-You normally never touch it directly. Open the **Toolbar** tab of
+Open the **Toolbar** tab of
 [Hub](/docs/fns-hub/) (the FNS button in the main-menu bar) to reorder,
 group, hide/show and add dividers between widgets; the layout is saved and
 follows you across projects through
@@ -32,7 +32,7 @@ follows you across projects through
 ## For tool authors
 
 A tool that wants a place on the bar ships a small **host** copy of this
-registry alongside its widget and registers itself on load, with no installer
-script, no editing a definition table. Dropping any panel COMP on the FNS
+registry alongside its widget and registers itself on load, which is all the
+installing it needs. Dropping any panel COMP on the FNS
 button stamps that host into it for you, which is the quickest way to put your
 own tool on the bar.

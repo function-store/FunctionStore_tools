@@ -41,7 +41,7 @@ This button is a quick way to manipulate **Custom Parameters** of a parent compo
 - **Alt-LeftClick (Cmd+LeftClick for Mac):** Runs **ClearPars** on the selected COMP: any parameter left in `Bind` mode with no valid bind master, or in `Expression` mode whose expression currently raises, is switched to `Constant` mode (dropping the dangling bind/expression), and the COMP's script errors are cleared too. Recursive into the COMP's immediate children (excluding annotations), usually useful after copying a COMP from another project
 - **Ctrl+Alt+Drag** an **OP** (Ctrl+Cmd+Drag on Mac): Promote as `iop` to parent
 - **Ctrl+Shift+Click**: Add Parent shortcut
-- **Shift+Alt+LeftClick** (Shift+Cmd+LeftClick for Mac): Add [QuickExt](/docs/fns-custompartools/#quickext) to parent for a streamlined python Extension workflow - see [QuickExt](/docs/fns-custompartools/)  
+- **Shift+Alt+LeftClick** (Shift+Cmd+LeftClick for Mac): Add [QuickExt](/docs/fns-custompartools/#quickext) to parent for a streamlined python Extension workflow. See [QuickExt](/docs/fns-custompartools/)  
 - **MiddleClick:** Collapses the selected nodes via [QuickCollapse](/docs/fns-quickcollapse/#quickcollapse) (if installed). Hold `Ctrl` or `Shift` to pop the naming dialog first.
 
 ## QuickExt
@@ -68,13 +68,13 @@ When adding an extension using [CustomParTools](/docs/fns-custompartools/#quicke
 
 By leveraging [NoNode] and [CustomParHelper], TouchDesigner developers can create more efficient, organized, and maintainable extensions, ultimately leading to smoother workflow and improved project scalability.
 
-> Pro Tip: Set your IDE's Python interpreter to that of TouchDesigner's to utilize stubs/code suggestion - ExtUtils will deploy its definition automatically!
+> Pro Tip: Set your IDE's Python interpreter to that of TouchDesigner's to utilize stubs/code suggestion. ExtUtils will deploy its definition automatically!
 
 ##### Importing
 
-The default extension code will contain the following - at first sight complicated looking - import statements for the utility packages. You can just ignore them, but don't remove them!
+The default extension code will contain the following import statements (complicated looking at first sight) for the utility packages. You can just ignore them, but don't remove them!
 
-> This might look complicated at first but it's just a fancy import statement to avoid any conflicts when
+> Each line is a fancy import statement that avoids any conflicts when
 > having multiple extension classes with ExtUtils attached. 
 
 ```python
@@ -188,8 +188,8 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
 
     Every other keyword is a TouchDesigner **`Par` member**, set straight through:
     `default`, `label`, `help`, `readOnly`, `startSection`, `min`, `max`, `clampMin`,
-    `clampMax`, `normMin`, `normMax`, `menuNames`, `menuLabels`, `order`. There is no
-    second vocabulary to learn: see [Par Class](https://docs.derivative.ca/Par_Class) for
+    `clampMax`, `normMin`, `normMax`, `menuNames`, `menuLabels`, `order`. They keep
+    TouchDesigner's own names: see [Par Class](https://docs.derivative.ca/Par_Class) for
     what each does and which styles honour it.
 
     **A static alternative.** If the parameter set never varies you can declare on the
@@ -221,8 +221,8 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
       and position on the page. The one thing that cannot survive is an **export**:
       that link belongs to the exporting CHOP and lives outside the parameter, so it is reported in
       the textport and you re-export it.
-    - **`help` is strongly expected but not enforced.** Omitting it logs a warning rather
-      than breaking your extension. Fill it in: it is the tooltip your users get when
+    - **`help` is strongly expected but not enforced.** Omitting it logs a warning and
+      your extension keeps working. Fill it in: it is the tooltip your users get when
       they hover the parameter name.
 
 4. Access and set custom parameters as properties (if enable_properties=True (default)):
@@ -486,8 +486,8 @@ Omit the owner on `onParExec` to watch your own COMP's parameter.
 
 What this buys over the imperative form:
 
-- **The binding is visible at the callback**, not in a registration block
-  somewhere else, and the method name is free.
+- **The binding is visible at the callback itself**, right where you read
+  the handler, and the method name is free.
 - **A target that does not resolve is reported.** A mistyped operator or
   parameter name currently produces a callback that simply never fires;
   harvest logs it, and nothing is raised, so one bad declaration should not
@@ -550,8 +550,8 @@ anything. Its **Active** toggle turns the whole feature off.
 All four are rebindable on the **Custom** page of QuickParCustom, and listed
 in HotkeyManager.
 
-It was a separate package until 2026-08-24. It never really was one: it drove
-promotion by calling this package's promoter through the `FNS_CPP` global, so
+It was a separate package until 2026-08-24, though it always depended on this
+one: it drove promotion by calling this package's promoter through the `FNS_CPP` global, so
 installing it without CustomParTools gave you hotkeys that could not promote.
 As a child it calls its parent directly.
 
@@ -583,8 +583,8 @@ of the tool's parameters.
 | QuickParCustom | The rollover hotkeys (bound to QuickParCustom's own Active switch) |
 | Parameter/Editor Hotkeys | The four stock-TouchDesigner shortcuts |
 
-Switching a module off withdraws whatever surface it owns, so it leaves rather
-than sitting there inert:
+Switching a module off withdraws whatever surface it owns, so that surface goes
+away with it:
 
 - **Navbar Drag/Drop** and **Navbar Path Cell Click** each own their own navbar
   registration, so turning one off unregisters that widget and it disappears

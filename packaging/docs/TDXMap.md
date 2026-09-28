@@ -18,9 +18,9 @@ button, switch banks per device, and let Smart Learn work out what the
 hardware sends. The full manual, guides and changelog live on its own
 site: [tdxmap.functionstore.xyz](https://tdxmap.functionstore.xyz).
 
-TDXMap is a **family product**, not a toolkit tool. The toolkit mirrors its
-released build so you can install it from the same picker as everything
-else, but the tool itself, its updates and its licensing are its own.
+TDXMap is a **family product** with its own releases. The toolkit mirrors
+its released build so you can install it from the same picker as everything
+else. The tool itself, its updates and its licensing are its own.
 
 ## Installing from the toolkit
 

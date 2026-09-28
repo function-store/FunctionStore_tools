@@ -16,7 +16,7 @@ TouchDesigner's timeline bar is a fixed piece of chrome. This registry makes it
 extensible: a tool publishes a panel COMP and it appears in the bar, in a zone it
 picks, without that tool knowing anything about the dialog's layout.
 
-Nothing stock is moved or re-expressed. Contributions are shown through Select
+The stock blocks stay where they are, as they are. Contributions are shown through Select
 COMP mirrors anchored to TD's own blocks, and `/ui` is never saved with a
 project, so the whole surface is rebuilt on every load; the registry
 re-registers each time.
@@ -24,7 +24,7 @@ re-registers each time.
 It ships as its own core package, promoted to `/sys` (global shortcut
 `op.FNS_TIMELINEREGISTRY`), alongside the other surface registries.
 
-**With nothing contributed it claims nothing at all.** The surface appears with
+**With nothing contributed, the bar stays stock.** The surface appears with
 the first registration and disappears with the last, and the bar returns to its
 stock height.
 
@@ -36,9 +36,9 @@ stock height.
   the ruler numbers (TD's own ruler background is transparent, so it shows
   through).
 
-`background` is a **grow** zone: it takes no height out of the
-transport row and clipping the controls, it makes the bar taller by its own
-height and the bar's fixed-height blocks follow. The dialog height is always
+`background` is a **grow** zone: it makes the bar taller by its own height and
+the bar's fixed-height blocks follow, so the transport row keeps its full height
+and its controls stay unclipped. The dialog height is always
 recomputed as base plus growth and never incremented; the bar's height is saved in
 the `.toe` while `/sys` is not, so an increment-and-restore scheme would creep
 taller every session.
@@ -54,7 +54,7 @@ From Python, `op.FNS_TIMELINEREGISTRY.RegisterWidget(comp, 'mytool',
 zone='transport', order=20)` does the same, with `UnregisterWidget()` and
 `SetWidgetZone()` as the rest of the API.
 
-Registration is **not** instantaneous: the entry is stored first and its zone
+Registration takes a frame: the entry is stored first and its zone
 arrives with the host's parameter a frame later, so anything that depends on the
 final zone settles a frame later.
 

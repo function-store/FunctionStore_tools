@@ -10,7 +10,7 @@ features:
 
 ## What it is
 
-ConstantCHOP holds a list of named values, like the Constant CHOP, but the values don't have to be plain numbers. Pick a Type and every constant becomes a float, an integer, a toggle, a four-value tuple such as XYZW or RGBA, a string, a file or folder path, or a reference to an operator. Numbers, toggles and tuples come out as channels; text, paths and references come out as a table.
+ConstantCHOP holds a list of named values, like the Constant CHOP, and gives the values a type. Pick a Type and every constant becomes a float, an integer, a toggle, a four-value tuple such as XYZW or RGBA, a string, a file or folder path, or a reference to an operator. Numbers, toggles and tuples come out as channels; text, paths and references come out as a table.
 
 With Promote to Property on, each constant is also a property on the node: `op('ConstantCHOP').Speed` reads and sets the constant named `speed`, and `Speed_out` reads what the node outputs. A prefix keeps those names clear of anything else on the COMP.
 
