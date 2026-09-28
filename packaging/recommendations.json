@@ -181,7 +181,7 @@
       "author": "Lake Heckaman",
       "author_url": "https://www.patreon.com/water__shed",
       "url": "https://www.patreon.com/water__shed/posts/gsops-v1-0-1-and-167828628",
-      "description": "GSOPs by Lake Heckaman. Version 1.0.1 adds equirectangular and cubemap output."
+      "description": "Gaussian Splat Operators: load .ply and .spz splats and edit, animate, optimize and render them live on POPs, with a per-point particle system and shader effects such as bokeh, motion blur and relighting."
     },
     {
       "name": "AML",
