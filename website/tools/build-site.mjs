@@ -1982,9 +1982,9 @@ if (fs.existsSync(cfgSrc)) {
     `<link rel="icon" href="/favicon.png" type="image/png" />\n`
     + `<link rel="apple-touch-icon" href="/favicon.png" />\n`
     + `<link rel="canonical" href="${SITE}/get/" />\n`
-    + `<meta name="description" content="Pick your FNSTools packages and copy a one-line install script for the TouchDesigner Textport: sha256-verified, macOS or Windows." />\n`
+    + `<meta name="description" content="Pick the FNSTools you want and install them in TouchDesigner with one line. macOS and Windows." />\n`
     + `<meta property="og:title" content="Build your FNSTools install" />\n`
-    + `<meta property="og:description" content="Pick the TouchDesigner tools you want and get a single sha256-verified line to paste into the Textport." />\n`
+    + `<meta property="og:description" content="Pick the TouchDesigner tools you want and install them with one line." />\n`
     + `<meta property="og:type" content="website" />\n`
     + `<meta property="og:image" content="${SITE}/og-image.png" />\n`
     + `<link rel="preconnect" href="https://fonts.googleapis.com">\n`
