@@ -1001,6 +1001,7 @@
   "ThresholdColor": {
    "category": "Visual",
    "description": "A Threshold TOP that keeps the colour: pixels that pass the test come through in their original colour with a soft edge. An alternative for the Threshold TOP.",
+   "placement": "none",
    "fits": [
     "art",
     "speed",
@@ -1040,7 +1041,7 @@
   },
   "RealRamp": {
    "category": "Visual",
-   "description": "A GLSL ramp with a true phase and period: vertical, horizontal, radial or circular, repeating or mirroring, so a driven phase never drifts or snaps the way a keyed Ramp TOP can.",
+   "description": "A ramp with a true phase and period and its colour keys as parameters: vertical, horizontal, radial or circular, holding, zeroing, repeating or mirroring past its ends, so a driven phase never drifts or snaps the way a keyed Ramp TOP can. An alternative for the Ramp TOP.",
    "fits": [
     "art",
     "live"

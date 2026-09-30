@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.60",
+ "release": "v3.2.61",
  "td_build": "2025.33070",
  "packages": {
   "ChopBank": [
@@ -9373,7 +9373,7 @@
     "style": "RGBA",
     "help": "The family's colour in the OP Create dialog and on its operators.",
     "size": 3,
-    "default": 0.5690000057220459,
+    "default": 0.569,
     "section": true,
     "page": "Family"
    },
@@ -10630,6 +10630,14 @@
       "label": "Project (this .toe)"
      }
     ],
+    "page": "Custom"
+   },
+   {
+    "name": "Libraryfolder",
+    "label": "Library Folder",
+    "style": "Str",
+    "help": "Folder under <user palette>/FNSTools that holds the global library. Empty uses OpTemplates, which is right for everyone except a development project that must keep its curated set apart from the one it uses day to day. Global scope only; cleared on export, so it never ships.",
+    "default": "",
     "page": "Custom"
    },
    {
@@ -19376,7 +19384,7 @@
     "name": "Type",
     "label": "Type",
     "style": "Menu",
-    "help": "Ramp shape: Vertical and Horizontal are linear, Radial sweeps around the centre, Circular grows outward from the centre.",
+    "help": "Direction of the ramp. Radial runs round the centre starting at 3 o'clock, like the Ramp TOP; Circular grows outward from the centre.",
     "default": "horiz",
     "section": true,
     "menu": [
@@ -19419,9 +19427,17 @@
     "name": "Extend",
     "label": "Extend",
     "style": "Menu",
-    "help": "What happens past one period: Repeat restarts at black, Mirror runs back down for a seamless ping-pong.",
+    "help": "What the ramp does past its ends: Hold keeps the end colours, Zero goes transparent black, Repeat starts over, Mirror runs back.",
     "default": "repeat",
     "menu": [
+     {
+      "name": "hold",
+      "label": "Hold"
+     },
+     {
+      "name": "zero",
+      "label": "Zero"
+     },
      {
       "name": "repeat",
       "label": "Repeat"
@@ -19431,6 +19447,40 @@
       "label": "Mirror"
      }
     ],
+    "page": "Custom"
+   },
+   {
+    "name": "Interpolate",
+    "label": "Interpolate",
+    "style": "Menu",
+    "help": "How colours blend between keys, as on the Ramp TOP: Step holds each key, Linear blends straight, Ease In Ease Out slows at each key, Hermite curves through them.",
+    "default": "linear",
+    "menu": [
+     {
+      "name": "step",
+      "label": "Step"
+     },
+     {
+      "name": "linear",
+      "label": "Linear"
+     },
+     {
+      "name": "easeineaseout",
+      "label": "Ease In Ease Out"
+     },
+     {
+      "name": "hermite",
+      "label": "Hermite"
+     }
+    ],
+    "page": "Custom"
+   },
+   {
+    "name": "Tension",
+    "label": "Curve Tension",
+    "style": "Float",
+    "help": "Hermite only: bends the curve between keys. 0 is a smooth curve through every key.",
+    "default": 0.0,
     "page": "Custom"
    },
    {
@@ -19578,6 +19628,48 @@
      }
     ],
     "page": "Custom"
+   },
+   {
+    "name": "Key",
+    "label": "Keys",
+    "style": "Sequence",
+    "help": "Colour keys along the ramp. Add or remove keys with + and -. Keys may be in any order; they are sorted by position.",
+    "default": 0,
+    "page": "Keys"
+   },
+   {
+    "name": "Key0pos",
+    "label": "Position",
+    "style": "Float",
+    "help": "Where this key sits on the ramp, 0 at the start and 1 at the end.",
+    "default": 0.0,
+    "page": "Keys"
+   },
+   {
+    "name": "Key0color",
+    "label": "Color",
+    "style": "RGBA",
+    "help": "Colour and alpha of this key.",
+    "size": 4,
+    "default": 0.0,
+    "page": "Keys"
+   },
+   {
+    "name": "Key1pos",
+    "label": "Position",
+    "style": "Float",
+    "help": "Where this key sits on the ramp, 0 at the start and 1 at the end.",
+    "default": 0.0,
+    "page": "Keys"
+   },
+   {
+    "name": "Key1color",
+    "label": "Color",
+    "style": "RGBA",
+    "help": "Colour and alpha of this key.",
+    "size": 4,
+    "default": 0.0,
+    "page": "Keys"
    }
   ],
   "SeqMod": [
@@ -20975,7 +21067,9 @@
    "opmenu"
   ],
   "QuickMarks": [],
-  "RealRamp": [],
+  "RealRamp": [
+   "opmenu"
+  ],
   "SeqMod": [],
   "SlideShow": [],
   "ThresholdColor": [
@@ -21531,6 +21625,14 @@
     "surface": "opmenu",
     "widget": "PrismTOP",
     "label": "PrismTOP",
+    "order": 0
+   }
+  ],
+  "RealRamp": [
+   {
+    "surface": "opmenu",
+    "widget": "RealRamp",
+    "label": "RealRamp",
     "order": 0
    }
   ],
