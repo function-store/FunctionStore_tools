@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.61",
+ "release": "v3.2.62",
  "td_build": "2025.33070",
  "packages": {
   "ChopBank": [
@@ -14389,6 +14389,28 @@
      {
       "name": "manual",
       "label": "Manual (do nothing)"
+     }
+    ],
+    "page": "Timeline"
+   },
+   {
+    "name": "Dropaction",
+    "label": "On Media Drop",
+    "style": "Menu",
+    "help": "What dropping a movie or audio file on the tool does. Load As Media makes it the tool's media. Just Sync Timeline only reads its length and resizes the timeline to it; the loaded media, filmstrip and waveform stay as they are. Ask offers both.",
+    "default": "ask",
+    "menu": [
+     {
+      "name": "ask",
+      "label": "Ask"
+     },
+     {
+      "name": "load",
+      "label": "Load As Media"
+     },
+     {
+      "name": "sync",
+      "label": "Just Sync Timeline"
      }
     ],
     "page": "Timeline"

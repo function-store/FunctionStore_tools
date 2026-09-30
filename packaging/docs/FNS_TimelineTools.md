@@ -32,6 +32,13 @@ downstream, playback and drawing alike, reads the same window.
 *Sync Timeline to Media* resizes the range to fit; with it off, the media is
 trimmed to the range instead. Either way playback stays locked to the timeline.
 
+Dropping a movie or audio file on the tool asks what you want: **Load as media**,
+or **Just sync the timeline**. The second one only reads the file's length and
+resizes the timeline to it. The media you have loaded, the filmstrip and the
+waveform stay as they are, so you can size a timeline to a clip without switching
+to it. *On Media Drop* sets the answer once (Load As Media or Just Sync Timeline)
+and skips the question. The timeline keeps its frame rate either way.
+
 ## Scope: which timeline?
 
 TouchDesigner has more than one timeline. Any component can carry a **local**
