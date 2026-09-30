@@ -103,8 +103,12 @@ common question in the open and keeps the precise answer one `<details>`
 away. `<details>` rather than script: it works with JS off, it is focusable
 and announced, and Chrome's Ctrl+F finds closed content.
 
-That is why the landing page has one three-step install section instead of
-the previous two (a "paths" row and a quickstart saying the same thing), and
+That is why the landing page has one install section instead of the
+previous two (a "paths" row and a quickstart saying the same thing). Its
+three cards are tagged **Either / Or / Then**, not 1 / 2 / 3 (owner,
+2026-09-30): download-and-drop and pick-online-and-paste are alternative
+ways in, and only the updater card follows both. Numbering them read as a
+sequence and hid the paste path inside step 2. That is also
 why the tool catalogue is one fold per category rather than 49 rows in a
 column. Nothing was deleted; the caveats moved into the fold under the step
 they belong to.

@@ -272,12 +272,15 @@
     padding: 24px 24px 26px;
     background: var(--bg-1); border: 1px solid var(--border); border-radius: 3px;
   }
+  /* A number for a step, or a word for a path (Either / Or / Then): the
+     tag grows with its text and never stretches to the card's width. */
   .path-tag {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 26px; height: 26px; border-radius: 7px;
+    align-self: flex-start;
+    min-width: 26px; height: 26px; padding: 0 9px; border-radius: 7px;
     background: var(--accent-dim); color: var(--accent);
     font-family: 'JetBrains Mono', ui-monospace, monospace;
-    font-size: 13px; font-weight: 500;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
     margin-bottom: 14px;
   }
   .path h3 { margin: 0 0 8px; font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
@@ -1194,33 +1197,23 @@
 <section id="get" style="padding-top: 12px;">
   <div class="wrap">
     <div class="section-head">
-      <h2>Install in three steps</h2>
-      <p>One container goes into your project. You pick the tools from there, and only those get downloaded.</p>
+      <h2>Two ways to install</h2>
+      <p>One container goes into your project, you pick the tools from there, and only those get downloaded. Start from a download or from the picker on this site; either way, the updater keeps it current.</p>
     </div>
     <div class="paths">
       <div class="path">
-        <div class="path-tag">1</div>
-        <h3>Drop one <code>.tox</code></h3>
+        <div class="path-tag">Either</div>
+        <h3>Download and drop</h3>
         <p>
           Drag <code>FNSTools.tox</code> into the root of a project. It is about 150 KB and
           arrives empty: the container you drop <em>is</em> where your tools will live.
         </p>
-        <a class="btn btn-primary js-fns-download" href="https://storage.functionstore.tools/fnstools/latest/FNSTools.tox" download>Download</a>
-
-      </div>
-      <div class="path">
-        <div class="path-tag">2</div>
-        <h3>Pick your tools</h3>
         <p>
-          Pulse <strong>Pick Tools</strong> and the picker opens inside TouchDesigner. Browse by
-          category, follow any card through to its docs, then review the plan before anything is
+          Then pulse <strong>Pick Tools</strong> and the picker opens inside TouchDesigner. Browse
+          by category, follow any card through to its docs, and review the plan before anything is
           written to your project.
         </p>
-        <p>
-          Or choose online: the same picker is on this site. Tick your tools there and paste the
-          one line it gives you into the Textport.
-        </p>
-        <a class="btn btn-secondary" href="/get/">Choose tools online →</a>
+        <a class="btn btn-primary js-fns-download" href="https://storage.functionstore.tools/fnstools/latest/FNSTools.tox" download>Download</a>
         <details class="fold">
           <summary>What the picker actually does</summary>
           <div class="fold-body">
@@ -1234,7 +1227,31 @@
         </details>
       </div>
       <div class="path">
-        <div class="path-tag">3</div>
+        <div class="path-tag">Or</div>
+        <h3>Pick online and paste</h3>
+        <p>
+          The same picker is on this site. Tick your tools, copy the one line it gives you, and
+          paste it into the Textport of an open project.
+        </p>
+        <p>
+          No download: the line fetches the container and your picks together and places the
+          container in your project for you.
+        </p>
+        <a class="btn btn-secondary" href="/get/">Choose tools online →</a>
+        <details class="fold">
+          <summary>What the pasted line does</summary>
+          <div class="fold-body">
+            <p>It carries only the names you ticked. Release, URLs and hashes are read from the
+              published manifest at paste time, so a line you copied earlier still installs the
+              current release.</p>
+            <p>It fetches the core registries, your selection and the container, verifies every
+              file with sha256 before writing anything, then loads the container into the network
+              you are in and hands it the selection to install.</p>
+          </div>
+        </details>
+      </div>
+      <div class="path">
+        <div class="path-tag">Then</div>
         <h3>It stays current</h3>
         <p>
           Each package carries its own version, and the updater compares it against the published
