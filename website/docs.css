@@ -797,6 +797,15 @@ a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
   .cm-credit dd { margin-bottom: 8px; }
 }
 
+/* /about/: the photo beside the bio, stacked on a phone. */
+.about-intro { display: grid; grid-template-columns: 160px 1fr; gap: 28px; align-items: start; margin: 0 0 12px; }
+.about-intro p { color: var(--text-dim); max-width: 68ch; margin: 0 0 14px; }
+.about-photo { width: 160px; height: 160px; object-fit: cover; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-1); }
+@media (max-width: 560px) {
+  .about-intro { grid-template-columns: 1fr; gap: 18px; }
+  .about-photo { width: 120px; height: 120px; }
+}
+
 /* Built with TDFam, on /community/#tdfam */
 .cm-families { margin-top: 56px; scroll-margin-top: 90px; }
 .cm-families > p { color: var(--text-dim); max-width: 68ch; }

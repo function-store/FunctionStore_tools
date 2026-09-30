@@ -11,11 +11,13 @@ packaging/catalog.json     category + description + access per package (curated)
 packaging/docs/<Name>.md   prose + frontmatter per package     (curated)
 website/index.html         landing page                        (hand-written)
 website/content/patreon.html /patreon/ prose, a fragment       (hand-written)
+website/content/about.html  /about/ prose, a fragment          (hand-written)
 website/content/family.json the other Function Store products  (curated)
 website/content/guides/*.md guides and reference pages, one per file (hand-written)
 website/docs/              GENERATED — gitignored, built on every deploy
 website/get/               GENERATED — gitignored, the online configurator
 website/patreon/           GENERATED — gitignored, from content/patreon.html
+website/catalog.json       GENERATED — gitignored, the tool feed functionstore.xyz reads
 ```
 
 `/get/` is emitted from `packaging/configurator/index.html` with the
@@ -151,6 +153,49 @@ otherwise is a Patreon page that quietly lists nothing.
 > unauthenticated GET of a `plus/` artifact returns 401 (probed 2026-09-08).
 > This note used to say the Worker was undeployed and the catalog carried
 > `PLACEHOLDER_TIER`; both were true until the 2026-08-29 deploy.
+
+## About
+
+`/about/` is built from `website/content/about.html` the way `/privacy/` and
+`/terms/` are: a hand-written fragment wrapped in the site chrome. It says
+who makes the toolkit and points at the portfolio (functionstore.xyz), which
+keeps the long bio and the work; keep the facts in step when they move.
+
+**The Mission section is left out until it is written.** A `<h2>` followed
+only by comments is dropped from the built page (the same rule the community
+posts use), so the fragment carries the heading and the note to fill it in
+without the site publishing an empty section. Write one or more paragraphs
+under the heading and the next build publishes them; the build prints a note
+while a section is still unwritten.
+
+The landing page carries a short "Who makes this" strip that links to
+`/about/`, and About is in the header (hand-written in `index.html` and
+`navLinks` in the build, change both) and the footer.
+
+## The catalog feed
+
+`https://functionstore.tools/catalog.json` is the published catalogue as one
+JSON document, for other sites to read. The Function Store portfolio
+(`myPortfolioWebsite`, functionstore.xyz) renders its Tools section from it:
+its build takes a snapshot into `data/tools.js`, and the page refreshes from
+the live URL in the visitor's browser. That is what replaced the Notion
+tools database over there. This repo is the list of tools; nothing is typed
+twice.
+
+The build writes it last, after every refusal gate, from the same `pages`,
+categories, `family.json` and guides the HTML is built from. So a feed that
+exists describes a site that built: previews are absent, titles are the
+public names, each category carries its glyph, pitch and group, each tool its
+docs URL, access (`free` or `patreon`), tier name, unlock route, surfaces,
+author and pricing. `vercel.json` serves it with
+`Access-Control-Allow-Origin: *` and a five-minute cache, because a
+third-party page fetches it from the browser.
+
+**Fields are only ever added under `schema: 1`.** A consumer this repo does
+not deploy reads them by name, so a rename or a removal bumps `schema` and
+gets the consumer changed first. The reasoning and the field list:
+`docs/PortfolioCatalogFeed.md`; `python tests/test_catalog_feed.py` pins the
+wiring.
 
 ## Build
 

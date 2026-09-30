@@ -12,4 +12,7 @@
 /plus/
 /privacy/
 /terms/
+/about/
 /community/
+# The tool feed functionstore.xyz reads (docs/PortfolioCatalogFeed.md).
+/catalog.json

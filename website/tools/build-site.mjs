@@ -544,6 +544,7 @@ const navLinks = [
   ['/docs/', 'Docs'],
   ['/community/', 'Community'],
   ['/patreon/', 'Patreon'],
+  ['/about/', 'About'],
 ];
 
 const docsStyleVersion = createHash('sha256').update(fs.readFileSync(path.join(WEB, 'docs.css'))).digest('hex').slice(0, 12);
@@ -619,6 +620,7 @@ const FOOTER = `<footer class="site">
       <a href="/docs/">Docs</a>
       <a href="/community/">Community</a>
       <a href="/patreon/">Patreon</a>
+      <a href="/about/">About</a>
       <a href="/privacy/">Privacy</a>
       <a href="/terms/">Terms</a>
       <a href="${GH}" target="_blank" rel="noopener">GitHub</a>
@@ -1606,26 +1608,41 @@ ${FOOT}`);
   console.warn('note: website/content/patreon.html missing — /patreon/ not built, and every link to it 404s');
 }
 
-// ------------------------------------------- /privacy/ and /terms/ — legal
+// ------------------------------- /privacy/, /terms/ and /about/ — prose pages
 //
-// Two hand-written fragments in website/content/, wrapped in the same chrome
-// as every other page. They exist because registering an OAuth client (the
-// Patreon one the gate depends on) requires public policy URLs -- and because
-// keeping the privacy claims HERE means they change in the same commit as
-// worker/src/index.js, the code they describe. A policy hosted anywhere else
-// is one that silently stops being true.
+// Hand-written fragments in website/content/, wrapped in the same chrome as
+// every other page. The two legal ones exist because registering an OAuth
+// client (the Patreon one the gate depends on) requires public policy URLs --
+// and because keeping the privacy claims HERE means they change in the same
+// commit as worker/src/index.js, the code they describe. A policy hosted
+// anywhere else is one that silently stops being true. /about/ says who
+// makes the toolkit and points at the portfolio, which keeps the long bio.
+//
+// A section still waiting for its words (a heading followed only by
+// comments, like /about/'s Mission until it is written) is left out of the
+// page, the same rule the community posts follow: a bare heading over
+// nothing reads as a mistake, and the fragment can hold the placeholder
+// without the site publishing it.
+const dropUnwrittenSections = (html) => html.replace(
+  /<h2\b[^>]*>(?:(?!<\/h2>)[\s\S])*<\/h2>\s*(?:<!--(?:(?!-->)[\s\S])*-->\s*)*(?=<h2\b|$)/g, '');
 for (const [slug, title, desc] of [
   ['privacy', 'Privacy | FNSTools',
     'What FNSTools collects: nothing at all in the free toolkit, and the least the supporter gate can store and still know that a membership is live.'],
   ['terms', 'Terms | FNSTools',
     'The free packages are MIT and stay that way; the Patreon packages are licensed to you while your membership or Gumroad licence key is live. Everything ships as-is.'],
+  ['about', 'About | FNSTools',
+    'FNSTools is made by Dan Molnar, a Berlin-based TouchDesigner artist and developer working as Function Store. Who is behind the toolkit, why it exists, and where the rest of the work lives.'],
 ]) {
   const src = path.join(WEB, 'content', `${slug}.html`);
   if (!fs.existsSync(src)) {
     console.warn(`note: website/content/${slug}.html missing — /${slug}/ not built, and every link to it 404s`);
     continue;
   }
-  const body = fs.readFileSync(src, 'utf8');
+  const raw = fs.readFileSync(src, 'utf8');
+  const body = dropUnwrittenSections(raw);
+  if (body !== raw) {
+    console.log(`note: /${slug}/ has a heading with nothing written under it yet; that section is left out of the page`);
+  }
   checkLinks(body, `content/${slug}.html`, null);
   if (problems.length) {
     console.error('build refused — unresolved internal links:\n' +
@@ -2014,6 +2031,115 @@ if (fs.existsSync(cfgSrc)) {
     + `${manifest.category_meta ? '' : ', category_meta baked from catalog.json'})`);
 } else {
   console.warn('note: packaging/configurator/index.html missing — /get/ not built');
+}
+
+// ------------------------------------------------- /catalog.json — the feed
+//
+// One JSON document describing the published catalogue, for OTHER sites to
+// read. functionstore.xyz renders its Tools section from it (a snapshot at
+// its build, refreshed in the visitor's browser), which is what retired the
+// Notion tools database over there: this repo is the live list of tools, and
+// the portfolio reads it instead of keeping a second one by hand.
+//
+// Derived from the same `pages`, categories, family and guides every page
+// above is built from, and written AFTER every refusal gate, so a feed that
+// exists describes a site that built: previews are already gone, titles are
+// the public names, categories carry their glyph and pitch. Not the bucket
+// manifest: that one is a release behind by definition, sends CORS for this
+// host only, and carries install data no web page needs.
+//
+// Served with Access-Control-Allow-Origin: * (website/vercel.json) because a
+// third-party page reads it from the browser; gitignored like every other
+// generated file. Contract: docs/PortfolioCatalogFeed.md. Fields are only
+// ever ADDED under schema 1 -- a rename or removal breaks a consumer this
+// repo does not deploy, so it bumps `schema`.
+{
+  const FEED = path.join(WEB, 'catalog.json');
+  const abs = (p) => `${SITE}${p}`;
+  const byTitle = (a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' });
+  const tools = displayCategories.flatMap((cat) => pages
+    .filter((p) => p.category === cat)
+    .sort(byTitle)
+    .map((p) => {
+      const cur = curated[p.name] || {};
+      const pricing = pricingOf(p.name);
+      return {
+        name: p.name,
+        title: p.title,
+        slug: p.slug,
+        url: abs(`/docs/${p.slug}/`),
+        category: p.category,
+        description: p.description || p.meta.summary || '',
+        access: isPlus(p.name) ? 'patreon' : 'free',
+        tier: tierOf(p.name),
+        unlock: isPlus(p.name) ? unlockRoute(p.name) : '',
+        key_available: ROUTES.keys.has(p.name),
+        surfaces: surfacesOf(p.name).map(surfaceLabel),
+        author: p.author,
+        recommended: cur.recommended === true,
+        minor: cur.minor === true,
+        foreign: p.foreign,
+        homepage: p.homepage,
+        pricing: pricing ? String(pricing.summary) : '',
+        variants: variantsOf(p.name).map((v) => `${variantTier(v)} build`),
+      };
+    }));
+  const categoriesOut = displayCategories.map((cat) => {
+    const inCat = tools.filter((t) => t.category === cat);
+    return {
+      name: cat,
+      glyph: GLYPH[cat] || '',
+      pitch: CATEGORY_PITCH[cat] || '',
+      group: (catMeta[cat] && catMeta[cat].group) || '',
+      deprioritized: isDeprioritized(cat),
+      count: inCat.length,
+      free: inCat.filter((t) => t.access === 'free').length,
+      patreon: inCat.filter((t) => t.access === 'patreon').length,
+    };
+  }).filter((c) => c.count);
+  const toolkit = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(
+        path.join(REPO, 'packaging', 'manifest.json'), 'utf8')).toolkit || {};
+    } catch {
+      return {};
+    }
+  })();
+  const feed = {
+    schema: 1,
+    generated: new Date().toISOString(),
+    site: SITE,
+    toolkit: { name: String(toolkit.name || 'FNSTools'), td_build: String(toolkit.td_build || '') },
+    links: {
+      home: abs('/'),
+      get: abs('/#get'),
+      pick: abs('/get/'),
+      docs: abs('/docs/'),
+      patreon: abs('/patreon/'),
+      community: abs('/community/'),
+      github: GH,
+      support: PATREON,
+    },
+    counts: {
+      tools: tools.length,
+      free: tools.filter((t) => t.access === 'free').length,
+      patreon: tools.filter((t) => t.access === 'patreon').length,
+      categories: categoriesOut.length,
+    },
+    categories: categoriesOut,
+    tools,
+    family: family.map((p) => ({
+      name: String(p.name), kind: String(p.kind || ''), pitch: String(p.pitch || ''),
+      url: String(p.url), access: String(p.access || ''),
+    })),
+    guides: guides.map((g) => ({
+      title: g.title, summary: g.summary, section: g.section,
+      url: abs(`/docs/guides/${g.slug}/`),
+    })),
+  };
+  fs.writeFileSync(FEED, JSON.stringify(feed, null, 1) + '\n');
+  console.log(`built /catalog.json (${tools.length} tools, ${categoriesOut.length} categories, `
+    + `${feed.family.length} family, ${feed.guides.length} guides)`);
 }
 
 // ------------------------------------------------- doc evidence audit
