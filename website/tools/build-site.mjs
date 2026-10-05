@@ -1969,7 +1969,16 @@ if (fs.existsSync(cfgSrc)) {
     const row = curated[pkg.name] || curated['FNS_' + pkg.name];
     return !(row && row.preview === true) && !pkg.preview;
   });
+  // The docs search index (each row's `search`, packaging/search_index.py)
+  // is built from packaging/docs/, which is newer than any published
+  // release for the same reason the catalog is: the repo manifest's copy
+  // wins, and a release published before the index existed still searches.
+  const repoSearch = {};
+  for (const pkg of repoManifest.packages || []) {
+    if (pkg.search) repoSearch[pkg.name] = pkg.search;
+  }
   for (const pkg of manifest.packages || []) {
+    if (repoSearch[pkg.name]) pkg.search = repoSearch[pkg.name];
     const row = curated[pkg.name] || curated['FNS_' + pkg.name];
     if (!row) continue;
     if (row.category) pkg.category = row.category;

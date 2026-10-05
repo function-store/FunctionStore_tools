@@ -792,6 +792,33 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   .chip.where { background: transparent; border-color: var(--border); color: var(--text-faint); }
   .badge.new { color: var(--green); border: 1px solid var(--green); opacity: .9; }
 
+  /* ── a search hit (one ranked list): its category, since there are no
+     section headings, and the docs words that found it ── */
+  .name .cattag { font-size: 11.5px; font-weight: 500; letter-spacing: 0; color: var(--text-faint); }
+  .name > .cattag + a.help { margin-left: auto; }
+  .dochit { margin-top: 5px; font-size: 12px; color: var(--text-faint); }
+  .dochit b { font-weight: 600; color: var(--text-dim); }
+
+  /* ── compact view (the Compact toggle): title-only tiles. The state
+     that matters stays (installed / will install / will be removed, the
+     Patreon chip, New, a placed tool's undo); the description is the
+     tile's hover, from the card's data-tip. ── */
+  #list.dense .grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  #list.dense .card { padding: 8px 11px; gap: 9px; align-items: center; }
+  #list.dense .card input { margin-top: 0; }
+  #list.dense .body, #list.dense .body.has-foot {
+    display: flex; flex-direction: row; flex-wrap: wrap; align-items: center;
+    gap: 4px 8px; align-self: center;
+  }
+  #list.dense .name { font-size: 13.5px; }
+  #list.dense .name .tt { overflow-wrap: anywhere; }
+  #list.dense .chips { margin-top: 0; }
+  #list.dense .dochit { flex-basis: 100%; margin-top: 0; }
+  #list.dense .desc, #list.dense .name a.help, #list.dense .chip.where,
+  #list.dense .chip.hint, #list.dense .chip.variant,
+  #list.dense .card:not(.placed) .card-foot { display: none; }
+  #list.dense .card-foot { margin: 0; padding: 0; }
+
   /* ── the footer count opens the selection tray ── */
   .sum-count {
     background: none; border: 0; padding: 4px 6px; margin: -4px -6px; border-radius: 8px;
@@ -900,7 +927,7 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
   <div class="cfg-bar">
    <div class="bar-row bar-find">
     <div class="qwrap">
-      <input type="search" id="q" placeholder="Search tools, descriptions, categories…" autocomplete="off" aria-label="Search tools">
+      <input type="search" id="q" placeholder="Search tools, their docs, categories…" autocomplete="off" aria-label="Search tools">
       <kbd class="qkey" aria-hidden="true">/</kbd>
     </div>
     <button class="btn btn-secondary" id="wizard">Guided setup</button>
@@ -916,6 +943,7 @@ body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
     <button type="button" class="tog" id="selonly" aria-pressed="false" data-tip="Show only what you have ticked or placed">Selected <span class="k"></span></button>
     <button type="button" class="tog" id="placeonly" aria-pressed="false" hidden data-tip="Tools you drop into a network as nodes, like the FNS family operators">Placeable <span class="k"></span></button>
     <button type="button" class="tog" id="newonly" aria-pressed="false" hidden data-tip="Packages that are new in the current release line">New <span class="k"></span></button>
+    <button type="button" class="tog" id="compact" aria-pressed="false" data-tip="Title-only tiles. Hover a tile for its description">Compact</button>
    </div>
   </div>
 
@@ -1370,6 +1398,301 @@ function heroFirstRun() {
     'selection any time from the root’s Pick Tools.';
 }
 
+/* FNS:SEARCH:START -- the picker's search (docs/PickerSearch.md). Pure
+   functions, no DOM: tests/test_picker_search.py evaluates this block in
+   node, ranks the real manifest with it, and checks FNSFuzzy against
+   scripts/shared/FuzzyMatch.py. */
+
+// A port of scripts/shared/FuzzyMatch.py -- tiers, folding, typo and
+// subsequence exactly as the palettes and the launcher rank. Keep the two
+// in step; the test compares them over a corpus. ES5 and no lookbehind:
+// the page also runs on JavaScriptCore.
+var FNSFuzzy = (function () {
+  var EXACT = 0, PREFIX = 1, WORD = 2, SUBSTRING = 3, INITIALS = 4, TYPO = 5, SUBSEQUENCE = 6;
+  var SPELLING = [
+    [/([lmnrt])is(e|es|ed|er|ers|ing|ation|ations)$/, '$1iz$2'],
+    [/(l)ys(e|es|ed|er|ers|ing)$/, '$1yz$2'],
+    [/^(.{3,})our(s|ed|ing|ite|ites|ful|less)?$/, '$1or$2'],
+    [/^grey/, 'gray'],
+    [/^centre(s)?$/, 'center$1'],
+    [/^centred$/, 'centered']
+  ];
+  // Python's [^\W_]+ also takes non-ASCII letters; the last class is the
+  // nearest ES5 spelling of that (Latin-1 and up, general punctuation out).
+  var WORDS = /[A-Z]+(?=[A-Z][a-z])|[A-Z]?[a-z0-9]+|[A-Z]+|[0-9]+|[À-῿⁰-￿]+/g;
+  var TYPO_MIN = 4, TYPO_WIDE = 8;
+  var CACHE_MAX = 50000;
+  var wordsCache = Object.create(null), wordsN = 0;
+  var foldCache = Object.create(null), foldN = 0;
+
+  function spell(w) {
+    for (var i = 0; i < SPELLING.length; i++) w = w.replace(SPELLING[i][0], SPELLING[i][1]);
+    return w;
+  }
+  /** The words of a name, split on separators and camelCase humps, folded. */
+  function words(text) {
+    var key = text || '';
+    var ws = wordsCache[key];
+    if (ws === undefined) {
+      if (wordsN >= CACHE_MAX) { wordsCache = Object.create(null); wordsN = 0; }
+      ws = (key.match(WORDS) || []).map(function (w) { return spell(w.toLowerCase()); });
+      wordsCache[key] = ws;
+      wordsN++;
+    }
+    return ws;
+  }
+  /** Lower case, spelling folds, separators and humps dropped: one string. */
+  function fold(text) {
+    var key = text || '';
+    var f = foldCache[key];
+    if (f === undefined) {
+      if (foldN >= CACHE_MAX) { foldCache = Object.create(null); foldN = 0; }
+      f = words(key).join('');
+      foldCache[key] = f;
+      foldN++;
+    }
+    return f;
+  }
+  /** Optimal-string-alignment distance, or null past limit. */
+  function damerau(a, b, limit) {
+    if (Math.abs(a.length - b.length) > limit) return null;
+    if (a === b) return 0;
+    var la = a.length, lb = b.length, prev2 = null, prev = [], cur, i, j;
+    for (j = 0; j <= lb; j++) prev.push(j);
+    for (i = 1; i <= la; i++) {
+      cur = [i];
+      var ca = a.charAt(i - 1), rowMin = i;
+      for (j = 1; j <= lb; j++) {
+        var cb = b.charAt(j - 1);
+        var d = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca === cb ? 0 : 1));
+        if (i > 1 && j > 1 && ca === b.charAt(j - 2) && a.charAt(i - 2) === cb) {
+          d = Math.min(d, prev2[j - 2] + 1);
+        }
+        cur[j] = d;
+        if (d < rowMin) rowMin = d;
+      }
+      if (rowMin > limit) return null;
+      prev2 = prev;
+      prev = cur;
+    }
+    return prev[lb] <= limit ? prev[lb] : null;
+  }
+  /** Quality in 0..1 when tok is a subsequence of text, else null. */
+  function subsequence(tok, text) {
+    if (!tok) return 0;
+    if (!text) return null;
+    var qi = 0, runs = 0, run = 0, first = -1;
+    for (var i = 0; i < text.length; i++) {
+      if (qi < tok.length && text.charAt(i) === tok.charAt(qi)) {
+        if (first < 0) first = i;
+        qi++;
+        run++;
+      } else if (run) {
+        runs = Math.max(runs, run);
+        run = 0;
+      }
+    }
+    if (qi < tok.length) return null;
+    runs = Math.max(runs, run);
+    var position = first >= 0 ? 1 - first / text.length : 0;
+    return 0.5 * (runs / tok.length) + 0.3 * position + 0.2 * (tok.length / text.length);
+  }
+  /** Best quality of a bounded-distance hit against the words, or null. */
+  function typo(tk, ws, tf) {
+    var n = tk.length;
+    if (n < TYPO_MIN) return null;
+    var limit = n < TYPO_WIDE ? 1 : 2;
+    var best = null;
+    var candidates = ws.slice();
+    if (ws.length > 1) candidates.push(tf);
+    for (var i = 0; i < candidates.length; i++) {
+      var w = candidates[i];
+      var forms = [w];
+      for (var cut = n - 1; cut <= n + 1; cut++) {
+        if (cut > 0 && cut < w.length && forms.indexOf(w.slice(0, cut)) < 0) forms.push(w.slice(0, cut));
+      }
+      for (var k = 0; k < forms.length; k++) {
+        var form = forms[k];
+        if (form.length < TYPO_MIN) continue;
+        // a letter the form lacks costs an edit of its own
+        var missing = 0;
+        for (var c = 0; c < n && missing <= limit; c++) {
+          if (form.indexOf(tk.charAt(c)) < 0) missing++;
+        }
+        if (missing > limit) continue;
+        var d = damerau(tk, form, limit);
+        if (d === null) continue;
+        var q = 1 - d / (limit + 1) - 0.05 * Math.min(i, 9) - 0.01 * (w.length - form.length);
+        if (best === null || q > best) best = q;
+      }
+    }
+    return best;
+  }
+  /** [tier, quality] for one token against one text, or null. */
+  function matchToken(tok, text, ws, strict) {
+    var tk = fold(tok);
+    if (!tk) return null;
+    var tf;
+    if (ws == null) { ws = words(text); tf = fold(text); } else { tf = ws.join(''); }
+    if (!tf) return null;
+    if (tf === tk) return [EXACT, 1];
+    if (tf.indexOf(tk) === 0) return [PREFIX, tk.length / tf.length];
+    for (var i = 0; i < ws.length; i++) {
+      if (ws[i].indexOf(tk) === 0) {
+        return [WORD, 0.5 * tk.length / ws[i].length + 0.5 * (1 - i / ws.length)];
+      }
+    }
+    var at = tf.indexOf(tk);
+    if (at >= 0) return [SUBSTRING, 1 - at / tf.length];
+    if (strict) return null;
+    if (ws.length >= 2 && tk.length >= 2) {
+      var initials = ws.map(function (w) { return w.charAt(0); }).join('');
+      if (initials.indexOf(tk) === 0) return [INITIALS, tk.length / initials.length];
+    }
+    var q = typo(tk, ws, tf);
+    if (q !== null) return [TYPO, q];
+    q = subsequence(tk, tf);
+    if (q !== null) return [SUBSEQUENCE, q];
+    return null;
+  }
+  /** The tokens of a query: whitespace-split, empty after folding dropped. */
+  function tokens(query) {
+    return String(query || '').split(/\s+/).filter(function (t) { return !!fold(t); });
+  }
+  /** Best [tier, quality] across fields [[text, penalty, substringOnly]]. */
+  function scoreFields(query, fields) {
+    var toks = tokens(query);
+    if (!toks.length) return [EXACT, 0];
+    var prepared = fields.filter(function (f) { return !!f[0]; });
+    var worst = 0, total = 0;
+    for (var t = 0; t < toks.length; t++) {
+      var best = null;
+      for (var i = 0; i < prepared.length; i++) {
+        var m = matchToken(toks[t], prepared[i][0], null, prepared[i][2]);
+        if (!m) continue;
+        var key = m[0] + prepared[i][1];
+        if (!best || key < best[0] || (key === best[0] && m[1] > best[1])) best = [key, m[1]];
+      }
+      if (!best) return null;
+      worst = Math.max(worst, best[0]);
+      total += best[1] - best[0];
+    }
+    return [worst, total / toks.length];
+  }
+  return {EXACT: EXACT, PREFIX: PREFIX, WORD: WORD, SUBSTRING: SUBSTRING,
+          INITIALS: INITIALS, TYPO: TYPO, SUBSEQUENCE: SUBSEQUENCE,
+          words: words, fold: fold, damerau: damerau, subsequence: subsequence,
+          matchToken: matchToken, tokens: tokens, scoreFields: scoreFields};
+})();
+
+// What a package answers to, and how much each field counts. A field's
+// weight is added to the tier of a hit in it, so a title hit outranks the
+// same hit in a description, and every weight stays under 1: a strict hit
+// anywhere (a docs word included) still ranks above any fuzzy one, the
+// FuzzyMatch promise. Only the short name fields take fuzzy hits; a typo
+// or a subsequence over a description or a docs page matches almost
+// anything. Hotkeys are not searched: nearly every one carries alt or
+// ctrl, so "alt" listed 41 tools above AltSelect.
+var FNSSearch = (function (F) {
+  var NAME = 0, TAG = 0.3, META = 0.4, DESC = 0.5, HEAD = 0.6, BODY = 0.8;
+  // A token this short is a word start or nothing: two letters inside a
+  // word ("ui" in quick) are in most names, and in every docs page.
+  var SHORT = 3;
+  // and letters scattered through a name need four to mean anything
+  // ("lag" was a subsequence of SimpleSceneChanger)
+  var SUBSEQ_MIN = 4;
+
+  /** Everything one manifest row answers to, split into words once.
+   *  `labelOf` turns a surface id into the words the card uses. */
+  function prepare(p, labelOf) {
+    var fam = p.family || {};
+    var fields = [];
+    function add(text, pen, strict) {
+      if (!text) return;
+      text = String(text);
+      fields.push({text: text, ws: F.words(text), pen: pen, strict: !!strict});
+    }
+    add(p.title, NAME);
+    add(String(p.name || '').replace(/^FNS_/, ''), NAME);
+    add(fam.op_label, NAME);
+    // the CMS tags and the operator types it stands in for, one field
+    // each, so "math" is a prefix hit on mathCHOP wherever it sits
+    (fam.search_words || []).forEach(function (w) { add(w, TAG); });
+    (p.alternatives_for || []).forEach(function (t) { add(t, TAG); });
+    add(p.category, META, true);
+    add(fam.op_group, META, true);
+    (p.surfaces || []).forEach(function (s) { add(labelOf ? labelOf(s) : s, META, true); });
+    if (p.author) add(p.author.name, META, true);
+    add(p.description, DESC, true);
+    add(fam.summary, DESC, true);
+    if (p.pricing && p.pricing.summary) add('trial ' + p.pricing.summary, DESC, true);
+    Object.keys(p.variants || {}).forEach(function (vid) {
+      add(vid + ' ' + ((p.variants[vid] || {}).summary || ''), DESC, true);
+    });
+    // the docs index (packaging/search_index.py): folded words, sorted,
+    // space-joined -- padded so every word sits between two spaces
+    var s = p.search || {};
+    return {fields: fields,
+            head: s.head ? ' ' + s.head + ' ' : '',
+            body: s.body ? ' ' + s.body + ' ' : ''};
+  }
+
+  /** The first docs word the folded token starts, or null. The list is
+   *  sorted, so an exact word comes before its longer forms. */
+  function docWord(tk, list) {
+    if (!list) return null;
+    var at = list.indexOf(' ' + tk);
+    return at < 0 ? null : list.slice(at + 1, list.indexOf(' ', at + 1));
+  }
+
+  /** {tier, quality, docs} for query tokens against a prepared row, or
+   *  null when a token hits nothing. `docs` lists the docs words that
+   *  carried a token no card field did, for the "in docs:" line. */
+  function score(toks, row) {
+    var worst = 0, total = 0, docs = [];
+    for (var t = 0; t < toks.length; t++) {
+      var tk = F.fold(toks[t]);
+      var best = null, via = null;
+      for (var i = 0; i < row.fields.length; i++) {
+        var fd = row.fields[i];
+        var m = F.matchToken(tk, fd.text, fd.ws, fd.strict);
+        if (!m || (m[0] === F.SUBSTRING && tk.length < SHORT)
+            || (m[0] === F.SUBSEQUENCE && tk.length < SUBSEQ_MIN)) continue;
+        var key = m[0] + fd.pen;
+        if (!best || key < best[0] || (key === best[0] && m[1] > best[1])) {
+          best = [key, m[1]];
+          via = null;
+        }
+      }
+      var tiers = tk.length < SHORT ? [] : [[row.head, HEAD], [row.body, BODY]];
+      for (var j = 0; j < tiers.length; j++) {
+        var w = docWord(tk, tiers[j][0]);
+        if (!w) continue;
+        var dk = F.WORD + tiers[j][1];
+        var dq = tk.length / w.length;
+        if (!best || dk < best[0] || (dk === best[0] && dq > best[1])) {
+          best = [dk, dq];
+          via = w;
+        }
+      }
+      if (!best) return null;
+      if (via && docs.indexOf(via) < 0) docs.push(via);
+      worst = Math.max(worst, best[0]);
+      total += best[1] - best[0];
+    }
+    return {tier: worst, quality: toks.length ? total / toks.length : 0, docs: docs};
+  }
+
+  /** Best first: the worst token's tier, then the tighter hit. */
+  function compare(a, b) {
+    return (a.tier - b.tier) || (b.quality - a.quality);
+  }
+
+  return {prepare: prepare, score: score, compare: compare, docWord: docWord,
+          weights: {NAME: NAME, TAG: TAG, META: META, DESC: DESC, HEAD: HEAD, BODY: BODY}};
+})(FNSFuzzy);
+/* FNS:SEARCH:END */
+
 function fnsBoot() {
   var M = window.FNS_MANIFEST;
   var listEl = document.getElementById('list');
@@ -1709,6 +2032,24 @@ function fnsBoot() {
     render();
   }
   function narrowed() { return view.access !== 'all' || view.sel || view.fresh || view.once; }
+  // Compact: title-only tiles (owner, 2026-10-03: "there are just so many
+  // tools and features"). A view, not a filter: every card stays, only
+  // its description, byline, hints and where-it-lands chips go, and the
+  // description is still the tile's hover. Per viewer, off by default.
+  var COMPACT_KEY = 'fns.compact';
+  var compactOn = stored(COMPACT_KEY, null) === '1';
+  function applyCompact() {
+    listEl.classList.toggle('dense', compactOn);
+    var b = document.getElementById('compact');
+    b.setAttribute('aria-pressed', compactOn ? 'true' : 'false');
+    b.classList.toggle('on', compactOn);
+  }
+  function setCompact(on) {
+    compactOn = !!on;
+    try { localStorage.setItem(COMPACT_KEY, compactOn ? '1' : '0'); } catch (e) { /* nicety */ }
+    applyCompact();
+  }
+  applyCompact();
   // Placeable: a tool you drop into a network as nodes rather than a
   // service living in the toolkit container -- an FNS family member, a
   // package that spawns into your network or at its root, or one the
@@ -1881,7 +2222,10 @@ function fnsBoot() {
     return true;
   }
 
-  function card(p) {
+  /** A tool's card. `hit` (a search result, FNSSearch.score) puts the
+   *  category on it, since a ranked list has no section headings, and a
+   *  line naming the docs words that found it when no card field did. */
+  function card(p, hit) {
     var on = picked.has(p.name);
     var el = document.createElement('label');
     var placed = !on && placing.has(p.name);
@@ -1919,6 +2263,13 @@ function fnsBoot() {
       nb.className = 'badge new';
       nb.textContent = 'New';
       name.appendChild(nb);
+    }
+    if (hit) {
+      el.setAttribute('data-cat', p.category || '');
+      var ct = document.createElement('span');
+      ct.className = 'cattag';
+      ct.textContent = p.category || '';
+      name.appendChild(ct);
     }
     if (p.help_url) {
       var a = docsLink(p.help_url, 'docs ↗', 'help');
@@ -1958,6 +2309,16 @@ function fnsBoot() {
         by.appendChild(document.createTextNode(p.author.name));
       }
       body.appendChild(by);
+    }
+    // a deep hit explains itself: the words were in the docs, not here
+    if (hit && hit.docs.length) {
+      var dh = document.createElement('div');
+      dh.className = 'dochit';
+      dh.appendChild(document.createTextNode('in docs: '));
+      var dw = document.createElement('b');
+      dw.textContent = hit.docs.join(', ');
+      dh.appendChild(dw);
+      body.appendChild(dh);
     }
 
     var chips = document.createElement('div');
@@ -2012,7 +2373,7 @@ function fnsBoot() {
       var vown = !!(account && (account.products || []).indexOf(p.name + '.' + vid) >= 0);
       var vlabel = vtier + ' build' + (!account ? '' : (vown ? ' · yours' : ' · upgrade'));
       var vc = docsLink(FNS_DOCS + '/patreon/', vlabel,
-        'chip plus' + (!account ? '' : (vown ? ' own' : ' locked')));
+        'chip plus variant' + (!account ? '' : (vown ? ' own' : ' locked')));
       vc.setAttribute('data-tip', (v.summary ? v.summary + ' ' : '')
         + 'The ' + vtier + ' tier or higher gets this build; it installs in place of the '
         + (tierLabel(p.access) || 'Base') + ' build.');
@@ -2364,7 +2725,7 @@ function fnsBoot() {
       // under a search or a filter the rail counts what is shown, and a
       // category with nothing to show goes quiet rather than jumping to
       // a section that is not there
-      var pool = (document.getElementById('q').value.trim() || narrowed()) ? shownTools : tools;
+      var pool = (queryText() || narrowed()) ? shownTools : tools;
       var n = cat === 'Core' ? core.length
         : pool.filter(function (p) { return p.category === cat; }).length;
       var sel = cat === 'Core' ? 0
@@ -2386,24 +2747,30 @@ function fnsBoot() {
 
   var shownTools = [];
   var coreNoteEl = document.getElementById('corenote');
-  /** The search text a package answers to: names, description, category,
-   *  the surfaces it adds, a trial and its tier builds. */
-  function shownText(p) {
-    // Surfaces are searchable: "toolbar" is how someone asks for the
-    // tools that put a button somewhere, and it is a question the
-    // package list could not answer before.
-    var surf = (p.surfaces || []).map(surfaceLabel).join(' ');
-    return (p.name + ' ' + titleOf(p) + ' ' + (p.description || '') + ' '
-            + (p.category || '') + ' ' + surf
-            + (pricingOf(p) ? ' trial ' + pricingOf(p).summary : '')
-            + Object.keys(p.variants || {}).map(function (vid) {
-                return ' ' + vid + ' ' + ((p.variants[vid] || {}).summary || '');
-              }).join(''))
-           .toLowerCase();
+  // What a package answers to (FNSSearch.prepare): names, CMS tags, the
+  // operator types it stands in for, category, the surfaces it adds
+  // ("toolbar" is how someone asks for the tools that put a button
+  // somewhere), description, a trial, its tier builds, and the words of
+  // its documentation. Prepared once per package, scored once per query.
+  var searchRows = {};
+  var hitQuery = null, hitCache = {};
+  /** The search hit for p ({tier, quality, docs}), or null on a miss. */
+  function hitOf(p, q) {
+    if (q !== hitQuery) { hitQuery = q; hitCache = {}; }
+    if (!Object.prototype.hasOwnProperty.call(hitCache, p.name)) {
+      var row = searchRows[p.name] || (searchRows[p.name] = FNSSearch.prepare(p, surfaceLabel));
+      hitCache[p.name] = FNSSearch.score(FNSFuzzy.tokens(q), row);
+    }
+    return hitCache[p.name];
   }
-  function matchText(p, q) { return !q || shownText(p).indexOf(q) !== -1; }
-  function render() {
+  function matchText(p, q) { return !q || !!hitOf(p, q); }
+  /** The search field's query, or '' when it holds nothing to match on. */
+  function queryText() {
     var q = document.getElementById('q').value.trim().toLowerCase();
+    return FNSFuzzy.tokens(q).length ? q : '';
+  }
+  function render() {
+    var q = queryText();
     function match(p) {
       return accessOk(p, view.access) && (!view.sel || chosenHere(p))
         && (!view.fresh || isNew(p)) && (!view.once || isPlaceable(p)) && matchText(p, q);
@@ -2419,8 +2786,23 @@ function fnsBoot() {
     // the piece with. The groups keep their order and a gap divides them;
     // no heading names them (owner, 2026-09-26).
     var lastGroup = null;
+    // A search is ONE ranked list, best match first, each card naming its
+    // category; the sections and their fold state come back when the
+    // field is cleared.
+    if (q) {
+      visible = tools.filter(match).sort(function (a, b) {
+        return FNSSearch.compare(hitOf(a, q), hitOf(b, q)) || byTitle(a, b);
+      });
+      shown = visible.length;
+      if (shown) {
+        var rg = document.createElement('div');
+        rg.className = 'grid ranked';
+        visible.forEach(function (p) { rg.appendChild(card(p, hitOf(p, q))); });
+        listEl.appendChild(rg);
+      }
+    }
     cats.forEach(function (cat) {
-      if (cat === 'Core') return;
+      if (cat === 'Core' || q) return;
       var items = tools.filter(function (p) { return p.category === cat && match(p); });
       if (!items.length) return;
       var grp = metaOf(cat).group || '';
@@ -2943,7 +3325,7 @@ function fnsBoot() {
     save(); render();
   });
   document.getElementById('none').addEventListener('click', function () {
-    if (document.getElementById('q').value.trim() || narrowed()) {
+    if (queryText() || narrowed()) {
       shownTools.forEach(function (p) { picked.delete(p.name); });
     } else {
       picked.clear();
@@ -2956,6 +3338,7 @@ function fnsBoot() {
   document.getElementById('selonly').addEventListener('click', function () { setView({sel: !view.sel}); });
   document.getElementById('newonly').addEventListener('click', function () { setView({fresh: !view.fresh}); });
   document.getElementById('placeonly').addEventListener('click', function () { setView({once: !view.once}); });
+  document.getElementById('compact').addEventListener('click', function () { setCompact(!compactOn); });
   document.getElementById('resetview').addEventListener('click', function () {
     document.getElementById('q').value = '';
     setView({access: 'all', sel: false, fresh: false, once: false});
@@ -2972,13 +3355,19 @@ function fnsBoot() {
   });
   document.getElementById('trayclose').addEventListener('click', function () { setTray(false); });
   // "/" jumps to the search from anywhere but a text field; Escape in
-  // the search clears it, and elsewhere closes the tray
+  // the search clears it, and elsewhere closes the tray; Enter in the
+  // search ticks the top hit (never unticks: a second Enter is harmless)
   document.addEventListener('keydown', function (e) {
     var t = e.target;
     var typing = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
     if (e.key === '/' && !typing && !document.querySelector('dialog[open]')) {
       e.preventDefault();
       document.getElementById('q').focus();
+    } else if (e.key === 'Enter' && t && t.id === 'q' && queryText()) {
+      e.preventDefault();
+      // the card's own checkbox, so a Patreon tool still asks
+      var top = listEl.querySelector('.grid.ranked .card input[type=checkbox]');
+      if (top && !top.checked) top.click();
     } else if (e.key === 'Escape' && t && t.id === 'q' && t.value) {
       t.value = ''; render();
     } else if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
@@ -4213,8 +4602,22 @@ function fnsBoot() {
       a.href = '#cat-' + catSlug(cat);
       a.setAttribute('data-cat', cat);
       // the rail opens what it jumps to; a jump to a closed section
-      // landed on one header row and looked like a broken link
-      a.addEventListener('click', function () { setOpen(cat, true); render(); });
+      // landed on one header row and looked like a broken link. Under a
+      // search there are no sections: it jumps to the category's best hit.
+      a.addEventListener('click', function (e) {
+        if (queryText()) {
+          e.preventDefault();
+          var hits = listEl.querySelectorAll('.grid.ranked .card');
+          for (var i = 0; i < hits.length; i++) {
+            if (hits[i].getAttribute('data-cat') === cat) {
+              hits[i].scrollIntoView({block: 'center'});
+              break;
+            }
+          }
+          return;
+        }
+        setOpen(cat, true); render();
+      });
       var m = metaOf(cat);
       if (m.glyph) {
         var g = document.createElement('span');
@@ -4477,6 +4880,9 @@ function fnsBoot() {
             if (b.category) p.category = b.category;
             if (b.description) p.description = b.description;
             if (b.fits) p.fits = b.fits; else delete p.fits;
+            // the docs search index, baked from the repo's docs: newer
+            // than the release for the same reason
+            if (b.search) p.search = b.search;
           });
           window.FNS_MANIFEST = m;
         }

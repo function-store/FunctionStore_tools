@@ -8,14 +8,16 @@ features:
     anchor: quick-start
   - name: Inputs two ways to add scenes
     anchor: inputs-two-ways-to-add-scenes
-  - name: Custom page
-    anchor: custom-page
+  - name: Scenes page
+    anchor: scenes-page
+  - name: Transition page
+    anchor: transition-page
   - name: Cooking page
     anchor: cooking-page
   - name: Inputs page
     anchor: inputs-page
-  - name: Callbacks and about pages
-    anchor: callbacks-and-about-pages
+  - name: About page
+    anchor: about-page
   - name: The a/b fader
     anchor: the-a-b-fader
   - name: How cook control decides
@@ -34,19 +36,20 @@ ProSceneChanger is the Pro package of the scene changer family. Everything below
 ## Contents
 1. Quick start
 2. Inputs: two ways to add scenes
-3. Custom page (what's showing, transition, output)
-4. Cooking page (what cooks, and when)
-5. Inputs page (wiring tools, colours)
-6. Callbacks and About pages
-7. The A/B fader
-8. How cook control decides
-9. Python
-10. Troubleshooting and notes
+3. Scenes page (what's showing, crossfade, output)
+4. Transition page (switch modes, fades, the A/B fader, auto advance)
+5. Cooking page (what cooks, and when)
+6. Inputs page (wiring tools, colours)
+7. About page
+8. The A/B fader
+9. How cook control decides
+10. Python
+11. Troubleshooting and notes
 
 ## Quick start
 1. Add scenes: wire scene COMPs into the input connectors, or reference COMPs or TOPs in the
-   Inputs sequence at the bottom of the Custom page (see section 2).
-2. Pick a Switch Mode and set Select (or Select Menu) to the scene you want. That's it.
+   Inputs sequence at the bottom of the Scenes page (see section 2).
+2. Set Select (or Select Menu) to the scene you want. That's it.
 3. On the Cooking page turn on Control Cook so idle scenes stop cooking, and Unload so their
    memory is released. Add Pre-Roll or Outro if a scene needs time before or after its switch.
 
@@ -70,36 +73,64 @@ Inputs sequence     Each block's TOP parameter takes a COMP or a TOP:
 Add sequence blocks for more inputs; the connectors and the internal select TOPs follow. A bare
 TOP that is not inside a scene COMP is shown but never uncooked or unloaded.
 
-## Custom page
-What's showing
+## Scenes page
+What's showing, and how
 Active            Master switch. Off: no transitions, every scene cooks, node colours restored.
 Select            Scene index to show. Constant, expression, bind or exported CHOP channel all
                   work; changes are seen the frame they happen, even mid-transition.
 Select Menu       Pick a scene by name. Available when Select is a constant or bind.
 Loop Type         Out-of-range Select values: Clamp holds at the ends, Loop wraps around
-                  (modulo), Zigzag bounces back and forth.
+                  (modulo), Zigzag bounces back and forth. Auto Advance uses it too.
+Crossfade Length  Seconds for a crossfade (Switch Mode Crossfade, the default).
+Easing            Curve applied to crossfades, fade-outs and fade-ins (not to the A/B fader).
+Res               Output resolution of the changer.
+Callbacks         Create Callbacks makes an editable callbacks DAT next to the changer, with each
+                  callback documented inside. Each callback can also take an `info` dict with scene
+                  names and indices; it is passed only when the function declares an `info`
+                  parameter (or **kwargs), so older callbacks DATs keep working. Five callbacks:
+                    onPrerollStart(target, current, seconds)        a scene starts its Pre-Roll
+                        warm-up (only when Pre-Roll is above 0).
+                    onTransitionStart(target, current, mode)        a switch has begun: after any
+                        Pre-Roll, for cuts, when the A/B Fader leaves home, and again when a running
+                        switch is redirected. target/current are the scene COMPs (or TOPs for bare
+                        TOP scenes); mode is 'cross', 'fade', 'cut', 'manual' or 'manualfade'.
+                    onTransitionCancel(target, current)             a pre-rolling or running switch
+                        was abandoned (Select back or elsewhere, Fader home, Active off): target
+                        will not arrive.
+                    onSelectionChange(selected_ops, unselected_ops) a switch completed; the lists
+                        hold the TOPs shown (a wired scene's In TOP, or the resolved TOP). The
+                        leaving scene's Outro starts here.
+                    onCookingChange(cooked_comps, uncooked_comps)   Control Cook enabled or disabled
+                        scene COMPs; only changes are reported.
 Current Select    Read-only: the scene currently visible.
 Num Scenes        Read-only: number of inputs.
 Progress          Read-only: 0-1 progress of the running timed transition.
-Finish Transition Pulse: complete the switch under way right now. A running crossfade or fade
-                  lands on its target, a Pre-Roll cuts straight to the scene it was warming, and
-                  a half-moved A/B Fader completes. Does nothing when idle.
+Inputs            The scene reference sequence described in section 2.
 
-Transition
+## Transition page
 Switch Mode
    Crossfade              Blend from the current scene to the target over Crossfade Length.
    Fade Through Black     Fade the current scene out (Fade Out Time), then the target in
                           (Fade In Time).
    Cut                    Instant switch.
-   A/B Fader Crossfade    Driven by the A/B Fader parameter, see section 7.
+   A/B Fader Crossfade    Driven by the A/B Fader parameter, see section 8.
    A/B Fader Through Black
-Crossfade Length  Seconds for Crossfade.
-Easing            Curve applied to crossfades, fade-outs and fade-ins (not to the A/B fader).
 Fade Out Time     Seconds to fade the current scene to black in Fade Through Black.
 Fade In Time      Seconds to fade the target up from black in Fade Through Black.
 Fade Style        What "black" means: To Black drives RGB to black and keeps alpha (opaque);
                   To Transparent fades opacity instead. Applies to both through-black modes.
 A/B Fader         The manual control for the two A/B Fader modes.
+Finish Transition Pulse: complete the switch under way right now. A running crossfade or fade
+                  lands on its target, a Pre-Roll cuts straight to the scene it was warming, and
+                  a half-moved A/B Fader completes. Does nothing when idle.
+
+Per-scene times: a scene COMP carrying custom parameters named Fadeintime and/or Fadeouttime
+overrides the changer's times for that scene (Fadeintime also overrides Crossfade Length).
+Per-scene curves: Fadeincurve (arriving: the crossfade or the fade-up half) and Fadeoutcurve
+(leaving: the fade-to-black half) name an Easing curve, e.g. 'OutBounce'. Unknown names are
+ignored, so Easing applies.
+
+Only the parameters the current Switch Mode uses stay enabled, on this page and on Scenes.
 
 Auto Advance
 Auto Advance      Switch to the next scene every Interval. Off pauses the countdown where it is.
@@ -118,18 +149,6 @@ Order             Sequential steps through the scenes in Direction; Loop Type de
 Direction         Sequential order: Forward (next index) or Back (previous index).
 Random Seed       Random order: the same seed always gives the same sequence.
 Next Switch In    Read-only: seconds until the next Auto switch.
-
-Per-scene times: a scene COMP carrying custom parameters named Fadeintime and/or Fadeouttime
-overrides the changer's times for that scene (Fadeintime also overrides Crossfade Length).
-Per-scene curves: Fadeincurve (arriving: the crossfade or the fade-up half) and Fadeoutcurve
-(leaving: the fade-to-black half) name an Easing curve, e.g. 'OutBounce'. Unknown names are
-ignored, so Easing applies.
-
-Output
-Res               Output resolution of the changer.
-Inputs            The scene reference sequence described in section 2.
-
-Only the parameters the current Switch Mode uses stay enabled.
 
 ## Cooking page
 Control Cook      Only the visible scene (plus the incoming one during a transition) is allowed
@@ -171,25 +190,7 @@ Colorize Scenes   Tint the scene COMPs in the network editor: On Color for the v
                   remembered the first time it is tinted and restored when Colorize is off.
 Off = Keep Original Color   Idle scenes get their own original colour back instead of Off Color.
 
-## Callbacks and about pages
-Callbacks         Create Callbacks makes an editable callbacks DAT next to the changer, with each
-                  callback documented inside. Each callback can also take an `info` dict with scene
-                  names and indices; it is passed only when the function declares an `info`
-                  parameter (or **kwargs), so older callbacks DATs keep working. Five callbacks:
-                    onPrerollStart(target, current, seconds)        a scene starts its Pre-Roll
-                        warm-up (only when Pre-Roll is above 0).
-                    onTransitionStart(target, current, mode)        a switch has begun: after any
-                        Pre-Roll, for cuts, when the A/B Fader leaves home, and again when a running
-                        switch is redirected. target/current are the scene COMPs (or TOPs for bare
-                        TOP scenes); mode is 'cross', 'fade', 'cut', 'manual' or 'manualfade'.
-                    onTransitionCancel(target, current)             a pre-rolling or running switch
-                        was abandoned (Select back or elsewhere, Fader home, Active off): target
-                        will not arrive.
-                    onSelectionChange(selected_ops, unselected_ops) a switch completed; the lists
-                        hold the TOPs shown (a wired scene's In TOP, or the resolved TOP). The
-                        leaving scene's Outro starts here.
-                    onCookingChange(cooked_comps, uncooked_comps)   Control Cook enabled or disabled
-                        scene COMPs; only changes are reported.
+## About page
 About             Open Documentation opens this text. Build Number, Build Date and Touch Build
                   are stamped at every release. Package Version is the version FNSTools compares
                   against the published release to offer updates.

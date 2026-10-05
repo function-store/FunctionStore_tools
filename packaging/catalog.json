@@ -632,6 +632,14 @@
     "ui"
    ]
   },
+  "FNS_SearchFix": {
+   "category": "Network",
+   "description": "Makes the network editor's find bar find things: any part of a name, case-insensitive, with wildcards, optionally fuzzy and inside child networks. Keeps the bar's arrows and Home toggle; a Legacy toggle brings TouchDesigner's own search back.",
+   "fits": [
+    "network",
+    "speed"
+   ]
+  },
   "FNS_ParOPDrop": {
    "category": "Parameters",
    "description": "Create Parameter CHOP/DAT and Parameter Execute DAT nodes inside a COMP from its custom parameters, by drag and drop or hotkey.",
@@ -762,6 +770,10 @@
    "category": "Core",
    "description": "Publish a widget into TouchDesigner's timeline bar: transport controls beside the stock ones, an entry on the time-properties block, or a full-width strip in the frame-ruler band that gets its own row."
   },
+  "FNS_PaneSearchRegistry": {
+   "category": "Core",
+   "description": "Publish a control into the find bar of every network editor pane: it sits beside the bar's own Home toggle, one copy per pane, and appears in panes opened later too."
+  },
   "FNS_TimelineTools": {
    "category": "Interface",
    "description": "Drive the timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Keyframer graph as a filmstrip, a waveform and your editor's markers. Key any operators' parameters into an Animation COMP with one press, and play them back from it.",
@@ -855,6 +867,7 @@
   },
   "FNS_OpSequencer": {
    "category": "Time & sequencing",
+   "homepage": "https://seq.functionstore.tools",
    "description": "Preset sequencer for one operator: store any number of its parameter states in a table, then scrub, jump or morph between them with easing, or mix them by weight from a CHOP. Drop the operator on the panel and drag parameters in to add columns.",
    "placement": "none",
    "fits": [
@@ -869,6 +882,7 @@
   },
   "FNS_CamSequencer": {
    "category": "Time & sequencing",
+   "homepage": "https://seq.functionstore.tools",
    "description": "A camera with two preset sequencers inside, one for its transform and lens and one for the Look At target: frame it, append, scrub or drive it from a CHOP, fly it with a joystick, or take over a palette camera viewport.",
    "placement": "none",
    "fits": [
@@ -882,6 +896,7 @@
   },
   "FNS_MixSequencer": {
    "category": "Time & sequencing",
+   "homepage": "https://seq.functionstore.tools",
    "description": "A step sequencer of mixes for OpSequencer: every step is a weight vector over a sequencer's presets, the playhead crossfades between steps with easing, and the result rides out as one channel per preset. A run of one-hot steps is a cue list.",
    "placement": "none",
    "fits": [
