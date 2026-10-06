@@ -508,7 +508,7 @@ decorator when you want the handler's name to be free of the `onPar<Name>`
 convention.
 
 
-To demo all the features you can download [QuickExtTest.tox](https://github.com/function-store/FunctionStore_tools/blob/main/modules/suspects/FunctionStore_tools_2023/QuickExtTest.tox) and run it or just check its [extension code](https://github.com/function-store/FunctionStore_tools/blob/main/scripts/QuickExt/templates/ExtUtils/ExtTest.py).
+To demo all the features you can download [QuickExtTest.tox](https://github.com/function-store/FunctionStore_tools/blob/dev2023/modules/suspects/FunctionStore_tools_2023/QuickExtTest.tox) and run it or just check its [extension code](https://github.com/function-store/FunctionStore_tools/blob/dev2023/scripts/QuickExt/templates/ExtUtils/ExtTest.py).
 
 ## TouchDesigner shortcuts
 
