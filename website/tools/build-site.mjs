@@ -1631,7 +1631,7 @@ for (const [slug, title, desc] of [
   ['terms', 'Terms | FNSTools',
     'The free packages are MIT and stay that way; the Patreon packages are licensed to you while your membership or Gumroad licence key is live. Everything ships as-is.'],
   ['about', 'About | FNSTools',
-    'FNSTools is made by Dan Molnar, a Berlin-based TouchDesigner artist and developer working as Function Store. Who is behind the toolkit, why it exists, and where the rest of the work lives.'],
+    'FNSTools is made by Dan Molnar, a Berlin-based TouchDesigner artist and developer working as Function Store, with a few community contributors. Who is behind the toolkit, why it exists, and where the rest of the work lives.'],
 ]) {
   const src = path.join(WEB, 'content', `${slug}.html`);
   if (!fs.existsSync(src)) {
