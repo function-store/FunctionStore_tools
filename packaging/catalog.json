@@ -726,12 +726,8 @@
   },
   "FNS_SearchPalette": {
    "category": "Interface",
-   "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Vendored TD-SearchPalette by Yea Chen.",
+   "description": "Search field for TouchDesigner's palette browser, installed into the palette on startup. Based on Yea Chen's TD-SearchPalette.",
    "recommended": true,
-   "author": {
-    "name": "Yea Chen",
-    "url": "https://github.com/yeataro/TD-SearchPalette"
-   },
    "fits": [
     "speed",
     "learn",
@@ -842,7 +838,7 @@
    "category": "Network",
    "description": "Paste the image on the clipboard into the current network as a Movie File In, a Script TOP or an annotation. Windows only.",
    "author": {
-    "name": "DotSimulate",
+    "name": "DotSimulate and Lake Heckaman",
     "url": "https://www.patreon.com/dotsimulate"
    },
    "fits": [

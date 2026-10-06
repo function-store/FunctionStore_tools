@@ -10,7 +10,7 @@ platforms:
 
 ## Clipboard Image Paste
 
-> Windows only! Implemented by [Dotsimulate](https://www.patreon.com/c/dotsimulate), integrated by Function Store
+> Windows only! Implemented by [DotSimulate](https://www.patreon.com/c/dotsimulate) and [Lake Heckaman](https://www.patreon.com/cw/water__shed), integrated by Function Store
 
 Copy an image to your clipboard and paste it directly in TD with `alt+v` shortcut  
    - You will be met with three options (hotkeys **1,2,3**): 🟢 Paste as **Movie File In**, 🔵 Paste as **locked Script TOP**, 🟠 Paste as **Annotate**  

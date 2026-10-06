@@ -12,8 +12,7 @@ features:
 
 Adds a search field to TouchDesigner's palette browser, so palette
 components can be found by typing their name.
-This is [Yea Chen's TD-SearchPalette](https://github.com/yeataro/TD-SearchPalette),
-vendored into the toolkit.
+It is based on [Yea Chen's TD-SearchPalette](https://github.com/yeataro/TD-SearchPalette).
 
 The component installs itself into the palette on project start while
 **Auto Install** is on (the toggle roams with your config), and can be
