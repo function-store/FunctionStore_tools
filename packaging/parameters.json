@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.65",
+ "release": "v3.2.66",
  "td_build": "2025.33070",
  "packages": {
   "ChopBank": [
@@ -16883,10 +16883,6 @@
     "default": "",
     "menu": [
      {
-      "name": "172.18.112.1",
-      "label": "172.18.112.1"
-     },
-     {
       "name": "192.168.42.66",
       "label": "192.168.42.66"
      }
@@ -16917,10 +16913,6 @@
     "help": "Which network interface talkback is sent from. '*' lets the OS choose.",
     "default": "*",
     "menu": [
-     {
-      "name": "172.18.112.1",
-      "label": "172.18.112.1"
-     },
      {
       "name": "192.168.42.66",
       "label": "192.168.42.66"
