@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# Refuse any push to the PUBLIC mirror from this private repo.
+#
+# The public repo is GENERATED (scripts/publish_public.py), never pushed
+# from this history: this tree holds gated package source, the design
+# docs behind it, and .toe files that fully embed a different product.
+# Before the first generated publish, public/dev25 is an ANCESTOR of this
+# history -- so `git push public HEAD:dev25` fast-forwards and publishes
+# paid source with no warning. This hook is what stands in the way.
+#
+# The verdict comes from publish_public.py --check-rev, so the hook and
+# the publisher can never disagree about what is private.
+#
+# Install (hooks are not versioned, so this is a one-liner per clone):
+#     git config core.hooksPath scripts/hooks
+#
+# git passes: $1 = remote name, $2 = remote URL; refs arrive on stdin as
+#     <local ref> <local sha> <remote ref> <remote sha>
+
+remote_url="$2"
+
+case "$remote_url" in
+  *function-store/FunctionStore_tools*)
+    ;;
+  *)
+    exit 0   # not the public mirror -- nothing to police
+    ;;
+esac
+
+repo_root=$(git rev-parse --show-toplevel)
+zero=$(git hash-object --stdin </dev/null | tr '0-9a-f' '0')
+status=0
+
+while read -r _local_ref local_sha _remote_ref _remote_sha; do
+  [ "$local_sha" = "$zero" ] && continue   # a delete, nothing to inspect
+  if ! python "$repo_root/scripts/publish_public.py" --check-rev "$local_sha"
+  then
+    status=1
+  fi
+done
+
+if [ "$status" -ne 0 ]; then
+  echo ""
+  echo "pre-push REFUSED: this history is not publishable."
+  echo "Publish the mirror instead:  python scripts/publish_public.py"
+  echo "(override only if you truly mean it: git push --no-verify)"
+fi
+
+exit $status

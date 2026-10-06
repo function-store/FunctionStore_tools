@@ -1,0 +1,1856 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FNS tools — Console</title>
+<style>
+  /* The FNS console: the toolkit's in-TD manager. Served from a Text DAT by
+     the console's Web Server DAT, so every style is inline. The block
+     between the FNS:UIBASE markers is a GENERATED copy of
+     packaging/configurator/base.css -- the same tokens and components the
+     picker and the website use, which is what makes the framed picker read
+     as a native panel instead of a website inside a box. Edit base.css,
+     then run `python packaging/configurator/sync_base.py --write`. */
+  /* FNS:UIBASE:START -- generated from packaging/configurator/base.css; edit THERE, then run python packaging/configurator/sync_base.py --write */
+/* FNSTools UI base -- the ONE source for the family's design tokens and
+   shared components. Both web shells inline a copy of this file between
+   FNS:UIBASE markers (packaging/configurator/index.html and
+   FNSTools/FNS_Console/console_page.html), because each of them must stay a
+   single self-contained file: one is embedded into the installer and served
+   from a Text DAT inside TouchDesigner, the other doubles as a
+   double-clickable standalone. Edit HERE, then run
+
+       python packaging/configurator/sync_base.py --write
+
+   to push the block into both shells (bare run = drift check only;
+   tests/test_ui_base_sync.py refuses a release with a stale copy).
+
+   Token values are kept in lockstep with website/docs.css on purpose: the
+   /get/ flavor loads docs.css for the site chrome AND this block inline, and
+   the two must never disagree (this block wins the cascade, so a drifted
+   value here would restyle the site header). Change a token value in both
+   places or in neither. */
+
+:root {
+  --bg: #0a0a0a;        --bg-1: #111111;      --bg-2: #161616;
+  --bg-3: #1c1c1c;      --bg-deep: #050505;
+  --border: #262626;    --border-strong: #3a3a3a;
+  --text: #f5f5f5;      --text-dim: #a3a3a3;  --text-faint: #737373;
+  --accent: #fbbf24;    --accent-dim: #2a1f08; --accent-bright: #fcd34d;
+  --accent-ink: #0a0a0a;
+  --green: #4ade80;     --warn: #fdba74;      --warn-dim: #2a1408;
+  --err: #f87171;       --err-dim: #2a0f0f;
+  --max-w: 1140px;      --radius: 10px;
+  /* Height of the chrome that sits above a sticky bar. 0 on its own; the
+     site flavor sets it to the site header's height. */
+  --stick: 0px;
+}
+/* Opt-in only, and only where the page is the whole window: the site and
+   TouchDesigner are dark everywhere, so embedded flavors never offer it. */
+:root[data-theme="light"] {
+  --bg: #f7f7f8;        --bg-1: #ffffff;      --bg-2: #f0f1f4;
+  --bg-3: #e9eaee;      --bg-deep: #f2f3f5;
+  --border: #e2e3e7;    --border-strong: #c6c8ce;
+  --text: #16171a;      --text-dim: #5c6069;  --text-faint: #83878f;
+  --accent: #a16207;    --accent-dim: #fdf3d7; --accent-bright: #854d0e;
+  --accent-ink: #ffffff;
+  --green: #16a34a;     --warn: #b45309;      --warn-dim: #fff5e8;
+  --err: #dc2626;       --err-dim: #fdecec;
+}
+
+* { box-sizing: border-box; }
+/* .btn sets display:inline-flex, and an author display beats the UA's
+   [hidden] rule. Served mode hides the paste-rail button that way, and
+   dialogs toggle their buttons the same way, so this has to win. */
+[hidden] { display: none !important; }
+html, body { margin: 0; padding: 0; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-bright); }
+code, kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.9em; }
+.spacer { flex: 1 1 auto; }
+
+/* ── buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 16px; border-radius: 8px;
+  font: inherit; font-size: 14px; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer; white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-primary:hover { background: var(--accent-bright); color: var(--accent-ink); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; background: var(--accent); }
+.btn-secondary { background: transparent; color: var(--text); border-color: var(--border-strong); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-quiet {
+  background: transparent; color: var(--text-dim);
+  border-color: var(--border); font-weight: 500;
+}
+.btn-quiet:hover { border-color: var(--border-strong); color: var(--text); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* a toggle that is on (the Plus-only filter) */
+.btn.on { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+/* ── inputs ── */
+input[type=search], input[type=text].fns, select.fns {
+  padding: 9px 13px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-1); color: var(--text); font: inherit; font-size: 14px;
+}
+input[type=search]:focus, input[type=text].fns:focus, select.fns:focus {
+  outline: none; border-color: var(--accent); background: var(--bg-2);
+}
+
+/* ── eyebrow / meta ── */
+.eyebrow {
+  display: inline-block; padding: 5px 12px; border-radius: 999px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(251,191,36,0.25);
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+}
+
+/* ── notes ── */
+.note {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.08) 0%, var(--bg-1) 60%);
+  border: 1px solid rgba(251,191,36,0.26); border-radius: 12px;
+  font-size: 14px; color: var(--text-dim); line-height: 1.6;
+}
+.note b { color: var(--text); }
+.note a { white-space: nowrap; }
+
+/* ── category sections ── */
+.cat {
+  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  margin: 34px 0 2px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+}
+.cat-glyph { color: var(--accent); font-size: 15px; font-weight: 400; }
+.cat-count {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.cat-docs { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+.cat-docs:hover { color: var(--accent); }
+.cat-pitch { margin: 0 0 14px; font-size: 13px; color: var(--text-faint); }
+
+/* ── category quick-nav (jump chips under the filter bar) ── */
+.catnav {
+  display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+  padding: 8px 0 2px;
+}
+.catnav a {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 999px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--text-dim);
+  white-space: nowrap;
+}
+.catnav a:hover { border-color: var(--accent); color: var(--accent); }
+.catnav a .g { color: var(--accent); font-size: 11px; }
+.catnav a .n { color: var(--text-faint); font-size: 11px; }
+
+/* ── the grid and cards ── */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.card {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 14px 16px; cursor: pointer;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.card:hover { border-color: var(--border-strong); background: var(--bg-2); }
+/* Selected reads from the filled checkbox and a slightly lifted card, not
+   an accent border: with forty cards selected the borders were the whole
+   page, and the eye had nowhere to land. */
+.card.on { border-color: var(--border-strong); background: var(--bg-2); }
+.card.on .name { color: var(--text); }
+.card.rec { cursor: default; text-decoration: none; }
+.card.rec:hover { border-color: var(--accent); }
+.card.rec .name a { color: inherit; text-decoration: none; }
+.card.rec .name a:hover { color: var(--accent); }
+a.chip.rec { text-decoration: none; color: inherit; }
+.rec-by { font-size: 12px; opacity: .75; }
+.chip.rec { border-style: dashed; }
+/* an action on a card that is not its selection: Place, Install */
+.chip.placebtn {
+  cursor: pointer; font-family: inherit;
+  background: transparent; border-style: dashed; color: var(--text-dim);
+}
+.chip.placebtn:hover { border-color: var(--accent); color: var(--accent); }
+.chip.placebtn.on {
+  border-style: solid; border-color: rgba(251,191,36,0.4);
+  background: var(--accent-dim); color: var(--accent);
+}
+.card.core { cursor: default; }
+.card.core:hover { border-color: var(--border); background: var(--bg-1); }
+/* A MINOR tool: a small convenience that should not compete for attention
+   with the tools someone actually came for. Ranked last inside its own
+   category and drawn about two thirds the weight, in a denser grid so a
+   handful of them cost one row instead of four. Marked, never hidden --
+   same reasoning as .chip.plus below: a picker that hides packages lies
+   about what the toolkit contains. Curated per package in catalog.json. */
+.grid.compact { grid-template-columns: repeat(auto-fill, minmax(232px, 1fr)); gap: 8px; }
+.card.minor { padding: 9px 12px; gap: 9px; }
+.card.minor .name { font-size: 13px; font-weight: 500; }
+.card.minor .desc { margin-top: 2px; font-size: 12px; color: var(--text-faint); }
+.card.minor .chips { margin-top: 6px; }
+.card input {
+  flex: none; margin: 3px 0 0; width: 16px; height: 16px;
+  accent-color: var(--accent); cursor: pointer;
+}
+.body { min-width: 0; flex: 1; }
+.name {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+  font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+}
+.desc { margin-top: 4px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+/* two lines at a glance; the full text rides the card's data-tip */
+.card .desc:not(.byline) {
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+a.help { font-size: 12px; font-weight: 500; color: var(--text-faint); }
+a.help:hover { color: var(--accent); }
+
+/* ── chips ── */
+.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 9px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 500; color: var(--text-dim); white-space: nowrap;
+}
+.chip.core {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
+}
+.chip.hint {
+  background: var(--warn-dim); border-color: rgba(251,146,60,0.3); color: var(--warn);
+}
+/* a priced family product: a trial, then its own licence -- not the
+   Patreon gate (that chip is .plus), and not free either */
+.chip.trial {
+  background: transparent; border-color: rgba(251,191,36,0.35); color: var(--accent);
+}
+a.chip.trial:hover { border-color: var(--accent); color: var(--accent-bright); }
+/* state chips (the updates list, install reports) */
+.chip.ok { background: rgba(74,222,128,0.08); border-color: rgba(74,222,128,0.3); color: var(--green); }
+.chip.warn { background: var(--warn-dim); border-color: rgba(253,186,116,0.35); color: var(--warn); }
+.chip.err { background: var(--err-dim); border-color: rgba(248,113,113,0.35); color: var(--err); }
+.chip.up {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.4); color: var(--accent);
+  font-weight: 600;
+}
+/* Plus: a package the gate serves only to an entitled account. Marked, not
+   hidden -- the decision was "visible and locked", because a picker that
+   hides them lies about what the toolkit is. It is still tickable: this
+   page does not know your entitlement (the server does), and refusing the
+   tick here would be a client-side lock, which is exactly the thing that
+   means nothing. */
+.chip.plus {
+  background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent);
+  font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 10px;
+}
+a.chip.plus:hover { border-color: var(--accent); }
+.card.plus { border-color: rgba(251,191,36,0.22); }
+/* Entitlement, served flavor only. Unlocked reads as a firmer outline;
+   locked stays dimmed (a state you could have). Neither fills: a filled
+   accent chip on every Plus card was one more thing shouting. The
+   published /get/ page never sets these classes. */
+.chip.plus.own { border-color: rgba(251,191,36,0.55); }
+.chip.plus.locked { opacity: 0.6; }
+.acct { color: var(--text-dim); font-size: 12.5px; }
+.acct b { color: var(--accent); font-weight: 600; }
+.plus-hint { margin-top: 10px; font-size: 12.5px; color: var(--text-dim); }
+.plus-hint a { color: var(--accent); }
+
+/* ── the Plus rail: one understated line, not a storefront banner. The
+   free kit is the toolkit; Plus is named as exactly what it is. ── */
+.plusrail {
+  display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap;
+  margin: 14px 0 0; padding: 10px 16px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-left: 2px solid rgba(251,191,36,0.5); border-radius: 8px;
+  font-size: 13px; color: var(--text-dim);
+}
+.plusrail b { color: var(--text); font-weight: 600; }
+.plusrail .mark { color: var(--accent); font-weight: 700; }
+
+.empty { padding: 48px 0; text-align: center; color: var(--text-faint); }
+.empty code {
+  background: var(--bg-3); border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 4px; color: var(--accent-bright);
+}
+
+/* ── summary rail ──
+   Sticky rather than fixed: it rides the viewport while there is list left
+   to scroll, then settles at the end of the page instead of sitting on top
+   of the footer forever. */
+.sum {
+  position: sticky; bottom: 0; z-index: 7;
+  display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+  margin: 40px 0 0; padding: 14px 18px;
+  background: rgba(17,17,17,0.94);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  border: 1px solid var(--border); border-radius: 12px 12px 0 0;
+  border-bottom: none;
+}
+:root[data-theme="light"] .sum { background: rgba(255,255,255,0.94); }
+.sum .n { font-size: 15px; font-weight: 700; }
+.sum .muted { font-size: 13px; color: var(--text-faint); }
+.sum-count { display: flex; align-items: baseline; gap: 8px; }
+
+/* ── dialogs ── */
+dialog {
+  max-width: 720px; width: 92vw; padding: 0; color: var(--text);
+  background: var(--bg-1); border: 1px solid var(--border-strong); border-radius: 14px;
+}
+dialog::backdrop { background: rgba(0,0,0,0.7); }
+.dlg { padding: 22px 24px 20px; }
+.dlg h3 { margin: 0 0 8px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+.dlg-hint { margin: 0 0 14px; font-size: 13.5px; color: var(--text-dim); line-height: 1.6; }
+.dlg pre, pre.out {
+  margin: 0; padding: 14px 16px; max-height: 44vh; overflow: auto;
+  background: var(--bg-deep); border: 1px solid var(--border); border-radius: 10px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 12px; line-height: 1.6; color: var(--text-dim);
+  white-space: pre-wrap; word-break: break-word;
+}
+/* The action row stays reachable however long the dialog gets: the
+   <dialog> element is the scroller, so the row sticks to its bottom edge
+   instead of sitting under the fold. An install plan of 51 chips put
+   Install off screen entirely (field report 2026-09-18). It spans the
+   dialog's padding so the panel reads as a footer, and on a dialog short
+   enough not to scroll a sticky box lays out exactly where it always did. */
+.dlg-actions {
+  display: flex; gap: 10px; align-items: center; margin-top: 16px;
+  position: sticky; bottom: 0; z-index: 1;
+  margin-left: -24px; margin-right: -24px; margin-bottom: -20px;
+  padding: 12px 24px 20px;
+  background: var(--bg-1); border-top: 1px solid var(--border);
+}
+/* the done state: a check in the title, the report as a count and chips */
+.dlg.done h3 { display: flex; align-items: center; gap: 10px; }
+.dlg.done h3::before {
+  content: '✓'; display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%; font-size: 15px; font-weight: 800;
+  background: var(--accent); color: var(--accent-ink);
+}
+.dlg-report {
+  padding: 16px 18px; border-radius: 10px;
+  background: var(--bg-deep); border: 1px solid var(--border);
+}
+.dlg-report .sumline { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; }
+.dlg-report .big { font-size: 30px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; color: var(--accent-bright); }
+.dlg-report .lab { font-size: 14px; color: var(--text-dim); }
+.dlg-report .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dlg-report .chip { font-size: 12.5px; padding: 5px 10px; border-radius: 999px; background: var(--bg-2); border: 1px solid var(--border-strong); color: var(--text); }
+.dlg-report .chip.ok { border-color: var(--accent); }
+.dlg-report a.chip { text-decoration: none; cursor: pointer; }
+.dlg-report a.chip:hover { background: var(--accent-dim); color: var(--accent-bright); }
+.dlg-report .chip.rm { color: var(--text-faint); text-decoration: line-through; }
+.dlg-report .chip.bad { border-color: #c0392b; color: #e57368; }
+.dlg-report .note { margin: 12px 0 0; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.dlg-report .note.bad { color: #e57368; }
+.dlg-report .sec { margin-top: 12px; }
+.dlg-report .sumline + .sec { margin-top: 4px; }
+.dlg-report .seclab { margin-bottom: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+.dlg-report .chip.kept { color: var(--text-dim); border-color: var(--border); }
+
+/* ── the guided steps strip ── */
+.steps {
+  display: flex; gap: 18px; flex-wrap: wrap; margin: 18px 0 0; padding: 0;
+  list-style: none; font-size: 13px; color: var(--text-faint);
+}
+.steps li { display: flex; align-items: center; gap: 8px; }
+.steps li::before {
+  content: attr(data-n); display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 50%; font-size: 11px; font-weight: 700;
+  background: var(--bg-3); border: 1px solid var(--border-strong); color: var(--text-dim);
+}
+.steps li.now { color: var(--text); }
+.steps li.now::before { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.steps li.done::before {
+  content: '✓'; background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+}
+/* two to four cards, depending on what this machine remembers */
+.presets {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px; margin: 6px 0 4px;
+}
+.preset {
+  display: flex; flex-direction: column; gap: 4px; text-align: left; cursor: pointer;
+  padding: 14px; border-radius: var(--radius); color: var(--text);
+  background: var(--bg-2); border: 1px solid var(--border); font: inherit;
+}
+.preset:hover, .preset:focus-visible { border-color: var(--accent); outline: none; }
+.preset b { font-size: 15px; }
+.preset span { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
+.preset .pick { margin-top: 6px; font-size: 12px; color: var(--accent); }
+/* the one card that is also the confirmation ("like last time"): first, and lit */
+.preset.primary { border-color: var(--accent); background: var(--accent-dim); }
+.preset.primary .pick { font-weight: 700; }
+@media (max-width: 640px) { .presets { grid-template-columns: 1fr; } }
+
+/* ── the questionnaire (inside the guided setup dialog) ── */
+.quiz-progress { font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.quiz-prompt { margin: 6px 0 4px; font-size: 18px; font-weight: 700; letter-spacing: -0.015em; }
+.quiz-hint { margin: 0 0 12px; font-size: 13px; color: var(--text-dim); }
+.quiz-options { display: flex; flex-direction: column; gap: 6px; }
+.qopt {
+  text-align: left; cursor: pointer; padding: 10px 14px; border-radius: 8px;
+  background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+  font: inherit; font-size: 14px;
+}
+.qopt:hover { border-color: var(--border-strong); }
+.qopt.on { border-color: var(--accent); background: var(--accent-dim); color: var(--accent-bright); }
+.quiz-result { display: flex; flex-direction: column; gap: 4px; max-height: 44vh; overflow: auto; }
+.qres {
+  display: flex; gap: 10px; align-items: flex-start; cursor: pointer;
+  padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg-2);
+}
+.qres input { margin-top: 3px; accent-color: var(--accent); }
+.qres-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.qres-body b { font-size: 14px; font-weight: 600; }
+.qres-body .chip { align-self: flex-start; }
+.qres-name { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.qres-name .chip { align-self: center; }
+.qres-desc {
+  font-size: 12.5px; color: var(--text-dim); line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.qres-why { font-size: 12px; color: var(--text-faint); }
+/* the Plus reminder on the result: the rail's look, inside the dialog */
+.quiz-plus {
+  display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+  margin: 0 0 8px; padding: 8px 12px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  border-left: 2px solid rgba(251,191,36,0.5); border-radius: 8px;
+  font-size: 12.5px; color: var(--text-dim); line-height: 1.5;
+}
+.quiz-plus b { color: var(--text); font-weight: 600; }
+.quiz-plus .mark { color: var(--accent); }
+.quiz-plus .btn { margin-left: auto; padding: 4px 10px; font-size: 12px; }
+.qres-sub { margin: 10px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.qres.plus { border-color: rgba(251,191,36,0.22); }
+
+/* ── toast ── */
+.toast {
+  position: fixed; bottom: 14px; right: 18px; padding: 8px 14px;
+  border-radius: 8px; background: var(--bg-2); border: 1px solid var(--border);
+  color: var(--text);
+  opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 30;
+  max-width: 70ch; word-break: break-word; font-size: 13px;
+}
+.toast.show { opacity: 1; }
+.toast.ok { border-color: var(--green); }
+.toast.err { border-color: var(--err); }
+
+/* ── collapsible category sections ──
+   The overview IS the closed state: eight header rows with a pitch and a
+   count. A section opens on click, on a filter match, or when a preset
+   selects into it; open state persists per browser (fns.fold). ── */
+.cat-sec { margin: 10px 0 0; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-1); }
+.cat-sec.closed { background: transparent; }
+.cat-head {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 13px 16px; cursor: pointer; user-select: none;
+  border-radius: 12px;
+}
+.cat-head:hover { background: var(--bg-2); }
+.cat-sec:not(.closed) > .cat-head { border-bottom: 1px solid var(--border); border-radius: 12px 12px 0 0; }
+.cat-head .cat-glyph { width: 18px; text-align: center; font-size: 15px; }
+.cat-head .cat-name { font-size: 16px; font-weight: 700; letter-spacing: -0.015em; }
+.cat-head .cat-pitch { margin: 0; flex: 1 1 240px; font-size: 13px; color: var(--text-faint); }
+.cat-head .cat-count { white-space: nowrap; text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 12.5px; }
+.cat-head .cat-count b { color: var(--accent); font-weight: 600; }
+.cat-head .cat-docs { white-space: nowrap; }
+.cat-head .chev {
+  width: 18px; text-align: center; color: var(--text-faint); font-size: 12px;
+  transition: transform 0.15s ease;
+}
+.cat-sec.closed .chev { transform: rotate(-90deg); }
+.cat-body { padding: 14px 16px 16px; }
+.cat-sec.closed > .cat-body { display: none; }
+.cat-body .grid + .grid { margin-top: 10px; }
+.cat-body .note { margin: 0 0 14px; }
+/* a deprioritized category (Core): a footnote, not a section to get past */
+.cat-sec.quiet { margin-top: 22px; border-style: dashed; }
+.cat-sec.quiet .cat-head { padding: 9px 16px; }
+.cat-sec.quiet .cat-name { font-size: 13px; font-weight: 600; color: var(--text-dim); }
+.cat-sec.quiet .cat-pitch, .cat-sec.quiet .cat-count { font-size: 12px; }
+.cat-sec.quiet .cat-glyph { color: var(--text-faint); font-size: 12px; }
+.cat-sec.quiet .card.core { padding: 8px 12px; }
+.cat-sec.quiet .card.core .name { font-size: 13px; font-weight: 500; }
+.cat-sec.quiet .card.core .desc { font-size: 12px; }
+.cat-sec.quiet .card.core .chips { display: none; }
+
+/* ── the layout: a sticky side rail on wide screens, the chip row below ── */
+.layout { display: block; }
+.layout > .content { min-width: 0; }
+.fold-all { display: flex; gap: 6px; align-items: center; }
+@media (min-width: 1000px) {
+  .layout { display: grid; grid-template-columns: 212px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .layout > .catnav {
+    position: sticky; top: calc(var(--stick) + 86px);
+    display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 4px 0 0;
+    max-height: calc(100vh - var(--stick) - 110px); overflow-y: auto;
+  }
+  .layout > .catnav a {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 8px; border: 1px solid transparent;
+    background: transparent; font-size: 13px; color: var(--text-dim);
+  }
+  .layout > .catnav a:hover { background: var(--bg-1); border-color: var(--border); color: var(--text); }
+  .layout > .catnav a.open { color: var(--text); }
+  .layout > .catnav a .g { width: 16px; text-align: center; }
+  .layout > .catnav a .n { margin-left: auto; font-size: 11px; }
+  .layout > .catnav a .n b { color: var(--accent); font-weight: 600; }
+  .layout > .catnav .fold-all {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+  }
+  .layout > .catnav .fold-all .btn { flex: 1 1 auto; justify-content: center; padding: 5px 8px; font-size: 12px; }
+}
+@media (max-width: 999px) {
+  .catnav .fold-all { margin-left: auto; }
+  .catnav .fold-all .btn { padding: 4px 10px; font-size: 12px; }
+}
+
+/* ── app density: the in-TD manager sets body.app; everything reads a
+   notch tighter without forking any component. ── */
+body.app { font-size: 13px; line-height: 1.5; }
+body.app .btn { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+body.app input[type=search], body.app input[type=text].fns, body.app select.fns {
+  padding: 6px 10px; font-size: 13px; border-radius: 6px;
+}
+body.app .cat { margin: 22px 0 2px; font-size: 16px; }
+body.app .card { padding: 11px 13px; }
+body.app .name { font-size: 14px; }
+body.app .desc { font-size: 12.5px; }
+body.app .dlg h3 { font-size: 16px; }
+/* fewer strips before the first card: the notes and the Plus line go
+   quiet, the category chips small, the footer one row with one action */
+body.app .note { padding: 8px 12px; font-size: 12.5px; line-height: 1.5; border-radius: 8px; }
+body.app .plusrail { margin-top: 10px; padding: 6px 12px; font-size: 12px; border-radius: 6px; background: transparent; }
+body.app .catnav a { padding: 3px 9px; font-size: 12px; }
+body.app .cat-head .cat-pitch { display: none; }
+/* the action at the top: the count and the install button in the toolbar's
+   right end; the account status and its buttons in the Plus line, each
+   wrapped so a hidden or empty one takes its separator with it */
+body.app .bar-act { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+body.app .bar-act .n { font-size: 14px; font-weight: 700; }
+body.app .bar-act .muted { font-size: 12px; color: var(--text-faint); white-space: nowrap; }
+body.app .bar-act #deps { font-size: 12px; color: var(--text-faint); white-space: nowrap; }
+body.app .plusrail .rail-acc { display: inline-flex; align-items: center; gap: 6px; }
+body.app .plusrail .rail-acc:has(> [hidden]) { display: none; }
+body.app .plusrail .rail-acc:has(> .acct:empty) { display: none; }
+body.app .plusrail .rail-acc .btn { padding: 2px 8px; font-size: 11.5px; }
+body.app .catnav .fold-all .btn { padding: 3px 9px; font-size: 12px; }
+
+/* ── tooltip ── data-tip, drawn by base.js: TouchDesigner's Web Render (CEF)
+   never draws a native `title`, so nothing in the family uses one. */
+.fns-tip {
+  position: fixed; z-index: 1000; pointer-events: none;
+  max-width: 360px; padding: 8px 11px; border-radius: 8px;
+  background: var(--bg-3); color: var(--text); border: 1px solid var(--border-strong);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+  font-size: 12.5px; font-weight: 400; line-height: 1.45; white-space: pre-line;
+}
+/* FNS:UIBASE:END */
+
+  /* ── the console shell ── */
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; height: 100vh;
+  }
+
+  /* ── top bar: identity and tabs ── */
+  #topbar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 0 14px; background: var(--bg-1);
+    border-bottom: 1px solid var(--border); flex: none;
+  }
+  #topbar .brand {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    padding: 10px 8px 10px 0; white-space: nowrap; letter-spacing: -0.01em;
+  }
+  .tab {
+    padding: 10px 14px; background: none; border: 0; color: var(--text-dim);
+    border-bottom: 2px solid transparent; cursor: pointer; font: inherit;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.sel { color: var(--text); border-bottom-color: var(--accent); }
+  .tab .badge {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 16px; padding: 1px 5px; margin-left: 6px;
+    border-radius: 999px; background: var(--accent); color: var(--accent-ink);
+    font-size: 10px; font-weight: 700;
+  }
+  /* built-ins | contributions: the divider is the seam between what the
+     console is and what tools add to it */
+  .tabsep { width: 1px; height: 18px; background: var(--border-strong); margin: 0 8px; align-self: center; }
+  .tab.manage { padding: 10px 9px; font-size: 15px; line-height: 1; color: var(--text-dim); }
+  .tab.manage:hover { color: var(--accent); }
+  #topbar .spacer { flex: 1; }
+  #topbar .meta { color: var(--text-faint); font-size: 11px; margin-right: 8px; }
+
+  /* ── views ── */
+  /* #views must itself be a flex column, or the views' flex:1 has nothing
+     to stretch against and every framed tab collapses to the iframe
+     default height (~150px) */
+  #views { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .view { flex: 1; min-height: 0; display: none; }
+  #view-settings { grid-template-rows: auto 1fr; grid-template-columns: 220px 1fr; }
+  #view-updates { flex-direction: column; }
+  #view-community { flex-direction: column; }
+  #cm-list { flex: 1; overflow-y: auto; padding: 14px 16px 40px; }
+  #cm-list .intro { color: var(--text-dim); font-size: 12.5px; margin: 0 0 12px; max-width: 72ch; }
+  .view.frame { flex-direction: column; }
+  .view.frame .note {
+    flex: none; padding: 8px 16px; font-size: 12px; color: var(--text-dim);
+    background: var(--bg-1); border: 0; border-radius: 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .view.frame .note b { color: var(--text); }
+  /* the framed picker paints the same --bg, so the seam is invisible */
+  .view.frame iframe { flex: 1; border: 0; width: 100%; background: var(--bg); }
+
+  /* ── settings view (toolbar + nav + scrollable sections) ── */
+  .settings-bar {
+    grid-column: 1 / -1;
+    display: flex; gap: 8px; align-items: center;
+    padding: 8px 14px; background: var(--bg-1);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px; color: var(--text-faint);
+  }
+  nav.side {
+    background: var(--bg-1); border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 10px 0;
+  }
+  nav.side #search {
+    display: block; width: calc(100% - 20px); margin: 0 10px 10px;
+  }
+  nav.side button {
+    display: block; width: 100%; text-align: left; padding: 6px 14px;
+    background: none; border: 0; border-left: 2px solid transparent;
+    color: var(--text); cursor: pointer; font: inherit;
+  }
+  nav.side button:hover { background: var(--bg-2); }
+  nav.side button.sel {
+    background: var(--bg-2); color: var(--accent);
+    border-left-color: var(--accent);
+  }
+  nav.side .ver { color: var(--text-faint); font-size: 11px; float: right; }
+  main#main { overflow-y: auto; padding: 0 26px 60vh; scroll-behavior: smooth; }
+  section.tool { margin-top: 26px; }
+  section.tool > header {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--bg); padding: 12px 0 6px;
+    border-bottom: 1px solid var(--border);
+  }
+  section.tool h2 { font-size: 16px; margin: 0; display: inline; }
+  section.tool .ver { color: var(--accent); font-size: 12px; margin-left: 8px; }
+  section.tool .path { color: var(--text-faint); font-size: 11px; }
+  .parcard {
+    background: var(--bg-1); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 18px 8px; margin-top: 12px;
+    max-width: 680px;
+  }
+  .page { margin-bottom: 18px; }
+  .page h3 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--text-faint); border-bottom: 1px solid var(--border);
+    padding-bottom: 4px; margin: 0 0 8px;
+  }
+  .row {
+    display: grid; grid-template-columns: 240px 1fr; gap: 10px;
+    align-items: center; padding: 3px 0; max-width: 620px;
+  }
+  .row label { color: var(--text); }
+  .row .ro { color: var(--text-faint); font-style: italic; }
+  #view-settings input[type=text], #view-settings input[type=number],
+  #view-settings select {
+    background: var(--bg-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 4px 8px; font: inherit; width: 100%; max-width: 320px;
+  }
+  #view-settings input[type=checkbox] { width: 15px; height: 15px; accent-color: var(--accent); }
+  #view-settings input:focus, #view-settings select:focus { outline: 1px solid var(--accent); }
+  .group { display: flex; gap: 6px; align-items: center; }
+  .group input[type=number]:not(:only-child) { width: 92px; }
+  .swatch {
+    width: 22px; height: 22px; border-radius: 4px; flex: none;
+    border: 1px solid var(--border);
+  }
+
+  /* ── updates view ── */
+  .upd-head {
+    flex: none; display: flex; gap: 8px; align-items: center;
+    padding: 10px 16px; background: var(--bg-1);
+    border-bottom: 1px solid var(--border);
+  }
+  .upd-head b { font-size: 13px; }
+  .upd-head .muted { color: var(--text-faint); font-size: 12px; }
+  .upd-status {
+    flex: none; padding: 8px 16px; font-size: 12px;
+    background: var(--accent-dim); color: var(--accent);
+    border-bottom: 1px solid rgba(251,191,36,0.25);
+    white-space: pre-wrap;
+  }
+  .upd-status.err { background: var(--err-dim); color: var(--err); border-bottom-color: rgba(248,113,113,0.3); }
+  #upd-list { flex: 1; overflow-y: auto; padding: 14px 16px 40px; }
+  .upd-row {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 14px; margin-bottom: 8px; max-width: 760px;
+    background: var(--bg-1); border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .upd-row.has-update { border-color: rgba(251,191,36,0.35); }
+  .upd-row .body { flex: 1; min-width: 0; }
+  .upd-row .name { font-size: 14px; }
+  .upd-row .vers { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .upd-row .vers b { color: var(--text); font-weight: 600; }
+  .upd-row .why { font-size: 12px; color: var(--text-faint); margin-top: 4px; }
+  .upd-row .whatsnew {
+    margin-top: 6px; font-size: 12.5px; color: var(--text-dim); line-height: 1.5;
+  }
+  .upd-sect {
+    margin: 18px 0 8px; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint);
+  }
+
+  /* ── dialogs ── */
+  dialog { max-width: 480px; }
+  dialog .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  #tabsdlg label { display: flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; }
+  #tabsdlg label .src { color: var(--text-faint); font-size: 11px; margin-left: auto; }
+  #tabsdlg .none { color: var(--text-faint); font-style: italic; }
+  #tabsdlg input[type=checkbox] { accent-color: var(--accent); }
+
+  .empty { color: var(--text-faint); margin-top: 40px; padding: 0; text-align: left; }
+</style>
+</head>
+<body class="app">
+
+<div id="topbar">
+  <span class="brand">FNS tools</span>
+  <span id="tabs"></span>
+  <span class="spacer"></span>
+  <span class="meta" id="meta"></span>
+</div>
+
+<div id="views">
+  <div class="view" id="view-settings">
+    <div class="settings-bar">
+      <span>Every installed tool's saved settings, in one place.</span>
+      <span class="spacer"></span>
+      <button class="btn btn-quiet" id="scopebtn" data-tip="Where settings live: global roams across projects via the config file; project keeps them in this .toe only.">scope: …</button>
+      <button class="btn btn-quiet" id="export" data-tip="Export the current settings of every tool as one FNStools_config.json (written beside the config file; a download is offered too).">Export</button>
+      <button class="btn btn-quiet" id="import" data-tip="Apply a previously exported FNStools_config.json. Tools not installed keep their section for when they are.">Import</button>
+      <input type="file" id="importfile" accept=".json,application/json" hidden>
+    </div>
+    <nav class="side">
+      <input id="search" type="search" placeholder="Search settings…">
+      <div id="nav"></div>
+    </nav>
+    <main id="main"><div class="empty">Loading…</div></main>
+  </div>
+
+  <div class="view frame" id="view-tools">
+    <iframe data-src="/tools" title="FNS tools picker"></iframe>
+  </div>
+
+  <div class="view" id="view-community">
+    <div class="upd-head">
+      <b>From the community</b>
+      <span class="muted">Tools by other creators. They make them, maintain them and support them.</span>
+      <span class="spacer"></span>
+      <button class="btn btn-quiet" id="cm-site">On the website ↗</button>
+    </div>
+    <div id="cm-list"><div class="empty">Loading…</div></div>
+  </div>
+
+  <div class="view" id="view-updates">
+    <div class="upd-head">
+      <b id="upd-release">Updates</b>
+      <span class="muted" id="upd-meta"></span>
+      <span class="spacer"></span>
+      <button class="btn btn-quiet" id="upd-check">Check for updates</button>
+      <button class="btn btn-primary" id="upd-all" hidden>Update all</button>
+    </div>
+    <div class="upd-status" id="upd-status" hidden></div>
+    <div id="upd-list"><div class="empty">Loading…</div></div>
+  </div>
+</div>
+
+<dialog id="tabsdlg"><div class="dlg">
+  <h3>Tabs</h3>
+  <p class="dlg-hint">Settings, Install &amp; remove and Updates are the console's
+     own and always shown. Tools contribute the rest; hide any you do not want
+     on the bar — the choice is written back to the tool and follows it.</p>
+  <div id="tabslist"></div>
+  <div class="actions">
+    <button class="btn btn-quiet" id="tabs-close">Close</button>
+  </div>
+</div></dialog>
+
+<dialog id="scopedlg"><div class="dlg">
+  <h3>Switch config scope to global?</h3>
+  <p class="dlg-hint">Global scope roams settings through the machine-wide config
+     file. Choose what happens right now: <b>Push</b> overwrites the global
+     config with this project's current settings; <b>Adopt</b> applies the
+     existing global config onto this project.</p>
+  <div class="actions">
+    <button class="btn btn-quiet" id="scope-cancel">Cancel</button>
+    <button class="btn btn-secondary" id="scope-adopt">Adopt global</button>
+    <button class="btn btn-primary" id="scope-push">Push to global</button>
+  </div>
+</div></dialog>
+
+<dialog id="upddlg"><div class="dlg">
+  <h3 id="upd-dlg-title">Update</h3>
+  <p class="dlg-hint" id="upd-dlg-hint">Settings are snapshotted before anything
+     is replaced and re-apply afterwards; a package the user never installed
+     stays uninstalled.</p>
+  <pre class="out" id="upd-dlg-out"></pre>
+  <div class="actions">
+    <button class="btn btn-quiet" id="upd-dlg-close">Close</button>
+    <button class="btn btn-primary" id="upd-dlg-go" hidden>Update</button>
+  </div>
+</div></dialog>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* FNS:UIBASEJS:START -- generated from packaging/configurator/base.js; edit THERE, then run python packaging/configurator/sync_base.py --write */
+/* FNSTools UI base script -- the ONE source for behaviour every shell
+   shares. Inlined between FNS:UIBASEJS markers by sync_base.py, exactly
+   like base.css: edit HERE, then run
+
+       python packaging/configurator/sync_base.py --write
+
+   Tooltips. TouchDesigner's Web Render (CEF) never draws a native `title`
+   tooltip, so every hover text in the family rides `data-tip` and this one
+   element draws it: a short delay, it follows the cursor, stays inside the
+   viewport, and pre-line keeps a multi-line tip's breaks (a card's tip is
+   its full description plus "Adds: ..."). Set text with
+   el.setAttribute('data-tip', text) or window.fnsTip(el, text); never
+   `title`. Inside an open modal <dialog> the element is moved into that
+   dialog, because the top layer covers everything appended to body. */
+(function () {
+  if (window.fnsTip) return;
+  var tip = null, cur = null, timer = 0, lastX = 0, lastY = 0, lastPress = 0;
+  var DELAY = 350, GAP = 14, EDGE = 8;
+  function tipEl(host) {
+    if (!tip) {
+      tip = document.createElement('div');
+      tip.className = 'fns-tip';
+      tip.setAttribute('role', 'tooltip');
+      tip.hidden = true;
+    }
+    host = host || document.body;
+    if (tip.parentNode !== host) host.appendChild(tip);
+    return tip;
+  }
+  function place(x, y) {
+    if (!tip || tip.hidden) return;
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var left = x + GAP, top = y + GAP;
+    if (left + w > vw - EDGE) left = Math.max(EDGE, x - GAP - w);
+    if (top + h > vh - EDGE) top = Math.max(EDGE, y - GAP - h);
+    tip.style.left = left + 'px';
+    tip.style.top = top + 'px';
+  }
+  function show(target, x, y) {
+    var text = target.getAttribute('data-tip');
+    if (!text) return;
+    var host = target.closest('dialog[open]') || document.body;
+    var t = tipEl(host);
+    t.textContent = text;
+    t.hidden = false;
+    place(x, y);
+  }
+  function hide() {
+    clearTimeout(timer); timer = 0; cur = null;
+    if (tip) tip.hidden = true;
+  }
+  function tipTarget(e) {
+    var n = e.target;
+    return n && n.closest ? n.closest('[data-tip]') : null;
+  }
+  document.addEventListener('mouseover', function (e) {
+    var target = tipTarget(e);
+    if (target === cur) return;
+    hide();
+    if (!target) return;
+    cur = target;
+    lastX = e.clientX; lastY = e.clientY;
+    timer = setTimeout(function () {
+      if (cur === target) show(target, lastX, lastY);
+    }, DELAY);
+  });
+  document.addEventListener('mousemove', function (e) {
+    lastX = e.clientX; lastY = e.clientY;
+    if (cur) place(lastX, lastY);
+  });
+  // keyboard focus shows the tip at the element; a click's focus does not
+  document.addEventListener('mousedown', function () { lastPress = Date.now(); hide(); });
+  document.addEventListener('focusin', function (e) {
+    var target = tipTarget(e);
+    if (!target || Date.now() - lastPress < 500) return;
+    hide();
+    cur = target;
+    var r = target.getBoundingClientRect();
+    show(target, r.left, r.bottom);
+  });
+  document.addEventListener('focusout', hide);
+  document.addEventListener('keydown', hide);
+  document.addEventListener('scroll', hide, true);
+  document.documentElement.addEventListener('mouseleave', hide);
+  window.addEventListener('blur', hide);
+  window.fnsTip = function (node, text) {
+    if (text) node.setAttribute('data-tip', text);
+    else node.removeAttribute('data-tip');
+    return node;
+  };
+})();
+
+/* Tools by other creators (docs/CommunityHighlights.md): the card and its
+   actions, shared by the console's Community view and anything else that
+   lists them. window.fnsCommunity.card(row, {served}) builds one card;
+   .load({url, served}, cb) fetches the list. A card is never selectable:
+   nothing here enters an install plan. Served inside TouchDesigner, a
+   pinned tox gets Place and a locked Python package gets Install, both
+   answered through the installer's /community/* routes; links open in the
+   system browser through /open (a Web Render ignores target=_blank). */
+(function () {
+  if (window.fnsCommunity) return;
+  var SITE = 'https://functionstore.tools';
+  var PLATFORM = {github: 'on GitHub', patreon: 'on Patreon', gumroad: 'on Gumroad',
+                  itch: 'on itch.io', pypi: 'on PyPI'};
+
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function pinned(r) { return !!(r && r.tox_url && /^[0-9a-f]{64}$/.test(String(r.sha256 || ''))); }
+  function locked(r) { return !!(r && r.tdp && r.tdp.package && r.tdp.module); }
+  function postUrl(r) { return r.slug ? SITE + '/community/' + encodeURIComponent(r.slug) + '/' : ''; }
+  function json(url, body) {
+    var o = body === undefined ? {cache: 'no-store'}
+      : {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)};
+    return fetch(url, o).then(function (x) { return x.json(); });
+  }
+
+  function link(href, text, cls, served) {
+    var a = el('a', cls || 'chip rec', text);
+    a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+    if (served) {
+      a.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        json('/open', {url: href}).catch(function () {});
+      });
+    }
+    return a;
+  }
+
+  function failed(btn, e, text) {
+    btn.disabled = false;
+    btn.textContent = text;
+    btn.setAttribute('data-tip', String(e && e.message || e));
+  }
+
+  /** Follow the updater's answer for this tool until placed or failed. */
+  function follow(r, btn, maxTries, doneText) {
+    var tries = 0;
+    (function poll() {
+      tries++;
+      json('/community/place').then(function (st) {
+        if (st.name === r.name && st.state === 'placed') {
+          btn.textContent = doneText;
+          btn.setAttribute('data-tip', 'Placed at ' + st.placed + '. Yours to keep: FNSTools never updates it.'
+            + (st.note ? ' ' + st.note : ''));
+          btn.disabled = false;
+        } else if (st.name === r.name && (st.state === 'failed' || st.state === 'noenv')) {
+          throw new Error(st.why);
+        } else if (tries < maxTries) {
+          setTimeout(poll, 1000);
+        } else {
+          throw new Error('no answer yet; check the Textport');
+        }
+      }).catch(function (e) { failed(btn, e, 'failed · retry'); });
+    })();
+  }
+
+  function place(r, btn) {
+    btn.disabled = true;
+    btn.textContent = 'placing…';
+    json('/community/place', {name: r.name}).then(function (a) {
+      if (!a.ok) throw new Error(a.why || 'could not place it');
+      follow(r, btn, 90, 'placed ✓');
+    }).catch(function (e) { failed(btn, e, 'place failed · retry'); });
+  }
+
+  function install(r, btn) {
+    btn.disabled = true;
+    btn.textContent = 'installing…';
+    json('/community/install', {name: r.name}).then(function (a) {
+      if (a.noenv) return offerEnv(btn, a.env || {});
+      if (!a.ok) throw new Error(a.why || 'could not install it');
+      follow(r, btn, 600, 'installed and placed ✓');
+    }).catch(function (e) { failed(btn, e, 'install failed · retry'); });
+  }
+
+  /** No Python environment: offer TouchDesigner's own manager, which shows
+   *  Derivative's disclaimer before it creates one. */
+  function offerEnv(btn, env) {
+    btn.disabled = false;
+    if (env.state === 'creating') {
+      btn.textContent = 'Python environment is being set up · try again';
+      btn.setAttribute('data-tip', env.status || 'TouchDesigner is creating the environment.');
+      return;
+    }
+    btn.textContent = 'set up a Python environment first';
+    btn.setAttribute('data-tip', 'This project has no Python environment for packages yet. This opens '
+      + "TouchDesigner's own environment manager, which asks for your OK (Derivative's disclaimer) "
+      + 'and creates .venv beside your project. Then press Install again.');
+    btn.onclick = function (e) {
+      e.preventDefault(); e.stopPropagation();
+      btn.onclick = null;
+      btn.disabled = true;
+      btn.textContent = 'answer the dialog in TouchDesigner…';
+      json('/community/pyenv', {}).catch(function () {});
+      var tries = 0;
+      (function poll() {
+        tries++;
+        json('/community/pyenv').then(function (st) {
+          if (st.state === 'ready') {
+            btn.disabled = false;
+            btn.textContent = 'environment ready · install';
+            btn.setAttribute('data-tip', 'Python environment at ' + st.env);
+          } else if (st.state === 'error') {
+            failed(btn, new Error(st.status || 'the environment could not be created'), 'environment failed');
+          } else if (tries < 240) {
+            setTimeout(poll, 1500);
+          } else {
+            failed(btn, new Error('no environment yet'), 'no environment · retry');
+          }
+        }).catch(function (e) { failed(btn, e, 'environment failed'); });
+      })();
+    };
+  }
+
+  function actionButton(text, tip, run) {
+    var b = el('button', 'chip placebtn', text);
+    b.type = 'button';
+    b.setAttribute('data-tip', tip);
+    b.addEventListener('click', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      if (!b.disabled && !b.onclick) run(b);
+    });
+    return b;
+  }
+
+  /** One card. The author is named on it: we are pointing, not shipping. */
+  function card(r, opts) {
+    var served = !!(opts && opts.served);
+    var c = el('div', 'card rec');
+    var body = el('div', 'body');
+    var n = el('div', 'name');
+    var post = postUrl(r);
+    if (post) n.appendChild(link(post, r.name, 'post', served));
+    else n.textContent = r.name;
+    body.appendChild(n);
+    if (r.author) body.appendChild(el('div', 'rec-by', 'by ' + r.author));
+    if (r.description) body.appendChild(el('div', 'desc', r.description));
+    var chips = el('div', 'chips');
+    if (post) chips.appendChild(link(post, 'our write-up ↗', null, served));
+    chips.appendChild(link(r.url, (PLATFORM[r.platform] || 'their site') + ' ↗', null, served));
+    if (served && pinned(r)) {
+      chips.appendChild(actionButton('place in this project',
+        'Downloads the exact file we checked into the network you are working in. '
+        + 'If the author has changed it since, nothing is placed. FNSTools never updates it.',
+        function (b) { place(r, b); }));
+    }
+    if (locked(r)) {
+      if (served) {
+        chips.appendChild(actionButton('install in this project',
+          'A Python package (' + r.tdp.package + '). Installs its latest release into this '
+          + "project's Python environment, then places the tool in the network you are working in. "
+          + 'Refused if it would add a package TouchDesigner ships. FNSTools never updates it.',
+          function (b) { install(r, b); }));
+      } else {
+        chips.appendChild(el('span', 'chip rec', 'Python package'));
+      }
+    }
+    body.appendChild(chips);
+    c.appendChild(body);
+    return c;
+  }
+
+  /** Fetch the list: {intro, tools}. Served, the installer answers `retry`
+   *  while its store copy is being refreshed. Rows without a name or an
+   *  https link are dropped, whatever the file says. */
+  function load(opts, cb) {
+    var tries = 0;
+    (function ask() {
+      tries++;
+      fetch(opts.url, {cache: 'no-store'})
+        .then(function (x) { return x.ok ? x.json() : null; })
+        .then(function (doc) {
+          if (!doc) return cb(null);
+          if (opts.served && doc.retry && tries < 8) setTimeout(ask, 3000);
+          var tools = (Array.isArray(doc.tools) ? doc.tools : []).filter(function (t) {
+            return t && t.name && String(t.url || '').indexOf('https://') === 0;
+          });
+          cb({intro: String(doc.intro || ''), tools: tools});
+        })
+        .catch(function () { cb(null); });
+    })();
+  }
+
+  window.fnsCommunity = {card: card, load: load, pinned: pinned, locked: locked, SITE: SITE};
+})();
+/* FNS:UIBASEJS:END */
+</script>
+<script>
+'use strict';
+let STATE = null, SELECTED = null;
+let SECTIONS = new Map();   // tool name -> its <section> element
+
+const $ = (t, attrs, ...kids) => {
+  const el = document.createElement(t);
+  Object.assign(el, attrs || {});
+  for (const k of kids) el.append(k);
+  return el;
+};
+
+let toastTimer = 0;
+function toast(msg, ok) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (ok ? 'ok' : 'err');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.className = 'toast', 2200);
+}
+
+async function setPar(tool, par, value, label) {
+  try {
+    const r = await fetch('/api/set', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({tool, par, value}),
+    });
+    const d = await r.json();
+    if (d.ok) toast(label + ' saved', true);
+    else toast(d.why || 'rejected', false);
+    return d;
+  } catch (e) { toast(String(e), false); return {ok: false}; }
+}
+
+const NUMERIC = s => !['Toggle', 'Menu', 'StrMenu', 'Str', 'File',
+                       'Folder', 'Python'].includes(s);
+const COLOR = s => s === 'RGB' || s === 'RGBA';
+
+function componentInput(tool, g, c, onSet) {
+  if (c.readonly)
+    return $('span', {className: 'ro', title: c.mode}, String(c.val));
+  if (g.style === 'Toggle') {
+    const el = $('input', {type: 'checkbox', checked: !!c.val});
+    el.onchange = () => setPar(tool, c.name, el.checked, g.label);
+    return el;
+  }
+  if (g.menuNames) {
+    const el = $('select', {},
+      ...g.menuNames.map((n, i) =>
+        $('option', {value: n, selected: n === c.val},
+          g.menuLabels[i] || n)));
+    el.onchange = () => setPar(tool, c.name, el.value, g.label);
+    return el;
+  }
+  const numeric = NUMERIC(g.style);
+  const el = $('input', {
+    type: numeric ? 'number' : 'text',
+    value: c.val == null ? '' : c.val,
+    title: c.name,
+  });
+  if (numeric) {
+    if (g.style !== 'Int') el.step = 'any';
+    if (g.min !== undefined) el.min = g.min;
+    if (g.max !== undefined) el.max = g.max;
+  }
+  let deb = 0;
+  const fire = () => setPar(tool, c.name, el.value, g.label)
+                       .then(() => onSet && onSet(c.name, el.value));
+  el.oninput = () => { clearTimeout(deb); deb = setTimeout(fire, 500); };
+  el.onchange = () => { clearTimeout(deb); fire(); };
+  return el;
+}
+
+function control(tool, g) {
+  // one row per parGroup: every component gets its own input, side by side
+  const wrap = $('div', {className: 'group'});
+  let swatch = null, vals = g.pars.map(c => c.val);
+  const paint = () => {
+    if (!swatch) return;
+    const [r, gg, b] = vals.map(v => Math.round(255 * Math.max(0, Math.min(1, +v || 0))));
+    swatch.style.background = `rgb(${r},${gg},${b})`;
+  };
+  if (COLOR(g.style) && g.pars.length >= 3) {
+    swatch = $('span', {className: 'swatch'});
+    wrap.append(swatch);
+  }
+  g.pars.forEach((c, i) => {
+    wrap.append(componentInput(tool, g, c, (name, v) => {
+      vals[i] = v; paint();
+    }));
+  });
+  paint();
+  return wrap;
+}
+
+let QUERY = '';
+const parMatch = (g, q) =>
+  (g.label || '').toLowerCase().includes(q) ||
+  g.name.toLowerCase().includes(q) ||
+  (g.help || '').toLowerCase().includes(q);
+// `name` is the canonical key; `label` is what a reader sees (the FNS_
+// prefix stripped). Match on both so a search for "FNS_Hub" still finds Hub.
+const publicName = (n) => (String(n).startsWith('FNS_') ? String(n).slice(4) : String(n));
+const toolLabel = (t) => t.label || t.name;
+const toolMatch = (t, q) =>
+  !q || t.name.toLowerCase().includes(q) || toolLabel(t).toLowerCase().includes(q)
+     || t.pars.some(g => parMatch(g, q));
+
+function markSelected(name) {
+  SELECTED = name;
+  for (const b of document.querySelectorAll('nav.side button'))
+    b.classList.toggle('sel', b.dataset.name === name);
+}
+
+function toolSection(tool) {
+  const sec = $('section', {className: 'tool'});
+  sec.dataset.name = tool.name;
+  sec.append($('header', {},
+    $('h2', {}, toolLabel(tool)),
+    $('span', {className: 'ver'}, tool.version ? 'v' + tool.version : ''),
+    $('div', {className: 'path'}, tool.path)));
+  // a par-level query narrows the rows, unless it only hit the tool name
+  const q = QUERY && !tool.name.toLowerCase().includes(QUERY)
+                  && !toolLabel(tool).toLowerCase().includes(QUERY) ? QUERY : '';
+  const pages = new Map();
+  for (const p of tool.pars) {
+    if (q && !parMatch(p, q)) continue;
+    if (!pages.has(p.page)) pages.set(p.page, []);
+    pages.get(p.page).push(p);
+  }
+  const card = $('div', {className: 'parcard'});
+  for (const [page, pars] of pages) {
+    const pg = $('div', {className: 'page'}, $('h3', {}, page));
+    pars.sort((a, b) => a.order - b.order);
+    for (const p of pars)
+      pg.append($('div', {className: 'row'},
+                  $('label', {title: p.help ? p.name + ' — ' + p.help
+                                            : p.name},
+                    p.label || p.name),
+                  control(tool.name, p)));
+    card.append(pg);
+  }
+  if (!pages.size)
+    card.append($('div', {className: 'page'},
+      $('span', {className: 'ro'}, 'No matching settings.')));
+  sec.append(card);
+  return sec;
+}
+
+function scrollToTool(name) {
+  const sec = SECTIONS.get(name);
+  if (!sec) return;
+  markSelected(name);
+  suppressSpyUntil = Date.now() + 800;   // let smooth-scroll land
+  sec.scrollIntoView({block: 'start'});
+}
+
+// --- scrollspy: highlight the section under the header line ---
+let suppressSpyUntil = 0;
+function spy() {
+  if (Date.now() < suppressSpyUntil || !SECTIONS.size) return;
+  const main = document.getElementById('main');
+  const line = main.scrollTop + 40;
+  let current = null;
+  for (const [name, sec] of SECTIONS) {
+    if (sec.offsetTop <= line) current = name;
+    else break;
+  }
+  // bottom of the list: last section wins even if its top never reaches the line
+  if (main.scrollTop + main.clientHeight >= main.scrollHeight - 2) {
+    const names = [...SECTIONS.keys()];
+    if (names.length) current = names[names.length - 1];
+  }
+  if (current && current !== SELECTED) markSelected(current);
+}
+
+function render() {
+  const nav = document.getElementById('nav');
+  const main = document.getElementById('main');
+  nav.replaceChildren();
+  main.replaceChildren();
+  SECTIONS = new Map();
+  if (!STATE || !STATE.tools) {
+    main.append($('div', {className: 'empty'},
+      'Settings need FNS_ConfigRegistry, which this project does not have.'));
+    return;
+  }
+  const visible = STATE.tools.filter(t => toolMatch(t, QUERY));
+  for (const t of visible) {
+    const b = $('button', {}, toolLabel(t),
+                $('span', {className: 'ver'}, t.version || ''));
+    b.dataset.name = t.name;
+    b.onclick = () => scrollToTool(t.name);
+    nav.append(b);
+    const sec = toolSection(t);
+    SECTIONS.set(t.name, sec);
+    main.append(sec);
+  }
+  if (!visible.length) {
+    main.append($('div', {className: 'empty'}, QUERY ? 'No matches.' :
+      'No registered tools expose settings.'));
+    return;
+  }
+  if (SELECTED && SECTIONS.has(SELECTED)) markSelected(SELECTED);
+  else markSelected(visible[0].name);
+  spy();
+}
+
+document.getElementById('main').onscroll = spy;
+
+document.getElementById('search').oninput = e => {
+  QUERY = e.target.value.trim().toLowerCase();
+  render();
+};
+
+// --- tabs: three built-ins plus whatever tools contribute (/api/tabs) ----
+// A contributed tab is a page the tool ships, framed under /t/<name>/; the
+// console only knows its label and order. The tab is the URL fragment, so
+// the root's Pick Tools pulse can deep-link (#tools) and a reload keeps it.
+let TABS = [];          // everything /api/tabs knows, hidden ones included
+const viewId = t => 'view-' + (t.builtin ? t.name : 't-' + t.name);
+const hashOf = t => '#' + (t.builtin ? t.name : 't-' + t.name);
+const shownTabs = () => TABS.filter(t => t.builtin || t.displayed);
+
+// Install & remove leads (same order as ConsoleRegistryExt.BUILTIN_TABS):
+// a fresh install lands there, and an open with no fragment shows it.
+const FALLBACK_TABS = [
+  {name: 'tools', label: 'Install & remove', builtin: true, order: 0, displayed: true},
+  {name: 'settings', label: 'Settings', builtin: true, order: 10, displayed: true},
+  {name: 'updates', label: 'Updates', builtin: true, order: 20, displayed: true},
+  {name: 'community', label: 'Community', builtin: true, order: 30, displayed: true},
+];
+
+function buildTabs(tabs) {
+  TABS = tabs;
+  const bar = document.getElementById('tabs');
+  bar.replaceChildren();
+  const views = document.getElementById('views');
+  const addTab = t => {
+    const b = $('button', {className: 'tab', textContent: t.label});
+    b.dataset.view = viewId(t);
+    b.onclick = () => showView(viewId(t));
+    bar.append(b);
+  };
+  for (const t of tabs.filter(t => t.builtin)) addTab(t);
+  const contributed = tabs.filter(t => !t.builtin);
+  if (contributed.some(t => t.displayed)) bar.append($('span', {className: 'tabsep'}));
+  for (const t of contributed) {
+    if (t.displayed) addTab(t);
+    // every contribution keeps a view (hidden tabs just lose their button),
+    // so showing one later is instant
+    if (!document.getElementById(viewId(t))) {
+      const v = $('div', {className: 'view frame', id: viewId(t)});
+      const f = $('iframe', {title: t.label});
+      f.dataset.src = t.url;
+      v.append(f);
+      views.append(v);
+    }
+  }
+  const mgr = $('button', {className: 'tab manage', textContent: '⋯',
+                           title: 'Show or hide contributed tabs'});
+  mgr.onclick = openTabManager;
+  bar.append(mgr);
+  paintUpdatesBadge();
+  paintToolsBadge();
+}
+
+async function loadTabs() {
+  let tabs = [];
+  try {
+    const r = await (await fetch('/api/tabs')).json();
+    tabs = r.tabs || [];
+  } catch (e) { /* the built-ins below still render */ }
+  if (!tabs.length) tabs = FALLBACK_TABS.slice();
+  // A server one release behind this page may not know the Updates tab is
+  // built in; the view exists here regardless, so the tab does too.
+  if (!tabs.some(t => t.builtin && t.name === 'updates')) {
+    const at = tabs.findIndex(t => !t.builtin);
+    tabs.splice(at < 0 ? tabs.length : at, 0, FALLBACK_TABS[2]);
+  }
+  // likewise Community, which arrived later still: after Updates
+  if (!tabs.some(t => t.builtin && t.name === 'community')) {
+    const at = tabs.findIndex(t => t.builtin && t.name === 'updates');
+    tabs.splice(at + 1, 0, FALLBACK_TABS[3]);
+  }
+  buildTabs(tabs);
+}
+
+// --- the tab manager: show/hide contributions; written back to the tool ---
+function renderTabManager() {
+  const list = document.getElementById('tabslist');
+  list.replaceChildren();
+  const contributed = TABS.filter(t => !t.builtin);
+  if (!contributed.length) {
+    list.append($('div', {className: 'none'}, 'No tool contributes a tab yet.'));
+    return;
+  }
+  for (const t of contributed) {
+    const cb = $('input', {type: 'checkbox', checked: !!t.displayed});
+    cb.onchange = async () => {
+      cb.disabled = true;
+      try {
+        const r = await (await fetch('/api/tabs/display', {
+          method: 'POST', headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({name: t.name, displayed: cb.checked})})).json();
+        if (!r.ok) { toast(r.why || 'rejected', false); cb.checked = !cb.checked; return; }
+        toast(t.label + (r.displayed ? ' shown' : ' hidden') +
+              (r.persisted ? '' : ' (this session only)'), true);
+        const wasCurrent = document.getElementById(viewId(t)).style.display !== 'none';
+        await loadTabs();
+        renderTabManager();
+        if (wasCurrent && !r.displayed) showView('view-settings');
+      } catch (e) { toast(String(e), false); cb.checked = !cb.checked; }
+      finally { cb.disabled = false; }
+    };
+    list.append($('label', {}, cb, $('span', {}, t.label),
+                  $('span', {className: 'src'}, t.source || '')));
+  }
+}
+function openTabManager() {
+  renderTabManager();
+  document.getElementById('tabsdlg').showModal();
+}
+document.getElementById('tabs-close').onclick =
+  () => document.getElementById('tabsdlg').close();
+
+function showView(id) {
+  for (const v of document.querySelectorAll('.view')) {
+    const on = v.id === id;
+    v.style.display = on ? (v.id === 'view-settings' ? 'grid' : 'flex') : 'none';
+    if (on) {
+      const f = v.querySelector('iframe');
+      // lazy, and never from the browser cache: the picker and the tabs
+      // are served live from the toolkit, and a cached copy showed an
+      // old layout for a whole session after a rail refresh
+      if (f && !f.src && f.dataset.src) {
+        f.src = f.dataset.src + (f.dataset.src.indexOf('?') < 0 ? '?' : '&') + 'v=' + Date.now();
+      }
+    }
+  }
+  for (const b of document.querySelectorAll('#tabs .tab'))
+    b.classList.toggle('sel', b.dataset.view === id);
+  const t = TABS.find(t => viewId(t) === id);
+  if (t) {
+    history.replaceState(null, '', hashOf(t));
+    // the console remembers it, so the hub reopens here rather than on a
+    // fragment an earlier open left in the browser's address
+    fetch('/api/view', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({name: t.name})}).catch(() => {});
+  }
+  if (id === 'view-updates') loadUpdates();
+  if (id === 'view-community') loadCommunity();
+}
+
+// --- Community: tools by other creators (docs/CommunityHighlights.md) ---
+// The cards and their Place / Install come from the shared base script
+// (window.fnsCommunity); the list is the installer's copy, relayed here.
+function loadCommunity() {
+  const list = document.getElementById('cm-list');
+  if (!window.fnsCommunity) { list.replaceChildren($('div', {className: 'empty'}, 'The community list needs a newer console page.')); return; }
+  window.fnsCommunity.load({url: '/recommendations.json', served: true}, (doc) => {
+    if (!doc) { list.replaceChildren($('div', {className: 'empty'}, 'Could not load the community list (offline?).')); return; }
+    const tools = doc.tools.slice().sort((a, b) =>
+      String(b.date || '').localeCompare(String(a.date || '')) || String(a.name).localeCompare(String(b.name)));
+    if (!tools.length) { list.replaceChildren($('div', {className: 'empty'}, 'No community tools are listed yet.')); return; }
+    const grid = $('div', {className: 'grid'});
+    for (const t of tools) grid.append(window.fnsCommunity.card(t, {served: true}));
+    list.replaceChildren(...(doc.intro ? [$('p', {className: 'intro'}, doc.intro)] : []), grid);
+  });
+}
+document.getElementById('cm-site').onclick = () =>
+  fetch('/open', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({url: 'https://functionstore.tools/community/'})}).catch(() => {});
+
+function viewFromHash() {
+  const h = location.hash;
+  const shown = shownTabs();
+  // no fragment, or a deep link to a hidden tab, falls back to the first
+  // tab (Install & remove) rather than opening a view that has no button
+  const t = shown.find(t => hashOf(t) === h) || shown[0];
+  if (t) showView(viewId(t));
+}
+window.addEventListener('hashchange', viewFromHash);
+
+// The console server stops after ten minutes of silence and releases the
+// browser's render with it -- and a dormant render shows its last frame
+// and takes no clicks. While someone is at the page (mouse or keys in the
+// last two minutes) it says so once a minute; left alone it goes quiet and
+// the server stops, as it should.
+(() => {
+  let lastActivity = Date.now();
+  for (const ev of ['mousemove', 'pointerdown', 'keydown', 'wheel']) {
+    document.addEventListener(ev, () => { lastActivity = Date.now(); }, {passive: true});
+  }
+  setInterval(() => {
+    if (Date.now() - lastActivity < 120000) fetch('/api/tabs').catch(() => {});
+  }, 60000);
+})();
+
+// --- scope ------------------------------------------------------------
+function paintChrome() {
+  const have = STATE && STATE.tools;
+  document.getElementById('scopebtn').textContent =
+    'scope: ' + ((STATE && STATE.scope) || '…');
+  document.getElementById('meta').textContent = (STATE && STATE.project) || '';
+  for (const id of ['scopebtn', 'export', 'import'])
+    document.getElementById(id).disabled = !have;
+}
+
+async function postScope(value, mode) {
+  try {
+    const r = await fetch('/api/scope', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({value, mode}),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      STATE.scope = d.scope;
+      paintChrome();
+      toast('config scope: ' + d.scope +
+            (mode ? ' (' + mode + ')' : ''), true);
+      if (mode === 'adopt') load();   // values on screen just changed
+    } else toast(d.why || 'scope change rejected', false);
+  } catch (e) { toast(String(e), false); }
+}
+
+document.getElementById('scopebtn').onclick = () => {
+  if (STATE && STATE.scope === 'global') postScope('project');
+  else document.getElementById('scopedlg').showModal();
+};
+document.getElementById('scope-cancel').onclick =
+  () => document.getElementById('scopedlg').close();
+document.getElementById('scope-push').onclick = () => {
+  document.getElementById('scopedlg').close();
+  postScope('global', 'push');
+};
+document.getElementById('scope-adopt').onclick = () => {
+  document.getElementById('scopedlg').close();
+  postScope('global', 'adopt');
+};
+
+// --- export / import --------------------------------------------------
+document.getElementById('export').onclick = async () => {
+  try {
+    const r = await (await fetch('/api/export')).json();
+    if (!r.ok) { toast(r.why || 'export failed', false); return; }
+    // the server already wrote the file (saved_to); the download is a
+    // convenience on top, not what the export depends on
+    const blob = new Blob([JSON.stringify(r.document, null, 1) + '\n'],
+                          {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'FNStools_config.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('exported ' + r.tools + ' tool section(s)' +
+          (r.saved_to ? ' → ' + r.saved_to
+                      : r.save_error ? ' (file not written: ' + r.save_error + ')' : ''),
+          !r.save_error);
+  } catch (e) { toast(String(e), false); }
+};
+
+document.getElementById('import').onclick =
+  () => document.getElementById('importfile').click();
+document.getElementById('importfile').onchange = async e => {
+  const file = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+  let doc;
+  try { doc = JSON.parse(await file.text()); }
+  catch (err) { toast('not valid JSON: ' + err, false); return; }
+  try {
+    const r = await fetch('/api/import', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(doc),
+    });
+    const d = await r.json();
+    if (!d.ok) { toast(d.why || 'import rejected', false); return; }
+    toast('applied ' + d.applied.length + ' tool(s)' +
+          (d.deferred.length
+            ? ', ' + d.deferred.length + ' kept for later install' : ''),
+          true);
+    load();   // re-read: the values on screen just changed
+  } catch (err) { toast(String(err), false); }
+};
+
+// --- updates ----------------------------------------------------------
+// The console is where update state LIVES: the backend (FNS_Updater) has
+// carried CheckUpdates/Compare/UpdateProject all along; this view is the
+// first surface that speaks it. Everything here narrates -- checking,
+// downloading, applying one package per frame -- and failure keeps its
+// sentence, per the funnel doctrine: the true reason, then a next step.
+let UPD = null;               // last /api/updates payload
+let updPolls = 0;
+const UPD_STATES = {
+  update: ['update available', 'up'],
+  current: ['up to date', 'ok'],
+  locked: ['locked', 'warn'],
+  incompatible: ['needs a newer TD', 'warn'],
+  unversioned: ['unversioned', 'warn'],
+  missing: ['missing', 'err'],
+  // a foreign package with its own updater (manifest updates: 'self'):
+  // never offered here, never touched -- the tool checks for itself
+  'self-managed': ['updates itself', 'ok'],
+};
+
+function paintUpdatesBadge() {
+  const n = UPD && UPD.ok ? (UPD.updates || []).length : 0;
+  const btn = document.querySelector('#tabs .tab[data-view="view-updates"]');
+  if (!btn) return;
+  btn.textContent = 'Updates';
+  if (n) btn.append($('span', {className: 'badge'}, String(n)));
+}
+
+// Install & remove carries the count of tools this machine has not been
+// shown (docs/NewToolsAndFamilyFreshness.md, D). The picker records them
+// when its "New since you last looked" dialog is answered, and tells this
+// page, which repaints.
+let NEWTOOLS = 0;
+function paintToolsBadge() {
+  const btn = document.querySelector('#tabs .tab[data-view="view-tools"]');
+  if (!btn) return;
+  const t = (TABS || []).find(x => x.builtin && x.name === 'tools');
+  btn.textContent = t ? t.label : 'Install & remove';
+  if (NEWTOOLS) {
+    btn.append($('span', {className: 'badge',
+      title: NEWTOOLS + ' new tool' + (NEWTOOLS === 1 ? '' : 's') + ' since you last looked'},
+      String(NEWTOOLS)));
+  }
+}
+async function loadNewTools() {
+  try {
+    const r = await fetch('/newtools.json', {cache: 'no-store'});
+    const d = await r.json();
+    NEWTOOLS = d && d.ok ? (d.unseen || []).length : 0;
+  } catch (e) {
+    NEWTOOLS = 0;
+  }
+  paintToolsBadge();
+}
+window.addEventListener('message', (e) => {
+  if (e.data === 'fns:seen') loadNewTools();
+  // the picker's pointer line: "N tools by other creators: open Community"
+  if (e.data === 'fns:community') showView('view-community');
+});
+
+function updStatus(text, err) {
+  const el = document.getElementById('upd-status');
+  el.hidden = !text;
+  el.textContent = text || '';
+  el.className = 'upd-status' + (err ? ' err' : '');
+}
+
+function updRow(r) {
+  const [label, cls] = UPD_STATES[r.state] || [r.state, ''];
+  const row = $('div', {className: 'upd-row' + (r.state === 'update' ? ' has-update' : '')});
+  const body = $('div', {className: 'body'});
+  const name = $('div', {className: 'name'}, publicName(r.package),
+                 $('span', {className: 'chip ' + cls}, label));
+  body.append(name);
+  const vers = $('div', {className: 'vers'});
+  if (r.installed) vers.append('installed ', $('b', {}, r.installed));
+  if (r.available && r.available !== r.installed) {
+    vers.append(r.installed ? ' → ' : '', $('b', {}, r.available), ' available');
+  }
+  if (vers.childNodes.length) body.append(vers);
+  // an update row's note is just the release label (Compare stamps it
+  // there); the versions line already says so, so only real reasons show
+  if (r.note && !(r.state === 'update' && UPD && r.note === UPD.release))
+    body.append($('div', {className: 'why'}, r.note));
+  if (r.state === 'update' && r.whatsnew)
+    body.append($('div', {className: 'whatsnew'}, r.whatsnew));
+  row.append(body);
+  if (r.state === 'update') {
+    const b = $('button', {className: 'btn btn-secondary', textContent: 'Update'});
+    b.onclick = () => confirmUpdate([r.package]);
+    row.append(b);
+  }
+  return row;
+}
+
+function renderUpdates() {
+  const list = document.getElementById('upd-list');
+  list.replaceChildren();
+  const rel = document.getElementById('upd-release');
+  const meta = document.getElementById('upd-meta');
+  const all = document.getElementById('upd-all');
+  paintUpdatesBadge();
+  if (!UPD || !UPD.ok) {
+    rel.textContent = 'Updates';
+    meta.textContent = '';
+    all.hidden = true;
+    list.append($('div', {className: 'empty'},
+      (UPD && UPD.why) || 'No update information yet — Check for updates asks the store.'));
+    return;
+  }
+  rel.textContent = UPD.release ? 'Store release ' + UPD.release : 'Updates';
+  const n = (UPD.updates || []).length;
+  meta.textContent = n ? n + ' update' + (n === 1 ? '' : 's') + ' available'
+                       : 'everything is current';
+  all.hidden = n < 2;
+  // ordered by the name the row PRINTS, so the list reads alphabetically
+  // instead of stacking every FNS package under "F"
+  const rows = (UPD.rows || []).slice().sort((a, b) =>
+    publicName(a.package).localeCompare(publicName(b.package), 'en', {sensitivity: 'base'}));
+  const upd = rows.filter(r => r.state === 'update');
+  const attn = rows.filter(r => ['locked', 'incompatible', 'unversioned', 'missing'].includes(r.state));
+  const cur = rows.filter(r => r.state === 'current' || r.state === 'self-managed');
+  if (!rows.length) {
+    list.append($('div', {className: 'empty'},
+      'Nothing installed that the store publishes.'));
+    return;
+  }
+  if (upd.length) {
+    list.append($('div', {className: 'upd-sect'}, 'Available'));
+    upd.forEach(r => list.append(updRow(r)));
+  }
+  if (attn.length) {
+    list.append($('div', {className: 'upd-sect'}, 'Needs attention'));
+    attn.forEach(r => list.append(updRow(r)));
+  }
+  if (cur.length) {
+    list.append($('div', {className: 'upd-sect'}, 'Up to date'));
+    cur.forEach(r => list.append(updRow(r)));
+  }
+}
+
+async function loadUpdates() {
+  try {
+    const r = await fetch('/api/updates');
+    UPD = r.ok ? await r.json() : null;
+  } catch (e) { UPD = null; }
+  renderUpdates();
+  if (UPD && (UPD.checking || UPD.applying)) {
+    updStatus(UPD.detail || (UPD.checking ? 'Checking the store…' : 'Updating…'));
+    if (++updPolls < 200) setTimeout(loadUpdates, 1500);
+    else updStatus('Still busy — see the UPDATER status in TouchDesigner.', true);
+  } else if (UPD && UPD.ok) {
+    updStatus('');
+  }
+}
+
+document.getElementById('upd-check').onclick = async () => {
+  const btn = document.getElementById('upd-check');
+  btn.disabled = true;
+  try {
+    const r = await (await fetch('/api/updates/check', {method: 'POST',
+      headers: {'Content-Type': 'application/json'}, body: '{}'})).json();
+    if (!r.ok) { toast(r.why || 'check refused', false); return; }
+    updStatus('Checking the store…');
+    updPolls = 0;
+    setTimeout(loadUpdates, 1200);
+  } catch (e) { toast(String(e), false); }
+  finally { btn.disabled = false; }
+};
+
+function confirmUpdate(names) {
+  const dlg = document.getElementById('upddlg');
+  const n = names.length;
+  document.getElementById('upd-dlg-title').textContent =
+    n === 1 ? 'Update ' + publicName(names[0]) + '?' : 'Update ' + n + ' packages?';
+  const rows = (UPD && UPD.rows || []).filter(r => names.includes(r.package));
+  document.getElementById('upd-dlg-out').textContent = rows.map(r =>
+    publicName(r.package) + '  ' + r.installed + ' → ' + r.available).join('\n');
+  const go = document.getElementById('upd-dlg-go');
+  go.hidden = false;
+  go.onclick = () => { dlg.close(); applyUpdates(names); };
+  dlg.showModal();
+}
+
+async function applyUpdates(names) {
+  try {
+    const r = await (await fetch('/api/updates/apply', {method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({names})})).json();
+    if (!r.ok) { updStatus(r.why || 'update refused', true); return; }
+    updStatus('Updating ' + names.length + ' package' + (names.length === 1 ? '' : 's') + '…');
+    watchApply();
+  } catch (e) { updStatus(String(e), true); }
+}
+
+let applyPolls = 0;
+function watchApply() {
+  if (++applyPolls > 400) {
+    updStatus('Update did not finish — see the UPDATER status in TouchDesigner.', true);
+    return;
+  }
+  setTimeout(async () => {
+    let st = null;
+    try { st = await (await fetch('/api/updates/status')).json(); }
+    catch (e) { /* server busy applying: keep waiting */ }
+    if (!st || !st.settled) {
+      if (st && st.detail) updStatus(st.detail);
+      watchApply();
+      return;
+    }
+    applyPolls = 0;
+    const failed = st.failed || [];
+    if (failed.length) {
+      updStatus('Update finished with failures:\n' + failed.join('\n'), true);
+    } else {
+      updStatus('');
+      toast('updated ' + (st.applied || 0) + ' package(s)', true);
+    }
+    loadUpdates();
+    load();   // versions on the Settings side just changed too
+  }, 1500);
+}
+
+document.getElementById('upd-dlg-close').onclick =
+  () => document.getElementById('upddlg').close();
+document.getElementById('upd-all').onclick =
+  () => confirmUpdate((UPD && UPD.updates || []).slice());
+
+async function load() {
+  try {
+    const r = await fetch('/api/state');
+    STATE = r.ok ? await r.json() : null;
+  } catch (e) { STATE = null; }
+  paintChrome();
+  render();
+}
+
+async function boot() {
+  await loadTabs();
+  viewFromHash();
+  await load();
+  // the badge answers "is anything new?" without opening the tab -- from
+  // the store manifest already on disk, so this costs no network
+  loadUpdates();
+  loadNewTools();
+}
+boot();
+</script>
+</body>
+</html>

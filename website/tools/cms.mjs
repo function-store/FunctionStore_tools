@@ -1,0 +1,1023 @@
+// Internal CMS for FNSTools package metadata and docs.
+//
+//   npm run cms      ->  http://127.0.0.1:8787
+//
+// Authors the two curated sources directly on disk: packaging/catalog.json
+// (category + description) and packaging/docs/<Name>.md (frontmatter +
+// prose). There is no database and no staging layer — git is the audit
+// trail, so review with `git diff` and revert with `git checkout`.
+//
+// Same shape as packaging/configurator: a static page served from a small
+// local server that POSTs back. Deliberately bound to 127.0.0.1 — this
+// process writes to the repo, so it must not be reachable from the network.
+
+import { spawn, spawnSync } from 'node:child_process';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import http from 'node:http';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import matter from 'gray-matter';
+import MarkdownIt from 'markdown-it';
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const WEB = path.dirname(HERE);
+const REPO = path.dirname(WEB);
+const DOCS = path.join(REPO, 'packaging', 'docs');
+const GATE_PY = path.join(REPO, 'packaging', 'gate_package.py');
+// python for the packaging CLIs; override when it is not on PATH
+const PYTHON = process.env.FNS_PYTHON || 'python';
+const CATALOG = path.join(REPO, 'packaging', 'catalog.json');
+const RECOMMENDS = path.join(REPO, 'packaging', 'recommendations.json');
+const ICONS = path.join(REPO, 'icons');
+
+const PORT = Number(process.env.CMS_PORT || 8787);
+const HOST = '127.0.0.1';
+
+const md = new MarkdownIt({ html: true, linkify: true });
+
+// ------------------------------------------------------------ helpers
+
+const readCatalog = () => JSON.parse(fs.readFileSync(CATALOG, 'utf8'));
+
+const readRecommends = () => JSON.parse(fs.readFileSync(RECOMMENDS, 'utf8'));
+
+/** Tools by OTHER creators that we link to. Deliberately a separate file
+ *  from catalog.json, and separate from anything the manifest carries: a
+ *  row here is a link, not a package, and it publishes on its own so that
+ *  REMOVING one never waits for a release. */
+function writeRecommends(doc) {
+  fs.writeFileSync(RECOMMENDS, JSON.stringify(doc, null, 1) + '\n');
+}
+
+// The website posts for those rows (docs/CommunityHighlights.md): one
+// Markdown file per slug, pictures beside them. A write-up whose row is
+// removed is moved to archive/, never deleted -- it may not be in git yet.
+const COMMUNITY = path.join(WEB, 'content', 'community');
+const COMMUNITY_IMAGES = path.join(COMMUNITY, 'images');
+const COMMUNITY_ARCHIVE = path.join(COMMUNITY, 'archive');
+const MAX_IMAGE = 8 * 1024 * 1024;
+
+function readWriteups() {
+  const out = {};
+  if (!fs.existsSync(COMMUNITY)) return out;
+  for (const f of fs.readdirSync(COMMUNITY).filter((x) => x.endsWith('.md'))) {
+    out[f.slice(0, -3)] = fs.readFileSync(path.join(COMMUNITY, f), 'utf8');
+  }
+  return out;
+}
+
+const communityImages = () => (fs.existsSync(COMMUNITY_IMAGES)
+  ? fs.readdirSync(COMMUNITY_IMAGES).filter((f) => REC_IMAGE.test(f)).sort() : []);
+
+/** Save the list and its write-ups as one step. Everything is checked
+ *  before anything is written: a slug with no write-up, a rename onto an
+ *  existing write-up, or an invalid row leaves every file as it was. */
+function saveCommunity(body) {
+  const doc = readRecommends();
+  const next = {
+    ...doc,
+    intro: String(body.intro ?? doc.intro ?? ''),
+    tools: Array.isArray(body.tools) ? body.tools : doc.tools,
+    families: Array.isArray(body.families) ? body.families : (doc.families || []),
+  };
+  const bad = validateRecommends(next);
+  const have = readWriteups();
+  const writeups = Array.isArray(body.writeups) ? body.writeups : [];
+  const bySlug = new Map(writeups.map((w) => [String(w.slug || ''), w]));
+  for (const t of next.tools) {
+    if (!t.slug) continue;
+    const w = bySlug.get(t.slug);
+    const text = w ? String(w.markdown || '') : have[t.slug];
+    if (!String(text || '').trim()) bad.push(`${t.name}: has a slug, so it needs a write-up (or clear the slug)`);
+  }
+  const renames = [];
+  for (const w of writeups) {
+    const slug = String(w.slug || '');
+    const from = String(w.from || '');
+    if (!REC_SLUG.test(slug)) { bad.push(`write-up slug "${slug}" is not lowercase words joined by hyphens`); continue; }
+    if (!next.tools.some((t) => t.slug === slug)) bad.push(`write-up "${slug}" has no row with that slug`);
+    if (from && from !== slug) {
+      if (have[slug] !== undefined && !writeups.some((x) => x.from === slug)) {
+        bad.push(`cannot rename "${from}" to "${slug}": a write-up with that slug already exists`);
+      }
+      renames.push([from, slug]);
+    }
+  }
+  if (bad.length) throw new Error(bad.join('; '));
+
+  writeRecommends(next);
+  fs.mkdirSync(COMMUNITY, { recursive: true });
+  const archive = (slug) => {
+    const src = path.join(COMMUNITY, `${slug}.md`);
+    if (!fs.existsSync(src)) return;
+    fs.mkdirSync(COMMUNITY_ARCHIVE, { recursive: true });
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    fs.renameSync(src, path.join(COMMUNITY_ARCHIVE, `${slug}.${stamp}.md`));
+  };
+  // A renamed write-up leaves its old file; the new text is written below.
+  for (const [from] of renames) {
+    if (!next.tools.some((t) => t.slug === from)) archive(from);
+  }
+  for (const w of writeups) {
+    const text = String(w.markdown || '');
+    if (!text.trim()) continue;
+    if (have[w.slug] === text) continue;
+    fs.writeFileSync(path.join(COMMUNITY, `${w.slug}.md`), text.endsWith('\n') ? text : `${text}\n`);
+  }
+  const slugs = new Set(next.tools.map((t) => t.slug).filter(Boolean));
+  for (const slug of Object.keys(readWriteups())) {
+    if (!slugs.has(slug)) archive(slug);
+  }
+}
+
+/** Store a picture for a post. The name is checked like a row's `image`,
+ *  and an existing file is never overwritten by accident. */
+function saveCommunityImage(body) {
+  const name = String(body.name || '').toLowerCase();
+  if (!REC_IMAGE.test(name)) throw new Error('name the image in lowercase words joined by hyphens, ending .png, .jpg, .webp or .gif');
+  const buf = Buffer.from(String(body.data || ''), 'base64');
+  if (!buf.length) throw new Error('the image is empty');
+  if (buf.length > MAX_IMAGE) throw new Error(`the image is ${(buf.length / 1048576).toFixed(1)} MB; keep it under 8 MB`);
+  const dst = path.join(COMMUNITY_IMAGES, name);
+  if (fs.existsSync(dst) && !body.replace) throw new Error(`${name} already exists`);
+  fs.mkdirSync(COMMUNITY_IMAGES, { recursive: true });
+  fs.writeFileSync(dst, buf);
+  return name;
+}
+
+const REC_FIELDS = ['name', 'author', 'author_url', 'url', 'description',
+                    'category', 'note',
+                    'tox_url', 'sha256', 'bytes', 'pinned_at',
+                    'slug', 'date', 'image', 'platform', 'author_license', 'tdp', 'draft'];
+const HEX64 = /^[0-9a-f]{64}$/;
+const REC_SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const REC_DATE = /^\d{4}-\d{2}-\d{2}$/;
+const REC_IMAGE = /^[a-z0-9]+(?:-[a-z0-9]+)*\.(?:png|jpg|jpeg|webp|gif)$/;
+const REC_PLATFORMS = ['github', 'patreon', 'gumroad', 'itch', 'pypi', 'other'];
+const PYPI_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/;
+const PY_MODULE = /^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$/;
+const TOX_KEY = /^[A-Za-z_]\w*$/;
+const pyCanon = (n) => String(n).replace(/[-_.]+/g, '-').toLowerCase();
+
+/** Mirror of recommendations.py _tdpProblems(). */
+function tdpProblems(where, t) {
+  if (!t || typeof t !== 'object' || Array.isArray(t)) return [`${where}: tdp must be an object`];
+  const out = [];
+  for (const f of Object.keys(t)) {
+    if (!['package', 'module', 'tox', 'also'].includes(f)) out.push(`${where}: tdp has an unknown field \`${f}\``);
+  }
+  const also = t.also === undefined ? [] : t.also;
+  if (!Array.isArray(also) || !also.every((a) => PYPI_NAME.test(String(a).trim()))) {
+    out.push(`${where}: tdp.also must be a list of PyPI project names`);
+  }
+  const pkg = String(t.package || '').trim();
+  if (!PYPI_NAME.test(pkg)) out.push(`${where}: tdp.package must be a PyPI project name`);
+  if (!PY_MODULE.test(String(t.module || '').trim())) out.push(`${where}: tdp.module must be the importable module (tdpFoo)`);
+  if ('tox' in t && !TOX_KEY.test(String(t.tox || '').trim())) out.push(`${where}: tdp.tox must name one entry of the package's _ToxFiles`);
+  return out;
+}
+
+/** Mirror of packaging/recommendations.py validate(). Kept in step by the
+ *  test, not by hope -- the CMS must refuse the same rows the publisher
+ *  would, or a save looks fine and the upload fails hours later. */
+/** Mirror of recommendations.py _familyProblems(): the Built with TDFam list. */
+const FAMILY_FIELDS = ['name', 'author', 'author_url', 'url', 'description', 'ops', 'tool', 'ours'];
+function familyProblems(families, toolNames) {
+  if (families === undefined || families === null) return [];
+  if (!Array.isArray(families)) return ['`families` must be a list'];
+  const out = [];
+  const seen = new Set();
+  families.forEach((row, i) => {
+    let where = `families[${i}]`;
+    if (!row || typeof row !== 'object' || Array.isArray(row)) { out.push(`${where} is not an object`); return; }
+    const name = String(row.name || '').trim();
+    if (name) where = `${where} (${name})`;
+    for (const f of ['name', 'author', 'url']) if (!String(row[f] || '').trim()) out.push(`${where}: ${f} is required`);
+    for (const f of Object.keys(row)) if (!FAMILY_FIELDS.includes(f)) out.push(`${where}: unknown field \`${f}\``);
+    const url = String(row.url || '').trim();
+    if (url && !(url.startsWith('https://') || url.startsWith('/'))) out.push(`${where}: url must be https, or a page on this site (/...)`);
+    const aurl = String(row.author_url || '').trim();
+    if (aurl && !aurl.startsWith('https://')) out.push(`${where}: author_url must be https`);
+    if ('ops' in row && !(Number.isInteger(row.ops) && row.ops > 0)) out.push(`${where}: ops must be a positive whole number`);
+    if ('ours' in row && typeof row.ours !== 'boolean') out.push(`${where}: ours must be true or false`);
+    if ('tool' in row && !toolNames.has(String(row.tool))) out.push(`${where}: tool is not a row in tools`);
+    if (String(row.description || '').length > 400) out.push(`${where}: description is over 400 characters`);
+    if (name) {
+      if (seen.has(name.toLowerCase())) out.push(`${where}: duplicate name`);
+      seen.add(name.toLowerCase());
+    }
+  });
+  return out;
+}
+
+function validateRecommends(doc) {
+  const bad = [];
+  const tools = (doc && doc.tools) || [];
+  if (!Array.isArray(tools)) return ['`tools` must be a list'];
+  const seen = new Map();
+  const slugs = new Map();
+  tools.forEach((row, i) => {
+    const where = row && row.name ? `tools[${i}] (${row.name})` : `tools[${i}]`;
+    if (!row || typeof row !== 'object') { bad.push(`${where} is not an object`); return; }
+    for (const f of ['name', 'author', 'url']) {
+      if (!String(row[f] || '').trim()) bad.push(`${where}: ${f} is required`);
+    }
+    for (const f of Object.keys(row)) {
+      if (!REC_FIELDS.includes(f)) bad.push(`${where}: unknown field \`${f}\``);
+    }
+    for (const f of ['url', 'author_url']) {
+      const v = String(row[f] || '').trim();
+      if (v && !v.startsWith('https://')) bad.push(`${where}: ${f} must be https`);
+    }
+    // Placement fields travel together -- a tox_url with no pinned hash
+    // would install unverified bytes, and a hash with no url is inert.
+    const tox = String(row.tox_url || '').trim();
+    const sha = String(row.sha256 || '').trim().toLowerCase();
+    if (tox || sha || row.bytes != null) {
+      if (!tox) bad.push(`${where}: sha256/bytes given without tox_url`);
+      else if (!tox.startsWith('https://')) bad.push(`${where}: tox_url must be https`);
+      else if (!tox.toLowerCase().endsWith('.tox')) bad.push(`${where}: tox_url must point at a .tox file`);
+      if (!sha) bad.push(`${where}: tox_url needs a pinned sha256 — use Pin`);
+      else if (!HEX64.test(sha)) bad.push(`${where}: sha256 must be 64 lowercase hex characters`);
+      if (!Number.isInteger(row.bytes) || row.bytes <= 0) bad.push(`${where}: bytes must be a positive integer`);
+    }
+    if ('tdp' in row) {
+      bad.push(...tdpProblems(where, row.tdp));
+      if (String(row.tox_url || '').trim()) bad.push(`${where}: a row is a tox or a tdp package, not both`);
+    }
+    const slug = String(row.slug || '').trim();
+    if ('slug' in row && !REC_SLUG.test(slug)) bad.push(`${where}: slug must be lowercase words joined by hyphens`);
+    else if (slug) {
+      if (slugs.has(slug)) bad.push(`${where}: slug ${slug} is also tools[${slugs.get(slug)}]`);
+      slugs.set(slug, i);
+    }
+    if ('date' in row && !REC_DATE.test(String(row.date || ''))) bad.push(`${where}: date must be YYYY-MM-DD`);
+    if ('image' in row && !REC_IMAGE.test(String(row.image || ''))) bad.push(`${where}: image must be a file name in website/content/community/images`);
+    if ('platform' in row && !REC_PLATFORMS.includes(row.platform)) bad.push(`${where}: platform must be one of ${REC_PLATFORMS.join(', ')}`);
+    if ('draft' in row && typeof row.draft !== 'boolean') bad.push(`${where}: draft must be true or false`);
+    if (String(row.author_license || '').length > 200) bad.push(`${where}: author_license is over 200 characters; link to it instead`);
+    if (String(row.description || '').length > 400) {
+      bad.push(`${where}: description is over 400 characters`);
+    }
+    const k = String(row.name || '').toLowerCase();
+    if (k) {
+      if (seen.has(k)) bad.push(`${where}: duplicate name`);
+      else seen.set(k, i);
+    }
+  });
+  bad.push(...familyProblems(doc && doc.families,
+    new Set(tools.filter((t) => t && typeof t === 'object').map((t) => String(t.name || '')))));
+  return bad;
+}
+
+/** Byte-identical to how catalog.json is already formatted, so saving a
+ *  description produces a one-line diff rather than reformatting the file. */
+function writeCatalog(cat) {
+  fs.writeFileSync(CATALOG, JSON.stringify(cat, null, 1) + '\n');
+}
+
+const countByCategory = (cat) => {
+  const n = {};
+  for (const name of Object.keys(cat.packages)) {
+    const c = cat.packages[name].category;
+    n[c] = (n[c] || 0) + 1;
+  }
+  return n;
+};
+
+/** Apply a whole desired category list: order, renames, additions, removals.
+ *
+ *  Taken as one transaction rather than per-row edits, because a rename has
+ *  to move every package assigned to the old name in the same breath — the
+ *  site build refuses to run on a package whose category is not in the list,
+ *  so a half-applied rename is a broken repo. */
+function applyCategories(cat, incoming) {
+  const seen = new Set();
+  for (const row of incoming) {
+    const name = String(row.name || '').trim();
+    if (!name) throw new Error('a category cannot have an empty name');
+    if (seen.has(name)) throw new Error(`duplicate category "${name}"`);
+    seen.add(name);
+  }
+
+  const counts = countByCategory(cat);
+  const removed = cat.categories.filter((c) =>
+    !incoming.some((r) => (r.from || r.name) === c));
+  for (const c of removed) {
+    if (counts[c]) {
+      throw new Error(
+        `"${c}" still has ${counts[c]} package${counts[c] > 1 ? 's' : ''} in it — ` +
+        'move them somewhere else before deleting it');
+    }
+  }
+
+  const meta = {};
+  for (const row of incoming) {
+    const name = String(row.name).trim();
+    const from = row.from && row.from !== name ? row.from : null;
+    if (from) {
+      if (!cat.categories.includes(from)) throw new Error(`unknown category "${from}"`);
+      for (const pkg of Object.values(cat.packages)) {
+        if (pkg.category === from) pkg.category = name;
+      }
+    }
+    const prev = (cat.category_meta || {})[from || name] || {};
+    meta[name] = {
+      glyph: String(row.glyph ?? prev.glyph ?? '·').trim() || '·',
+      pitch: String(row.pitch ?? prev.pitch ?? '').trim(),
+    };
+  }
+
+  cat.categories = incoming.map((r) => String(r.name).trim());
+  cat.category_meta = meta;
+  return cat;
+}
+
+/** A package name is only ever accepted if it is already a catalog key.
+ *  Nothing from a request is allowed to build a path on its own. */
+function docPath(cat, name) {
+  if (!Object.prototype.hasOwnProperty.call(cat.packages, name)) return null;
+  if (!/^[A-Za-z0-9_-]+$/.test(name)) return null;
+  return path.join(DOCS, `${name}.md`);
+}
+
+const mtimeOf = (p) => (fs.existsSync(p) ? fs.statSync(p).mtimeMs : 0);
+
+/** Frontmatter key order, so saved files stay diffable against each other. */
+// `credit` is gone from here on purpose: author name + link live in
+// catalog.json `author` (the manifest carries it to the picker and the
+// site), and the site build refuses a doc that still carries `credit`.
+const FM_ORDER = ['package', 'summary', 'features', 'platforms', 'video'];
+
+/** Curated fields every package may carry (docs/ForeignPackages.md §1b),
+ *  and the ones only a FOREIGN entry (one with a `source`) may carry --
+ *  on a live package each has a live authority that must not fork. */
+const LINK_KEYS = ['homepage', 'changelog_url'];
+const FOREIGN_ONLY = ['updates', 'help_url', 'min_td_build'];
+const UPDATES_MODES = ['self', 'store'];
+const isForeignEntry = (e) => !!(e && e.source && typeof e.source === 'object');
+function orderedData(data) {
+  const out = {};
+  for (const k of FM_ORDER) if (data[k] !== undefined) out[k] = data[k];
+  for (const k of Object.keys(data)) if (!(k in out)) out[k] = data[k];
+  return out;
+}
+
+/** The campaign's tiers, from gate_package -- the one place that knows
+ *  them. Cached for the process: they change when the campaign does,
+ *  which is not mid-session. */
+let LADDER = null;
+function tierLadder() {
+  if (LADDER) return LADDER;
+  try {
+    const r = spawnSync(PYTHON, [GATE_PY, '--ladder'], { encoding: 'utf8' });
+    LADDER = JSON.parse(r.stdout);
+  } catch {
+    LADDER = [];
+  }
+  return LADDER;
+}
+
+/** Gate or ungate through gate_package.py, never by editing catalog.json
+ *  here: it writes catalog.json AND wrangler.toml together, and a package
+ *  gated in one but not the other is a customer paying for a 403. */
+function setAccess(name, tier) {
+  const args = [GATE_PY, name];
+  if (tier) args.push('--tier', tier); else args.push('--free');
+  const r = spawnSync(PYTHON, args, { encoding: 'utf8' });
+  if (r.status !== 0) {
+    throw new Error((r.stderr || r.stdout || 'gate_package failed').trim());
+  }
+  return (r.stdout || '').trim();
+}
+
+/** Hold a package back from the public (docs/PreviewPackages.md), or release
+ *  it. Through gate_package for the same reason as setAccess: it writes the
+ *  catalog flag AND the Worker's grants, and the two must agree. */
+function setPreview(name, on) {
+  const r = spawnSync(PYTHON, [GATE_PY, name, on ? '--preview' : '--release'], { encoding: 'utf8' });
+  if (r.status !== 0) {
+    throw new Error((r.stderr || r.stdout || 'gate_package failed').trim());
+  }
+  return (r.stdout || '').trim();
+}
+
+/** The curated link + foreign fields of one catalog entry, normalised for
+ *  the editor: strings for text inputs, an object for author, and the
+ *  `source` block verbatim. */
+function curatedExtras(entry) {
+  const a = entry.author && typeof entry.author === 'object' ? entry.author : null;
+  return {
+    author: a && a.name ? { name: String(a.name), url: String(a.url || '') } : null,
+    homepage: String(entry.homepage || ''),
+    changelog_url: String(entry.changelog_url || ''),
+    foreign: isForeignEntry(entry),
+    source: isForeignEntry(entry)
+      ? { manifest: String(entry.source.manifest || ''),
+          tox: String(entry.source.tox || ''),
+          package: String(entry.source.package || '') }
+      : null,
+    updates: String(entry.updates || ''),
+    help_url: String(entry.help_url || ''),
+    min_td_build: String(entry.min_td_build || ''),
+    // operator types the package stands in for; one space-separated string
+    // for the input. Derived at manifest build for a live package with an
+    // op-menu host (a curated list there is a preflight problem).
+    alternatives_for: (Array.isArray(entry.alternatives_for) ? entry.alternatives_for : []).join(' '),
+    // an FNS family member's block, curated here ONLY for a foreign
+    // package; a live package carries it in its FamManifest and the editor
+    // writes that through /api/td/familywrite (docs/OperatorFamilyFromStore.md)
+    family: entry.family && typeof entry.family === 'object' && !Array.isArray(entry.family)
+      ? entry.family : null,
+  };
+}
+
+/** Apply the editor's curated fields onto a catalog entry, enforcing the
+ *  allowed-on rules. Returns an error string, or '' when applied. Stored
+ *  as presence throughout: an unset field leaves no key behind. */
+const FAMILY_GROUPS = ['COMP', 'TOP', 'CHOP', 'SOP', 'MAT', 'DAT', 'POP'];
+
+/** A curated `family` block, normalised the way build_manifest reads it:
+ *  presence throughout, lowercase type (TDFam looks the type up verbatim in
+ *  a lowercased cache). Returns [block, error]. */
+function normaliseFamily(f) {
+  if (!f || typeof f !== 'object' || Array.isArray(f)) return [null, 'family must be an object'];
+  const out = {};
+  const type = String(f.op_type || '').trim();
+  if (!/^[a-z][a-z0-9_]*$/.test(type)) {
+    return [null, `family type "${type}" must be a lowercase word like scenechanger`];
+  }
+  out.op_type = type;
+  const name = String(f.op_name || '').trim();
+  if (name && !/^[A-Za-z][A-Za-z0-9_]*$/.test(name)) return [null, `family name "${name}" must be a word`];
+  if (name && name !== type) out.op_name = name;
+  for (const k of ['op_label', 'summary']) {
+    const v = String(f[k] || '').trim();
+    if (v) out[k] = v;
+  }
+  const group = String(f.op_group || '').trim();
+  if (group && !FAMILY_GROUPS.includes(group)) return [null, `family group "${group}" is not one of ${FAMILY_GROUPS.join(', ')}`];
+  if (group) out.op_group = group;
+  out.is_filter = !!f.is_filter;
+  for (const k of ['compatible_types', 'search_words']) {
+    const raw = typeof f[k] === 'string' ? f[k].replace(/,/g, ' ').split(/\s+/) : (Array.isArray(f[k]) ? f[k] : []);
+    const list = raw.map((x) => String(x).trim()).filter(Boolean);
+    if (k === 'compatible_types') {
+      const bad = list.filter((t) => !FAMILY_GROUPS.includes(t));
+      if (bad.length) return [null, `family compatible types ${bad.join(', ')} are not operator families`];
+    }
+    if (list.length) out[k] = list;
+  }
+  for (const k of ['par_retain', 'state_retain', 'shortcuts']) {
+    const v = f[k];
+    if (v === undefined || v === null) continue;
+    if (typeof v !== 'object' || Array.isArray(v)) return [null, `family ${k} must be a JSON object`];
+    if (Object.keys(v).length) out[k] = v;
+  }
+  return [out, ''];
+}
+
+function applyCurated(entry, body) {
+  const setOrDelete = (k, v) => { if (v) entry[k] = v; else delete entry[k]; };
+  if (body.author !== undefined) {
+    const a = body.author && typeof body.author === 'object' ? body.author : {};
+    const name = String(a.name || '').trim();
+    const url = String(a.url || '').trim();
+    if (url && !name) return 'author needs a name when a link is given';
+    if (url && !/^https:\/\//.test(url)) return 'author link must be https://';
+    setOrDelete('author', name ? (url ? { name, url } : { name }) : null);
+  }
+  for (const k of LINK_KEYS) {
+    if (typeof body[k] !== 'string') continue;
+    const v = body[k].trim();
+    if (v && !/^https:\/\//.test(v)) return `${k} must be https://`;
+    setOrDelete(k, v);
+  }
+  if (typeof body.alternatives_for === 'string') {
+    const tokens = body.alternatives_for.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
+    const badTypes = tokens.filter((t) => !/^[a-z0-9_]+(TOP|CHOP|SOP|DAT|MAT|COMP|POP)$/.test(t));
+    if (badTypes.length) {
+      return `alternatives_for: ${badTypes.join(', ')} -- an operator type reads like moviefileinTOP or noiseCHOP`;
+    }
+    const list = [...new Set(tokens)].sort();
+    if (list.length) entry.alternatives_for = list; else delete entry.alternatives_for;
+  }
+  // `source` decides foreign-ness. Clearing its manifest URL removes the
+  // block, and with it every foreign-only field (they would be orphans).
+  if (body.source !== undefined) {
+    const s = body.source && typeof body.source === 'object' ? body.source : {};
+    const manifest = String(s.manifest || '').trim();
+    if (manifest) {
+      if (!/^https:\/\//.test(manifest)) return 'source manifest must be https://';
+      const src = { manifest };
+      const tox = String(s.tox || '').trim();
+      const pkg = String(s.package || '').trim();
+      if (tox && !/\.tox$/i.test(tox)) return 'source tox must name a .tox file';
+      if (tox) src.tox = tox;
+      if (pkg) src.package = pkg;
+      entry.source = src;
+    } else {
+      delete entry.source;
+    }
+  }
+  const foreign = isForeignEntry(entry);
+  for (const k of FOREIGN_ONLY) {
+    if (!foreign) { delete entry[k]; continue; }
+    if (typeof body[k] !== 'string') continue;
+    const v = body[k].trim();
+    if (k === 'updates' && v && !UPDATES_MODES.includes(v)) {
+      return `updates must be one of ${UPDATES_MODES.join(', ')}`;
+    }
+    if (k === 'help_url' && v && !/^https:\/\//.test(v)) return 'help_url must be https://';
+    if (k === 'min_td_build' && v && !/^\d{4}\.\d+$/.test(v)) {
+      return 'min_td_build looks like 2025.33070';
+    }
+    setOrDelete(k, v);
+  }
+  // FNS family membership: curated in the catalog for a foreign package
+  // only. A live package's block is derived from its FamManifest, and a
+  // curated block beside one is a preflight problem, so it is refused here.
+  if (body.family !== undefined) {
+    if (!body.family) {
+      delete entry.family;
+    } else {
+      if (!foreign) {
+        return 'family is curated only on a foreign package; a live package carries it in its FamManifest (Write to the tool)';
+      }
+      const [block, err] = normaliseFamily(body.family);
+      if (err) return err;
+      const placement = typeof body.placement === 'string' ? body.placement : entry.placement;
+      // A family member is reached from the FNS tab of the OP Create dialog
+      // and from the family folder on disk, so it is NOT placed at install
+      // (owner 2026-09-18). 'none' is its placement; 'pane' and 'root' both
+      // put a copy somewhere, which is the thing being stopped.
+      if (placement === 'root' || placement === 'pane') {
+        return 'a family member is not placed at install: it is reached from the FNS tab of the OP Create dialog, so its placement is "none"';
+      }
+      entry.family = block;
+    }
+  }
+  return '';
+}
+
+function loadPackage(cat, name) {
+  const p = docPath(cat, name);
+  if (!p || !fs.existsSync(p)) return null;
+  const raw = fs.readFileSync(p, 'utf8');
+  const { data, content } = matter(raw);
+  return {
+    name,
+    category: cat.packages[name].category,
+    description: cat.packages[name].description || '',
+    recommended: !!cat.packages[name].recommended,
+    nopick: cat.packages[name].nopick === true,
+    placeonce: cat.packages[name].placeonce === true,
+    preview: cat.packages[name].preview === true,
+    // `access` is the ENTRY tier id, or absent for a free package.
+    // Editable here now: the ladder supplies real named tiers, so nothing
+    // is invented, and gate_package keeps the two files in step.
+    access: String(cat.packages[name].access || ''),
+    plus: Boolean(cat.packages[name].access) && cat.packages[name].access !== 'free',
+    // '' = toolkit container (default); 'pane' = the installer spawns it
+    // into the network the user is working in.
+    placement: String(cat.packages[name].placement || ''),
+    ...curatedExtras(cat.packages[name]),
+    data,
+    body: content.replace(/^\n+/, ''),
+    mtime: mtimeOf(p),
+    stub: /TODO: no wiki content/.test(content),
+    todos: (content.match(/TODO/g) || []).length,
+    words: content.split(/\s+/).filter(Boolean).length,
+  };
+}
+
+function state() {
+  const cat = readCatalog();
+  const ladder = tierLadder();
+  const packages = Object.keys(cat.packages)
+    .sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }))
+    .map((n) => {
+      const p = loadPackage(cat, n);
+      return p || {
+        name: n, category: cat.packages[n].category,
+        description: cat.packages[n].description || '',
+        recommended: !!cat.packages[n].recommended,
+        nopick: cat.packages[n].nopick === true,
+        placeonce: cat.packages[n].placeonce === true,
+        preview: cat.packages[n].preview === true,
+        access: String(cat.packages[n].access || ''),
+        plus: Boolean(cat.packages[n].access) && cat.packages[n].access !== 'free',
+        placement: String(cat.packages[n].placement || ''),
+        ...curatedExtras(cat.packages[n]),
+        data: {}, body: '', mtime: 0, stub: true, todos: 0, words: 0,
+        missing: true,
+      };
+    });
+  const counts = countByCategory(cat);
+  const rec = readRecommends();
+  return {
+    recommendations: { intro: rec.intro || '', tools: rec.tools || [], families: rec.families || [] },
+    communityWriteups: readWriteups(),
+    communityImages: communityImages(),
+    categories: cat.categories,
+    categoryMeta: cat.categories.map((c) => ({
+      name: c,
+      glyph: (cat.category_meta?.[c] || {}).glyph || '·',
+      pitch: (cat.category_meta?.[c] || {}).pitch || '',
+      count: counts[c] || 0,
+    })),
+    icons: fs.readdirSync(ICONS).filter((f) => /\.(png|jpg)$/i.test(f)).sort(),
+    // the campaign's tiers, so the UI can offer names while writing ids
+    ladder,
+    packages,
+  };
+}
+
+// --- the TouchDesigner release console -------------------------------
+// FNS_CMS answers only what a running TD can: PI dirty/save, live
+// Pkgversion, Preflight, Stage, the FNS_About.Helpurl override.
+const TD_PORTS = Array.from({ length: 10 }, (_, i) => 36770 + i);
+const TD_TTL = 10000;
+let tdCache = { at: 0, base: null };
+
+/** Base URL of the release console, or null. Identified by its /api/ping
+ *  marker rather than by an open port: FNS_CMS walks the range when its
+ *  default is taken, and something else answering on a port it might have
+ *  used must not be mistaken for it. */
+async function tdBase() {
+  if (tdCache.base !== null && Date.now() - tdCache.at < TD_TTL) return tdCache.base;
+  let found = null;
+  for (const port of TD_PORTS) {
+    try {
+      const r = await fetch(`http://127.0.0.1:${port}/api/ping`,
+                            { signal: AbortSignal.timeout(250) });
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d && d.service === 'fns-release') { found = `http://127.0.0.1:${port}`; break; }
+    } catch {
+      // nothing listening, or not ours -- keep walking
+    }
+  }
+  tdCache = { at: Date.now(), base: found };
+  return found;
+}
+
+/** Check a tdp package with packaging/tdp_pin.py: its module and toxes read
+ *  from the newest wheel, and what it resolves to today, refused when that
+ *  includes a package TouchDesigner ships. Nothing is pinned. */
+function pinTdp(pkg, also) {
+  return new Promise((resolve, reject) => {
+    const args = [path.join(REPO, 'packaging', 'tdp_pin.py'), pkg, '--json'];
+    for (const a of also) args.push('--also', a);
+    const child = spawn(PYTHON, args, { cwd: REPO });
+    let out = '';
+    let err = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { err += d; });
+    child.on('error', (e) => reject(e));
+    child.on('close', () => {
+      try {
+        const r = JSON.parse(out.trim().split('\n').pop());
+        if (r.error) reject(new Error(r.error)); else resolve(r);
+      } catch (e) {
+        reject(new Error((err || out || 'tdp_pin.py gave no answer').trim().slice(-600)));
+      }
+    });
+  });
+}
+
+function runBuild() {
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [path.join(HERE, 'build-site.mjs')], {
+      cwd: WEB,
+      // the local preview shows community drafts, marked; the public build never does
+      env: { ...process.env, FNS_SHOW_DRAFTS: '1' },
+    });
+    let out = '';
+    child.stdout.on('data', (d) => { out += d; });
+    child.stderr.on('data', (d) => { out += d; });
+    child.on('close', (code) => resolve({ ok: code === 0, code, output: out.trim() }));
+    child.on('error', (e) => resolve({ ok: false, code: -1, output: String(e) }));
+  });
+}
+
+// ---------------------------------------------------------------- http
+
+const MIME = {
+  '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8', '.json': 'application/json',
+  '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp',
+  '.gif': 'image/gif', '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2', '.ico': 'image/x-icon',
+};
+
+const json = (res, code, obj) => {
+  const body = JSON.stringify(obj);
+  res.writeHead(code, {
+    'content-type': 'application/json',
+    'content-length': Buffer.byteLength(body),
+    'cache-control': 'no-store',
+  });
+  res.end(body);
+};
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = '';
+    req.on('data', (c) => {
+      data += c;
+      if (data.length > 12e6) reject(new Error('body too large'));
+    });
+    req.on('end', () => {
+      try { resolve(data ? JSON.parse(data) : {}); } catch (e) { reject(e); }
+    });
+  });
+}
+
+/** Serve website/ so the CMS can preview the built pages on its own origin. */
+function serveStatic(req, res, urlPath) {
+  let rel = decodeURIComponent(urlPath.split('?')[0]);
+  if (rel.endsWith('/')) rel += 'index.html';
+  const full = path.join(WEB, rel);
+  if (!full.startsWith(WEB + path.sep) || !fs.existsSync(full) || fs.statSync(full).isDirectory()) {
+    res.writeHead(404, { 'content-type': 'text/plain' });
+    return res.end('not found');
+  }
+  res.writeHead(200, {
+    'content-type': MIME[path.extname(full).toLowerCase()] || 'application/octet-stream',
+    'cache-control': 'no-store',
+  });
+  fs.createReadStream(full).pipe(res);
+}
+
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://${HOST}:${PORT}`);
+  const p = url.pathname;
+
+  try {
+    if (p === '/' || p === '/cms') {
+      const html = fs.readFileSync(path.join(HERE, 'cms.html'));
+      res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-store' });
+      return res.end(html);
+    }
+
+    if (p === '/api/state' && req.method === 'GET') {
+      return json(res, 200, state());
+    }
+
+    if (p === '/api/categories' && req.method === 'PUT') {
+      const { categories } = await readBody(req);
+      if (!Array.isArray(categories) || !categories.length) {
+        return json(res, 400, { error: 'expected a non-empty categories array' });
+      }
+      const cat = readCatalog();
+      try {
+        writeCatalog(applyCategories(cat, categories));
+      } catch (e) {
+        return json(res, 400, { error: e.message });
+      }
+      return json(res, 200, state());
+    }
+
+    if (p === '/api/pin' && req.method === 'POST') {
+      // Download a community tool ONCE, here, and record what we got.
+      // The pin is the whole safety argument for placing someone else's
+      // code: it promises the bytes a user installs are the bytes a
+      // curator looked at. If the author republishes, the hash stops
+      // matching and the row degrades to a link rather than silently
+      // installing something nobody checked.
+      const { tox_url: toxUrl } = await readBody(req);
+      const u = String(toxUrl || '').trim();
+      if (!u.startsWith('https://') || !u.toLowerCase().endsWith('.tox')) {
+        return json(res, 400, { error: 'tox_url must be an https link to a .tox file' });
+      }
+      try {
+        const r = await fetch(u, { redirect: 'follow' });
+        if (!r.ok) return json(res, 400, { error: `the author's server said ${r.status}` });
+        const buf = Buffer.from(await r.arrayBuffer());
+        if (!buf.length) return json(res, 400, { error: 'that URL returned an empty file' });
+        // A .tox is a container; an HTML error page served with a 200 is
+        // the common failure and would otherwise be pinned as if it were
+        // the tool.
+        if (buf.slice(0, 64).toString('latin1').trim().toLowerCase().startsWith('<')) {
+          return json(res, 400, {
+            error: 'that URL returned a web page, not a .tox -- link directly to the file',
+          });
+        }
+        const sha = crypto.createHash('sha256').update(buf).digest('hex');
+        return json(res, 200, {
+          sha256: sha, bytes: buf.length,
+          pinned_at: new Date().toISOString().slice(0, 10),
+        });
+      } catch (e) {
+        return json(res, 400, { error: `could not fetch it: ${e.message}` });
+      }
+    }
+
+    if (p === '/api/pin-tdp' && req.method === 'POST') {
+      const body = await readBody(req);
+      const pkg = String(body.package || '').trim();
+      const also = (Array.isArray(body.also) ? body.also : []).map((a) => String(a).trim()).filter(Boolean);
+      if (!PYPI_NAME.test(pkg) || !also.every((a) => PYPI_NAME.test(a))) {
+        return json(res, 400, { error: 'give PyPI project names (letters, digits, - _ .)' });
+      }
+      try {
+        return json(res, 200, await pinTdp(pkg, also));
+      } catch (e) {
+        return json(res, 400, { error: e.message });
+      }
+    }
+
+    if (p === '/api/recommendations' && req.method === 'PUT') {
+      try {
+        saveCommunity(await readBody(req));
+      } catch (e) {
+        return json(res, 400, { error: e.message });
+      }
+      return json(res, 200, state());
+    }
+
+    if (p === '/api/community/image' && req.method === 'POST') {
+      try {
+        const name = saveCommunityImage(await readBody(req));
+        return json(res, 200, { name, images: communityImages() });
+      } catch (e) {
+        return json(res, 400, { error: e.message });
+      }
+    }
+
+    if (p.startsWith('/community/images/') && req.method === 'GET') {
+      // the editor's preview of a picture before the site is built
+      const name = decodeURIComponent(p.slice('/community/images/'.length));
+      const full = path.join(COMMUNITY_IMAGES, name);
+      if (!REC_IMAGE.test(name) || !fs.existsSync(full)) {
+        res.writeHead(404, { 'content-type': 'text/plain' });
+        return res.end('not found');
+      }
+      res.writeHead(200, { 'content-type': MIME[path.extname(full).toLowerCase()] || 'application/octet-stream', 'cache-control': 'no-store' });
+      return fs.createReadStream(full).pipe(res);
+    }
+
+    if (p === '/api/render' && req.method === 'POST') {
+      const { markdown } = await readBody(req);
+      return json(res, 200, { html: md.render(String(markdown || '')) });
+    }
+
+    if (p === '/api/build' && req.method === 'POST') {
+      return json(res, 200, await runBuild());
+    }
+
+    // Everything under /api/td/ belongs to the live project, and is
+    // forwarded verbatim. Deliberately a dumb pipe: the release logic
+    // lives in TD, where the project is, and duplicating any of it here
+    // is how the two surfaces drifted apart in the first place.
+    if (p.startsWith('/api/td/')) {
+      const base = await tdBase();
+      if (!base) {
+        return json(res, 503, {
+          error: 'TouchDesigner is not running, or its release console is '
+               + 'closed (pulse Open on /FNS_CMS).',
+        });
+      }
+      const init = { method: req.method };
+      if (req.method === 'POST') {
+        init.headers = { 'content-type': 'application/json' };
+        init.body = JSON.stringify(await readBody(req));
+      }
+      const r = await fetch(base + '/api/' + p.slice('/api/td/'.length), init);
+      const text = await r.text();
+      res.writeHead(r.status, { 'content-type': 'application/json' });
+      return res.end(text);
+    }
+
+    if (p.startsWith('/api/package/')) {
+      let cat = readCatalog();
+      const name = decodeURIComponent(p.slice('/api/package/'.length));
+      const file = docPath(cat, name);
+      if (!file) return json(res, 404, { error: `unknown package "${name}"` });
+
+      if (req.method === 'GET') {
+        return json(res, 200, loadPackage(cat, name) || { error: 'no docs file' });
+      }
+
+      if (req.method === 'PUT') {
+        const body = await readBody(req);
+
+        // Refuse to clobber a file that changed underneath the editor —
+        // most likely the seeder or a git operation ran since it loaded.
+        const onDisk = mtimeOf(file);
+        if (body.mtime && onDisk && Math.abs(onDisk - body.mtime) > 1) {
+          return json(res, 409, {
+            error: 'This file changed on disk since you opened it. Reload before saving.',
+          });
+        }
+
+        // Gating goes through gate_package -- it writes catalog.json AND
+        // wrangler.toml together, and a package gated in one but not the
+        // other is a customer paying for a 403. It runs FIRST and the
+        // catalogue is re-read after, because that call rewrites the file
+        // this handler is holding in memory.
+        if (typeof body.access === 'string') {
+          try {
+            setAccess(name, body.access.trim());
+          } catch (e) {
+            return json(res, 400, { error: String(e.message || e) });
+          }
+          cat = readCatalog();
+        }
+        // Preview: not released yet. After access, so a save that sets both
+        // leaves the grants of the access it now names (docs/PreviewPackages.md).
+        if (typeof body.preview === 'boolean'
+            && body.preview !== (cat.packages[name].preview === true)) {
+          try {
+            setPreview(name, body.preview);
+          } catch (e) {
+            return json(res, 400, { error: String(e.message || e) });
+          }
+          cat = readCatalog();
+        }
+
+        const curatedKeys = ['author', 'source', 'alternatives_for', 'family', ...LINK_KEYS, ...FOREIGN_ONLY];
+        if (typeof body.category === 'string' || typeof body.description === 'string'
+            || typeof body.recommended === 'boolean'
+            || typeof body.nopick === 'boolean'
+            || typeof body.placeonce === 'boolean'
+            || typeof body.placement === 'string'
+            || curatedKeys.some((k) => body[k] !== undefined)) {
+          const entry = cat.packages[name];
+          const bad = applyCurated(entry, body);
+          if (bad) return json(res, 400, { error: bad });
+          if (typeof body.category === 'string') {
+            if (!cat.categories.includes(body.category)) {
+              return json(res, 400, { error: `unknown category "${body.category}"` });
+            }
+            entry.category = body.category;
+          }
+          if (typeof body.description === 'string') {
+            entry.description = body.description.trim();
+          }
+          // The picker's Recommended preset (the first-run welcome). Stored
+          // as presence, not as `false`: an unflagged package stays a
+          // two-line entry, and the diff of toggling one is one line.
+          if (typeof body.recommended === 'boolean') {
+            if (body.recommended) entry.recommended = true;
+            else delete entry.recommended;
+          }
+          // Explicit pick only: no bulk selection (Select all, Everything,
+          // Recommended, bundles, the questionnaire) ever ticks it. Stored
+          // as presence like `recommended`; the pair is refused, the same
+          // rule preflight enforces (build_manifest.CatalogProblems).
+          if (typeof body.nopick === 'boolean') {
+            if (body.nopick) entry.nopick = true;
+            else delete entry.nopick;
+          }
+          // Place once (docs/PlaceOnce.md): the picker card offers Place
+          // beside the tick -- into this project only, never carried into the
+          // next one by "Set up like last time". Presence-style like nopick.
+          if (typeof body.placeonce === 'boolean') {
+            if (body.placeonce) entry.placeonce = true;
+            else delete entry.placeonce;
+          }
+          if (entry.nopick && entry.recommended) {
+            return json(res, 400, { error: 'an explicit-pick-only package cannot be Recommended: the Recommended set is a bulk selection' });
+          }
+          // Where the installer lands the package. Stored as presence:
+          // the default (toolkit container) stays a two-line entry.
+          if (typeof body.placement === 'string') {
+            const pl = body.placement.trim();
+            if (pl && pl !== 'pane' && pl !== 'root' && pl !== 'none') {
+              return json(res, 400, { error: `unknown placement "${pl}"` });
+            }
+            if (pl) entry.placement = pl;
+            else delete entry.placement;
+          }
+          writeCatalog(cat);
+        }
+
+        const data = orderedData({ ...(body.data || {}), package: name });
+        // the site build refuses it; refuse it here so the save that
+        // would break the build cannot happen
+        delete data.credit;
+        // Trim blank lines off the ends only. A plain .trim() would also eat
+        // the two trailing spaces on the final line, which are a markdown
+        // hard line break — the CMS must not silently rewrite prose.
+        const prose = String(body.body || '').replace(/^\n+/, '').replace(/\n+$/, '');
+        const text = matter.stringify(`\n${prose}\n`, data, { lineWidth: -1 });
+        fs.writeFileSync(file, text);
+
+        return json(res, 200, loadPackage(readCatalog(), name));
+      }
+    }
+
+    return serveStatic(req, res, p);
+  } catch (err) {
+    return json(res, 500, { error: String(err && err.message || err) });
+  }
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`FNSTools CMS  ->  http://${HOST}:${PORT}`);
+  console.log('editing packaging/catalog.json and packaging/docs/*.md directly.');
+  console.log('review with `git diff`, undo with `git checkout -- packaging/`.');
+});

@@ -1,0 +1,21 @@
+# Vercel builds this site itself (see vercel.json), so everything the build
+# needs must reach the builder: package.json, package-lock.json, tools/, and
+# -- crucially -- packaging/docs/ and packaging/catalog.json, which live
+# OUTSIDE this directory.
+#
+# PATTERNS HERE MATCH THE WHOLE REPO, not just website/. A bare `docs/` also
+# matches /packaging/docs/ and /docs/, which silently deletes the markdown
+# the build reads and fails it with "catalog.json has package X with no
+# packaging/docs/X.md". Do not add unanchored directory names.
+#
+# The generated docs/ and get/ need no entry: they are gitignored, so a
+# deploy clone never contains them.
+
+node_modules/
+
+# local scratch and CLI state. .env.local holds a VERCEL_OIDC_TOKEN the CLI
+# writes on link — git ignores it, and it has no business being uploaded.
+.DS_Store
+*.log
+.env*
+.vercel/

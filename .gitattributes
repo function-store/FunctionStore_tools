@@ -4,7 +4,7 @@
 # Embody / Envoy -- normalize TD line endings (auto-managed)
 *.py text eol=lf
 *.md text eol=lf
-*.tdn text eol=lf diff=tdn
+*.tdn text eol=lf diff=tdxn
 *.json text eol=lf
 *.tsv text eol=lf
 *.xml text eol=lf

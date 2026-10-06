@@ -1,0 +1,2441 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>FNSTools CMS</title>
+<link rel="icon" href="/favicon.png" type="image/png" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a; --bg-1: #111111; --bg-2: #161616; --bg-3: #1c1c1c;
+    --border: #262626; --border-strong: #3a3a3a;
+    --text: #f5f5f5; --text-dim: #a3a3a3; --text-faint: #737373;
+    --accent: #fbbf24; --accent-dim: #2a1f08; --accent-bright: #fcd34d;
+    --green: #4ade80; --red: #f87171;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif; font-size: 14px; line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  code, kbd, textarea, .mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+  /* ───── Top bar ───── */
+  .bar {
+    display: flex; align-items: center; gap: 14px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    background: var(--bg-1); flex-shrink: 0;
+  }
+  .bar h1 { margin: 0; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+  .bar h1 span { color: var(--accent); }
+  .bar .spacer { flex: 1; }
+  .dirty { font-size: 12px; color: var(--accent); display: none; }
+  .dirty.on { display: inline; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
+    border: 1px solid var(--border-strong); background: transparent;
+    color: var(--text); cursor: pointer; font-family: inherit;
+    transition: all 0.12s ease; white-space: nowrap;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btn-primary { background: var(--accent); border-color: var(--accent); color: #0a0a0a; }
+  .btn-primary:hover:not(:disabled) { background: var(--accent-bright); border-color: var(--accent-bright); color: #0a0a0a; }
+  .btn:disabled { opacity: 0.45; cursor: default; }
+
+  /* ───── Layout ───── */
+  .cols { flex: 1; display: grid; grid-template-columns: 250px minmax(0,1fr) minmax(0,1fr); min-height: 0; }
+  .col { min-height: 0; overflow-y: auto; }
+  .col + .col { border-left: 1px solid var(--border); }
+  /* The release view is a wide table with actions on its right edge, and
+     the preview column has nothing to preview while it is open -- it would
+     sit there showing whichever package was last selected, clipping the
+     buttons that matter. Give the table the room. */
+  body.mode-release .cols { grid-template-columns: 250px minmax(0,1fr); }
+  body.mode-release .col:last-child { display: none; }
+  /* and when the window is still too narrow, the table scrolls rather than
+     hiding the action at its right edge -- a PI Save you cannot reach is
+     worse than one you have to scroll to */
+  body.mode-release .col:nth-child(2) { overflow-x: auto; }
+  table.rel { min-width: 640px; }
+
+  /* ───── Package list ───── */
+  .side-top { position: sticky; top: 0; background: var(--bg); padding: 12px; border-bottom: 1px solid var(--border); z-index: 2; }
+  input[type=search], input[type=text], textarea, select {
+    width: 100%; padding: 7px 10px; border-radius: 7px;
+    background: var(--bg-2); border: 1px solid var(--border); color: var(--text);
+    font-family: inherit; font-size: 13px;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); }
+  .filters { display: flex; gap: 6px; margin-top: 8px; }
+  .chip {
+    flex: 1; padding: 4px 6px; border-radius: 6px; font-size: 11px; font-weight: 600;
+    background: var(--bg-2); border: 1px solid var(--border); color: var(--text-dim);
+    cursor: pointer; text-align: center;
+  }
+  .chip.on { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+  .cat-label {
+    padding: 14px 12px 5px; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.09em; text-transform: uppercase; color: var(--text-faint);
+  }
+  .pkg {
+    display: flex; align-items: center; gap: 7px;
+    padding: 6px 12px; cursor: pointer; border-left: 2px solid transparent;
+  }
+  .pkg:hover { background: var(--bg-2); }
+  .pkg.on { background: var(--accent-dim); border-left-color: var(--accent); }
+  .pkg-name { flex: 1; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pkg.on .pkg-name { color: var(--accent-bright); font-weight: 600; }
+  .tag { font-size: 9px; font-weight: 700; padding: 2px 5px; border-radius: 4px; letter-spacing: 0.04em; }
+  .tag-stub { background: #3b2508; color: #fdba74; }
+  .tag-todo { background: var(--bg-3); color: var(--text-faint); }
+  .tag-rec { background: var(--accent-dim, #2a1f08); color: var(--accent, #fbbf24); }
+  .tag-net { background: #0a2a1f; color: #4ade80; }
+  .tag-warn { background: #2a1408; color: #fdba74; }
+  /* the tox changed since it last shipped (PI build moved, version not yet) */
+  .tag-chg { background: #2a1f08; color: #fdba74; }
+  /* Read-only: gating is set in catalog.json, not here. */
+  .tag-plus {
+    background: hsl(var(--tier-hue, 38) 70% 12%);
+    color: hsl(var(--tier-hue, 38) 85% 62%);
+    border: 1px solid hsl(var(--tier-hue, 38) 70% 32%);
+  }
+  /* the row itself carries the tier, so a scan down the list reads access
+     without reading badges */
+  /* the release button carries the live-project state */
+  .btn.live::before {
+    content: ''; display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; background: #4ade80; margin-right: 7px;
+    vertical-align: 1px;
+  }
+  .btn.off { opacity: 0.55; }
+  .btn.off::before {
+    content: ''; display: inline-block; width: 7px; height: 7px;
+    border-radius: 50%; background: #666; margin-right: 7px;
+    vertical-align: 1px;
+  }
+
+  /* discovered shortcut: the key is a fact, the sentence is the work */
+  .hk-row { display: grid; grid-template-columns: auto 1fr auto; gap: 10px;
+    align-items: center; padding: 4px 0; }
+  .hk-row kbd {
+    background: var(--panel, #1f2226); border: 1px solid var(--line, #31353b);
+    border-bottom-width: 2px; border-radius: 4px; padding: 2px 7px;
+    font: 500 12px/1.6 ui-monospace, monospace; color: var(--ink, #e8e6e1);
+    white-space: nowrap;
+  }
+  .hk-row .hint { font-size: 11px; opacity: .7; }
+
+  .feat-row.feat-quiet { padding: 4px 0; border-bottom: 1px solid transparent; }
+  .feat-row.feat-quiet .feat-name { font-weight: 500; }
+  .feat-add {
+    background: none; border: 1px dashed var(--line, #333); color: var(--mut, #8b9096);
+    border-radius: 5px; padding: 2px 8px; font-size: 12px; cursor: pointer;
+  }
+  .feat-add:hover { color: var(--ink, #e8e6e1); border-color: var(--mut, #8b9096); }
+
+  .pkg-plus {
+    border-left: 3px solid hsl(var(--tier-hue, 38) 75% 48%);
+    background: linear-gradient(90deg,
+      hsl(var(--tier-hue, 38) 60% 16% / 0.55), transparent 62%);
+  }
+  .pkg-plus .pkg-name { color: hsl(var(--tier-hue, 38) 80% 70%); font-weight: 600; }
+  .pkg-plus:hover { background: linear-gradient(90deg,
+    hsl(var(--tier-hue, 38) 60% 22% / 0.7), transparent 62%); }
+  .pkg-plus.on { background: hsl(var(--tier-hue, 38) 55% 20%); }
+  label.check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  label.check input { width: auto; margin: 0; accent-color: var(--accent, #fbbf24); }
+
+  /* ───── Editor ───── */
+  .pane { padding: 16px 18px 40px; }
+  .field { margin-bottom: 14px; }
+  .field > label {
+    display: block; margin-bottom: 5px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.07em;
+    text-transform: uppercase; color: var(--text-faint);
+  }
+  .hint { font-size: 11px; color: var(--text-faint); margin-top: 4px; font-weight: 400; text-transform: none; letter-spacing: 0; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  textarea { resize: vertical; line-height: 1.55; }
+  #body { min-height: 400px; font-size: 13px; }
+  h2.pane-title { margin: 0 0 4px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .pane-sub { margin: 0 0 18px; font-size: 12px; color: var(--text-faint); }
+  .pane-sub a { color: var(--text-dim); }
+
+  /* ───── Features ───── */
+  .feat-row {
+    display: grid; grid-template-columns: 1fr 150px 26px; gap: 8px;
+    align-items: start; padding: 9px 0; border-top: 1px solid var(--border);
+  }
+  .feat-row:first-of-type { border-top: none; }
+  .feat-name { font-size: 13px; font-weight: 600; }
+  .feat-anchor { font-size: 11px; color: var(--text-faint); }
+  .feat-hk { margin-top: 6px; font-size: 12px; min-height: 30px; }
+  .icon-x { background: none; border: none; color: var(--text-faint); cursor: pointer; font-size: 15px; padding: 2px; }
+  .icon-x:hover { color: var(--red); }
+  .empty { font-size: 12px; color: var(--text-faint); padding: 10px 0; }
+
+  /* ───── Categories panel ───── */
+  .rec-place { display:flex; gap:8px; align-items:center; margin-top:6px; }
+  .rec-place input { flex:1; }
+  .rec-place .hint { white-space:nowrap; font-size:11px; }
+  .rec-post { margin-top:10px; border-top:1px dashed var(--border, #333); padding-top:8px; }
+  .rec-post > summary { cursor:pointer; font-weight:600; font-size:12.5px; }
+  .rec-post > summary .hint { font-weight:400; margin-left:6px; }
+  .rec-grid { display:grid; grid-template-columns:1fr auto 1fr 1fr; gap:8px; align-items:end; margin:8px 0; }
+  .rec-grid label { display:flex; flex-direction:column; gap:3px; font-size:11.5px; margin:0; }
+  .rec-grid label.wide { grid-column:1 / -1; }
+  .rec-grid label.wide:has(select) { flex-direction:row; align-items:center; gap:8px; }
+  .rec-thumb { display:block; max-width:280px; max-height:160px; border-radius:6px; margin:4px 0 8px; }
+  .rec-md-head { display:flex; gap:8px; align-items:center; margin:8px 0 4px; font-size:12px; }
+  .rec-md-head > span { flex:1; }
+  .rec-md { width:100%; font-size:12.5px; line-height:1.5; }
+  .rec-preview { border:1px solid var(--border, #333); border-radius:6px; padding:10px 14px; margin-top:6px; max-height:420px; overflow:auto; }
+  .rec-preview img { max-width:100%; }
+  .cat-row {
+    display: grid; grid-template-columns: 22px 52px 1fr 44px 26px;
+    gap: 8px; align-items: start;
+    padding: 10px 0; border-top: 1px solid var(--border);
+  }
+  .cat-row:first-of-type { border-top: none; }
+  .cat-move { display: flex; flex-direction: column; gap: 2px; }
+  .cat-move button {
+    background: var(--bg-2); border: 1px solid var(--border); color: var(--text-dim);
+    border-radius: 4px; cursor: pointer; font-size: 9px; line-height: 1; padding: 3px 0;
+  }
+  .cat-move button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .cat-move button:disabled { opacity: 0.3; cursor: default; }
+  .cat-glyph { text-align: center; font-size: 17px; }
+  .cat-count { font-size: 11px; color: var(--text-faint); padding-top: 8px; text-align: right; }
+  .cat-pitch { margin-top: 6px; font-size: 12px; }
+  .warn {
+    margin: 0 0 16px; padding: 10px 14px; border-radius: 8px;
+    background: #2a1408; border: 1px solid rgba(251,146,60,0.35);
+    color: #fdba74; font-size: 12px; line-height: 1.5;
+  }
+
+  /* ───── Preview ───── */
+  .tabs { display: flex; gap: 4px; padding: 10px 14px 0; position: sticky; top: 0; background: var(--bg); z-index: 2; }
+  .tab {
+    padding: 6px 12px; border-radius: 7px 7px 0 0; font-size: 12px; font-weight: 600;
+    background: transparent; border: 1px solid transparent; border-bottom: none;
+    color: var(--text-faint); cursor: pointer; font-family: inherit;
+  }
+  .tab.on { background: var(--bg-1); border-color: var(--border); color: var(--text); }
+  .tabpanes { border-top: 1px solid var(--border); }
+  .prev { padding: 16px 18px 60px; max-width: 74ch; }
+  .prev h2 { margin: 30px 0 10px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 20px; }
+  .prev h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .prev h3 { margin: 22px 0 8px; font-size: 16px; }
+  .prev h4 { margin: 18px 0 6px; font-size: 14px; color: var(--text-dim); }
+  .prev p, .prev li { font-size: 14px; }
+  .prev ul, .prev ol { padding-left: 20px; }
+  .prev img { max-width: 100%; vertical-align: middle; }
+  .prev code { background: var(--bg-3); border: 1px solid var(--border); padding: 1px 5px; border-radius: 4px; color: var(--accent-bright); font-size: 0.9em; }
+  .prev pre { background: #050505; border: 1px solid var(--border); border-radius: 9px; padding: 14px; overflow-x: auto; }
+  .prev pre code { background: none; border: none; color: var(--text); padding: 0; }
+  .prev blockquote { margin: 0 0 16px; padding: 10px 16px; border-left: 3px solid var(--accent); background: var(--bg-1); color: var(--text-dim); }
+  .prev table { border-collapse: collapse; width: 100%; font-size: 13px; display: block; overflow-x: auto; }
+  .prev th, .prev td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; }
+  iframe.built { width: 100%; height: calc(100vh - 100px); border: 0; background: var(--bg); }
+
+  /* ───── Build output ───── */
+  .log {
+    margin: 0; padding: 14px 18px; font-size: 12px; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word; color: var(--text-dim);
+  }
+  .log.ok { color: var(--green); }
+  .log.err { color: var(--red); }
+  .toast {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 600;
+    background: var(--bg-2); border: 1px solid var(--border-strong);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.5); opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease; z-index: 50;
+  }
+  .toast.on { opacity: 1; }
+  .toast.ok { border-color: var(--green); color: var(--green); }
+  .toast.err { border-color: var(--red); color: var(--red); }
+
+  /* Parameters view: help text is authored ON the parameter, so this is a
+     table of live pars, not a document. */
+  .par-pkg { border: 1px solid var(--border); border-radius: 8px;
+    margin-bottom: 8px; background: var(--bg-1); }
+  .par-pkg > summary { cursor: pointer; padding: 10px 14px; display: flex;
+    align-items: center; gap: 12px; font-weight: 600; font-size: 14px; }
+  .par-pkg > summary::-webkit-details-marker { display: none; }
+  .par-pkg[open] > summary { border-bottom: 1px solid var(--border); }
+  .par-cov { font-size: 12px; font-weight: 500; color: var(--text-dim);
+    margin-left: auto; }
+  .par-cov.done { color: var(--green); }
+  .par-cov.none { color: var(--red); }
+  .par-body { padding: 10px 14px 14px; }
+  .par-page { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-faint); margin: 14px 0 6px; }
+  .par-row { display: grid; grid-template-columns: 210px minmax(0, 1fr);
+    gap: 10px; align-items: start; margin-bottom: 6px; }
+  .par-row .who { font-size: 13px; padding-top: 6px; }
+  .par-row .who code { display: block; font-size: 11px; color: var(--text-faint); }
+  .par-row .who .sty { font-size: 11px; color: var(--text-faint); }
+  .par-row textarea { width: 100%; min-height: 42px; resize: vertical;
+    font: inherit; font-size: 13px; padding: 6px 8px; border-radius: 6px;
+    background: var(--bg-2); border: 1px solid var(--border);
+    color: var(--text); }
+  .par-row textarea:focus { outline: none; border-color: var(--accent); }
+  .par-row.blank textarea { border-color: var(--border-strong); }
+  .par-row.edited textarea { border-color: var(--accent); }
+  .par-sec { font-size: 12px; color: var(--accent); margin: 12px 0 4px;
+    font-weight: 600; }
+  .par-actions { display: flex; gap: 8px; align-items: center;
+    margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <h1>FNSTools <span>CMS</span></h1>
+  <span class="dirty" id="dirty">● unsaved</span>
+  <div class="spacer"></div>
+  <button class="btn" id="cats">Categories</button>
+  <button class="btn" id="community">Community</button>
+  <button class="btn" id="params">Parameters</button>
+  <button class="btn" id="release">Release</button>
+  <button class="btn" id="revert" disabled>Discard changes</button>
+  <button class="btn" id="build">Build site</button>
+  <button class="btn btn-primary" id="save" disabled>Save <kbd style="opacity:.6">⌘S</kbd></button>
+</div>
+
+<div class="cols">
+  <div class="col">
+    <div class="side-top">
+      <input type="search" id="filter" placeholder="Filter packages…" />
+      <div class="filters">
+        <button class="chip on" data-f="all">All</button>
+        <button class="chip" data-f="stub">Stubs</button>
+        <button class="chip" data-f="todo">TODO</button>
+        <button class="chip" data-f="plus" title="Gated: needs a Patreon tier or a Gumroad key">Patreon</button>
+        <button class="chip" data-f="free" title="Installs for anyone">Free</button>
+      </div>
+    </div>
+    <div id="list"></div>
+  </div>
+
+  <div class="col">
+    <div class="pane" id="editor">
+      <p class="empty">Pick a package on the left.</p>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="tabs">
+      <button class="tab on" data-t="preview">Preview</button>
+      <button class="tab" data-t="built">Built page</button>
+      <button class="tab" data-t="log">Build output</button>
+    </div>
+    <div class="tabpanes">
+      <div id="pane-preview"><div class="prev" id="preview"></div></div>
+      <div id="pane-built" hidden></div>
+      <div id="pane-log" hidden><pre class="log" id="log">Not built yet this session.</pre></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+let STATE = null;        // {categories, icons, packages}
+let current = null;      // the loaded package record
+let draft = null;        // edited copy
+let filterMode = 'all';
+
+const api = async (url, opts) => {
+  const res = await fetch(url, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `${res.status} ${res.statusText}`);
+  return data;
+};
+
+function toast(msg, kind) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast on ' + (kind || '');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { t.className = 'toast ' + (kind || ''); }, 2600);
+}
+
+// ───── package list ─────
+
+/** The ladder entry a package unlocks from, or null when it is free (or
+ *  carries an access value the ladder does not know -- which is a state
+ *  worth SEEING rather than smoothing over). */
+function tierOf(p) {
+  if (!p.access) return null;
+  return ((STATE && STATE.ladder) || []).find((t) => t.id === p.access) || null;
+}
+
+/** Hue by POSITION in the ladder, not by a hardcoded colour per tier, so
+ *  adding a rung does not mean editing a palette. Amber at the entry,
+ *  walking toward magenta at the top. */
+function tierHue(tier) {
+  const ladder = (STATE && STATE.ladder) || [];
+  const i = ladder.findIndex((t) => t.id === tier.id);
+  if (i < 0 || ladder.length < 2) return '38';
+  return String(Math.round(38 + (i / (ladder.length - 1)) * 262));
+}
+
+function matchesFilter(p) {
+  const q = $('#filter').value.trim().toLowerCase();
+  if (q && !p.name.toLowerCase().includes(q) &&
+      !(p.description || '').toLowerCase().includes(q)) return false;
+  if (filterMode === 'stub') return p.stub;
+  if (filterMode === 'todo') return p.todos > 0;
+  if (filterMode === 'plus') return !!p.plus;
+  if (filterMode === 'free') return !p.plus;
+  return true;
+}
+
+function renderList() {
+  const list = $('#list');
+  list.innerHTML = '';
+  for (const cat of STATE.categories) {
+    const items = STATE.packages.filter((p) => p.category === cat && matchesFilter(p));
+    if (!items.length) continue;
+    const h = document.createElement('div');
+    h.className = 'cat-label';
+    h.textContent = cat;
+    list.appendChild(h);
+    for (const p of items) {
+      const el = document.createElement('div');
+      // Access earns a row modifier, not just a badge: it decides who can
+      // install, unlike STUB and TODO which are doc-completeness states.
+      const tier = tierOf(p);
+      el.className = 'pkg' + (current && current.name === p.name ? ' on' : '')
+        + (p.plus ? ' pkg-plus' : '');
+      if (tier) el.style.setProperty('--tier-hue', tierHue(tier));
+      el.innerHTML = `<span class="pkg-name"></span>` +
+        (p.plus ? `<span class="tag tag-plus" title="Unlocks from ${
+          tier ? tier.label : p.access}">${
+          tier ? tier.label.toUpperCase() : 'PLUS'}</span>` : '') +
+        (p.recommended ? '<span class="tag tag-rec" title="In the picker’s Recommended preset">REC</span>' : '') +
+        (p.nopick ? '<span class="tag tag-net" title="Explicit pick only: no Select all, preset, bundle or questionnaire ever ticks it">PICK</span>' : '') +
+        (p.preview ? '<span class="tag tag-warn" title="Not released yet: only your account sees and installs it">PREVIEW</span>' : '') +
+        (p.placeonce ? '<span class="tag tag-net" title="The picker offers Place in this project only, never carried into the next (FNS family members get it without the flag)">PLACE</span>' : '') +
+        (p.placement === 'pane' ? '<span class="tag tag-net" title="Installs into the network the user is working in">NET</span>' : '') +
+        (p.placement === 'root' ? '<span class="tag tag-net" title="Installs at the network root, beside the toolkit container">ROOT</span>' : '') +
+        (p.foreign ? '<span class="tag tag-net" title="Foreign package: bytes and version owned upstream, mirrored by foreign_sync.py">FOREIGN</span>' : '') +
+        (p.stub ? '<span class="tag tag-stub">STUB</span>'
+                : (p.todos ? `<span class="tag tag-todo">${p.todos} TODO</span>` : ''));
+      el.querySelector('.pkg-name').textContent = p.name;
+      el.onclick = () => select(p.name);
+      list.appendChild(el);
+    }
+  }
+  if (!list.children.length) {
+    list.innerHTML = '<p class="empty" style="padding:14px 12px">Nothing matches.</p>';
+  }
+}
+
+// ───── editor ─────
+
+const H2_RE = /^##\s+(.+?)\s*$/gm;
+
+function slugify(text) {
+  return String(text)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/`/g, '').toLowerCase().trim()
+    .replace(/[^a-z0-9\s_-]/g, '').replace(/[\s_]+/g, '-')
+    .replace(/-{2,}/g, '-').replace(/^-+|-+$/g, '');
+}
+
+/** Features mirror the body's h2 headings — that is what the build
+ *  validates anchors against. Re-derive them from the prose, keeping any
+ *  icon and hotkeys already attached to a surviving anchor. */
+function syncFeatures() {
+  const keep = new Map((draft.data.features || []).map((f) => [f.anchor, f]));
+  const next = [];
+  for (const m of draft.body.matchAll(H2_RE)) {
+    const name = m[1].replace(/\s*#+\s*$/, '');
+    const anchor = slugify(name);
+    const prev = keep.get(anchor) || {};
+    const f = { name, anchor };
+    if (prev.icon) f.icon = prev.icon;
+    if (prev.hotkeys && prev.hotkeys.length) f.hotkeys = prev.hotkeys;
+    next.push(f);
+  }
+  draft.data.features = next;
+}
+
+const hotkeysToText = (hk) => (hk || []).map((h) => `${h.keys} = ${h.does || ''}`).join('\n');
+const textToHotkeys = (txt) => txt.split('\n').map((l) => l.trim()).filter(Boolean)
+  .map((l) => {
+    const i = l.indexOf('=');
+    return i < 0 ? { keys: l, does: '' }
+                 : { keys: l.slice(0, i).trim(), does: l.slice(i + 1).trim() };
+  }).filter((h) => h.keys);
+
+// The tool-side alternatives list (bindAlternatives): what was read, so Save
+// knows whether the tool needs writing. Null when the field is the catalog's.
+let ALT = null;
+const altNorm = (v) => String(v || '').replace(/,/g, ' ').split(/\s+/).filter(Boolean).join(' ');
+function altChanged() {
+  return !!(ALT && ALT.editable && draft && ALT.name === draft.name
+            && altNorm($('#alternatives_for').value) !== altNorm(ALT.loaded));
+}
+
+function markDirty() {
+  const changed = JSON.stringify(draft) !== JSON.stringify(current) || altChanged();
+  $('#dirty').classList.toggle('on', changed);
+  $('#save').disabled = !changed;
+  $('#revert').disabled = !changed;
+}
+
+// ---------------------------------------------------------------- FNS family
+// docs/OperatorFamilyFromStore.md. A live package's family facts live in its
+// FamManifest, so the form reads /api/td/familyread and writes
+// /api/td/familywrite (FNS_CMS PI-saves the tool); a foreign package's block
+// rides the normal catalog save.
+function famToFields(f) {
+  const x = f || {};
+  $('#fam-type').value = x.op_type || '';
+  $('#fam-name').value = x.op_name || '';
+  $('#fam-label').value = x.op_label || '';
+  $('#fam-group').value = x.op_group || '';
+  $('#fam-filter').checked = !!x.is_filter;
+  $('#fam-compat').value = (x.compatible_types || []).join(' ');
+  $('#fam-words').value = (x.search_words || []).join(' ');
+  $('#fam-summary').value = x.summary || '';
+  const js = (v) => (v && Object.keys(v).length ? JSON.stringify(v, null, 2) : '');
+  $('#fam-parretain').value = js(x.par_retain);
+  $('#fam-stateretain').value = js(x.state_retain);
+  $('#fam-shortcuts').value = js(x.shortcuts);
+}
+
+function famFromFields() {
+  const words = (id) => $(id).value.replace(/,/g, ' ').split(/\s+/).filter(Boolean);
+  const obj = (id, label) => {
+    const t = $(id).value.trim();
+    if (!t) return {};
+    let v;
+    try { v = JSON.parse(t); } catch (e) { throw new Error(`${label} is not JSON: ${e.message}`); }
+    if (!v || typeof v !== 'object' || Array.isArray(v)) throw new Error(`${label} must be a JSON object`);
+    return v;
+  };
+  const type = $('#fam-type').value.trim();
+  if (!/^[a-z][a-z0-9_]*$/.test(type)) throw new Error('Type must be a lowercase word like scenechanger');
+  return {
+    op_type: type,
+    op_name: $('#fam-name').value.trim(),
+    op_label: $('#fam-label').value.trim(),
+    op_group: $('#fam-group').value,
+    is_filter: $('#fam-filter').checked,
+    compatible_types: words('#fam-compat'),
+    search_words: words('#fam-words'),
+    summary: $('#fam-summary').value.trim(),
+    par_retain: obj('#fam-parretain', 'ParRetain'),
+    state_retain: obj('#fam-stateretain', 'StateRetain'),
+    shortcuts: obj('#fam-shortcuts', 'Shortcuts'),
+  };
+}
+
+function famShowProblems(list) {
+  $('#fam-problems').textContent = (list && list.length) ? 'Preflight would refuse: ' + list.join('; ') : '';
+}
+
+// ------------------------------------------------------------ alternatives
+// docs/OpAlternatives.md. A live tool with an op-menu host keeps the types it
+// stands in for in its own `alternatives` table, so the field reads
+// /api/td/altread and writes /api/td/altwrite (FNS_CMS saves the tool). A
+// tool that computes its list (OpTemplates) shows it read-only. A foreign
+// tool, or a live one with no host, keeps the catalog value as before.
+async function bindAlternatives(d) {
+  const input = $('#alternatives_for');
+  const state = $('#alt-state');
+  ALT = null;
+  state.textContent = '';
+  input.disabled = false;
+  if (d.foreign) return;
+  let r;
+  try {
+    r = await api('/api/td/altread', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: d.name }),
+    });
+  } catch (e) {
+    // the reason names the fix (pulse Open on /FNS_CMS, which idles shut)
+    state.textContent = 'Cannot read the tool: ' + e.message + ' A live tool with an op-menu host keeps this list inside the tool.';
+    return;
+  }
+  if (draft !== d || !r.hosted) return;   // another package, or the catalog field applies
+  // the tool is the source: this field no longer feeds the catalog save
+  d.alternatives_for = '';
+  current.alternatives_for = '';
+  input.value = (r.types || []).join(' ');
+  ALT = { name: d.name, editable: !!r.editable, loaded: input.value };
+  if (!r.editable) {
+    input.disabled = true;
+    input.oninput = () => {};
+    state.textContent = 'Computed by the tool (read-only here): it lists what its own library offers.';
+    return;
+  }
+  input.oninput = () => markDirty();
+  state.textContent = 'Read from the tool. Save writes a changed list back: its alternatives table is rewritten and the package saved.';
+}
+
+/** Save's second half: a changed tool-side list is written to the tool. */
+async function saveAlternatives(name) {
+  if (!altChanged()) return null;
+  const w = await api('/api/td/altwrite', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ name, types: $('#alternatives_for').value }),
+  });
+  $('#alternatives_for').value = (w.types || []).join(' ');
+  ALT.loaded = $('#alternatives_for').value;
+  return w;
+}
+
+async function bindFamily(d) {
+  const on = $('#fam-on');
+  const fields = $('#fam-fields');
+  const write = $('#fam-write');
+  const state = $('#fam-state');
+  const inputs = fields.querySelectorAll('input, select, textarea');
+  famShowProblems([]);
+  if (d.foreign) {
+    // catalog curation: the block is part of the draft and saves with it
+    on.checked = !!d.family;
+    fields.hidden = !d.family;
+    famToFields(d.family);
+    state.textContent = 'Foreign package: saved in catalog.json with the rest of this form.';
+    const sync = () => {
+      if (!on.checked) { d.family = null; markDirty(); return; }
+      try { d.family = famFromFields(); famShowProblems([]); markDirty(); }
+      catch (e) { famShowProblems([e.message]); }
+    };
+    on.onchange = () => { fields.hidden = !on.checked; sync(); };
+    inputs.forEach((i) => { i.oninput = sync; i.onchange = sync; });
+    return;
+  }
+  // a live package: the tool is the source of truth
+  on.disabled = true;
+  inputs.forEach((i) => { i.disabled = true; });
+  state.textContent = 'Reading the tool...';
+  let r;
+  try {
+    r = await api('/api/td/familyread', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name: d.name }),
+    });
+  } catch (e) {
+    fields.hidden = true;
+    state.textContent = 'TouchDesigner is not connected, so this cannot be edited: a live package keeps its family facts in its FamManifest, inside the tool. (' + e.message + ')';
+    return;
+  }
+  if (draft !== d) return;   // another package was opened meanwhile
+  on.disabled = false;
+  inputs.forEach((i) => { i.disabled = false; });
+  on.checked = !!r.member;
+  fields.hidden = !r.member;
+  write.hidden = false;
+  famToFields(r.family);
+  famShowProblems(r.problems);
+  const raw = r.raw || {};
+  if (Object.keys(raw).length) {
+    famShowProblems(['unreadable in the tool: ' + Object.keys(raw).join(', ') + ' (fix and write again)']);
+  }
+  state.textContent = r.member
+    ? 'Live package: Write to the tool updates its FamManifest and saves the package.'
+    : 'Live package, not a member. Tick the box, fill in the type, then Write to the tool.';
+  on.onchange = () => { fields.hidden = !on.checked; };
+  write.onclick = async () => {
+    let family = null;
+    if (on.checked) {
+      try { family = famFromFields(); } catch (e) { famShowProblems([e.message]); return; }
+    } else if (r.member && !confirm(`Remove ${d.name} from the FNS family?\n\nIts FamManifest is deleted and the package is saved.`)) {
+      return;
+    }
+    write.disabled = true;
+    try {
+      const w = await api('/api/td/familywrite', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: d.name, family }),
+      });
+      r = { member: w.member, family: w.family };
+      famShowProblems(w.problems);
+      toast(w.member ? `${d.name}: FamManifest written and saved` : `${d.name}: left the FNS family`, w.ok === false ? 'err' : 'ok');
+      state.textContent = w.member
+        ? 'Live package: Write to the tool updates its FamManifest and saves the package.'
+        : 'Live package, not a member. Tick the box, fill in the type, then Write to the tool.';
+    } catch (e) {
+      toast(e.message, 'err');
+    } finally {
+      write.disabled = false;
+    }
+  };
+}
+
+function renderEditor() {
+  const d = draft;
+  const cats = STATE.categories.map((c) =>
+    `<option value="${c}"${c === d.category ? ' selected' : ''}>${c}</option>`).join('');
+  const icons = ['<option value="">— none —</option>'].concat(
+    STATE.icons.map((i) => `<option value="${i}">${i}</option>`)).join('');
+
+  $('#editor').innerHTML = `
+    <h2 class="pane-title"></h2>
+    <p class="pane-sub">packaging/docs/<span class="mono" id="fname"></span>
+      · <a href="/docs/${d.name.toLowerCase().replace(/_/g, '-')}/" target="_blank">open built page ↗</a></p>
+
+    <div class="field">
+      <label for="category">Category <span class="hint">— shown on the landing page and in the installer picker</span></label>
+      <select id="category">${cats}</select>
+    </div>
+
+    <div class="field">
+      <label for="access">Access <span class="hint">— free, or the tier a supporter needs. Saves immediately: it writes catalog.json and the gate's tier map together, so it is not a draft edit.</span></label>
+      <select id="access"></select>
+      <div class="hint" id="accessNote"></div>
+    </div>
+
+    <div class="field">
+      <label for="description">Description <span class="hint">— the curated one-liner. Lives in catalog.json; feeds the picker, the site and the docs lede.</span></label>
+      <textarea id="description" rows="2"></textarea>
+    </div>
+
+    <div class="field">
+      <label class="check"><input type="checkbox" id="recommended" /> Recommended
+        <span class="hint">— part of the picker’s Recommended preset, the starting point the first-run welcome offers. Lives in catalog.json; ships with the next release’s manifest.</span></label>
+    </div>
+
+    <div class="field">
+      <label class="check"><input type="checkbox" id="nopick" /> Explicit pick only
+        <span class="hint">— a normal card that installs and updates, but no bulk selection ever ticks it: not Select all, Everything, Recommended, a bundle or the questionnaire. For hardware-specific integrations. Cannot be combined with Recommended. Lives in catalog.json as <code>nopick</code>; ships with the next release’s manifest.</span></label>
+      <label class="check"><input type="checkbox" id="preview" /> Preview: not released yet
+        <span class="hint">— ships in the next release for your own testing, but only your signed-in account can see or install it: the site, the picker, the questionnaire and the new-tools notice leave it out for everyone else. Its access above is what it will ship at. Untick to release it; everyone is told about it then. Saving runs gate_package, so publish with <code>wrangler deploy</code>. Lives in catalog.json as <code>preview</code>.</span></label>
+      <label class="check"><input type="checkbox" id="placeonce" /> Can be placed without joining the setup
+        <span class="hint">— the picker card offers “place in this project only” beside the tick: the tool lands and updates here, but “Set up like last time” never brings it into the next project. The tick still works for anyone who wants it every time. Lives in catalog.json as <code>placeonce</code>; ships with the next release’s manifest.</span></label>
+    </div>
+
+    <div class="field">
+      <label for="placement">Installs into <span class="hint">— where the installer lands it. Toolkit: a child of the toolkit container, update-tracked in place. Network root: beside the toolkit container — a known address, so it updates and removes like a toolkit tool. Current network: a reusable component spawned into the network the user is working in; instances stay at their spawn version. Not placed: nothing is put anywhere — the install downloads it and records it, and the user reaches it from the FNS tab of the OP Create dialog or from the family folder on disk. This is what an FNS family member wants. Lives in catalog.json; ships with the next release’s manifest.</span></label>
+      <select id="placement">
+        <option value="">Toolkit container (default)</option>
+        <option value="root">Network root — beside the toolkit container</option>
+        <option value="pane">Current network — spawns where the user is working</option>
+        <option value="none">Not placed — on disk only, reached from the FNS tab / OpTemplates</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="alternatives_for">Alternative for <span class="hint">— operator types this tool stands in for, separated by spaces (moviefileinTOP ndiinTOP). Creating one of those types with the alternatives shortcut held offers this tool, from the store when it is not in the project. A live tool with an op-menu host keeps this list in its own <code>alternatives</code> table: this field reads it from TouchDesigner, and Save writes it back to the tool.</span></label>
+      <input type="text" id="alternatives_for" placeholder="moviefileinTOP ndiinTOP" />
+      <div class="hint" id="alt-state"></div>
+    </div>
+
+    <div class="field" id="fam">
+      <label><input type="checkbox" id="fam-on" /> FNS family operator <span class="hint">— listed on the FNS tab of the OP Create dialog, placed as one node, with stubs and in-place updates. A live package keeps this in its own FamManifest: this section reads and writes the tool and saves it. A foreign package keeps it in catalog.json with the rest of this form. Membership implies Current network.</span></label>
+      <div class="hint" id="fam-state"></div>
+      <div id="fam-fields" hidden>
+        <div class="row">
+          <div class="field"><label for="fam-type">Type <span class="hint">— lowercase, unique in the family (scenechanger)</span></label><input type="text" id="fam-type" placeholder="scenechanger" /></div>
+          <div class="field"><label for="fam-name">Name <span class="hint">— names the placed operator (sceneChanger)</span></label><input type="text" id="fam-name" placeholder="sceneChanger" /></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="fam-label">Label <span class="hint">— shown on the tab</span></label><input type="text" id="fam-label" placeholder="Scene Changer" /></div>
+          <div class="field"><label for="fam-group">Group <span class="hint">— the column it sits in</span></label><select id="fam-group"><option value="">—</option><option>COMP</option><option>TOP</option><option>CHOP</option><option>SOP</option><option>MAT</option><option>DAT</option><option>POP</option></select></div>
+        </div>
+        <label><input type="checkbox" id="fam-filter" /> Filter <span class="hint">— takes an input (a filter), rather than generating one</span></label>
+        <div class="row">
+          <div class="field"><label for="fam-compat">Compatible types <span class="hint">— operator families it wires to, separated by spaces</span></label><input type="text" id="fam-compat" placeholder="TOP CHOP" /></div>
+          <div class="field"><label for="fam-words">Search words <span class="hint">— extra words the dialog's search matches</span></label><input type="text" id="fam-words" placeholder="scene crossfade" /></div>
+        </div>
+        <div class="field"><label for="fam-summary">Summary <span class="hint">— the hover help on the tab</span></label><textarea id="fam-summary" rows="2"></textarea></div>
+        <div class="field"><label for="fam-parretain">ParRetain <span class="hint">— JSON: which parameters survive a stub or an update</span></label><textarea id="fam-parretain" rows="3" class="mono" placeholder="{}"></textarea></div>
+        <div class="field"><label for="fam-stateretain">StateRetain <span class="hint">— JSON: extension storage, COMP storage and DAT contents that survive</span></label><textarea id="fam-stateretain" rows="3" class="mono" placeholder="{}"></textarea></div>
+        <div class="field"><label for="fam-shortcuts">Shortcuts <span class="hint">— JSON: {"ctrl.shift.b": "Bypass"}</span></label><textarea id="fam-shortcuts" rows="2" class="mono" placeholder="{}"></textarea></div>
+      </div>
+      <div class="hint" id="fam-problems"></div>
+      <button type="button" id="fam-write" hidden>Write to the tool</button>
+    </div>
+
+    <div class="field">
+      <label for="summary">Summary <span class="hint">— optional fallback used only if Description is empty</span></label>
+      <textarea id="summary" rows="2"></textarea>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="author-name">Author <span class="hint">— who made it. Blank = Function Store. Lives in catalog.json; the picker byline and the docs badge both read it.</span></label>
+        <input type="text" id="author-name" placeholder="e.g. AlphaMoonbase.berlin" />
+      </div>
+      <div class="field">
+        <label for="author-url">Author link</label>
+        <input type="text" id="author-url" placeholder="https://…" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="homepage">Website <span class="hint">— the product’s own site, when it has one</span></label>
+        <input type="text" id="homepage" placeholder="https://…" />
+      </div>
+      <div class="field">
+        <label for="changelog_url">Changelog <span class="hint">— release notes hosted upstream</span></label>
+        <input type="text" id="changelog_url" placeholder="https://…" />
+      </div>
+    </div>
+
+    <details class="field" id="foreignBox"${d.foreign ? ' open' : ''}>
+      <summary>Foreign package <span class="hint">— a product whose bytes and version are owned upstream (another repo, another release rail). Setting a source manifest makes this entry foreign: the release rail mirrors the artifact with <code>foreign_sync.py</code> instead of exporting a live component. Live toolkit packages leave this empty.</span></summary>
+      <div class="row">
+        <div class="field">
+          <label for="source-manifest">Upstream manifest URL</label>
+          <input type="text" id="source-manifest" placeholder="https://…/manifest.json" />
+        </div>
+        <div class="field">
+          <label for="source-tox">Artifact file name <span class="hint">— when the manifest names no url</span></label>
+          <input type="text" id="source-tox" placeholder="Name.tox" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="updates">Updates <span class="hint">— self: the tool runs its own updater after install (the toolkit never touches it). store: the toolkit updater tracks it like a tool (needs a Pkgversion par inside the artifact).</span></label>
+          <select id="updates">
+            <option value="">store (default)</option>
+            <option value="self">self — the tool keeps itself current</option>
+            <option value="store">store — the toolkit updater tracks it</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="min_td_build">Minimum TD build <span class="hint">— e.g. 2025.33070; blank = no floor</span></label>
+          <input type="text" id="min_td_build" placeholder="2025.33070" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="help_url">Docs URL <span class="hint">— the upstream documentation page; live packages derive theirs, foreign ones declare it</span></label>
+        <input type="text" id="help_url" placeholder="https://…" />
+      </div>
+    </details>
+
+    <div class="row">
+      <div class="field">
+        <label for="platforms">Platforms <span class="hint">— blank = both</span></label>
+        <select id="platforms">
+          <option value="">Windows &amp; macOS</option>
+          <option value="windows">Windows only</option>
+          <option value="macos">macOS only</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="video">Video</label>
+        <input type="text" id="video" placeholder="https://youtu.be/…" />
+      </div>
+    </div>
+
+    <div class="field">
+      <div id="hotkeysBox"></div>
+    </div>
+
+    <div class="field">
+      <label>Headings <span class="hint">— the <code>##</code> headings in the documentation below, which become the page's table of contents. Optionally give one an icon or the keys it documents. Stored as <code>features:</code>.</span></label>
+      <div id="features"></div>
+    </div>
+
+    <div class="field">
+      <label for="body">Documentation <span class="hint">— markdown. <code>##</code> headings become the page's sections and anchors.</span></label>
+      <textarea id="body" spellcheck="true"></textarea>
+    </div>`;
+
+  $('.pane-title').textContent = d.name;
+  $('#fname').textContent = d.name + '.md';
+  $('#description').value = d.description || '';
+  // Access: options come from the campaign's ladder, so the UI never
+  // invents a tier id -- it offers names and the CLI writes the numbers.
+  const acc = $('#access');
+  if (acc) {
+    const ladder = (STATE && STATE.ladder) || [];
+    acc.innerHTML = '<option value="">Free</option>' + ladder.map((t) =>
+      `<option value="${t.id}">${t.label} and above</option>`).join('') +
+      (d.access && !ladder.some((t) => t.id === d.access)
+        ? `<option value="${d.access}">${d.access} (not in the ladder)</option>` : '');
+    acc.value = d.access || '';
+    $('#accessNote').textContent = d.access
+      ? 'Gated. Run wrangler deploy for the map to take effect.' : '';
+    acc.onchange = async (e) => {
+      const value = e.target.value;
+      try {
+        await api(`/api/package/${encodeURIComponent(d.name)}`, {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ access: value }),
+        });
+      } catch (err) {
+        toast(err.message, 'err');
+        acc.value = d.access || '';
+        return;
+      }
+      d.access = value;
+      $('#accessNote').textContent = value
+        ? 'Gated. Run wrangler deploy for the map to take effect.' : '';
+      toast(value ? 'Gated — wrangler deploy to apply' : 'Now free', 'ok');
+      STATE = await api('/api/state');
+      renderList();
+    };
+  }
+  $('#recommended').checked = !!d.recommended;
+  $('#nopick').checked = !!d.nopick;
+  $('#placeonce').checked = !!d.placeonce;
+  $('#preview').checked = !!d.preview;
+  $('#placement').value = d.placement || '';
+  $('#summary').value = d.data.summary || '';
+  $('#author-name').value = (d.author && d.author.name) || '';
+  $('#author-url').value = (d.author && d.author.url) || '';
+  $('#homepage').value = d.homepage || '';
+  $('#changelog_url').value = d.changelog_url || '';
+  $('#source-manifest').value = (d.source && d.source.manifest) || '';
+  $('#source-tox').value = (d.source && d.source.tox) || '';
+  $('#updates').value = d.updates || '';
+  $('#min_td_build').value = d.min_td_build || '';
+  $('#help_url').value = d.help_url || '';
+  $('#alternatives_for').value = d.alternatives_for || '';
+  $('#video').value = d.data.video || '';
+  $('#body').value = d.body;
+  const plats = d.data.platforms || [];
+  $('#platforms').value = plats.length === 1 ? plats[0] : '';
+
+  $('#category').onchange = (e) => { d.category = e.target.value; markDirty(); renderList(); };
+  $('#description').oninput = (e) => { d.description = e.target.value; markDirty(); };
+  $('#recommended').onchange = (e) => { d.recommended = e.target.checked; markDirty(); renderList(); };
+  $('#nopick').onchange = (e) => { d.nopick = e.target.checked; markDirty(); renderList(); };
+  $('#placeonce').onchange = (e) => { d.placeonce = e.target.checked; markDirty(); renderList(); };
+  $('#preview').onchange = (e) => { d.preview = e.target.checked; markDirty(); renderList(); };
+  $('#placement').onchange = (e) => { d.placement = e.target.value; markDirty(); renderList(); };
+  $('#summary').oninput = (e) => { setData('summary', e.target.value.trim()); };
+  $('#video').oninput = (e) => { setData('video', e.target.value.trim()); };
+  $('#platforms').onchange = (e) => {
+    setData('platforms', e.target.value ? [e.target.value] : undefined);
+  };
+  // Curated catalog fields (docs/ForeignPackages.md §1b). They live on the
+  // draft itself, not in `data` (which is the doc's frontmatter).
+  const author = () => {
+    const name = $('#author-name').value.trim();
+    const url = $('#author-url').value.trim();
+    d.author = name ? { name, url } : null;
+    markDirty();
+  };
+  $('#author-name').oninput = author;
+  $('#author-url').oninput = author;
+  $('#homepage').oninput = (e) => { d.homepage = e.target.value.trim(); markDirty(); };
+  $('#changelog_url').oninput = (e) => { d.changelog_url = e.target.value.trim(); markDirty(); };
+  const source = () => {
+    const manifest = $('#source-manifest').value.trim();
+    const tox = $('#source-tox').value.trim();
+    d.source = manifest ? { manifest, tox, package: (d.source && d.source.package) || '' } : null;
+    d.foreign = !!manifest;
+    markDirty();
+    renderList();
+  };
+  $('#source-manifest').oninput = source;
+  $('#source-tox').oninput = source;
+  $('#updates').onchange = (e) => { d.updates = e.target.value; markDirty(); };
+  $('#min_td_build').oninput = (e) => { d.min_td_build = e.target.value.trim(); markDirty(); };
+  $('#help_url').oninput = (e) => { d.help_url = e.target.value.trim(); markDirty(); };
+  $('#alternatives_for').oninput = (e) => { d.alternatives_for = e.target.value.trim(); markDirty(); };
+  bindFamily(d);
+  bindAlternatives(d);
+
+  let previewTimer;
+  $('#body').oninput = (e) => {
+    d.body = e.target.value;
+    syncFeatures();
+    renderFeatures();
+    markDirty();
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(renderPreview, 250);
+  };
+
+  renderFeatures();
+  renderHotkeys();
+  loadHotkeys().then(renderHotkeys);   // fills in once TD answers
+  renderPreview();
+  markDirty();
+
+  function setData(key, value) {
+    if (value === undefined || value === '' ||
+        (Array.isArray(value) && !value.length)) delete d.data[key];
+    else d.data[key] = value;
+    markDirty();
+  }
+}
+
+// Features opened by hand on the CURRENT package. Cleared when another is
+// selected, so a row opened here does not follow you to the next doc.
+let featOpen = new Set();
+
+/** Bindings per package, discovered by FNS_HotkeyManager. Fetched once
+ *  and only when TouchDesigner is reachable; without it the section says
+ *  so rather than offering a box to type keys into. */
+let HOTKEYS = null;
+
+async function loadHotkeys() {
+  if (HOTKEYS) return HOTKEYS;
+  try {
+    const d = await api('/api/td/hotkeys');
+    HOTKEYS = d.packages || {};
+  } catch (e) {
+    HOTKEYS = {};
+  }
+  return HOTKEYS;
+}
+
+function renderHotkeys() {
+  const box = $('#hotkeysBox');
+  if (!box || !draft) return;
+  const bound = (HOTKEYS || {})[draft.name] || [];
+  const said = new Map((draft.data.hotkeys || []).map((h) => [keyId(h.keys), h.does || '']));
+  // legacy: sentences that were attached to a heading before the keys
+  // became a package-level, derived fact
+  for (const f of (draft.data.features || [])) {
+    for (const h of (f.hotkeys || [])) {
+      if (h && h.keys && !said.has(keyId(h.keys))) said.set(keyId(h.keys), h.does || '');
+    }
+  }
+  if (!HOTKEYS || !Object.keys(HOTKEYS).length) {
+    box.innerHTML = '<label>Shortcuts <span class="hint">— discovered from '
+      + 'FNS_HotkeyManager. Start TouchDesigner and open the release server '
+      + 'on <code>/FNS_CMS</code> to see them.</span></label>';
+    return;
+  }
+  if (!bound.length) {
+    box.innerHTML = '<label>Shortcuts <span class="hint">— this package '
+      + 'binds none.</span></label>';
+    return;
+  }
+  box.innerHTML = '<label>Shortcuts <span class="hint">— the keys '
+    + 'TouchDesigner reports for this package, and they are GLOBAL -- '
+    + 'panel-scoped bindings are a local control scheme and are not '
+    + 'discovered. Read-only: rebind them in the tool. Say what each '
+    + 'one does.</span></label>'
+    + bound.map((h) => `<div class="hk-row">
+        <kbd>${prettyKeys(h.keys)}</kbd>
+        <input class="hk-does" data-keys="${String(h.keys).replace(/"/g, '&quot;')}"
+          placeholder="what this shortcut does" />
+        <span class="hint mono" title="the parameter this binding lives on">${h.op}<br>${h.par}</span>
+      </div>`).join('');
+  box.querySelectorAll('.hk-does').forEach((i) => {
+    i.value = said.get(keyId(i.dataset.keys)) || '';
+    i.oninput = () => {
+      const rows = (draft.data.hotkeys || []).filter((h) => keyId(h.keys) !== keyId(i.dataset.keys));
+      if (i.value.trim()) rows.push({ keys: i.dataset.keys, does: i.value.trim() });
+      if (rows.length) draft.data.hotkeys = rows; else delete draft.data.hotkeys;
+      markDirty();
+    };
+  });
+}
+
+/** Same identity rule the site build uses, so a sentence written against
+ *  one spelling still finds a key reported in another. */
+function keyId(raw) {
+  return String(raw).toLowerCase().replace(/\([^)]*\)/g, '')
+    .split(/[.+\-\s]+/).filter(Boolean).sort().join('+');
+}
+
+function prettyKeys(raw) {
+  return String(raw).trim().split(/\s+/).map((c) => c.split('.')
+    .map((k) => (k.length === 1 ? k.toUpperCase()
+      : k.charAt(0).toUpperCase() + k.slice(1))).join('+')).join('  /  ');
+}
+
+function renderFeatures() {
+  const wrap = $('#features');
+  if (!wrap) return;
+  const feats = draft.data.features || [];
+  if (!feats.length) {
+    wrap.innerHTML = '<p class="empty">No <code>##</code> headings yet — add one in the documentation below.</p>';
+    return;
+  }
+  wrap.innerHTML = '';
+  feats.forEach((f, i) => {
+    const row = document.createElement('div');
+    const has = !!f.icon;
+    // Open only where there is something to see. Everything else stays a
+    // line until asked: 16 of 96 feature entries across the docs carry
+    // any of this, and an empty dropdown per heading is not information.
+    const open = has || featOpen.has(f.anchor);
+    row.className = 'feat-row' + (open ? '' : ' feat-quiet');
+    row.innerHTML = `
+      <div>
+        <div class="feat-name"></div>
+        <div class="feat-anchor mono"></div>
+
+      </div>
+      <select class="feat-icon"${open ? '' : ' hidden'}></select>
+      <button class="feat-add"${open ? ' hidden' : ''} title="Give this heading an icon">+ icon</button>
+      <button class="icon-x"${open ? '' : ' hidden'} title="Clear the icon">×</button>`;
+    row.querySelector('.feat-name').textContent = f.name;
+    row.querySelector('.feat-anchor').textContent = '#' + f.anchor;
+    row.querySelector('.feat-add').onclick = () => {
+      featOpen.add(f.anchor);
+      renderFeatures();
+    };
+    const sel = row.querySelector('.feat-icon');
+    sel.innerHTML = ['<option value="">— no icon —</option>']
+      .concat(STATE.icons.map((ic) => `<option value="${ic}">${ic}</option>`)).join('');
+    sel.value = f.icon || '';
+    sel.onchange = () => {
+      if (sel.value) f.icon = sel.value; else delete f.icon;
+      markDirty();
+    };
+    row.querySelector('.icon-x').onclick = () => {
+      delete f.icon;
+      featOpen.delete(f.anchor);      // clearing closes it again
+      renderFeatures(); markDirty();
+    };
+    wrap.appendChild(row);
+  });
+}
+
+async function renderPreview() {
+  try {
+    const { html } = await api('/api/render', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ markdown: draft.body }),
+    });
+    $('#preview').innerHTML = html;
+  } catch (e) { /* preview is best-effort */ }
+}
+
+// ───── categories ─────
+
+let catDraft = null;   // non-null while the categories panel is open
+
+let recDraft = null;
+
+/** Tools by OTHER creators. Edited here, published on its own with
+ *  `python packaging/upload.py --recommendations` -- deliberately NOT with a
+ *  release, so that REMOVING a recommendation reaches every install in
+ *  minutes rather than waiting for one. */
+// --- release console (lives in TouchDesigner, shown here) -------------
+// Everything below reads /api/td/*, which the server forwards to FNS_CMS
+// on loopback. It answers only what a running project can: PI dirty and
+// Save, the live Pkgversion against what the world has, Preflight, Stage,
+// and the one FNS_About.Helpurl override.
+let relRows = null;
+// selection survives a re-render, so ticking a box does not reset the list
+let relPicked = new Set();
+// the install rails: not a package (their dirt lives in repo files PI
+// cannot see) but a first-class release citizen with its own row
+let relRails = null;
+let relRailsPicked = false;
+// the prune rail: vanished (published but gone -- Stage refuses until
+// declared), stale retired (declared but still live), prunable retired
+// (declared, gone, and no published manifest still lists it)
+let relPruning = null;
+// Published-column provenance: it reads the palette STORE CACHE, which
+// lags the bucket until a store refresh -- these two labels let the page
+// say so instead of looking broken right after an upload
+let relPublishedRelease = '';
+let relStagedRelease = '';
+
+// seed the selection from the data once per OPEN of the release view --
+// shippable rows arrive pre-ticked, but a Refresh never re-ticks what the
+// user deliberately unticked
+let relSeedPicks = false;
+
+async function openRelease() {
+  document.body.classList.add('mode-release');
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  draft = current = null;
+  relRows = null;
+  relSeedPicks = true;
+  renderRelease('Looking for TouchDesigner...');
+  renderList();
+  await loadRelease();
+}
+
+async function loadRelease() {
+  try {
+    const d = await api('/api/td/dirty');
+    relRows = d.rows || [];
+    relRails = d.rails || null;
+    relPruning = d.pruning || null;
+    relPublishedRelease = d.published_release || '';
+    relStagedRelease = d.staged_release || '';
+    if (relRails && relRails.state !== 'changed') relRailsPicked = false;
+    if (relSeedPicks) {
+      relSeedPicks = false;
+      // UNSHIPPED only: a real version difference is a decision already
+      // made. 'changed since ship' is NOT auto-ticked -- a tox save can
+      // land pure usage dirt (a parameter wiggle marks PI dirty), and
+      // pre-ticking it would patch-bump packages nobody meant to ship.
+      // Rails are not auto-ticked either: they ride into every release
+      // regardless, and the tick asserts they are worth a RAILS-ONLY
+      // release -- a claim a rebuild (whose bytes always differ, tox
+      // exports never repeat) cannot make on its own.
+      // The badges inform; the Select button opts both in.
+      relPicked = new Set(relRows
+        .filter((r) => r.unshipped)
+        .map((r) => r.name));
+    }
+    renderRelease();
+  } catch (e) {
+    relRows = null;
+    renderRelease(e.message);
+  }
+}
+
+function renderRelease(problem) {
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  if (problem || !relRows) {
+    $('#editor').innerHTML = `<div class="pane-head"><h2>Release</h2></div>
+      <p class="empty">${at(problem || 'No release data.')}</p>
+      <p class="empty">The release view needs the project open in
+      TouchDesigner, with <code>Open</code> pulsed on <code>/FNS_CMS</code>.</p>`;
+    return;
+  }
+  const unshipped = relRows.filter((r) => r.unshipped).length;
+  // changed = the tox was saved since it last shipped (PI build moved)
+  // while the version still equals the published one -- the bump has not
+  // happened yet, which is exactly what makes it worth selecting.
+  const changed = relRows.filter((r) => r.build_changed && !r.unshipped).length;
+  // unlanded = source files newer than the suspect tox: a file-synced DAT
+  // edit reloads the live comp without marking PI dirty or moving its
+  // build counter, so these need a PI save before they read as changed.
+  const unlanded = relRows.filter((r) => r.unlanded).length;
+  const dirty = relRows.filter((r) => r.dirty || r.unlanded).length;
+  $('#editor').innerHTML = `
+    <div class="pane-head">
+      <h2>Release</h2>
+      <span class="hint">${unshipped} unshipped &middot; ${changed} changed since ship &middot; ${dirty} unsaved in PI${unlanded ? ` (${unlanded} unlanded)` : ''}${relPruning && relPruning.vanished && relPruning.vanished.length ? ` &middot; ${relPruning.vanished.length} vanished` : ''}</span>
+    </div>
+    <div class="field">
+      <button class="btn" id="relRefresh">Refresh</button>
+      <button class="btn" id="relPre">Preflight</button>
+      <button class="btn" id="relStage">Stage only</button>
+      <span class="sep"></span>
+      <button class="btn" id="relPickUnshipped"
+        title="Tick every package the world lacks — unshipped versions and toxes changed since their last ship (auto bump handles the version)">Select unshipped + changed</button>
+      <button class="btn" id="relPickNone">Clear</button>
+      <select id="relBump" title="How the version moves. Auto only bumps a package the world already has at this version.">
+        <option value="auto">bump: auto</option>
+        <option value="patch">bump: patch</option>
+        <option value="minor">bump: minor</option>
+        <option value="major">bump: major</option>
+        <option value="none">bump: none</option>
+      </select>
+      <button class="btn btn-primary" id="relPublish">Release &amp; stage selected</button>
+      <span class="sep"></span>
+      <button class="btn" id="relSaveDirty">PI Save unsaved</button>
+      <button class="btn" id="relUpload">Upload to bucket</button>
+      <button class="btn" id="relPruneBucket"
+        title="Delete old release directories from the bucket, keeping the newest N (the current release is always kept). Runs detached; preview first.">Prune bucket…</button>
+    </div>
+    <p class="hint">Release &amp; stage bumps, exports, rebuilds the manifest
+      and stages — it ends at <code>packaging/publish/</code>, nothing is
+      uploaded. <b>TouchDesigner is frozen while it exports</b> — seconds for
+      one package, minutes for many. Shipping lives elsewhere:
+      <b>Publish Selected to Bucket</b> on PI's Publish page, or
+      <code>python packaging/upload.py</code>, then
+      <code>python packaging/check_pins.py</code>.</p>
+    ${relStagedRelease && relPublishedRelease
+       && relStagedRelease !== relPublishedRelease
+      ? `<p class="hint"><b class="warn">Published column may be stale:</b>
+         it reads the store cache (last fetched manifest,
+         <b>${at(relPublishedRelease)}</b>), but the staged release is
+         <b>${at(relStagedRelease)}</b>. If you already uploaded, refresh the
+         store and these rows settle.
+         <button class="btn" id="relRefreshStore">Refresh store</button></p>`
+      : ''}
+    <pre class="log" id="relOut" hidden></pre>
+    <table class="rel"><tr><th></th><th>Package</th><th>PI</th><th>Version</th>
+      <th>Published</th><th>Help override</th><th></th></tr>` +
+    (relRails ? `<tr>
+      <td><input type="checkbox" id="relRailsPick"
+        ${relRailsPicked ? 'checked' : ''}
+        ${relRails.state !== 'changed' ? 'disabled' : ''}
+        title="${relRails.state === 'stale' ? 'rebuild first'
+          : relRails.state === 'current' ? 'nothing to ship'
+          : 'release the new rails'}" /></td>
+      <td><b>Install rails</b> <span class="hint">bootstrap + installer
+        (/get pastes &amp; native installers)</span></td>
+      <td class="${relRails.state === 'stale' ? 'warn' : ''}">${at(relRails.state)}</td>
+      <td colspan="3">${relRails.state === 'stale'
+          ? 'sources newer than the built bytes — rebuild, then release'
+          : relRails.state === 'changed'
+          ? 'built bytes differ from the staged release — tick to ship them'
+          : relRails.state === 'current'
+          ? 'match the staged release'
+          : at(relRails.error || 'state unknown')}</td>
+      <td><button class="btn" id="relRailsBuild">Rebuild</button></td>
+    </tr>` : '') +
+    relRows.map((r) => r.foreign ? `<tr>
+      <td><input type="checkbox" class="relpick" data-name="${at(r.name)}"
+        ${relPicked.has(r.name) ? 'checked' : ''} /></td>
+      <td>${at(r.name)} <span class="tag tag-net" title="Foreign: bytes and version owned upstream (${at(r.upstream && r.upstream.manifest)}). Never bumped, exported or PI-saved — Sync mirrors the upstream build into packaging/dist and pins it in foreign.lock.json.">FOREIGN</span>${
+        r.updates === 'self' ? ' <span class="hint">updates itself</span>' : ''}</td>
+      <td class="${r.mirrored && !(r.problems || []).length ? '' : 'warn'}"
+        title="${at((r.problems || []).join('; '))}">${
+        (r.problems || []).length ? 'not mirrored' : r.mirrored ? 'mirrored' : 'not synced'}</td>
+      <td title="lock version — what foreign_sync last fetched${r.upstream && r.upstream.fetched_at ? ', ' + new Date(r.upstream.fetched_at * 1000).toLocaleString() : ''}">${at(r.version) || '&mdash;'}</td>
+      <td class="${r.unshipped ? 'warn' : ''}">${at(r.published) || '&mdash;'}</td>
+      <td><span class="hint">${at(r.help_override) || 'set in the package editor'}</span></td>
+      <td><button class="btn relforeignsync" data-name="${at(r.name)}"
+        title="Fetch the upstream manifest, mirror the artifact, pin the lock (runs detached; watch the log)">Sync</button>
+        <button class="btn relretire" data-name="${at(r.name)}"
+        title="Stop shipping it: declares the drop in release.json, removes the catalog entry (the declaration IS the package), archives its doc">Retire</button></td>
+    </tr>` : `<tr>
+      <td><input type="checkbox" class="relpick" data-name="${at(r.name)}"
+        ${relPicked.has(r.name) ? 'checked' : ''} /></td>
+      <td>${at(r.name)}</td>
+      <td class="${r.dirty || r.unlanded ? 'warn' : ''}"
+        title="${r.unlanded ? 'source files are newer than the suspect tox — PI Save to land them (a file-synced edit reloads the live comp without marking PI dirty)' : ''}">${r.dirty ? 'unsaved' : r.unlanded ? 'unlanded' : 'clean'}</td>
+      <td title="PI build ${at(r.build)}${r.shipped_build != null
+          ? ', shipped at build ' + at(r.shipped_build) : ' (never recorded shipping)'}">${at(r.version)}${
+        r.build_changed && !r.unshipped
+          ? ' <span class="tag tag-chg" title="The tox was saved since it last shipped (PI build ' + at(r.build) + ' vs ' + at(r.shipped_build) + ' at ship) — select it and auto bump does the rest">changed</span>'
+          : ''}</td>
+      <td class="${r.unshipped ? 'warn' : ''}">${at(r.published) || '&mdash;'}</td>
+      <td><input class="relhelp" data-name="${at(r.name)}"
+        value="${at(r.help_override)}" placeholder="${at(r.help_derived)}" /></td>
+      <td><button class="btn relsave" data-name="${at(r.name)}">PI Save</button></td>
+    </tr>`).join('') + '</table>' + (() => {
+      // the prune rail, only when there is something to act on
+      const p = relPruning;
+      if (!p) return '';
+      const van = p.vanished || [], stale = p.stale_retired || [],
+        prune = p.prunable_retired || [];
+      if (!van.length && !stale.length && !prune.length) return '';
+      return `<div class="field" style="margin-top:14px">
+        <label>Pruning</label>` +
+        van.map((n) => `<p class="hint"><b class="warn">${at(n)}</b> is published
+          but no longer a live package — Stage refuses the next release until
+          the drop is declared. Retiring also removes its catalog entry,
+          archives its doc and drops its shipped-builds record.
+          <button class="btn relretire" data-name="${at(n)}">Retire</button></p>`).join('') +
+        stale.map((n) => `<p class="hint"><b class="warn">${at(n)}</b> is declared
+          retired but still LIVE in this project — a standing authorisation for
+          a future accidental drop.
+          <button class="btn relretire" data-name="${at(n)}" data-undo="1">Clear entry</button></p>`).join('') +
+        prune.map((n) => `<p class="hint"><b>${at(n)}</b> is retired, gone, and no
+          published manifest still lists it — the entry has done its job.
+          <button class="btn relretire" data-name="${at(n)}" data-undo="1">Prune entry</button></p>`).join('') +
+        '</div>';
+    })();
+
+  document.querySelectorAll('.relpick').forEach((b) => {
+    b.onchange = () => {
+      if (b.checked) relPicked.add(b.dataset.name);
+      else relPicked.delete(b.dataset.name);
+      renderRelease();
+    };
+  });
+  const rs = $('#relRefreshStore');
+  if (rs) {
+    rs.onclick = async () => {
+      rs.disabled = true;
+      rs.textContent = 'Refreshing…';
+      try {
+        await api('/api/td/refreshstore', { method: 'POST', body: '{}' });
+        toast('Store manifest refresh started', 'ok');
+        // the fetch is async in the updater -- give it a beat, then re-read
+        setTimeout(loadRelease, 4000);
+      } catch (e) { toast(e.message, 'err'); rs.disabled = false; }
+    };
+  }
+  document.querySelectorAll('.relforeignsync').forEach((b) => {
+    b.onclick = async () => {
+      b.disabled = true;
+      const out = $('#relOut');
+      out.hidden = false;
+      out.className = 'log';
+      out.textContent = 'Syncing ' + b.dataset.name + ' from upstream...';
+      try {
+        await api('/api/td/foreignsync', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ names: [b.dataset.name] }),
+        });
+        // detached: poll the log until it settles, then re-read the rows
+        let polls = 0;
+        const tick = async () => {
+          try {
+            const l = await api('/api/td/foreignlog');
+            out.textContent = l.tail || out.textContent;
+            if (l.exists && l.age_s != null && l.age_s > 3 || ++polls > 60) {
+              out.className = 'log ' + (/FAILED/.test(l.tail || '') ? 'err' : 'ok');
+              await loadRelease();
+              return;
+            }
+          } catch (e) { out.textContent = e.message; }
+          setTimeout(tick, 1000);
+        };
+        setTimeout(tick, 1500);
+      } catch (e) { toast(e.message, 'err'); out.textContent = e.message; b.disabled = false; }
+    };
+  });
+  document.querySelectorAll('.relretire').forEach((b) => {
+    b.onclick = async () => {
+      const undo = !!b.dataset.undo;
+      if (!undo && !confirm(`Retire ${b.dataset.name}?\n\nDeclares the drop in `
+          + 'release.json, removes its catalog entry, archives its doc and '
+          + 'drops its shipped-builds record.')) return;
+      b.disabled = true;
+      try {
+        const r = await api('/api/td/retire', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: b.dataset.name, undo }),
+        });
+        toast((undo ? 'Cleared ' : 'Retired ') + b.dataset.name
+          + (r.notes && r.notes.length ? ' — ' + r.notes.join('; ') : ''), 'ok');
+        await loadRelease();
+      } catch (e) { toast(e.message, 'err'); b.disabled = false; }
+    };
+  });
+  const railsPick = $('#relRailsPick');
+  if (railsPick) {
+    railsPick.onchange = () => { relRailsPicked = railsPick.checked; };
+  }
+  const railsBuild = $('#relRailsBuild');
+  if (railsBuild) {
+    railsBuild.onclick = async () => {
+      railsBuild.disabled = true;
+      try {
+        await api('/api/td/rebuildrails', { method: 'POST' });
+        toast('Rails rebuilt', 'ok');
+        await loadRelease();
+      } catch (e) { toast(e.message, 'err'); railsBuild.disabled = false; }
+    };
+  }
+  $('#relPickUnshipped').onclick = () => {
+    relRows.filter((r) => r.unshipped || r.build_changed)
+      .forEach((r) => relPicked.add(r.name));
+    if (relRails && relRails.state === 'changed') relRailsPicked = true;
+    renderRelease();
+  };
+  $('#relPickNone').onclick = () => {
+    relPicked.clear(); relRailsPicked = false; renderRelease();
+  };
+  $('#relPublish').onclick = relPublish;
+  $('#relRefresh').onclick = loadRelease;
+  $('#relPre').onclick = () => relRun('/api/td/preflight', 'GET');
+  $('#relStage').onclick = () => relRun('/api/td/stage', 'POST');
+  $('#relSaveDirty').onclick = relSaveDirty;
+  $('#relUpload').onclick = relUpload;
+  $('#relPruneBucket').onclick = relPruneBucket;
+  document.querySelectorAll('.relsave').forEach((b) => {
+    b.onclick = async () => {
+      b.disabled = true;
+      try {
+        await api('/api/td/save', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: b.dataset.name }),
+        });
+        toast('PI saved ' + b.dataset.name, 'ok');
+        await loadRelease();
+      } catch (e) { toast(e.message, 'err'); b.disabled = false; }
+    };
+  });
+  document.querySelectorAll('.relhelp').forEach((i) => {
+    i.onchange = async () => {
+      try {
+        const r = await api('/api/td/helpurl', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ name: i.dataset.name, url: i.value.trim() }),
+        });
+        toast(i.dataset.name + ' help: ' + (r.effective || 'derived'), 'ok');
+        await loadRelease();
+      } catch (e) { toast(e.message, 'err'); }
+    };
+  });
+}
+
+async function relSaveDirty() {
+  // The release lands its own bumps now (release_one PI-saves what it
+  // bumped), so this exists for hand-edits and for releases that ran
+  // before that fix -- every row PI still marks unsaved, in one press.
+  const dirty = relRows.filter((r) => r.dirty || r.unlanded);
+  if (!dirty.length) { toast('Nothing unsaved in PI', 'ok'); return; }
+  if (!confirm(`PI Save ${dirty.length} package(s)?\n\n`
+      + dirty.map((r) => r.name).join(', '))) return;
+  let saved = 0;
+  for (const r of dirty) {
+    try {
+      await api('/api/td/save', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: r.name }),
+      });
+      saved += 1;
+    } catch (e) {
+      toast(`${r.name}: ${e.message} (${saved} saved before it)`, 'err');
+      await loadRelease();
+      return;
+    }
+  }
+  toast('PI saved ' + saved + ' package(s)', 'ok');
+  await loadRelease();
+}
+
+let upPoll = null;
+async function relUpload() {
+  if (!confirm('Upload packaging/publish/ to the bucket?\n\n'
+      + 'This SHIPS the staged release. It runs detached; the log streams '
+      + 'below. The uploader verifies what the bucket actually serves and '
+      + 'fails the run if the plus/ prefix is publicly readable.')) return;
+  const out = $('#relOut');
+  out.hidden = false;
+  out.className = 'log';
+  try {
+    const d = await api('/api/td/upload', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: '{}',
+    });
+    out.textContent = 'Upload started — ' + (d.log || '');
+    toast('Upload started', 'ok');
+    pollUploadLog();
+  } catch (e) {
+    out.className = 'log err';
+    out.textContent = e.message;
+    toast(e.message, 'err');
+  }
+}
+
+async function relPruneBucket() {
+  const keep = parseInt(prompt(
+    'Prune bucket: keep how many newest releases?\n\n'
+    + 'Everything older is deleted from the bucket (the current release is '
+    + 'always kept, and each doomed release is enumerated from its own '
+    + 'pinned manifest). Never prune a release you still want a support '
+    + 'conversation to be able to reproduce.', '3'), 10);
+  if (!keep || keep < 1) return;
+  // Cancel is the safe path by construction: it runs the DRY preview.
+  const dry = !confirm(
+    `Delete all but the newest ${keep} release(s) from the bucket NOW?\n\n`
+    + 'OK deletes for real. Cancel runs a DRY PREVIEW into the log below '
+    + 'instead — nothing deleted.');
+  const out = $('#relOut');
+  out.hidden = false;
+  out.className = 'log';
+  try {
+    const d = await api('/api/td/prunebucket', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ keep, dry }),
+    });
+    out.textContent = (dry ? 'Prune preview started — ' : 'Prune started — ')
+      + (d.log || '');
+    toast(dry ? 'Prune preview started (nothing deleted)' : 'Prune started',
+      'ok');
+    pollUploadLog();
+  } catch (e) {
+    out.className = 'log err';
+    out.textContent = e.message;
+    toast(e.message, 'err');
+  }
+}
+
+function pollUploadLog() {
+  clearInterval(upPoll);
+  let quiet = 0;
+  upPoll = setInterval(async () => {
+    const out = $('#relOut');
+    if (!out) { clearInterval(upPoll); return; }
+    try {
+      const d = await api('/api/td/uploadlog');
+      if (d.exists) {
+        out.hidden = false;
+        out.textContent = d.tail;
+        out.scrollTop = out.scrollHeight;
+      }
+      // the log going quiet is the only end-of-run signal a detached
+      // process leaves; two quiet reads = done (or wedged -- same view)
+      quiet = d.age_s !== null && d.age_s > 20 ? quiet + 1 : 0;
+      if (quiet >= 2) { clearInterval(upPoll); toast('Upload log settled', 'ok'); }
+    } catch (e) { clearInterval(upPoll); }
+  }, 2000);
+}
+
+async function relPublish() {
+  const names = [...relPicked];
+  const rails = relRailsPicked;
+  if (!names.length && !rails) { toast('Nothing selected', 'err'); return; }
+  const bump = $('#relBump').value;
+  const what = [
+    names.length ? `${names.length} package(s) with bump "${bump}"` : '',
+    rails ? 'the install rails' : '',
+  ].filter(Boolean).join(' + ');
+  if (!confirm(`Release & stage ${what}?\n\n`
+      + (names.join(', ') || '(no package bumps)')
+      + '\n\nTouchDesigner will be frozen while it '
+      + 'exports. Nothing is uploaded.')) return;
+  const out = $('#relOut');
+  out.hidden = false;
+  out.className = 'log';
+  out.textContent = 'Releasing ' + what + '...';
+  try {
+    const d = await api('/api/td/release', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ names, bump, rails }),
+    });
+    out.textContent = JSON.stringify(d, null, 1);
+    out.className = 'log ' + (d.ok ? 'ok' : 'err');
+    if (d.ok) {
+      toast('Released ' + (d.release || ''), 'ok');
+      relPicked.clear();
+      relRailsPicked = false;
+    } else {
+      toast(d.why || 'Release refused', 'err');
+    }
+    await loadRelease();
+  } catch (e) {
+    out.textContent = e.message;
+    out.className = 'log err';
+    toast(e.message, 'err');
+  }
+}
+
+async function relRun(url, method) {
+  const out = $('#relOut');
+  out.hidden = false;
+  out.textContent = 'Working...';
+  try {
+    const d = await api(url, method === 'POST' ? { method: 'POST' } : undefined);
+    out.textContent = JSON.stringify(d, null, 1);
+    out.className = 'log ' + (d.error || (d.blockers || []).length ? 'err' : 'ok');
+    if ((d.blockers || []).some((b) => /rails stale/i.test(b))) {
+      out.textContent += '\n\n→ the Install rails row’s Rebuild button'
+        + ' fixes this, then run Preflight again.';
+    }
+  } catch (e) {
+    out.textContent = e.message;
+    out.className = 'log err';
+  }
+}
+
+// ───── parameters view ─────
+//
+// A custom parameter's `help` is its tooltip in TouchDesigner AND its
+// description on the docs page: build_manifest.Parameters() reads the pars
+// live and the site renders that exact string. So this view edits the
+// parameter itself, not a copy of it -- which is why it has to talk to the
+// live project (/api/td/*) rather than to a file in the repo.
+let parData = null;
+const parEdits = new Map();     // "Pkg\u0000Page\u0000Name" -> text
+const parKey = (pkg, page, name) => [pkg, page, name].join('\u0000');
+
+async function openParams() {
+  document.body.classList.add('mode-release');
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  draft = current = null;
+  parData = null;
+  parEdits.clear();
+  renderParams('Looking for TouchDesigner...');
+  renderList();
+  await loadParams();
+}
+
+async function loadParams() {
+  try {
+    parData = await api('/api/td/parameters');
+    renderParams();
+  } catch (e) {
+    parData = null;
+    renderParams(e.message);
+  }
+}
+
+function renderParams(problem) {
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  if (problem || !parData) {
+    $('#editor').innerHTML = `<div class="pane-head"><h2>Parameters</h2></div>
+      <p class="empty">${at(problem || 'No parameter data.')}</p>
+      <p class="empty">This view reads the LIVE parameters, so it needs the
+      project open in TouchDesigner with <code>Open</code> pulsed on
+      <code>/FNS_CMS</code>.</p>`;
+    return;
+  }
+  const pkgs = parData.packages || [];
+  const blank = (parData.controls || 0) - (parData.documented || 0);
+  $('#editor').innerHTML = `
+    <div class="pane-head">
+      <h2>Parameters</h2>
+      <span class="hint">${parData.documented} of ${parData.controls} controls
+        documented &middot; ${blank} still blank</span>
+    </div>
+    <p class="hint">Each description is written onto the parameter's own
+      <code>help</code>, so it becomes the tooltip in TouchDesigner and the
+      description on the docs page at the same time. Saving a package writes
+      its pars and re-saves its suspect tox once.
+      <strong>${at((parData.locked || []).join(', '))}</strong> pages are not
+      editable here: the toolkit stamps them on every package, and they are
+      documented once on their registry's page.</p>
+    <div class="par-actions">
+      <button class="btn" id="parRefresh">Reload from TouchDesigner</button>
+      <button class="btn" id="parExport">Write parameters.json</button>
+      <label class="hint"><input type="checkbox" id="parOnlyBlank" /> only undocumented</label>
+    </div>
+    <div id="parList" style="margin-top:14px"></div>`;
+  $('#parRefresh').onclick = loadParams;
+  $('#parExport').onclick = exportParams;
+  $('#parOnlyBlank').onchange = renderParamList;
+  renderParamList();
+}
+
+function renderParamList() {
+  const onlyBlank = $('#parOnlyBlank')?.checked;
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  const rows = (parData.packages || []).filter((pkg) =>
+    !onlyBlank || pkg.documented < pkg.controls);
+  $('#parList').innerHTML = rows.map((pkg) => {
+    const cls = pkg.controls === 0 ? '' :
+      pkg.documented === pkg.controls ? 'done' : pkg.documented ? '' : 'none';
+    return `<details class="par-pkg" data-pkg="${at(pkg.name)}">
+      <summary>${at(pkg.name)}
+        <span class="par-cov ${cls}">${pkg.documented}/${pkg.controls}</span>
+      </summary>
+      <div class="par-body"></div>
+    </details>`;
+  }).join('') || '<p class="empty">Every control is documented.</p>';
+  // Rendered on open: 558 textareas up front is a wall the browser has to
+  // build for a page you only ever edit one package of.
+  for (const el of document.querySelectorAll('.par-pkg')) {
+    el.ontoggle = () => { if (el.open) renderParamPkg(el); };
+  }
+}
+
+function renderParamPkg(el) {
+  const name = el.dataset.pkg;
+  const pkg = (parData.packages || []).find((x) => x.name === name);
+  const body = el.querySelector('.par-body');
+  if (!pkg || body.dataset.done === '1') return;
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  const onlyBlank = $('#parOnlyBlank')?.checked;
+  let page = null;
+  const parts = [];
+  for (const row of pkg.rows) {
+    if (row.page !== page) { page = row.page; parts.push(`<p class="par-page">${at(page)}</p>`); }
+    if (row.style === 'Header') {
+      parts.push(`<p class="par-sec">${at(row.label)}</p>`);
+      continue;
+    }
+    if (onlyBlank && row.help) continue;
+    const key = parKey(name, row.page, row.name);
+    const val = parEdits.has(key) ? parEdits.get(key) : (row.help || '');
+    parts.push(`<div class="par-row ${row.help ? '' : 'blank'}" data-key="${at(key)}">
+      <div class="who"><strong>${at(row.label || row.name)}</strong>
+        <code>${at(row.name)}</code>
+        <span class="sty">${at(row.style)}${row.readonly ? ' · read-only' : ''}</span></div>
+      <textarea rows="2" placeholder="What does this control do, and what do its values mean?">${at(val).replace(/&quot;/g, '"')}</textarea>
+    </div>`);
+  }
+  parts.push(`<div class="par-actions">
+    <button class="btn btn-primary" data-save="${at(name)}" disabled>Save help text</button>
+    <span class="hint" data-count="${at(name)}"></span>
+  </div>`);
+  body.innerHTML = parts.join('');
+  body.dataset.done = '1';
+
+  const saveBtn = body.querySelector('[data-save]');
+  const counter = body.querySelector('[data-count]');
+  const refresh = () => {
+    const n = [...parEdits.keys()].filter((k) => k.startsWith(name + '\u0000')).length;
+    saveBtn.disabled = n === 0;
+    counter.textContent = n ? `${n} unsaved` : '';
+  };
+  for (const row of body.querySelectorAll('.par-row')) {
+    const ta = row.querySelector('textarea');
+    const key = row.dataset.key;
+    const original = ta.value;
+    ta.oninput = () => {
+      if (ta.value === original) parEdits.delete(key);
+      else parEdits.set(key, ta.value);
+      row.classList.toggle('edited', parEdits.has(key));
+      refresh();
+    };
+  }
+  saveBtn.onclick = () => saveParams(name, body);
+  refresh();
+}
+
+async function saveParams(name, body) {
+  const edits = [...parEdits.entries()]
+    .filter(([k]) => k.startsWith(name + '\u0000'))
+    .map(([k, help]) => {
+      const [, page, par] = k.split('\u0000');
+      return { page, name: par, help };
+    });
+  if (!edits.length) return;
+  try {
+    const d = await api('/api/td/parhelp', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name, edits }),
+    });
+    for (const k of [...parEdits.keys()]) {
+      if (k.startsWith(name + '\u0000')) parEdits.delete(k);
+    }
+    const pkg = (parData.packages || []).find((x) => x.name === name);
+    if (pkg) {
+      Object.assign(pkg, { rows: d.rows, documented: d.documented, controls: d.controls });
+      parData.documented = (parData.packages || [])
+        .reduce((a, x) => a + x.documented, 0);
+      parData.controls = (parData.packages || [])
+        .reduce((a, x) => a + x.controls, 0);
+    }
+    if (d.skipped?.length) toast(`saved; skipped ${d.skipped.length}`, 'err');
+    else toast(`${d.written.length} written to ${name}, tox saved`, 'ok');
+    renderParams();
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+async function exportParams() {
+  try {
+    const d = await api('/api/td/parexport', { method: 'POST' });
+    toast(`parameters.json: ${d.parameters} controls across ${d.packages} packages`, 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+function openCommunity() {
+  document.body.classList.remove('mode-release');
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  draft = current = null;
+  // Each row carries its write-up while it is edited: `_md` is the text,
+  // `_from` the slug it was loaded under (so a changed slug is a rename).
+  // Both are stripped before the list is sent.
+  const writeups = STATE.communityWriteups || {};
+  recDraft = {
+    intro: STATE.recommendations.intro,
+    tools: STATE.recommendations.tools.map((t) => ({
+      ...t,
+      ...(t.slug ? { _from: t.slug, _md: writeups[t.slug] || '' } : {}),
+    })),
+    families: (STATE.recommendations.families || []).map((f) => ({ ...f })),
+  };
+  renderCommunity();
+  renderList();
+}
+
+const REC_PLATFORMS = ['', 'github', 'patreon', 'gumroad', 'itch', 'pypi', 'other'];
+const slugOf = (name) => String(name || '').toLowerCase().normalize('NFKD')
+  .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+const writeupStarter = (t) => `---
+title: ${t.name || ''}
+summary: ${String(t.description || '').replace(/\n/g, ' ')}
+---
+
+## What it does
+
+## Why we like it
+
+## Getting it
+`;
+
+
+/** The Built with TDFam rows: one family each. `tool` picks a community
+ *  row whose post the card opens; `ours` counts the family from the
+ *  manifest (the FNS family). */
+function familyRows() {
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  const names = recDraft.tools.map((t) => t.name).filter(Boolean);
+  return (recDraft.families || []).map((f, i) => `
+    <div class="cat-row fam-row" data-i="${i}" style="grid-template-columns:auto 1fr auto">
+      <div class="cat-move">
+        <button data-fup ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+        <button data-fdown ${i === recDraft.families.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+      </div>
+      <div>
+        <input type="text" data-ff="name" value="${at(f.name)}" placeholder="Family name" />
+        <input type="text" data-ff="author" value="${at(f.author)}" placeholder="Author" />
+        <input type="text" data-ff="url" value="${at(f.url)}" placeholder="https://  or a page on this site, /docs/..." />
+        <input type="text" data-ff="author_url" value="${at(f.author_url)}" placeholder="https://  the author (optional)" />
+        <textarea class="cat-pitch" data-ff="description" rows="2" placeholder="One or two lines. Max 400 characters.">${String(f.description || '').replace(/</g, '&lt;')}</textarea>
+        <div class="rec-grid">
+          <label>Operators <input type="number" min="1" data-ff="ops" value="${at(f.ops)}" placeholder="count" /></label>
+          <label>Card opens the post of <select data-ff="tool"><option value="">(its own link)</option>${names.map((n) => `<option${f.tool === n ? ' selected' : ''}>${at(n)}</option>`).join('')}</select></label>
+          <label class="check"><input type="checkbox" data-ff="ours" ${f.ours ? 'checked' : ''} /> Ours <span class="hint">counted from the release</span></label>
+        </div>
+      </div>
+      <button class="icon-x" data-fdel title="Remove">&times;</button>
+    </div>`).join('');
+}
+
+function renderCommunity() {
+  const at = (v) => String(v == null ? '' : v).replace(/"/g, '&quot;');
+  const rows = recDraft.tools.map((t, i) => `
+    <div class="cat-row" data-i="${i}" style="grid-template-columns:auto 1fr auto">
+      <div class="cat-move">
+        <button data-up ${i === 0 ? 'disabled' : ''} title="Move up">&#9650;</button>
+        <button data-down ${i === recDraft.tools.length - 1 ? 'disabled' : ''} title="Move down">&#9660;</button>
+      </div>
+      <div>
+        <input type="text" data-f="name" value="${at(t.name)}" placeholder="Tool name" />
+        <input type="text" data-f="author" value="${at(t.author)}" placeholder="Author" />
+        <input type="text" data-f="url" value="${at(t.url)}" placeholder="https://  where to get it (their page)" />
+        <input type="text" data-f="author_url" value="${at(t.author_url)}" placeholder="https://  the author (optional)" />
+        <textarea class="cat-pitch" data-f="description" rows="2" placeholder="One or two lines. Max 400 characters.">${String(t.description || '').replace(/</g, '&lt;')}</textarea>
+        <div class="rec-place">
+          <input type="text" data-f="tox_url" value="${at(t.tox_url)}" placeholder="https://  direct .tox link (optional — enables Place)" />
+          <button class="btn" data-pin>${t.sha256 ? 'Re-pin' : 'Pin'}</button>
+          <span class="hint">${t.sha256
+            ? 'pinned ' + (t.pinned_at || '') + ' · ' + t.sha256.slice(0, 12) + '… · ' + t.bytes + ' bytes'
+            : 'link only until pinned'}</span>
+        </div>
+        <details class="rec-post"${t.slug || t._md ? ' open' : ''}>
+          <summary>Website post ${t.slug ? `<span class="hint">/community/${at(t.slug)}/</span>` : '<span class="hint">none: the card links straight to the author</span>'}</summary>
+          <label class="check"><input type="checkbox" data-draft ${t.draft ? 'checked' : ''} /> Draft
+            <span class="hint">still being written: not on the website and not sent to installs</span></label>
+          <div class="rec-grid">
+            <label>Slug <input type="text" data-f="slug" value="${at(t.slug)}" placeholder="lowercase-with-hyphens" /></label>
+            <button class="btn" data-slugify title="Make the slug from the name">From name</button>
+            <label>Date <input type="date" data-f="date" value="${at(t.date)}" /></label>
+            <label>Platform <select data-f="platform">${REC_PLATFORMS.map((x) => `<option value="${x}"${(t.platform || '') === x ? ' selected' : ''}>${x || '(none)'}</option>`).join('')}</select></label>
+            <label class="wide">Author's terms <input type="text" data-f="author_license" value="${at(t.author_license)}" placeholder="as they state them, e.g. MIT, CC BY 4.0, personal use only" /></label>
+            <label class="wide">Image <select data-f="image"><option value="">(none)</option>${(STATE.communityImages || []).map((f) => `<option${t.image === f ? ' selected' : ''}>${at(f)}</option>`).join('')}</select>
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" data-upload hidden />
+              <button class="btn" data-upload-btn>Upload…</button></label>
+          </div>
+          ${t.image ? `<img class="rec-thumb" src="/community/images/${at(t.image)}" alt="" />` : ''}
+          <div class="rec-md-head"><span>Write-up <span class="hint">Markdown, any length. Pictures: <span class="mono">![alt](/community/images/file.png)</span></span></span>
+            ${t._md ? '' : '<button class="btn" data-starter>Start one</button>'}
+            <button class="btn" data-mdpreview>Preview</button></div>
+          <textarea class="rec-md mono" data-md rows="14" placeholder="Needed once there is a slug.">${String(t._md || '').replace(/</g, '&lt;')}</textarea>
+          <div class="rec-preview docs-body" hidden></div>
+        </details>
+        <details class="rec-post"${t.tdp ? ' open' : ''}>
+          <summary>Python package (tdp) <span class="hint">${t.tdp && t.tdp.package ? `${at(t.tdp.package)}, latest from PyPI` : 'none'}</span></summary>
+          <div class="rec-grid">
+            <label>PyPI package <input type="text" data-tdp="package" value="${at(t.tdp && t.tdp.package)}" placeholder="tdp-Something" /></label>
+            <button class="btn" data-pintdp title="Read the module and toxes from the newest release, and check what it installs">Check</button>
+            <label>Module <input type="text" data-tdp="module" value="${at(t.tdp && t.tdp.module)}" placeholder="tdpSomething" /></label>
+            <label>Tox <input type="text" data-tdp="tox" value="${at(t.tdp && t.tdp.tox)}" placeholder="a _ToxFiles key; blank = ToxFile" /></label>
+          </div>
+          <label class="wide">Also needs <input type="text" data-tdp="also" value="${at(t.tdp && (t.tdp.also || []).join(' '))}" placeholder="packages it imports but does not declare, e.g. tdp-touchutilcollection" /></label>
+          ${t._toxes && t._toxes.length ? `<p class="hint">Toxes in this package: ${t._toxes.map((k) => `<span class="mono">${at(k)}</span>`).join(', ')}${t._single ? ' (blank Tox = its ToxFile)' : ' (name one in Tox)'}</p>` : ''}
+        </details>
+      </div>
+      <button class="icon-x" data-del title="Remove">&times;</button>
+    </div>`).join('');
+
+  $('#editor').innerHTML = `
+    <h2 class="pane-title">From other creators</h2>
+    <p class="pane-sub">packaging/<span class="mono">recommendations.json</span> &middot; published on its own with <span class="mono">upload.py --recommendations</span>, not with a release</p>
+    <p class="warn">These are <b>links, not packages</b>. FNSTools never updates them. A pinned .tox or a locked Python package installs exactly what was checked here, and nothing else. Links must be https. Ask the author before a post goes up, and use their pictures only with their permission.</p>
+    <label>Intro <span class="hint">shown above the section</span></label>
+    <textarea class="cat-pitch" id="rec-intro" rows="2">${String(recDraft.intro || '').replace(/</g, '&lt;')}</textarea>
+    <div id="recrows" style="margin-top:14px">${rows || '<p class="empty">No community tools listed yet.</p>'}</div>
+    <h3 class="pane-title" style="margin-top:28px">Built with TDFam</h3>
+    <p class="pane-sub">Operator families made with TDFam, on the community page at <span class="mono">/community/#tdfam</span>. Website only: installs never download this list.</p>
+    <div id="famrows">${familyRows() || '<p class="empty">No families listed yet.</p>'}</div>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" id="fam-add">+ Add family</button></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" id="rec-add">+ Add tool</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="rec-cancel">Cancel</button>
+      <button class="btn btn-primary" id="rec-save">Save community list</button>
+    </div>`;
+
+  $('#rec-intro').oninput = (e) => { recDraft.intro = e.target.value; };
+  $('#recrows').oninput = (e) => {
+    const row = e.target.closest('.cat-row');
+    if (!row) return;
+    const t = recDraft.tools[Number(row.dataset.i)];
+    if (e.target.hasAttribute('data-md')) { t._md = e.target.value; return; }
+    if (e.target.dataset.tdp) {
+      const k = e.target.dataset.tdp;
+      const tdp = { ...(t.tdp || {}) };
+      if (k === 'also') tdp.also = e.target.value.split(/[\s,]+/).filter(Boolean);
+      else if (e.target.value.trim()) tdp[k] = e.target.value.trim();
+      else delete tdp[k];
+      if (!tdp.also || !tdp.also.length) delete tdp.also;
+      if (Object.keys(tdp).length) t.tdp = tdp; else delete t.tdp;
+      return;
+    }
+    if (!e.target.dataset.f) return;
+    const v = e.target.value;
+    // An empty optional field is DROPPED rather than stored as '' -- the
+    // publisher rejects unknown/blank shapes, and a row full of empty
+    // strings is noise in the diff git is meant to be the audit trail of.
+    const f = e.target.dataset.f;
+    if (v.trim() === '' && ['author_url', 'description', 'tox_url', 'slug', 'date', 'platform',
+                            'author_license', 'image'].includes(f)) {
+      delete t[f];
+    } else {
+      t[f] = v;
+    }
+    // A pin belongs to ONE url. Changing or clearing the url must drop it,
+    // or a row keeps a hash for bytes that are no longer what it points at.
+    if (f === 'tox_url') { delete t.sha256; delete t.bytes; delete t.pinned_at; }
+  };
+  $('#recrows').onclick = (e) => {
+    const row = e.target.closest('.cat-row');
+    if (!row) return;
+    const i = Number(row.dataset.i);
+    if (e.target.hasAttribute('data-up')) swapRec(i, i - 1);
+    else if (e.target.hasAttribute('data-down')) swapRec(i, i + 1);
+    else if (e.target.hasAttribute('data-del')) {
+      if (!confirm('Remove "' + (recDraft.tools[i].name || 'this tool') + '"?')) return;
+      recDraft.tools.splice(i, 1);
+      renderCommunity();
+    } else if (e.target.hasAttribute('data-pin')) {
+      pinTool(i, e.target);
+    } else if (e.target.hasAttribute('data-pintdp')) {
+      pinTdpRow(i, e.target);
+    } else if (e.target.hasAttribute('data-slugify')) {
+      recDraft.tools[i].slug = slugOf(recDraft.tools[i].name);
+      renderCommunity();
+    } else if (e.target.hasAttribute('data-starter')) {
+      recDraft.tools[i]._md = writeupStarter(recDraft.tools[i]);
+      renderCommunity();
+    } else if (e.target.hasAttribute('data-upload-btn')) {
+      e.preventDefault();
+      row.querySelector('[data-upload]').click();
+    } else if (e.target.hasAttribute('data-mdpreview')) {
+      const box = row.querySelector('.rec-preview');
+      if (!box.hidden) { box.hidden = true; e.target.textContent = 'Preview'; return; }
+      api('/api/render', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ markdown: String(recDraft.tools[i]._md || '').replace(/^---[\s\S]*?\n---\n/, '') }),
+      }).then((r) => { box.innerHTML = r.html; box.hidden = false; e.target.textContent = 'Hide preview'; })
+        .catch((err) => toast(String(err.message || err), 'bad'));
+    }
+  };
+  $('#recrows').onchange = (e) => {
+    if (e.target.hasAttribute('data-draft')) {
+      const t = recDraft.tools[Number(e.target.closest('.cat-row').dataset.i)];
+      if (e.target.checked) t.draft = true; else delete t.draft;
+      return;
+    }
+    if (e.target.tagName === 'SELECT' || e.target.type === 'date') {
+      $('#recrows').oninput(e);
+      if (e.target.dataset.f === 'image') renderCommunity();
+      return;
+    }
+    if (!e.target.hasAttribute('data-upload') || !e.target.files.length) return;
+    const row = e.target.closest('.cat-row');
+    const t = recDraft.tools[Number(row.dataset.i)];
+    uploadCommunityImage(t, e.target.files[0]);
+  };
+  $('#famrows').oninput = (e) => {
+    const row = e.target.closest('.fam-row');
+    if (!row || !e.target.dataset.ff) return;
+    const f = recDraft.families[Number(row.dataset.i)];
+    const k = e.target.dataset.ff;
+    if (k === 'ours') { if (e.target.checked) f.ours = true; else delete f.ours; return; }
+    if (k === 'ops') {
+      const n = parseInt(e.target.value, 10);
+      if (n > 0) f.ops = n; else delete f.ops;
+      return;
+    }
+    const v = e.target.value;
+    if (v.trim() === '' && ['author_url', 'description', 'tool'].includes(k)) delete f[k]; else f[k] = v;
+  };
+  $('#famrows').onchange = (e) => $('#famrows').oninput(e);
+  $('#famrows').onclick = (e) => {
+    const row = e.target.closest('.fam-row');
+    if (!row) return;
+    const i = Number(row.dataset.i);
+    const fs = recDraft.families;
+    if (e.target.hasAttribute('data-fup') && i > 0) [fs[i - 1], fs[i]] = [fs[i], fs[i - 1]];
+    else if (e.target.hasAttribute('data-fdown') && i < fs.length - 1) [fs[i + 1], fs[i]] = [fs[i], fs[i + 1]];
+    else if (e.target.hasAttribute('data-fdel')) {
+      if (!confirm('Remove the family "' + (fs[i].name || 'this one') + '"?')) return;
+      fs.splice(i, 1);
+    } else return;
+    renderCommunity();
+  };
+  $('#fam-add').onclick = () => {
+    recDraft.families.push({ name: '', author: '', url: '' });
+    renderCommunity();
+  };
+  $('#rec-add').onclick = () => {
+    recDraft.tools.push({ name: '', author: '', url: '' });
+    renderCommunity();
+    const inputs = document.querySelectorAll('[data-f="name"]');
+    inputs[inputs.length - 1].focus();
+  };
+  $('#rec-cancel').onclick = () => {
+    recDraft = null;
+    $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>';
+  };
+  $('#rec-save').onclick = saveCommunity;
+}
+
+/** Fetch the author's .tox once and record exactly what came back.
+ *  Pinning is a deliberate act of vetting -- it is what makes it honest to
+ *  offer Place rather than only a link. */
+async function pinTool(i, btn) {
+  const t = recDraft.tools[i];
+  const url = String(t.tox_url || '').trim();
+  if (!url) { toast('Add a direct .tox link first', 'bad'); return; }
+  const was = btn.textContent;
+  btn.textContent = 'Fetching…';
+  btn.disabled = true;
+  try {
+    const r = await api('/api/pin', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tox_url: url }),
+    });
+    t.sha256 = r.sha256; t.bytes = r.bytes; t.pinned_at = r.pinned_at;
+    renderCommunity();
+    toast('Pinned ' + r.bytes + ' bytes — save to keep it', 'ok');
+  } catch (e) {
+    btn.textContent = was; btn.disabled = false;
+    toast(String(e.message || e), 'bad');
+  }
+}
+
+function swapRec(a, b) {
+  if (b < 0 || b >= recDraft.tools.length) return;
+  [recDraft.tools[a], recDraft.tools[b]] = [recDraft.tools[b], recDraft.tools[a]];
+  renderCommunity();
+}
+
+/** Check a Python package: the newest release's module and toxes, read from
+ *  its wheel, and what it resolves to today (packaging/tdp_pin.py). Refused
+ *  when that includes a package TouchDesigner ships. Nothing is pinned. */
+async function pinTdpRow(i, btn) {
+  const t = recDraft.tools[i];
+  const pkg = String((t.tdp && t.tdp.package) || '').trim();
+  const also = (t.tdp && t.tdp.also) || [];
+  if (!pkg) { toast('Name the PyPI package first', 'bad'); return; }
+  const was = btn.textContent;
+  btn.textContent = 'Resolving…';
+  btn.disabled = true;
+  try {
+    const r = await api('/api/pin-tdp', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ package: pkg, also }),
+    });
+    const keep = t.tdp && t.tdp.tox && (r.toxes || []).includes(t.tdp.tox) ? t.tdp.tox : '';
+    t.tdp = { package: r.package, module: r.module };
+    if (keep) t.tdp.tox = keep;
+    else if (!r.single && (r.toxes || []).length === 1) t.tdp.tox = r.toxes[0];
+    if (also.length) t.tdp.also = also;
+    t._toxes = r.toxes || [];
+    t._single = !!r.single;
+    renderCommunity();
+    toast(`${r.package} ${r.version} installs ${r.resolves.length} package${r.resolves.length === 1 ? '' : 's'} today: ${r.resolves.join(', ')}. Save to keep it.`, 'ok');
+  } catch (e) {
+    btn.textContent = was; btn.disabled = false;
+    toast(String(e.message || e), 'bad');
+  }
+}
+
+/** Store a picture under a name made from the row, and select it. */
+async function uploadCommunityImage(t, file) {
+  const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace('jpeg', 'jpg');
+  const base = slugOf(t.slug || t.name) || 'image';
+  let name = `${base}.${ext}`;
+  for (let n = 2; (STATE.communityImages || []).includes(name); n++) name = `${base}-${n}.${ext}`;
+  try {
+    const data = await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result).split(',')[1]);
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+    const r = await api('/api/community/image', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ name, data }),
+    });
+    STATE.communityImages = r.images;
+    t.image = r.name;
+    renderCommunity();
+    toast(`Stored ${r.name}. It goes live with the list.`, 'ok');
+  } catch (e) {
+    toast(String(e.message || e), 'bad');
+  }
+}
+
+async function saveCommunity() {
+  const tools = recDraft.tools.map((t) => {
+    const { _md, _from, _toxes, _single, ...row } = t;
+    return row;
+  });
+  const writeups = recDraft.tools.filter((t) => t.slug).map((t) => ({
+    slug: t.slug, from: t._from || '', markdown: String(t._md || ''),
+  }));
+  try {
+    STATE = await api('/api/recommendations', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ intro: recDraft.intro, tools, writeups, families: recDraft.families }),
+    });
+    recDraft = null;
+    $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>';
+    renderList();
+    toast('Community list and write-ups saved. Publish the list with upload.py --recommendations, the posts with the website', 'ok');
+  } catch (e) {
+    toast(String(e.message || e), 'bad');
+  }
+}
+
+function openCategories() {
+  document.body.classList.remove('mode-release');
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  draft = current = null;
+  // `from` remembers the original name, so a rename can move its packages.
+  catDraft = STATE.categoryMeta.map((c) => ({ ...c, from: c.name }));
+  renderCategories();
+  renderList();
+}
+
+function renderCategories() {
+  const rows = catDraft.map((c, i) => `
+    <div class="cat-row" data-i="${i}">
+      <div class="cat-move">
+        <button data-up ${i === 0 ? 'disabled' : ''} title="Move up">▲</button>
+        <button data-down ${i === catDraft.length - 1 ? 'disabled' : ''} title="Move down">▼</button>
+      </div>
+      <input class="cat-glyph" data-glyph value="${c.glyph.replace(/"/g, '&quot;')}" maxlength="2" />
+      <div>
+        <input type="text" data-name value="${c.name.replace(/"/g, '&quot;')}" />
+        <textarea class="cat-pitch" data-pitch rows="2" placeholder="One-line pitch shown above this section on the landing page and in the picker">${c.pitch.replace(/</g, '&lt;')}</textarea>
+      </div>
+      <div class="cat-count">${c.count} pkg</div>
+      <button class="icon-x" data-del ${c.count ? 'disabled title="Move its packages out first"' : 'title="Delete"'}>×</button>
+    </div>`).join('');
+
+  $('#editor').innerHTML = `
+    <h2 class="pane-title">Categories</h2>
+    <p class="pane-sub">packaging/<span class="mono">catalog.json</span> · order here is the order sections appear on the site and in the picker — and the first two after Core are the ones the landing page previews</p>
+    <p class="warn">Renaming moves every package in that category with it, in one write. Deleting is only possible once a category is empty.</p>
+    <div id="catrows">${rows}</div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn" id="cat-add">+ Add category</button>
+      <div style="flex:1"></div>
+      <button class="btn" id="cat-cancel">Cancel</button>
+      <button class="btn btn-primary" id="cat-save">Save categories</button>
+    </div>`;
+
+  $('#catrows').oninput = (e) => {
+    const row = e.target.closest('.cat-row');
+    const c = catDraft[Number(row.dataset.i)];
+    if (e.target.hasAttribute('data-name')) c.name = e.target.value;
+    if (e.target.hasAttribute('data-glyph')) c.glyph = e.target.value;
+    if (e.target.hasAttribute('data-pitch')) c.pitch = e.target.value;
+  };
+  $('#catrows').onclick = (e) => {
+    const row = e.target.closest('.cat-row');
+    if (!row) return;
+    const i = Number(row.dataset.i);
+    if (e.target.hasAttribute('data-up')) swapCat(i, i - 1);
+    else if (e.target.hasAttribute('data-down')) swapCat(i, i + 1);
+    else if (e.target.hasAttribute('data-del') && !e.target.disabled) {
+      catDraft.splice(i, 1);
+      renderCategories();
+    }
+  };
+  $('#cat-add').onclick = () => {
+    catDraft.push({ name: '', glyph: '·', pitch: '', count: 0, from: null });
+    renderCategories();
+    const inputs = document.querySelectorAll('[data-name]');
+    inputs[inputs.length - 1].focus();
+  };
+  $('#cat-cancel').onclick = () => { catDraft = null; $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>'; };
+  $('#cat-save').onclick = saveCategories;
+}
+
+function swapCat(a, b) {
+  if (b < 0 || b >= catDraft.length) return;
+  [catDraft[a], catDraft[b]] = [catDraft[b], catDraft[a]];
+  renderCategories();
+}
+
+async function saveCategories() {
+  try {
+    STATE = await api('/api/categories', {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ categories: catDraft }),
+    });
+    catDraft = null;
+    $('#editor').innerHTML = '<p class="empty">Pick a package on the left.</p>';
+    renderList();
+    toast('Categories saved', 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+// ───── actions ─────
+
+async function select(name) {
+  document.body.classList.remove('mode-release');
+  catDraft = null;
+  featOpen = new Set();   // a row opened by hand belongs to one package
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current) &&
+      !confirm('Discard unsaved changes to ' + current.name + '?')) return;
+  current = await api('/api/package/' + encodeURIComponent(name));
+  draft = JSON.parse(JSON.stringify(current));
+  renderList();
+  renderEditor();
+  showTab('preview');
+}
+
+async function save() {
+  if (!draft) return;
+  try {
+    const saved = await api('/api/package/' + encodeURIComponent(draft.name), {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        category: draft.category,
+        description: draft.description,
+        recommended: !!draft.recommended,
+        nopick: !!draft.nopick,
+        placeonce: !!draft.placeonce,
+        preview: !!draft.preview,
+        placement: draft.placement || '',
+        author: draft.author || null,
+        homepage: draft.homepage || '',
+        changelog_url: draft.changelog_url || '',
+        source: draft.source || null,
+        updates: draft.updates || '',
+        help_url: draft.help_url || '',
+        min_td_build: draft.min_td_build || '',
+        alternatives_for: draft.alternatives_for || '',
+        // only a foreign package's block rides the catalog save; undefined
+        // drops out of the JSON, so a live package never touches the key
+        family: draft.foreign ? (draft.family || null) : undefined,
+        data: draft.data,
+        body: draft.body,
+        mtime: current.mtime,
+      }),
+    });
+    current = saved;
+    draft = JSON.parse(JSON.stringify(saved));
+    const idx = STATE.packages.findIndex((p) => p.name === saved.name);
+    if (idx >= 0) STATE.packages[idx] = saved;
+    let wroteAlt = null;
+    try {
+      wroteAlt = await saveAlternatives(saved.name);
+    } catch (e) {
+      renderList();
+      markDirty();
+      toast('Saved ' + saved.name + '.md, but the alternatives were not written: ' + e.message, 'err');
+      return;
+    }
+    renderList();
+    markDirty();
+    toast('Saved ' + saved.name + '.md' + (wroteAlt ? ' and its alternatives (tool saved)' : ''), 'ok');
+  } catch (e) {
+    toast(e.message, 'err');
+  }
+}
+
+async function build() {
+  const btn = $('#build');
+  btn.disabled = true;
+  btn.textContent = 'Building…';
+  showTab('log');
+  try {
+    const r = await api('/api/build', { method: 'POST' });
+    const log = $('#log');
+    log.textContent = r.output || '(no output)';
+    log.className = 'log ' + (r.ok ? 'ok' : 'err');
+    toast(r.ok ? 'Build OK' : 'Build failed — see output', r.ok ? 'ok' : 'err');
+    if (r.ok) STATE = await api('/api/state');
+    renderList();
+  } catch (e) {
+    toast(e.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Build site';
+  }
+}
+
+function showTab(which) {
+  document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.t === which));
+  $('#pane-preview').hidden = which !== 'preview';
+  $('#pane-built').hidden = which !== 'built';
+  $('#pane-log').hidden = which !== 'log';
+  if (which === 'built' && draft) {
+    const slug = draft.name.toLowerCase().replace(/_/g, '-');
+    $('#pane-built').innerHTML =
+      `<iframe class="built" src="/docs/${slug}/?t=${Date.now()}"></iframe>`;
+  }
+}
+
+// ───── wiring ─────
+
+document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => showTab(t.dataset.t); });
+document.querySelectorAll('.chip').forEach((c) => {
+  c.onclick = () => {
+    filterMode = c.dataset.f;
+    document.querySelectorAll('.chip').forEach((x) => x.classList.toggle('on', x === c));
+    renderList();
+  };
+});
+$('#filter').oninput = renderList;
+$('#cats').onclick = openCategories;
+$('#community').onclick = openCommunity;
+$('#params').onclick = openParams;
+$('#release').onclick = openRelease;
+
+// Say up front whether TouchDesigner is there. The release view is the one
+// part of this CMS that depends on something outside it, and a button that
+// looks identical either way is how you end up staring at an empty pane
+// wondering which half is broken.
+(async () => {
+  const btn = $('#release');
+  try {
+    const d = await api('/api/td/ping');
+    if (d && d.ok) {
+      btn.classList.add('live');
+      btn.title = 'TouchDesigner connected on port ' + d.port;
+      return;
+    }
+  } catch (e) { /* not running, or console closed */ }
+  btn.classList.add('off');
+  btn.title = 'TouchDesigner is not running, or /FNS_CMS is closed. '
+    + 'Open it there to enable PI save, Preflight and Stage.';
+})();
+$('#save').onclick = save;
+$('#build').onclick = build;
+$('#revert').onclick = () => {
+  if (!current || !confirm('Discard your changes to ' + current.name + '?')) return;
+  draft = JSON.parse(JSON.stringify(current));
+  renderEditor();
+};
+window.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); }
+});
+window.addEventListener('beforeunload', (e) => {
+  if (draft && JSON.stringify(draft) !== JSON.stringify(current)) e.preventDefault();
+});
+
+(async () => {
+  try {
+    STATE = await api('/api/state');
+    renderList();
+  } catch (e) {
+    document.body.innerHTML = '<p style="padding:40px;color:#f87171">' + e.message + '</p>';
+  }
+})();
+</script>
+</body>
+</html>

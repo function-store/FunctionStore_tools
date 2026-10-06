@@ -51,6 +51,10 @@ Log/OrbbecSDK.log.txt
 /Assets
 /clipboard_images
 !FunctionStore_tools_2023_DEV.toe
+!FunctionStore_tools_2025_DEV.toe
+# renamed 2026-08-29 when the repo folder became FNSTools_PRIV. The
+# exception list is by NAME, so a rename silently untracks the project.
+!FNSTools_PRIV.toe
 
 # Embody / Envoy (auto-managed)
 logs/
@@ -59,9 +63,44 @@ CrashAutoSave*
 .mcp.json
 .embody/*
 !.embody/project.json
+# Machine-local only: generated permissions, session state, local locks.
 .claude/settings.local.json
 .claude/projects/
-/.claude
-CLAUDE.md
-AGENTS.md
+.claude/scheduled_tasks.lock
+.claude/worktrees/
+/.claude/*
+# Tracked: the agent doctrine. These ARE Embody/Envoy deployment artifacts and
+# Envoy rewrites them on deploy, so expect churn -- they are tracked so the
+# rules travel between machines, NOT so they can be a rule's only home
+# (scripts/docs_index.py says why: a normative rule belongs in docs/).
+!/.claude/rules/
+!/.claude/launch.json
+!/.claude/skills/
+/.claude/skills/*
+!/.claude/skills/fns-*/
 externalizations.tsv
+
+# Task briefs (session-local contracts)
+briefs/
+.tdn_backup/
+.embody/
+
+# packaging: exported tox artifacts are rebuildable from the manifest
+packaging/dist/
+packaging/publish/
+
+# wrangler local state
+.wrangler/
+
+# website deps. website/docs/ IS committed -- Vercel serves it with no build step.
+website/node_modules/
+
+# vercel CLI link state (per-machine)
+.vercel/
+.env.local
+/.modus
+
+# PI release exports -- build artifacts, never source. The 9MB portable
+# root embeds EVERY tool including gated ones (leaked to the mirror once,
+# 2026-08-30); distribution is the bucket, never git.
+modules/release/

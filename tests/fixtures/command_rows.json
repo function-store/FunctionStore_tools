@@ -1,0 +1,828 @@
+[
+{
+"title": "Toggle AltSelect",
+"category": "AltSelect",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_AltSelect"
+},
+{
+"title": "Toggle AutoCombine",
+"category": "AutoCombine",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_AutoCombine"
+},
+{
+"title": "Toggle AutoRes",
+"category": "AutoRes",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_AutoRes"
+},
+{
+"title": "Autosave...",
+"category": "Autosave",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Autosave"
+},
+{
+"title": "LFO on hovered par",
+"category": "BeatMod",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BeatMod"
+},
+{
+"title": "Modulation menu for hovered par",
+"category": "BeatMod",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BeatMod"
+},
+{
+"title": "Modulator manager",
+"category": "BeatMod",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BeatMod"
+},
+{
+"title": "Record a gesture on hovered par",
+"category": "BeatMod",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BeatMod"
+},
+{
+"title": "Remove modulation from hovered par",
+"category": "BeatMod",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BeatMod"
+},
+{
+"title": "Set BPM",
+"category": "BeatMod",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BeatMod"
+},
+{
+"title": "Speed on hovered par",
+"category": "BeatMod",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BeatMod"
+},
+{
+"title": "Tap tempo",
+"category": "BeatMod",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BeatMod"
+},
+{
+"title": "Toggle borderless",
+"category": "BorderlessWindow",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BorderlessTD/BorderlessWindow"
+},
+{
+"title": "Toggle fullscreen",
+"category": "BorderlessWindow",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BorderlessTD/BorderlessWindow"
+},
+{
+"title": "Clear custom pars of selected",
+"category": "ClearPars",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools/ClearPars"
+},
+{
+"title": "Collect All & Save…",
+"category": "Collect",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Collect"
+},
+{
+"title": "Open color UI",
+"category": "ColorUI",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ColorUI"
+},
+{
+"title": "Randomize colors",
+"category": "ColorUI",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ColorUI"
+},
+{
+"title": "Undo randomize",
+"category": "ColorUI",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ColorUI"
+},
+{
+"title": "Open FNS settings",
+"category": "ConfigRegistry",
+"kind": "command",
+"builtin": false,
+"path": "/sys/FNS_Registries/FNS_ConfigRegistry"
+},
+{
+"title": "Save all tool configs",
+"category": "ConfigRegistry",
+"kind": "command",
+"builtin": false,
+"path": "/sys/FNS_Registries/FNS_ConfigRegistry"
+},
+{
+"title": "Customize current COMP",
+"category": "CustomParTools",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools"
+},
+{
+"title": "Customize parent COMP",
+"category": "CustomParTools",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools"
+},
+{
+"title": "Open current COMP parameters",
+"category": "CustomParTools",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools"
+},
+{
+"title": "Open parent COMP parameters",
+"category": "CustomParTools",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools"
+},
+{
+"title": "Promote pars of selected",
+"category": "CustomParTools",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools"
+},
+{
+"title": "Open hot-strings editor",
+"category": "ExprHotStrings",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ExprHotStrings"
+},
+{
+"title": "Set volume",
+"category": "GlobalVolControl",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_GlobalVolControl"
+},
+{
+"title": "Toggle mute",
+"category": "GlobalVolControl",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_GlobalVolControl"
+},
+{
+"title": "Toggle timeline",
+"category": "HideTimeline",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_BorderlessTD/HideTimeline"
+},
+{
+"title": "Load hotkeys",
+"category": "HotkeyManager",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_HotkeyManager"
+},
+{
+"title": "Open hotkey UI",
+"category": "HotkeyManager",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_HotkeyManager"
+},
+{
+"title": "Save hotkeys",
+"category": "HotkeyManager",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_HotkeyManager"
+},
+{
+"title": "Open FNS Hub",
+"category": "Hub",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Hub"
+},
+{
+"title": "Open main-menu configurator",
+"category": "Hub",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Hub"
+},
+{
+"title": "Set HydroHomie interval",
+"category": "HydroHomie",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_HydroHomie"
+},
+{
+"title": "Toggle HydroHomie",
+"category": "HydroHomie",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_HydroHomie"
+},
+{
+"title": "Install an FNS package…",
+"category": "Installer",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Installer"
+},
+{
+"title": "Media Browser…",
+"category": "MediaBrowser",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_MediaBrowser"
+},
+{
+"title": "Open toolbar configurator",
+"category": "Misc",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Misc"
+},
+{
+"title": "Open extension of current",
+"category": "OpenExt",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_OpenExt"
+},
+{
+"title": "Add selection to templates",
+"category": "OpTemplates",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_OpTemplates"
+},
+{
+"title": "Open templates",
+"category": "OpTemplates",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_OpTemplates"
+},
+{
+"title": "Copy op to clipboard",
+"category": "OpToClipboard",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_OpToClipboard"
+},
+{
+"title": "Toggle OpToClipboard",
+"category": "OpToClipboard",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_OpToClipboard"
+},
+{
+"title": "Toggle NDI output",
+"category": "Output",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Output"
+},
+{
+"title": "Toggle perform window",
+"category": "Output",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Output"
+},
+{
+"title": "Toggle Spout/Syphon output",
+"category": "Output",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Output"
+},
+{
+"title": "Floating network editor",
+"category": "PaneTypeRegistry",
+"kind": "command",
+"builtin": false,
+"path": "/sys/FNS_Registries/FNS_PaneTypeRegistry"
+},
+{
+"title": "Toggle ParOPDrop",
+"category": "ParOPDrop",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ParOPDrop"
+},
+{
+"title": "Randomize pars of op",
+"category": "ParRandomizer",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ParRandomizer"
+},
+{
+"title": "Randomize rollover par",
+"category": "ParRandomizer",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ParRandomizer"
+},
+{
+"title": "Reset custom pars to defaults",
+"category": "ParRandomizer",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ParRandomizer"
+},
+{
+"title": "Save custom defaults",
+"category": "ParRandomizer",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ParRandomizer"
+},
+{
+"title": "Toggle ParRandomizer",
+"category": "ParRandomizer",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ParRandomizer"
+},
+{
+"title": "Paste as annotate",
+"category": "PasteFromClipboard",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/PasteFromClipboard"
+},
+{
+"title": "Paste as Script TOP",
+"category": "PasteFromClipboard",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/PasteFromClipboard"
+},
+{
+"title": "Paste image",
+"category": "PasteFromClipboard",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/PasteFromClipboard"
+},
+{
+"title": "Open preview panel",
+"category": "PreviewPanel",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_PreviewPanel"
+},
+{
+"title": "Collapse selected",
+"category": "QuickCollapse",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_QuickCollapse"
+},
+{
+"title": "Toggle QuickCollapse",
+"category": "QuickCollapse",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_QuickCollapse"
+},
+{
+"title": "Create extension on current",
+"category": "QuickExt",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools/QuickExt"
+},
+{
+"title": "Clear quickmark",
+"category": "QuickMarks",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/QuickMarks"
+},
+{
+"title": "Go to quickmark",
+"category": "QuickMarks",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/QuickMarks"
+},
+{
+"title": "List quickmarks",
+"category": "QuickMarks",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/QuickMarks"
+},
+{
+"title": "Name quickmark",
+"category": "QuickMarks",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/QuickMarks"
+},
+{
+"title": "Store quickmark",
+"category": "QuickMarks",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/QuickMarks"
+},
+{
+"title": "Toggle QuickMarks",
+"category": "QuickMarks",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/QuickMarks"
+},
+{
+"title": "Split pane",
+"category": "QuickPane",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_QuickPane"
+},
+{
+"title": "Toggle QuickPane",
+"category": "QuickPane",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_QuickPane"
+},
+{
+"title": "Toggle QuickParCustom",
+"category": "QuickParCustom",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools/QuickParCustom"
+},
+{
+"title": "Add parent shortcut",
+"category": "QuickParent",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_CustomParTools/QuickParent"
+},
+{
+"title": "Reset timer",
+"category": "QuickTime",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_QuickTime"
+},
+{
+"title": "Phone Remote...",
+"category": "Remote",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Remote"
+},
+{
+"title": "Reset all generators",
+"category": "ResetPLS",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_ResetPLS"
+},
+{
+"title": "Smoothness -> all",
+"category": "SetSmoothness",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_SetSmoothness"
+},
+{
+"title": "Smoothness -> selected",
+"category": "SetSmoothness",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_SetSmoothness"
+},
+{
+"title": "Swap selected ops",
+"category": "SwapOps",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_SwapOps"
+},
+{
+"title": "Toggle SwitchOPs",
+"category": "SwitchOPs",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_SwitchOPs"
+},
+{
+"title": "Export Movie",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Floating copy of pane",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Home network view",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Import File",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Maximize Pane",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Beat",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Bookmarks",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Console",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Errors",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Key Manager",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open MIDI Device Mapper",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Operator Snippets",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Palette Browser",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Performance Monitor",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Preferences",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Search",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Textport",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Version",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Open Window Placement",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Set pane type",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Show op in floating pane",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Tear away pane",
+"category": "TD_Dialogs",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Dialogs"
+},
+{
+"title": "Copy op path",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Load recent file",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Open op parameters",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Open op viewer",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Open Project Folder",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Open TD folder",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Quit TouchDesigner",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Save Project",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Save project + external toxes",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Set master volume",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Toggle Perform Mode",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Toggle perform on start",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Toggle Realtime",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Toggle window on top",
+"category": "TD_Session",
+"kind": "command",
+"builtin": true,
+"path": "/FNSTools/FNS_CommandRegistry/FNS_BuiltinCommands/TD_Session"
+},
+{
+"title": "Check for updates",
+"category": "Updater",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_Updater"
+},
+{
+"title": "Externalize selected",
+"category": "VSCodeTools",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_VSCodeTools"
+},
+{
+"title": "Open project in VSCode",
+"category": "VSCodeTools",
+"kind": "command",
+"builtin": false,
+"path": "/FNSTools/FNS_VSCodeTools"
+}
+]

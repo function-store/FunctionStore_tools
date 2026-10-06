@@ -1,0 +1,35 @@
+#!/bin/sh
+#
+# Warn when a commit changes a shipped package and packaging/release_notes.md
+# carries no line for it. The notes accumulate per commit (RELEASING.md,
+# "Release notes"); this is the reminder, never a gate -- a PI re-save or a
+# doc-only change legitimately ships no note, so the commit always proceeds.
+#
+# Install (hooks are not versioned, so this is a one-liner per clone):
+#     git config core.hooksPath scripts/hooks
+
+repo_root=$(git rev-parse --show-toplevel)
+notes="$repo_root/packaging/release_notes.md"
+
+# Package names from the staged paths: modules/suspects/FNSTools/<Name>.tox
+# or modules/suspects/FNSTools/<Name>/... -- the depth-1 suspect layout that
+# defines a package (packaging/README.md, "Package identity").
+pkgs=$(git diff --cached --name-only \
+  | sed -n 's#^modules/suspects/FNSTools/\([^/]*\)\.tox$#\1#p; s#^modules/suspects/FNSTools/\([^/]*\)/.*#\1#p' \
+  | sort -u)
+
+[ -z "$pkgs" ] && exit 0
+
+missing=""
+for p in $pkgs; do
+  if ! grep -q "^$p:" "$notes" 2>/dev/null; then
+    missing="$missing $p"
+  fi
+done
+
+if [ -n "$missing" ]; then
+  echo "release notes: no line in packaging/release_notes.md for:$missing" >&2
+  echo "  add '<Name>: what changed' if this commit changes what the package does (RELEASING.md, Release notes)" >&2
+fi
+
+exit 0

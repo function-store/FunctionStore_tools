@@ -1,0 +1,2334 @@
+// Generates website/docs/ from packaging/docs/*.md + packaging/catalog.json,
+// and injects the tool catalogue into index.html between the TOOLS markers.
+//
+// packaging/docs/ is the source of truth for prose; catalog.json is the
+// source of truth for category and description (it already feeds the
+// installer picker, so duplicating either into frontmatter would give us
+// two answers to the same question). The build joins them on package name
+// and refuses to produce a site if they disagree.
+//
+//   node tools/build-site.mjs      then      npx pagefind --site docs
+//
+// website/docs/ is disposable: it is wiped and rebuilt every run. Nothing
+// hand-authored may live there -- docs.css and docs.js sit at website/.
+
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import matter from 'gray-matter';
+import MarkdownIt from 'markdown-it';
+import anchor from 'markdown-it-anchor';
+// Only the languages the docs actually contain. hljs/lib/core plus explicit
+// registration rather than the full bundle: it makes the supported set
+// readable here, and an unregistered language falls back to plain text
+// instead of silently guessing (autodetection reads two lines of
+// TouchDesigner Python as Perl often enough to matter).
+import hljs from 'highlight.js/lib/core';
+import hljsPython from 'highlight.js/lib/languages/python';
+import hljsJavascript from 'highlight.js/lib/languages/javascript';
+import hljsBash from 'highlight.js/lib/languages/bash';
+import hljsJson from 'highlight.js/lib/languages/json';
+
+hljs.registerLanguage('python', hljsPython);
+hljs.registerLanguage('javascript', hljsJavascript);
+hljs.registerLanguage('js', hljsJavascript);
+hljs.registerLanguage('bash', hljsBash);
+hljs.registerLanguage('sh', hljsBash);
+hljs.registerLanguage('json', hljsJson);
+
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+const WEB = path.dirname(HERE);
+const REPO = path.dirname(WEB);
+const SRC = path.join(REPO, 'packaging', 'docs');
+const CATALOG = path.join(REPO, 'packaging', 'catalog.json');
+const ICONS = path.join(REPO, 'icons');
+// Glyphs rendered by build_manifest.RenderSurfaceIcons from the SAME Text
+// TOP + font the live bar button uses, so this is the button's own picture
+// rather than a lookalike. Missing is fine: the badges fall back to words.
+const SURFACE_ICONS = path.join(REPO, 'packaging', 'docs', 'surface-icons');
+const OUT = path.join(WEB, 'docs');
+
+const SITE = 'https://functionstore.tools';
+const GH = 'https://github.com/function-store/FunctionStore_tools';
+const PATREON = 'https://patreon.com/function_store';
+// Rolling pointer published by packaging/publish.py; base_url in manifest.json.
+const BUCKET = 'https://storage.functionstore.tools/fnstools';
+const EDIT_BASE = `${GH}/blob/main/packaging/docs`;
+
+const problems = [];
+const fail = (msg) => problems.push(msg);
+
+/** Anchor slug. Must stay identical to slugify() in docs_seed_from_wiki.py. */
+function slugify(text) {
+  return String(text)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/`/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s_-]/g, '')
+    .replace(/[\s_]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** A binding's identity, for matching a hand-written sentence to the key
+ *  the manager actually reports. The two spellings drift by nature --
+ *  'alt.F7' from TD, 'Alt+F7 (Opt+F7 on Mac)' from a human -- so compare
+ *  the modifier set, not the text: lowercase, drop any parenthetical, and
+ *  treat . + - and space as the same separator. */
+function keyId(raw) {
+  return String(raw).toLowerCase().replace(/\([^)]*\)/g, '')
+    .split(/[.+\-\s]+/).filter(Boolean).sort().join('+');
+}
+
+/** TouchDesigner stores a binding as `ctrl.alt.q`, and one par can hold
+ *  several separated by spaces. Readers know it as Ctrl+Alt+Q. */
+function prettyKeys(raw) {
+  return String(raw).trim().split(/\s+/).map((combo) => combo.split('.')
+    .map((k) => (k.length === 1 ? k.toUpperCase()
+      : k.charAt(0).toUpperCase() + k.slice(1)))
+    .join('+')).join('  /  ');
+}
+
+/** Hotkeys per package, from the REPO manifest -- the one
+ *  build_manifest just wrote from FNS_HotkeyManager. Not the published
+ *  manifest fetched later for /get/: that one is a release behind by
+ *  definition, and a docs page should describe the toolkit as it is. */
+const HOTKEYS = (() => {
+  try {
+    const doc = JSON.parse(fs.readFileSync(
+      path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+    const out = {};
+    for (const pkg of doc.packages || []) {
+      if ((pkg.hotkeys || []).length) out[pkg.name] = pkg.hotkeys;
+    }
+    return out;
+  } catch {
+    return {};   // no manifest yet: pages build without a shortcuts block
+  }
+})();
+
+/** How a gated package unlocks, from the same REPO manifest: its tier
+ *  ladder (id -> Base / Pro / Coaching) and which packages a Gumroad key
+ *  can unlock. build_manifest derives both from the Worker's maps, so the
+ *  site names a tier without keeping a copy of which tier covers what. */
+const ROUTES = (() => {
+  try {
+    const doc = JSON.parse(fs.readFileSync(
+      path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+    const tiers = {};
+    for (const t of (doc.toolkit && doc.toolkit.tiers) || []) tiers[String(t.id)] = t.label;
+    const keys = new Set((doc.packages || []).filter((q) => q.key_available).map((q) => q.name));
+    return { tiers, keys };
+  } catch {
+    return { tiers: {}, keys: new Set() };   // no manifest yet: no tier named
+  }
+})();
+
+/** Every package's customization surface, from the REPO's
+ *  packaging/parameters.json -- written by build_manifest.BuildParameters()
+ *  in the same live pass that writes the manifest, so the two can never
+ *  describe different projects.
+ *
+ *  Deliberately NOT part of manifest.json: that file is the rolling pointer
+ *  every installed toolkit re-fetches to ask "is there a newer version",
+ *  and this is ~200 KB of help text no client needs to answer it. The docs
+ *  build reads the repo, so nothing has to be uploaded for it to work. */
+const PARAMS = (() => {
+  try {
+    return JSON.parse(fs.readFileSync(
+      path.join(REPO, 'packaging', 'parameters.json'), 'utf8'));
+  } catch {
+    return { packages: {} };   // pages build without the tables
+  }
+})();
+
+/** What a package GIVES you -- a toolbar button, a Hub tab, a pane type --
+ *  derived in build_manifest from the registries it hosts, with the words
+ *  and the owning registry published alongside so this file keeps no list
+ *  of its own. A package with none is a background behaviour: it changes
+ *  how TouchDesigner acts without putting anything on screen, and saying
+ *  so is as useful as naming a button. */
+const SURFACE_META = () => PARAMS.surface_meta || {};
+const surfacesOf = (name) => ((PARAMS.surfaces || {})[name] || []);
+
+/** What a package actually puts on each bar: one entry per registry host,
+ *  carrying the widget, the name the bar shows, its position, and the icon
+ *  glyph read off the live button (build_manifest.SurfaceEntries).
+ *
+ *  `surfaces` above is the same evidence collapsed to a yes/no, and stays
+ *  the thing the badges and the index filter run on -- this adds the detail
+ *  a reader with the toolbar open in front of them is actually after. A
+ *  build against a parameters.json written before this existed simply has
+ *  none, and every page renders as it did. */
+const entriesOf = (name) => ((PARAMS.surface_entries || {})[name] || []);
+
+/** The rendered glyph for a package's FIRST contribution to one surface.
+ *  Two buttons on one bar (MISC) each keep their own file; the badge shows
+ *  the first and the placement list below shows both. */
+function surfaceIcon(name, sid) {
+  const hit = entriesOf(name).find((e) => e.surface === sid && e.icon);
+  return hit ? hit.icon.file : '';
+}
+const iconImg = (file, cls) => (file
+  ? `<img class="${cls}" src="/docs/assets/icons/surface/${esc(file)}" alt=""
+      width="18" height="18" loading="lazy" decoding="async" />` : '');
+const surfaceLabel = (id) => (SURFACE_META()[id] || {}).label || id;
+const surfaceRegistry = (id) => (SURFACE_META()[id] || {}).registry || '';
+
+/** URL slug for a package. Must match _helpUrl() in build_manifest.py. */
+const packageSlug = (name) => name.toLowerCase().replace(/_/g, '-');
+
+/** The name a reader sees: the package name with a leading FNS_ removed.
+ *  Must match PublicName() in build_manifest.py, which writes it into the
+ *  manifest as `title`. The prefix is an operator-name convention and it
+ *  earns nothing in a sorted list, where it collapses every FNS package
+ *  under "F". `name` stays the identity everywhere it is looked up, and a
+ *  curated catalog.json `title` wins over the derivation.
+ *  See docs/PublicToolNames.md. */
+const publicName = (name) => (name.startsWith('FNS_') ? name.slice(4) : name);
+
+const esc = (s) => String(s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;');
+
+// ---------------------------------------------------------------- load
+
+const catalog = JSON.parse(fs.readFileSync(CATALOG, 'utf8'));
+const categories = catalog.categories;
+const curated = catalog.packages;
+
+// Presentation per category — the glyph on each tile and the one-line pitch
+// above each section. Curated in catalog.json next to the category list, so
+// renaming or adding a category in the CMS carries them along; hardcoding
+// them here meant a rename silently lost both. The repo's icons/*.png are
+// 30x19 UI chrome and unusable at tile size, hence unicode glyphs.
+const catMeta = catalog.category_meta || {};
+const GLYPH = Object.fromEntries(
+  categories.map((c) => [c, (catMeta[c] && catMeta[c].glyph) || '·']));
+const CATEGORY_PITCH = Object.fromEntries(
+  categories.map((c) => [c, (catMeta[c] && catMeta[c].pitch) || '']));
+
+/** Categories that are plumbing rather than a reason to install.
+ *
+ *  Core is eleven registries: the thing every other tool plugs into, always
+ *  installed, never chosen. Listing it FIRST meant the docs sidebar opened
+ *  on eleven registry names before a single tool a reader came looking for,
+ *  and the landing page's catalogue unfolded on them by default.
+ *
+ *  Marked in catalog.json's `category_meta`, which its own _comment defines
+ *  as the website's presentation layer ("packaging ignores it"). So this
+ *  reorders the SITE only -- `categories` stays the canonical ordered list
+ *  the installer picker runs on, where Core leading is correct because
+ *  those packages are the mandatory ones. */
+const isDeprioritized = (c) => Boolean(catMeta[c] && catMeta[c].deprioritized);
+
+/** Reading order: everything else first, in catalog order, then the
+ *  plumbing. A stable partition, not a sort -- two de-prioritized
+ *  categories would keep their curated order relative to each other. */
+const displayCategories = [
+  ...categories.filter((c) => !isDeprioritized(c)),
+  ...categories.filter(isDeprioritized),
+];
+
+// Entitlement. `access` in catalog.json NAMES A TIER (docs/GatedDeliveryResearch
+// §9.3), so anything that is not the literal 'free' is gated. The marker says
+// "Patreon" (docs/PatreonNaming.md); the tier NAME comes from the manifest's
+// ladder, never from a copy of the Worker's map kept here. Absent means free,
+// so a catalog written before gating existed reads correctly.
+const isPlus = (name) => {
+  const a = curated[name] && curated[name].access;
+  return Boolean(a) && a !== 'free';
+};
+const PLUS_MARK = '<span class="plus-mark">Patreon</span>';
+/** The minimum Patreon tier's name for a gated package, '' when unknown. */
+const tierOf = (name) => ROUTES.tiers[String(curated[name] && curated[name].access)] || '';
+/** "the Patreon Base tier or higher, or a Gumroad licence key", as far as
+ *  the manifest can say. */
+const unlockRoute = (name) => {
+  const tier = tierOf(name);
+  const patreon = tier ? `the Patreon ${tier} tier or higher` : 'a Patreon membership';
+  return ROUTES.keys.has(name) ? `${patreon}, or a Gumroad licence key` : patreon;
+};
+/** "Patreon:Base" -- the route and its lowest tier in one word; plain
+ *  "Patreon" when the manifest names no tier. */
+const tierMark = (name) => (tierOf(name) ? `Patreon:${tierOf(name)}` : 'Patreon');
+/** The row marker for one package: PLUS_MARK with the tier in it. */
+const plusMark = (name) => `<span class="plus-mark" title="Unlocks with ${esc(unlockRoute(name))}">${esc(tierMark(name))}</span>`;
+// A priced family product (catalog `pricing`): not Patreon-gated, installs
+// for everyone, and not free -- a trial, then its own licence. The words
+// are the catalog's; the site only shows them beside the Patreon mark.
+const pricingOf = (name) => (curated[name] && curated[name].pricing && curated[name].pricing.summary)
+  ? curated[name].pricing : null;
+// A tier variant (docs/TierVariants.md): the build above the entry tier,
+// on the same row and page. The words are the catalog's summary; the
+// tier name is the manifest's ladder, like every other tier word here.
+const variantsOf = (name) => {
+  const v = curated[name] && curated[name].variants;
+  return v && typeof v === 'object' ? Object.keys(v).sort().map((vid) => ({ vid, ...(v[vid] || {}) })) : [];
+};
+const variantTier = (v) => ROUTES.tiers[String(v.access)] || v.vid;
+const variantMark = (name) => variantsOf(name).map((v) =>
+  `<span class="plus-mark" title="${esc((v.summary ? v.summary + ' ' : '') + 'Unlocks at the ' + variantTier(v) + ' tier or higher')}">${esc(variantTier(v))} build</span>`).join('');
+const trialMark = (name) => {
+  const pr = pricingOf(name);
+  return pr ? `<span class="plus-mark trial" title="${esc(pr.detail || pr.summary)}">${esc(pr.summary)}</span>` : '';
+};
+
+// Curated site content: the other Function Store products. Site-only —
+// packaging/ never reads it. One source, injected into both the landing page
+// and /patreon/, because two hand-kept copies of the same two cards drift.
+const FAMILY = path.join(WEB, 'content', 'family.json');
+const family = fs.existsSync(FAMILY)
+  ? (JSON.parse(fs.readFileSync(FAMILY, 'utf8')).products || [])
+  : [];
+if (!family.length) {
+  console.warn('note: website/content/family.json missing or empty — the "More from Function Store" blocks will be empty');
+}
+
+if (!fs.existsSync(SRC)) {
+  console.error(`missing ${path.relative(REPO, SRC)} — run packaging/docs_seed_from_wiki.py first`);
+  process.exit(1);
+}
+
+const files = fs.readdirSync(SRC).filter((f) => f.endsWith('.md')).sort();
+const pages = [];
+
+for (const file of files) {
+  const name = file.replace(/\.md$/, '');
+  const raw = fs.readFileSync(path.join(SRC, file), 'utf8');
+  const { data, content } = matter(raw);
+  if (!curated[name]) {
+    fail(`packaging/docs/${file} has no entry in catalog.json (name must match a package exactly)`);
+    continue;
+  }
+  if (data.package && data.package !== name) {
+    fail(`packaging/docs/${file}: frontmatter package "${data.package}" does not match the filename`);
+  }
+  // Author has ONE home: catalog.json `author` (the manifest carries it,
+  // so the picker byline and this badge agree). The old doc-frontmatter
+  // `credit` block is refused so the two can never drift apart again.
+  if (data.credit !== undefined) {
+    fail(`packaging/docs/${file}: frontmatter \`credit\` moved to catalog.json \`author\` — delete it here and set it in the CMS package editor`);
+  }
+  const cur = curated[name];
+  const author = cur.author && typeof cur.author === 'object' && cur.author.name
+    ? { name: String(cur.author.name), url: cur.author.url ? String(cur.author.url) : '' }
+    : null;
+  pages.push({
+    name,
+    title: String(cur.title || publicName(name)),
+    slug: packageSlug(name),
+    file,
+    meta: data,
+    body: content,
+    category: cur.category,
+    description: cur.description || '',
+    author,
+    homepage: cur.homepage ? String(cur.homepage) : '',
+    changelogUrl: cur.changelog_url ? String(cur.changelog_url) : '',
+    foreign: !!(cur.source && typeof cur.source === 'object'),
+  });
+}
+
+for (const name of Object.keys(curated)) {
+  if (!pages.some((p) => p.name === name)) {
+    fail(`catalog.json has package "${name}" with no packaging/docs/${name}.md`);
+  }
+}
+
+if (problems.length) {
+  console.error('build refused:\n' + problems.map((p) => `  - ${p}`).join('\n'));
+  process.exit(1);
+}
+
+// A package not released yet (catalog `preview`, docs/PreviewPackages.md)
+// keeps its doc and its catalog entry, so the checks above still hold it
+// to the same standard, but the site says nothing about it: no page, no
+// card, no count, no search entry, until the flag is cleared.
+const previewNames = pages.filter((p) => curated[p.name].preview === true).map((p) => p.name);
+for (let i = pages.length - 1; i >= 0; i--) {
+  if (curated[pages[i].name].preview === true) pages.splice(i, 1);
+}
+if (previewNames.length) {
+  console.log(`preview, not published: ${previewNames.join(', ')}`);
+}
+
+const unknownCategory = pages.filter((p) => !categories.includes(p.category));
+if (unknownCategory.length) {
+  console.error('build refused: packages in a category missing from catalog.categories:\n' +
+    unknownCategory.map((p) => `  - ${p.name} (${p.category})`).join('\n'));
+  process.exit(1);
+}
+
+// ------------------------------------------------------------- render
+
+/** Colour a fenced block at BUILD time.
+ *
+ *  Returning the inner HTML only, never a whole <pre>: markdown-it then
+ *  keeps its own `<pre><code class="language-python">` wrapper, so the
+ *  existing .docs-body pre rules still apply and Pagefind still indexes
+ *  the text. Returning a full <pre> would take that wrapper away.
+ *
+ *  Highlighting HERE rather than in the browser is the point -- no
+ *  client-side highlighter to ship, nothing to run on load, and a block
+ *  that is coloured in the HTML stays coloured with scripts off.
+ *
+ *  `ignoreIllegals` because these are excerpts: a snippet that starts
+ *  mid-class is not valid Python on its own and must still colour rather
+ *  than throw the build. */
+const fenceLanguages = new Set();
+function highlight(code, lang) {
+  const name = String(lang || '').trim().toLowerCase();
+  if (name) fenceLanguages.add(name);
+  if (name && hljs.getLanguage(name)) {
+    try {
+      return hljs.highlight(code, { language: name, ignoreIllegals: true }).value;
+    } catch {
+      // fall through to plain, escaped below
+    }
+  }
+  if (name) fail(`a code block is tagged \`${name}\`, which no registered `
+    + `highlighter covers -- register it in build-site.mjs or retag the fence`);
+  return '';   // '' tells markdown-it to escape and render it plain
+}
+
+const md = new MarkdownIt({ html: true, linkify: true, breaks: false, highlight })
+  .use(anchor, {
+    slugify,
+    permalink: anchor.permalink.linkInsideHeader({
+      symbol: '#', placement: 'after', class: 'heading-anchor',
+      ariaHidden: true,
+    }),
+  });
+
+const anchorsOf = new Map();   // slug -> Set of heading anchors
+
+for (const p of pages) {
+  const ids = new Set();
+  p.html = md.render(p.body);
+  for (const m of p.html.matchAll(/<h[2-6][^>]*\sid="([^"]+)"/g)) ids.add(m[1]);
+  const mode = p.meta.parameter_reference || 'generated';
+  if (!['generated', 'authored'].includes(mode)) {
+    fail(`${p.file}: parameter_reference must be generated or authored`);
+  }
+  if (mode === 'authored' && !ids.has('parameters')) {
+    fail(`${p.file}: authored parameter_reference needs a ## Parameters section`);
+  }
+  if (mode === 'generated' && ids.has('parameters') && (PARAMS.packages || {})[p.name]?.length) {
+    fail(`${p.file}: duplicate Parameters references; remove the handwritten list or set parameter_reference: authored`);
+  }
+  anchorsOf.set(p.slug, ids);
+}
+
+// ------------------------------------------------------------- guides
+//
+// Long-form pages about the toolkit as a whole, as opposed to one package:
+// how it is built, how an update decides, how the launcher and the gate
+// fit together. Authored as markdown in website/content/guides/<slug>.md
+// with a two-key frontmatter (title, summary), rendered through the same
+// markdown pipeline and the same docs chrome as a package page, and
+// published under /docs/guides/<slug>/ so Pagefind indexes them with the
+// rest of the docs. They join the link check in both directions: a guide's
+// links to package pages are verified, and a package page may link to a
+// guide. The filename is the slug, and the slug is the URL.
+const GUIDES_SRC = path.join(WEB, 'content', 'guides');
+const guides = [];
+if (fs.existsSync(GUIDES_SRC)) {
+  for (const file of fs.readdirSync(GUIDES_SRC).filter((f) => f.endsWith('.md')).sort()) {
+    const slug = file.replace(/\.md$/, '');
+    if (!/^[a-z0-9-]+$/.test(slug)) {
+      fail(`website/content/guides/${file}: the filename is the URL slug, so it must be lowercase letters, digits and hyphens`);
+      continue;
+    }
+    const raw = fs.readFileSync(path.join(GUIDES_SRC, file), 'utf8');
+    const { data, content } = matter(raw);
+    if (!data.title || !data.summary) {
+      fail(`website/content/guides/${file}: frontmatter needs both \`title\` and \`summary\``);
+      continue;
+    }
+    // Where the guide sits in the docs. `guides` (the default) is the short,
+    // instructional kind and leads the sidebar and the index; `reference`
+    // is the long-form kind (how the toolkit is built) and closes both,
+    // beside the common-parameters page, so a reader meets the
+    // instructions first and the architecture only if they go looking.
+    const section = data.section ? String(data.section) : 'guides';
+    if (!['guides', 'reference'].includes(section)) {
+      fail(`website/content/guides/${file}: frontmatter \`section\` must be "guides" or "reference"`);
+      continue;
+    }
+    // Reading order inside the section, low first. Explicit because the
+    // alternative is the filename, and a guide named later in the alphabet
+    // would quietly jump the queue in front of Getting started.
+    const order = data.order === undefined ? 50 : Number(data.order);
+    if (!Number.isFinite(order)) {
+      fail(`website/content/guides/${file}: frontmatter \`order\` must be a number`);
+      continue;
+    }
+    const html = md.render(content);
+    const ids = new Set();
+    for (const m of html.matchAll(/<h[2-6][^>]*\sid="([^"]+)"/g)) ids.add(m[1]);
+    anchorsOf.set(`guides/${slug}`, ids);
+    guides.push({
+      slug, file, body: content, html, section, order,
+      title: String(data.title), summary: String(data.summary),
+    });
+  }
+  guides.sort((a, b) => a.order - b.order
+    || a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
+}
+
+// Internal links must resolve. This is the check that would have caught the
+// wiki's own dead anchors (#-custompar-tools, #opmenu-mod, ...), and it also
+// covers the hand-written landing page, whose /docs/ links are easy to typo.
+function checkLinks(html, where, selfSlug) {
+  for (const m of html.matchAll(/href="(\/docs\/[^"#]*)(#[^"]*)?"/g)) {
+    const wanted = m[1].replace(/^\/docs\//, '').replace(/\/+$/, '');
+    if (wanted && !anchorsOf.has(wanted)) {
+      fail(`${where}: link to /docs/${wanted}/ but no such package page`);
+      continue;
+    }
+    const frag = m[2] ? m[2].slice(1) : '';
+    const ids = anchorsOf.get(wanted || selfSlug);
+    if (frag && ids && !ids.has(frag)) {
+      fail(`${where}: link to /docs/${wanted || selfSlug}/#${frag} but that heading does not exist`);
+    }
+  }
+}
+
+// The shared parameter reference is generated rather than authored from a
+// markdown file, but package pages link to it -- so it has to exist as far
+// as checkLinks is concerned.
+const PARAMS_SLUG = 'common-parameters';
+anchorsOf.set(PARAMS_SLUG, new Set(['registry-sections', 'about']));
+
+// A link to a preview's page (docs/PreviewPackages.md) keeps its words and
+// loses the link: the page is not published until the tool is released.
+const previewSlugs = new Set(previewNames.map(packageSlug));
+const unlinkPreviews = (html) => html.replace(
+  /<a\s+href="\/docs\/([a-z0-9-]+)\/(?:#[^"]*)?"[^>]*>([\s\S]*?)<\/a>/g,
+  (whole, slug, text) => (previewSlugs.has(slug) ? text : whole));
+for (const p of pages) p.html = unlinkPreviews(p.html);
+for (const g of guides) g.html = unlinkPreviews(g.html);
+for (const p of pages) checkLinks(p.html, p.file, p.slug);
+for (const g of guides) checkLinks(g.html, `content/guides/${g.file}`, `guides/${g.slug}`);
+
+const landingPath = path.join(WEB, 'index.html');
+if (fs.existsSync(landingPath)) {
+  // Only the hand-written parts. The TOOLS block still holds the PREVIOUS
+  // build's output at this point, so checking it would deadlock the build
+  // on any package rename: the stale block fails the check, and the check
+  // runs before the block is regenerated from the catalog. What the build
+  // writes there is correct by construction.
+  const landingSrc = fs.readFileSync(landingPath, 'utf8')
+    .replace(/<!-- TOOLS:START -->[\s\S]*?<!-- TOOLS:END -->/, '');
+  checkLinks(landingSrc, 'index.html', null);
+}
+
+if (problems.length) {
+  console.error('build refused — unresolved internal links:\n' +
+    problems.map((p) => `  - ${p}`).join('\n'));
+  process.exit(1);
+}
+
+// ------------------------------------------------------------ chrome
+
+// Kept in step with the hand-written nav in index.html — the header markup
+// is duplicated the same way the tokens are, and a visitor moving between
+// the landing page and a docs page should not see the links change.
+const navLinks = [
+  ['/#get', 'Install'],
+  ['/#tools', 'Tools'],
+  ['/docs/', 'Docs'],
+  ['/community/', 'Community'],
+  ['/patreon/', 'Patreon'],
+  ['/about/', 'About'],
+];
+
+const docsStyleVersion = createHash('sha256').update(fs.readFileSync(path.join(WEB, 'docs.css'))).digest('hex').slice(0, 12);
+
+function head(title, description, canonical) {
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<link rel="icon" href="/favicon.png" type="image/png" />
+<link rel="apple-touch-icon" href="/favicon.png" />
+<title>${esc(title)}</title>
+<meta name="description" content="${esc(description)}" />
+<meta property="og:title" content="${esc(title)}" />
+<meta property="og:description" content="${esc(description)}" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="${SITE}/og-image.png" />
+<link rel="canonical" href="${canonical}" />
+<meta name="robots" content="index, follow" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<!-- Pagefind FIRST, then ours. Its bundle declares the same
+     --pagefind-ui-* custom properties on :root that docs.css overrides;
+     equal specificity means the LAST sheet wins, so loading it after
+     docs.css silently reverted every one of them -- the docs search box
+     rendered white-on-white in Arial Bold in a black site, and the bold
+     placeholder overran the 244px sidebar and was clipped mid-word. -->
+<link rel="stylesheet" href="/docs/pagefind/pagefind-ui.css" onerror="this.remove()">
+<link rel="stylesheet" href="/site-nav.css">
+<link rel="stylesheet" href="/docs.css?v=${docsStyleVersion}">
+</head>
+<body>`;
+}
+
+function header(current) {
+  const links = navLinks.map(([href, label]) => {
+    const isCurrent = href === current;
+    const ext = href.startsWith('http') ? ' target="_blank" rel="noopener"' : '';
+    return `      <a href="${href}"${isCurrent ? ' aria-current="page"' : ''}${ext}>${label}</a>`;
+  }).join('\n') +
+  `\n      <a href="${GH}" target="_blank" rel="noopener">GitHub</a>`
+  + `\n      <a class="btn btn-secondary" href="/get/"${current === '/get/' ? ' aria-current="page"' : ''}>Choose tools</a>`;
+  return `<header class="site">
+  <div class="site-inner">
+    <div class="brand">
+      <img class="brand-logo" src="/favicon.png" alt="" width="28" height="28" decoding="async" />
+      <div class="brand-lockup">
+        <a href="/" class="brand-name">FNSTools</a>
+        <span class="brand-credit">by <a href="https://functionstore.xyz/link-in-bio" target="_blank" rel="noopener noreferrer">Function Store</a></span>
+      </div>
+    </div>
+    <button type="button" class="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open menu">
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+      <span class="nav-toggle__bar" aria-hidden="true"></span>
+    </button>
+    <nav id="site-nav" class="site-nav">
+${links}
+      <a class="btn btn-primary" href="/#get">Get FNSTools →</a>
+    </nav>
+  </div>
+</header>`;
+}
+
+// Shared by the docs pages and by /get/ — every page below the landing page
+// ends the same way, so the footer markup has one definition.
+const FOOTER = `<footer class="site">
+  <div class="wrap footer-inner">
+    <div>© 2026 FNSTools · Built for TouchDesigner</div>
+    <div class="footer-links">
+      <a href="/docs/">Docs</a>
+      <a href="/community/">Community</a>
+      <a href="/patreon/">Patreon</a>
+      <a href="/about/">About</a>
+      <a href="/privacy/">Privacy</a>
+      <a href="/terms/">Terms</a>
+      <a href="${GH}" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://discord.gg/b4CaCP3g3K" target="_blank" rel="noopener">Discord</a>
+      <a href="https://derivative.ca" target="_blank" rel="noopener">TouchDesigner</a>
+      <a href="https://functionstore.xyz" target="_blank" rel="noopener">Function Store</a>
+      <a href="mailto:dan%2Bfnstools@functionstore.xyz?subject=FNSTools%20feedback">Feedback</a>
+    </div>
+  </div>
+</footer>`;
+
+const ANALYTICS = `<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+</script>
+<script src="/_vercel/insights/script.js" defer></script>`;
+
+const FOOT = `${FOOTER}
+<script src="/site-nav.js" defer></script>
+<!-- Pagefind is emitted by the search step that runs after this build.
+     Both scripts are deferred so they run in order; if the index has not
+     been generated yet this 404s and docs.js just skips the search UI. -->
+<script src="/docs/pagefind/pagefind-ui.js" defer onerror="this.remove()"></script>
+<script src="/docs.js" defer></script>
+${ANALYTICS}
+</body>
+</html>`;
+
+// ----------------------------------------------------------- parameters
+
+/** How a control's value type reads to someone who is not sitting in front
+ *  of the TouchDesigner parameter dialog. */
+const STYLE_WORD = {
+  Toggle: 'on / off', Pulse: 'button', Str: 'text', Int: 'number',
+  Float: 'number', Menu: 'menu', StrMenu: 'menu, editable',
+  File: 'file path', FileSave: 'file path', Folder: 'folder path',
+  RGB: 'colour', RGBA: 'colour', WH: 'width, height', XY: 'x, y',
+  XYZ: 'x, y, z', UV: 'u, v', OP: 'operator', COMP: 'operator',
+  TOP: 'operator', CHOP: 'operator', DAT: 'operator', SOP: 'operator',
+  MAT: 'operator', PanelCOMP: 'operator', Header: 'heading',
+};
+const styleWord = (s) => STYLE_WORD[s] || String(s).toLowerCase();
+
+/** The value the tool arrives with. An empty string is SAID rather than
+ *  left blank: a blank cell reads as missing data, and "empty" is often
+ *  the meaningful default (an empty Scope Comp means the root timeline). */
+function defaultCell(row) {
+  if (row.style === 'Pulse' || row.style === 'Header') return '';
+  const d = row.default;
+  if (d === undefined || d === null) return '';
+  if (typeof d === 'boolean') return d ? 'on' : 'off';
+  if (d === '') return 'empty';
+  if (row.style === 'Menu' || row.style === 'StrMenu') {
+    const hit = (row.menu || []).find((m) => m.name === d);
+    return hit ? hit.label : String(d);
+  }
+  return String(d);
+}
+
+/** TD's own separator entries are layout, not choices. */
+function menuLine(row) {
+  const items = (row.menu || []).filter((m) => m.name !== '_separator_');
+  if (!items.length) return '';
+  const shown = items.slice(0, 8).map((m) => `<code>${esc(m.label)}</code>`);
+  const rest = items.length - shown.length;
+  return `<div class="par-menu">Options: ${shown.join(', ')}`
+    + `${rest > 0 ? ` and ${rest} more` : ''}</div>`;
+}
+
+/** One table per parameter page, in dialog order.
+ *
+ *  A control with no help text is still listed, for the same reason an
+ *  unexplained hotkey is: knowing it exists beats not knowing. Saying so in
+ *  the cell is also what keeps the gap visible -- an undocumented control
+ *  that quietly renders as a blank cell is indistinguishable from a
+ *  documented one, and nobody ever goes back to fill those in. */
+/** A Header par is a section label -- unless there is a row of them.
+ *
+ *  Several Headers in a row are not labelling anything: they are a
+ *  paragraph typed into the parameter dialog one line per par, which is
+ *  the only way to get multi-line prose in there. ExprHotStrings has a run
+ *  of fourteen (`Usage:`, then `L1`..`L12`), and rendered literally that is
+ *  fourteen full-width heading rows of instructions sitting under a table
+ *  of six real controls -- prose wearing the costume of structure.
+ *
+ *  So: a Header ADJACENT to another Header is dropped, every member of the
+ *  run included. A lone Header keeps its meaning and its row. The text is
+ *  not lost -- that is what the tool's page is for, and ExprHotStrings
+ *  already says all of it in prose. */
+const withoutHeaderRuns = (rows) => rows.filter((row, i) => {
+  if (row.style !== 'Header') return true;
+  const before = i > 0 && rows[i - 1].style === 'Header';
+  const after = i < rows.length - 1 && rows[i + 1].style === 'Header';
+  return !before && !after;
+});
+
+let headerRunsDropped = 0;
+
+function parTable(allRows) {
+  const rows = withoutHeaderRuns(allRows);
+  headerRunsDropped += allRows.length - rows.length;
+  // A page that was ONLY a header run has nothing left to tabulate, and an
+  // empty table with a header row still reads as a table.
+  if (!rows.some((r) => r.style !== 'Header')) return '';
+  const body = rows.map((row) => {
+    if (row.style === 'Header') {
+      return `      <tr class="par-head"><th colspan="3">${esc(row.label)}</th></tr>`;
+    }
+    const def = defaultCell(row);
+    const desc = (row.help
+      ? md.renderInline(row.help)
+      : '<span class="par-todo">Not documented yet.</span>') + menuLine(row);
+    return `      <tr>
+        <td class="par-name"><strong>${esc(row.label || row.name)}</strong>`
+      + `<code>${esc(row.name)}</code>`
+      + `${row.readonly ? '<span class="par-flag">read-only</span>' : ''}</td>
+        <td class="par-type">${esc(styleWord(row.style))}`
+      + `${def ? `<span class="par-def">${esc(def)}</span>` : ''}</td>
+        <td>${desc}</td>
+      </tr>`;
+  }).join('\n');
+  return `<div class="par-wrap"><table class="par-table">
+    <thead><tr><th>Control</th><th>Type / default</th><th>What it does</th></tr></thead>
+    <tbody>
+${body}
+    </tbody>
+  </table></div>`;
+}
+
+/** "This tool also registers with X and Y."
+ *
+ *  A tool's Registry page is NOT listed on its own page: those controls
+ *  belong to the registry that stamps them, are identical on every tool
+ *  that registers, and are documented once on the registry's page.
+ *
+ *  Driven by `registry_pages` (which registries put a section on THIS
+ *  component) rather than by `surfaces` (what the package gives the user).
+ *  They are not the same list: a host nested inside a widget earns the
+ *  package a toolbar button while leaving the package root's Registry page
+ *  empty, which is true of 5 packages. Using surfaces here would point at
+ *  a parameter page that does not exist. */
+function registersWithLine(name) {
+  const owners = (PARAMS.registry_pages || {})[name] || [];
+  if (!owners.length) return '';
+  const links = owners.map((o) =>
+    `<a href="/docs/${packageSlug(o)}/#registry-section">${esc(o)}</a>`);
+  const list = links.length > 1
+    ? links.slice(0, -1).join(', ') + ' and ' + links[links.length - 1]
+    : links[0];
+  return `<p class="hint-line">Its <strong>Registry</strong> page comes from ${list}.</p>`;
+}
+
+/** The section a REGISTRY stamps onto every tool that registers with it.
+ *
+ *  Rendered on the registry's own page, which is where a reader who
+ *  followed "documented on its registry's page" lands. Derived from the
+ *  sections as actually stamped, not from the registry's template. */
+function registrySection(name) {
+  const rows = (PARAMS.registry_sections || {})[name] || [];
+  if (!rows.length) return '';
+  const table = parTable(rows);
+  if (!table) return '';
+  return `<section class="parameters">
+  <h2 id="registry-section">What it adds to a registered tool</h2>
+  <p class="hint-line">Every tool that registers gets these on its own <strong>Registry</strong> page.</p>
+${table}
+</section>`;
+}
+
+/** The package's own controls, grouped by parameter page in dialog order.
+ *
+ *  Derived, never authored here: build_manifest.Parameters() reads the pars
+ *  off the live component and the description IS the parameter's tooltip,
+ *  so a sentence written in TouchDesigner reaches this page at the next
+ *  build with no prose edited anywhere. The controls the toolkit stamps on
+ *  every package are not repeated here -- they are described once, on the
+ *  shared reference. */
+function parametersSection(p) {
+  if (p.meta.parameter_reference === 'authored') return '';
+  const rows = (PARAMS.packages || {})[p.name] || [];
+  if (!rows.length) return '';
+  // A doc that already hand-wrote a "Parameters" heading owns that anchor.
+  const anchor = (anchorsOf.get(p.slug) || new Set()).has('parameters')
+    ? 'parameter-reference' : 'parameters';
+  const byPage = [];
+  for (const row of rows) {
+    const last = byPage[byPage.length - 1];
+    if (last && last.page === row.page) last.rows.push(row);
+    else byPage.push({ page: row.page, rows: [row] });
+  }
+  const blocks = byPage.map(({ page, rows: rs }) => {
+    const table = parTable(rs);
+    // No table, no heading for it.
+    return table ? `  <h3 id="${slugify(anchor + '-' + page)}">${esc(page)}</h3>
+${table}` : '';
+  }).filter(Boolean).join('\n');
+  if (!blocks) return '';
+  return `<section class="parameters">
+  <h2 id="${anchor}">Parameters</h2>
+  ${registersWithLine(p.name)}
+${blocks}
+</section>`;
+}
+
+/** One collapsible group in the sidebar.
+ *
+ *  <details open> rather than a plain <div>: on a phone the flat list was
+ *  53 packages tall and pushed the first word of every page 2358px down --
+ *  you tapped a tool and landed back on the menu. Collapsed, the same nav
+ *  is eight rows.
+ *
+ *  Authored OPEN and closed by docs.js only under the mobile breakpoint, so
+ *  the desktop sidebar is unchanged and a reader with no JavaScript gets
+ *  today's fully-expanded list rather than a nav they cannot open. The
+ *  count rides in the summary because a collapsed group that does not say
+ *  how much it hides is a worse affordance than the list it replaced.
+ */
+function sideGroup(glyph, label, items, count) {
+  return `  <details class="side-group" open>
+    <summary>
+      <span class="side-glyph" aria-hidden="true">${glyph}</span>
+      <span class="side-cat">${esc(label)}</span>
+      <span class="side-count">${count}</span>
+    </summary>
+    <ul>
+${items}
+    </ul>
+  </details>`;
+}
+
+/** "Where it appears" -- every on-screen contribution, one row each.
+ *
+ *  Entirely derived (build_manifest.SurfaceEntries reads the registry
+ *  hosts): the icon is the glyph off the live button, the name is the
+ *  registry's own Canonicalname, and the position is the order par the
+ *  surface configurator writes. Nothing here is authored in a doc, so a
+ *  rebound button or a re-ordered bar reaches the site with no prose
+ *  edited -- which is the whole point, since the previous answer to
+ *  "which icon is this" was a hand-typed PNG filename from the wiki era
+ *  that no longer matched the button.
+ *
+ *  Skipped entirely for a package with no entries: "nothing on screen" is
+ *  already said by the badges, and an empty section says it worse. */
+function placementSection(p) {
+  const entries = entriesOf(p.name);
+  if (!entries.length) return '';
+  // How many rows share a surface: a package with two hosts on one bar
+  // (PreviewPanel registers itself AND its nested PopViewer as pane types)
+  // needs both names printed, or the row whose name matches the package
+  // reads as an empty duplicate of the other.
+  const perSurface = new Map();
+  for (const e of entries) perSurface.set(e.surface, (perSurface.get(e.surface) || 0) + 1);
+  const rows = entries.map((e) => {
+    const reg = surfaceRegistry(e.surface);
+    const where = reg
+      ? `<a href="/docs/${packageSlug(reg)}/">${esc(surfaceLabel(e.surface))}</a>`
+      : esc(surfaceLabel(e.surface));
+    const bits = [];
+    // The name the BAR shows, which is often not the package name. Printed
+    // when it differs from the package, and always when the package has
+    // more than one row on this surface.
+    const ownName = e.label === p.name || e.label === p.title;
+    if (e.label && (!ownName || perSurface.get(e.surface) > 1)) bits.push(`as <strong>${esc(e.label)}</strong>`);
+    if (e.side) bits.push(`${esc(e.side)} side`);
+    if (e.order !== undefined) bits.push(`position ${esc(String(e.order))}`);
+    const icon = e.icon
+      ? iconImg(e.icon.file, 'place-icon')
+      : '<span class="place-icon place-icon--none" aria-hidden="true"></span>';
+    return `      <li>${icon}<span class="place-what">${where}</span>`
+      + `<span class="place-detail">${bits.join(' \u00b7 ')}</span></li>`;
+  }).join('\n');
+  return `<section class="placement">
+  <h2 id="where-it-appears">Where it appears</h2>
+  <p class="hint-line">Read off the registry hosts in the component, so this is
+  where the tool puts itself in a default install; every one of these can be
+  reordered or hidden from <a href="/docs/fns-hub/">Hub</a>.</p>
+  <ul class="place-list">
+${rows}
+  </ul>
+</section>`;
+}
+
+// Sidebar access is a compact annotation; full terms remain on the tool page.
+function sidebarAccess(name) {
+  const pricing = pricingOf(name);
+  const variants = variantsOf(name);
+  const detail = [];
+  if (isPlus(name)) detail.push(`Unlocks with ${unlockRoute(name)}.`);
+  if (pricing) detail.push(pricing.detail || pricing.summary);
+  for (const v of variants) {
+    detail.push(`${variantTier(v)} build: ${v.summary || 'Unlocks at the ' + variantTier(v) + ' tier or higher.'}`);
+  }
+  if (!detail.length) return null;
+  const label = pricing ? (/trial/i.test(pricing.summary) ? 'Trial' : 'Licence')
+    : isPlus(name) ? (tierOf(name) || 'Paid') + (variants.length ? '+' : '')
+    : `${variantTier(variants[0])} option`;
+  return { label, detail: detail.join(' ') };
+}
+
+// Keep free entries first in docs navigation and category listings.
+// A free tool with an optional paid variant remains in the free group.
+const docsToolOrder = (a, b) =>
+  Number(isPlus(a.name) || Boolean(pricingOf(a.name)))
+  - Number(isPlus(b.name) || Boolean(pricingOf(b.name)))
+  || a.title.localeCompare(b.title, 'en', { sensitivity: 'base' });
+
+function sidebar(currentSlug) {
+  const groups = displayCategories.map((cat) => {
+    const inCat = pages
+      .filter((p) => p.category === cat)
+      .sort(docsToolOrder);
+    const items = inCat
+      .map((p) => {
+        const access = sidebarAccess(p.name);
+        const hintId = `side-access-${p.slug}`;
+        return `      <li class="side-tool"><a href="/docs/${p.slug}/"${p.slug === currentSlug ? ' aria-current="page"' : ''}${access ? ` aria-describedby="${hintId}"` : ''}><span class="side-tool-name">${esc(p.title)}</span>${access ? `<span class="side-access" aria-hidden="true">${esc(access.label)}</span>` : ''}</a>${access ? `<span class="side-access-detail" id="${hintId}" role="tooltip">${esc(access.detail)}</span>` : ''}</li>`;
+      })
+      .join('\n');
+    if (!items) return '';
+    return sideGroup(GLYPH[cat] || '·', cat, items, inCat.length);
+  }).filter(Boolean).join('\n');
+  const guideItem = (g) => `      <li><a href="/docs/guides/${g.slug}/"${currentSlug === `guides/${g.slug}` ? ' aria-current="page"' : ''}>${esc(g.title)}</a></li>`;
+  // First, above the packages: the instructional guides are where a reader
+  // who has not yet picked a tool starts, and there are only ever a few.
+  const topGuides = guides.filter((g) => g.section === 'guides');
+  const guideGroup = topGuides.length
+    ? sideGroup('◈', 'Guides', topGuides.map(guideItem).join('\n'), topGuides.length)
+    : '';
+  // Last, under the packages: a reference is something to come back to, and
+  // the long-form guides (how the toolkit is built) live here on purpose.
+  const endGuides = guides.filter((g) => g.section === 'reference');
+  const reference = sideGroup('§', 'Reference', [
+    `      <li><a href="/docs/${PARAMS_SLUG}/"${currentSlug === PARAMS_SLUG ? ' aria-current="page"' : ''}>Common parameters</a></li>`,
+    ...endGuides.map(guideItem),
+  ].join('\n'), 1 + endGuides.length);
+  return `<aside class="docs-side" id="docs-side">
+  <div class="docs-search"><div id="search"></div></div>
+${guideGroup}
+${groups}
+${reference}
+</aside>`;
+}
+
+// ------------------------------------------------------------- write
+
+// Rebuild from scratch, but keep docs/pagefind/ — that is the search index,
+// written by the separate pagefind step. Wiping it here would silently drop
+// search from the site whenever this script is run on its own (the markup
+// degrades quietly, so the loss is invisible until someone tries to search).
+if (fs.existsSync(OUT)) {
+  for (const entry of fs.readdirSync(OUT)) {
+    if (entry === 'pagefind') continue;
+    fs.rmSync(path.join(OUT, entry), { recursive: true, force: true });
+  }
+}
+fs.mkdirSync(path.join(OUT, 'assets', 'icons'), { recursive: true });
+let copied = 0;
+for (const f of fs.readdirSync(ICONS)) {
+  fs.copyFileSync(path.join(ICONS, f), path.join(OUT, 'assets', 'icons', f));
+  copied++;
+}
+let glyphs = 0;
+if (fs.existsSync(SURFACE_ICONS)) {
+  const dst = path.join(OUT, 'assets', 'icons', 'surface');
+  fs.mkdirSync(dst, { recursive: true });
+  for (const f of fs.readdirSync(SURFACE_ICONS).filter((f) => f.endsWith('.png'))) {
+    fs.copyFileSync(path.join(SURFACE_ICONS, f), path.join(dst, f));
+    glyphs++;
+  }
+}
+
+for (const p of pages) {
+  const dir = path.join(OUT, p.slug);
+  fs.mkdirSync(dir, { recursive: true });
+
+  const badges = [
+    `<span class="badge badge-cat">${GLYPH[p.category] || '·'} ${esc(p.category)}</span>`,
+  ];
+  // A gated package is documented exactly like a free one — the decision was
+  // "visible and locked", so the page is public and complete. What differs is
+  // one badge and one callout saying how to get it.
+  if (isPlus(p.name)) {
+    badges.push(`<a class="badge badge-cat" href="/patreon/" title="Unlocks with ${esc(unlockRoute(p.name))}">◆ ${esc(tierMark(p.name))}</a>`);
+  }
+  for (const v of variantsOf(p.name)) {
+    badges.push(`<a class="badge badge-cat" href="/patreon/" title="${esc('Unlocks at the ' + variantTier(v) + ' tier or higher')}">◆ ${esc(variantTier(v))} build</a>`);
+  }
+  const pricing = pricingOf(p.name);
+  if (pricing) {
+    badges.push(`<a class="badge badge-cat" href="${esc(pricing.url || p.homepage || '#')}" target="_blank" rel="noopener" title="${esc(pricing.detail || '')}">${esc(pricing.summary)}</a>`);
+  }
+  // Where it shows up, before anything else about it: this is the question
+  // a reader scanning the docs actually has.
+  for (const sid of surfacesOf(p.name)) {
+    const reg = surfaceRegistry(sid);
+    // The glyph the bar button actually draws, beside the words for it --
+    // a reader scanning the toolbar recognises the picture faster than the
+    // sentence, and the picture is now derived rather than hand-typed.
+    const label = iconImg(surfaceIcon(p.name, sid), 'badge-icon')
+      + esc(surfaceLabel(sid));
+    badges.push(reg
+      ? `<a class="badge badge-surface" href="/docs/${packageSlug(reg)}/">${label}</a>`
+      : `<span class="badge badge-surface">${label}</span>`);
+  }
+  const plats = p.meta.platforms;
+  if (Array.isArray(plats) && plats.length && plats.length < 2) {
+    badges.push(`<span class="badge badge-warn">${esc(plats.join(', '))} only</span>`);
+  }
+  if (p.author) {
+    const c = p.author;
+    badges.push(c.url
+      ? `<span class="badge">by <a href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.name)}</a></span>`
+      : `<span class="badge">by ${esc(c.name)}</span>`);
+  }
+  // A foreign package (catalog `source`): its own product, mirrored into
+  // the store. Say so, and give the reader the way out to its own site.
+  if (p.foreign) {
+    badges.push(`<span class="badge" title="Its own product with its own updater, installable from the toolkit picker">family product</span>`);
+  }
+  if (p.homepage) {
+    badges.push(`<a class="badge" href="${esc(p.homepage)}" target="_blank" rel="noopener">website ↗</a>`);
+  }
+  if (p.changelogUrl) {
+    badges.push(`<a class="badge" href="${esc(p.changelogUrl)}" target="_blank" rel="noopener">changelog ↗</a>`);
+  }
+
+  const video = p.meta.video
+    ? `<div class="embed-video"><iframe src="https://www.youtube.com/embed/${esc(String(p.meta.video).split(/[/=]/).pop())}" title="${esc(p.title)} walkthrough" loading="lazy" allowfullscreen></iframe></div>`
+    : '';
+
+  // The site is the complete record of the gated tools: a gated page is as
+  // full as a free one, and the note on it is where the reader meets the
+  // membership that pays for the free toolkit.
+  const plusNote = isPlus(p.name) ? `<div class="plus-note">
+    <p><strong>This tool unlocks with Patreon.</strong> It installs through the same picker as
+    everything else and unlocks with ${esc(unlockRoute(p.name))}, connected from inside
+    TouchDesigner.
+    Everything else in the toolkit stays free and MIT, and the membership is what keeps that
+    work moving.</p>
+    <p class="plus-note-actions">
+      <a class="btn btn-primary" href="${PATREON}" target="_blank" rel="noopener">Join on Patreon →</a>
+      <a class="btn btn-secondary" href="/patreon/">How unlocking works →</a>
+    </p>
+  </div>` : '';
+  // A priced family product says what it costs on its own page too, in
+  // the catalog's words, with the way to its own licence page.
+  // one package, one page: the build above the entry tier is a paragraph
+  // here, never a second page (docs/TierVariants.md)
+  const variantNote = variantsOf(p.name).length ? `<div class="plus-note">
+    ${variantsOf(p.name).map((v) => `<p><strong>The ${esc(variantTier(v))} build</strong> ${esc(v.summary || 'adds more')}. It unlocks at the ${esc(variantTier(v))} tier or higher and installs in place of the ${esc(tierOf(p.name) || 'Base')} build; the picker lands whichever build your account holds.</p>`).join('\n    ')}
+  </div>` : '';
+  const trialNote = !isPlus(p.name) && pricing ? `<div class="plus-note">
+    <p><strong>${esc(p.title)} is a family product with its own licence.</strong> ${esc(pricing.detail || pricing.summary)}</p>
+    <p class="plus-note-actions">
+      <a class="btn btn-secondary" href="${esc(pricing.url || p.homepage || '#')}" target="_blank" rel="noopener">Licensing →</a>
+    </p>
+  </div>` : '';
+
+  const features = p.meta.features || [];
+  const featIcon = (f) => (f.icon
+    ? `<img class="feat-icon" src="/docs/assets/icons/${esc(f.icon)}" alt="" `
+      + `width="18" height="18" decoding="async" />` : '');
+
+  const parAnchor = p.meta.parameter_reference !== 'authored' && (PARAMS.packages || {})[p.name]?.length
+    ? ((anchorsOf.get(p.slug) || new Set()).has('parameters')
+        ? 'parameter-reference' : 'parameters')
+    : '';
+  const tocItems = (entriesOf(p.name).length
+      ? [`<li><a href="#where-it-appears">Where it appears</a></li>`] : [])
+    .concat(features
+      .map((f) => `<li><a href="#${esc(f.anchor)}">${featIcon(f)}${esc(f.name)}</a></li>`))
+    .concat(parAnchor ? [`<li><a href="#${parAnchor}">Parameters</a></li>`] : []);
+  const onThisPage = tocItems.length > 1
+    ? `<nav class="toc"><span>On this page</span><ul>${tocItems.join('')}</ul></nav>`
+    : '';
+
+  // NO icon is injected into the headings. The CMS lets a feature carry an
+  // icons/*.png and this used to stamp it in front of its <h2>; it read as
+  // decoration inside the running text and is gone by request. The file is
+  // still authored and still rides the table of contents, which is a list
+  // of links rather than prose.
+  const body = p.html;
+
+  // Shortcuts: the KEYS come from the manifest, which build_manifest
+  // fills from FNS_HotkeyManager on every build, so a rebound key
+  // reaches the site with no prose edited. The sentence comes from the
+  // doc, because nothing in the project knows what a shortcut MEANS.
+  // A key with no sentence is still listed: knowing one exists beats
+  // not knowing.
+  const said = new Map();
+  // Top-level `hotkeys:` is where the CMS writes now -- the keys belong to
+  // the PACKAGE, not to whichever heading someone once attached them to.
+  for (const h of (p.meta.hotkeys || [])) {
+    if (h && h.keys && h.does) said.set(keyId(h.keys), h.does);
+  }
+  for (const f of features) {
+    for (const h of (f.hotkeys || [])) {
+      const k = typeof h === 'string' ? h.split('=')[0] : (h.keys || '');
+      const v = typeof h === 'string'
+        ? h.split('=').slice(1).join('=').trim() : (h.does || '');
+      if (String(k).trim() && v) said.set(keyId(k), v);
+    }
+  }
+  const bound = HOTKEYS[p.name] || [];
+  // Below the prose: the tables are a reference to come back to, and a
+  // 80-row table between the lede and the explanation buries the
+  // explanation. The TOC entry is what makes them reachable from the top.
+  const parSection = parametersSection(p);
+  const shortcuts = bound.length ? `<section class="shortcuts">
+    <h2 id="shortcuts">Shortcuts</h2>
+    <p class="hint-line">Global: they fire anywhere in TouchDesigner. Shortcuts scoped to a single panel are a local control scheme and stay off this list.</p>
+    <ul class="feat-keys">${bound.map((h) => {
+      const what = said.get(keyId(h.keys)) || '';
+      return `<li><kbd>${esc(prettyKeys(h.keys))}</kbd>${
+        what ? md.renderInline(what) : ''}</li>`;
+    }).join('')}</ul>
+  </section>` : '';
+
+  // An undocumented page has to LOOK undocumented. Rendered empty it is a
+  // title, a badge row and generated tables -- indistinguishable from a
+  // tool that simply has little to say, which is how AltSelect shipped
+  // with a blank page nobody noticed. Same reasoning as .par-todo.
+  const undocumented = p.body.trim() ? '' : `<p class="page-todo">This tool
+    does not have a written page yet. The generated sections below are read
+    straight from the component, so they are accurate. What is missing is
+    the prose. <a href="${EDIT_BASE}/${p.file}" target="_blank"
+    rel="noopener">Write it →</a></p>`;
+
+  const html = `${head(`${p.title} | FNSTools docs`, p.description || `${p.title} documentation.`, `${SITE}/docs/${p.slug}/`)}
+${header('/docs/')}
+<div class="docs-layout wrap">
+${sidebar(p.slug)}
+<main class="docs-main" data-pagefind-body>
+  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> ${esc(p.category)}</p>
+  <h1>${esc(p.title)}</h1>
+  ${p.description ? `<p class="lede">${esc(p.description)}</p>` : ''}
+  <p class="badges">${badges.join(' ')}</p>
+  ${plusNote}${variantNote}${trialNote}
+  ${undocumented}
+  ${video}
+  ${onThisPage}
+  ${placementSection(p)}
+  ${shortcuts}
+  <div class="docs-body">
+${body}
+  </div>
+  ${parSection}
+  ${registrySection(p.name)}
+  <p class="edit-page"><a href="${EDIT_BASE}/${p.file}" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
+</main>
+</div>
+${FOOT}`;
+  fs.writeFileSync(path.join(dir, 'index.html'), html);
+}
+
+// Guides get the package page's chrome and nothing generated: no badges, no
+// parameter tables, no registry section. "On this page" is read off the
+// guide's own second-level headings, since a guide declares no features.
+for (const g of guides) {
+  const dir = path.join(OUT, 'guides', g.slug);
+  fs.mkdirSync(dir, { recursive: true });
+  const h2s = [];
+  for (const m of g.html.matchAll(/<h2[^>]*\sid="([^"]+)"[^>]*>([\s\S]*?)<\/h2>/g)) {
+    const text = m[2]
+      .replace(/<a class="heading-anchor"[\s\S]*?<\/a>/, '')
+      .replace(/<[^>]+>/g, '')
+      .trim();
+    h2s.push(`<li><a href="#${esc(m[1])}">${text}</a></li>`);
+  }
+  const onThisPage = h2s.length > 1
+    ? `<nav class="toc"><span>On this page</span><ul>${h2s.join('')}</ul></nav>`
+    : '';
+  fs.writeFileSync(path.join(dir, 'index.html'), `${head(`${g.title} | FNSTools docs`, g.summary, `${SITE}/docs/guides/${g.slug}/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/guides/${g.file}: do not edit here -->
+${header('/docs/')}
+<div class="docs-layout wrap">
+${sidebar(`guides/${g.slug}`)}
+<main class="docs-main" data-pagefind-body>
+  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> ${g.section === 'reference' ? 'Reference' : 'Guides'}</p>
+  <h1>${esc(g.title)}</h1>
+  <p class="lede">${esc(g.summary)}</p>
+  ${onThisPage}
+  <div class="docs-body">
+${g.html}
+  </div>
+  <p class="edit-page"><a href="${GH}/blob/main/website/content/guides/${g.file}" target="_blank" rel="noopener">Edit this page on GitHub →</a></p>
+</main>
+</div>
+${FOOT}`);
+  console.log(`built /docs/guides/${g.slug}/`);
+}
+
+/** Filter the index by what a package puts on screen.
+ *
+ *  Built from the surfaces actually in use, so a vocabulary entry nothing
+ *  hosts (the pane type, today) never becomes a button that always returns
+ *  nothing. "Nothing on screen" is a real answer and gets its own button:
+ *  those tools change how TouchDesigner behaves rather than adding to it,
+ *  and that is exactly what someone browsing wants to be able to ask for. */
+function surfaceFilter() {
+  const used = new Map();
+  for (const p of pages) {
+    const list = surfacesOf(p.name);
+    if (!list.length) used.set('none', (used.get('none') || 0) + 1);
+    for (const sid of list) used.set(sid, (used.get(sid) || 0) + 1);
+  }
+  if (used.size < 2) return '';
+  const order = [...Object.keys(SURFACE_META()), 'none'].filter((k) => used.has(k));
+  const buttons = order.map((sid) => `<button class="surf-chip" data-surf="${esc(sid)}">${
+    sid === 'none' ? 'Nothing on screen' : esc(surfaceLabel(sid))
+  } <span>${used.get(sid)}</span></button>`).join('');
+  return `  <div class="surf-filter" id="surf-filter">
+    <button class="surf-chip on" data-surf="all">All <span>${pages.length}</span></button>
+    ${buttons}
+  </div>
+  <script>
+  (function () {
+    var bar = document.getElementById('surf-filter');
+    if (!bar) return;
+    bar.addEventListener('click', function (e) {
+      var b = e.target.closest('.surf-chip');
+      if (!b) return;
+      var want = b.dataset.surf;
+      bar.querySelectorAll('.surf-chip').forEach(function (x) {
+        x.classList.toggle('on', x === b);
+      });
+      document.querySelectorAll('.doc-card').forEach(function (card) {
+        var has = want === 'all'
+          || (card.dataset.surfaces || '').split(' ').indexOf(want) !== -1;
+        card.hidden = !has;
+      });
+      // a category whose every card is hidden is noise, not a heading
+      document.querySelectorAll('.doc-cat').forEach(function (sec) {
+        var any = sec.querySelector('.doc-card:not([hidden])');
+        sec.hidden = !any;
+      });
+    });
+  })();
+  <\/script>`;
+}
+
+// docs index: the instructional guides first, one section per category,
+// and the reference guides last. A guide card carries every surface id
+// plus "none" so the surface filter, which is a question about packages,
+// never hides it.
+const everySurface = [...Object.keys(SURFACE_META()), 'none'].join(' ');
+const guideCardSection = (id, glyph, label, list) => (list.length ? `  <section class="doc-cat">
+    <h2 id="${id}"><span class="side-glyph" aria-hidden="true">${glyph}</span>${esc(label)}</h2>
+    <div class="doc-cards">
+${list.map((g) => `      <a class="doc-card" href="/docs/guides/${g.slug}/" data-surfaces="${esc(everySurface)}">
+        <strong>${esc(g.title)}</strong>
+        <span>${esc(g.summary)}</span>
+      </a>`).join('\n')}
+    </div>
+  </section>` : '');
+const guideCards = guideCardSection('guides', '◈', 'Guides',
+  guides.filter((g) => g.section === 'guides'));
+const referenceCards = guideCardSection('reference', '§', 'Reference',
+  guides.filter((g) => g.section === 'reference'));
+// Categories renamed or split in the 2026-09-25 rethink keep their old
+// anchors, so a saved /docs/#media-output link still lands somewhere
+// sensible: an empty target inside the successor's section.
+const CATEGORY_ALIASES = {
+  'Surfaces': 'Interface',
+  'Workflow': 'Project',
+  'Media & Output': 'Visual',
+  'Control': 'Control & mapping',
+};
+const aliasAnchors = (cat) => Object.entries(CATEGORY_ALIASES)
+  .filter(([old, now]) => now === cat && slugify(old) !== slugify(cat))
+  .map(([old]) => `<span id="${slugify(old)}" class="anchor-alias"></span>`).join('');
+const indexGroups = displayCategories.map((cat) => {
+  const items = pages
+    .filter((p) => p.category === cat)
+    .sort(docsToolOrder)
+    .map((p) => `      <a class="doc-card" href="/docs/${p.slug}/" data-surfaces="${
+        esc(surfacesOf(p.name).join(' ')) || 'none'}">
+        <strong>${esc(p.title)}${isPlus(p.name) ? plusMark(p.name) : ''}${variantMark(p.name)}${trialMark(p.name)}</strong>
+        <span>${esc(p.description || p.meta.summary)}</span>
+      </a>`).join('\n');
+  if (!items) return '';
+  return `  <section class="doc-cat">
+    ${aliasAnchors(cat)}<h2 id="${slugify(cat)}"><span class="side-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>${esc(cat)}</h2>
+    <div class="doc-cards">
+${items}
+    </div>
+  </section>`;
+}).filter(Boolean).join('\n');
+
+fs.writeFileSync(path.join(OUT, 'index.html'), `${head(
+  'FNSTools docs: every tool in the toolkit',
+  `Documentation for all ${pages.length} FNSTools packages: templates, parameter tools, network shortcuts, MIDI/OSC mapping and extension helpers for TouchDesigner.`,
+  `${SITE}/docs/`)}
+${header('/docs/')}
+<div class="docs-layout wrap">
+${sidebar(null)}
+<main class="docs-main docs-index" data-pagefind-body>
+  <h1>Documentation</h1>
+  <p class="lede">Setup instructions, shortcuts and reference for FNSTools.</p>
+  <p class="docs-index-note">For controls shared by all tools, see the <a href="/docs/${PARAMS_SLUG}/">common parameters</a> page.</p>
+  <p class="docs-index-note">Access labels show the lowest Patreon tier required. <a href="/patreon/">Membership and licence details →</a></p>
+${guideCards}
+${surfaceFilter()}
+${indexGroups}
+${referenceCards}
+</main>
+</div>
+${FOOT}`);
+
+// --------------------------- shared parameter reference (generated page)
+
+// The toolkit stamps the same controls onto every package: one registry
+// section per surface a tool publishes into, and the read-only identity
+// block on its About page. Repeating those on 49 pages would be 49 copies
+// of one explanation to keep in step -- so each package page links here
+// instead, and this is the only place they are described.
+{
+  const aboutRows = PARAMS.about_stamp || [];
+  const registries = Object.entries(PARAMS.registry_sections || {});
+  const registryList = registries.map(([name, rows]) =>
+    `      <li><a href="/docs/${packageSlug(name)}/#registry-section">${esc(name)}</a>`
+    + `: ${rows.length} controls</li>`).join('\n');
+  const dir = path.join(OUT, PARAMS_SLUG);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, 'index.html'), `${head(
+    'Common parameters | FNSTools docs',
+    'The controls every FNSTools package carries: the read-only About block that identifies a version, and the registry sections that decide where a tool appears.',
+    `${SITE}/docs/${PARAMS_SLUG}/`)}
+${header('/docs/')}
+<div class="docs-layout wrap">
+${sidebar(PARAMS_SLUG)}
+<main class="docs-main" data-pagefind-body>
+  <p class="crumbs"><a href="/docs/">Docs</a> <span aria-hidden="true">/</span> Reference</p>
+  <h1>Common parameters</h1>
+  <p class="lede">The controls every package carries, whatever the tool does.</p>
+  <section class="parameters">
+  <h2 id="about">About</h2>
+  <p class="hint-line">Read-only, on every package. <code>Pkgversion</code> is what the updater compares.</p>
+${parTable(aboutRows)}
+
+  <h2 id="registry-sections">Registry sections</h2>
+  <p class="hint-line">Registering with a surface adds a section to a tool's <strong>Registry</strong> page. Each registry documents its own:</p>
+  <ul class="par-registry-list">
+${registryList}
+  </ul>
+  </section>
+</main>
+</div>
+${FOOT}`);
+  console.log(`built /docs/${PARAMS_SLUG}/ (${aboutRows.length} identity fields, ${registries.length} registries linked)`);
+}
+
+// ------------------------------- tool catalogue injected into index.html
+
+// One fold per category. 49 packages listed flat is a wall nobody reads, and
+// the landing page's job is to say what KIND of thing is in here — so the
+// category, its pitch and its count stay in the open and the list opens on
+// demand. <details> keeps it working with JS off and findable by Ctrl+F.
+//
+// Core is open by default: it is the shortest way to answer "what is this
+// thing actually made of" for someone who just arrived.
+const grid = displayCategories.map((cat) => {
+  const inCat = pages
+    .filter((p) => p.category === cat)
+    .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
+  const items = inCat.map((p) => `          <div class="feat">
+            <div class="feat-icon" aria-hidden="true">${GLYPH[cat] || '·'}</div>
+            <div class="feat-text"><strong><a href="/docs/${p.slug}/">${esc(p.title)}</a>${isPlus(p.name) ? plusMark(p.name) : ''}${variantMark(p.name)}${trialMark(p.name)}</strong><span>${esc(p.description || p.meta.summary)}</span></div>
+          </div>`).join('\n');
+  if (!items) return '';
+  const plusHere = inCat.filter((p) => isPlus(p.name)).length;
+  const count = `${inCat.length} tool${inCat.length === 1 ? '' : 's'}`
+    + (plusHere ? ` · ${plusHere} Patreon` : '');
+  // The first category a reader meets, whichever that now is -- never a
+  // hardcoded name, which is how this stayed pinned to Core.
+  return `      <details class="cat"${cat === displayCategories[0] ? ' open' : ''}>
+        <summary>
+          <span class="cat-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>
+          <span>
+            <span class="cat-name">${esc(cat)}</span>
+            <span class="cat-pitch">${esc(CATEGORY_PITCH[cat] || '')}</span>
+          </span>
+          <span class="cat-count">${count}</span>
+        </summary>
+        <div class="cat-list">
+${items}
+        </div>
+      </details>`;
+}).filter(Boolean).join('\n');
+
+// ------------------------------- the rest of the family, from family.json
+const familyBlock = family.map((p) => `      <a class="prod" href="${esc(p.url)}" target="_blank" rel="noopener">
+        <span class="prod-kind">${esc(p.kind || '')}</span>
+        <span class="prod-name">${esc(p.name)} ↗</span>
+        <span class="prod-pitch">${esc(p.pitch || '')}</span>
+        <span class="prod-access">${esc(p.access || '')}</span>
+      </a>`).join('\n');
+
+// ------------------------------- picker preview injected into index.html
+//
+// A depiction of /get/ on the landing page, built from the same catalogue
+// the picker lists — so it can never show a tool that no longer ships, and
+// the categories it shows are simply the first two the CMS puts after Core.
+// Static markup inside one link: the real thing is one click away, and a
+// second copy of the picker's logic here would be a second thing to keep
+// true.
+const previewCats = displayCategories.filter((c) => !isDeprioritized(c)).slice(0, 2);
+const previewBlock = previewCats.map((cat) => {
+  const items = pages
+    .filter((p) => p.category === cat)
+    .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
+  const cards = items.slice(0, 2).map((p, i) => `          <span class="picker__card${i === 0 ? ' is-on' : ''}">
+            <span class="picker__box" aria-hidden="true">${i === 0 ? '✓' : ''}</span>
+            <span class="picker__card-body">
+              <b>${esc(p.title)}</b>
+              <span>${esc(p.description || p.meta.summary || '')}</span>
+            </span>
+            <span class="picker__card-docs">docs ↗</span>
+          </span>`).join('\n');
+  return `          <span class="picker__cat">
+            <span class="picker__cat-glyph" aria-hidden="true">${GLYPH[cat] || '·'}</span>
+            ${esc(cat)}
+            <span class="picker__cat-count">1 of ${items.length} selected</span>
+          </span>
+${cards}`;
+}).join('\n');
+
+const preview = `        <span class="picker__bar" aria-hidden="true">
+          <span class="picker__search">Filter by name, description or category…</span>
+          <span class="picker__chip">Select all</span>
+          <span class="picker__chip">Clear</span>
+        </span>
+        <span class="picker__body" aria-hidden="true">
+${previewBlock}
+        </span>
+        <span class="picker__sum" aria-hidden="true">
+          <span class="picker__sum-text"><b>${previewCats.length}</b> tools selected · + the core packages they need (already included)</span>
+          <span class="picker__sum-cta">Copy install script</span>
+        </span>`;
+
+// The published release. NOTHING release-shaped is stamped into the landing
+// page any more: the download hrefs point at the mutable latest/ aliases,
+// and the version text next to them is gone. A release therefore cannot
+// leave this page stale, and does not need a rebuild to stay correct.
+//
+// Still fetched because /get/ bakes the published manifest (it carries the
+// `rails` hashes the paste script shows), and because the count note below
+// compares the catalogue against what the release actually publishes.
+async function publishedRelease() {
+  // CI sets this. Without it the stamped release depends on what is published
+  // at the moment the build runs, so a release cut between commit and CI would
+  // make index.html differ from the committed copy and fail the drift check
+  // for reasons nobody changed.
+  if (process.env.FNSTOOLS_NO_RELEASE_FETCH) return null;
+  const url = `${BUCKET}/manifest.json`;
+  try {
+    const res = await fetch(url, {
+      cache: 'no-store',
+      signal: AbortSignal.timeout(8000),
+      headers: { 'user-agent': 'Mozilla/5.0 (fnstools-site-build)' },
+    });
+    if (!res.ok) return null;
+    const m = await res.json();
+    return m && m.release ? m : null;
+  } catch {
+    return null;
+  }
+}
+
+const live = await publishedRelease();
+
+const landing = path.join(WEB, 'index.html');
+if (fs.existsSync(landing)) {
+  const src = fs.readFileSync(landing, 'utf8');
+  const re = /(<!-- TOOLS:START -->)[\s\S]*?(<!-- TOOLS:END -->)/;
+  if (!re.test(src)) {
+    console.error('index.html is missing the <!-- TOOLS:START --> / <!-- TOOLS:END --> markers');
+    process.exit(1);
+  }
+  // Function replacements throughout: these bodies are built from catalog
+  // prose, and `$1` or `$&` inside a replacement STRING is a capture-group
+  // reference. One description with a dollar sign in it would otherwise
+  // rewrite the page in a way nobody would think to look for.
+  let out = src.replace(re, (_m, a, b) => `${a}\n${grid}\n      ${b}`);
+
+  const previewRe = /(<!-- CONFIGURATOR:START -->)[\s\S]*?(<!-- CONFIGURATOR:END -->)/;
+  if (!previewRe.test(out)) {
+    console.error('index.html is missing the <!-- CONFIGURATOR:START --> / <!-- CONFIGURATOR:END --> markers');
+    process.exit(1);
+  }
+  out = out.replace(previewRe, (_m, a, b) => `${a}\n${preview}\n        ${b}`);
+
+  const familyRe = /(<!-- FAMILY:START -->)[\s\S]*?(<!-- FAMILY:END -->)/;
+  if (!familyRe.test(out)) {
+    console.error('index.html is missing the <!-- FAMILY:START --> / <!-- FAMILY:END --> markers');
+    process.exit(1);
+  }
+  out = out.replace(familyRe, (_m, a, b) =>
+    `${a}\n    <div class="prod-grid">\n${familyBlock}\n    </div>\n    ${b}`);
+
+  // "N tools" always matches the catalogue this build actually rendered.
+  out = out.replace(/(<span class="js-fns-count">)[^<]*(<\/span>)/g,
+    `$1${pages.length}$2`);
+
+  if (live) {
+    console.log(`release ${live.release} published (${live.packages?.length ?? '?'} packages)`);
+    if (live.packages && live.packages.length !== pages.length) {
+      console.log(`note: catalog has ${pages.length} packages but ${live.release} publishes ` +
+        `${live.packages.length} — the site lists the catalog, so these align at the next publish`);
+    }
+  } else if (process.env.FNSTOOLS_NO_RELEASE_FETCH) {
+    console.log('release fetch skipped — landing page carries no release, so nothing to keep');
+  } else {
+    console.log('note: could not reach the release manifest — /get/ falls back to the repo manifest');
+  }
+  fs.writeFileSync(landing, out);
+} else {
+  console.warn('note: website/index.html does not exist yet — tool catalogue not injected');
+}
+
+// --------------------------------------------------- /patreon/ — the gate
+//
+// Prose is hand-written in website/content/patreon.html and is only a fragment:
+// this wraps it in the same head, header and footer every other generated
+// page gets, so the page cannot drift out of the site's chrome. The
+// output is generated and gitignored, exactly like docs/ and get/.
+//
+// Two blocks are injected. The package list comes from catalog.json, so the
+// page cannot advertise a gated tool that does not ship (or miss one that
+// does); the family cards come from content/family.json, the same source the
+// landing page uses.
+const plusSrc = path.join(WEB, 'content', 'patreon.html');
+if (fs.existsSync(plusSrc)) {
+  let body = fs.readFileSync(plusSrc, 'utf8');
+
+  const plusPages = pages
+    .filter((p) => isPlus(p.name))
+    .sort((a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' }));
+
+  const plusList = plusPages.length
+    ? `<div class="plus-pkgs">\n` + plusPages.map((p) => `  <a class="plus-pkg" href="/docs/${p.slug}/">
+    <span>
+      <b>${esc(p.title)}</b>
+      <span>${esc(p.description || p.meta.summary || '')}</span>
+      <span class="cat-of">${GLYPH[p.category] || '·'} ${esc(p.category)}${tierOf(p.name) ? ` · ${esc(tierOf(p.name))} tier or higher` : ''}${ROUTES.keys.has(p.name) ? ' · Gumroad key available' : ''}</span>
+    </span>
+    <span class="btn btn-secondary">Read the docs →</span>
+  </a>`).join('\n') + `\n</div>`
+    // Not an error: a catalog with nothing gated is a legitimate state, and
+    // the page still has to explain what Patreon unlocks when the first one lands.
+    : `<p class="plus-pkgs-empty">Nothing is gated in the current catalogue; every package on this site installs free.</p>`;
+
+  for (const [marker, markup] of [
+    ['PLUSPKGS', plusList],
+    ['FAMILY', `<div class="prod-grid">\n${familyBlock}\n</div>`],
+  ]) {
+    const re = new RegExp(`(<!-- ${marker}:START -->)[\\s\\S]*?(<!-- ${marker}:END -->)`);
+    if (!re.test(body)) {
+      console.error(`website/content/patreon.html is missing its <!-- ${marker}:START --> / `
+        + `<!-- ${marker}:END --> markers — /patreon/ would ship without that block`);
+      process.exit(1);
+    }
+    body = body.replace(re, (_m, a, b) => `${a}\n${markup}\n${b}`);
+  }
+
+  checkLinks(body, 'content/patreon.html', null);
+  if (problems.length) {
+    console.error('build refused — unresolved internal links:\n' +
+      problems.map((p) => `  - ${p}`).join('\n'));
+    process.exit(1);
+  }
+
+  fs.mkdirSync(path.join(WEB, 'patreon'), { recursive: true });
+  fs.writeFileSync(path.join(WEB, 'patreon', 'index.html'),
+    `${head('FNSTools on Patreon: supporter tools, and what stays free',
+      'Nearly all of FNSTools is free and MIT. A few tools unlock with a Patreon membership or a Gumroad licence key, redeemed inside TouchDesigner. Here is exactly how that works.',
+      `${SITE}/patreon/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/patreon.html — do not edit here -->
+${header('/patreon/')}
+<main class="plus-page">
+${body}
+</main>
+${FOOT}`);
+  console.log(`built /patreon/ (${plusPages.length} gated package${plusPages.length === 1 ? '' : 's'}, ${family.length} family cards)`);
+} else {
+  console.warn('note: website/content/patreon.html missing — /patreon/ not built, and every link to it 404s');
+}
+
+// ------------------------------- /privacy/, /terms/ and /about/ — prose pages
+//
+// Hand-written fragments in website/content/, wrapped in the same chrome as
+// every other page. The two legal ones exist because registering an OAuth
+// client (the Patreon one the gate depends on) requires public policy URLs --
+// and because keeping the privacy claims HERE means they change in the same
+// commit as worker/src/index.js, the code they describe. A policy hosted
+// anywhere else is one that silently stops being true. /about/ says who
+// makes the toolkit and points at the portfolio, which keeps the long bio.
+//
+// A section still waiting for its words (a heading followed only by
+// comments, like /about/'s Mission until it is written) is left out of the
+// page, the same rule the community posts follow: a bare heading over
+// nothing reads as a mistake, and the fragment can hold the placeholder
+// without the site publishing it.
+const dropUnwrittenSections = (html) => html.replace(
+  /<h2\b[^>]*>(?:(?!<\/h2>)[\s\S])*<\/h2>\s*(?:<!--(?:(?!-->)[\s\S])*-->\s*)*(?=<h2\b|$)/g, '');
+for (const [slug, title, desc] of [
+  ['privacy', 'Privacy | FNSTools',
+    'What FNSTools collects: nothing at all in the free toolkit, and the least the supporter gate can store and still know that a membership is live.'],
+  ['terms', 'Terms | FNSTools',
+    'The free packages are MIT and stay that way; the Patreon packages are licensed to you while your membership or Gumroad licence key is live. Everything ships as-is.'],
+  ['about', 'About | FNSTools',
+    'FNSTools is made by Dan Molnar, a Berlin-based TouchDesigner artist and developer working as Function Store, with a few community contributors. Who is behind the toolkit, why it exists, and where the rest of the work lives.'],
+]) {
+  const src = path.join(WEB, 'content', `${slug}.html`);
+  if (!fs.existsSync(src)) {
+    console.warn(`note: website/content/${slug}.html missing — /${slug}/ not built, and every link to it 404s`);
+    continue;
+  }
+  const raw = fs.readFileSync(src, 'utf8');
+  const body = dropUnwrittenSections(raw);
+  if (body !== raw) {
+    console.log(`note: /${slug}/ has a heading with nothing written under it yet; that section is left out of the page`);
+  }
+  checkLinks(body, `content/${slug}.html`, null);
+  if (problems.length) {
+    console.error('build refused — unresolved internal links:\n' +
+      problems.map((x) => `  - ${x}`).join('\n'));
+    process.exit(1);
+  }
+  fs.mkdirSync(path.join(WEB, slug), { recursive: true });
+  fs.writeFileSync(path.join(WEB, slug, 'index.html'),
+    `${head(title, desc, `${SITE}/${slug}/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/${slug}.html — do not edit here -->
+${header(`/${slug}/`)}
+<main class="plus-page">
+${body}
+</main>
+${FOOT}`);
+  console.log(`built /${slug}/`);
+}
+
+// ------------------------------------------- /community/ — other creators
+//
+// Tools by other people, highlighted like blog posts (docs/CommunityHighlights.md).
+// The rows are packaging/recommendations.json, the list the picker already
+// shows as "From other creators"; packaging/recommendations.py is the
+// validator and runs before every publish. A row with a `slug` is a post:
+// its write-up is website/content/community/<slug>.md, Markdown of any
+// length, and its pictures live in website/content/community/images/.
+// A row with no slug is a card that links straight to the author.
+//
+// Credit sits at the top of every post, before the write-up: the author, a
+// link to them, their terms as they state them, and the line that says we
+// did not make it and do not maintain it.
+const COMMUNITY_SRC = path.join(WEB, 'content', 'community');
+const COMMUNITY_IMAGES = path.join(COMMUNITY_SRC, 'images');
+const COMMUNITY_OUT = path.join(WEB, 'community');
+const RECOMMENDS = path.join(REPO, 'packaging', 'recommendations.json');
+const recommends = fs.existsSync(RECOMMENDS) ? JSON.parse(fs.readFileSync(RECOMMENDS, 'utf8')) : { tools: [] };
+// A draft is still being written: no card, no post, no landing strip.
+// FNS_SHOW_DRAFTS=1 (the CMS's Build site sets it) shows them, marked, for
+// the local preview; the public build never sets it.
+const SHOW_DRAFTS = process.env.FNS_SHOW_DRAFTS === '1';
+const highlights = (recommends.tools || []).filter((t) => SHOW_DRAFTS || t.draft !== true);
+
+const PLATFORM_LABEL = {
+  github: 'Get it on GitHub', patreon: 'Get it on Patreon', gumroad: 'Get it on Gumroad',
+  itch: 'Get it on itch.io', pypi: 'Get it on PyPI', other: "Go to the author's page",
+};
+const deliveryOf = (t) => ((t.tdp && t.tdp.package && t.tdp.module) ? 'tdp'
+  : (t.tox_url && /^[0-9a-f]{64}$/.test(String(t.sha256 || '')) ? 'tox' : 'link'));
+const DELIVERY_LABEL = { tdp: 'Python package', tox: '.tox file', link: 'On their site' };
+const fmtDate = (d) => {
+  if (!d) return '';
+  const [y, m, day] = String(d).split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, day)).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+};
+
+// Write-ups, joined to their rows by filename = slug.
+const communityProblems = [];
+const writeups = new Map();
+if (fs.existsSync(COMMUNITY_SRC)) {
+  for (const file of fs.readdirSync(COMMUNITY_SRC).filter((f) => f.endsWith('.md')).sort()) {
+    const slug = file.replace(/\.md$/, '');
+    let parsed;
+    try {
+      parsed = matter(fs.readFileSync(path.join(COMMUNITY_SRC, file), 'utf8'));
+    } catch (e) {
+      // a colon in an unquoted summary is the usual cause: say so, do not crash
+      communityProblems.push(`website/content/community/${file}: its frontmatter is not valid YAML (${e.reason || e.message}); quote values that contain a colon`);
+      writeups.set(slug, { file, data: {}, content: '' });
+      continue;
+    }
+    writeups.set(slug, { file, data: parsed.data, content: parsed.content });
+  }
+}
+// every row, drafts included: a draft's write-up is not an orphan
+const bySlug = new Map((recommends.tools || []).filter((t) => t.slug).map((t) => [t.slug, t]));
+for (const slug of writeups.keys()) {
+  if (!bySlug.has(slug)) {
+    communityProblems.push(`website/content/community/${slug}.md: no row in packaging/recommendations.json has slug "${slug}"`);
+  }
+}
+for (const t of highlights) {
+  if (t.slug && !writeups.has(t.slug)) {
+    communityProblems.push(`packaging/recommendations.json: ${t.name} has slug "${t.slug}" but website/content/community/${t.slug}.md does not exist`);
+  }
+  if (t.image && !fs.existsSync(path.join(COMMUNITY_IMAGES, t.image))) {
+    communityProblems.push(`packaging/recommendations.json: ${t.name} names image ${t.image}, not found in website/content/community/images/`);
+  }
+}
+const postImageProblems = (html, where) => {
+  for (const m of html.matchAll(/<img[^>]*\ssrc="([^"]+)"/g)) {
+    const src = m[1];
+    if (/^https?:\/\//.test(src)) continue;
+    const local = /^\/community\/images\/([^/?#]+)$/.exec(src);
+    if (!local) {
+      communityProblems.push(`${where}: image ${src} must be /community/images/<file> (posts sit one folder down, so a relative path breaks)`);
+    } else if (!fs.existsSync(path.join(COMMUNITY_IMAGES, local[1]))) {
+      communityProblems.push(`${where}: image ${src} is not in website/content/community/images/`);
+    }
+  }
+};
+
+// Newest first; an undated row after every dated one, then by name.
+highlights.sort((a, b) => (String(b.date || '').localeCompare(String(a.date || '')))
+  || String(a.name).localeCompare(String(b.name), 'en', { sensitivity: 'base' }));
+
+const postHref = (t) => (t.slug ? `/community/${t.slug}/` : t.url);
+const isExternal = (t) => !t.slug;
+const imgSrc = (t) => (t.image ? `/community/images/${t.image}` : '');
+
+const posts = highlights.filter((t) => t.slug && writeups.has(t.slug)).map((t) => {
+  const w = writeups.get(t.slug);
+  // A section still waiting for its words (a heading followed only by
+  // comments, like the "Why we like it" placeholder) is left out rather
+  // than published as a bare heading.
+  // One heading only: the heading's own text may not run into another.
+  const html = md.render(w.content).replace(
+    /<h2\b[^>]*>(?:(?!<\/h2>)[\s\S])*<\/h2>\s*(?:<!--(?:(?!-->)[\s\S])*-->\s*)*(?=<h2\b|$)/g, '');
+  checkLinks(html, `content/community/${w.file}`, null);
+  postImageProblems(html, `content/community/${w.file}`);
+  return { t, w, html, title: String(w.data.title || t.name), summary: String(w.data.summary || t.description || '') };
+});
+
+problems.push(...communityProblems);
+if (problems.length) {
+  console.error('build refused — community highlights:\n' +
+    problems.map((x) => `  - ${x}`).join('\n'));
+  process.exit(1);
+}
+
+function communityCard(t) {
+  const ext = isExternal(t) ? ' target="_blank" rel="noopener"' : '';
+  const img = t.image ? `<img class="cm-card-img" src="${esc(imgSrc(t))}" alt="" loading="lazy" decoding="async" />` : '';
+  const meta = [t.draft ? 'Draft' : '', DELIVERY_LABEL[deliveryOf(t)], fmtDate(t.date)].filter(Boolean).map(esc).join(' · ');
+  return `    <a class="cm-card" href="${esc(postHref(t))}"${ext}>
+      ${img}
+      <span class="cm-card-body">
+        <span class="cm-kind">${meta}</span>
+        <span class="cm-name">${esc(t.name)}${isExternal(t) ? ' ↗' : ''}</span>
+        <span class="cm-by">by ${esc(t.author)}</span>
+        <span class="cm-pitch">${esc(t.description || '')}</span>
+      </span>
+    </a>`;
+}
+
+function creditBox(t) {
+  const author = t.author_url
+    ? `<a href="${esc(t.author_url)}" target="_blank" rel="noopener">${esc(t.author)}</a>`
+    : esc(t.author);
+  const rows = [`<dt>Made by</dt><dd>${author}</dd>`];
+  if (t.author_license) rows.push(`<dt>Terms</dt><dd>${esc(t.author_license)} <span class="cm-faint">(as the author states them)</span></dd>`);
+  const kind = deliveryOf(t);
+  if (kind === 'tox') {
+    rows.push(`<dt>Download</dt><dd><a href="${esc(t.tox_url)}" rel="noopener">${esc(decodeURIComponent(t.tox_url.split('/').pop()))}</a> <span class="cm-faint">sha256 ${esc(t.sha256.slice(0, 12))}…, the file we looked at</span></dd>`);
+  } else if (kind === 'tdp') {
+    rows.push(`<dt>Python package</dt><dd><a href="https://pypi.org/project/${esc(t.tdp.package)}/" target="_blank" rel="noopener"><code>${esc(t.tdp.package)}</code></a> <span class="cm-faint">its latest release</span></dd>`);
+    rows.push(`<dt>In TouchDesigner</dt><dd>The FNSTools console installs it into your project's Python environment and places the tool. <span class="cm-faint">No environment yet? It offers to set one up with TouchDesigner's own manager.</span></dd>`);
+  }
+  const cta = PLATFORM_LABEL[t.platform] || PLATFORM_LABEL.other;
+  return `  <aside class="cm-credit" aria-label="Credit">
+    <dl>${rows.join('')}</dl>
+    <p class="cm-disclaimer">Not part of FNSTools. ${esc(t.author)} made it and ${/\sand\s|&|,/.test(t.author) ? 'maintain' : 'maintains'} it; questions and support go to them.</p>
+    <a class="btn btn-primary" href="${esc(t.url)}" target="_blank" rel="noopener">${esc(cta)} ↗</a>
+  </aside>`;
+}
+
+if (fs.existsSync(COMMUNITY_OUT)) fs.rmSync(COMMUNITY_OUT, { recursive: true, force: true });
+fs.mkdirSync(COMMUNITY_OUT, { recursive: true });
+if (fs.existsSync(COMMUNITY_IMAGES)) {
+  fs.mkdirSync(path.join(COMMUNITY_OUT, 'images'), { recursive: true });
+  for (const f of fs.readdirSync(COMMUNITY_IMAGES)) {
+    fs.copyFileSync(path.join(COMMUNITY_IMAGES, f), path.join(COMMUNITY_OUT, 'images', f));
+  }
+}
+
+// Built with TDFam (docs/CommunityHighlights.md): operator families made
+// with TDFam, on /community/#tdfam. From recommendations.json `families`,
+// edited in the CMS. A family's card opens its tool's post when that post
+// is published, else its own url; `ours` (the FNS family) is counted from
+// the manifest, so the number follows the releases.
+const families = Array.isArray(recommends.families) ? recommends.families : [];
+const fnsFamilyCount = (() => {
+  try {
+    const m = JSON.parse(fs.readFileSync(path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+    return (m.packages || []).filter((p) => p.family && !p.preview).length;
+  } catch (e) {
+    return 0;
+  }
+})();
+const shownPost = (name) => posts.find((p) => p.t.name === name);
+function familyCard(f) {
+  const post = f.tool ? shownPost(f.tool) : null;
+  const href = post ? `/community/${post.t.slug}/` : f.url;
+  const external = /^https?:\/\//.test(href);
+  const n = f.ours ? fnsFamilyCount : f.ops;
+  const meta = n ? esc(`${n} operators`) : '';
+  return `    <a class="cm-card" href="${esc(href)}"${external ? ' target="_blank" rel="noopener"' : ''}>
+      <span class="cm-card-body">
+        <span class="cm-kind">${meta || 'Operator family'}</span>
+        <span class="cm-name">${esc(f.name)}${external ? ' ↗' : ''}</span>
+        <span class="cm-by">by ${esc(f.author)}</span>
+        <span class="cm-pitch">${esc(f.description || '')}</span>
+      </span>
+    </a>`;
+}
+const tdfamPost = shownPost('TDFam');
+const familiesBlock = families.length ? `
+  <section class="cm-families" id="tdfam">
+    <h2>Built with TDFam</h2>
+    <p>${tdfamPost ? `<a href="/community/${tdfamPost.t.slug}/">TDFam</a>` : 'TDFam'} lets you make your own operator family, with its own tab in the OP Create dialog. These families are built with it.</p>
+    <div class="cm-grid">
+${families.map(familyCard).join('\n')}
+    </div>
+  </section>` : '';
+
+const COMMUNITY_TITLE = 'Community tools for TouchDesigner | FNSTools';
+const COMMUNITY_DESC = 'TouchDesigner tools by other creators that we think are worth your time. Each is made and maintained by its author.';
+const communityIntro = String(recommends.intro || '').trim();
+fs.writeFileSync(path.join(COMMUNITY_OUT, 'index.html'), `${head(COMMUNITY_TITLE, COMMUNITY_DESC, `${SITE}/community/`)}
+<!-- GENERATED by tools/build-site.mjs from packaging/recommendations.json and website/content/community/ — do not edit here -->
+${header('/community/')}
+<main class="plus-page cm-page">
+  <h1>From the community</h1>
+  <p class="lede">${communityIntro ? md.renderInline(communityIntro) : esc(COMMUNITY_DESC)}</p>
+${highlights.length
+    ? `  <div class="cm-grid">\n${highlights.map(communityCard).join('\n')}\n  </div>`
+    : '  <p class="cm-empty">The first highlights are on their way.</p>'}
+${familiesBlock}
+</main>
+${FOOT}`);
+
+for (const p of posts) {
+  const { t } = p;
+  const dir = path.join(COMMUNITY_OUT, t.slug);
+  fs.mkdirSync(dir, { recursive: true });
+  const byline = [`by ${t.author_url ? `<a href="${esc(t.author_url)}" target="_blank" rel="noopener">${esc(t.author)}</a>` : esc(t.author)}`,
+    t.date ? `<time datetime="${esc(t.date)}">${esc(fmtDate(t.date))}</time>` : ''].filter(Boolean).join(' · ');
+  fs.writeFileSync(path.join(dir, 'index.html'), `${head(`${p.title} by ${t.author} | FNSTools community`, p.summary || `${p.title}, a TouchDesigner tool by ${t.author}.`, `${SITE}/community/${t.slug}/`)}
+<!-- GENERATED by tools/build-site.mjs from website/content/community/${p.w.file} — do not edit here -->
+${header('/community/')}
+<main class="plus-page cm-page cm-post">
+  <p class="crumbs"><a href="/community/">Community</a>${t.draft ? ' <span aria-hidden="true">/</span> Draft, not published' : ''}</p>
+  <h1>${esc(p.title)}</h1>
+  <p class="cm-byline">${byline}</p>
+${t.image ? `  <img class="cm-hero" src="${esc(imgSrc(t))}" alt="${esc(t.name)}" decoding="async" />\n` : ''}${creditBox(t)}
+  <div class="docs-body">
+${p.html}
+  </div>
+  <p class="cm-back"><a href="/community/">← All community tools</a></p>
+</main>
+${FOOT}`);
+}
+console.log(`built /community/ (${highlights.length} highlight${highlights.length === 1 ? '' : 's'}, ${posts.length} post${posts.length === 1 ? '' : 's'})`);
+
+// The landing page strip: the three newest, only when there is something
+// to show. The markers wrap the whole section so an empty list leaves no
+// heading behind.
+{
+  const landing = path.join(WEB, 'index.html');
+  const src = fs.readFileSync(landing, 'utf8');
+  const re = /(<!-- COMMUNITY:START -->)[\s\S]*?(<!-- COMMUNITY:END -->)/;
+  if (!re.test(src)) {
+    console.error('website/index.html is missing its <!-- COMMUNITY:START --> / <!-- COMMUNITY:END --> markers');
+    process.exit(1);
+  }
+  // A pointer to the page, no tool picked out (owner, 2026-09-27): the
+  // section names what is there and links it. Never a draft: this block is
+  // committed with website/index.html.
+  const shown = highlights.filter((t) => t.draft !== true);
+  const block = shown.length ? `
+<section id="community" style="padding-top: 12px;">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>From the community</h2>
+      <p>${shown.length} tools by other creators that pair well with FNSTools, made and maintained by them.</p>
+    </div>
+    <a href="/community/">See the community tools →</a>
+  </div>
+</section>
+` : '\n';
+  const out = src.replace(re, (_m, a, b) => `${a}${block}${b}`);
+  if (out !== src) fs.writeFileSync(landing, out);
+}
+
+// ------------------------------------------------- /get/ — online picker
+//
+// The same configurator the installer serves from inside TD, published as
+// a page: pick tools, copy a one-line Textport install script (and
+// nothing else: no selection.json on the site). The manifest is BAKED in at build
+// time; the page also refreshes it at runtime, which works because the
+// bucket sends Access-Control-Allow-Origin for this host. Prefer the
+// published rolling manifest (it carries the `rails` hashes publish.py
+// stamps, and it is what a paste actually installs); fall back to the
+// repo's, which lists the same catalogue minus rails.
+//
+// Everything site-shaped is added HERE rather than in the configurator:
+// that file is also read verbatim into a Text DAT and served from inside
+// TouchDesigner, where /docs.css and /site-nav.js do not exist. The source
+// stays self-contained and this build dresses it in the site's chrome.
+const cfgSrc = path.join(REPO, 'packaging', 'configurator', 'index.html');
+if (fs.existsSync(cfgSrc)) {
+  const repoManifest = JSON.parse(fs.readFileSync(path.join(REPO, 'packaging', 'manifest.json'), 'utf8'));
+  const manifest = live || repoManifest;
+  // Presentation the picker reads that a PUBLISHED manifest may predate:
+  // the questionnaire and each package's fits (curated in catalog.json,
+  // the same source category_meta is baked from) and the preset bundles
+  // (from the repo manifest, where build_manifest validated them). Baked
+  // here so /get/ has them the day they are authored, without waiting for
+  // the bucket's rolling manifest to be republished; the page merges the
+  // baked copy in at runtime the same way when the live fetch lacks them.
+  if (!manifest.quiz && catalog.quiz && Array.isArray(catalog.quiz.questions)
+      && catalog.quiz.questions.length) {
+    manifest.quiz = catalog.quiz;
+  }
+  if (!manifest.presets && repoManifest.presets) manifest.presets = repoManifest.presets;
+  // Category, description and fits are curated in the catalog and are
+  // presentation only; the catalog is newer than any published release,
+  // so it wins for these three (what ships, versions, artifacts and
+  // access stay the published manifest's). The category list itself
+  // comes from the catalog for the same reason.
+  manifest.categories = categories;
+  // a preview is published for its owner's signed-in picker only: the
+  // baked copy the site serves never carries it (docs/PreviewPackages.md)
+  manifest.packages = (manifest.packages || []).filter((pkg) => {
+    const row = curated[pkg.name] || curated['FNS_' + pkg.name];
+    return !(row && row.preview === true) && !pkg.preview;
+  });
+  // The docs search index (each row's `search`, packaging/search_index.py)
+  // is built from packaging/docs/, which is newer than any published
+  // release for the same reason the catalog is: the repo manifest's copy
+  // wins, and a release published before the index existed still searches.
+  const repoSearch = {};
+  for (const pkg of repoManifest.packages || []) {
+    if (pkg.search) repoSearch[pkg.name] = pkg.search;
+  }
+  for (const pkg of manifest.packages || []) {
+    if (repoSearch[pkg.name]) pkg.search = repoSearch[pkg.name];
+    const row = curated[pkg.name] || curated['FNS_' + pkg.name];
+    if (!row) continue;
+    if (row.category) pkg.category = row.category;
+    if (row.description) pkg.description = row.description;
+    if (Array.isArray(row.fits) && row.fits.length) pkg.fits = row.fits;
+    else delete pkg.fits;
+  }
+  let page = fs.readFileSync(cfgSrc, 'utf8');
+  // The standalone website needs no app-mode label above its heading.
+  page = page.replace(/    <span class="eyebrow">CONFIGURATOR<\/span>\r?\n/, '');
+  const tag = '<script src="manifest.js"></script>';
+  if (!page.includes(tag)) {
+    console.error('packaging/configurator/index.html lost its manifest.js script tag');
+    process.exit(1);
+  }
+  // catMeta is the curated presentation from catalog.json — the same glyph
+  // and pitch the landing page and the docs sidebar use, so a category
+  // renamed in the CMS reads the same in all three places. build_manifest.py
+  // now carries it on the manifest too (for the picker served inside TD);
+  // baking it here means /get/ has it even against a release published
+  // before that key existed.
+  const baked = '<script>\nwindow.FNS_SITE = true;\n'
+    + 'window.FNS_CATEGORY_META = ' + JSON.stringify(catMeta) + ';\n'
+    + 'window.FNS_MANIFEST = ' + JSON.stringify(manifest, null, 1) + ';\n</script>';
+  page = page.replace(tag, () => baked);
+  page = page.replace('<title>',
+    `<link rel="icon" href="/favicon.png" type="image/png" />\n`
+    + `<link rel="apple-touch-icon" href="/favicon.png" />\n`
+    + `<link rel="canonical" href="${SITE}/get/" />\n`
+    + `<meta name="description" content="Browse the FNSTools toolkit for TouchDesigner, see what each tool does, and keep only the ones you want. Free and open source, macOS and Windows." />\n`
+    + `<meta property="og:title" content="Build your FNSTools install" />\n`
+    + `<meta property="og:description" content="Browse every FNSTools tool for TouchDesigner and pick the ones that fit your workflow." />\n`
+    + `<meta property="og:type" content="website" />\n`
+    + `<meta property="og:image" content="${SITE}/og-image.png" />\n`
+    + `<link rel="preconnect" href="https://fonts.googleapis.com">\n`
+    + `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n`
+    + `<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">\n`
+    + `<link rel="stylesheet" href="/site-nav.css">\n`
+    + `<link rel="stylesheet" href="/docs.css?v=${docsStyleVersion}">\n`
+    + `<title>`);
+
+  for (const [marker, markup] of [
+    ['<!-- FNS:HEADER -->', header('/get/')],
+    ['<!-- FNS:FOOTER -->', `${FOOTER}\n<script src="/site-nav.js" defer></script>\n${ANALYTICS}`],
+  ]) {
+    if (!page.includes(marker)) {
+      console.error(`packaging/configurator/index.html lost its ${marker} marker — `
+        + '/get/ would ship without the site header or footer');
+      process.exit(1);
+    }
+    page = page.replace(marker, () => markup);
+  }
+
+  fs.mkdirSync(path.join(WEB, 'get'), { recursive: true });
+  fs.writeFileSync(path.join(WEB, 'get', 'index.html'),
+    '<!-- GENERATED by tools/build-site.mjs from packaging/configurator/index.html — do not edit here -->\n' + page);
+  console.log(`built /get/ (release ${manifest.release}, ${live ? 'published' : 'repo'} manifest`
+    + `${manifest.rails ? '' : ', no rails hashes yet — paste script needs the next publish'}`
+    + `${manifest.category_meta ? '' : ', category_meta baked from catalog.json'})`);
+} else {
+  console.warn('note: packaging/configurator/index.html missing — /get/ not built');
+}
+
+// ------------------------------------------------- /catalog.json — the feed
+//
+// One JSON document describing the published catalogue, for OTHER sites to
+// read. functionstore.xyz renders its Tools section from it (a snapshot at
+// its build, refreshed in the visitor's browser), which is what retired the
+// Notion tools database over there: this repo is the live list of tools, and
+// the portfolio reads it instead of keeping a second one by hand.
+//
+// Derived from the same `pages`, categories, family and guides every page
+// above is built from, and written AFTER every refusal gate, so a feed that
+// exists describes a site that built: previews are already gone, titles are
+// the public names, categories carry their glyph and pitch. Not the bucket
+// manifest: that one is a release behind by definition, sends CORS for this
+// host only, and carries install data no web page needs.
+//
+// Served with Access-Control-Allow-Origin: * (website/vercel.json) because a
+// third-party page reads it from the browser; gitignored like every other
+// generated file. Contract: docs/PortfolioCatalogFeed.md. Fields are only
+// ever ADDED under schema 1 -- a rename or removal breaks a consumer this
+// repo does not deploy, so it bumps `schema`.
+{
+  const FEED = path.join(WEB, 'catalog.json');
+  const abs = (p) => `${SITE}${p}`;
+  const byTitle = (a, b) => a.title.localeCompare(b.title, 'en', { sensitivity: 'base' });
+  const tools = displayCategories.flatMap((cat) => pages
+    .filter((p) => p.category === cat)
+    .sort(byTitle)
+    .map((p) => {
+      const cur = curated[p.name] || {};
+      const pricing = pricingOf(p.name);
+      return {
+        name: p.name,
+        title: p.title,
+        slug: p.slug,
+        url: abs(`/docs/${p.slug}/`),
+        category: p.category,
+        description: p.description || p.meta.summary || '',
+        access: isPlus(p.name) ? 'patreon' : 'free',
+        tier: tierOf(p.name),
+        unlock: isPlus(p.name) ? unlockRoute(p.name) : '',
+        key_available: ROUTES.keys.has(p.name),
+        surfaces: surfacesOf(p.name).map(surfaceLabel),
+        author: p.author,
+        recommended: cur.recommended === true,
+        minor: cur.minor === true,
+        foreign: p.foreign,
+        homepage: p.homepage,
+        pricing: pricing ? String(pricing.summary) : '',
+        variants: variantsOf(p.name).map((v) => `${variantTier(v)} build`),
+      };
+    }));
+  const categoriesOut = displayCategories.map((cat) => {
+    const inCat = tools.filter((t) => t.category === cat);
+    return {
+      name: cat,
+      glyph: GLYPH[cat] || '',
+      pitch: CATEGORY_PITCH[cat] || '',
+      group: (catMeta[cat] && catMeta[cat].group) || '',
+      deprioritized: isDeprioritized(cat),
+      count: inCat.length,
+      free: inCat.filter((t) => t.access === 'free').length,
+      patreon: inCat.filter((t) => t.access === 'patreon').length,
+    };
+  }).filter((c) => c.count);
+  const toolkit = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(
+        path.join(REPO, 'packaging', 'manifest.json'), 'utf8')).toolkit || {};
+    } catch {
+      return {};
+    }
+  })();
+  const feed = {
+    schema: 1,
+    generated: new Date().toISOString(),
+    site: SITE,
+    toolkit: { name: String(toolkit.name || 'FNSTools'), td_build: String(toolkit.td_build || '') },
+    links: {
+      home: abs('/'),
+      get: abs('/#get'),
+      pick: abs('/get/'),
+      docs: abs('/docs/'),
+      patreon: abs('/patreon/'),
+      community: abs('/community/'),
+      github: GH,
+      support: PATREON,
+    },
+    counts: {
+      tools: tools.length,
+      free: tools.filter((t) => t.access === 'free').length,
+      patreon: tools.filter((t) => t.access === 'patreon').length,
+      categories: categoriesOut.length,
+    },
+    categories: categoriesOut,
+    tools,
+    family: family.map((p) => ({
+      name: String(p.name), kind: String(p.kind || ''), pitch: String(p.pitch || ''),
+      url: String(p.url), access: String(p.access || ''),
+    })),
+    guides: guides.map((g) => ({
+      title: g.title, summary: g.summary, section: g.section,
+      url: abs(`/docs/guides/${g.slug}/`),
+    })),
+  };
+  fs.writeFileSync(FEED, JSON.stringify(feed, null, 1) + '\n');
+  console.log(`built /catalog.json (${tools.length} tools, ${categoriesOut.length} categories, `
+    + `${feed.family.length} family, ${feed.guides.length} guides)`);
+}
+
+// ------------------------------------------------- doc evidence audit
+//
+// The generated blocks on a page cannot be wrong -- they are read off the
+// live component. The PROSE can, and silently: a sentence naming a shortcut
+// that nothing binds looks exactly like one naming a shortcut that works.
+//
+// Reported, never fatal: each line is a claim to CHECK. The filters below
+// exist because the first version of this printed 9 lines of which 7 were
+// correct prose, and a report that cries wolf gets ignored -- which is the
+// failure mode it was written to prevent.
+{
+  const MOUSE = /click|drag|drop|scroll|wheel|hover/i;
+  const MODS = /^(?:ctrl|cmd|alt|opt|option|shift|meta)$/i;
+  const COMBO = /\b((?:(?:ctrl|cmd|alt|opt|option|shift|meta)\s*(?:\([^)]*\))?\s*\+\s*)+[A-Za-z0-9\\[\]{}]+)/gi;
+
+  /** The key a combo actually presses -- its last part. */
+  const keyOf = (raw) => {
+    const parts = String(raw).replace(/\([^)]*\)/g, '').split('+')
+      .map((x) => x.trim()).filter(Boolean);
+    return (parts[parts.length - 1] || '').toLowerCase();
+  };
+  /** TD writes a character class; prose writes {number}. Same shortcut. */
+  const normKey = (k) => (/^(\[0-9\]|\{number\}|\{0-9\}|\[n\])$/.test(k) ? '#' : k);
+
+  // Every binding in the toolkit, not just this package's: a registry page
+  // legitimately documents the tool it serves (FNS_PaletteRegistry names
+  // TDX_SearchPalette's Ctrl+Shift+F), and that is a cross-reference, not
+  // a stale claim.
+  const allCombos = new Set();
+  const allKeys = new Map();       // key -> the package that binds it
+  const ownCombos = {};
+  for (const [name, list] of Object.entries(HOTKEYS)) {
+    ownCombos[name] = new Set();
+    for (const h of list) {
+      for (const combo of String(h.keys).trim().split(/\s+/)) {
+        allCombos.add(keyId(combo));
+        ownCombos[name].add(keyId(combo));
+        const k = normKey(keyOf(combo.replace(/\./g, '+')));
+        if (k && !allKeys.has(k)) allKeys.set(k, name);
+      }
+    }
+  }
+
+  const claims = [];
+  for (const p of pages) {
+    // Parenthesised combos are the mac restatement of the one beside them
+    // ("Ctrl+Tab or (Option+Tab)"). The manifest carries whichever half
+    // THIS machine binds, so the other half can never match and is not a
+    // finding. Drop them before scanning rather than after.
+    const prose = p.body.replace(/\([^)]*\)/g, ' ');
+    const said = new Map();
+    // Keys a page declares as its own panel's control scheme -- the
+    // in-window keys of a palette or an editor -- are no more bindings
+    // than a mouse combo is, and the Shortcuts hint-line already says
+    // panel-scoped keys are not listed. `local_keys:` in the frontmatter
+    // is that declaration, so the exemption is explicit, not guessed.
+    const local = new Set((p.meta.local_keys || []).map((k) => keyId(String(k))));
+    // Keys a tool binds OUTSIDE FNS_HotkeyManager's reach -- BorderlessTD's
+    // Shift+Esc lives in a list expression the conformance contract does not
+    // recognise (docs/DocsEvidenceDerivation.md, "What this does not do").
+    // They are real and global, so `local_keys` would be a lie; `fixed_keys:`
+    // says exactly what they are, and the audit stops crying wolf over a
+    // gap that is already on record.
+    const fixed = new Set((p.meta.fixed_keys || []).map((k) => keyId(String(k))));
+    for (const m of prose.matchAll(COMBO)) {
+      const raw = m[1];
+      if (MOUSE.test(raw)) continue;
+      const parts = raw.split('+').map((x) => x.trim()).filter(Boolean);
+      // "Hold Ctrl+Alt while dragging" is an instruction, not a binding --
+      // build_manifest drops these from the manifest for the same reason.
+      if (parts.every((x) => MODS.test(x))) continue;
+      const id = keyId(raw.replace(/opt(ion)?/gi, 'alt').replace(/cmd/gi, 'ctrl'));
+      if (!id || allCombos.has(id) || local.has(id) || fixed.has(id)) continue;
+      const key = normKey(keyOf(raw));
+      // The exact combo is unbound, but the KEY is -- ParOPDrop binds `p`
+      // and its doc describes four modifier variants of pressing it. The
+      // doc is right and so is the manifest; they differ in granularity.
+      if (allKeys.has(key)) continue;
+      said.set(raw.replace(/\s+/g, ''), key);
+    }
+    if (said.size) claims.push({ name: p.name, combos: [...said.keys()] });
+  }
+
+  // An UNTAGGED fence renders as grey plain text next to a coloured one,
+  // which reads as a rendering bug rather than as missing metadata.
+  //
+  // Fences must be walked in PAIRS: a closing ``` carries no info string by
+  // definition, so a plain regex over every fence line reports every page
+  // that has a code block at all -- which it did, naming all four.
+  const untagged = new Set();
+  for (const p of pages) {
+    let open = false;
+    for (const line of p.body.split('\n')) {
+      const m = /^\s{0,3}```(.*)$/.exec(line);
+      if (!m) continue;
+      if (open) { open = false; continue; }      // closing fence
+      open = true;
+      if (!m[1].trim()) untagged.add(p.name);    // opening fence, no language
+    }
+  }
+  if (untagged.size) {
+    console.log(`note: ${untagged.size} page(s) open a code fence with no `
+      + `language, so it renders unhighlighted: ${[...untagged].join(', ')}`);
+  }
+
+  // House style: no em-dashes and no double-hyphen asides in reader-facing
+  // prose. Reported per page so the habit cannot creep back in unnoticed.
+  const dashy = [
+    ...pages,
+    ...guides.map((g) => ({ name: `guides/${g.slug}`, body: g.body, description: g.summary })),
+  ].filter((p) => /—|(?<=\S) -- (?=\S)/.test(
+    p.body.replace(/<!--[\s\S]*?-->/g, '') + ' ' + (p.description || '')));
+  if (dashy.length) {
+    console.log(`note: ${dashy.length} page(s) use an em-dash or " -- " in prose `
+      + `(house style is plain punctuation): ${dashy.map((p) => p.name).join(', ')}`);
+  }
+  // Same for the contrast trope. "rather than" is the one form a regex can
+  // catch reliably; "it is not X, it is Y" and "you never X. Y does" need a
+  // human read. A clean note here only means the regex found nothing.
+  const contrasty = [
+    ...pages,
+    ...guides.map((g) => ({ name: `guides/${g.slug}`, body: g.body, description: g.summary })),
+  ].filter((p) => /\brather than\b/i.test(
+    p.body.replace(/<!--[\s\S]*?-->/g, '').replace(/```[\s\S]*?```/g, '')
+      + ' ' + (p.description || '')));
+  if (contrasty.length) {
+    console.log(`note: ${contrasty.length} page(s) say "rather than" in prose `
+      + `(house style states what a thing does, without the foil): `
+      + `${contrasty.map((p) => p.name).join(', ')}`);
+  }
+  // The same rule for tooltips, which reach the tables verbatim. These live
+  // on the parameters inside the components, so the fix is in TouchDesigner
+  // (par.help), and this is where anyone learns that it is needed.
+  const DASH = /—|(?<=\S) -- (?=\S)/;
+  const tipDashes = [];
+  for (const p of pages) {
+    const n = ((PARAMS.packages || {})[p.name] || [])
+      .filter((r) => DASH.test(String(r.help || ''))).length;
+    if (n) tipDashes.push(`${p.name} (${n})`);
+  }
+  if (tipDashes.length) {
+    console.log(`note: parameter tooltips with an em-dash or " -- ", by package `
+      + `(fix par.help in TouchDesigner): ${tipDashes.join(', ')}`);
+  }
+
+  const blank = pages.filter((p) => !p.body.trim()).map((p) => p.name);
+  if (blank.length) {
+    console.log(`note: ${blank.length} page(s) have no prose at all: ${blank.join(', ')}`);
+  }
+  if (claims.length) {
+    console.log(`note: ${claims.length} page(s) name a key nothing in the toolkit binds `
+      + `-- either the doc is stale, or the binding is not reaching `
+      + `FNS_HotkeyManager (docs/HotkeyManagerConformance.md):`);
+    for (const c of claims) console.log(`  - ${c.name}: ${c.combos.join(', ')}`);
+  } else {
+    console.log('every shortcut named in prose is backed by a real binding');
+  }
+}
+
+if (headerRunsDropped) {
+  console.log(`note: ${headerRunsDropped} Header parameters dropped from the tables `
+    + `-- consecutive Headers are prose typed into the parameter dialog, not `
+    + `section labels`);
+}
+console.log(`built ${pages.length} package pages + index, ${copied} icons copied`
+  + `, ${glyphs} surface glyphs`
+  + `, code fences: ${[...fenceLanguages].sort().join(', ') || 'none'}`);
+{
+  // Said out loud for the same reason an undocumented parameter is: a
+  // surface with no gathered glyph renders as words and looks deliberate.
+  const noIcon = pages.filter((p) => entriesOf(p.name).some((e) => !e.icon));
+  if (noIcon.length) {
+    console.log(`note: ${noIcon.length} packages contribute a surface with no icon `
+      + `glyph (panels, sliders and whole-COMP tabs have none): `
+      + noIcon.map((p) => p.name).join(', '));
+  }
+}
+const stubs = pages.filter((p) => /TODO: no wiki content/.test(p.body));
+if (stubs.length) {
+  console.log(`${stubs.length} pages are still stubs: ${stubs.map((p) => p.name).join(', ')}`);
+}

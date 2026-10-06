@@ -1,0 +1,28 @@
+
+'''Info Header Start
+Name : extTemplate
+Author : Dan@DAN-4090
+Saveorigin : FNSTools_PRIV.toe
+Saveversion : 2025.33070
+Info Header End'''
+# < - DO NOT REMOVE THIS VERY IMPORTANT LINE!!! used by QuickExt to inject extension - >
+
+CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
+# Quick-launch commands: decorate promoted methods with @FNSCommand.fns_command
+# - registration is AUTOMATIC via ExtUtils/FNSCommandAnnouncer (no lifecycle
+# code needed). After changing your command set at runtime, re-announce with:
+#   op('ExtUtils/FNSCommandAnnouncer').Announce()
+# Full guide: docs/CommandRegistration.md
+###
+
+class QuickExtTemplate:
+	def __init__(self, ownerComp):
+		CustomParHelper.Init(self, ownerComp, enable_properties=True, enable_callbacks=True)
+		self.ownerComp = ownerComp
+		
+
+
+	
+
+

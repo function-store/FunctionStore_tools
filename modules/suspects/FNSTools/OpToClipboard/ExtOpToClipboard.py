@@ -1,0 +1,120 @@
+
+'''Info Header Start
+Name : ExtOpToClipboard
+Author : Dan@DAN-4090
+Saveorigin : FNSTools_PRIV.toe
+Saveversion : 2025.33070
+Info Header End'''
+import re
+
+def fnsLog(*args, level='INFO'):
+	"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
+	the logger is absent (standalone installs) or its Active par is off."""
+	try:
+		_logger = op.FNS.op('logger')
+		if _logger and _logger.par.Active.eval():
+			_logger.Log(*args, level=level)
+	except Exception:
+		pass
+
+FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
+
+class ExtOpToClipboard:
+	def __init__(self, ownerComp):
+		self.ownerComp = ownerComp
+		self._op_ref = None
+		# Define the regular expression pattern with a capturing group, we choose @ as the delimiter
+		self.patternize = lambda _opname: f"op('{_opname}')@"
+		self.regex = lambda _op_ref: rf".*(op\('({re.escape(_op_ref)})'\)\@).*" 
+		self.mod = self.ownerComp.op('null_mod')
+
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def OnCopy(self):
+		# A parameter under the mouse is what is being copied; otherwise the
+		# network's current operator, as before.
+		hovered = self.hoveredParReference(ui.rolloverPar, getattr(ui, 'rolloverParGroup', None))
+		if hovered is not None:
+			owner, suffix = hovered
+			ui.clipboard = self.patternize(owner.name) + suffix
+			self._op_ref = owner
+			fnsLog(f'OpToClipboard: copied parameter reference {owner.path}{suffix}')
+			return
+		if _op := ui.panes.current.owner.currentChild:
+			ui.clipboard = self.patternize(_op.name)
+			self._op_ref = _op
+			fnsLog(f'OpToClipboard: copied op reference {_op.path}')
+
+	@staticmethod
+	def hoveredParReference(par, group):
+		"""(owner, '.par.Name' or '.parGroup.Name') for what is hovered, or None.
+
+		The parameter under the mouse when there is one, else the group, the
+		rule the parameter tools share (docs/BeatModDesign.md item 8): TD's
+		parameter dialog reports a field of Translate as `ui.rolloverPar` and
+		the Translate row as `ui.rolloverParGroup` alone. The suffix rides
+		after the `@`, so OnRolloverPar still finds `op('name')@` and swaps it
+		for the relative or shortcut path, keeping `.par.Name` behind it.
+		"""
+		if par is not None:
+			return par.owner, f'.par.{par.name}'
+		if group is not None:
+			return group.owner, f'.parGroup.{group.name}'
+		return None
+
+	def OnRolloverPar(self, _op_str, _par_str, _expr):
+		_op = op(_op_str)
+		if not _op:
+			return
+		_par = op(_op_str).par[_par_str]
+		if _par.mode in [ParMode.EXPRESSION, ParMode.CONSTANT] and _expr != 'None':
+			if self._op_ref and (_to_replace := self.__checkExprReplace(_expr)):
+				if not self.mod['shift'].eval():
+					shortcut = f"op('{_op.relativePath(self._op_ref)}')"
+				else:
+					# RFE: this is a workaround to get the shortcut path of the op
+					# so this kinda sucks since keyboardin DAT/CHOP is not working during text input,
+					# so if you want to use this feature, you need to move your cursor out of the text input field before pasting
+					# then paste the expression,
+					# and then press enter or click away to stop text ipnut, 
+					# and then press shift and hover over the parameter
+					shortcut = _op.shortcutPath(self._op_ref)
+				if shortcut:
+					_par.expr = _par.expr.replace(_to_replace, shortcut)
+				pass
+
+	
+	def __checkExprReplace(self, _expr):
+
+		pattern = self.regex(self._op_ref.name)
+		
+		# Use re.match to check if _expr matches the pattern
+		match = re.match(pattern, _expr)
+		# If there's a match
+		if match:
+			return match.group(1)
+		
+		# If no match, return None
+		return False
+
+
+	### FNS_CommandRegistry (quick-launch commands) ###
+
+	@FNSCommand.fns_command(label='Copy op to clipboard', context='current')
+	def CopyOpToClipboard(self):
+		"""Copy the current operator to the OS clipboard."""
+		self.OnCopy()
+		return {'ok': True}
+
+	@FNSCommand.fns_command(label='Toggle OpToClipboard', state='Active')
+	def ToggleActive(self):
+		"""Enable or disable OpToClipboard."""
+		self.ownerComp.par.Active = not self.ownerComp.par.Active.eval()
+		return {'ok': True, 'active': bool(self.ownerComp.par.Active.eval())}

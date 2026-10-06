@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "id": "check-generated-output",
+      "name": "Check committed output (CI parity)",
+      "command": "FNSTOOLS_NO_RELEASE_FETCH=1 npm run build && { drift=$(git status --porcelain -- docs index.html); if [ -n \"$drift\" ]; then echo \"STALE -- commit this rebuild:\"; echo \"$drift\"; exit 1; fi; echo \"generated output is current\"; }",
+      "cwd": ".",
+      "comment": "What .github/workflows/website.yml enforces, run locally before pushing. website/docs/ and index.html are committed because Vercel serves them with no build step, so editing packaging/docs/*.md and forgetting to rebuild would ship docs the site never shows. FNSTOOLS_NO_RELEASE_FETCH=1 keeps it reproducible -- otherwise a release published since the last build restamps index.html and reports drift nobody caused. Leaves the rebuild in the working tree; if it fails, that rebuild is what you commit.",
+      "favorite": true
+    },
+    {
+      "id": "syntax-check-tooling",
+      "name": "Syntax-check the tooling",
+      "command": "node --check tools/build-site.mjs && node --check tools/cms.mjs && echo \"tooling parses\"",
+      "cwd": ".",
+      "comment": "Parse-only check of the two .mjs entrypoints, the first step CI runs. Catches a typo in the generator without waiting for a full build.",
+      "favorite": false
+    },
+    {
+      "id": "docs-needing-prose",
+      "name": "Docs still needing prose",
+      "command": "grep -rl 'TODO: no wiki content' ../packaging/docs || echo \"every package has hand-written prose\"",
+      "cwd": ".",
+      "comment": "Lists packages still documented only by their catalog line -- the stubs docs_seed_from_wiki.py wrote for packages the wiki never covered. CI reports the same list in its job summary. Reads packaging/docs/, which is the source of truth for prose.",
+      "favorite": false
+    }
+  ]
+}

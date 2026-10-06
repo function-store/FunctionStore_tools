@@ -1,0 +1,199 @@
+---
+package: FNS_TimelineTools
+summary: 'Drive TouchDesigner''s timeline from your media: pick a movie and an audio file, optionally resize the timeline to fit, and see them behind the ruler and the Animation editor as a filmstrip, a waveform and your editor''s markers.'
+features:
+  - name: Media on the timeline
+    anchor: media-on-the-timeline
+  - name: 'Scope: which timeline?'
+    anchor: scope-which-timeline
+  - name: The background
+    anchor: the-background
+  - name: The waveform
+    anchor: the-waveform
+  - name: Markers from your editor
+    anchor: markers-from-your-editor
+  - name: Keyframes from parameters
+    anchor: keyframes-from-parameters
+---
+
+## Media on the timeline
+
+Pick a **movie file**, an **audio file**, or both. The tool loads them, locks
+their playback to the timeline, with no clock of their own,
+and can either resize the timeline to the longest one or trim them to fit the
+range you already have.
+
+Trimming picks a window of the file that lines up with the range. A timeline whose range starts at
+frame 100 is already 99 frames into the song when the range opens, so trimming
+from the beginning of the file would play the right *duration* of the wrong
+*part*. The media window carries an offset as well as a length, and everything
+downstream, playback and drawing alike, reads the same window.
+
+*Sync Timeline to Media* resizes the range to fit; with it off, the media is
+trimmed to the range instead. Either way playback stays locked to the timeline.
+
+Dropping a movie or audio file on the tool asks what you want: **Load as media**,
+or **Just sync the timeline**. The second one only reads the file's length and
+resizes the timeline to it. The media you have loaded, the filmstrip and the
+waveform stay as they are, so you can size a timeline to a clip without switching
+to it. *On Media Drop* sets the answer once (Load As Media or Just Sync Timeline)
+and skips the question. The timeline keeps its frame rate either way.
+
+## Scope: which timeline?
+
+TouchDesigner has more than one timeline. Any component can carry a **local**
+timeline with its own range and transport, swapped into the UI with the `S`
+button and back out with `/`.
+
+*Scope* picks which one this tool drives: the root timeline, or a named
+component's local one. *Ensure Local Timeline* creates a local timeline on that
+component if it does not have one; a bare Time COMP is an empty shell, so it is
+cloned from the root's.
+
+## The background
+
+The tool draws behind two of TD's surfaces, and it is the **single owner** of
+both: the strip in the timeline's frame-ruler band, and the Animation editor's
+background. The timeline strip gets its own row and takes no height from
+the transport controls.
+
+What it draws is a **composite of three layers**, all drawn together:
+
+- **Filmstrip**: thumbnails sampled evenly across the movie. It is baked once
+  on *Build Strip* and then costs nothing; it does not rebuild itself when the
+  media changes, which is exactly what keeps it free.
+- **Waveform**: the audio, drawn live.
+- **Markers**: vertical coloured lines, in front of both.
+
+Each layer has its own *Show* toggle and opacity, per surface, and each has a
+toggle and slider in the control row. Hiding one also saves work: a
+hidden layer stops rendering altogether.
+
+## The waveform
+
+The Animation editor view is **interactive**. The graph can be zoomed and panned, and
+the waveform stays pinned between the range markers while that happens; it
+scrolls and scales with the view.
+
+The timeline strip is a different shape and a different job: it is 64:1 and
+always holds the whole range, so it works as an overview while the graph view
+works as an editing surface. Both are rendered from one set of audio, and
+either can be switched off on its own.
+
+*Resolution* is how many points the wave is drawn with across the whole file;
+higher reads more detail when you zoom in, at the cost of GPU points. *Wave
+Height*, *Wave Color* and *Wave Opacity* are the rest.
+
+## Markers from your editor
+
+Cut your edit somewhere else, then bring the structure back. Point *Marker File*
+at a marker list exported from your editor and the tool draws each marker as a
+vertical coloured line across both surfaces.
+
+| Where it came from | How to export it |
+|---|---|
+| DaVinci Resolve | Timelines ▸ Export ▸ **Timeline Markers to EDL**; names and colours come across |
+| Premiere Pro | File ▸ Export ▸ **Markers** (CSV); names come across, and Premiere leaves colours out of that file |
+| Final Cut / Resolve XML | any **FCPXML** with markers in it |
+| Audacity | a label track (**Export Labels**), handy for music you cued by ear |
+
+The format is worked out from what is inside the file, whatever its extension,
+so a marker list saved under the wrong name still loads.
+
+**Timecodes need to know their frame rate.** *Source Frame Rate* is the rate of
+the timecodes **in the file**; leave it at 0 to assume they
+match. Nothing here ever changes your timeline's rate.
+
+*Source Start Timecode* handles sequences that start at `01:00:00:00`, which is
+most of them out of Resolve: left on `auto` the tool drops the leading hour so
+the markers land where you expect.
+
+*Time Base* decides what a marker time means. **Timeline** is seconds from the
+start of your working range and works with no media loaded at all. **Media** ties
+markers to the picture, so if the media sits at an offset inside the range the
+markers move with it.
+
+**Hover a line to see its name.** The label follows the marker, in both the
+timeline strip and the Animation editor, and disappears when you move away.
+Names are hover-only on purpose: seven of them across a 60-pixel strip would
+overlap into noise, and the one you want is the one under the pointer. *Hover
+Labels* turns it off; *Label Size* and *Label Color* are the rest.
+
+The remaining look controls: *Marker Color* (used for markers whose file carried
+none), *Marker Width* in screen pixels, held steady however far you zoom the
+Animation editor, and *Marker Height* as a share of the surface.
+
+Markers live in their own list, apart from the media: the table is yours to edit by
+hand, add to, or keep across a media change. *Merge On Load* adds a second file's
+markers to what is already there instead of replacing them.
+
+**Right-click the strip to author them.** On a line you get Rename, Set Colour and
+Delete; on empty strip, Add Marker Here, Add Marker At Playhead and Clear All.
+The menu names the marker and its frame, so you always know what you are about to
+change.
+
+**Save Markers** writes them back out. *FNS CSV* keeps everything; it is the
+tool's own columns, and reading it back gives you exactly what you had.
+*Resolve marker EDL* goes back into an edit, but an EDL only knows the sixteen
+Resolve colour names and only stores whole frames, so a hand-picked colour is
+snapped to the nearest and a marker dropped between frames moves by up to half a
+frame. The status line tells you how many of each, so nothing is left for you to find
+out in the edit.
+
+Requires [TimelineRegistry](/docs/fns-timelineregistry/) for the timeline
+surface; the Animation editor background works without it.
+
+## Keyframes from parameters
+
+Set a scene up by hand, then turn it into a key. The Animation editor's
+channel list is the truth: **Keyframe Now** (or KEY in the editor) reads
+every channel's parameter as it stands and writes a key at the animation's
+current frame, whichever timeline that animation sits on, and when you have
+channels picked in the list, only those. Channels get in by dropping on the
+KF block (below), by adding them in the editor (a channel named
+`operator:parameter` works like one the tool made), or in bulk from the
+**Keyframer** page: point **Animation COMP** at the Animation COMP that
+should hold the curves, add a **Reference** block per operator, and press
+**Add Channels From References** for every parameter that passes the block's
+*Include* and *Exclude* patterns, no keys yet. Delete a channel in the editor
+and it is gone.
+
+Patterns are TouchDesigner's own (`*` for everything, `t? r?` for the
+transform, a list of names), and **Exclude Pages** keeps whole pages out of
+it on every reference; `Common About Info Version` is the shipped default,
+since those are housekeeping on most operators. Numbers, toggles and menus
+are keyed (a menu as its index); pulses, strings and references have no
+curve. **Key Function** chooses the interpolation each new key carries, from
+linear and constant through the eases to bezier and spline. **Remove Keys At
+Frame** (UNKEY) deletes the keys at the current frame from the picked
+channels, else all of them, and leaves the channels.
+
+**Drive Parameters** is the other direction. On, the tool builds the rig you
+would build by hand: a Null CHOP beside the Animation COMP, fed from it,
+exporting each channel to its parameter through a table, so the parameters
+show as exports and the animation plays them. Drive plays every curve the
+animation holds, whoever keyed it, like every other action here. **Drive Method** can switch
+that to an expression per parameter instead. Off, either way, they go back to
+plain constants at the value they show, so nothing jumps, and the rig goes
+with them. Author with it
+off, play with it on: with Drive on a parameter's value *is* the animation,
+and Keyframe Now says so and leaves the curve as it is. A
+parameter already driven by an expression, export or bind of your own is
+left alone.
+
+The same three actions sit in the Animation editor itself. Its graph heading
+carries a **KF** block beside the MEDIA button and the layer toggles: **KEY**
+and **UNKEY** are Keyframe Now and Remove Keys At Frame, and **DRIVE** is the
+Drive Parameters toggle, lit while it drives, so a scene is keyed from the
+editor you are already looking at. **KF** is the block's handle: click it
+and the Keyframer page opens; drop an operator on the block for a channel
+per parameter, a parameter or a pargroup for just those, or an Animation
+COMP to make it the animation. Whatever you drop shows up in the editor's
+channel list at once, keys or not, and the block always acts on the
+animation the editor is showing, so it follows you from one Animation COMP
+to the next.
+**Controls In Animation Editor** on the Keyframer page takes the block out
+again.
+
+The keys themselves are the Animation COMP's, in its own tables: open its
+Animation editor and you are editing what the tool wrote.

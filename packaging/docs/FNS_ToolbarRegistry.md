@@ -1,0 +1,38 @@
+---
+package: FNS_ToolbarRegistry
+summary: 'The toolbar surface registry and mirror rail. The raw master, promoted to /sys; clone it to put your own tools on the bar.'
+features:
+  - name: Toolbar Registry
+    anchor: toolbar-registry
+  - name: For tool authors
+    anchor: for-tool-authors
+---
+
+## Toolbar Registry
+
+The raw registry behind the FNS toolbar: which widgets sit
+on the bar, in what order, and which of them are shown. That state lives here
+and in no per-widget parameter, which is why installing or removing a tool
+never leaves a hole or a dead button behind.
+
+It also owns the **mirror rail**: the registry keeps TouchDesigner's own
+bookmark bar (`/ui/dialogs/bookmark_bar`) in step with the registered set, so
+the bar you see is a reflection of the registry; no button COMPs are copied
+in.
+
+It ships as its own core package, always installed,
+promoted to `/sys` with the global shortcut `op.FNS_TOOLBARREGISTRY`.
+
+Open the **Toolbar** tab of
+[Hub](/docs/fns-hub/) (the FNS button in the main-menu bar) to reorder,
+group, hide/show and add dividers between widgets; the layout is saved and
+follows you across projects through
+[ConfigRegistry](/docs/fns-configregistry/).
+
+## For tool authors
+
+A tool that wants a place on the bar ships a small **host** copy of this
+registry alongside its widget and registers itself on load, which is all the
+installing it needs. Dropping any panel COMP on the FNS
+button stamps that host into it for you, which is the quickest way to put your
+own tool on the bar.

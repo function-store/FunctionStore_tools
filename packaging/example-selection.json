@@ -1,0 +1,15 @@
+{
+ "schema": 1,
+ "toolkit": "FNSTools",
+ "core": [],
+ "tools": [
+  "AutoRes",
+  "ExprHotStrings",
+  "CustomParTools"
+ ],
+ "install": [
+  "AutoRes",
+  "ExprHotStrings",
+  "CustomParTools"
+ ]
+}

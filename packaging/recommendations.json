@@ -1,0 +1,215 @@
+{
+  "_comment": [
+    "TOOLS BY OTHER CREATORS that we point at. Curated in the CMS; git is the",
+    "audit trail.",
+    "",
+    "THESE ARE NOT PACKAGES, and they must never appear in manifest.json's",
+    "`packages` array. A row there is assumed by everything downstream to be",
+    "ours: Compare() versions it, the updater fetches it, InstallerExt installs",
+    "it, `requires` is derived for it, and the removed-guard would demand you",
+    "declare it retired the day the author's link dies.",
+    "",
+    "WE LINK, WE DO NOT HOST. `url` opens the author's own page in a browser.",
+    "Nothing is fetched, nothing is hashed, nothing enters the store. We cannot",
+    "pin bytes we do not control -- the file behind someone else's URL can",
+    "change whenever they like -- and putting one in the store would enrol it",
+    "in the update rail, which is exactly what this list promises not to do.",
+    "",
+    "This file publishes on its own, not with a release: edit, run",
+    "`python packaging/upload.py --recommendations`, and it reaches every",
+    "install within minutes. That independence is the safety valve -- pulling a",
+    "recommendation must never wait for a release.",
+    "",
+    "Per row: name, author, author_url, url (all required except author_url),",
+    "description, and an optional free-form category for grouping. Version,",
+    "sha256 and requires are REFUSED by the validator, so this list cannot",
+    "drift into looking like a package list."
+  ],
+  "schema": 1,
+  "intro": "While [FNSTools](/#tools) packs a lot of goodies, here are some other tools I use frequently from other creators. Show them some love!",
+  "tools": [
+    {
+      "name": "TauCeti",
+      "author": "PlusPlusOneGmbH",
+      "url": "https://github.com/PlusPlusOneGmbH/TauCeti",
+      "description": "Preset management and parameter tweening: store, recall and fade between parameter states, with a dashboard, a cue list and a CHOP mapper.",
+      "slug": "tauceti",
+      "date": "2026-09-26",
+      "platform": "github",
+      "tdp": {
+        "package": "tdp-TauCeti",
+        "module": "tdpTauCeti",
+        "tox": "PresetManager",
+        "also": [
+          "tdp-touchutilcollection"
+        ]
+      },
+      "author_url": "https://plusplus.one"
+    },
+    {
+      "name": "QR Code COMP",
+      "author": "PlusPlusOneGmbH",
+      "url": "https://github.com/PlusPlusOneGmbH/tdp-QrCodeCOMP",
+      "description": "Generates QR codes as a TOP from any text or URL.",
+      "slug": "qr-code-comp",
+      "date": "2026-09-24",
+      "platform": "github",
+      "tdp": {
+        "package": "tdp-QrCodeCOMP",
+        "module": "tdpQrCodeCOMP"
+      },
+      "author_url": "https://plusplus.one"
+    },
+    {
+      "name": "EssentiaTD",
+      "author": "Darien Brito",
+      "author_url": "https://github.com/DarienBrito",
+      "url": "https://github.com/DarienBrito/EssentiaTD",
+      "platform": "github",
+      "author_license": "AGPL-3.0",
+      "description": "Real-time and offline audio analysis as native CHOPs, powered by Essentia: spectrum, mel bands, MFCCs, pitch, key, onsets and BPM, and EBU R128 loudness. Windows and macOS.",
+      "slug": "essentiatd",
+      "date": "2026-09-26"
+    },
+    {
+      "name": "Embody",
+      "author": "Dylan Roscover",
+      "author_url": "https://github.com/dylanroscover",
+      "url": "https://github.com/dylanroscover/Embody",
+      "platform": "github",
+      "author_license": "MIT",
+      "description": "Externalizes your network to files you can diff and version, and runs an MCP server so AI assistants can build and debug in your live TouchDesigner session.",
+      "slug": "embody",
+      "date": "2026-09-26"
+    },
+    {
+      "name": "TDFam",
+      "author": "dotsimulate and Function Store",
+      "author_url": "https://github.com/dotsimulate",
+      "url": "https://github.com/dotsimulate/TDFam",
+      "platform": "github",
+      "author_license": "Apache-2.0",
+      "description": "Custom operator families for TouchDesigner: your own tab in the OP Create dialog, manifests, placement, stubs and in-place updates, in one component.",
+      "slug": "tdfam",
+      "date": "2026-09-26"
+    },
+    {
+      "name": "Swaggy Bokeh",
+      "author": "OVVO Studio",
+      "author_url": "https://github.com/OVVO-Studio",
+      "url": "https://github.com/OVVO-Studio/TD-Swaggy-Bokeh",
+      "platform": "github",
+      "author_license": "GPL-3.0",
+      "description": "Physically based depth of field in GLSL, with bokeh, autofocus and a focus overlay. Drop in your scene camera, or composite a render with a depth pass.",
+      "slug": "swaggy-bokeh",
+      "date": "2026-09-26"
+    },
+    {
+      "name": "MediaPipe TouchDesigner",
+      "author": "Torin Blankensmith and Dom Scott",
+      "author_url": "https://github.com/torinmb",
+      "url": "https://github.com/torinmb/mediapipe-touchdesigner",
+      "platform": "github",
+      "author_license": "MIT",
+      "description": "GPU-accelerated MediaPipe in TouchDesigner, on Mac and PC with no installation: face, hand, pose, object and gesture tracking, segmentation and classification.",
+      "slug": "mediapipe-touchdesigner",
+      "date": "2026-09-26"
+    },
+    {
+      "name": "T3D",
+      "author": "Josef Pelz",
+      "author_url": "https://www.patreon.com/JosefPelz/",
+      "url": "https://www.patreon.com/JosefPelz/",
+      "platform": "patreon",
+      "description": "A family of 48 operators for 3D textures: generate volumes, process them (filters, composites, transforms, optical flow, fluid simulation) and render them (ray-marched volumes, iso-surfaces, volume tracing), all on the GPU.",
+      "slug": "t3d",
+      "date": "2026-09-27"
+    },
+    {
+      "name": "Pathtracer",
+      "author": "Josef Pelz",
+      "author_url": "https://www.patreon.com/JosefPelz/",
+      "url": "https://www.patreon.com/JosefPelz/",
+      "platform": "patreon",
+      "description": "A super performant, well designed path tracer for TouchDesigner.",
+      "slug": "pathtracer",
+      "date": "2026-09-27"
+    }
+  ],
+  "families": [
+    {
+      "name": "FNS",
+      "author": "Function Store",
+      "author_url": "https://functionstore.xyz",
+      "url": "/docs/fns-opfamily/",
+      "description": "The FNS tab in the OP Create dialog: FNS tools placed as one node each, with stubs for projects that travel and in-place updates.",
+      "ours": true
+    },
+    {
+      "name": "T3D",
+      "author": "Josef Pelz",
+      "author_url": "https://www.patreon.com/JosefPelz/",
+      "url": "https://www.patreon.com/JosefPelz/",
+      "description": "Operators for 3D textures: generate, process and render volumes on the GPU.",
+      "ops": 48,
+      "tool": "T3D"
+    },
+    {
+      "name": "STOP",
+      "author": "Spiraldiver",
+      "author_url": "https://www.patreon.com/spiraldiver",
+      "url": "https://spiraldiver.com/TouchDesigner/STOP/",
+      "description": "Strudel live-coding as an operator family: wire operators to build a pattern across six groups, and the Strudel Master plays it.",
+      "ops": 139
+    },
+    {
+      "name": "FOP",
+      "author": "Spiraldiver",
+      "author_url": "https://www.patreon.com/spiraldiver",
+      "url": "https://spiraldiver.com/TouchDesigner/FOP/",
+      "description": "A 3D and 4D modular fractal system, announced when it ships."
+    },
+    {
+      "name": "LOP",
+      "author": "dotsimulate",
+      "author_url": "https://www.patreon.com/dotsimulate",
+      "url": "https://docs.dotsimulate.com/guides/installation/",
+      "description": "Language, learning, logic and latent operators: agents, MCP client and server, and hosted or local models inside TouchDesigner."
+    },
+    {
+      "name": "GSOP",
+      "author": "Lake Heckaman",
+      "author_url": "https://www.patreon.com/water__shed",
+      "url": "https://www.patreon.com/water__shed/posts/gsops-v1-0-1-and-167828628",
+      "description": "Gaussian Splat Operators: load .ply and .spz splats and edit, animate, optimize and render them live on POPs, with a per-point particle system and shader effects such as bokeh, motion blur and relighting."
+    },
+    {
+      "name": "AML",
+      "author": "Mickey van Olst",
+      "author_url": "https://www.patreon.com/MickeyvanOlst",
+      "url": "https://www.patreon.com/MickeyvanOlst/posts/meet-aml-macos-167645742",
+      "description": "AI and ML on macOS: Apple's built-in pose tracking, masking and image classification, often on the Neural Engine, plus CoreML operators for depth, YOLO, segmentation, Stable Diffusion and 3D mesh generation. Free to download."
+    },
+    {
+      "name": "MCX",
+      "author": "Edwin Lucchesi",
+      "author_url": "https://www.patreon.com/Alaghast",
+      "url": "https://www.edwinlucchesi.com/mcx",
+      "description": "Custom CHOP operators for modular audio synthesis: a polyphonic synth, multichannel CV and generative data, patched in your network like Max/MSP. Mac and Windows."
+    },
+    {
+      "name": "MOP",
+      "author": "Ilgın İçözü",
+      "author_url": "https://www.patreon.com/cw/ilginicozu",
+      "url": "https://ilginicozu.com/mops.html",
+      "description": "A modular synthesis toolkit built inside TouchDesigner: oscillators, filters, envelopes, sequencers, effects and semi-modular instruments that patch together like Eurorack modules."
+    },
+    {
+      "name": "L2D",
+      "author": "Prismatic",
+      "author_url": "https://www.patreon.com/prismaticvisuals",
+      "url": "https://www.patreon.com/prismaticvisuals/posts/tox-l2d-operator-155965844",
+      "description": "Real-time 2D lighting from textures: geometry, materials, lights and renderers in screen space, with SDF raymarching for volumetric global illumination, shadows, refraction and dispersion. Windows and macOS."
+    }
+  ]
+}

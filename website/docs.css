@@ -1,0 +1,811 @@
+/* Docs pages for functionstore.tools.
+   Hand-authored and lives at website/ — website/docs/ is generated and
+   wiped on every build, so nothing authored may sit inside it.
+   Shares the family's token names; only --accent differs per site. */
+
+:root {
+  --bg: #0a0a0a;
+  --bg-1: #111111;
+  --bg-2: #161616;
+  --bg-3: #1c1c1c;
+  --bg-deep: #050505;
+  --border: #262626;
+  --border-strong: #3a3a3a;
+  --text: #f5f5f5;
+  --text-dim: #a3a3a3;
+  --text-faint: #737373;
+  --accent: #fbbf24;
+  --accent-dim: #2a1f08;
+  --accent-bright: #fcd34d;
+  --green: #4ade80;
+  --max-w: 1140px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+html { scroll-padding-top: 84px; scroll-behavior: smooth; }
+:target { scroll-margin-top: 84px; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { color: var(--accent-bright); }
+code, kbd { font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.9em; }
+
+.wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+/* ───── Header (mirrors index.html; site-nav.css owns the brand + drawer) ───── */
+header.site {
+  position: sticky; top: 0; z-index: 10;
+  background: rgba(10,10,10,0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+}
+.site-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px; max-width: var(--max-w); margin: 0 auto;
+}
+nav.site-nav { display: flex; gap: 28px; align-items: center; font-size: 14px; }
+/* :not(.btn) keeps these from overriding .btn-primary — nav.site-nav a has
+   higher specificity, so without it the CTA inherits the muted nav color. */
+nav.site-nav a:not(.btn) { color: var(--text-dim); }
+nav.site-nav a:not(.btn):hover { color: var(--text); }
+nav.site-nav a[aria-current="page"]:not(.btn) { color: var(--text); }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 8px;
+  font-weight: 600; font-size: 14px;
+  border: 1px solid transparent; cursor: pointer;
+  transition: all 0.15s ease; white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #0a0a0a; }
+.btn-primary:hover { background: var(--accent-bright); color: #0a0a0a; }
+.btn-secondary { background: transparent; color: var(--text); border-color: var(--border-strong); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ───── Layout ───── */
+.docs-layout {
+  display: grid;
+  grid-template-columns: 244px minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+  padding-top: 32px;
+  padding-bottom: 72px;
+}
+.docs-side {
+  position: sticky; top: 84px;
+  max-height: calc(100vh - 104px);
+  overflow-y: auto;
+  padding-right: 8px;
+  font-size: 14px;
+}
+.docs-side::-webkit-scrollbar { width: 8px; }
+.docs-side::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 4px; }
+
+/* A sidebar group is a <details open>. Desktop keeps today's look: the
+   summary is styled to read as the old <h3>, and the marker is hidden
+   because nothing collapses at this width. docs.js closes them under the
+   mobile breakpoint -- see the media query at the end of this file. */
+.side-group { margin-bottom: 22px; }
+.side-group > summary {
+  display: flex; align-items: center; gap: 8px;
+  margin: 0 0 8px; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--text-faint);
+  list-style: none; cursor: default;
+}
+.side-group > summary::-webkit-details-marker { display: none; }
+.side-group > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+/* The count only earns its place when the group can be closed. */
+.side-count { display: none; }
+.side-glyph { color: var(--accent); font-size: 12px; }
+.side-group ul { list-style: none; margin: 0; padding: 0; }
+.side-group li a {
+  display: block; padding: 5px 10px; margin-left: -10px;
+  border-radius: 6px; color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+.side-group li a:hover { background: var(--bg-2); color: var(--text); }
+.side-group li a[aria-current="page"] {
+  background: var(--accent-dim); color: var(--accent-bright); font-weight: 600;
+}
+
+.docs-search { margin-bottom: 24px; }
+
+/* ───── Content ───── */
+.docs-main { min-width: 0; }
+.crumbs { margin: 0 0 8px; font-size: 13px; color: var(--text-faint); }
+.crumbs a { color: var(--text-dim); }
+.docs-main h1 {
+  margin: 0 0 10px;
+  font-size: clamp(30px, 4vw, 40px);
+  font-weight: 700; letter-spacing: -0.025em; line-height: 1.1;
+}
+.lede { margin: 0 0 16px; font-size: 17px; color: var(--text-dim); max-width: 62ch; }
+
+.badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; }
+.badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 999px;
+  background: var(--bg-2); border: 1px solid var(--border);
+  font-size: 12px; font-weight: 500; color: var(--text-dim);
+}
+.badge-cat { background: var(--accent-dim); border-color: rgba(251,191,36,0.28); color: var(--accent); }
+.badge-warn { background: #2a1408; border-color: rgba(251,146,60,0.3); color: #fdba74; }
+
+.toc {
+  margin: 0 0 32px; padding: 16px 20px;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: 12px;
+}
+.toc > span {
+  display: block; margin-bottom: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--text-faint);
+}
+.toc ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.toc li a { font-size: 14px; }
+
+.docs-body { max-width: 74ch; }
+.docs-body h2 {
+  margin: 44px 0 12px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 24px; font-weight: 700; letter-spacing: -0.02em;
+}
+.docs-body h2:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.docs-body h3 { margin: 30px 0 10px; font-size: 18px; font-weight: 600; }
+.docs-body h4 { margin: 24px 0 8px; font-size: 15px; font-weight: 600; color: var(--text-dim); }
+.docs-body p { margin: 0 0 14px; }
+.docs-body ul, .docs-body ol { margin: 0 0 16px; padding-left: 22px; }
+.docs-body li { margin-bottom: 6px; }
+.docs-body img { max-width: 100%; height: auto; vertical-align: middle; }
+/* Wiki-era inline icon glyphs sit in running text at their native size. */
+.docs-body p > img, .docs-body li > img { border-radius: 3px; }
+
+.docs-body code {
+  background: var(--bg-3); border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 4px; color: var(--accent-bright);
+}
+.docs-body pre {
+  background: var(--bg-deep); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px 18px;
+  overflow-x: auto; margin: 0 0 18px;
+}
+.docs-body pre code { background: none; border: none; padding: 0; color: var(--text); }
+.docs-body blockquote {
+  margin: 0 0 18px; padding: 12px 18px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-1); border-radius: 0 8px 8px 0;
+  color: var(--text-dim);
+}
+.docs-body blockquote p:last-child { margin-bottom: 0; }
+.docs-body table {
+  width: 100%; border-collapse: collapse; margin: 0 0 18px; font-size: 14px;
+  display: block; overflow-x: auto;
+}
+.docs-body th, .docs-body td {
+  border: 1px solid var(--border); padding: 8px 12px; text-align: left;
+}
+.docs-body th { background: var(--bg-2); font-weight: 600; }
+.docs-body hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+.heading-anchor {
+  margin-left: 10px; color: var(--border-strong);
+  opacity: 0; transition: opacity 0.15s ease;
+}
+h2:hover .heading-anchor, h3:hover .heading-anchor { opacity: 1; }
+
+.embed-video {
+  position: relative; width: 100%; aspect-ratio: 16 / 9;
+  border-radius: 12px; border: 1px solid var(--border);
+  overflow: hidden; background: var(--bg-2); margin: 0 0 28px;
+}
+.embed-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+.edit-page {
+  margin: 48px 0 0; padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+
+/* ───── Docs index ───── */
+.docs-index .doc-cat { margin-top: 44px; }
+.docs-index h2 {
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 16px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+}
+.doc-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+.doc-card {
+  display: block; padding: 14px 16px;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: 10px;
+  color: var(--text); transition: border-color 0.15s ease, background 0.15s ease;
+}
+.doc-card:hover { border-color: var(--accent); background: var(--bg-2); color: var(--text); }
+.doc-card strong { display: block; font-size: 15px; margin-bottom: 4px; }
+.doc-card > span { display: block; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+/* ───── Footer ───── */
+footer.site { border-top: 1px solid var(--border); padding: 28px 0; }
+.footer-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; font-size: 13px; color: var(--text-faint);
+}
+.footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+.footer-links a { color: var(--text-dim); }
+.footer-links a:hover { color: var(--accent); }
+
+/* ───── Pagefind ───── */
+:root {
+  --pagefind-ui-scale: 0.8;
+  --pagefind-ui-primary: var(--text);
+  --pagefind-ui-text: var(--text);
+  --pagefind-ui-background: var(--bg-1);
+  --pagefind-ui-border: var(--border);
+  --pagefind-ui-tag: var(--bg-2);
+  --pagefind-ui-border-width: 1px;
+  --pagefind-ui-border-radius: 8px;
+  --pagefind-ui-font: 'Inter', system-ui, sans-serif;
+}
+.pagefind-ui__result-link { color: var(--accent) !important; }
+
+/* We init PagefindUI with resetStyles:false, so its `all: unset` reset never
+   runs and the <input> keeps the UA's own colour and font instead of
+   inheriting the widget's. Harmless while the box was white; now that the
+   tokens above actually apply, black-on-#111 would make typed text
+   invisible. Both are therefore set here rather than left to inherit. */
+.docs-search .pagefind-ui__search-input {
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-weight: 500;
+  /* The placeholder has to survive a 244px sidebar. Pagefind reserves
+     calc(70px * scale) on the right for a Clear button that does not exist
+     until you type, leaving 128.8px of content box for 130px of text -- the
+     sidebar search read "Search the do". Reclaim it while the field is
+     empty, and never let a longer string clip without saying so. */
+  padding-right: 14px;
+  text-overflow: ellipsis;
+}
+.docs-search .pagefind-ui__search-input:not(:placeholder-shown) {
+  padding-right: calc(70px * var(--pagefind-ui-scale));
+}
+/* Pagefind's own ::placeholder is opacity .2 -- legible as grey on white,
+   almost nothing on #111. */
+.docs-search .pagefind-ui__search-input::placeholder {
+  color: var(--text-faint); opacity: 1;
+}
+.docs-search .pagefind-ui__search-input:focus {
+  outline: none; border-color: var(--border-strong);
+}
+/* The clear button sits on top of the field; match it or it reads as a chip. */
+.docs-search .pagefind-ui__search-clear {
+  background: transparent; color: var(--text-dim);
+  font-family: 'Inter', system-ui, sans-serif;
+}
+.docs-search .pagefind-ui__search-clear:hover { color: var(--accent); }
+
+@media (max-width: 900px) {
+  .docs-layout { grid-template-columns: 1fr; gap: 0; padding-top: 20px; }
+  .docs-side {
+    position: static; max-height: none; overflow: visible;
+    margin-bottom: 28px; padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Each category collapses to one tappable row, so the whole nav is
+     eight rows instead of 53 and the article starts on the first screen.
+     docs.js closes them at load; these rules are what makes a closed one
+     look like a control rather than a dead heading. */
+  .side-group { margin-bottom: 0; border-bottom: 1px solid var(--border); }
+  .side-group:last-of-type { border-bottom: none; }
+  .side-group > summary {
+    margin: 0; padding: 13px 30px 13px 2px;
+    position: relative; cursor: pointer;
+    font-size: 12px; color: var(--text-dim);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .side-group > summary:hover { color: var(--text); }
+  .side-cat { flex: 1; min-width: 0; }
+  /* Count and chevron: how much is hidden, and that it opens. */
+  .side-count {
+    display: inline-block;
+    font-size: 11px; font-weight: 600; letter-spacing: 0;
+    color: var(--text-faint); font-variant-numeric: tabular-nums;
+  }
+  .side-group > summary::after {
+    content: ''; position: absolute; right: 6px; top: 50%;
+    width: 7px; height: 7px; margin-top: -5px;
+    border-right: 1.5px solid var(--text-faint);
+    border-bottom: 1.5px solid var(--text-faint);
+    transform: rotate(45deg); transition: transform 0.15s ease;
+  }
+  .side-group[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
+  .side-group[open] > summary { color: var(--text); }
+  .side-group > ul { padding-bottom: 8px; }
+  /* Touch targets, not 5px-padded desktop rows. */
+  .side-group li a { padding: 9px 10px; }
+
+  .docs-search { margin-bottom: 8px; }
+}
+
+/* ═════ Plus ═════
+   Named Plus before 2026-09-13; the class names kept it, the copy says Patreon.
+   Used by /patreon/ (generated from content/patreon.html) and by the Patreon marker
+   on package pages, the docs index and the sidebar.
+
+   These mirror the same-named rules in index.html's inline <style>, the way
+   the tokens and the header already do: the landing page carries its own
+   copy of the chrome so it loads one stylesheet, docs.css carries the copy
+   every generated page uses. Same names, same values — keep them in step. */
+
+.plus-mark {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 5px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(251,191,36,0.28);
+  vertical-align: 2px;
+  white-space: nowrap;
+}
+a .plus-mark, .side-group .plus-mark { margin-left: 7px; }
+
+/* The unlock callout at the top of a Plus package's page. */
+.plus-note {
+  border: 1px solid rgba(251,191,36,0.3);
+  border-radius: 12px;
+  background:
+    radial-gradient(420px 160px at 100% 0%, rgba(251,191,36,0.07), transparent 70%),
+    var(--bg-1);
+  padding: 18px 20px;
+  margin: 0 0 28px;
+  font-size: 14.5px; color: var(--text-dim);
+}
+.plus-note strong { color: var(--text); }
+.plus-note p { margin: 0 0 10px; }
+.plus-note p:last-child { margin-bottom: 0; }
+
+/* ───── Progressive disclosure ───── */
+details.fold {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-1);
+  margin: 0 0 10px;
+}
+details.fold > summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-size: 14.5px; font-weight: 600;
+  color: var(--text);
+  display: flex; align-items: center; gap: 10px;
+  list-style: none;
+}
+details.fold > summary::-webkit-details-marker { display: none; }
+details.fold > summary::before {
+  content: '+';
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  color: var(--accent); font-size: 15px; line-height: 1;
+  width: 12px; text-align: center; flex: none;
+}
+details.fold[open] > summary::before { content: '−'; }
+details.fold > summary:hover { color: var(--accent); }
+details.fold > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.fold-body { padding: 0 16px 16px 38px; font-size: 14.5px; color: var(--text-dim); }
+.fold-body > :first-child { margin-top: 0; }
+.fold-body > :last-child { margin-bottom: 0; }
+.fold-body p { margin: 0 0 10px; }
+
+/* ───── The Plus page ───── */
+.plus-page { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+.plus-page h1 { font-size: clamp(32px, 4.4vw, 44px); font-weight: 700; letter-spacing: -0.025em; margin: 0 0 14px; }
+.plus-page h2 {
+  font-size: 24px; font-weight: 650; letter-spacing: -0.015em;
+  margin: 52px 0 14px; padding-top: 4px;
+}
+/* Feature metadata authored in the CMS: the icon rides its heading and the
+   table of contents; hotkeys list under the feature they belong to. */
+.feat-icon { vertical-align: -3px; margin-right: 7px; border-radius: 3px; }
+.shortcuts .hint-line {
+  margin: -4px 0 10px; font-size: 12.5px; color: var(--text-faint);
+  max-width: 62ch;
+}
+.feat-keys { list-style: none; margin: 6px 0 14px; padding: 0; display: flex;
+  flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--text-dim); }
+.feat-keys kbd {
+  background: var(--bg-3); border: 1px solid var(--border-strong);
+  border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px;
+  font: 500 12px/1.5 var(--mono, ui-monospace, monospace); color: var(--text);
+  margin-right: 6px;
+}
+.toc .feat-icon { width: 14px; height: 14px; }
+
+.plus-page h3 {
+  font-size: 17px; font-weight: 600; letter-spacing: -0.01em;
+  margin: 30px 0 10px;
+}
+.plus-page > p { color: var(--text-dim); max-width: 68ch; }
+.plus-page .lede { font-size: 18px; max-width: 68ch; margin-bottom: 36px; }
+
+.tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: stretch; margin: 22px 0; }
+.tier {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg-1);
+  padding: 26px 24px;
+  display: flex; flex-direction: column;
+}
+.tier--plus {
+  border-color: rgba(251,191,36,0.32);
+  background:
+    radial-gradient(520px 200px at 100% 0%, rgba(251,191,36,0.07), transparent 70%),
+    var(--bg-1);
+}
+.tier-tag {
+  display: inline-flex; align-self: flex-start;
+  font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 11px; border-radius: 999px;
+  background: var(--bg-3); color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.tier--plus .tier-tag { background: var(--accent-dim); color: var(--accent); border-color: rgba(251,191,36,0.3); }
+.tier h3 { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; margin: 15px 0 8px; }
+.tier > p { color: var(--text-dim); font-size: 15px; margin: 0 0 18px; }
+.tier ul { list-style: none; margin: 0 0 22px; padding: 0; display: grid; gap: 11px; }
+.tier li { position: relative; padding-left: 24px; font-size: 14.5px; color: var(--text-dim); }
+.tier li::before { content: '✓'; position: absolute; left: 0; top: 0; color: var(--green); font-size: 13px; font-weight: 700; }
+.tier--plus li::before { content: '◆'; color: var(--accent); font-size: 11px; }
+.tier li strong { color: var(--text); font-weight: 600; }
+.tier-actions { margin-top: auto; display: flex; gap: 10px; flex-wrap: wrap; }
+.plus-tiers { margin-bottom: 8px; }
+
+/* The generated Plus package list. */
+.plus-pkgs { display: grid; gap: 12px; margin: 22px 0; }
+.plus-pkg {
+  display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 16px;
+  border: 1px solid rgba(251,191,36,0.22);
+  border-radius: 12px; background: var(--bg-1);
+  padding: 18px 20px;
+}
+.plus-pkg b { font-size: 16.5px; font-weight: 650; letter-spacing: -0.01em; color: var(--text); }
+.plus-pkg span { display: block; font-size: 14px; color: var(--text-dim); margin-top: 5px; }
+.plus-pkg .cat-of { color: var(--text-faint); font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 8px; }
+.plus-pkgs-empty { color: var(--text-faint); font-style: italic; }
+
+.plus-steps { counter-reset: step; list-style: none; margin: 22px 0; padding: 0; display: grid; gap: 12px; }
+.plus-steps li {
+  counter-increment: step;
+  position: relative; padding: 16px 20px 16px 58px;
+  border: 1px solid var(--border); border-radius: 12px; background: var(--bg-1);
+  color: var(--text-dim); font-size: 15px;
+}
+.plus-steps li::before {
+  content: counter(step);
+  position: absolute; left: 18px; top: 15px;
+  width: 26px; height: 26px; border-radius: 8px;
+  display: grid; place-items: center;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(251,191,36,0.28);
+  font-size: 13px; font-weight: 700;
+}
+.plus-steps strong { color: var(--text); }
+
+.plus-facts { list-style: none; margin: 22px 0; padding: 0; display: grid; gap: 14px; }
+.plus-facts li {
+  position: relative; padding-left: 26px;
+  color: var(--text-dim); font-size: 15px; max-width: 74ch;
+}
+.plus-facts li::before {
+  content: '◆'; position: absolute; left: 0; top: 1px;
+  color: var(--accent); font-size: 11px;
+}
+.plus-facts strong { color: var(--text); }
+
+/* ───── The rest of the family ───── */
+.prod-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin: 22px 0; }
+.prod {
+  display: block;
+  border: 1px solid var(--border); border-radius: 14px;
+  background: var(--bg-1); padding: 24px 24px 22px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.prod:hover { border-color: var(--border-strong); background: var(--bg-2); }
+.prod-kind { font-size: 11.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.prod-name { display: block; font-size: 19px; font-weight: 700; letter-spacing: -0.015em; color: var(--text); margin: 8px 0; }
+.prod:hover .prod-name { color: var(--accent); }
+.prod-pitch { display: block; font-size: 14.5px; color: var(--text-dim); margin-bottom: 14px; }
+.prod-access { display: block; font-size: 13px; color: var(--text-faint); border-top: 1px solid var(--border); padding-top: 12px; }
+
+.plus-cta {
+  margin: 64px 0 0; padding: 36px 28px;
+  border: 1px solid var(--border); border-radius: 16px;
+  background: var(--bg-1); text-align: center;
+}
+.plus-cta h2 { margin: 0 0 10px; }
+.plus-cta p { color: var(--text-dim); max-width: 56ch; margin: 0 auto 24px; }
+.hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn-lg { padding: 14px 26px; font-size: 15px; }
+
+@media (max-width: 860px) {
+  .tiers, .prod-grid { grid-template-columns: 1fr; }
+  .plus-pkg { grid-template-columns: 1fr; }
+}
+
+/* Generated parameter tables. They sit OUTSIDE .docs-body (like .shortcuts)
+   because build-site.mjs injects them around the rendered markdown, so they
+   carry their own table rules rather than inheriting .docs-body table. */
+.parameters { margin: 8px 0 4px; }
+.parameters h2 { scroll-margin-top: 84px; }
+.parameters h3 {
+  font-size: 15px; font-weight: 600; letter-spacing: 0.02em;
+  text-transform: uppercase; color: var(--text-dim);
+  margin: 26px 0 8px;
+}
+.par-wrap { overflow-x: auto; margin: 0 0 18px; }
+.par-table {
+  width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px;
+}
+.par-table th, .par-table td {
+  border: 1px solid var(--border); padding: 9px 12px;
+  text-align: left; vertical-align: top;
+}
+.par-table thead th {
+  background: var(--bg-2); font-weight: 600; font-size: 12.5px;
+  letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-dim);
+}
+.par-table tbody tr:hover { background: var(--bg-1); }
+/* A Header parameter is a section label inside the page, not a control. */
+.par-table .par-head th {
+  background: var(--bg-2); color: var(--accent);
+  font-size: 12.5px; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.par-name { width: 24%; }
+.par-name strong { display: block; font-weight: 600; }
+.par-name code {
+  display: inline-block; margin-top: 3px;
+  font: 500 12px/1.5 var(--mono, ui-monospace, monospace);
+  color: var(--text-faint);
+}
+.par-flag {
+  display: inline-block; margin: 3px 0 0 6px; padding: 0 5px;
+  border: 1px solid var(--border-strong); border-radius: 3px;
+  font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-faint);
+}
+.par-type { width: 16%; color: var(--text-dim); white-space: nowrap; }
+.par-def {
+  display: block; margin-top: 3px; font-size: 12.5px; color: var(--text-faint);
+}
+.par-def::before { content: 'default: '; }
+.par-menu { margin-top: 6px; font-size: 12.5px; color: var(--text-faint); }
+.par-menu code {
+  font: 500 12px/1.5 var(--mono, ui-monospace, monospace);
+  color: var(--text-dim);
+}
+/* Said out loud on purpose: a blank cell is indistinguishable from a
+   documented control, and the gap has to stay visible to get closed. */
+.par-todo { color: var(--text-faint); font-style: italic; }
+.parameters kbd {
+  background: var(--bg-3); border: 1px solid var(--border-strong);
+  border-bottom-width: 2px; border-radius: 4px; padding: 1px 6px;
+  font: 500 12px/1.5 var(--mono, ui-monospace, monospace); color: var(--text);
+}
+.docs-index-note {
+  margin: -8px 0 26px; color: var(--text-dim); font-size: 14.5px;
+  max-width: 68ch;
+}
+
+@media (max-width: 720px) {
+  .par-name, .par-type { width: auto; }
+  .par-type { white-space: normal; }
+}
+.par-registry-list { margin: 6px 0 18px; padding-left: 20px; color: var(--text-dim);
+  font-size: 14.5px; line-height: 1.9; }
+.par-registry-list a { font-weight: 600; }
+.badge-surface {
+  border-color: var(--border-strong); color: var(--text-dim);
+  background: var(--bg-2);
+}
+a.badge-surface:hover { color: var(--text); border-color: var(--accent); }
+
+/* Index filter: what a package puts on screen. */
+.surf-filter { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 28px; }
+.surf-chip {
+  font: inherit; font-size: 13px; cursor: pointer;
+  padding: 6px 12px; border-radius: 999px;
+  background: var(--bg-1); border: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.surf-chip:hover { border-color: var(--border-strong); color: var(--text); }
+.surf-chip.on {
+  background: var(--accent-dim); border-color: var(--accent); color: var(--accent-bright);
+}
+.surf-chip span { opacity: 0.55; margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+/* ───── Where it appears ─────
+   Derived from the registry hosts (build_manifest.SurfaceEntries): the icon
+   is the glyph rendered from the same font the live bar button draws, so
+   this block is the button's own picture rather than a description of it. */
+.placement { margin: 0 0 30px; }
+.placement h2 {
+  margin: 0 0 6px; font-size: 20px; font-weight: 700; letter-spacing: -0.02em;
+  scroll-margin-top: 84px;
+}
+.placement .hint-line {
+  margin: 0 0 12px; font-size: 13px; color: var(--text-faint); max-width: 66ch;
+}
+.place-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.place-list li {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 10px 14px; font-size: 14px;
+  background: var(--bg-1); border: 1px solid var(--border); border-radius: 10px;
+}
+.place-icon {
+  width: 18px; height: 18px; flex: none;
+  /* The PNGs are white-on-transparent masters; tint them to the accent so
+     they read as part of the page rather than as pasted screenshots. */
+  filter: brightness(0) saturate(100%) invert(78%) sepia(58%)
+          saturate(748%) hue-rotate(332deg) brightness(101%) contrast(97%);
+}
+.place-icon--none {
+  border: 1px dashed var(--border-strong); border-radius: 4px; opacity: 0.5;
+}
+.place-what { font-weight: 600; color: var(--text); }
+.place-detail { color: var(--text-dim); font-size: 13px; }
+.place-detail:empty { display: none; }
+
+/* The same glyph, inline in the badge row at the top of the page. */
+.badge-icon {
+  width: 14px; height: 14px; vertical-align: -2px; margin-right: 5px;
+  opacity: 0.85;
+}
+
+/* An undocumented page says so. Same reasoning as .par-todo: a gap that
+   renders as absence is indistinguishable from a gap nobody has. */
+.page-todo {
+  margin: 0 0 26px; padding: 14px 18px;
+  border: 1px dashed var(--border-strong); border-radius: 10px;
+  background: var(--bg-1); color: var(--text-dim);
+  font-size: 14px; max-width: 68ch;
+}
+
+/* ───── Code highlighting ─────
+   Emitted at build time by highlight.js in tools/build-site.mjs, so these
+   classes are already in the HTML: nothing runs on load and a block stays
+   coloured with scripts off. The wrapper is still .docs-body pre, which
+   owns the background, padding and scrolling -- these rules only colour
+   tokens.
+
+   Tuned for the near-black --bg-deep the blocks sit on, and deliberately
+   NOT the site accent for keywords: amber is the link and badge colour
+   here, and a keyword wearing it reads as clickable. */
+.docs-body pre code .hljs-comment,
+.docs-body pre code .hljs-quote {
+  color: var(--text-faint); font-style: italic;
+}
+.docs-body pre code .hljs-keyword,
+.docs-body pre code .hljs-selector-tag,
+.docs-body pre code .hljs-meta-keyword {
+  color: #c792ea;
+}
+.docs-body pre code .hljs-string,
+.docs-body pre code .hljs-meta .hljs-string,
+.docs-body pre code .hljs-regexp {
+  color: var(--green);
+}
+.docs-body pre code .hljs-number,
+.docs-body pre code .hljs-literal {
+  color: #f78c6c;
+}
+.docs-body pre code .hljs-title,
+.docs-body pre code .hljs-title.function_,
+.docs-body pre code .hljs-built_in,
+.docs-body pre code .hljs-type {
+  color: #82aaff;
+}
+.docs-body pre code .hljs-attr,
+.docs-body pre code .hljs-property,
+.docs-body pre code .hljs-params {
+  color: var(--text);
+}
+/* `self` and `me` -- the TouchDesigner reader's anchor in every snippet. */
+.docs-body pre code .hljs-variable.language_,
+.docs-body pre code .hljs-symbol {
+  color: #f07178; font-style: italic;
+}
+/* Decorators: @FNSCommand.fns_command is load-bearing in these docs. */
+.docs-body pre code .hljs-meta {
+  color: #ffcb6b;
+}
+.docs-body pre code .hljs-subst { color: var(--text); }
+.docs-body pre code .hljs-deletion { color: #f07178; }
+.docs-body pre code .hljs-addition { color: var(--green); }
+.docs-body pre code .hljs-emphasis { font-style: italic; }
+.docs-body pre code .hljs-strong { font-weight: 700; }
+
+/* The two calls to action in a Plus tool's note. */
+.plus-note-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.plus-note-actions .btn { font-size: 13.5px; padding: 9px 16px; }
+
+/* Documentation reading layout. */
+.docs-layout .badge { border-radius: 2px; background: transparent; padding: 2px 7px; }
+.docs-layout .toc { background: transparent; border: 0; border-left: 2px solid var(--border-strong); border-radius: 0; padding: 4px 0 4px 18px; }
+.docs-layout .doc-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 28px; }
+.docs-layout .doc-card { min-width: 0; background: transparent; border: 0; border-top: 1px solid var(--border); border-radius: 0; padding: 18px 0 22px; }
+.docs-layout .doc-card:hover { background: var(--bg-1); }
+.docs-layout .docs-body { line-height: 1.7; }
+.docs-layout .docs-body li { margin-bottom: 10px; }
+.docs-layout .docs-body pre { border-radius: 3px; }
+.docs-layout .docs-body blockquote { background: transparent; border-radius: 0; }
+.docs-layout .docs-body th, .docs-layout .docs-body td { vertical-align: top; padding: 10px 12px; }
+.docs-layout .docs-body td { border-left: 0; border-right: 0; }
+.docs-layout .crumbs, .docs-layout .toc > span { color: var(--text-dim); }
+.docs-layout a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.docs-layout .heading-anchor:focus-visible { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* Keep access labels separate from description typography. */
+.docs-index .doc-card strong { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 10px; font-weight: 600; font-size: 16px; margin-bottom: 8px; }
+.docs-index .doc-card .plus-mark { display: inline-flex; width: auto; flex: 0 0 auto; margin: 0; padding: 1px 5px; font-size: 10px; line-height: 1.5; letter-spacing: 0; text-transform: none; border-radius: 3px; color: var(--accent); }
+.docs-index .doc-card > span { font-size: 13px; line-height: 1.6; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; overflow: hidden; }
+.docs-index .doc-cat { margin-top: 32px; }
+.docs-index .doc-cat h2 { font-size: 19px; margin-bottom: 14px; }
+.docs-index .docs-index-note { max-width: 65ch; }
+@media (max-width: 600px) { .docs-layout .doc-cards { grid-template-columns: 1fr; } }
+
+/* Tool names lead; access information occupies a quiet, aligned column. */
+.side-tool { position: relative; }
+.side-group .side-tool > a { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.side-tool-name { min-width: 0; }
+.side-access { flex-shrink: 0; font-size: 10px; font-weight: 500; line-height: 1.4; color: #b9aa7b; white-space: nowrap; }
+.side-tool > a:hover .side-access, .side-tool > a:focus-visible .side-access { color: var(--accent); }
+.side-access-detail { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 5; padding: 10px 12px; background: var(--bg-2); border: 1px solid var(--border-strong); border-radius: 3px; color: var(--text); font-size: 12px; font-weight: 400; line-height: 1.5; box-shadow: 0 4px 12px #0006; }
+.side-tool:hover .side-access-detail, .side-tool:focus-within .side-access-detail { display: block; }
+.side-tool > a:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* ───── /community/ — other creators' tools (build-site.mjs) ───── */
+.cm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; margin: 28px 0; }
+.cm-card {
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--border); border-radius: 14px; background: var(--bg-1);
+  color: var(--text); transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cm-card:hover { border-color: var(--border-strong); background: var(--bg-2); color: var(--text); }
+.cm-card-img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: var(--bg-deep); border-bottom: 1px solid var(--border); }
+.cm-card-body { display: block; padding: 18px 20px 20px; }
+.cm-kind { display: block; font-size: 11.5px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
+.cm-name { display: block; font-size: 19px; font-weight: 700; letter-spacing: -0.015em; margin: 8px 0 2px; }
+.cm-card:hover .cm-name { color: var(--accent); }
+.cm-by { display: block; font-size: 13.5px; color: var(--text-dim); margin-bottom: 10px; }
+.cm-pitch { display: block; font-size: 14.5px; color: var(--text-dim); line-height: 1.55; }
+.cm-empty { color: var(--text-faint); }
+.cm-byline { color: var(--text-dim); margin: -4px 0 24px; }
+.cm-hero { display: block; width: 100%; border-radius: 12px; border: 1px solid var(--border); margin: 0 0 24px; }
+.cm-credit { border: 1px solid var(--border); border-radius: 14px; background: var(--bg-1); padding: 20px 22px; margin: 0 0 36px; }
+.cm-credit dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 18px; margin: 0 0 14px; font-size: 14.5px; }
+.cm-credit dt { color: var(--text-faint); }
+.cm-credit dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.cm-faint { color: var(--text-faint); font-size: 13px; }
+.cm-disclaimer { color: var(--text-dim); font-size: 14px; margin: 0 0 16px; }
+.cm-back { margin-top: 48px; }
+@media (max-width: 560px) {
+  .cm-credit dl { grid-template-columns: 1fr; gap: 2px; }
+  .cm-credit dd { margin-bottom: 8px; }
+}
+
+/* /about/: the photo beside the bio, stacked on a phone. */
+.about-intro { display: grid; grid-template-columns: 160px 1fr; gap: 28px; align-items: start; margin: 0 0 12px; }
+.about-intro p { color: var(--text-dim); max-width: 68ch; margin: 0 0 14px; }
+.about-photo { width: 160px; height: 160px; object-fit: cover; border-radius: 14px; border: 1px solid var(--border); background: var(--bg-1); }
+@media (max-width: 560px) {
+  .about-intro { grid-template-columns: 1fr; gap: 18px; }
+  .about-photo { width: 120px; height: 120px; }
+}
+
+/* Built with TDFam, on /community/#tdfam */
+.cm-families { margin-top: 56px; scroll-margin-top: 90px; }
+.cm-families > p { color: var(--text-dim); max-width: 68ch; }

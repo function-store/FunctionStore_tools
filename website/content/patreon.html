@@ -1,0 +1,218 @@
+<!-- Source for /patreon/. Hand-written prose; tools/build-site.mjs wraps this in
+     the site head, header and footer and writes website/patreon/index.html
+     (generated, gitignored — like docs/ and get/). /plus/ redirects here
+     (website/vercel.json): installed pickers still link the old address.
+
+     Two blocks are injected:
+       PLUSPKGS  the packages catalog.json marks with a non-free `access`,
+                 each with its minimum Patreon tier from the manifest
+       FAMILY    the cards from content/family.json, same as the landing page
+
+     The build refuses to run if either marker pair is missing, because the
+     failure mode otherwise is a page that quietly lists nothing. -->
+
+<h1>FNSTools on Patreon</h1>
+<p class="lede">Most FNSTools packages are free and MIT licensed. A few tools unlock with a Patreon
+  membership or a Gumroad licence key. You install and update them through the same picker.</p>
+
+<div class="tiers plus-tiers">
+  <div class="tier">
+    <span class="tier-tag">Free · MIT</span>
+    <h3>Nearly everything</h3>
+    <p>The core registries and nearly every tool in the catalogue.</p>
+    <ul>
+      <li><strong>Use it without an account or sign-in.</strong> The toolkit sends no telemetry and never phones home.</li>
+      <li><strong>Source on GitHub.</strong> Read it, fork it, use it in commercial work.</li>
+      <li><strong>Every machine you own</strong>, and every machine you set up for someone else.</li>
+      <li><strong>Free stays free.</strong> A tool that is free today does not become paid later.</li>
+    </ul>
+    <div class="tier-actions">
+      <a class="btn btn-primary" href="/#get">Get FNSTools →</a>
+    </div>
+  </div>
+  <div class="tier tier--plus">
+    <span class="tier-tag">Patreon</span>
+    <h3>A few tools</h3>
+    <p>Paid tools in the FNSTools catalogue. Sign in with Patreon or redeem a Gumroad licence key to
+      download them.</p>
+    <ul>
+      <li><strong>Visible and documented.</strong> These tools sit in the picker and the docs like any other, marked Patreon.</li>
+      <li><strong>Base, Pro or Coaching.</strong> Each tool names the lowest Patreon tier that unlocks it, and every tier above it unlocks it too.</li>
+      <li><strong>Same installer.</strong> Install and update alongside your free tools.</li>
+    </ul>
+    <div class="tier-actions">
+      <a class="btn btn-primary" href="https://patreon.com/function_store" target="_blank" rel="noopener">See the tiers</a>
+      <a class="btn btn-secondary" href="#unlock">How to unlock →</a>
+    </div>
+  </div>
+</div>
+
+<h2 id="whats-unlocked">What Patreon unlocks right now</h2>
+<p>
+  Each tool links to its documentation and names the lowest Patreon tier that unlocks it.
+</p>
+
+<!-- PLUSPKGS:START -->
+<!-- PLUSPKGS:END -->
+
+<h2 id="unlock">Two ways to unlock</h2>
+<div class="tiers">
+  <div class="tier">
+    <span class="tier-tag">Membership</span>
+    <h3>Patreon</h3>
+    <p>Ongoing support. Your tier (Base, Pro or Coaching) decides which tools you get, and they stay
+      current for as long as you are a member.</p>
+    <ul>
+      <li>Covers more than the toolkit: the same membership reaches the other Function Store tools.</li>
+      <li>New tools at your tier appear as they ship, without buying anything again.</li>
+      <li>Connect once per machine, from inside TouchDesigner.</li>
+    </ul>
+    <div class="tier-actions">
+      <a class="btn btn-primary" href="https://patreon.com/function_store" target="_blank" rel="noopener">Tiers and pricing →</a>
+    </div>
+  </div>
+  <div class="tier">
+    <span class="tier-tag">Licence key</span>
+    <h3>Gumroad</h3>
+    <p>A one-time purchase for a single tool, sold on Gumroad and redeemed with a key, with no
+      membership or recurring charge.</p>
+    <ul>
+      <li>One key per tool. Hold as many as you have bought, and add or remove them individually.</li>
+      <li>How many machines a key covers is stated on the Gumroad page.</li>
+      <li>Redeemed in the same place as the Patreon connection.</li>
+    </ul>
+    <div class="tier-actions">
+      <a class="btn btn-secondary" href="#unlocking-in-touchdesigner">Where to redeem →</a>
+    </div>
+  </div>
+</div>
+
+<h2 id="unlocking-in-touchdesigner">Unlocking, step by step</h2>
+<ol class="plus-steps">
+  <li>
+    <strong>Install the toolkit as usual.</strong> These tools need no special installer; they are
+    rows in the same catalogue. <a href="/#get">The three steps are here.</a>
+  </li>
+  <li>
+    <strong>Open <code>FNS_Updater</code></strong> inside the toolkit container. Its sign-in
+    parameters are where all of this happens, and there is no separate account tool to install.
+  </li>
+  <li>
+    <strong>Pulse <em>Sign In</em>, or paste a Gumroad licence key and pulse <em>Redeem</em>.</strong>
+    Signing in opens Patreon in your normal browser, you approve there, and the tab hands the result
+    back to TouchDesigner by itself.
+  </li>
+  <li>
+    <strong>Pick your tools.</strong> The tools your tier or key covers stop being locked in the
+    picker and install like anything else.
+  </li>
+</ol>
+
+<h2 id="what-it-does-to-your-machine">What it does to your machine</h2>
+<p>
+  Worth being precise about, because the answer is short and it is the part people are right to
+  ask about.
+</p>
+<ul class="plus-facts">
+  <li>
+    <strong>The credential lives in your system keystore.</strong> It goes into the Windows
+    Credential Manager or the macOS Keychain, under your user account. It stays out of the
+    <code>.toe</code>, out of any <code>.tox</code>, and out of files beside them, so a project
+    you hand to a collaborator carries no key of yours.
+  </li>
+  <li>
+    <strong>Your Patreon token stays on the server.</strong> TouchDesigner holds an opaque token that
+    means nothing anywhere else, and that can be revoked.
+  </li>
+  <li>
+    <strong>The server checks every download.</strong> Entitlement is decided by the
+    server before a file is served. Nothing is "unlocked" by editing a parameter, which is also
+    why a locked tool in your picker is a real lock.
+  </li>
+  <li>
+    <strong>Sign out whenever.</strong> One button; the credential is deleted from the keystore.
+  </li>
+</ul>
+
+<h2 id="questions">The questions people actually ask</h2>
+
+<details class="fold">
+  <summary>What happens if my membership lapses?</summary>
+  <div class="fold-body">
+    <p>Tools already installed in your project keep working. They are files in your
+      <code>.toe</code> like any other component; nothing calls home to check on them, and
+      nothing expires.</p>
+    <p>What you lose is the ability to download them again: updates to those tools, and installing
+      them on a new machine or into a new project. Rejoin and both come back.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>Does any of this change the free toolkit?</summary>
+  <div class="fold-body">
+    <p>No. The free packages are served publicly and unauthenticated exactly as they were, the
+      source stays on GitHub under MIT, and the installer does not ask you to sign in to use
+      them. If you never unlock anything, you will not notice the gate exists beyond a few
+      cards marked Patreon.</p>
+    <p>Nothing that is free today becomes paid later. The Patreon list grows by new tools arriving
+      in it.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>Can I still read the source of a Patreon tool?</summary>
+  <div class="fold-body">
+    <p>These packages are not published to the public GitHub repository, and they are not MIT.
+      Once installed they are ordinary TouchDesigner components in your project; you can open
+      them, read the Python inside, and see exactly what they do. What you may not do is
+      redistribute them.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>I work on several machines: studio, laptop, a show box.</summary>
+  <div class="fold-body">
+    <p>Connect each one. A membership is checked per machine against your account, so signing in
+      on a new box is the whole procedure.</p>
+    <p>Gumroad licence keys are per tool, and how many machines one key covers is stated on the
+      Gumroad page.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>Does the toolkit need internet to run?</summary>
+  <div class="fold-body">
+    <p>Only to install and to update. Once packages are in your project, TouchDesigner runs them
+      offline, which matters on a show machine, and is why the entitlement check sits on the
+      download, with nothing checked at startup.</p>
+  </div>
+</details>
+
+<details class="fold">
+  <summary>Why gate anything at all?</summary>
+  <div class="fold-body">
+    <p>Patreon memberships and Gumroad purchases help pay for development and maintenance of
+      FNSTools, including the free tools.</p>
+  </div>
+</details>
+
+<h2 id="more">More from Function Store</h2>
+<p>
+  The same shape elsewhere: a free core, more with support. One membership reaches these too,
+  each product's own page states which tier it needs.
+</p>
+
+<!-- FAMILY:START -->
+<!-- FAMILY:END -->
+
+<div class="plus-cta">
+  <h2>Start with the free toolkit</h2>
+  <p>
+    You can install the free tools without an account.
+  </p>
+  <div class="hero-cta">
+    <a class="btn btn-primary btn-lg js-fns-download" href="https://storage.functionstore.tools/fnstools/latest/FNSTools.tox" download>Get FNSTools →</a>
+    <a class="btn btn-secondary btn-lg" href="/get/">Pick your tools →</a>
+    <a class="btn btn-secondary btn-lg" href="https://patreon.com/function_store" target="_blank" rel="noopener">Patreon</a>
+  </div>
+</div>
