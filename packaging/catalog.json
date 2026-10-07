@@ -547,7 +547,7 @@
   },
   "FNS_Misc": {
    "category": "Project",
-   "description": "Three small toolbar utilities: a Background Viewer toggle for the network's backdrop TOPs and CHOPs, a global Mouse In CHOP you can drag channels from onto parameters, and a Hog CHOP for starving a patch of cook time to see how it copes.",
+   "description": "Two small toolbar utilities: a Background Viewer toggle for the network's backdrop TOPs and CHOPs, and a global Mouse In CHOP you can drag channels from onto parameters.",
    "minor": true,
    "fits": [
     "dev",
@@ -860,6 +860,18 @@
     "speed"
    ],
    "recommended": true
+  },
+  "CookBar": {
+   "category": "Network",
+   "description": "Draws a bar above every operator in the network you are viewing: its cook time on top, its GPU memory below, so the expensive parts of a network stand out at a glance. Its toolbar button switches it on; right-click the button for a global Hog CHOP to stress-test against.",
+   "author": {
+    "name": "Anton Heestand",
+    "url": "https://github.com/heestand-xyz/cook_bar"
+   },
+   "fits": [
+    "network",
+    "dev"
+   ]
   },
   "FNS_OpSequencer": {
    "category": "Time & sequencing",

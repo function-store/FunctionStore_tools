@@ -17,6 +17,15 @@ Collect finds every File-style parameter whose value is a real file
 `{project}/collected/<category>/`, rewrites those parameters to
 project-relative paths, and saves the `.toe`.
 
+FNSTools' own files are left out, so the toolkit's tools keep pointing where
+they do. Your media inside it is collected: TimelineTools' movie and audio file
+are copied like any other, and its players and waveform follow the new path. A
+tool you placed in your own network (a scene changer, a sequencer) is collected
+like the rest of the project.
+
+Collect is the **Collect** tab of [Hub](/docs/fns-hub/) (the **FNS** button in the
+main-menu bar), and **Open UI** on the tool opens it in a window of its own.
+
 Copying is chunked, so a folder of large movies does not freeze the UI.
 
 ## The plan comes first
