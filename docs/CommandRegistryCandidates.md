@@ -18,7 +18,7 @@ in every tool's docked ExtUtils since the 2026-08-21 clone rollout, so any
 tool below can adopt the two-touch pattern:
 
 ```python
-FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand')
+FNSCommand = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('FNSCommand')
 
 class MyToolExt:
 	@FNSCommand.fns_command(help='...')
@@ -101,7 +101,7 @@ memory (`? rec 1`), so bikeshed them here, not after shipping.
 | | QuickMarks | Clear quickmark | `UnstoreQuickmark` | `params`: `slot` int |
 | | FNS_PaneTypeRegistry | Floating network editor | `OpenFloatingNetworkEditor` | |
 | | FNS_PaneTypeRegistry | Recall panel | `RecallPanel` | `params`: `panel` menu if the panel list is ≤16 |
-| | PreviewPanel25 / POPtoDAT_panel | Open preview panel | `Winopen` pulse | |
+| | FNS_PreviewPanel (was PreviewPanel25) | Open preview panel | `Winopen` pulse | |
 
 ## Tier 4 — UI openers, config & maintenance
 
@@ -294,7 +294,7 @@ it, so either curate or split across two owners (`td-dialogs` +
   Tier 1 above.)
 - ~~MISC/button_hog / input_mouse~~ — moved to the Second sweep section
   above at user request.
-- **PreviewPanel25 ext internals** — all drop-handler plumbing
+- **FNS_PreviewPanel (was PreviewPanel25) ext internals** — all drop-handler plumbing
   (`onOpDrop`, `set*State`); the only palette action is the `Winopen` row
   already in Tier 3.
 

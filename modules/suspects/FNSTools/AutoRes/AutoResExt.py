@@ -1,4 +1,5 @@
 
+
 '''Info Header Start
 Name : AutoResExt
 Author : Dan@DAN-4090
@@ -42,8 +43,34 @@ class AutoResExt:
 		self.ownerComp = ownerComp
 		fnsLog('AutoRes: init')
 
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
+	def modifierHeld(self):
+		"""Whether the tool's modifier (the Keys parameter, alt) is held right now.
+
+		Asks the OS through FNSModifiers, immune to the missed keyup that
+		leaves a Keyboard In latched after an alt-tab -- a latched Alt is
+		what armed AutoRes for a drop nobody meant to resize. Where the OS
+		cannot be asked it falls back to the keyboardin chain (null_hk).
+		"""
+		keys = str(self.ownerComp.par.Keys.eval()).split() if self.ownerComp.par['Keys'] is not None else []
+		modifier = keys[0].lower().lstrip('lr') if keys else 'alt'
+		hk = self.ownerComp.op('null_hk')
+		raw = bool(hk['activate'].eval()) if hk is not None else False
+		mods = self.ownerComp.op('FNSModifiers')
+		if mods is None:
+			return raw
+		return mods.module.heldOr(modifier, raw)
+
 	def SetRes(self, _op):
-		if self.ownerComp.op('null_hk')['activate'].eval() and _op.pars('outputresolution'):
+		if self.modifierHeld() and _op.pars('outputresolution'):
 			if not _op.inputs:
 				if _op.par.outputresolution.enable and not _op.isFilter:
 					fnsLog(f'AutoRes: setting resolution on {_op.path}', level='DEBUG')

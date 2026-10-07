@@ -1,4 +1,5 @@
 
+
 '''Info Header Start
 Name : AltSelectExt
 Author : Dan@DAN-4090
@@ -41,6 +42,15 @@ class AltSelectExt:
 		self.selectColor = (0.71, 0.53, 0.16)
 		self.lastSelectedPos = None
 		fnsLog('AltSelect: init')
+
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
 
 
 	def OnSelectOP(self, _op):

@@ -585,6 +585,31 @@ console.log('\n12. the creator can exercise their own gate');
   check('  a different user is NOT granted it',
     !sess2.patreon_tiers.includes(TOP), JSON.stringify(sess2.patreon_tiers));
 
+  // preview packages (docs/PreviewPackages.md): the creator, and only the
+  // creator, carries the pseudo tier they are granted to
+  check('creator also carries the preview tier',
+    sess.patreon_tiers.includes('preview'), JSON.stringify(sess.patreon_tiers));
+  check('  a stranger does not',
+    !sess2.patreon_tiers.includes('preview'), JSON.stringify(sess2.patreon_tiers));
+  const env4 = makeEnv();
+  env4.PATREON_CREATOR_USER_ID = CREATOR;
+  env4.CREATOR_TIER = TOP;
+  env4.TIERS = JSON.stringify({ preview: ['FNS_Wip'], [TOP]: ['FNS_Paid'] });
+  const dev4 = await signIn(env4, CREATOR, []);
+  const sess4 = lastSession(env4, dev4);
+  check('  so a preview package reaches the creator',
+    sess4.products.includes('FNS_Wip') && sess4.products.includes('FNS_Paid'),
+    JSON.stringify(sess4.products));
+  const env5 = makeEnv();
+  env5.PATREON_CREATOR_USER_ID = CREATOR;
+  env5.CREATOR_TIER = TOP;
+  env5.TIERS = JSON.stringify({ preview: ['FNS_Wip'], [TOP]: ['FNS_Paid'] });
+  const dev5 = await signIn(env5, '99999999', [TOP]);
+  const sess5 = lastSession(env5, dev5);
+  check('  and not a top-tier patron',
+    !sess5.products.includes('FNS_Wip') && sess5.products.includes('FNS_Paid'),
+    JSON.stringify(sess5.products));
+
   // unconfigured: no accidental grant when the vars are absent
   const env3 = makeEnv();
   const dev3 = await signIn(env3, CREATOR, []);

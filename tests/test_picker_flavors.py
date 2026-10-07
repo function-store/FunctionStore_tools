@@ -61,29 +61,32 @@ check('the token never leaves the updater',
 
 print('3. the chip decides correctly in all three states')
 # lift the page's real decision lines rather than restating them here
-m = re.search(r"var own = entitled\(p\);\s*\n\s*var label = (.*?);\s*\n\s*"
-              r"var extra = (.*?);", src, re.S)
+m = re.search(r"var own = entitled\(p\);\s*\n(.*?var extra = .*?;)", src, re.S)
 assert m, 'could not find the chip decision in the page'
-label_expr, extra_expr = m.group(1), m.group(2)
+decision = m.group(1)
 
 harness = """
-function run(account, products, name) {
+function tierLabel(access) {
+  return {'8323905': 'Base', '8291595': 'Pro'}[access] || '';
+}
+function run(account, products, name, access) {
   function entitled(p) {
     return !!(account && (account.products || []).indexOf(p.name) >= 0);
   }
-  var p = {name: name};
+  var p = {name: name, access: access};
   var own = entitled(p);
-  var label = %s;
-  var extra = %s;
+  %s
   return label + '|' + extra;
 }
 var out = [];
-out.push(run(undefined, null, 'FNS_TimelineTools'));                  // site
-out.push(run(null, null, 'FNS_TimelineTools'));                       // signed out
-out.push(run({products:['FNS_TimelineTools']}, null, 'FNS_TimelineTools'));
-out.push(run({products:['Other']}, null, 'FNS_TimelineTools'));
+out.push(run(undefined, null, 'FNS_TimelineTools', '8323905'));        // site
+out.push(run(null, null, 'FNS_TimelineTools', '8323905'));             // signed out
+out.push(run({products:['FNS_TimelineTools']}, null, 'FNS_TimelineTools', '8323905'));
+out.push(run({products:['Other']}, null, 'FNS_TimelineTools', '8323905'));
+out.push(run(undefined, null, 'FNS_ProOnly', '8291595'));              // Pro entry tier
+out.push(run(undefined, null, 'FNS_Unknown', '999'));                  // tier not in ladder
 console.log(out.join('\\n'));
-""" % (label_expr, extra_expr)
+""" % decision
 
 try:
     got = subprocess.run([os.environ.get('NODE', 'node'), '-e', harness],
@@ -94,10 +97,14 @@ except Exception as e:
     print('  SKIP  node unavailable (%s)' % e)
 
 if lines:
-    check('site flavor (no global) -> plain "Plus", no state class',
-          lines[0] == 'Plus|', lines[0])
-    check('signed out -> plain "Plus", no state class',
-          lines[1] == 'Plus|', lines[1])
+    check('site flavor (no global) -> plain "Patreon:Base", no state class',
+          lines[0] == 'Patreon:Base|', lines[0])
+    check('signed out -> plain "Patreon:Base", no state class',
+          lines[1] == 'Patreon:Base|', lines[1])
+    check('a Pro entry tier reads "Patreon:Pro"',
+          len(lines) > 4 and lines[4] == 'Patreon:Pro|', lines[4:5])
+    check('a tier the ladder does not name falls back to "Patreon"',
+          len(lines) > 5 and lines[5] == 'Patreon|', lines[5:6])
     check('entitled -> unlocked, own class',
           'unlocked' in lines[2] and lines[2].endswith('| own'), lines[2])
     check('gated but not yours -> locked, locked class',

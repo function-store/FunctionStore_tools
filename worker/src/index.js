@@ -1,13 +1,17 @@
 /**
  * FNSTools entitlement gate.
  *
- * One Worker, three jobs:
+ * One Worker, four jobs:
  *   1. turn a Patreon membership or a Gumroad licence key into an FNS
  *      device token  (/patreon/*, /gumroad/redeem)
  *   2. turn a device token into a short-lived download token, re-checking
  *      entitlement as it goes                              (/token/download)
  *   3. serve gated artifacts from the private `fnstools/plus/` prefix,
  *      and refuse everything else            (/fnstools/plus/...)
+ *   4. pass the two public JSON documents the website reads in the browser
+ *      through from the origin, adding a CORS header for the site origin
+ *      only (/fnstools/manifest.json, /fnstools/recommendations.json;
+ *      routed in wrangler.toml, see README "Website CORS")
  *
  * WHAT THIS IS NOT. Free artifacts never come through here. They sit under
  * the public prefix and are served straight off the CDN, so the free rail
@@ -262,6 +266,9 @@ async function overLimit(env, bucket, id) {
 /** Currently-entitled tier ids for an access token. Empty for a free
  *  follower and for a former patron -- entitlement is TIER-BASED, never
  *  "has a membership", which is how a lapsed supporter keeps access. */
+/** The pseudo tier that grants preview packages (see patreonTiers). */
+const PREVIEW_TIER = 'preview';
+
 async function patreonTiers(env, accessToken) {
   const r = await fetch(PATREON_IDENTITY, {
     headers: { authorization: 'Bearer ' + accessToken },
@@ -287,6 +294,12 @@ async function patreonTiers(env, accessToken) {
   const topTier = String(env.CREATOR_TIER || '');
   if (creator && topTier && me === creator && !tiers.includes(topTier)) {
     tiers.push(topTier);
+  }
+  // A package not released yet (catalog `preview`, docs/PreviewPackages.md)
+  // is granted to PREVIEW_TIER alone. Patreon tier ids are numeric, so no
+  // membership can carry this one: it reaches the creator and nobody else.
+  if (creator && me === creator && !tiers.includes(PREVIEW_TIER)) {
+    tiers.push(PREVIEW_TIER);
   }
   return { ok: true, tiers: [...new Set(tiers)] };
 }
@@ -815,10 +828,65 @@ async function handlePlusDownload(env, request, url) {
 
 // ---------------------------------------------------------------------------
 
+/** The two public JSON documents the website reads IN THE BROWSER.
+ *
+ *  The configurator page on https://functionstore.tools fetches the live
+ *  manifest (and the recommendations list) from the storage host, and the
+ *  bucket sends no Access-Control-Allow-Origin header, so the browser
+ *  blocked both (measured 2026-09-17) and the page silently fell back to
+ *  the manifest baked at site build.
+ *
+ *  Every install ALSO fetches these two URLs (ExtUpdater: base/manifest.json
+ *  on every check, the community list for the picker), so this handler must
+ *  not change a single byte or header of what they receive. It therefore
+ *  never reads R2 itself: fetch(request) from a route goes to the origin,
+ *  not back into this Worker (Cloudflare Workers docs, Routes and Fetch),
+ *  and the origin's status, body, cache-control (no-cache), etag, 304 and
+ *  HEAD behaviour pass through untouched. The one addition is the CORS
+ *  header, for the site origin only, never `*`; artifacts and every other
+ *  path are not routed here at all. */
+export const PUBLIC_JSON_PATHS = new Set([
+  '/fnstools/manifest.json',
+  '/fnstools/recommendations.json',
+]);
+export const SITE_ORIGIN = 'https://functionstore.tools';
+// Only on the storage host: the gate host shares this Worker and has no
+// bucket origin behind it.
+export const STORAGE_HOST = 'storage.functionstore.tools';
+
+async function handlePublicJson(request) {
+  const res = await fetch(request);
+  const out = new Response(res.body, res);
+  // Vary on Origin whether or not the header is added, so no cache can hand
+  // the site's answer to another origin or another origin's to the site.
+  const vary = out.headers.get('vary');
+  if (!vary || !/(^|,)\s*origin\s*(,|$)/i.test(vary)) {
+    out.headers.set('vary', vary ? `${vary}, Origin` : 'Origin');
+  }
+  if (request.headers.get('origin') === SITE_ORIGIN) {
+    out.headers.set('access-control-allow-origin', SITE_ORIGIN);
+  }
+  return out;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const { pathname } = url;
+
+    // Before every other rule: installs depend on these URLs, so anything
+    // that is not a plain GET/HEAD, and any failure in the handler, goes to
+    // the origin exactly as it would with no Worker on the route.
+    if (url.hostname === STORAGE_HOST && PUBLIC_JSON_PATHS.has(pathname)) {
+      if (request.method === 'GET' || request.method === 'HEAD') {
+        try {
+          return await handlePublicJson(request);
+        } catch (err) {
+          console.error('public json passthrough', pathname, err && err.stack);
+        }
+      }
+      return fetch(request);
+    }
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: { allow: 'GET, POST, OPTIONS' } });

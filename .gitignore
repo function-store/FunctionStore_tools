@@ -63,14 +63,21 @@ CrashAutoSave*
 .mcp.json
 .embody/*
 !.embody/project.json
+# Machine-local only: generated permissions, session state, local locks.
 .claude/settings.local.json
 .claude/projects/
+.claude/scheduled_tasks.lock
+.claude/worktrees/
 /.claude/*
+# Tracked: the agent doctrine. These ARE Embody/Envoy deployment artifacts and
+# Envoy rewrites them on deploy, so expect churn -- they are tracked so the
+# rules travel between machines, NOT so they can be a rule's only home
+# (scripts/docs_index.py says why: a normative rule belongs in docs/).
+!/.claude/rules/
+!/.claude/launch.json
 !/.claude/skills/
 /.claude/skills/*
 !/.claude/skills/fns-*/
-CLAUDE.md
-AGENTS.md
 externalizations.tsv
 
 # Task briefs (session-local contracts)

@@ -1,6 +1,7 @@
 
 
 
+
 '''Info Header Start
 Name : ParentHierarchyExt
 Author : Dan@DAN-4090
@@ -140,7 +141,14 @@ class ParentHierarchyExt:
 		if idx is None:
 			return
 
-		if self.ownerComp.op('null_hk1')[0][0]:
+		# null_hk1 carries CTRL (hotkey1/keyboardin2 watches keys='ctrl').
+		# It latches when TD loses focus with ctrl down, which is the
+		# stuck-modifier symptom this tool shows most visibly.
+		_hk = bool(self.ownerComp.op('null_hk1')[0][0])
+		_mods = self.ownerComp.op('FNSModifiers')
+		if _mods is not None:
+			_hk = _mods.module.heldOr('ctrl', _hk)
+		if _hk:
 			showVals = True
 			showPars = True
 			extraInfo = True

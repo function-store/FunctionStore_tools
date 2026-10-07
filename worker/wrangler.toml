@@ -17,6 +17,12 @@ routes = [
   # before the origin is ever reached.
   { pattern = "gate.functionstore.tools/*", zone_name = "functionstore.tools" },
   { pattern = "storage.functionstore.tools/fnstools/plus/*", zone_name = "functionstore.tools" },
+  # The two public JSON documents the website reads in the browser: passed
+  # through from the bucket untouched, plus a CORS header for the site
+  # origin only (src/index.js handlePublicJson, README "Website CORS").
+  # Exact paths, no wildcard: artifacts never come through here.
+  { pattern = "storage.functionstore.tools/fnstools/manifest.json", zone_name = "functionstore.tools" },
+  { pattern = "storage.functionstore.tools/fnstools/recommendations.json", zone_name = "functionstore.tools" }
 ]
 
 # The private prefix. The bucket is the SAME one the free rail uses --
@@ -66,25 +72,98 @@ CREATOR_TIER = "9796651"
 TIERS = """
 {
   "8323905": [
-    "FNS_TimelineTools",
     "TDXLU_Pro",
-    "FNS_Collect",
-    "FNS_Remote",
-    "FNS_MediaBrowser"
+    "FNS_SwitchTools",
+    "SeqMod",
+    "OpenOp",
+    "LinkOPs",
+    "RealRamp",
+    "LayerSep3D",
+    "InstanceTrailer",
+    "TopToMidi",
+    "KinectSinglePlayer",
+    "ColorGen",
+    "FeedbackDisplace",
+    "PrismTOP",
+    "CircularDistortionTOP",
+    "Particles2D_POP",
+    "EaseInterpolator",
+    "MoveDetectDir",
+    "SlideShow",
+    "FloatDataRecorder",
+    "ChopProcess",
+    "ConstantCHOP",
+    "ChopBank"
   ],
   "8291595": [
-    "FNS_TimelineTools",
     "TDXLU_Pro",
-    "FNS_Collect",
-    "FNS_Remote",
-    "FNS_MediaBrowser"
+    "FNS_SwitchTools",
+    "SeqMod",
+    "OpenOp",
+    "LinkOPs",
+    "RealRamp",
+    "LayerSep3D",
+    "InstanceTrailer",
+    "TopToMidi",
+    "KinectSinglePlayer",
+    "MaskDraw",
+    "ColorGen",
+    "ColorGenPro",
+    "FeedbackDisplace",
+    "PrismTOP",
+    "CircularDistortionTOP",
+    "Particles2D_POP",
+    "ParticlesGpuUltimate",
+    "EaseInterpolator",
+    "MoveDetectDir",
+    "SlideShow",
+    "FloatDataRecorder",
+    "ChopProcess",
+    "ConstantCHOP",
+    "ChopBank"
   ],
   "9796651": [
-    "FNS_TimelineTools",
     "TDXLU_Pro",
-    "FNS_Collect",
+    "FNS_SwitchTools",
+    "SeqMod",
+    "OpenOp",
+    "LinkOPs",
+    "RealRamp",
+    "LayerSep3D",
+    "InstanceTrailer",
+    "TopToMidi",
+    "KinectSinglePlayer",
+    "MaskDraw",
+    "ColorGen",
+    "ColorGenPro",
+    "FeedbackDisplace",
+    "PrismTOP",
+    "CircularDistortionTOP",
+    "Particles2D_POP",
+    "ParticlesGpuUltimate",
+    "EaseInterpolator",
+    "MoveDetectDir",
+    "SlideShow",
+    "FloatDataRecorder",
+    "ChopProcess",
+    "ConstantCHOP",
+    "ChopBank"
+  ],
+  "preview": [
     "FNS_Remote",
-    "FNS_MediaBrowser"
+    "FNS_PreviewPanel",
+    "FNS_TimelineTools",
+    "FNS_BackupCleaner",
+    "FNS_Collect",
+    "FNS_MediaBrowser",
+    "FNS_BeatMod",
+    "FNS_CamSequencer",
+    "FNS_MixSequencer",
+    "FNS_OpSequencer",
+    "FNS_RandomCHOP",
+    "InfinityCHOP",
+    "FNS_SimpleSceneChanger",
+    "FNS_ProSceneChanger"
   ]
 }
 """

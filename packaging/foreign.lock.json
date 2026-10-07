@@ -1,0 +1,21 @@
+{
+ "schema": 1,
+ "packages": {
+  "TDXMap": {
+   "version": "1.2.0",
+   "sha256": "339116402eff423173e944862f7f623c3cede0c1593b6a5ac2328d87a65ac4ba",
+   "url": "https://pub-6d70b11fbdda47e1bbbb33f079ca8a7d.r2.dev/TDXMap.tox",
+   "notes_url": "https://tdxmap.functionstore.xyz/changelog",
+   "notes": "",
+   "fetched_at": 1788304336
+  },
+  "ParHoverMIDI_VSN1": {
+   "version": "1.9.0",
+   "sha256": "eaab30dc48f656e2408be67c01626426f61ce2feb0b9256f1a64d163c1f064d0",
+   "url": "https://github.com/function-store/TD_ParHoverMIDI_VSN1/releases/download/1.9.0/ParHoverMIDI_VSN1.tox",
+   "notes_url": "https://github.com/function-store/TD_ParHoverMIDI_VSN1/releases/tag/1.9.0",
+   "notes": "**.tox:**\r\n- performance improvement\r\n- improved zoom mechansim\r\n- fixed device state after init\r\n- future: TDMap support via python interface\r\n\r\n**VSN1 package/profile:**\r\n- avoid error messages from other devices\r\n- fixed jogwheel led feedback\r\n\r\n**other:**\r\n- fixed/enhanced grid software detection/launch\r\n- updated docs",
+   "fetched_at": 1790131568
+  }
+ }
+}

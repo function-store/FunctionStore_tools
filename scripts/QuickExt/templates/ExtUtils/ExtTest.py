@@ -1,4 +1,4 @@
-CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+﻿CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
 fns_command = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand').fns_command # import
 fns_announce = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand').announce # import

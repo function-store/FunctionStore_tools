@@ -1,6 +1,13 @@
 ﻿
+'''Info Header Start
+Name : RegistryBase
+Author : Dan@DAN-4090
+Saveorigin : FNSTools_PRIV.toe
+Saveversion : 2025.33070
+Info Header End'''
 
-CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or me.parent().op('ExtUtils')).mod('CustomParHelper').CustomParHelper # import
+
+CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('CustomParHelper').CustomParHelper # import
 ###
 
 from TDStoreTools import StorageManager
@@ -378,6 +385,25 @@ class _RegistryHostMixin:
 		return self
 
 	UNREGISTER_PAR = 'Unregister'
+
+	def _ensureCanonicalFollowsOwner(self):
+		"""A host whose constant Canonicalname merely repeats its owner's name
+		gets the parent().name expression instead (same value, no
+		registration change). Hand-authored names that differ are left
+		alone, as are masters, the /sys global and anything under /ui."""
+		if self._is_sys_global() or self._isUnderSysOrUi():
+			return
+		par = self.ownerComp.par['Canonicalname']
+		owner = self.ownerComp.parent()
+		if par is None or owner is None or owner is getattr(op, 'FNS', None):
+			return
+		try:
+			if par.mode != ParMode.CONSTANT or str(par.val).strip() != owner.name:
+				return
+			par.expr = self.CANONICAL_FOLLOWS_OWNER_EXPR
+			par.mode = ParMode.EXPRESSION
+		except Exception as e:
+			debug(f'{self.REGISTRY_NAME}: canonical follows owner: {e}')
 
 	def _ensureUnregisterPar(self):
 		"""Give every host an Unregister button, next to Register.
@@ -842,7 +868,7 @@ class _RegistryGlobalMixin:
 			return
 		ext_dat = registry_comp.op(self.EXT_NAME)
 		docked_n = len(ext_dat.docked) if ext_dat else -1
-		eu = registry_comp.op('ExtUtils')
+		eu = next((c for c in registry_comp.children if 'ExtUtils' in c.tags), None)
 		debug(
 			f'{self.REGISTRY_NAME}: retry global ext init attempts={attempts_left} '
 			f'docked={docked_n} eu={eu.path if eu else None}'
@@ -911,6 +937,7 @@ class _RegistryGlobalMixin:
 		self._promote_to_global(new_registry)
 
 		self._release_shipped_shortcut()
+		self._dropParallelTable()
 		if self._isLegacySysCopy():
 			# we WERE the pre-container global; the home copy carries our
 			# data now, so the old parking spot is litter -- clear it a few
@@ -924,21 +951,45 @@ class _RegistryGlobalMixin:
 	def _replace_global_registry(self, old_registry, force=False):
 		if not force and self._check_version_against(old_registry):
 			return
-		self._merge_pane_registry_from(old_registry)
+		# The incumbent is the LIVE table; whatever this master still holds
+		# is history. Same-name entries must come from the incumbent, or a
+		# stale order/side/visibility rides into the new global and the
+		# republish sweep skips the host because its entry "exists"
+		# (Hub and Palette masters carried such tables, 2026-09-10).
+		self._merge_pane_registry_from(old_registry, prefer_other=True)
 		if self._is_global_registry(old_registry):
 			old_registry.destroy()
 		self._become_global_registry()
 
-	def _merge_pane_registry_from(self, other_registry):
+	def _merge_pane_registry_from(self, other_registry, prefer_other=False):
+		"""Fold another copy's entries into ours. Names we lack are always
+		taken; with prefer_other the other copy also wins same-name entries
+		(the takeover case, where the other copy is the live global)."""
 		other_data = self._get_pane_registry_data(other_registry)
 		for name, info in other_data.items():
-			if name not in self.stored['PaneRegistry']:
+			if prefer_other or name not in self.stored['PaneRegistry']:
 				try:
 					info = dict(info)
 					info['action'] = self._normalize_action(info.get('action'))
 				except (TypeError, AttributeError):
 					pass
 				self.stored['PaneRegistry'][name] = info
+
+	def _dropParallelTable(self):
+		"""A master or host that is NOT the global keeps no entry table.
+
+		Registrations delegate to the global, so a table here is either
+		history from before the global existed or a copy's inheritance --
+		and on the next takeover it would shadow the live entries. Cleared
+		only while a separate global is live: with no /sys, this COMP IS the
+		API and its table is the real one."""
+		if self._is_sys_global():
+			return
+		glob = self._global_registry()
+		if glob is None or glob == self.ownerComp:
+			return
+		if self.stored['PaneRegistry']:
+			self.stored['PaneRegistry'].clear()
 
 	def _get_pane_registry_data(self, registry_comp):
 		if hasattr(registry_comp, 'ext') and hasattr(registry_comp.ext, self.EXT_NAME):
@@ -1402,7 +1453,16 @@ class _RegistryStampMixin:
 			comp_par = getattr(host.par, 'Panel', None)
 		if comp_par is not None:
 			comp_par.val = '..'
-		host.par.Canonicalname = canonical_name or target_comp.name
+		# The default canonical FOLLOWS the owner by expression. A constant
+		# copied at stamp time rode along with every copy of the tool, so a
+		# pasted copy registered under the original's name and took over its
+		# entry; parent().name gives the copy its own (TD suffixes the paste).
+		# An explicit name that differs from the owner's stays a constant.
+		if canonical_name and canonical_name != target_comp.name:
+			host.par.Canonicalname = canonical_name
+		else:
+			host.par.Canonicalname.expr = self.CANONICAL_FOLLOWS_OWNER_EXPR
+			host.par.Canonicalname.mode = ParMode.EXPRESSION
 		if not promote_pars and hasattr(host.par, 'Promotepars'):
 			host.par.Promotepars = False
 		for pname, value in (par_values or {}).items():
@@ -1870,6 +1930,8 @@ class RegistryBase(_RegistryToolPageMixin,
 	SHORTCUT = None
 	REGISTRY_NAME = 'Registry'
 	HOST_PAGE_NAME = 'Registration'
+	# Canonicalname's default: the host's parent is the tool it registers.
+	CANONICAL_FOLLOWS_OWNER_EXPR = 'parent().name'
 
 	def fnsLog(self, *args, level='INFO'):
 		"""Log via the central FNSTools logger (op.FNS 'logger'); silent no-op
@@ -1973,6 +2035,8 @@ class RegistryBase(_RegistryToolPageMixin,
 		self._sanitizeStoredRegistry()
 		self._installGlobalRegistry()
 		self._release_shipped_shortcut()
+		self._dropParallelTable()
+		self._ensureCanonicalFollowsOwner()
 		self._applyHostRegistration()
 		self._ensureSelectionExecuteRole()
 		self._ensurePresaveHealPar()

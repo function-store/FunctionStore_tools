@@ -85,6 +85,16 @@ DISCOVERY_PINS = (
 	'https://raw.githubusercontent.com/function-store/fnstools-links/main/fnstools.json',
 )
 DISCOVERY_NAME = 'fnstools.json'
+# The endpoint that ships IN THE BINARY, derived from the first pin so the
+# two can never drift. This is rung 3 of BaseUrl, and it has to be a
+# constant rather than a parameter value: the shipped Baseurl par is empty,
+# so a machine with no cached discovery had nowhere to look at all --
+# _startJob refuses with 'no Baseurl set' BEFORE it creates a job, and the
+# picker then waits on a refresh that never began. Measured 2026-09-18 on a
+# clean macOS install: _job None, no store folder, the page sitting on
+# 'First run: fetching the package catalog' for good. A dev machine cannot
+# reproduce it -- its store already holds a discovery document.
+PINNED_BASE = DISCOVERY_PINS[0].split('/.well-known/')[0]
 # Last copy that PARSED. The fetch target is overwritten in place, so a
 # truncated or error-page response would otherwise destroy the only
 # fallback at exactly the moment it is needed.
@@ -130,6 +140,106 @@ PART_SUFFIX = '.part'
 # re-hashed or updated. Linking is the default; a row carrying a pinned
 # sha256 may also be placed.
 COMMUNITY_NAME = 'recommendations.json'
+
+# Packages TouchDesigner ships without a dist-info folder, or under another
+# import name; a dist-info scan of its site-packages misses them. A second
+# copy of any bundled package in a project's venv is a known crash class,
+# so a tdp lock naming one is refused. Kept identical to
+# packaging/tdp_pin.py (tests/test_community_tdp.py).
+TD_BUNDLED_SEED = ('numpy', 'opencv-python', 'opencv-contrib-python',
+                   'opencv-python-headless', 'opencv-contrib-python-headless',
+                   'pyparsing', 'pyyaml', 'requests', 'attrs', 'pip')
+TDP_INSTALL_TIMEOUT = 600      # seconds before a hung install is given up
+
+
+# --- tdp helpers (pure; tests/test_community_tdp.py runs them outside TD)
+def _canonPkg(name):
+	import re
+	return re.sub(r'[-_.]+', '-', str(name)).lower()
+
+
+def _tdpRequirements(tdp):
+	"""What to install: the package and whatever it imports without
+	declaring (`also`), by name only. No versions: the latest resolves at
+	install time (owner, 2026-09-27), and the dry run shows what that is."""
+	reqs = [str(tdp.get('package', '')).strip()]
+	for a in tdp.get('also') or ():
+		a = str(a).strip()
+		if a and a not in reqs:
+			reqs.append(a)
+	return [r for r in reqs if r]
+
+
+def _dryRunNames(text):
+	"""Package names a dry run would install: uv prints ` + name==version`,
+	one per line."""
+	import re
+	out = []
+	for line in str(text or '').splitlines():
+		m = re.match(r'^\s*\+\s+([A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?)==', line)
+		if m:
+			out.append(_canonPkg(m.group(1)))
+	return out
+
+
+def _reportNames(report):
+	"""The same from pip's `--dry-run --report` JSON."""
+	out = []
+	for item in (report or {}).get('install') or ():
+		name = ((item or {}).get('metadata') or {}).get('name')
+		if name:
+			out.append(_canonPkg(name))
+	return out
+
+
+def _bundledNames(site_dir):
+	"""Every distribution TouchDesigner ships, read from its site-packages."""
+	import re
+	names = {_canonPkg(n) for n in TD_BUNDLED_SEED}
+	try:
+		for entry in os.listdir(site_dir):
+			m = re.match(r'^(.+?)-\d[^-]*\.dist-info$', entry)
+			if m:
+				names.add(_canonPkg(m.group(1)))
+	except OSError:
+		pass
+	return names
+
+
+def _tdpInstallCommand(reqs, venv_python, uv=None, dry_run=False, report=None):
+	"""Install the requirements, wheels only, uv when there is one, else the
+	venv's own pip. With `dry_run` nothing is installed: it says what would
+	be (uv on its output, pip into the `report` JSON file)."""
+	if uv:
+		cmd = [uv, 'pip', 'install', '--python', venv_python, '--only-binary', ':all:']
+		if dry_run:
+			cmd.append('--dry-run')
+		return cmd + list(reqs)
+	cmd = [venv_python, '-m', 'pip', 'install', '--disable-pip-version-check',
+		   '--no-input', '--only-binary=:all:']
+	if dry_run:
+		cmd += ['--dry-run', '--quiet', '--report', report]
+	return cmd + list(reqs)
+
+
+def _tdpChildEnv(environ):
+	"""The installer's environment without what tdPyEnvManager and TD set
+	for their own process: a child resolving against TD's Python by mistake
+	is how an install lands in the wrong place."""
+	env = {k: v for k, v in environ.items()
+		   if k not in ('VIRTUAL_ENV', 'PYTHONPATH', 'PYTHONHOME', 'PYTHONUSERBASE')}
+	env['PYTHONUTF8'] = '1'
+	return env
+
+
+def _tdpToxExpression(module, tox_key=None):
+	"""What `externaltox` reads: the package's own path to its tox, so the
+	binding follows the installed version on any machine (the launcher binds
+	the same way)."""
+	if tox_key:
+		return "mod.%s._ToxFiles['%s']" % (module, tox_key)
+	return 'mod.%s.ToxFile' % module
+# --- end tdp helpers
 # package -> the bytes it was installed from. Written by the installer and
 # by every update; read to decide what is stale. packaging/InstallerExt.py
 # writes the same four columns -- keep the two in step.
@@ -184,6 +294,29 @@ def _version(comp):
             return str(p.eval()).strip()
     p = getattr(comp.par, 'Pkgversion', None)
     return str(p.eval()).strip() if p is not None else ''
+
+
+def _variantOf(comp):
+    """Which build of a package this component IS: FNS_About's `Pkgvariant`
+    first (the master says what it is, docs/TierVariants.md), else the
+    comp's own, else 'base' -- every package without variants is base."""
+    if comp is None:
+        return 'base'
+    for host in (comp.op('FNS_About'), comp):
+        if host is None:
+            continue
+        p = getattr(host.par, 'Pkgvariant', None)
+        if p is not None and str(p.eval()).strip():
+            return str(p.eval()).strip().lower()
+    return 'base'
+
+
+def _artifactFor(pkg, vid='base'):
+    """The artifact of one build of a manifest row: the Base build is the
+    row's own `artifact`, a variant's sits under `variants.<vid>`."""
+    if vid and vid != 'base':
+        return (((pkg or {}).get('variants') or {}).get(vid) or {}).get('artifact')
+    return (pkg or {}).get('artifact')
 
 
 def _isNewer(available, installed):
@@ -242,6 +375,97 @@ def _sha256(path):
 		for chunk in iter(lambda: f.read(1 << 20), b''):
 			h.update(chunk)
 	return h.hexdigest()
+
+
+# --- the toolkit's folder in the user palette ------------------------------
+# <user palette>/FNSTools (docs/PaletteFolderContract.md). Until 2026-09-18
+# this was FNStools_ext; a legacy folder is renamed into place the first
+# time any reader looks, so store, config, tables and templates all move
+# at once and nothing is re-downloaded or re-saved. Every FNS extension
+# that reads the folder carries this same function: they ship as separate
+# toxes and cannot share a module, and whichever reader gets there first
+# must be able to migrate on its own. The launcher (TDXLU) derives the
+# same folder independently and runs the same migration.
+PALETTE_DIR = 'FNSTools'
+LEGACY_PALETTE_DIR = 'FNStools_ext'
+
+
+def _fnsPaletteRoot():
+	"""'<user palette>/FNSTools', migrating a legacy FNStools_ext folder into
+	place on first sight; '' when this install has no user palette folder."""
+	try:
+		base = str(app.userPaletteFolder).replace('\\', '/').rstrip('/')
+	except Exception:
+		return ''
+	if not base:
+		return ''
+	new = '%s/%s' % (base, PALETTE_DIR)
+	legacy = None
+	try:
+		for fn in os.listdir(base):
+			if fn.lower() == LEGACY_PALETTE_DIR.lower() and os.path.isdir('%s/%s' % (base, fn)):
+				legacy = '%s/%s' % (base, fn)
+				break
+	except Exception:
+		pass
+	if legacy is None:
+		return new
+	if not os.path.isdir(new):
+		try:
+			os.rename(legacy, new)
+			return new
+		except OSError as e:
+			# a file held open, most likely; this session keeps using the
+			# old folder and the next start tries again
+			debug('FNS: could not rename %s to %s (%s)' % (legacy, new, e))
+			return legacy
+	# both exist (a race, or an older launcher recreated the legacy
+	# folder): whatever the legacy folder holds that the new one lacks
+	# moves over, and the legacy folder goes once it is empty
+	# entry by entry, each on its own: a folder something still watches
+	# (TDFam's Folder DAT on the old family tree) refuses to move, and that
+	# must not keep the store or the config from moving. A folder both
+	# sides hold is merged the same way one level down, because a reader
+	# that seeds its file when it is missing (OpTemplates) can have made
+	# the new folder before this ran. A FILE both sides hold stays as the
+	# new side has it, and the legacy copy is kept aside under
+	# FNSTools/legacy_<old name>/ at its old relative path, never deleted:
+	# the new side's file is usually the later state, but it can be a seed
+	# (OpTemplates writes its default library when its file is missing)
+	# while the legacy one is the user's work. OpTemplates looks there
+	# before seeding again. Deleting it lost a user's library (2026-09-18).
+	left = []
+
+	def merge(src_dir, dst_dir):
+		for fn in os.listdir(src_dir):
+			src, dst = '%s/%s' % (src_dir, fn), '%s/%s' % (dst_dir, fn)
+			try:
+				if not os.path.exists(dst):
+					os.rename(src, dst)
+				elif os.path.isdir(src) and os.path.isdir(dst):
+					merge(src, dst)
+					if not os.listdir(src):
+						os.rmdir(src)
+				elif os.path.isfile(src) and os.path.isfile(dst):
+					rel = os.path.relpath(src, legacy).replace('\\', '/')
+					keep = '%s/legacy_%s/%s' % (new, LEGACY_PALETTE_DIR, rel)
+					if os.path.exists(keep):
+						os.remove(src)
+					else:
+						os.makedirs(os.path.dirname(keep), exist_ok=True)
+						os.rename(src, keep)
+			except OSError as e:
+				left.append('%s (%s)' % (fn, e))
+
+	try:
+		merge(legacy, new)
+		if not os.listdir(legacy):
+			os.rmdir(legacy)
+	except Exception as e:
+		left.append(str(e))
+	if left:
+		debug('FNS: legacy palette folder %s not fully merged: %s' % (legacy, '; '.join(left)))
+	return new
 
 
 # --- Ed25519 verify (RFC 8032), embedded -----------------------------------
@@ -375,6 +599,15 @@ class ExtUpdater:
 		self._place = None          # community placement, separate from a pass
 		fnsLog('UPDATER: init')
 
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
 	# ------------------------------------------------------------------
 	# where things live
 	# ------------------------------------------------------------------
@@ -397,7 +630,7 @@ class ExtUpdater:
 		is exactly what "what the store holds" means."""
 		v = self._par('Storefolder')
 		if not v:
-			v = '%s/FNStools_ext/store' % app.userPaletteFolder
+			v = '%s/store' % _fnsPaletteRoot()
 		return v.replace('\\', '/').rstrip('/')
 
 	def _parBool(self, name, default=True):
@@ -448,10 +681,10 @@ class ExtUpdater:
 		   lookup.
 		2. Discovery, when `Usediscovery` is on. This is what lets the
 		   bucket move without a component update.
-		3. The `Baseurl` par. Also the fallback when discovery has never
-		   been read on this machine -- a fresh install with no network
-		   history still knows where to look, because the par ships with
-		   the current endpoint.
+		3. The `Baseurl` par, then PINNED_BASE. A fresh install with no
+		   network history still knows where to look -- through the
+		   constant, NOT the par, which ships empty. The par stays ahead of
+		   it so a mirror or a moved bucket set there still wins.
 
 		`Usediscovery` is a NEW par rather than "empty Baseurl means
 		discovery": custom par values are PRESERVED across an in-place
@@ -467,7 +700,7 @@ class ExtUpdater:
 			found = self.DiscoveredBase()
 			if found:
 				return found
-		return par
+		return par or PINNED_BASE
 
 	def _belowFloor(self):
 		"""(refused, floor) -- is THIS updater below the discovery
@@ -534,8 +767,75 @@ class ExtUpdater:
 			return url[len(base) + 1:]
 		return '%s/%s.tox' % (manifest.get('release', ''), pkg['name'])
 
-	def _storePath(self, name):
-		return '%s/%s.tox' % (self.StoreFolder(), name)
+	def _storePath(self, name, vid='base'):
+		# a variant build has its own file beside the Base one: FNS_Foo.pro.tox
+		stem = name if not vid or vid == 'base' else '%s.%s' % (name, vid)
+		return '%s/%s.tox' % (self.StoreFolder(), stem)
+
+	def _familyStoreStale(self, pkg):
+		"""Is this family member's store copy missing, or not the manifest's
+		bytes? Size first, so a current store costs one stat per member."""
+		art = _artifactFor(pkg) or {}
+		want = art.get('sha256', '')
+		if not pkg or not want:
+			return False
+		path = self._storePath(str(pkg.get('name', '')))
+		if not os.path.exists(path):
+			return True
+		try:
+			if art.get('bytes') and os.path.getsize(path) != int(art['bytes']):
+				return True
+			return _sha256(path) != want
+		except Exception:
+			return True
+
+	def _variantRank(self, man, access):
+		"""Where a tier sits in the manifest's ladder (higher is more)."""
+		ladder = [str(t.get('id')) for t in ((man.get('toolkit') or {}).get('tiers') or [])]
+		acc = str(access or '')
+		return ladder.index(acc) if acc in ladder else -1
+
+	def BestVariant(self, name, manifest=None):
+		"""The highest build of `name` this account holds: 'base', or a
+		variant id whose product (FNS_Foo.pro) the account is entitled to,
+		ranked by its tier's place in the ladder. Asked by the installer at
+		plan time and by the fetch list, so both land the same build."""
+		man = manifest or self.StoreManifest() or {}
+		pkg = next((p for p in man.get('packages', []) if p.get('name') == name), None)
+		vs = (pkg or {}).get('variants') or {}
+		best, best_rank = 'base', -1
+		for vid, v in vs.items():
+			if not (v or {}).get('artifact'):
+				continue
+			rank = self._variantRank(man, (v or {}).get('access'))
+			if rank > best_rank and self._entitled('%s.%s' % (name, vid)):
+				best, best_rank = str(vid), rank
+		return best
+
+	def _allRows(self, man, scoped=False, plan_variants=None):
+		"""Every fetchable build as its own row: each package's Base row,
+		then one synthetic row per variant (name FNS_Foo.pro, its artifact,
+		its access, `_base` the package). A SCOPED fetch (an install, an
+		update) wants only the build that will land -- the planned variant,
+		else the best entitled one; a full mirror takes every row and lets
+		entitlement sort them downstream."""
+		out = []
+		for pkg in man.get('packages', []):
+			vs = pkg.get('variants') or {}
+			rows = [dict(pkg, _base=pkg['name'], _variant='base')]
+			for vid, v in sorted(vs.items()):
+				vart = (v or {}).get('artifact')
+				if not vart:
+					continue
+				rows.append({'name': '%s.%s' % (pkg['name'], vid), 'artifact': vart,
+					'access': str((v or {}).get('access', '') or '') or pkg.get('access', 'free'),
+					'version': (v or {}).get('version') or pkg.get('version', ''),
+					'_base': pkg['name'], '_variant': str(vid)})
+			if scoped and vs:
+				want = (plan_variants or {}).get(pkg['name']) or self.BestVariant(pkg['name'], man)
+				rows = [r for r in rows if r['_variant'] == want]
+			out.extend(rows)
+		return out
 
 	# ------------------------------------------------------------------
 	# the two records
@@ -663,6 +963,12 @@ class ExtUpdater:
 		               doorstep -- in the root, or beside it at the network
 		               root -- is NOT this: it compares and updates like
 		               any root child.
+		  self-managed a foreign package that keeps ITSELF current
+		               (manifest `updates: 'self'`, docs/ForeignPackages.md):
+		               the store installed it once; its own updater owns it
+		               from then on. Reported, never offered an update, never
+		               touched by UpdateProject -- two updaters rewriting the
+		               same externaltox would fight.
 		"""
 		man = self.StoreManifest()
 		if not man:
@@ -697,11 +1003,47 @@ class ExtUpdater:
 			seen.add(child.name)
 			have = _version(child)
 			avail = str(pkg.get('version', '')).strip()
+			if str(pkg.get('updates', '') or '') == 'self':
+				# Its own updater owns it after install. No Pkgversion
+				# is required inside the artifact, so `installed` may be
+				# blank; the store's version is shown for orientation only.
+				rows.append({'package': child.name, 'state': 'self-managed',
+							 'installed': have, 'available': avail,
+							 'note': 'keeps itself current -- check for '
+									 'updates from inside the tool'})
+				continue
 			if not have:
 				rows.append({'package': child.name, 'state': 'unversioned', 'installed': '',
 							 'available': avail,
 							 'note': 'component declares no version -- reinstall to adopt'})
 				continue
+			# Tier variants (docs/TierVariants.md): which build is installed,
+			# and which one the account holds today.
+			vs = pkg.get('variants') or {}
+			have_vid = _variantOf(child)
+			target_vid = have_vid if have_vid in vs else 'base'
+			if vs:
+				if target_vid != 'base' and not self._entitled('%s.%s' % (child.name, target_vid)):
+					# Hold on Pro (owner, 2026-09-17): the installed build stays and
+					# the updater says nothing until the account holds it again.
+					rows.append({'package': child.name, 'state': 'held',
+							 'installed': have, 'available': avail, 'variant': target_vid,
+							 'note': 'installed %s build; your account no longer includes it '
+							'-- kept as it is' % target_vid})
+					continue
+				best = self.BestVariant(child.name, man)
+				if (self._variantRank(man, (vs.get(best) or {}).get('access'))
+						> self._variantRank(man, (vs.get(target_vid) or {}).get('access'))):
+					# the account grew: a swap upward at whatever version ships
+					refuse = self._refuseReason(child)
+					rows.append({'package': child.name, 'state': 'locked' if refuse else 'upgrade',
+							 'installed': have, 'available': str((vs.get(best) or {}).get('version') or avail),
+							 'variant': best,
+							 'note': refuse or 'your account now holds the %s build' % best})
+					if not refuse:
+						updates.append(child.name)
+					continue
+				avail = str((vs.get(target_vid) or {}).get('version') or avail)
 			if _isNewer(avail, have):
 				floor = pkg.get('min_td_build', '')
 				if _tdBuildTooOld(floor, app.build):
@@ -715,29 +1057,51 @@ class ExtUpdater:
 					continue
 				refuse = self._refuseReason(child)
 				rows.append({'package': child.name, 'state': 'locked' if refuse else 'update',
-							 'installed': have, 'available': avail,
+							 'installed': have, 'available': avail, 'variant': target_vid,
 							 'note': refuse or man.get('release', '')})
 				if not refuse:
 					updates.append(child.name)
 			else:
 				rows.append({'package': child.name, 'state': 'current',
-							 'installed': have, 'available': avail, 'note': ''})
+							 'installed': have, 'available': avail, 'variant': target_vid, 'note': ''})
 
 		# Recorded as installed but no longer here -- the one thing the
 		# audit trail still tells us that the live network cannot.
 		for name, rec in sorted(self.Installed(target).items()):
 			if name in seen or root.op(name) is not None:
 				continue
-			if (index.get(name) or {}).get('placement') in ('pane', 'root'):
-				# a pane-placed component lives wherever the user spawned
-				# it -- installed WITHOUT being a root child. Instances are
-				# frozen at their spawn version by design (palette
-				# semantics); never counted missing, never auto-updated.
+			placement = (index.get(name) or {}).get('placement')
+			if placement == 'none' and self._familyStoreStale(index.get(name)):
+				# A family member's only home is the store file, which the
+				# family folder mirrors: a missing or older copy is an update
+				# like any other, applied by fetching and recording it
+				# (docs/NewToolsAndFamilyFreshness.md, B). Before 2026-09-25
+				# it read as 'component' forever and never moved.
+				rows.append({'package': name, 'state': 'update',
+							 'installed': rec.get('release', ''),
+							 'available': str((index.get(name) or {}).get('version', '')),
+							 'variant': 'base',
+							 'note': 'FNS family operator: the store copy is '
+									 'missing or older than this release'})
+				updates.append(name)
+				continue
+			if placement in ('pane', 'root', 'none'):
+				# Installed WITHOUT being a root child, two ways. A pane or
+				# root spawn lives wherever the user put it; a 'none' package
+				# is placed nowhere at all and is reached from the FNS tab and
+				# the family folder on disk. Neither is missing, and neither is
+				# auto-updated -- an instance is frozen at its spawn version by
+				# design (palette semantics), and there is no instance to
+				# update for 'none'. Leaving 'none' out of this tuple reported
+				# every family member as missing (2026-09-19).
 				rows.append({'package': name, 'state': 'component',
 							 'installed': rec.get('release', ''),
 							 'available': str((index.get(name) or {}).get('version', '')),
-							 'note': 'spawned into your networks; reinstall '
-									 'from the picker for the newest'})
+							 'note': ('on disk and in the FNS tab; nothing is '
+									  'placed in a project')
+							 if placement == 'none' else
+							 ('spawned into your networks; reinstall '
+							  'from the picker for the newest')})
 				continue
 			rows.append({'package': name, 'state': 'missing', 'installed': rec.get('release', ''),
 						 'available': str((index.get(name) or {}).get('version', '')),
@@ -1363,12 +1727,17 @@ class ExtUpdater:
 			if job.get('names'):
 				names = [n for n in names if n in job['names']]
 			job['plan_names'] = names
+			# which BUILD each update lands (docs/TierVariants.md): the one
+			# Compare chose -- the installed variant, or the upgrade
+			job['plan_variants'] = {r['package']: r.get('variant', 'base')
+					for r in cmp_['rows'] if r.get('package')}
 		else:
 			# a scoped refresh fetches just these; [] is manifest-only
 			names = job.get('names')
 		out = []
-		for pkg in man.get('packages', []):
-			if names is not None and pkg['name'] not in names:
+		for pkg in self._allRows(man, scoped=names is not None,
+					plan_variants=job.get('plan_variants')):
+			if names is not None and pkg['_base'] not in names:
 				continue
 			art = pkg.get('artifact')
 			if not art or not art.get('url'):
@@ -1460,17 +1829,20 @@ class ExtUpdater:
 		enter the store proper or the manifest.
 		"""
 		if self._job is not None and self._job.get('stage') not in ('done', 'failed'):
-			return {'ok': False, 'why': 'an update job is running -- try again after it finishes'}
+			return self._placeFailed(name, 'an update job is running -- try again after it finishes')
+		if getattr(self, '_place', None):
+			return self._placeFailed(name, 'another community download is under way -- try again in a moment')
 		row = self._communityRow(name)
 		if row is None:
-			return {'ok': False, 'why': 'unknown community tool %r -- refresh the list first' % name}
+			return self._placeFailed(name, 'unknown community tool %r -- refresh the list first' % name)
 		if not self._isPlaceable(row):
-			return {'ok': False, 'why': '%s is a link only; open %s to get it'
-					% (name, row.get('url', 'the author\'s page'))}
+			return self._placeFailed(name, '%s is a link only; open %s to get it'
+									 % (name, row.get('url', 'the author\'s page')))
 		dest = self._root(target)
 		if dest is None or not dest.valid:
-			return {'ok': False, 'why': 'no target COMP'}
+			return self._placeFailed(name, 'no target COMP')
 		os.makedirs(self._communityPath(), exist_ok=True)
+		self._communityResult = {'name': name, 'state': 'fetching', 'target': dest.path}
 		self._place = {'stage': 'tox', 'name': name, 'row': row,
 					   'target': dest.path, 'file': name + '.tox'}
 		self._status('fetching %s from %s...' % (name, row.get('author', 'its author')))
@@ -1505,9 +1877,12 @@ class ExtUpdater:
 		# page into a specific answer instead of an opaque hash mismatch.
 		want_size = row.get('bytes')
 		if isinstance(want_size, int) and size != want_size:
+			self._discard(path)
 			return self._placeFailed(name, 'wrong size (%d bytes, expected %d) -- '
 									 'the author may have republished it' % (size, want_size))
 		if _sha256(path) != str(row['sha256']).strip().lower():
+			# bytes nobody checked do not stay on disk either
+			self._discard(path)
 			return self._placeFailed(
 				name, 'this is not the build we checked -- %s has republished it. '
 				'Get it from %s instead.' % (row.get('author', 'the author'),
@@ -1528,12 +1903,283 @@ class ExtUpdater:
 		fnsLog('UPDATER: placed community tool %s by %s at %s'
 			   % (name, row.get('author', '?'), fresh[0].path))
 		self._status('placed %s by %s' % (name, row.get('author', '?')))
+		self._communityResult = {'name': name, 'state': 'placed', 'placed': fresh[0].path}
 		return {'ok': True, 'placed': fresh[0].path}
+
+	def _discard(self, path):
+		try:
+			os.remove(path)
+		except OSError:
+			pass
 
 	def _placeFailed(self, name, why):
 		fnsLog('UPDATER: could not place %s -- %s' % (name, why), level='WARNING')
 		self._status('%s: %s' % (name, why))
+		self._communityResult = {'name': name, 'state': 'failed', 'why': why}
 		return {'ok': False, 'why': why}
+
+	# --- tdp: a community tool shipped as a Python package -----------------
+
+	def _pyEnv(self):
+		"""(env folder, its python) when the project has a linked Python
+		environment (TD's TDPyEnvManager, or Embody's), else (None, None)."""
+		try:
+			h = app.pyEnvHelper
+			env = str(h.envPath or '')
+			exe = str(h.executablePath or '')
+		except Exception:
+			return None, None
+		if env and exe and os.path.isfile(exe):
+			return env.replace('\\', '/'), exe.replace('\\', '/')
+		return None, None
+
+	def PythonEnvStatus(self):
+		"""Whether the project can take a tdp install: `ready` with the env, or
+		where TD's environment manager stands (`none`, `creating`, `error`)."""
+		env, exe = self._pyEnv()
+		if env:
+			return {'state': 'ready', 'env': env, 'python': exe}
+		m = op('/').op('tdPyEnvManager') or op('/').op('TDPyEnvManager')
+		if m is None:
+			return {'state': 'none'}
+		try:
+			status = str(m.par.Status.eval())
+		except Exception:
+			status = ''
+		low = status.lower()
+		state = 'error' if 'error' in low else 'creating' if 'creating' in low else 'none'
+		return {'state': state, 'status': status, 'manager': m.path}
+
+	def SetUpPythonEnv(self):
+		"""Give the project a Python environment with TouchDesigner's own
+		TDPyEnvManager: drop it at `/` and switch it Active, which shows
+		Derivative's disclaimer (their consent step, never bypassed), then
+		press its Create vEnv. The same two clicks the user would make; the
+		launcher does exactly this."""
+		if self._pyEnv()[0]:
+			return {'ok': True, 'state': 'ready'}
+		root = op('/')
+		m = root.op('tdPyEnvManager') or root.op('TDPyEnvManager')
+		if m is None:
+			tox = '%s/Palette/Tools/tdPyEnvManager.tox' % app.samplesFolder
+			if not os.path.isfile(tox):
+				return {'ok': False, 'why': 'tdPyEnvManager.tox is not in this TouchDesigner (%s)' % tox}
+			wrapper = root.loadTox(tox)
+			inner = wrapper.op(wrapper.name) if wrapper is not None else None
+			if inner is not None and inner.isCOMP:
+				# a palette tox is Wrapper/Wrapper: keep the inner, as a palette drag does
+				wx, wy, want = wrapper.nodeX, wrapper.nodeY, wrapper.name
+				wrapper.name = want + '_wrap'
+				m = root.copy(inner, name=want)
+				m.nodeX, m.nodeY = wx, wy
+				wrapper.destroy()
+			else:
+				m = wrapper
+		# Active shows a modal; never inside the caller's frame
+		run('args[0]._activatePyEnvManager(args[1])', self, m.path,
+			delayFrames=2, delayRef=op.TDResources)
+		return {'ok': True, 'state': 'creating', 'manager': m.path}
+
+	def _activatePyEnvManager(self, path):
+		m = op(path)
+		if m is None:
+			return
+		try:
+			if not m.par.Active.eval():
+				m.par.Active = True      # Derivative's disclaimer asks here
+		except Exception as e:
+			fnsLog('UPDATER: could not activate TDPyEnvManager: %s' % e, level='WARNING')
+			return
+		run('args[0]._pressCreateVenv(args[1], 5)', self, path,
+			delayFrames=15, delayRef=op.TDResources)
+
+	def _pressCreateVenv(self, path, tries):
+		m = op(path)
+		if m is None:
+			return
+		try:
+			if not m.par.Active.eval():
+				fnsLog('UPDATER: no Python environment -- the TDPyEnvManager disclaimer was declined')
+				return
+			if 'creating' in str(m.par.Status.eval()).lower() or self._pyEnv()[0]:
+				return
+			m.par.Createvenv.pulse()
+		except Exception as e:
+			fnsLog('UPDATER: could not start the Python environment: %s' % e, level='WARNING')
+			return
+		if tries > 1:
+			run('args[0]._pressCreateVenv(args[1], args[2])', self, path, tries - 1,
+				delayFrames=20, delayRef=op.TDResources)
+
+	def InstallCommunityPackage(self, name, target=None):
+		"""Install a tdp highlight into the project's venv and place its tox
+		in `target`.
+
+		Like PlaceCommunityTool, NOT an FNSTools install: nothing is recorded
+		and no update pass touches it. The latest release installs, by name
+		(owner, 2026-09-27: no pinned versions to keep up to date). A dry
+		run goes first and the install is refused when it would add a
+		package TouchDesigner ships itself (a second numpy or opencv is a
+		known crash). Both steps run as subprocesses polled from the main
+		thread, so TD keeps drawing."""
+		row = self._communityRow(name)
+		tdp = (row or {}).get('tdp') if isinstance((row or {}).get('tdp'), dict) else None
+		if row is None:
+			return self._placeFailed(name, 'unknown community tool %r -- refresh the list first' % name)
+		if not tdp or not tdp.get('package') or not tdp.get('module'):
+			return self._placeFailed(name, '%s is not a Python package' % name)
+		if getattr(self, '_tdpJob', None):
+			return self._placeFailed(name, 'another package is installing -- try again when it is done')
+		env, exe = self._pyEnv()
+		if not env:
+			self._communityResult = {'name': name, 'state': 'noenv',
+									 'why': 'this project has no Python environment yet'}
+			return {'ok': False, 'why': 'no Python environment'}
+		dest = self._root(target)
+		if dest is None or not dest.valid:
+			return self._placeFailed(name, 'no target COMP')
+		os.makedirs(self._communityPath(), exist_ok=True)
+		uv = shutil.which('uv') or next((p for p in (env + '/Scripts/uv.exe', env + '/bin/uv')
+										 if os.path.isfile(p)), None)
+		job = {'name': name, 'row': row, 'reqs': _tdpRequirements(tdp), 'uv': uv, 'exe': exe,
+			   'env': env, 'target': dest.path, 'stage': 'check',
+			   'log_file': self._communityPath(name + '.install.log'),
+			   'report': self._communityPath(name + '.dryrun.json')}
+		why = self._startTdpStage(job)
+		if why:
+			return self._placeFailed(name, why)
+		self._communityResult = {'name': name, 'state': 'installing', 'target': dest.path}
+		self._status('checking %s by %s...' % (name, row.get('author', '?')))
+		return {'ok': True, 'why': 'installing %s (async)' % name}
+
+	def _startTdpStage(self, job):
+		"""Start the dry run ('check') or the install ('install'); '' or why not."""
+		import subprocess
+		cmd = _tdpInstallCommand(job['reqs'], job['exe'], job['uv'],
+								 dry_run=job['stage'] == 'check', report=job['report'])
+		try:
+			log = open(job['log_file'], 'a' if job['stage'] == 'install' else 'w', encoding='utf-8')
+			job['proc'] = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT,
+										   env=_tdpChildEnv(os.environ), cwd=job['env'],
+										   creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+		except Exception as e:
+			return 'could not start the installer (%s)' % e
+		job['log'] = log
+		job['started'] = time.time()
+		self._tdpJob = job
+		run('args[0]._pollTdpInstall()', self, delayFrames=15, delayRef=op.TDResources)
+		return ''
+
+	def _pollTdpInstall(self):
+		job = getattr(self, '_tdpJob', None)
+		if not job:
+			return
+		code = job['proc'].poll()
+		if code is None:
+			if time.time() - job['started'] > TDP_INSTALL_TIMEOUT:
+				job['proc'].kill()
+			else:
+				run('args[0]._pollTdpInstall()', self, delayFrames=15, delayRef=op.TDResources)
+				return
+		self._tdpJob = None
+		try:
+			job['log'].close()
+		except Exception:
+			pass
+		name = job['name']
+		try:
+			text = open(job['log_file'], encoding='utf-8', errors='replace').read()
+		except OSError:
+			text = ''
+		if code != 0:
+			tail = text.strip()[-400:]
+			return self._placeFailed(name, 'the %s failed%s' % (
+				'check' if job['stage'] == 'check' else 'install',
+				': ' + tail if tail else ' (timed out)' if code is None else ''))
+		if job['stage'] == 'check':
+			names = _dryRunNames(text)
+			if not job['uv']:
+				try:
+					with open(job['report'], encoding='utf-8') as f:
+						names = _reportNames(json.load(f))
+				except (OSError, ValueError):
+					names = []
+			import sys
+			clash = sorted(set(names) & _bundledNames(os.path.join(sys.base_prefix, 'Lib', 'site-packages')))
+			if clash:
+				return self._placeFailed(name, 'refused: it would install %s, which TouchDesigner '
+										 'ships itself' % ', '.join(clash))
+			job['stage'] = 'install'
+			why = self._startTdpStage(job)
+			if why:
+				return self._placeFailed(name, why)
+			self._status('installing %s by %s...' % (name, job['row'].get('author', '?')))
+			return
+		return self._placeTdp(name, job['row'], job['env'], job['target'])
+
+	def _placeTdp(self, name, row, env, target):
+		"""The lock is installed: make it importable in this session, find
+		the tox the package names, and place it bound to that path."""
+		import sys, importlib
+		tdp = row['tdp']
+		site = [env + '/Lib/site-packages'] + glob.glob(env + '/lib/python3*/site-packages')
+		for sp in site:
+			if os.path.isdir(sp) and not any(os.path.normcase(os.path.abspath(p)) ==
+											 os.path.normcase(os.path.abspath(sp)) for p in sys.path):
+				sys.path.insert(0, sp)
+		importlib.invalidate_caches()
+		module = str(tdp['module'])
+		stale = module in sys.modules
+		try:
+			pkg = importlib.import_module(module)
+			key = tdp.get('tox')
+			if key:
+				path = pkg._ToxFiles[key]
+			else:
+				path = getattr(pkg, 'ToxFile', None)
+				if path is None:
+					files = getattr(pkg, '_ToxFiles', {}) or {}
+					key = next(iter(files)) if len(files) == 1 else None
+					path = files[key] if key else None
+			if path is None:
+				raise LookupError('it names no tox (ToxFile / _ToxFiles)')
+			path = str(path)
+			if not os.path.isfile(path):
+				raise LookupError('its tox is not on disk (%s)' % path)
+		except Exception as e:
+			return self._placeFailed(name, 'installed, but %s could not be read: %s' % (module, e))
+		dest = op(target)
+		if dest is None or not dest.valid:
+			return self._placeFailed(name, 'installed, but the target went away')
+		before = {c.id for c in dest.children}
+		try:
+			dest.loadTox(path)
+		except Exception as e:
+			return self._placeFailed(name, 'installed, but TouchDesigner refused the tox (%s)' % e)
+		fresh = [c for c in dest.children if c.id not in before]
+		if not fresh:
+			return self._placeFailed(name, 'installed, but the tox loaded nothing -- it may need '
+									 'a newer TouchDesigner build')
+		comp = fresh[0]
+		try:
+			comp.par.externaltox.expr = _tdpToxExpression(module, key)
+			comp.par.enableexternaltox = True
+		except Exception as e:
+			fnsLog('UPDATER: %s placed, left unbound to its package (%s)' % (name, e), level='WARNING')
+		note = (' Restart TouchDesigner to use the new version: an older one was already imported.'
+				if stale else '')
+		fnsLog('UPDATER: installed and placed community package %s by %s at %s'
+			   % (name, row.get('author', '?'), comp.path))
+		self._status('placed %s by %s' % (name, row.get('author', '?')))
+		self._communityResult = {'name': name, 'state': 'placed', 'placed': comp.path, 'note': note.strip()}
+		return {'ok': True, 'placed': comp.path}
+
+	def communityPlaceResult(self):
+		"""The last community placement: {name, state: fetching|placed|failed,
+		placed|why}, or None. The served picker polls it after asking the
+		installer to place a tool, because the download is asynchronous and
+		its answer arrives frames later."""
+		return getattr(self, '_communityResult', None)
 
 	# ------------------------------------------------------------------
 	# gated packages
@@ -1600,7 +2246,7 @@ class ExtUpdater:
 			return {'ok': False, 'why': 'store has no manifest -- refresh first'}
 		present, missing, mismatched, gated = [], [], [], []
 		total = 0
-		for pkg in man.get('packages', []):
+		for pkg in self._allRows(man):
 			art = pkg.get('artifact')
 			if not art:
 				continue
@@ -1661,10 +2307,12 @@ class ExtUpdater:
 		man = job['manifest']
 		index = {p['name']: p for p in man.get('packages', [])}
 		steps = []
+		plan_variants = job.get('plan_variants') or {}
 		for name in names:
 			pkg = index.get(name)
-			art = (pkg or {}).get('artifact') or {}
-			steps.append({'name': name, 'path': self._storePath(name),
+			vid = plan_variants.get(name, 'base')
+			art = _artifactFor(pkg, vid) or {}
+			steps.append({'name': name, 'path': self._storePath(name, vid),
 						  'sha256': art.get('sha256', ''),
 						  'placement': (pkg or {}).get('placement', ''),
 						  'release': man.get('release', '')})
@@ -1723,10 +2371,7 @@ class ExtUpdater:
 		if not queue:
 			self._settleStaleErrors(job)
 			if job.get('results') and not job.get('failed'):
-				# next project open offers this release's notes, once
-				root = self._root(job.get('target'))
-				if root is not None:
-					root.store('updater_show_changelog', True)
+				self._announceRelease()
 			job['stage'] = 'done'
 			self._report()
 			return
@@ -1753,25 +2398,38 @@ class ExtUpdater:
 	# post-update changelog prompt (execute1 calls this on project start)
 	# ------------------------------------------------------------------
 
-	def ShowChangelogAfterUpdate(self):
-		"""Offer this release's notes once, on the first open after an
-		update. The flag is stored on the toolkit root by a successful
-		update pass and cleared here; the notes come from the store
-		manifest -- they ride the release, no web anything."""
-		root = self.ownerComp.parent()
-		if root is None or not root.fetch('updater_show_changelog', False, search=False):
+	def _announceRelease(self):
+		"""Say what just landed, in the Textport, as the pass finishes.
+
+		This used to set a flag that made the NEXT project open raise a
+		`ui.messageBox` (owner, 2026-09-21: "at least not after a
+		startup"). Three things were wrong with that. A modal blocks TD's
+		main thread until someone clicks it, which the project's own rules
+		say never to do in a load path. It arrived at a moment unrelated to
+		the update, so it read as the toolkit updating itself on startup,
+		which it never does -- the start hook only ever CHECKS. And the
+		release-level notes are frequently empty (a release whose notes are
+		all per-package lines leaves them so, as v3.2.47 did), so it often
+		blocked startup to say nothing but a version number.
+
+		The notes stay readable on the Hub's Updates tab either way; this
+		is the courtesy line, at the moment it means something.
+		"""
+		show = getattr(self.ownerComp.par, 'Shownotes', None)
+		if show is not None and not show.eval():
 			return
-		root.unstore('updater_show_changelog')
 		man = self.StoreManifest() or {}
-		label = man.get('release', '')
-		notes = str(man.get('notes', '')).strip()
-		text = 'FunctionStore tools updated%s.' % (' to %s' % label if label else '')
-		if notes:
-			text += '\n\n' + notes[:900]
+		label = str(man.get('release', '') or '')
+		notes = str(man.get('notes', '') or '').strip()
+		head = 'FNSTools: updated%s' % (' to %s' % label if label else '')
 		try:
-			ui.messageBox('FNS tools updated', text, buttons=['OK'])
+			# print, not fnsLog: fnsLog is a silent no-op when the central
+			# logger is absent or its Active par is off, which is most
+			# installs. A pass the user asked for has to answer out loud.
+			print(head + ('. ' + notes[:400] if notes else
+						  ' -- per-package notes are on the Updates tab'))
 		except Exception as e:
-			debug('UPDATER: changelog prompt failed: %s' % e)
+			debug('UPDATER: release notice failed: %s' % e)
 
 	def _settleStaleErrors(self, job):
 		"""After the whole pass: recook packages that still flag errors.
@@ -2092,6 +2750,19 @@ class ExtUpdater:
 
 	def _replacePackage(self, step, target=None):
 		name = step['name']
+		if step.get('placement') == 'none':
+			# An FNS family member: nothing is placed, so there is nothing to
+			# replace. The update IS the verified store copy; record it, and
+			# the family sync at the end of the pass mirrors it into the
+			# folder the FNS tab reads.
+			path = step['path']
+			if not os.path.exists(path):
+				return {'package': name, 'ok': False, 'why': 'no artifact in the store'}
+			digest = _sha256(path)
+			if not step.get('sha256') or digest != step['sha256']:
+				return {'package': name, 'ok': False, 'why': 'store copy fails its hash'}
+			self.RecordInstalled(name, digest, step.get('release', ''), target)
+			return {'package': name, 'ok': True, 'action': 'refreshed in the store'}
 		root = self._root(target)
 		dest = root.op(name)
 		if dest is None and step.get('placement') in ('pane', 'root'):
@@ -2205,10 +2876,22 @@ class ExtUpdater:
 		job = self._job or {}
 		kind = job.get('kind', 'check')
 		job['stage'] = 'done' if not job.get('failed') else 'failed'
+		# whatever the job was, what the store holds or the project has may
+		# have changed: the installer's install-<Package> commands follow
+		# (docs/CommandAvailability.md). A frame later, after every branch
+		# below has run.
+		run('args[0].valid and args[0].ext.ExtUpdater.askInstallerToRebuild()',
+			self.ownerComp, delayFrames=1, delayRef=op.TDResources)
 
 		if kind == 'refresh':
 			st = self.StoreStatus()
 			gated, why_gated = self._gatedWhy(job)
+			if job.get('names') is None and not job.get('failed'):
+				self._afterStoreComplete(st)
+			elif job.get('names'):
+				# a scoped fetch (a picker install) changed what the store
+				# holds without completing it: the family folder follows
+				self.SyncFamilyFolder()
 			self._status('store %s: %d verified, %d MB%s%s'
 						 % (st.get('release', '?'), st.get('verified', 0),
 							st.get('total_mb', 0),
@@ -2240,21 +2923,342 @@ class ExtUpdater:
 						'; FAILED: ' + ', '.join('%s (%s)' % (r['package'], r.get('why', ''))
 												 for r in bad) if bad else '',
 						'; ' + ' '.join(why_gated) if why_gated else ''))
+		self.SyncFamilyFolder()
+		self._keepStoreLater()
 		return {'ok': not bad and not job.get('failed'), 'updated': done,
 				'failed': bad + [{'why': f} for f in job.get('failed', [])],
 				'gated': gated, 'gated_why': why_gated,
 				'remaining': cmp_['updates']}
+
+	def askInstallerToRebuild(self):
+		"""Wiring: the sibling FNS_Installer re-announces its commands. Its
+		install rows depend on the store, the install record and entitlement,
+		all of which this updater changes. Guarded: an updater without an
+		installer beside it is normal."""
+		parent = self.ownerComp.parent()
+		inst = parent.op('FNS_Installer') if parent is not None else None
+		try:
+			if inst is not None and hasattr(inst.ext, 'InstallerExt'):
+				inst.ext.InstallerExt.rebuildInstallCommands()
+		except Exception as e:
+			fnsLog('could not refresh the install commands (%s)' % e, level='WARNING')
+
+	# ------------------------------------------------------------------
+	# a complete store (Keepstore)
+	# ------------------------------------------------------------------
+	# The store is machine-wide, and the picker fetches only the selection
+	# it installs, so a machine that never pulsed Refresh Store holds only
+	# what it installed. With Keepstore on (the default) every install and
+	# every update pass finishes by mirroring the rest of the release (12 MB
+	# free), so Pick Tools works offline afterwards and everything the store
+	# can offer is already on disk: op alternatives today, the FNS operator
+	# family when it lands (docs/OperatorFamilyFromStore.md, criterion 4).
+	# A FULL mirror's completion is ONE hook, _afterStoreComplete, which is
+	# where that family folder sync belongs. Nothing chains after a refresh
+	# itself, so the mirror can never re-trigger. docs/StoreCompleteness.md.
+
+	def KeepStore(self):
+		"""Mirror the rest of the release into the store, when Keepstore says
+		so and no job is running: what RefreshStore returns, or why not. Safe
+		to call at the end of any rail; the installer does after an install."""
+		if not self._parBool('Keepstore', True):
+			return {'ok': False, 'why': 'Keepstore is off'}
+		if self._job is not None and self._job.get('stage') not in ('done', 'failed'):
+			return {'ok': False, 'why': 'a job is running (%s)' % self._job.get('kind')}
+		return self.RefreshStore(names=None)
+
+	def _keepStoreLater(self):
+		# after the pass that called this has reported: the job dict is
+		# still the finishing one, and _startJob refuses while it is
+		if not self._parBool('Keepstore', True):
+			return
+		run('args[0].valid and args[0].extensionsReady and args[0].KeepStore()',
+			self.ownerComp, delayFrames=5, delayRef=op.TDResources)
+
+	def _afterStoreComplete(self, status):
+		"""The one place that runs when a FULL mirror has finished (Keepstore
+		or the Refresh Store pulse): the FNS operator family's folder is
+		brought in step with the store, so members reach the FNS tab the
+		moment the store holds them (docs/OperatorFamilyFromStore.md)."""
+		debug('UPDATER: store complete for %s (%d verified)'
+			% (status.get('release', '?'), status.get('verified', 0)))
+		self.SyncFamilyFolder()
+
+	# ------------------------------------------------------------------
+	# the FNS operator family folder (docs/PaletteFolderContract.md,
+	# docs/OperatorFamilyFromStore.md)
+	# ------------------------------------------------------------------
+	# TDFam lists a family's file-based operators from a folder of toxes
+	# with manifest sidecars, and TouchDesigner's own Palette shows the
+	# same folder: <user palette>/FNSTools/FNS. It is ONE folder because a
+	# human browses it (owner, 2026-09-18): flat, one tox per member under
+	# its public name (RandomCHOP.tox, not FNS_RandomCHOP_1.0.0.tox), the
+	# category in the sidecar's op_group and not in a subfolder. TDFam
+	# takes a loose file at the root as uncategorised and reads the group
+	# and the version from the sidecar (measured 2026-09-18 on its
+	# FileManager and OpFamRegistryExt), so the versioned filename its
+	# default naming regex expects is not needed.
+	#
+	# The store is flat and holds the whole release, so this folder is a
+	# DERIVED mirror of it: every member package (a manifest row with a
+	# `family` block) whose tox the store holds lands here, built from the
+	# row; stale files and non-members are removed, so no other store tox
+	# ever appears as an operator, and the store stays untouched. The
+	# store's own rules decide presence: a gated member is only there for
+	# an account that holds it, so the FNS tab gates itself for free.
+	#
+	# Always the machine's own palette, never a relocated Storefolder:
+	# TD's Palette reads app.userPaletteFolder and nothing else.
+	_FAMILY_NAME = 'FNS'
+
+	def FamilyFolder(self):
+		"""Where the FNS family's operators live: <user palette>/FNSTools/FNS,
+		or '' when this install has no user palette folder."""
+		root = _fnsPaletteRoot()
+		return '%s/%s' % (root, self._FAMILY_NAME) if root else ''
+
+	def _familySidecar(self, pkg, fam):
+		"""TDFam's per-op manifest for one member, from its manifest row:
+		OpInfo plus the retain and shortcut blocks the tool declared."""
+		info = {
+			'op_fam': self._FAMILY_NAME,
+			'op_version': str(pkg.get('version', '') or ''),
+			'op_type': str(fam.get('op_type', '') or '').lower(),
+			'op_name': str(fam.get('op_name', '') or fam.get('op_type', '') or ''),
+			'op_label': str(fam.get('op_label', '') or pkg.get('title', '') or pkg.get('name', '')),
+			'op_group': str(fam.get('op_group', '') or ''),
+			'isFilter': bool(fam.get('is_filter', False)),
+			'compatible_types': list(fam.get('compatible_types') or []),
+			'summary': str(fam.get('summary', '') or pkg.get('description', '') or ''),
+			'doc_url': str(pkg.get('help_url', '') or ''),
+			'search_words': list(fam.get('search_words') or []),
+		}
+		return {
+			'OpInfo': info,
+			'ParRetain': dict(fam.get('par_retain') or {}),
+			'StateRetain': dict(fam.get('state_retain') or {}),
+			'Shortcuts': dict(fam.get('shortcuts') or {}),
+		}
+
+	def SyncFamilyFolder(self):
+		"""Mirror every family member the store holds into the family folder
+		(tox plus sidecar, public names), drop what no longer belongs, let
+		TDFam re-read the folder and TD's Palette re-read its index. Cheap
+		when nothing changed: bytes are compared by size and sha before a
+		copy. Runs after every refresh and update pass and from the
+		full-mirror hook; safe to call by hand."""
+		# Nothing appears where the family is not installed (owner decision
+		# 2026-09-17): no folder, no mirrored toxes. The family itself asks
+		# for a sync when it initialises, so installing it fills the folder.
+		if self._familyOwner() is None:
+			return {'ok': True, 'skipped': 'the FNS family is not installed in this project',
+					'folder': '', 'mirrored': [], 'removed': [], 'skipped_members': []}
+		folder = self.FamilyFolder()
+		if not folder:
+			return {'ok': False, 'why': 'no user palette folder on this install'}
+		man = self.StoreManifest()
+		if not man:
+			return {'ok': False, 'why': 'store has no manifest -- refresh first'}
+		self._dropLegacyFamilyTree(folder)
+		# the folder exists even with no members, so the family's Folder DAT
+		# reads an empty folder instead of warning that it is not accessible
+		try:
+			os.makedirs(folder, exist_ok=True)
+		except Exception as e:
+			return {'ok': False, 'why': 'family folder not writable (%s)' % e}
+		keep = set()
+		mirrored, removed, skipped = [], [], []
+		for pkg in man.get('packages', []):
+			fam = pkg.get('family')
+			if not isinstance(fam, dict) or not fam.get('op_type'):
+				continue
+			name = str(pkg.get('name', ''))
+			src = self._storePath(name)
+			if not os.path.exists(src):
+				# not fetched: gated and not held, or never mirrored -- the
+				# store's verdict, not the family's
+				skipped.append(name)
+				continue
+			# the PUBLIC name: the palette reads FNS/SwitchTools
+			stem = name[4:] if name.startswith('FNS_') else name
+			dest = '%s/%s.tox' % (folder, stem)
+			side = '%s/%s.json' % (folder, stem)
+			keep.add(dest.lower())
+			keep.add(side.lower())
+			try:
+				if (not os.path.exists(dest)
+						or os.path.getsize(dest) != os.path.getsize(src)
+						or _sha256(dest) != _sha256(src)):
+					shutil.copyfile(src, dest)
+					mirrored.append(name)
+				text = json.dumps(self._familySidecar(pkg, fam), indent=4)
+				cur = ''
+				if os.path.exists(side):
+					with open(side, 'r', encoding='utf-8') as f:
+						cur = f.read()
+				if cur != text:
+					with open(side, 'w', encoding='utf-8') as f:
+						f.write(text)
+			except Exception as e:
+				debug('UPDATER: family mirror of %s failed (%s)' % (name, e))
+				skipped.append(name)
+		# prune: former members, stale names, a category subfolder from
+		# before 2026-09-18, anything else that is not a member's tox or
+		# sidecar -- the folder is derived, never authored
+		try:
+			for fn in os.listdir(folder):
+				fp = '%s/%s' % (folder, fn)
+				if os.path.isdir(fp):
+					shutil.rmtree(fp, ignore_errors=True)
+					removed.append(fn + '/')
+				elif fp.lower() not in keep and fn.lower().endswith(('.tox', '.json')):
+					os.remove(fp)
+					removed.append(fn)
+		except Exception as e:
+			debug('UPDATER: family prune failed (%s)' % e)
+		self._refreshFamily(folder)
+		idx = self.RebuildPaletteIndex()
+		if mirrored or removed:
+			fnsLog('UPDATER: family folder: %d mirrored, %d removed, %d skipped'
+				   % (len(mirrored), len(removed), len(skipped)))
+		return {'ok': True, 'folder': folder, 'mirrored': mirrored,
+				'removed': removed, 'skipped': skipped, 'index': idx}
+
+	def _dropLegacyFamilyTree(self, folder):
+		"""The pre-2026-09-18 layout kept TDFam's copy under family/FNS/<group>/
+		beside this folder, versioned. Derived, so it simply goes."""
+		legacy = '%s/family' % os.path.dirname(folder)
+		if os.path.isdir(legacy):
+			shutil.rmtree(legacy, ignore_errors=True)
+
+	# --- TD's Palette index -----------------------------------------------
+	# Copying files into the palette is NOT enough. TD does not scan the
+	# folder: it reads an INDEX, <userPalette>/paletteData.json, into the
+	# Text DAT /ui/dialogs/palette/palette/cusPalette, and only at startup.
+	# So the index is regenerated from a directory walk (wholesale, which is
+	# how the launcher's own writer does it, so the two cannot fight and
+	# nothing here needs re-asserting) and that DAT is then told to re-read.
+	# Measured 2026-09-18: editing the file and pulsing `loadonstartpulse`
+	# makes TD pick the change up; restoring the file and pulsing again
+	# takes it away.
+
+	# What never belongs in a palette index. Measured 2026-09-18: walking
+	# everything made the file 427 KB against the 269 KB TD had written,
+	# extra being .py/.pyc/.h/.lib/.pdb/.zip -- source and build artefacts
+	# from repos that happen to live under the palette. They are not
+	# components and they would clutter the browser as well as the file.
+	# Machine directories only. 'backup', 'build' and 'dist' were in this
+	# list for one draft and cost the user 50 .toe files that were simply
+	# in a folder called Backup: a plausible NAME is not a machine folder.
+	_PALETTE_SKIP_DIRS = ('node_modules', '__pycache__', 'site-packages')
+	_PALETTE_SKIP_EXTS = ('.py', '.pyc', '.pyd', '.h', '.hpp', '.lib', '.pdb',
+						  '.obj', '.dll', '.exe', '.zip', '.7z', '.tar', '.gz')
+
+	def RebuildPaletteIndex(self):
+		"""Regenerate <userPalette>/paletteData.json from a directory walk and
+		ask TD to re-read it.
+
+		Wholesale, never patched -- that is how the launcher writes it too,
+		so the two cannot fight. The node shape is TD's own, read off the
+		live file: {id, name, path, type} with `children` on a directory,
+		`path` backslash-relative to the palette root with a leading
+		backslash, ids dotted from the root's '2'. Dotfiles are skipped: a
+		.git or .venv beside the components is not a component.
+
+		The refresh is a COURTESY. TD reads this file at startup, so a
+		failure to nudge it must never fail the mirror that called it.
+		"""
+		try:
+			root = str(app.userPaletteFolder).replace('\\', '/').rstrip('/')
+		except Exception:
+			return {'ok': False, 'why': 'no user palette folder'}
+		if not root or not os.path.isdir(root):
+			return {'ok': False, 'why': 'user palette folder missing'}
+
+		def walk(abs_dir, rel, node_id):
+			kids = []
+			try:
+				names = sorted(os.listdir(abs_dir), key=lambda s: s.lower())
+			except Exception:
+				return kids
+			i = 0
+			for fn in names:
+				if fn.startswith('.'):
+					continue          # .git, .venv and friends
+				if fn.lower() in self._PALETTE_SKIP_DIRS:
+					continue
+				if os.path.splitext(fn)[1].lower() in self._PALETTE_SKIP_EXTS:
+					continue
+				ap = os.path.join(abs_dir, fn)
+				rp = rel + '\\' + fn
+				i += 1
+				kid_id = '%s.%d' % (node_id, i)
+				if os.path.isdir(ap):
+					kids.append({'children': walk(ap, rp, kid_id), 'id': kid_id,
+								 'name': fn, 'path': rp, 'type': 'directory'})
+				else:
+					kids.append({'id': kid_id, 'name': fn, 'path': rp,
+								 'type': 'file'})
+			return kids
+
+		doc = {'children': walk(root, '', '2'), 'id': '2',
+			   'localRoot': 'app.userPaletteFolder', 'name': 'My Components',
+			   'palette': 'My Components', 'path': 'app.userPaletteFolder',
+			   'type': 'directory'}
+		path = '%s/paletteData.json' % root
+		try:
+			with open(path, 'w', encoding='utf-8') as f:
+				json.dump(doc, f, indent=4, sort_keys=True)
+		except Exception as e:
+			return {'ok': False, 'why': 'could not write the palette index (%s)' % e}
+		refreshed = False
+		try:
+			dat = op('/ui/dialogs/palette/palette/cusPalette')
+			if dat is not None and hasattr(dat.par, 'loadonstartpulse'):
+				dat.par.loadonstartpulse.pulse()
+				refreshed = True
+		except Exception as e:
+			debug('UPDATER: palette index written but TD not refreshed (%s)' % e)
+		return {'ok': True, 'path': path, 'refreshed': refreshed}
+
+	def _familyOwner(self):
+		"""The registered FNS family COMP in this project, or None. By
+		shortcut, never a path."""
+		reg = getattr(op, 'FAMREGISTRY', None)
+		if reg is None:
+			return None
+		try:
+			return reg.GetFamilyOwner(self._FAMILY_NAME)
+		except Exception:
+			return None
+
+	def _refreshFamily(self, folder):
+		"""Tell TDFam to re-read the folder, when the family is in this
+		project. By shortcut, never a path; a project without the family
+		simply keeps the folder for the next one."""
+		reg = getattr(op, 'FAMREGISTRY', None)
+		if reg is None:
+			return False
+		try:
+			owner = reg.GetFamilyOwner(self._FAMILY_NAME)
+			if owner is None:
+				return False
+			reg.RefreshCache(self._FAMILY_NAME, owner, folder)
+			return True
+		except Exception as e:
+			debug('UPDATER: family cache refresh failed (%s)' % e)
+			return False
 
 	# ------------------------------------------------------------------
 	# parameter callbacks (extensionParExec dispatches par name -> method)
 	# ------------------------------------------------------------------
 
 	def Check(self, _=None):
-		if self.ownerComp.par.Enabled.eval():
+		if self.ownerComp.par.Active.eval():
 			self.CheckUpdates()
 
 	def Update(self, _=None):
-		if self.ownerComp.par.Enabled.eval():
+		if self.ownerComp.par.Active.eval():
 			self.UpdateProject()
 
 	def Refreshstore(self, _=None):

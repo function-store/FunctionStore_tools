@@ -131,6 +131,8 @@ pre-kill document keeps running — weakest exactly where you want it strongest.
 Ours should be enforced **both** ends: the client refuses below-floor, *and*
 the updater sends its version as a header so the origin can refuse too. A
 cached document may satisfy the client; it cannot satisfy the server.
+*(Status 2026-09-08: the client half is built, `ExtUpdater._belowFloor`; the
+version header and the origin-side refusal are not.)*
 
 ### 2.3 A protected set
 
@@ -206,7 +208,8 @@ All verified 2026-08-26. None are hypothetical.
 >
 > **Not yet exercised against a real bucket**: nothing has been published, so
 > no client has fetched a real discovery document over the wire. Pin 3's repo
-> (`function-store/fnstools-links`) does not exist yet — the URL is pinned in
+> (`function-store/fnstools-links`) does not exist yet (still 404 when probed
+> on 2026-09-08; pins 1 and 2 answer with v3.1.4) — the URL is pinned in
 > the shipped component and will 404 until it is created, which the fallback
 > chain handles but which must be fixed before it counts as a third origin.
 >

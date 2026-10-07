@@ -91,7 +91,9 @@ deprecation window for the bespoke verbs.
 1. **Names: the `TDXLU` prefix becomes `FNS_`** — `TDXLUCollect` →
    **`FNS_Collect`**, `TDXLUMedia` → **`FNS_Media`**. This is the
    irreversible one (the registry keys curation, history and presets on
-   `tool#id`, where the tool part is the COMP name), but its cost is
+   `tool#id`, where the tool part is the COMP name minus a leading
+   `FNS_` since registry 1.10.0, see [PublicToolNames.md](PublicToolNames.md)),
+   but its cost is
    near zero **because the keys are one day old**: the capability
    registration that created `TDXLUCollect#collect` landed in TDXLPP's
    P2 commit `82d9036` on 2026-08-30. Nothing has had time to curate
@@ -138,13 +140,13 @@ Four things the port had to fix — worth knowing for the next one:
 - **`FNS_Collect`** stores one key (`TDXLUCollectLast`) via
   `ownerComp.store()`: the last run's summary. Run-result cache, not a
   preference — **no ConfigRegistry host needed**.
-- **`FNS_Media`** persists nothing. None needed.
+- **`FNS_MediaBrowser`** persists nothing. None needed.
 - **`FNS_Remote`** needs **no ConfigRegistry host** — corrected
   2026-08-31 after verifying the code. An earlier reading of TDXLPP's D4
   ("machine-local activation via ConfigRegistry") said it did; the
   implementation has zero registry references, and TDXLPP has since
   corrected their doc. It writes one file directly —
-  `app.userPaletteFolder/FNStools_ext/config/fns_remote.json`, atomic
+  `app.userPaletteFolder/FNSTools/config/fns_remote.json`, atomic
   via a `.tmp` — holding only `{schema, token}`.
 
   **Do not "fix" this into the registry.** Two reasons, both deliberate.
@@ -165,7 +167,7 @@ Four things the port had to fix — worth knowing for the next one:
   This is the standing exception to the house rule that settings persist
   through ConfigRegistry (`/fns-config-scope`): secrets do not.
 
-### STATUS: shipped in v3.0.13 (2026-08-31), one step left
+### STATUS: shipped in v3.0.13, completed in v3.0.14 (2026-08-31)
 
 Steps 1–6 below are **done**. Only the companion release (step 7)
 remains, and it is an owner decision rather than a technical block.
@@ -178,6 +180,11 @@ remains, and it is an owner decision rather than a technical block.
 | `FNS_Collect` | 1.0.0 | Base `8323905` | false |
 | `FNS_Media` | 1.0.0 | Base `8323905` | false |
 | `FNS_Remote` | 1.0.0 | Base `8323905` | false |
+
+Names as shipped that day. `FNS_Media` was renamed **`FNS_MediaBrowser`**
+in v3.0.14 the following day, for colliding case-insensitively with
+TimelineTools' `op.FNS_MEDIA` global shortcut; the rows below that quote
+v3.0.13 output keep the old name deliberately.
 
 Plus `FNS_Updater` 3.0.7 → 3.0.8 and rebuilt rails at installer 3.1.0
 carrying the command rail (`fns.install`, `minimal`, `source`). The
@@ -244,11 +251,22 @@ absent. The name is decided; its APPEARANCE waits for their ship.
 - `FNS_Collect` — "With TDX Launcher Ultra installed, this also appears
   in the launcher's session view, with a per-file confirm before anything
   is copied."
-- `FNS_Media` — same, "…as a browsable media list with previews and
-  replace."
+- `FNS_MediaBrowser` — same, "…as a browsable media list with previews
+  and replace."
 - `FNS_Remote` — description already whole; add only "The launcher can
   show the pairing QR for any running session, so you do not have to open
   the component to find it." **Explicitly not "requires the launcher".**
+
+  **Two conditions, not one** (raised by TDXLPP 2026-08-31, recorded in
+  their `dce823d`). "Works with the launcher closed" and "works without
+  the companion COMP in the project" are different claims, and only the
+  first is true of every action. The page, touch, parameter control and
+  `save` hold under both. `snapshot` and `record` resolve `op.TDXLU` and
+  return "needs the TDXLU companion" without it — a graceful message, not
+  a failure, but not the same as working. Any copy that reaches for a
+  blanket "no launcher needed" on this package is overclaiming by two
+  actions. Autosave, Collect and MediaBrowser have no such split and can
+  make the unqualified claim.
 - `FNS_Autosave` — "Works in any project with no launcher; the launcher
   renders its settings when present." The framing genuinely improved for
   this one: free, standalone, and now reaching people who never install
@@ -339,23 +357,29 @@ with it, not just its entry point.** Their autosave modal drove the bus
 verb only: blessing `fns.autosave` made the modal OPEN from a registry
 command while every read and write still went to the companion, so
 deleting the COMP would have broken autosave in the launcher even with
-our package installed. Caught before shipping; the modal now prefers the
-capability rail and falls back to the legacy verbs. Collect and media did
-not have this shape. Check it for anything ported later that the launcher
-renders richly.
+our package installed. Caught before shipping; the modal now goes through the
+capability rail — capability-only, with no fallback, because D7 deleted
+the verbs. The absence of a fallback is what makes the release ordering
+load-bearing rather than merely preferred: an absent package gives a
+moved-to-package message, not a silent degrade to the old path. Collect
+and media did not have this shape. Check it for anything ported later that
+the launcher renders richly.
 
-### Still open
+### Closed (was "Still open")
 
-- **Catalogue + docs** (owner): category and description for each, and a
-  `packaging/docs/<Name>.md` per package. The entry and its doc must land
-  together or the site build fails. Nothing ships until then.
-- **Access = Base** through the CMS, which writes `wrangler.toml` in the
-  same motion; then `wrangler deploy`.
-- **Extension class names** are still `TDXLUCollectExt` / `TDXLUMediaExt`
-  inside `FNS_`-named packages. Cosmetic only — command ids key on the
-  COMP name, not the class — and deliberately left alone while TDXLPP may
-  still iterate, since renaming now would complicate a last sync. Worth
-  doing once their D7 window closes.
+Every item here shipped; kept as a record of what the release cleared,
+because a stale open-items list read as authoritative and contradicted
+the status block above it.
+
+- **Catalogue + docs** — done. All four carry a category, a description
+  and a `packaging/docs/<Name>.md`, landed together as the site build
+  requires.
+- **Access = Base** — done, through `gate_package.py`, with the worker
+  deployed so the tier map is live rather than merely written.
+- **Extension class names** — done, and earlier than this list expected:
+  renamed in `14a237f` to `FNSCollectExt` / `FNSMediaExt` /
+  `FNSAutosaveExt`, matching `FNSRemoteExt`. TDXLPP's correction #3 below
+  reads this stale entry rather than the code.
 
 ## From TDXLPP, 2026-08-31: the trap had a second instance
 
@@ -406,9 +430,28 @@ the launcher but lives inside TD, so it reads as neither side's problem.
    because the verbs are gone. Absent package -> a moved-to-package message.
    Worth stating plainly: the absence of a fallback is what makes the release
    ordering load-bearing rather than merely preferred.
-3. **The `TDXLUCollectExt` / `TDXLUMediaExt` renames are unblocked.** They
-   are marked "worth doing once their D7 window closes"; it closed
-   2026-08-31, per this same document.
+3. ~~**The `TDXLUCollectExt` / `TDXLUMediaExt` renames are unblocked.**~~
+   **WITHDRAWN — this correction was itself wrong.** The renames had already
+   landed in `14a237f`, before this note was filed; on disk the classes are
+   `FNSCollectExt`, `FNSMediaExt`, `FNSAutosaveExt`, `FNSRemoteExt`
+   (verified). The "worth doing once their D7 window closes" line I was
+   reading was the stale artefact, not a live item — so a correction filed
+   against a stale document inherited its staleness. Left visible rather than
+   deleted, because it is the same failure this section is about and the
+   remedy is the same: fewer standing claims, not a more careful reader.
+
+**Applied, same day.** 1 and 2 were real and are fixed above: the "Still
+open" list is now a "Closed" record, and the fallback sentence says
+capability-only and carries the ordering consequence. 3 was itself reading
+a stale line — the renames had already landed in `14a237f`, before the
+correction was written; the classes are `FNSCollectExt` / `FNSMediaExt` /
+`FNSAutosaveExt` today.
+
+That third one is the interesting one. A document can go stale faster than
+a reader can check it, so a correction filed against it inherits the
+staleness. The defence is not more diligence, it is fewer standing claims:
+an open-items list that outlives its work is a liability, which is why it
+was converted to a record of what closed instead of being deleted outright.
 
 ### Website, launcher side
 

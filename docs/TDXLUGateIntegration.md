@@ -224,7 +224,7 @@ met.
   acceptance recorded here per the §5 sequencing bullet — drafted this
   side on the launcher session's green light, no formal acceptance
   round per the amended contract)*: `gate-session.json` at
-  `<palette>/FNStools_ext/config/`
+  `<palette>/FNSTools/config/`
   (beside the config, never under `store/`), schema
   `{schema:1, device_token, written_by, written_at}`, per the
   launcher contract's amended §5: atomic write on every successful
@@ -256,7 +256,18 @@ met.
   extension lifetime: token held + shared file absent → publish the
   held token. Idempotent; makes G7 retroactive for every existing
   session the moment the new ExtAuth loads. Launcher mirrors in
-  `licensing.rs` for symmetry.
+  `licensing.rs` for symmetry. **Adoption can hand over a session that
+  entitles NOTHING (field report 2026-09-17, a Mac):** a fresh FNSTools
+  drop adopted the session `tdxlu` wrote, the gate tied it to no Patreon
+  grant, and the record then read as signed in with no products, so every
+  picker surface offered only Join and I just pledged and nothing could
+  start OAuth. Two changes: adoption now asks for a RECHECK rather than a
+  token (a recheck answer carries `connected`, a token refusal carries
+  only products), and the picker offers the sign-in whenever a session
+  entitles nothing, keeping I just pledged beside it. Its status sentence
+  never says a link is "no longer active" for a session that never had
+  one. An entitled account also gets Use a different account, because
+  signing out in FNS_Updater is not a route the picker may rely on.
 - **G6 (conditional, only if their §4 is decided FOR) — second gated
   prefix.** Route `storage.functionstore.tools/utility/plus/*` through
   the worker; generalize the prefix check; fail-closed tests against

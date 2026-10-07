@@ -227,9 +227,13 @@ class CmsExt:
 								  '/api/stage',
 								  '/api/release', '/api/upload',
 								  '/api/prunebucket',
-								  '/api/uploadlog', '/api/hotkeys',
+								  '/api/uploadlog',
+								  '/api/foreignsync', '/api/foreignlog',
+								  '/api/hotkeys',
 								  '/api/helpurl', '/api/parameters',
-								  '/api/parhelp', '/api/parexport'],
+								  '/api/parhelp', '/api/parexport',
+								  '/api/familyread', '/api/familywrite',
+								  '/api/altread', '/api/altwrite'],
 				})
 				return response
 			body = {}
@@ -263,11 +267,17 @@ class CmsExt:
 				('POST', '/api/upload'): self._apiUpload,
 				('POST', '/api/prunebucket'): lambda b=body: self._apiPruneBucket(b),
 				('GET', '/api/uploadlog'): self._apiUploadLog,
+				('POST', '/api/foreignsync'): lambda b=body: self._apiForeignSync(b),
+				('GET', '/api/foreignlog'): self._apiForeignLog,
 				('GET', '/api/hotkeys'): self._apiHotkeys,
 				('POST', '/api/helpurl'): lambda b=body: self._apiHelpurl(b),
 				('GET', '/api/parameters'): self._apiParameters,
 				('POST', '/api/parhelp'): lambda b=body: self._apiParHelp(b),
 				('POST', '/api/parexport'): self._apiParExport,
+				('POST', '/api/familyread'): lambda b=body: self._apiFamilyRead(b),
+				('POST', '/api/familywrite'): lambda b=body: self._apiFamilyWrite(b),
+				('POST', '/api/altread'): lambda b=body: self._apiAltRead(b),
+				('POST', '/api/altwrite'): lambda b=body: self._apiAltWrite(b),
 			}.get((method, path))
 			if handler is None:
 				payload, code = {'error': 'no such endpoint'}, 404
@@ -314,7 +324,7 @@ class CmsExt:
 			if upd is not None:
 				folder = str(upd.par.Storefolder.eval() or '')
 			if not folder:
-				folder = '%s/FNStools_ext/store' % app.userPaletteFolder
+				folder = '%s/FNSTools/store' % app.userPaletteFolder
 			path = os.path.join(folder, 'manifest.json')
 			with open(path, encoding='utf-8') as f:
 				published = {p['name']: p.get('version', '')
@@ -396,6 +406,39 @@ class CmsExt:
 						 'shipped_build': sb,
 						 'build_changed': changed,
 						 'saved': info.get('Savetimestamp', '')})
+		# Foreign packages (docs/ForeignPackages.md): no live COMP, so no
+		# PI dirt, build or save -- the row is the LOCK (what foreign_sync
+		# last mirrored) against what the world has. Read through
+		# build_manifest so the CMS can never show a row the release build
+		# would not emit.
+		try:
+			bm = self._pkgMod('build_manifest.py')
+			cat = self._catalog()
+			frows, fprob = bm['ForeignPackages'](cat, bm['ForeignLock']())
+			for e in frows:
+				name = e['name']
+				ver = str(e.get('version', '') or '')
+				pub = str(published.get(name, '') or '')
+				rows.append({'name': name,
+							 'foreign': True,
+							 'dirty': None,
+							 'help_override': e.get('help_url', ''),
+							 'help_derived': '',
+							 'version': ver,
+							 'published': pub,
+							 'unshipped': bool(ver) and ver != pub,
+							 'build': None,
+							 'shipped_build': None,
+							 'build_changed': None,
+							 'saved': '',
+							 'updates': e.get('updates', ''),
+							 'upstream': e.get('upstream', {}),
+							 'mirrored': 'artifact' in e,
+							 'problems': [p for p in fprob
+										  if p.split(':', 1)[0] == name]})
+		except Exception as e:
+			fnsLog('CMS: foreign rows unavailable -- %s' % e, level='ERROR')
+
 		# The install rails' own row: not a package (their dirt lives in
 		# repo files PI cannot see), but a first-class release citizen --
 		# stale means rebuild first, changed means worth a release.
@@ -413,8 +456,8 @@ class CmsExt:
 		except Exception as e:
 			rails = {'state': 'unknown', 'error': str(e)}
 		for r in rows:
-			r['unlanded'] = r['name'] in unlanded
-			r['rippled'] = r['name'] in rippled
+			r['unlanded'] = (not r.get('foreign')) and r['name'] in unlanded
+			r['rippled'] = (not r.get('foreign')) and r['name'] in rippled
 		# The prune rail. Three lists, three verbs:
 		#   vanished        published but no longer a live package -- Stage
 		#                   refuses the next release until each is DECLARED
@@ -443,7 +486,7 @@ class CmsExt:
 			if upd2 is not None:
 				folder2 = str(upd2.par.Storefolder.eval() or '')
 			if not folder2:
-				folder2 = '%s/FNStools_ext/store' % app.userPaletteFolder
+				folder2 = '%s/FNSTools/store' % app.userPaletteFolder
 			with open(os.path.join(folder2, 'manifest.json'),
 					  encoding='utf-8') as f:
 				published_release = str(json.load(f).get('release', ''))
@@ -511,6 +554,14 @@ class CmsExt:
 			return {'error': 'release.json unreadable: %s' % e}
 		retired = [str(n) for n in (doc.get('retired') or [])]
 		live = {c.name for c in self._packages()}
+		# A foreign package (catalog `source`) has no live COMP: its
+		# retirement IS removing the catalog entry, which this does below
+		# -- so it is retirable while still declared, unlike a live one.
+		try:
+			foreign_now = set(self._pkgMod('build_manifest.py')
+							  ['ForeignEntries'](self._catalog()))
+		except Exception:
+			foreign_now = set()
 		notes = []
 		if undo:
 			if name not in retired:
@@ -541,7 +592,11 @@ class CmsExt:
 					with open(cat_path, 'w', encoding='utf-8') as f:
 						json.dump(cat, f, indent=1)
 						f.write('\n')
-					notes.append('catalog entry removed')
+					notes.append('catalog entry removed'
+								 + (' (foreign: the declaration was the '
+									'package; its lock row goes on the '
+									'next sync)' if name in foreign_now
+									else ''))
 					if entry.get('access') and entry['access'] != 'free':
 						notes.append('it was GATED (%s): remove it from the '
 									 "worker's tier map (wrangler.toml) and "
@@ -756,6 +811,44 @@ class CmsExt:
 		return {'ok': True, 'dry': dry, 'keep': keep,
 				'log': 'packaging/publish/.upload.log'}
 
+	def _apiForeignSync(self, body):
+		"""Mirror foreign packages: the detached foreign_sync.py rail,
+		watched through /api/foreignlog. Network I/O never runs in-process
+		(the CMS rule): the subprocess fetches, verifies and writes the
+		lock; the next /api/dirty reads the result."""
+		names = [str(n).strip() for n in (body.get('names') or [])
+				 if str(n).strip()]
+		log = self._repo('packaging', '.foreign_sync.log')
+		if os.path.exists(log) and time.time() - os.path.getmtime(log) < 15:
+			return {'error': 'a foreign sync appears to be running (its log '
+							 'moved seconds ago) -- watch it, do not start '
+							 'a second'}
+		ro = self._pkgMod('release_one.py')
+		try:
+			py = ro['_shellPython']()
+		except Exception as e:
+			return {'error': str(e)}
+		import subprocess
+		env = dict(os.environ, PYTHONIOENCODING='utf-8')
+		subprocess.Popen(
+			py + [self._repo('packaging', 'foreign_sync.py')] + names,
+			stdout=open(log, 'w', encoding='utf-8', errors='replace'),
+			stderr=subprocess.STDOUT, cwd=project.folder, env=env)
+		fnsLog('CMS: foreign sync started (%s), log at packaging/'
+			   '.foreign_sync.log' % (', '.join(names) or 'all'))
+		return {'ok': True, 'log': 'packaging/.foreign_sync.log'}
+
+	def _apiForeignLog(self):
+		"""Tail of the detached foreign sync's log."""
+		log = self._repo('packaging', '.foreign_sync.log')
+		if not os.path.exists(log):
+			return {'ok': True, 'exists': False, 'age_s': None, 'tail': ''}
+		with open(log, 'r', encoding='utf-8', errors='replace') as f:
+			text = f.read()
+		return {'ok': True, 'exists': True, 'size': len(text),
+				'age_s': round(time.time() - os.path.getmtime(log), 1),
+				'tail': text[-8000:]}
+
 	def _apiUploadLog(self):
 		"""Tail of the detached upload's log -- the read-only ship-state
 		view. This endpoint only reports the uploader's own words; it
@@ -799,6 +892,204 @@ class CmsExt:
 		fnsLog('CMS: Helpurl override for %s = %r (suspect saved)' % (name, url))
 		return {'ok': True, 'name': name, 'override': url,
 				'effective': effective}
+
+	# ------------------------------------------------------------------
+	# FNS operator family (docs/OperatorFamilyFromStore.md)
+	#
+	# A live member's family facts live IN the tool, as TDFam's FamManifest
+	# (OpInfo plus ParRetain / StateRetain / Shortcuts DATs of JSON), and
+	# build_manifest derives the manifest's `family` block from it. So the
+	# editor writes the tool, not the catalog, and PI-saves it in the same
+	# action. Validation is build_manifest's own (FAMILY_TYPE_RE,
+	# FAMILY_GROUPS, FamilyProblems), so the form cannot accept what preflight
+	# would refuse.
+	# ------------------------------------------------------------------
+
+	_FAMILY_DATS = (('par_retain', 'ParRetain'), ('state_retain', 'StateRetain'),
+					('shortcuts', 'Shortcuts'))
+
+	def _familyFromManifest(self, fm):
+		"""The form's shape, read leniently from a FamManifest so a broken
+		one can still be opened and fixed. Unparseable DATs come back as
+		their raw text under `raw`."""
+		out, raw = {}, {}
+		info_dat = fm.op('OpInfo')
+		try:
+			info = json.loads(info_dat.text or '{}') if info_dat is not None else {}
+		except Exception:
+			info, raw['OpInfo'] = {}, info_dat.text
+		if not isinstance(info, dict):
+			info = {}
+		for k in ('op_type', 'op_name', 'op_label', 'op_group', 'summary'):
+			out[k] = str(info.get(k, '') or '')
+		out['is_filter'] = bool(info.get('isFilter', False))
+		for k in ('compatible_types', 'search_words'):
+			v = info.get(k) or []
+			out[k] = v.replace(',', ' ').split() if isinstance(v, str) else [str(x) for x in v]
+		for key, dat_name in self._FAMILY_DATS:
+			d = fm.op(dat_name)
+			try:
+				v = json.loads(d.text or '{}') if d is not None else {}
+			except Exception:
+				v, raw[dat_name] = {}, d.text
+			out[key] = v if isinstance(v, dict) else {}
+		return out, raw
+
+	def _apiFamilyRead(self, body):
+		name = str(body.get('name', '')).strip()
+		comp = self._pkgByName(name)
+		if comp is None or comp is op.FNS:
+			return {'error': 'unknown package %r' % name}
+		fm = comp.op('FamManifest')
+		if fm is None:
+			return {'ok': True, 'name': name, 'member': False, 'family': None, 'problems': []}
+		fam, raw = self._familyFromManifest(fm)
+		bm = self._pkgMod('build_manifest.py')
+		return {'ok': True, 'name': name, 'member': True, 'family': fam, 'raw': raw,
+				'problems': bm['FamilyProblems'](comp)}
+
+	# --- op alternatives (docs/OpAlternatives.md) -----------------------
+	# A tool that offers itself for operator types lists them in its own
+	# `alternatives` table (type | label | help); its callbacks read it. The
+	# CMS reads the live list here and, where the table exists, writes it
+	# and saves the tool. A tool that computes its list (OpTemplates, from
+	# its library) has no table and is shown read-only.
+	ALT_TABLE = 'alternatives'
+
+	def _apiAltRead(self, body):
+		name = str(body.get('name', '')).strip()
+		comp = self._pkgByName(name)
+		if comp is None or comp is op.FNS:
+			return {'error': 'unknown package %r' % name}
+		bm = self._pkgMod('build_manifest.py')
+		hosted = comp.op('FNS_OpMenuRegistry') is not None
+		t = comp.op(self.ALT_TABLE)
+		return {'ok': True, 'name': name, 'hosted': hosted,
+				'editable': hosted and t is not None and t.isDAT,
+				'types': bm['AlternativesFor'](comp) if hosted else []}
+
+	def _apiAltWrite(self, body):
+		"""Rewrite the tool's `alternatives` table from a list of types,
+		keeping each kept type's label and help (a new type takes the first
+		row's), then PI-save the tool."""
+		name = str(body.get('name', '')).strip()
+		comp = self._pkgByName(name)
+		if comp is None or comp is op.FNS:
+			return {'error': 'unknown package %r' % name}
+		t = comp.op(self.ALT_TABLE)
+		if t is None or comp.op('FNS_OpMenuRegistry') is None:
+			return {'error': '%s has no alternatives table: its list is computed by the tool' % name}
+		pi = self._pi()
+		if pi is None:
+			return {'error': 'Private Investigator not found: a table written without a save dies on the next reload'}
+		raw = body.get('types') or []
+		if isinstance(raw, str):
+			raw = raw.replace(',', ' ').split()
+		types = []
+		for x in raw:
+			x = str(x).strip()
+			if x and x not in types:
+				types.append(x)
+		bm = self._pkgMod('build_manifest.py')
+		bad = [x for x in types if not bm['ALT_TYPE_RE'].match(x)]
+		if bad:
+			return {'error': '%s -- an operator type reads like moviefileinTOP or noiseCHOP' % ', '.join(bad)}
+		old = {}
+		for r in range(1, t.numRows):
+			old[t[r, 0].val.strip()] = [t[r, c].val for c in range(t.numCols)]
+		first = next(iter(old.values()), None)
+		t.clear()
+		t.appendRow(['type', 'label', 'help'])
+		for x in types:
+			row = old.get(x) or ([x] + (first[1:3] if first else [comp.name, '']))
+			row = (list(row) + ['', '', ''])[:3]
+			row[0] = x
+			t.appendRow(row)
+		pi.Save(comp)
+		fnsLog('CMS: %s alternatives set to %s (table written, suspect saved)'
+			   % (name, ' '.join(types) or 'none'))
+		return {'ok': True, 'name': name, 'types': bm['AlternativesFor'](comp)}
+
+	def _apiFamilyWrite(self, body):
+		"""Create, update or remove a live package's FamManifest, then
+		PI-save the package. `family: null` removes membership."""
+		name = str(body.get('name', '')).strip()
+		comp = self._pkgByName(name)
+		if comp is None or comp is op.FNS:
+			return {'error': 'unknown package %r' % name}
+		pi = self._pi()
+		if pi is None:
+			return {'error': 'Private Investigator not found: a manifest written without a save dies on the next reload'}
+		fam = body.get('family')
+		fm = comp.op('FamManifest')
+		if not fam:
+			if fm is not None:
+				fm.destroy()
+			pi.Save(comp)
+			fnsLog('CMS: %s left the FNS family (FamManifest removed, suspect saved)' % name)
+			return {'ok': True, 'name': name, 'member': False}
+		if not isinstance(fam, dict):
+			return {'error': 'family must be an object'}
+		bm = self._pkgMod('build_manifest.py')
+		op_type = str(fam.get('op_type', '') or '').strip()
+		if not bm['FAMILY_TYPE_RE'].match(op_type):
+			return {'error': 'Type %r must be a lowercase word like scenechanger; Name holds the readable spelling' % op_type}
+		group = str(fam.get('op_group', '') or '').strip()
+		if group and group not in bm['FAMILY_GROUPS']:
+			return {'error': 'Group %r is not one of %s' % (group, ', '.join(bm['FAMILY_GROUPS']))}
+		op_name = str(fam.get('op_name', '') or '').strip() or op_type
+		if not bm['FAMILY_NAME_RE'].match(op_name):
+			return {'error': 'Name %r must be a word (it names the placed operator)' % op_name}
+		lists = {}
+		for k in ('compatible_types', 'search_words'):
+			v = fam.get(k) or []
+			if isinstance(v, str):
+				v = v.replace(',', ' ').split()
+			lists[k] = [str(x).strip() for x in v if str(x).strip()]
+		bad_types = [t for t in lists['compatible_types'] if t not in bm['FAMILY_GROUPS']]
+		if bad_types:
+			return {'error': 'Compatible types %s are not operator families' % ', '.join(bad_types)}
+		dicts = {}
+		for key, dat_name in self._FAMILY_DATS:
+			v = fam.get(key) or {}
+			if not isinstance(v, dict):
+				return {'error': '%s must be a JSON object' % dat_name}
+			dicts[dat_name] = v
+		info = {'op_fam': 'FNS', 'op_type': op_type, 'op_name': op_name,
+				'op_label': str(fam.get('op_label', '') or '').strip() or op_name,
+				'op_group': group, 'isFilter': bool(fam.get('is_filter', False)),
+				'compatible_types': lists['compatible_types'],
+				'summary': str(fam.get('summary', '') or '').strip(),
+				'search_words': lists['search_words']}
+		created = fm is None
+		if created:
+			fm = comp.create(baseCOMP, 'FamManifest')
+			kids = [c for c in comp.children if c is not fm and c.OPType != 'annotateCOMP']
+			right = max([c.nodeX + c.nodeWidth for c in kids] or [0])
+			top = max([c.nodeY for c in kids] or [0])
+			fm.nodeX = int((right + 200 + 199) // 200 * 200)
+			fm.nodeY = int(round(top / 200.0) * 200)
+		for dat_name, text in [('OpInfo', json.dumps(info, indent=4))] + [
+				(n, json.dumps(v, indent=4)) for n, v in dicts.items()]:
+			d = fm.op(dat_name)
+			if d is None:
+				d = fm.create(textDAT, dat_name)
+				d.nodeX = 0
+				d.nodeY = -200 * len([c for c in fm.children if c is not d])
+			d.text = text
+		# TDFam's tags, as its ensure_manifest_tags stamps them: FindOps and a
+		# stub replace find a member by these, not by the DAT text
+		for t in [t for t in fm.tags if t.startswith(('<FAM:', '<TYPE:')) or t == '<STUB>']:
+			fm.tags.remove(t)
+		for t in ('<FAM:FNS>', '<TYPE:%s>' % op_type, '<MANIFEST>'):
+			fm.tags.add(t)
+		pi.Save(comp)
+		problems = bm['FamilyProblems'](comp)
+		fnsLog('CMS: %s FamManifest %s (type %s, suspect saved)'
+			   % (name, 'created' if created else 'updated', op_type))
+		out, _ = self._familyFromManifest(fm)
+		return {'ok': not problems, 'name': name, 'member': True, 'created': created,
+				'family': out, 'problems': problems}
 
 	# ------------------------------------------------------------------
 	# Parameters tab

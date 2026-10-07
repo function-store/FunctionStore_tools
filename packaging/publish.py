@@ -111,7 +111,8 @@ def _entitlementProblems(manifest):
     product grants, all refuse the stage by name. Skipped when
     worker/wrangler.toml is absent (offline test repos have no worker)."""
     gated = [p for p in manifest.get('packages', [])
-             if str(p.get('access', 'free') or 'free') != 'free']
+             if str(p.get('access', 'free') or 'free') != 'free'
+             or p.get('variants')]
     if not gated:
         return []
     toml_path = _repo('worker', 'wrangler.toml')
@@ -133,9 +134,16 @@ def _entitlementProblems(manifest):
     tiers = {k: v for k, v in block('TIERS').items() if not is_placeholder(k)}
     gumroad = {k: v for k, v in block('GUMROAD_PRODUCTS').items()
                if not is_placeholder(k)}
-    problems = []
+    # a variant build is its own gate product (FNS_Foo.pro) with its own
+    # entry tier; it must be authorizable like the Base build
+    rows = []
     for p in gated:
-        name, acc = p['name'], str(p.get('access'))
+        if str(p.get('access', 'free') or 'free') != 'free':
+            rows.append((p['name'], str(p.get('access'))))
+        for vid, v in sorted((p.get('variants') or {}).items()):
+            rows.append(('%s.%s' % (p['name'], vid), str((v or {}).get('access', ''))))
+    problems = []
+    for name, acc in rows:
         if is_placeholder(acc):
             problems.append('%s: access %r is a placeholder -- put the real '
                             'Patreon tier ID in catalog.json' % (name, acc))
@@ -263,6 +271,26 @@ def Stage(clean=True):
             mismatched.append(pkg['name'])
             continue
         (gated_staged if gated else staged).append(pkg['name'])
+        # Every variant build is gated by definition (a variant IS the
+        # tier above): it stages under plus/ beside the Base build as
+        # <name>.<vid>.tox, its own bucket key (docs/TierVariants.md).
+        for vid, v in sorted((pkg.get('variants') or {}).items()):
+            vart = (v or {}).get('artifact')
+            vname = '%s.%s' % (pkg['name'], vid)
+            if not vart:
+                missing.append(vname + ' (no artifact in manifest)')
+                continue
+            vsrc = _repo(vart['path'])
+            if not os.path.exists(vsrc):
+                missing.append(vname + ' (artifact file absent)')
+                continue
+            os.makedirs(plus_dir, exist_ok=True)
+            vdst = os.path.join(plus_dir, vname + '.tox')
+            shutil.copy2(vsrc, vdst)
+            if _sha256(vdst) != vart.get('sha256'):
+                mismatched.append(vname)
+                continue
+            gated_staged.append(vname)
 
     # the install rails ride along: the bare installer, and the one-drop
     # bootstrap root (installer + UPDATER inside an empty toolkit

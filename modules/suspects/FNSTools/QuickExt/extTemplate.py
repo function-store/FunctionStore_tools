@@ -7,8 +7,8 @@ Saveversion : 2025.33070
 Info Header End'''
 # < - DO NOT REMOVE THIS VERY IMPORTANT LINE!!! used by QuickExt to inject extension - >
 
-CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
-FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
+CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('CustomParHelper').CustomParHelper # import
+FNSCommand = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('FNSCommand') # import
 # Quick-launch commands: decorate promoted methods with @FNSCommand.fns_command
 # - registration is AUTOMATIC via ExtUtils/FNSCommandAnnouncer (no lifecycle
 # code needed). After changing your command set at runtime, re-announce with:

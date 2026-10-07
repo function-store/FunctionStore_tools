@@ -9,7 +9,10 @@ and are served straight off the CDN, so the free rail keeps working with no
 compute hop in front of it. Design and reasoning:
 [docs/GatedDeliveryResearch.md](../docs/GatedDeliveryResearch.md).
 
-Nothing here is deployed yet.
+Deployed since 2026-08-29 (this line read "nothing here is deployed yet"
+until 2026-09-08). The route table below predates `/session/claim`,
+`/session/revoke`, `/session/recheck`, `/entitlement` and `/pubkey`; the
+dispatch in `src/index.js` is the truth.
 
 ---
 
@@ -101,3 +104,47 @@ controls distribution, not redistribution; the goal is friction plus an
 update channel only supporters get, not DRM. Do **not** try to close it
 with per-user watermarked artifacts: per-user bytes mean a per-user hash,
 and the whole update scheme rests on the manifest pinning one `sha256`.
+
+## Website CORS for the two public JSON documents
+
+The configurator page on `https://functionstore.tools` reads
+`fnstools/manifest.json` (live release) and `fnstools/recommendations.json`
+in the browser. The bucket sends no `Access-Control-Allow-Origin`, so the
+browser blocks both and the page falls back to the manifest baked at site
+build (measured 2026-09-17).
+
+`src/index.js` handles exactly those two paths on the storage host:
+`fetch(request)` to the origin (a route's own fetch never re-enters the
+Worker), the response passed through untouched, and
+`Access-Control-Allow-Origin: https://functionstore.tools` plus
+`Vary: Origin` added only when the request's `Origin` is the site. Every
+install fetches the same two URLs, so status, body, `no-cache`, `etag`, 304
+and HEAD must not change for them; `test/public_json.test.mjs` pins that.
+Anything but GET/HEAD, and any failure in the handler, is a plain origin
+fetch.
+
+**Live since 2026-09-17** (Worker version `3f626718`): both routes are in
+`wrangler.toml`:
+
+```toml
+  { pattern = "storage.functionstore.tools/fnstools/manifest.json", zone_name = "functionstore.tools" },
+  { pattern = "storage.functionstore.tools/fnstools/recommendations.json", zone_name = "functionstore.tools" },
+```
+
+Both routes' request-limit failure mode is **fail open**, set in the
+dashboard on 2026-09-17 (Workers & Pages > fnstools-gate > Settings >
+Domains & Routes > Edit); `wrangler.toml` cannot express it, so check it
+there if the routes are ever recreated. Over the free
+plan's daily limit the route is then skipped and installs reach the bucket as
+before (only the site loses the header). The `plus/*` route stays fail
+closed. Verified on deploy: an install-style request got the same body and
+headers as before plus `Vary: Origin`; 304, HEAD, artifacts,
+`latest/manifest.json` and the gated route were unchanged. Re-check with:
+
+```bash
+curl -s -D - -o /dev/null -H "Origin: https://functionstore.tools" https://storage.functionstore.tools/fnstools/manifest.json
+curl -s -D - -o /dev/null -H "Origin: https://example.com" https://storage.functionstore.tools/fnstools/manifest.json
+```
+
+The first carries the header and `cache-control: no-cache`; the second
+carries no `Access-Control-Allow-Origin`.

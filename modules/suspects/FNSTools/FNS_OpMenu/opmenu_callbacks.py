@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : opmenu_callbacks
+Author : Dan@DAN-4090
+Saveorigin : FNSTools_PRIV.toe
+Saveversion : 2025.33070
+Info Header End'''
 """FNS_OpMenu's own contributions to TD's Insert Operator dialog.
 
 Published through this component's OpMenuRegistry host, which holds only a

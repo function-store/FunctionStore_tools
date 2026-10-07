@@ -1,6 +1,6 @@
 ---
-status: research
-summary: Gating some R2-bucket packages behind Patreon membership or a Gumroad license key. Worker built and tested; not deployed, TD client side not started.
+status: landed
+summary: Gating some R2-bucket packages behind Patreon membership or a Gumroad license key. The design record; built, deployed 2026-08-29 and walked end to end, six packages gated at v3.1.4. Lifecycle rules in EntitlementLifecycle.md, open items in EntitlementFunnelPlan.md.
 since: 2026-08-26
 skill: fns-packaging
 ---
@@ -12,10 +12,15 @@ rest of the toolkit stays free and open. Delivery stays on R2 exactly as it is
 today ([PackagingScheme.md](PackagingScheme.md)); Patreon and Gumroad are only
 ever asked one question — **is this person entitled?**
 
-> **PARTLY BUILT 2026-08-27.** The Worker is written and tested
-> (`worker/`, 28 offline checks) and the manifest carries entitlement
-> metadata; `FNS_TimelineTools` is the first gated package. **Not deployed**, and nothing has
-> been exercised against a live gate. Status and what remains: §10.
+> **BUILT AND DEPLOYED** (banner corrected 2026-09-08). Written 2026-08-27
+> as research; the Worker went live on 2026-08-29 and the paid path was
+> walked end to end the same day ([TDXLUGateIntegration.md](TDXLUGateIntegration.md)
+> §1, [EntitlementFunnelPlan.md](EntitlementFunnelPlan.md)). At v3.1.4 six
+> packages are gated (BeatMod, Collect, MediaBrowser, PreviewPanel, Remote,
+> TimelineTools) with real tier ids; `PLACEHOLDER_TIER` survives only as a
+> test fixture. Probed 2026-09-08: `/health` answers and an unauthenticated
+> GET of a `plus/` artifact returns 401. §10 is the 2026-08-27 status, kept
+> as history.
 
 Read §2 first: one constraint decides the whole shape.
 
@@ -305,7 +310,7 @@ the project tree at all. LOPs does this (`secure_storage_windows.py` /
 strictly better than the plaintext sidecar this section originally proposed.
 
 Non-secret companions — tier label, expiry, last-checked — can sit in a
-machine-local JSON beside the store (`<userPaletteFolder>/FNStools_ext/`), so
+machine-local JSON beside the store (`<userPaletteFolder>/FNSTools/`), so
 the UI can render "your tier: X" without touching the keystore on every cook.
 Never a Patreon refresh token anywhere on the client. Never in a `.toe`, a
 `.tox`, or git.
@@ -467,7 +472,8 @@ only proof that the gate is not decorative.
 
 **Placeholder, deliberately:** `Gateurl` defaults to `https://gate.functionstore.tools`
 and `catalog.json` carries `PLACEHOLDER_TIER` for `FNS_TimelineTools`. Both
-are one-line swaps once the real tier id and hostname exist.
+are one-line swaps once the real tier id and hostname exist. *(Both swapped
+since: the hostname is live and the tier ids are real; noted 2026-09-08.)*
 
 **One design point the client forced.** Gated artifacts stay on the STORAGE
 host under `plus/`, not on the gate's hostname, so the Worker takes two

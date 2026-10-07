@@ -12,11 +12,11 @@ skill: fns-packaging
 secret. This document covers what happens **afterwards**: what gets re-checked,
 how often, and how an entitlement is supposed to end.
 
-> **BUILT, NOT DEPLOYED.** The gate is written and tested offline
-> (`worker/`, 62 checks) and is not deployed. The decisions in §1 and §2 are
-> taken; the §4 and §5 work was built 2026-08-28 (see the *Built* notes in
-> each section). All 48 packages in the current manifest are `access: free`,
-> so no user is affected by any of it yet. §2.2 and §3.1 remain open.
+> **BUILT AND DEPLOYED** (banner corrected 2026-09-08; it read "built, not
+> deployed" from 2026-08-28). The gate went live on 2026-08-29; at v3.1.4 the
+> offline suite has 91 checks and six packages are gated. The decisions in §1
+> and §2 are taken; the §4 and §5 work was built 2026-08-28 (see the *Built*
+> notes in each section). §2.2 and §3.1 remain open.
 
 ## 1. Two kinds of entitlement, deliberately different
 

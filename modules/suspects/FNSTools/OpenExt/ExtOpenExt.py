@@ -1,4 +1,5 @@
 
+
 '''Info Header Start
 Name : ExtOpenExt
 Author : Dan@DAN-4090
@@ -23,6 +24,15 @@ class ExtOpenExt:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
 		fnsLog('OpenExt: init')
+
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
 
 	def OnOpen(self):
 		_op = ui.panes.current.owner.currentChild
@@ -55,7 +65,7 @@ class ExtOpenExt:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Open extension of current')
+	@FNSCommand.fns_command(label='Open extension of current', context='current')
 	def OpenCurrentExt(self):
 		"""Open the extension code of the current COMP."""
 		self.OnOpen()

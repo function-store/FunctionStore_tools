@@ -53,7 +53,7 @@ for toe in ('FunctionStore_tools_2025_DEV.toe', 'FNS_TDDefault_2023.toe',
             'sub/dir/Anything.TOE'):
     check('withheld: %s' % toe, pp.Rule(toe, real) == 'toe')
 check('a .tox is not caught by the toe rule',
-      pp.Rule('modules/suspects/FNSTools/ColorUI.tox', real) is None)
+      pp.Rule('modules/suspects/FNSTools/FNS_ColorUI.tox', real) is None)
 
 print('3. the gated package\'s own paths are withheld by derivation')
 for path in ('FNSTools/FNS_TimelineTools/TimelineToolsExt.py',
@@ -74,16 +74,16 @@ print('5. THE claim: gate another package, its paths drop out, no code edit')
 cat_src = os.path.join(_ROOT, 'packaging', 'catalog.json')
 cat_tmp = os.path.join(tmp, 'catalog.json')
 cat = json.load(io.open(cat_src, encoding='utf-8'))
-cat['packages']['ColorUI']['access'] = '77771'
+cat['packages']['FNS_ColorUI']['access'] = '77771'
 io.open(cat_tmp, 'w', encoding='utf-8').write(json.dumps(cat))
 pp.CATALOG = cat_tmp
 gated2 = pp.GatedPackages()
-check('ColorUI now reads as gated', 'ColorUI' in gated2, gated2)
+check('FNS_ColorUI now reads as gated', 'FNS_ColorUI' in gated2, gated2)
 check('its source is withheld',
-      pp.Rule('FNSTools/ColorUI/ColorUIExt.py', gated2) == 'gated:ColorUI')
+      pp.Rule('FNSTools/FNS_ColorUI/ColorUIExt.py', gated2) == 'gated:FNS_ColorUI')
 check('its tox is withheld',
-      pp.Rule('modules/suspects/FNSTools/ColorUI.tox', gated2)
-      == 'gated:ColorUI')
+      pp.Rule('modules/suspects/FNSTools/FNS_ColorUI.tox', gated2)
+      == 'gated:FNS_ColorUI')
 check('its user-facing doc still publishes',
       pp.Rule('packaging/docs/ColorUI.md', gated2) is None)
 check('the previously gated package is unaffected',
@@ -102,6 +102,12 @@ check('the stray path is flagged', [h[0] for h in hits] == [stray], hits)
 clean = pp._unclassified(
     ['packaging/docs/FNS_TimelineTools.md', 'docs/README.md'], real)
 check('an allowed mention is not flagged', clean == [], clean)
+# Names prefix each other: ColorGenPro's own page is not ColorGen's file,
+# but a page named after no package still reads as one.
+pre = pp._unclassified(['packaging/docs/ColorGenPro.md'], ['ColorGen'])
+check('a prefixed package\'s own doc page is not flagged', pre == [], pre)
+stray = pp._unclassified(['packaging/docs/ColorGenExtra.md'], ['ColorGen'])
+check('a doc page named after no package is still flagged', len(stray) == 1, stray)
 
 print('8. sub-component names count as the tool -- they ARE its internals')
 toks = pp._tokens('FNS_TimelineTools')
@@ -120,7 +126,7 @@ for path in ('FNSTools/FNS_SecretNewTool/SecretExt.py',
           pp.Rule(path, real) == 'undeclared:FNS_SecretNewTool',
           pp.Rule(path, real))
 check('a catalogued free package still publishes',
-      pp.Rule('FNSTools/ColorUI/ColorUIExt.py', real) is None)
+      pp.Rule('FNSTools/FNS_ColorUI/ColorUIExt.py', real) is None)
 check('a merged sub-component is not mistaken for a package',
       pp.Rule('modules/suspects/FNSTools/QuickExt/ExtQuickExt.py', real)
       is None)
@@ -183,7 +189,12 @@ pp.GatedPackages = _orig_gated
 shutil.rmtree(tmp2, ignore_errors=True)
 check('release exports are withheld (the 9MB root embeds the gated tool)',
       pp.Rule('modules/release/FNSTools.tox', real) == 'declared'
-      and pp.Rule('modules/release/AltSelect.tox', real) == 'declared')
+      and pp.Rule('modules/release/FNS_AltSelect.tox', real) == 'declared')
+# briefs/ is gitignored, so a tracked brief is always an accident or a
+# force-added hand-off; either way it is a private working note
+check('a tracked brief is withheld (force-added hand-offs never publish)',
+      pp.Rule('briefs/release-handoff-2026-10-05.md', real) == 'declared'
+      and pp.Rule('briefs/picker-search-compact.md', real) == 'declared')
 # ... and the flag flips back ON for the USER: a bound install re-enables
 # savebackup so their .toe self-heals if the bound file vanishes -- there
 # the user owns both files and nothing is being smuggled anywhere
@@ -192,6 +203,101 @@ _inst = io.open(os.path.join(_ROOT, 'packaging', 'InstallerExt.py'),
 check('the installer re-enables savebackup on bound installs',
       "getattr(comp.par, 'savebackup', None)" in _inst
       and _inst.find('savebackup') > _inst.find('comp.par.enableexternaltox = True'))
+
+print('13. a package authored OUTSIDE FNSTools/ -- the root-resident shape')
+# PreviewPanel25 and FNS_CMS are authored this way, and `placement` makes
+# installing outside the toolkit a supported request, so root-resident is
+# a real layout rather than a hypothetical. Before this arm existed the
+# path rules knew only the FNSTools/ shape: a gated package here was
+# caught solely by the name sweep, which REFUSES the whole publish instead
+# of withholding one file, and an UNCLASSIFIED one was seen by nothing at
+# all -- which is how PreviewPanel25 published by accident.
+for path in ('modules/suspects/FNS_Remote.tox',
+             'modules/suspects/FNS_Remote/ui.tox',
+             'FNS_Remote/FNSRemoteExt.py'):
+    check('root-resident gated path withheld: %s' % path,
+          pp.Rule(path, real) == 'gated:FNS_Remote',
+          pp.Rule(path, real))
+check('and the toolkit shape still resolves to the same rule',
+      pp.Rule('modules/suspects/FNSTools/FNS_Remote.tox', real)
+      == 'gated:FNS_Remote')
+
+print('14. fail closed at root too: unclassified means withheld')
+check('an uncatalogued root suspect is withheld, not published',
+      pp.Rule('modules/suspects/FNS_BrandNew.tox', real)
+      == 'undeclared:FNS_BrandNew',
+      pp.Rule('modules/suspects/FNS_BrandNew.tox', real))
+check('_packageish sees the root shape',
+      pp._packageish('modules/suspects/FNS_BrandNew.tox') == 'FNS_BrandNew')
+check('a FNSTools sub-component is still NOT a package',
+      pp._packageish('modules/suspects/FNSTools/NoSuchSub/x.py') is None)
+
+print('15. the fix changed no published byte -- root scaffolding still ships')
+# Without these, the root arm would newly withhold 66 files the mirror
+# already carries. A safety fix that silently removes files from the
+# public repo is a product change wearing a safety fix's clothes.
+for name in ('FNSTools', 'FNS_CMS', 'FunctionStore_tools_2023',
+             'project1', 'private_investigator1_withmyhacks'):
+    check('grandfathered root suspect still publishes: %s' % name,
+          pp.Rule('modules/suspects/%s.tox' % name, real) is None,
+          pp.Rule('modules/suspects/%s.tox' % name, real))
+check('PreviewPanel25 stays withheld by its explicit declaration',
+      pp.Rule('modules/suspects/PreviewPanel25.tox', real) == 'declared')
+
+print('16. --only website: the site inputs publish, nothing else is touched')
+scope = pp.ONLY['website']
+splan = pp.Plan('HEAD', scope)
+spub = set(splan['published'])
+check('the landing page is in', 'website/index.html' in spub)
+check('a gated tool doc page is in (a doc is not the tool)',
+      'packaging/docs/FNS_TimelineTools.md' in spub)
+check('catalog and manifest are in',
+      {'packaging/catalog.json', 'packaging/manifest.json'} <= spub)
+check('nothing under modules/ or FNSTools/ is in',
+      not [p for p in spub if p.startswith(('modules/', 'FNSTools/'))])
+check('the scope carries no tox or toe, so the embedding guard may stand down',
+      not pp._scopeCarriesTox('HEAD', scope))
+check('a .toe under website/ would still be withheld by rule',
+      pp.Rule('website/scratch.toe', real) == 'toe')
+# Diff removes only inside the scope: a mirror file outside it is not "removed"
+_real_shas = pp._shas
+WANT = {'website/index.html': 'a'}
+HAVE = {'website/index.html': 'b', 'website/stale.html': 'c',
+        'modules/suspects/X.tox': 'd'}
+pp._shas = lambda args, cwd, idx: WANT if args[0] == 'ls-tree' else HAVE
+d = pp.Diff({'rev': 'HEAD', 'published': ['website/index.html'], 'scope': scope}, tmp)
+pp._shas = _real_shas
+check('a stale file inside the scope is removed',
+      d['removed'] == ['website/stale.html'], d)
+check('a changed file inside the scope is changed',
+      d['changed'] == ['website/index.html'], d)
+
+print('16. retired names are grandfathered, but never a gated one')
+# RETIRED_IN_MIRROR lets pre-rename files sit in the mirror unclassified so
+# a scoped publish is possible at all. That is a name-based allow, so the
+# day a gated tool takes one of those names its bytes would publish. The
+# guard has to run, not merely be commented.
+check('every retired name is free today',
+      not (set(pp.RETIRED_IN_MIRROR) & set(real)),
+      sorted(set(pp.RETIRED_IN_MIRROR) & set(real)))
+check('retired names are reachable through GRANDFATHERED',
+      all(n in pp.GRANDFATHERED for n in pp.RETIRED_IN_MIRROR))
+_clashed = False
+try:
+    pp._assertRetiredNotGated(['FNS_Remote', pp.RETIRED_IN_MIRROR[0]])
+except SystemExit:
+    _clashed = True
+check('a gated package sharing a retired name REFUSES the publish', _clashed)
+check('and the real catalog does not clash',
+      pp._assertRetiredNotGated(real) is None)
+# The reason the list exists: an old free path must stop failing closed.
+check('a retired package path publishes instead of reading undeclared',
+      pp.Rule('modules/suspects/FNSTools/AltSelect.tox', real) is None,
+      pp.Rule('modules/suspects/FNSTools/AltSelect.tox', real))
+# ...but a name nobody has classified still fails closed.
+check('an unknown package name still fails closed',
+      pp.Rule('modules/suspects/FNSTools/FNS_NotAThing.tox', real)
+      == 'undeclared:FNS_NotAThing')
 
 shutil.rmtree(tmp, ignore_errors=True)
 print()

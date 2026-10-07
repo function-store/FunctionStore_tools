@@ -28,6 +28,15 @@ class ExtParRandomizer:
 		self.ignorePages = ['About','Info','Common', 'Version Ctrl']
 		self.checkShortcutRayTK()#
 		fnsLog('ParRandomizer: init')
+
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
 	
 	@property
 	def shortcutopEval(self):
@@ -175,25 +184,25 @@ class ExtParRandomizer:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Randomize rollover par')
+	@FNSCommand.fns_command(label='Randomize rollover par', context='rollover-par')
 	def RandomizeRollover(self):
 		"""Randomize the parameter under the mouse."""
 		self.OnRandomizeRolloverPar()
 		return {'ok': True}
 
-	@FNSCommand.fns_command(label='Randomize pars of op')
+	@FNSCommand.fns_command(label='Randomize pars of op', context='current')
 	def RandomizeOp(self):
 		"""Randomize all parameters of the current operator."""
 		self.OnRandomizeOp()
 		return {'ok': True}
 
-	@FNSCommand.fns_command(label='Reset custom pars to defaults')
+	@FNSCommand.fns_command(label='Reset custom pars to defaults', context='current')
 	def ResetCustomDefaults(self):
 		"""Reset the current op's custom parameters to their defaults."""
 		self.OnResetAllCustom()
 		return {'ok': True}
 
-	@FNSCommand.fns_command(label='Save custom defaults')
+	@FNSCommand.fns_command(label='Save custom defaults', context='current')
 	def SaveCustomDefaults(self):
 		"""Store the current custom parameter values as defaults."""
 		self.SaveAllCustomDefaults()

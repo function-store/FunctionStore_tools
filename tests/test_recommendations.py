@@ -164,6 +164,68 @@ check('the editor offers Pin', 'data-pin' in html and 'pinTool' in html)
 check('changing tox_url drops the pin',
       "delete t.sha256" in html and "f === 'tox_url'" in html)
 
+print('\n9. the website post fields')
+H = 'a' * 64
+check('a full post row is valid', rec.validate(doc(row(
+    slug='thing-one', date='2026-09-25', image='thing-one.png', platform='patreon',
+    author_license='CC BY 4.0'))) == [])
+for label, kw in [('slug with capitals', {'slug': 'Thing'}),
+                  ('slug with spaces', {'slug': 'a b'}),
+                  ('date not ISO', {'date': '25/09/2026'}),
+                  ('image with a path', {'image': '../x.png'}),
+                  ('image not a picture', {'image': 'x.svg'}),
+                  ('unknown platform', {'platform': 'myspace'}),
+                  ('license essay', {'author_license': 'x' * 201})]:
+    check('refused: ' + label, len(rec.validate(doc(row(**kw)))) == 1, rec.validate(doc(row(**kw))))
+check('two rows cannot share a slug', any('slug' in p for p in rec.validate(doc(
+    row(name='A', slug='same'), row(name='B', slug='same')))))
+
+print('\n10. a tdp row names a package; nothing is pinned (owner, 2026-09-27)')
+TDP = {'package': 'tdp-QrCodeCOMP', 'module': 'tdpQrCodeCOMP', 'also': ['tdp-touchutilcollection']}
+check('a named package is valid', rec.validate(doc(row(tdp=TDP))) == [], rec.validate(doc(row(tdp=TDP))))
+check('  and is delivered as tdp', rec.delivery(row(tdp=TDP)) == 'tdp')
+check('  but is not placeable as a tox by an older updater', not rec.installable(row(tdp=TDP)))
+check('a row with neither is a link', rec.delivery(row()) == 'link')
+bad_cases = [
+    ('a lock (nothing is pinned)', dict(TDP, lock=['tdp-qrcodecomp==1.0.0 --hash=sha256:' + H])),
+    ('no package', {'module': 'tdpQrCodeCOMP'}),
+    ('a module that is not a module', dict(TDP, module='tdp-QrCode')),
+    ('a tox key with a path', dict(TDP, tox='a/b')),
+    ('also that is not a list of names', dict(TDP, also='tdp-touchutilcollection')),
+    ('an unknown field', dict(TDP, index='https://example.com')),
+]
+for label, t in bad_cases:
+    check('refused: ' + label, rec.validate(doc(row(tdp=t))) != [])
+check('a tox and a tdp on one row is refused', any('not both' in p for p in rec.validate(doc(row(
+    tdp=TDP, tox_url='https://example.com/a.tox', sha256=H, bytes=10)))))
+check('version stays forbidden as a field', rec.validate(doc(row(version='1.0'))) != [])
+pub = rec.published(doc(row(tdp=TDP, slug='qr')))
+check('published rows keep the post and tdp fields', pub['tools'][0].get('tdp') == TDP
+      and pub['tools'][0].get('slug') == 'qr')
+
+print('\n11. the CMS refuses exactly the same rows (run, not read)')
+import subprocess
+cases = ([row(slug='ok', date='2026-09-25', image='a.png', platform='github', author_license='MIT'),
+          row(tdp=TDP)]
+         + [row(**kw) for kw in ({'slug': 'Thing'}, {'date': 'x'}, {'image': 'x.svg'},
+                                 {'platform': 'x'}, {'author_license': 'x' * 201})]
+         + [row(tdp=t) for _, t in bad_cases]
+         + [row(tdp=TDP, tox_url='https://example.com/a.tox', sha256=H, bytes=10)])
+src = cms.replace('\r\n', '\n')
+start = src.index('const REC_FIELDS')
+tail = '  return bad;\n}'
+end = src.index(tail, src.index('function validateRecommends')) + len(tail)
+js = src[start:end] + (
+    '\nconst cases = JSON.parse(require("fs").readFileSync(0, "utf8"));'
+    '\nconsole.log(JSON.stringify(cases.map((r) => validateRecommends({tools: [r]}).length > 0)));')
+out = subprocess.run(['node', '-e', js], input=json.dumps(cases), capture_output=True, text=True)
+check('node ran the CMS validator', out.returncode == 0, out.stderr[-300:])
+if out.returncode == 0:
+    js_bad = json.loads(out.stdout)
+    py_bad = [rec.validate(doc(r)) != [] for r in cases]
+    check('  same verdict on every case (%d)' % len(cases), js_bad == py_bad, (js_bad, py_bad))
+    check('  and the verdicts are not all the same', True in py_bad and False in py_bad)
+
 print()
 if FAILS:
     print('%d FAILED: %s' % (len(FAILS), ', '.join(FAILS)))

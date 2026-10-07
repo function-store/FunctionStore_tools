@@ -85,7 +85,7 @@ class ExtQuickCollapse:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Collapse selected')
+	@FNSCommand.fns_command(label='Collapse selected', context='selected')
 	def CollapseSelected(self):
 		"""Collapse the selected operators into a container."""
 		self.OnCollapse()

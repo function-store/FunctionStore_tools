@@ -26,6 +26,15 @@ The rules that matter, in the order they matter:
   * URLS MUST BE https. These open in a user's browser on our say-so.
   * NAMES MUST BE UNIQUE, so a row can be removed by name and a UI can key
     on it.
+  * A PYTHON PACKAGE IS NAMED, NOT PINNED. A `tdp` row names a package on
+    PyPI, its module, and whatever it imports without declaring (`also`).
+    The latest release installs (owner, 2026-09-27: no versions to keep up
+    to date); the installer's dry run refuses one that would add a package
+    TouchDesigner ships. A `lock` is refused as an unknown field.
+
+Rows are also blog posts on the website (docs/CommunityHighlights.md): a
+`slug`, a `date`, an `image`, a `platform` and the `author_license`, with
+the write-up in website/content/community/<slug>.md.
 """
 
 import json
@@ -38,7 +47,14 @@ SCHEMA = 1
 REQUIRED = ('name', 'author', 'url')
 OPTIONAL = ('author_url', 'description', 'category', 'note',
             # Placement. Present together or not at all -- see below.
-            'tox_url', 'sha256', 'bytes', 'pinned_at')
+            'tox_url', 'sha256', 'bytes', 'pinned_at',
+            # The website post (docs/CommunityHighlights.md).
+            'slug', 'date', 'image', 'platform', 'author_license',
+            # A tox shipped as a Python package, named (latest installs).
+            'tdp',
+            # Being written: kept out of the site and out of what installs
+            # download until it is cleared.
+            'draft')
 ALLOWED = set(REQUIRED) | set(OPTIONAL)
 
 # Fields that would make a row look like one of OUR packages -- something
@@ -54,6 +70,50 @@ FORBIDDEN = ('version', 'artifact', 'requires', 'kind', 'pkgversion',
              'tox_carrier', 'seats')
 
 HEX64 = re.compile(r'^[0-9a-f]{64}$')
+SLUG = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
+DATE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+IMAGE = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*\.(?:png|jpg|jpeg|webp|gif)$')
+PLATFORMS = ('github', 'patreon', 'gumroad', 'itch', 'pypi', 'other')
+MAX_LICENSE = 200
+
+# A PyPI project name (PEP 508), a dotted module path, a tox key.
+PYPI_NAME = re.compile(r'^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$')
+MODULE = re.compile(r'^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*$')
+TOX_KEY = re.compile(r'^[A-Za-z_]\w*$')
+TDP_FIELDS = ('package', 'module', 'tox', 'also')
+
+
+def _canon(name):
+    """PEP 503 normalised name: `tdp-TauCeti` and `tdp_tauceti` are one."""
+    return re.sub(r'[-_.]+', '-', str(name)).lower()
+
+
+def delivery(row):
+    """How a user gets it: 'tdp' (a pinned Python package), 'tox' (a
+    pinned file we place) or 'link' (their page, nothing else)."""
+    if isinstance(row.get('tdp'), dict) and row['tdp'].get('package') and row['tdp'].get('module'):
+        return 'tdp'
+    return 'tox' if installable(row) else 'link'
+
+
+def _tdpProblems(where, t):
+    if not isinstance(t, dict):
+        return ['%s: tdp must be an object' % where]
+    out = []
+    for f in t:
+        if f not in TDP_FIELDS:
+            out.append('%s: tdp has an unknown field `%s`' % (where, f))
+    pkg = str(t.get('package', '')).strip()
+    if not PYPI_NAME.match(pkg):
+        out.append('%s: tdp.package must be a PyPI project name' % where)
+    if not MODULE.match(str(t.get('module', '')).strip()):
+        out.append('%s: tdp.module must be the importable module (tdpFoo)' % where)
+    if 'tox' in t and not TOX_KEY.match(str(t.get('tox', '')).strip()):
+        out.append('%s: tdp.tox must name one entry of the package\'s _ToxFiles' % where)
+    also = t.get('also', [])
+    if not isinstance(also, list) or not all(PYPI_NAME.match(str(a).strip()) for a in also):
+        out.append('%s: tdp.also must be a list of PyPI project names' % where)
+    return out
 
 
 def installable(row):
@@ -79,6 +139,56 @@ def load(repo_dir):
         return json.load(f)
 
 
+# Operator families built with TDFam (docs/CommunityHighlights.md,
+# "Built with TDFam"): a website-only list, shown on /community/#tdfam and
+# never downloaded by installs. `tool` names a row in `tools`, and the card
+# links that row's post; `ours` marks FNSTools' own family, counted from the
+# catalog at build.
+FAMILY_REQUIRED = ('name', 'author', 'url')
+FAMILY_FIELDS = ('name', 'author', 'author_url', 'url', 'description', 'ops', 'tool', 'ours')
+
+
+def _familyProblems(families, tool_names):
+    if families is None:
+        return []
+    if not isinstance(families, list):
+        return ['`families` must be a list']
+    out, seen = [], set()
+    for i, row in enumerate(families):
+        where = 'families[%d]' % i
+        if not isinstance(row, dict):
+            out.append('%s is not an object' % where)
+            continue
+        name = str(row.get('name', '')).strip()
+        if name:
+            where = '%s (%s)' % (where, name)
+        for f in FAMILY_REQUIRED:
+            if not str(row.get(f, '')).strip():
+                out.append('%s: %s is required' % (where, f))
+        for f in row:
+            if f not in FAMILY_FIELDS:
+                out.append('%s: unknown field `%s`' % (where, f))
+        url = str(row.get('url', '')).strip()
+        if url and not (url.startswith('https://') or url.startswith('/')):
+            out.append('%s: url must be https, or a page on this site (/...)' % where)
+        aurl = str(row.get('author_url', '')).strip()
+        if aurl and not aurl.startswith('https://'):
+            out.append('%s: author_url must be https' % where)
+        if 'ops' in row and (not isinstance(row['ops'], int) or isinstance(row['ops'], bool) or row['ops'] <= 0):
+            out.append('%s: ops must be a positive whole number' % where)
+        if 'ours' in row and not isinstance(row['ours'], bool):
+            out.append('%s: ours must be true or false' % where)
+        if 'tool' in row and str(row['tool']) not in tool_names:
+            out.append('%s: tool %r is not a row in tools' % (where, row['tool']))
+        if len(str(row.get('description', ''))) > MAX_DESCRIPTION:
+            out.append('%s: description is over %d characters' % (where, MAX_DESCRIPTION))
+        if name:
+            if name.casefold() in seen:
+                out.append('%s: duplicate name' % where)
+            seen.add(name.casefold())
+    return out
+
+
 def validate(doc):
     """Return a list of problems. Empty means publishable."""
     problems = []
@@ -91,6 +201,7 @@ def validate(doc):
         return problems + ['`tools` must be a list']
 
     seen = {}
+    slugs = {}
     for i, row in enumerate(tools):
         where = 'tools[%d]' % i
         if not isinstance(row, dict):
@@ -142,6 +253,31 @@ def validate(doc):
             if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
                 problems.append('%s: bytes must be a positive integer' % where)
 
+        if 'tdp' in row:
+            problems.extend(_tdpProblems(where, row.get('tdp')))
+            if str(row.get('tox_url', '')).strip():
+                problems.append('%s: a row is a tox or a tdp package, not both' % where)
+
+        slug = str(row.get('slug', '')).strip()
+        if 'slug' in row and not SLUG.match(slug):
+            problems.append('%s: slug must be lowercase words joined by hyphens' % where)
+        elif slug:
+            if slug in slugs:
+                problems.append('%s: slug %s is also tools[%d]' % (where, slug, slugs[slug]))
+            slugs[slug] = i
+        if 'date' in row and not DATE.match(str(row.get('date', ''))):
+            problems.append('%s: date must be YYYY-MM-DD' % where)
+        if 'image' in row and not IMAGE.match(str(row.get('image', ''))):
+            problems.append('%s: image must be a file name in website/content/'
+                            'community/images (png, jpg, webp, gif)' % where)
+        if 'platform' in row and row.get('platform') not in PLATFORMS:
+            problems.append('%s: platform must be one of %s' % (where, ', '.join(PLATFORMS)))
+        if 'draft' in row and not isinstance(row.get('draft'), bool):
+            problems.append('%s: draft must be true or false' % where)
+        if len(str(row.get('author_license', ''))) > MAX_LICENSE:
+            problems.append('%s: author_license is over %d characters; link to it instead'
+                            % (where, MAX_LICENSE))
+
         desc = str(row.get('description', ''))
         if len(desc) > MAX_DESCRIPTION:
             problems.append('%s: description is %d chars, max %d'
@@ -153,6 +289,8 @@ def validate(doc):
                                 % (where, seen[name.casefold()]))
             else:
                 seen[name.casefold()] = i
+    problems.extend(_familyProblems(doc.get('families'),
+                                    {str(t.get('name', '')) for t in tools if isinstance(t, dict)}))
     return problems
 
 
@@ -160,12 +298,13 @@ def published(doc):
     """What actually goes in the bucket: the curated rows and nothing else.
 
     The `_comment` block is for whoever edits the file and has no business
-    being downloaded by every install on every check."""
+    being downloaded by every install on every check. A `draft` row is not
+    published at all: it is still being written."""
     return {
         'schema': SCHEMA,
         'intro': str(doc.get('intro', '')),
-        'tools': [{k: v for k, v in row.items() if k in ALLOWED}
-                  for row in doc.get('tools', [])],
+        'tools': [{k: v for k, v in row.items() if k in ALLOWED and k != 'draft'}
+                  for row in doc.get('tools', []) if row.get('draft') is not True],
     }
 
 
@@ -183,6 +322,6 @@ if __name__ == '__main__':
             print('  ' + b)
         sys.exit(1)
     tools = doc.get('tools', [])
-    n = sum(1 for t in tools if installable(t))
-    print('recommendations.json valid -- %d tool(s), %d placeable, %d link-only'
-          % (len(tools), n, len(tools) - n))
+    kinds = [delivery(t) for t in tools]
+    print('recommendations.json valid -- %d tool(s): %d tox, %d tdp, %d link-only'
+          % (len(tools), kinds.count('tox'), kinds.count('tdp'), kinds.count('link')))

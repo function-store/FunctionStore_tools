@@ -41,6 +41,7 @@ or unknown to the manifest.
     python scripts/publish_public.py --target ../DIR   # explicit checkout
     python scripts/publish_public.py --local           # commit locally only
     python scripts/publish_public.py --push            # commit and publish
+    python scripts/publish_public.py --only website --push   # the site's inputs only
 
 Dry run is the default and prints every exclusion with the rule that
 produced it. Nothing is written without --push.
@@ -63,14 +64,54 @@ BRANCH = 'dev25'
 # refused: publishing into the wrong checkout is unrecoverable.
 PUBLIC_SLUG = 'function-store/FunctionStore_tools'
 
+# --only presets: a NAMED subset of the mirror, for a publish that must not
+# carry everything else that changed since the last one (the site after a
+# docs pass, while tool work is still landing). Every rule above still
+# applies inside the subset; outside it the mirror is left exactly as it
+# is -- untouched, never removed. A directory ends in '/', a file does not.
+ONLY = {
+    # everything website/tools/build-site.mjs reads, and the site itself
+    'website': ('website/', 'packaging/docs/', 'packaging/configurator/',
+                'icons/', 'packaging/catalog.json',
+                'packaging/manifest.json', 'packaging/parameters.json',
+                'packaging/recommendations.json'),
+}
+
+
+def _inScope(path, scope):
+    return any(path == p.rstrip('/') or path.startswith(p) for p in scope)
+
+
+def _scopeCarriesTox(rev, scope):
+    """Whether any tracked path inside `scope` is a .tox or .toe -- read
+    from the tree, so a preset can never merely claim to be binary-free."""
+    for path in _git('ls-tree', '-r', '--name-only', rev).split('\n'):
+        path = path.strip()
+        if path and _inScope(path, scope) and path.lower().endswith(('.tox', '.toe')):
+            return True
+    return False
+
 # Paths that belong to a gated package but carry no package name, so no
 # derivation can find them. Each one is a deliberate decision; the sweep
 # in _unclassified() refuses the run when a new candidate appears.
 DECLARED_PRIVATE = (
+    'docs/RealRampRework.md',       # an internal rework plan, like the contracts below
     'docs/TimelineToolsContract.md',
     'docs/MarkersToolContract.md',
     'docs/TimelineBackgroundContract.md',
     'docs/WaveformToolContract.md',
+    # FNS_Keyframer lives UNDER FNS_TimelineTools, so its contract is the
+    # same shape as the four above and withheld for the same reason; it is
+    # listed separately only because it was written later.
+    'docs/KeyframerContract.md',
+    # The design of a Base-gated tool: 750 lines of how FNS_BeatMod's
+    # modulators are built. Naming the tool publicly is fine, handing over
+    # its construction is not.
+    'docs/BeatModDesign.md',
+    # Phone-remote followups. Mixed subject (some navbar), but the parts
+    # that matter are FNS_Remote's internals and its open build decisions,
+    # and a doc is withheld whole or not at all.
+    'docs/RemoteAndNavbarFollowups.md',
     # Sample EDL/CSV/XML marker files -- fixtures for the gated tool's
     # importer. No published test reads them.
     'tests/fixtures/markers/README.md',
@@ -102,6 +143,19 @@ DECLARED_PRIVATE_PREFIXES = (
     # 65c758e; withheld here so a stray re-track can never publish, and
     # so the next publish DELETES the copies the mirror already carries.
     'modules/release/',
+    # Task briefs and hand-off notes: session-local working notes about
+    # release machinery, machine state and unreleased work. briefs/ is
+    # gitignored, so no rule here was ever needed -- until a hand-off for
+    # the next release machine was force-added to travel through git
+    # (2026-10-05) and the dry run listed it as published. A brief that is
+    # ever tracked, on purpose or by a stray `git add -f`, stays private.
+    'briefs/',
+    # The agent doctrine: how this repo is worked on with AI sessions.
+    # Tracked privately since 2026-09-01; kept out of the public repo by
+    # the owner's decision (2026-10-06), skills included.
+    'CLAUDE.md',
+    'AGENTS.md',
+    '.claude/',
 )
 
 # Paths whose NAME collides with a gated package but which belong to a
@@ -119,20 +173,44 @@ DECLARED_PRIVATE_PREFIXES = (
 NAME_COLLISIONS = (
     'modules/suspects/FNSTools/FNS_Updater/github_remote.tox',
     'modules/suspects/FNSTools/FNS_Updater/github_remote/githubRemote.py',
+    # "Markers" is one of FNS_TimelineTools' sub-toxes, and this test is
+    # about Private Investigator's markers (pi_suspect, FNS_externalized,
+    # Vcoriginal) in released artifacts. Checked: no reference to
+    # TimelineTools, FNS_Markers or Waveform anywhere in it.
+    'tests/test_release_markers.py',
 )
 
 
 # Paths that legitimately carry a gated package's name and still publish:
 # the public catalogue and the tool's own user-facing doc page (the site
 # build hard-fails without it, and a Plus tool having a docs page is the
-# point).
+# point) -- plus the glyph rendered for whatever that tool puts on a bar,
+# which is part of the same page. No gated package draws one TODAY, so this
+# arm is unexercised until one gains a toolbar button; without it, the day
+# that happens the sweep fails a release for a picture of an icon.
 def _nameAllowed(path, name):
     return path in NAME_COLLISIONS or path in (
         'packaging/catalog.json',
         'packaging/manifest.json',
         'packaging/release.json',
         'packaging/docs/%s.md' % name,
-    )
+    ) or path.startswith('packaging/docs/surface-icons/%s-' % name) \
+      or _isOwnDocPage(path)
+
+
+def _isOwnDocPage(path):
+    """A catalogued package's own doc page, whichever package it is.
+
+    Package names can prefix each other (ColorGen / ColorGenPro), so the
+    name sweep would read packaging/docs/ColorGenPro.md as ColorGen's file.
+    A doc page named after a package in the catalog belongs to that package,
+    and a package's doc page publishes whatever its access.
+    """
+    head, tail = 'packaging/docs/', '.md'
+    if not (path.startswith(head) and path.endswith(tail)):
+        return False
+    stem = path[len(head):-len(tail)]
+    return '/' not in stem and stem in KnownPackages()
 
 
 # Package-shaped paths that predate the catalog: legacy registry names,
@@ -145,15 +223,80 @@ GRANDFATHERED = (
     'FNS_UISkin', 'MainMenuRegistry', 'NavbarRegistry', 'Olib_Browser1',
     'OpMenuRegistry', 'PaneTypeRegistry', 'ToolbarRegistry', 'UPDATER',
     'op_store_mod',
+    # Root-level suspects that already publish. Added when _packageish()
+    # grew its root arm (below): without them that arm would have newly
+    # withheld 66 files that the mirror carries today, which would be a
+    # silent product change smuggled in behind a safety fix. Each is dev
+    # scaffolding or the toolkit's own carrier, not a package:
+    #   FNSTools                          the root toolkit tox itself --
+    #     publishes by design, and EmbeddedGated() is what keeps a gated
+    #     package from riding inside it
+    #   FunctionStore_tools_2023          the previous-generation project
+    #   project1 / private_investigator1_withmyhacks   dev shells
+    #   FNS_CMS                           the release console. Publishes
+    #     today and is left publishing here; whether it SHOULD is a
+    #     separate call, since it is internal release machinery rather
+    #     than a tool anyone installs.
+    'FNSTools', 'FNS_CMS', 'FunctionStore_tools_2023',
+    'private_investigator1_withmyhacks', 'project1',
 )
+
+# Package names that no longer exist here but are STILL IN THE PUBLIC
+# MIRROR, left by the FNS_ rename that shipped in v3.2.0. The mirror keeps
+# them until a FULL publish removes them; a scoped publish (--only) cannot,
+# because they lie outside every scope. Without this list the final
+# mirror-scan refuses every scoped publish, since _packageish() sees a
+# package-shaped path whose name no catalog claims and fails closed.
+#
+# Every one is a FREE tool that was renamed, verified against the catalog
+# when this list was written. They are NOT gated bytes, and
+# _assertRetiredNotGated() below re-checks that on every run so this list
+# can never become the hole a gated tool slips through.
+RETIRED_IN_MIRROR = (
+    'AltSelect', 'AutoCombine', 'AutoRes', 'BorderlessTD', 'ColorUI',
+    'CustomParTools', 'ExprHotStrings', 'FNS_Navbar', 'FNS_OpMenu',
+    'FNS_Toolbar', 'GlobalOutSelect', 'GlobalVolControl', 'HydroHomie',
+    'MISC', 'OUTPUT', 'OpTemplates', 'OpToClipboard', 'OpenExt',
+    'ParOPDrop', 'ParRandomizer', 'QuickCollapse', 'QuickPane',
+    'QuickTime', 'ResetPLS1', 'SetSmoothness', 'SwapOps', 'SwitchOPs',
+    'TDX_SearchPalette', 'VSCodeTools', 'paste_from_clipboard',
+)
+
+GRANDFATHERED = GRANDFATHERED + RETIRED_IN_MIRROR
+
+
+def _assertRetiredNotGated(gated):
+    """A retired name must never be a gated package's name.
+
+    RETIRED_IN_MIRROR exists to let old free files sit in the mirror
+    unclassified. If a gated tool ever took one of those names -- reused,
+    or renamed onto it -- the name would be grandfathered and its bytes
+    would publish. Checked on every run rather than trusted to the comment
+    above, because the list is static and the catalog is not.
+    """
+    clash = sorted(set(gated) & set(RETIRED_IN_MIRROR))
+    if clash:
+        raise SystemExit(
+            'REFUSED -- gated package(s) share a RETIRED_IN_MIRROR name, '
+            'which would grandfather paid bytes into the mirror: %s'
+            % ', '.join(clash))
 
 
 def _packageish(path):
     """The package name a path belongs to, or None if it is not one.
 
-    Two shapes carry package source: the externalized python under
-    FNSTools/<Name>/, and the suspect tox (plus its sub-tox folder) under
-    modules/suspects/FNSTools/.
+    Three shapes carry package source: the externalized python under
+    FNSTools/<Name>/, the suspect tox (plus its sub-tox folder) under
+    modules/suspects/FNSTools/, and a ROOT-level suspect tox for a package
+    authored outside the toolkit.
+
+    The root arm exists because its absence already leaked: PreviewPanel25
+    published by accident (see DECLARED_PRIVATE_PREFIXES) precisely because
+    a root-level suspect was not package-shaped to this function, so the
+    fail-closed sweep never examined it. Gated packages are withheld by
+    _gatedPrefixes above; this arm catches the OTHER half -- a tool nobody
+    has classified yet, which must not publish until catalog.json says it
+    is free.
     """
     parts = path.split('/')
     if len(parts) > 2 and parts[0] == 'FNSTools':
@@ -169,6 +312,14 @@ def _packageish(path):
         if os.path.exists(os.path.join(
                 REPO, 'modules', 'suspects', 'FNSTools', tail + '.tox')):
             return tail
+        return None
+    if len(parts) > 2 and parts[:2] == ['modules', 'suspects']:
+        tail = parts[2]
+        if tail.lower().endswith('.tox'):
+            return tail[:-4]
+        if os.path.exists(os.path.join(
+                REPO, 'modules', 'suspects', tail + '.tox')):
+            return tail
     return None
 
 
@@ -179,14 +330,43 @@ def _git(*args, **kw):
 
 
 def GatedPackages():
-    """Package names catalog.json marks non-free. The single source."""
+    """Package names catalog.json marks non-free, PLUS every variant master
+    (`variants.<vid>.source`, docs/TierVariants.md): a Pro master is a
+    gated tree under its own name that no catalog entry names directly, so
+    it is listed here on purpose, not left to fail-closed. The single
+    source."""
     cat = json.load(io.open(CATALOG, encoding='utf-8'))
     pk = cat.get('packages', cat)
     out = []
     for name, meta in sorted(pk.items()):
         access = str((meta or {}).get('access', 'free') or 'free')
-        if access != 'free':
+        # a preview (docs/PreviewPackages.md) is unreleased, so its tree is
+        # withheld like a gated one until the flag is cleared
+        if access != 'free' or (meta or {}).get('preview') is True:
             out.append(name)
+        for vid, block in sorted(((meta or {}).get('variants') or {}).items()):
+            src = str((block or {}).get('source', '') or '').strip()
+            if src and src not in out:
+                out.append(src)
+    return out
+
+
+def GatedFiles():
+    """Source files a variant build alone may hold (`variants.<vid>.withhold`):
+    when a FREE Base and a paid variant share one master, the variant's own
+    files publish with the Base tree unless named here. Repo-relative, in
+    both layouts."""
+    cat = json.load(io.open(CATALOG, encoding='utf-8'))
+    pk = cat.get('packages', cat)
+    out = set()
+    for name, meta in pk.items():
+        for vid, block in ((meta or {}).get('variants') or {}).items():
+            for f in ((block or {}).get('withhold') or []):
+                f = str(f).strip().lstrip('/')
+                if not f:
+                    continue
+                out.add('modules/suspects/FNSTools/%s/%s' % (name, f))
+                out.add('FNSTools/%s/%s' % (name, f))
     return out
 
 
@@ -235,12 +415,24 @@ def EmbeddedGated():
 
 
 def _gatedPrefixes(name):
-    """The standard on-disk layout of one package."""
+    """The on-disk layouts of one package: under FNSTools, and at root.
+
+    Root-resident is a real shape, not a hypothetical -- PreviewPanel25 and
+    FNS_CMS are authored that way, and `placement` lets a package ask to
+    install outside the toolkit. A gated package authored there was caught
+    only by the name sweep in _unclassified(), which REFUSES the publish
+    rather than withholding the file. Refusing is a safe failure but a
+    useless one: the operator's only move is to hand-add a DECLARED_PRIVATE
+    entry, which is the hand-kept list this module exists to avoid.
+    """
     return (
         'FNSTools/%s/' % name,
         'modules/suspects/FNSTools/%s/' % name,
+        '%s/' % name,
+        'modules/suspects/%s/' % name,
     ), (
         'modules/suspects/FNSTools/%s.tox' % name,
+        'modules/suspects/%s.tox' % name,
     )
 
 
@@ -257,6 +449,8 @@ def Rule(path, gated):
         prefixes, exacts = _gatedPrefixes(name)
         if path in exacts or any(path.startswith(p) for p in prefixes):
             return 'gated:%s' % name
+    if path in GatedFiles():
+        return 'gated-file:%s' % path.rsplit('/', 1)[-1]
     # Fail closed: package-shaped and undeclared means nobody has decided
     # whether it is free. Withhold until catalog.json says.
     pkg = _packageish(path)
@@ -305,11 +499,15 @@ def _unclassified(published, gated):
     return hits
 
 
-def Plan(rev='HEAD'):
-    """What one publish would contain, withhold, and flag."""
+def Plan(rev='HEAD', scope=None):
+    """What one publish would contain, withhold, and flag. With `scope`
+    (an ONLY preset) only the paths inside it are considered at all."""
     gated = GatedPackages()
+    _assertRetiredNotGated(gated)
     tracked = [p for p in _git('ls-tree', '-r', '--name-only', rev).split('\n')
                if p.strip()]
+    if scope:
+        tracked = [p for p in tracked if _inScope(p, scope)]
     published, withheld = [], []
     for path in tracked:
         rule = Rule(path, gated)
@@ -321,6 +519,7 @@ def Plan(rev='HEAD'):
         'published': published,
         'withheld': withheld,
         'unclassified': _unclassified(published, gated),
+        'scope': scope,
     }
 
 
@@ -349,6 +548,8 @@ def Diff(plan, target):
     want = _shas(('ls-tree', '-r', plan['rev']), REPO, 2)
     want = {k: v for k, v in want.items() if k in set(plan['published'])}
     have = _shas(('ls-files', '-s'), target, 1)
+    if plan.get('scope'):
+        have = {k: v for k, v in have.items() if _inScope(k, plan['scope'])}
     return {
         'added': sorted(p for p in want if p not in have),
         'changed': sorted(p for p in want if p in have and have[p] != want[p]),
@@ -372,8 +573,9 @@ def _targetOk(target):
     return None
 
 
-def _materialize(rev, published, target):
-    """Write the published set into target, and delete what left it."""
+def _materialize(rev, published, target, scope=None):
+    """Write the published set into target, and delete what left it --
+    inside `scope` only, when there is one."""
     keep = set(published)
     tar = subprocess.Popen(('git', 'archive', '--format=tar', rev),
                            cwd=REPO, stdout=subprocess.PIPE)
@@ -394,7 +596,7 @@ def _materialize(rev, published, target):
     removed = []
     for path in _git('ls-files', cwd=target).split('\n'):
         path = path.strip()
-        if path and path not in keep:
+        if path and path not in keep and (scope is None or _inScope(path, scope)):
             full = os.path.join(target, path.replace('/', os.sep))
             if os.path.exists(full):
                 os.remove(full)
@@ -425,6 +627,9 @@ def main(argv=None):
                     help='write and commit into the mirror checkout, but do '
                          'NOT push -- so the commit can be inspected before '
                          'it reaches the world. Push it yourself afterwards.')
+    ap.add_argument('--only', choices=sorted(ONLY), metavar='PRESET',
+                    help='publish one named subset of the mirror and leave '
+                         'the rest of it untouched: ' + ', '.join(sorted(ONLY)))
     ap.add_argument('--check-rev', metavar='REV',
                     help='exit non-zero when the tree at REV holds ANY '
                          'withheld path. This is what the pre-push hook '
@@ -434,7 +639,12 @@ def main(argv=None):
     # The embedding guard runs in EVERY mode, the hook's included: a
     # root-carried gated package taints modules/suspects/FNSTools.tox
     # itself, which no per-path rule can withhold.
-    embedded, unknown = EmbeddedGated()
+    scope = ONLY[args.only] if args.only else None
+    # A scoped publish that carries no tox at all cannot embed gated bytes
+    # (the guard exists because the root tox does), so only then does the
+    # guard stand down -- decided from the tree, never from the preset.
+    guard = scope is None or _scopeCarriesTox(args.rev, scope)
+    embedded, unknown = EmbeddedGated() if guard else ([], [])
     if embedded or unknown:
         if embedded:
             print('REFUSED -- gated package(s) whose bytes ride the '
@@ -463,10 +673,13 @@ def main(argv=None):
               'scripts/publish_public.py, never by pushing this history.')
         return 2
 
-    plan = Plan(args.rev)
+    plan = Plan(args.rev, scope)
     gated = plan['gated']
 
     print('publishing %s' % plan['rev'][:12])
+    if scope:
+        print('scope: --only %s (%s); the rest of the mirror is untouched'
+              % (args.only, ', '.join(scope)))
     print('gated packages (from catalog.json): %s'
           % (', '.join(gated) or 'none'))
     print()
@@ -528,7 +741,7 @@ def main(argv=None):
               ' publishing over it would silently revert their change.')
         return 2
 
-    written, removed = _materialize(args.rev, plan['published'], args.target)
+    written, removed = _materialize(args.rev, plan['published'], args.target, scope)
     # Stage FIRST: `git ls-files` reads the INDEX, so a file deleted from
     # the working tree still lists until that deletion is staged.
     # Asserting before this reports every correct removal as a leak.
@@ -572,11 +785,13 @@ def main(argv=None):
     else:
         shown = ', '.join(areas[:4]) + (', ...' if len(areas) > 4 else '')
         subject = 'Update %s' % shown
+    scope_note = ('Scope: --only %s; the rest of the mirror is untouched.\n'
+                  % args.only) if args.only else ''
     msg = ('%s\n\n%d file(s) changed across %s.\n\n'
            'Generated by scripts/publish_public.py from private commit '
-           '%s.\nWithheld: %d paths (the script carries the rules).\n'
+           '%s.\nWithheld: %d paths (the script carries the rules).\n%s'
            % (subject, len(changed), ', '.join(areas),
-              plan['rev'][:12], len(plan['withheld'])))
+              plan['rev'][:12], len(plan['withheld']), scope_note))
     _git('commit', '-m', msg, cwd=args.target)
     if not args.push:
         sha = _git('rev-parse', '--short', 'HEAD', cwd=args.target).strip()

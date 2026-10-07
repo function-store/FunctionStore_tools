@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : opmenu_callbacks
+Author : Dan@DAN-4090
+Saveorigin : FNSTools_PRIV.toe
+Saveversion : 2025.33070
+Info Header End'''
 """IOFilter's contributions to TD's Insert Operator dialog.
 
 Published through the OpMenuRegistry host next to this DAT. What the legacy

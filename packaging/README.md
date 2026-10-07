@@ -269,8 +269,10 @@ Install('packaging/example-selection.json', target=t.path)
 
 ## The bucket
 
-Distribution is **buckets and manifests only** — native `.exe`/`.dmg`
-installers are the bootstrap, and there is no GitHub-based update flow.
+Distribution is **buckets and manifests only** — the one-drop `FNSTools.tox`
+is the bootstrap (native `.exe`/`.dmg` installers are deferred, see
+`docs/NativeInstallerDecision.md`; corrected 2026-09-08), and there is no
+GitHub-based update flow.
 The bucket is the single source of truth for what exists and what the
 bytes are; `base_url` in the manifest says where to fetch. `Stage()`
 (see [RELEASING.md](RELEASING.md)) lays out `packaging/publish/` to
@@ -330,7 +332,7 @@ motions, deliberately separate (design record:
 `ConfiguratorDistribution.md` §4.2):
 
 - **Refresh Store** — fetch `<Base URL>/manifest.json` and every artifact
-  whose bytes differ into `<user palette>/FNStools_ext/store/`.
+  whose bytes differ into `<user palette>/FNSTools/store/`.
   Machine-wide; touches no project.
 - **Check for Updates** / **Update This Project** — compare the open
   project's `installed` table (package → the sha256 it was installed from)
@@ -380,7 +382,7 @@ project's copies its own, which is what lets one project hold a modified
 package without affecting the others.
 
 Settings are not in the `.tox` — they live in
-`<palette>/FNStools_ext/config/FNStools_config.json`, and each tool's
+`<palette>/FNSTools/config/FNStools_config.json`, and each tool's
 ConfigRegistry host re-applies its section when it re-registers after the
 reload. Rewriting a package cannot lose them.
 

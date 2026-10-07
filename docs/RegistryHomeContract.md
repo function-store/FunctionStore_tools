@@ -134,7 +134,12 @@ census in the recipe below after any bulk registry work.
 in the **TDXLPP** repo
 (`utility/TDXLauncherUtility/FNS_CommandRegistry/FNSCommandRegistryExt.py`,
 its own Envoy on port 9879) and it reaches this project only through
-`../TDXLPP/release/TDXLauncherUtility.tox`. It carries a hand-ported copy of
+`../TDXLPP/release/TDXLauncherUtility.tox`. **Corrected 2026-09-08:** the
+source now lives here
+(`modules/suspects/FNSTools/FNS_CommandRegistry/FNSCommandRegistryExt.py`), it
+ships as the `FNS_CommandRegistry` store package, and the launcher mirrors the
+released artifact (`packaging/launcher_mirror.json`); the promotion shape and
+the C1–C6 duty are unchanged. It carries a hand-ported copy of
 the same shape — `SYS_HOME`, `_sysHome(create=False)`, and the same
 relocate-if-parked rule — so it lands in the same home. **A source edit there
 does nothing here until TDXLPP re-releases its tox**; `Repromote()` is its

@@ -1,4 +1,5 @@
 
+
 '''Info Header Start
 Name : NoNode
 Author : Dan@DAN-4090
@@ -190,6 +191,22 @@ class NoNode:
     ALL_EXECS: list[DAT] = CHOP_EXECS + DAT_EXECS + PAR_EXECS + [KEYBOARD_EXEC]
     EXT_OWNER_COMP: COMP = None
 
+    # --- operator identity across network edits ------------------------------
+    # An OP's hash follows its PATH. Renaming an operator -- or ANY of its
+    # ancestors -- therefore changes the hash of a key already stored in a
+    # dict, stranding the entry in the wrong bucket: still present, still
+    # EQUAL to the key, simply unreachable by lookup. Every registry below is
+    # keyed by live OPs (the exec DATs' target parameters are literally
+    # `list(<registry>.keys())`), so the shapes are kept exactly as they are
+    # and the LOOKUPS are made tolerant instead.
+    #
+    # A MOVE is a different failure: TD destroys the operator and creates a
+    # new one, so neither the reference nor the id survives, and the exec DAT
+    # stops watching anything. Tags DO travel with a move, so a token stamped
+    # at registration is the only durable handle back. See Heal().
+    NONODE_TAG_PREFIX = 'nonode:'
+    WATCH_TOKENS: dict = {}
+
     @classmethod
     def Init(cls, ownerComp, enable_chopexec: bool = True, enable_datexec: bool = True, enable_parexec: bool = True, 
              enable_keyboard_shortcuts: bool = True) -> None:
@@ -292,18 +309,23 @@ class NoNode:
             # Or with comma and/or whitespace separated channels:
             NoNode.RegisterChopExec(ChopExecType.VALUE_CHANGE, op('constant1'), 'chan1, chan2 chan3,chan4', my_callback)
         """
+        cls.Heal()
         if event_type not in cls.CHOPEXEC_CALLBACKS.getRaw():
             cls.CHOPEXEC_CALLBACKS.setItem(event_type, {}, raw=True)
 
         current_callbacks = cls.CHOPEXEC_CALLBACKS.getDependency(event_type)
-        if chop not in current_callbacks.val:
-            current_callbacks.val[chop] = {}
+        # reach a stranded entry rather than adding a second key for the same
+        # operator -- two keys would make the exec DAT watch it twice
+        entry = cls._entryFor(current_callbacks.val, chop)
+        if entry is None:
+            entry = {}
+            current_callbacks.val[chop] = entry
             cls.__markOperatorAsWatched(chop)
 
         if isinstance(channels, str):
             channels = re.split(r'[,\s]+', channels.strip())
         for channel in channels:
-            current_callbacks.val[chop][channel] = callback
+            entry[channel] = callback
         cls.CHOPEXEC_CALLBACKS.setItem(event_type, current_callbacks)
 
         # Enable the appropriate docked operator based on the event type
@@ -326,11 +348,12 @@ class NoNode:
             
             NoNode.RegisterDatExec(DatExecType.SizeChange, op('table1'), my_callback)
         """
+        cls.Heal()
         if event_type not in cls.DATEXEC_CALLBACKS.getRaw():
             cls.DATEXEC_CALLBACKS.setItem(event_type, {}, raw=True)
 
         current_callbacks = cls.DATEXEC_CALLBACKS.getDependency(event_type)
-        if dat not in current_callbacks.val:
+        if cls._entryFor(current_callbacks.val, dat) is None:
             current_callbacks.val[dat] = callback
             cls.__markOperatorAsWatched(dat)
         cls.DATEXEC_CALLBACKS.setItem(event_type, current_callbacks)
@@ -349,35 +372,41 @@ class NoNode:
             chop (CHOP, optional): The CHOP operator to deregister the callback for. If None, deregisters all CHOPs for the event type.
             channels (Union[str, List[str]], optional): The channel(s) to deregister. Can be a string (single channel, comma/space-separated list, or wildcard pattern) or a list of strings. If None, deregisters all channels for the specified CHOP.
         """
-        if event_type in cls.CHOPEXEC_CALLBACKS:
-            if chop is None:
-                for registered_chop in cls.CHOPEXEC_CALLBACKS[event_type]:
-                    cls.__checkAndResetOperatorColor(registered_chop)
-                del cls.CHOPEXEC_CALLBACKS[event_type]
-            elif chop in cls.CHOPEXEC_CALLBACKS[event_type]:
+        if event_type not in cls.CHOPEXEC_CALLBACKS.getRaw():
+            return
+        inner = cls._raw(cls.CHOPEXEC_CALLBACKS.getRaw()[event_type])
+
+        if chop is None:
+            for registered_chop in list(inner.keys()):
+                cls.__checkAndResetOperatorColor(registered_chop)
+            del cls.CHOPEXEC_CALLBACKS[event_type]
+        else:
+            entry = cls._entryFor(inner, chop)
+            if entry is not None:
                 if channels is None:
-                    del cls.CHOPEXEC_CALLBACKS[event_type][chop]
-                    cls.__checkAndResetOperatorColor(chop)
+                    entry.clear()
                 else:
                     if isinstance(channels, str):
                         channels = re.split(r'[,\s]+', channels.strip())
                     for channel in channels:
-                        for registered_channel in list(cls.CHOPEXEC_CALLBACKS[event_type][chop].keys()):
+                        for registered_channel in list(entry.keys()):
                             if channel == '*' or tdu.match(channel, [registered_channel]):
-                                del cls.CHOPEXEC_CALLBACKS[event_type][chop][registered_channel]
-                
-                if not cls.CHOPEXEC_CALLBACKS[event_type][chop]:
-                    del cls.CHOPEXEC_CALLBACKS[event_type][chop]
+                                del entry[registered_channel]
+                if not entry:
+                    cls.CHOPEXEC_CALLBACKS.setItem(event_type,
+                                                   cls._withoutKey(inner, chop))
                     cls.__checkAndResetOperatorColor(chop)
-            
-            if not cls.CHOPEXEC_CALLBACKS[event_type]:
-                del cls.CHOPEXEC_CALLBACKS[event_type]
-            # check if there are any callbacks left for this event type if not disable the operator
-            if event_type in cls.CHOPEXEC_CALLBACKS:
-                for chop in cls.CHOPEXEC_CALLBACKS[event_type]:
-                    if cls.CHOPEXEC_CALLBACKS[event_type][chop]:
-                        return
-                cls.DisableChopExec(event_type)
+
+        raw = cls.CHOPEXEC_CALLBACKS.getRaw()
+        if event_type in raw and not raw[event_type]:
+            del cls.CHOPEXEC_CALLBACKS[event_type]
+        # nothing left registered for this event type -> stop the exec DAT
+        raw = cls.CHOPEXEC_CALLBACKS.getRaw()
+        if event_type in raw:
+            for registered in raw[event_type].values():
+                if registered:
+                    return
+        cls.DisableChopExec(event_type)
 
     @classmethod
     def DeregisterDatExec(cls, event_type: DatExecType, dat: DAT = None) -> None:
@@ -388,24 +417,30 @@ class NoNode:
             event_type (DatExecType): The event type to deregister.
             dat (DAT, optional): The DAT operator to deregister the callback for. If None, deregisters all DATs for the event type.
         """
-        if event_type in cls.DATEXEC_CALLBACKS:
-            if dat is None:
-                for registered_dat in cls.DATEXEC_CALLBACKS[event_type]:
-                    cls.__checkAndResetOperatorColor(registered_dat)
-                del cls.DATEXEC_CALLBACKS[event_type]
-            elif dat in cls.DATEXEC_CALLBACKS[event_type]:
-                del cls.DATEXEC_CALLBACKS[event_type][dat]
-                cls.__checkAndResetOperatorColor(dat)
-            
-            if not cls.DATEXEC_CALLBACKS[event_type]:
-                del cls.DATEXEC_CALLBACKS[event_type]
-                cls.DisableDatExec(event_type)
+        if event_type not in cls.DATEXEC_CALLBACKS.getRaw():
+            return
+        inner = cls._raw(cls.DATEXEC_CALLBACKS.getRaw()[event_type])
+
+        if dat is None:
+            for registered_dat in list(inner.keys()):
+                cls.__checkAndResetOperatorColor(registered_dat)
+            del cls.DATEXEC_CALLBACKS[event_type]
+        elif cls._entryFor(inner, dat) is not None:
+            cls.DATEXEC_CALLBACKS.setItem(event_type, cls._withoutKey(inner, dat))
+            cls.__checkAndResetOperatorColor(dat)
+
+        raw = cls.DATEXEC_CALLBACKS.getRaw()
+        if event_type in raw and not raw[event_type]:
+            del cls.DATEXEC_CALLBACKS[event_type]
+        if not cls.DATEXEC_CALLBACKS.getRaw().get(event_type):
+            cls.DisableDatExec(event_type)
 
     @classmethod
     def OnChopExec(cls, event_type: ChopExecType, channel: Channel, sampleIndex: int, val: float, prev: float) -> None:
         """Handle chopExec events."""
         if not cls.CHOPEXEC_IS_ENABLED:
             return
+        cls.Heal()
 
         def execute_callback(callback):
             arg_count = callback.__code__.co_argcount
@@ -423,7 +458,7 @@ class NoNode:
 
         # execute the callback for the channel if it matches the event type
         if event_type in cls.CHOPEXEC_CALLBACKS:
-            callbacks = cls.CHOPEXEC_CALLBACKS[event_type].get(chop, {})
+            callbacks = cls._entryFor(cls.CHOPEXEC_CALLBACKS[event_type], chop) or {}
             executed_callbacks = set() # to avoid executing the same callback multiple times for the same channel
             for ch, callback in callbacks.items():
                 channel_names = ch.split() if ch != '*' else ['*']
@@ -438,9 +473,12 @@ class NoNode:
         """Handle datExec events."""
         if not cls.DATEXEC_IS_ENABLED:
             return
+        cls.Heal()
 
-        if event_type in cls.DATEXEC_CALLBACKS and dat in cls.DATEXEC_CALLBACKS[event_type]:
-            callback = cls.DATEXEC_CALLBACKS[event_type][dat]
+        callback = None
+        if event_type in cls.DATEXEC_CALLBACKS:
+            callback = cls._entryFor(cls.DATEXEC_CALLBACKS[event_type], dat)
+        if callback:
             arg_count = callback.__code__.co_argcount
             if arg_count == 1:
                 callback()
@@ -498,20 +536,375 @@ class NoNode:
             cls.KEYBOARD_CALLBACKS[shortcut]()
 
     @classmethod
+    def _entryFor(cls, inner, _op):
+        """`inner[_op]`, tolerating a key stranded by a rename.
+
+        The scan runs only when the hash lookup misses, and only over the
+        handful of operators one extension watches, so it costs nothing in
+        the normal case. Identity is checked first because TD hands back the
+        same wrapper object for a given node; the id comparison covers the
+        rest.
+        """
+        if not inner:
+            return None
+        # A DependDict's Mapping.items() walks through its __getitem__, which
+        # raises KeyError on precisely the stranded keys this is here to find.
+        # Normalise to the plain dict before touching it.
+        inner = cls._raw(inner)
+        try:
+            hit = inner.get(_op)
+        except Exception:
+            hit = None
+        if hit is not None:
+            return hit
+        for k, v in inner.items():
+            try:
+                if k is _op or (k.valid and _op is not None and k.id == _op.id):
+                    return v
+            except Exception:
+                continue
+        return None
+
+    @classmethod
+    def _raw(cls, d):
+        """The plain dict behind a DependDict (or d itself)."""
+        try:
+            return d.getRaw() if hasattr(d, 'getRaw') else d
+        except Exception:
+            return d
+
+    @classmethod
+    def _parEntryFor(cls, params, parameter):
+        """`params[parameter]`, tolerating a Par key stranded by a rename.
+
+        A Par's hash follows its owner's path, so it stands the same way.
+        Within one owner a parameter name is unique, which makes the name the
+        reliable identity once the hash is untrustworthy.
+        """
+        if not params:
+            return None
+        try:
+            hit = params.get(parameter)
+        except Exception:
+            hit = None
+        if hit is not None:
+            return hit
+        try:
+            name = parameter.name
+        except Exception:
+            return None
+        for k, v in params.items():
+            try:
+                if (k.name if hasattr(k, 'name') else k) == name:
+                    return v
+            except Exception:
+                continue
+        return None
+
+    @classmethod
+    def _withoutKey(cls, inner, _op):
+        """`inner` minus _op's entry, tolerating a key stranded by a rename.
+
+        `del inner[_op]` is a hash lookup too, so it cannot reach a stranded
+        entry any more than a read can -- it either raises KeyError or misses
+        silently, leaving the callback live. Rebuilding is the only way to
+        drop one.
+        """
+        out, dropped = {}, False
+        for k, v in inner.items():
+            try:
+                same = (k is _op) or (k.valid and _op is not None and k.id == _op.id)
+            except Exception:
+                same = False
+            if same and not dropped:
+                dropped = True
+                continue
+            out[k] = v
+        return out
+
+    @classmethod
+    def _withoutParKey(cls, params, parameter):
+        """`params` minus parameter's entry, matched by NAME.
+
+        Par keys strand exactly like OP keys, so deletion has the same
+        problem; within one owner the name is unique and reliable.
+        """
+        nm = parameter.name if hasattr(parameter, 'name') else parameter
+        out = {}
+        for k, v in params.items():
+            try:
+                if (k.name if hasattr(k, 'name') else k) == nm:
+                    continue
+            except Exception:
+                pass
+            out[k] = v
+        return out
+
+    @classmethod
+    def _tokenFor(cls, _op) -> str:
+        """The operator's nonode: tag, stamped if it does not have one yet."""
+        for t in _op.tags:
+            if t.startswith(cls.NONODE_TAG_PREFIX):
+                return t
+        token = '%s%d' % (cls.NONODE_TAG_PREFIX, _op.id)
+        _op.tags.add(token)
+        return token
+
+    # --- declarative registration ------------------------------------------
+    #
+    # A decorator records WHAT a method listens to, next to the method, instead
+    # of the caller wiring it up elsewhere with Register*(). It buys four things
+    # the imperative form cannot: the binding is visible at the callback, the
+    # method name is free, a target that does not resolve is REPORTED at harvest
+    # instead of silently never firing, and -- because harvest rebuilds the
+    # registry from the class every time -- there is nothing left stale to
+    # deregister, which is the defect class behind items 2d and 2e.
+    #
+    # THE MARKER ATTRIBUTE IS THE CONTRACT, exactly as FNSCommand does it: the
+    # decorator records a spec and RETURNS THE FUNCTION UNTOUCHED. Wrapping
+    # would break arity inference (co_argcount would describe the wrapper, not
+    # the callback) and would make a vendored copy version-dependent.
+    #
+    # Targets are given as STRINGS and resolved at HARVEST, never at decoration:
+    # a class body runs before any COMP exists, so op('null_hk') there resolves
+    # against nothing. The same constraint the parameter fields ran into.
+
+    CALLBACK_ATTR = '_nonode_callbacks'
+
+    @classmethod
+    def _markCallback(cls, spec):
+        """Attach one listen-spec to a method and hand it back unchanged."""
+        def mark(fn):
+            specs = list(getattr(fn, cls.CALLBACK_ATTR, ()))
+            specs.append(spec)
+            setattr(fn, cls.CALLBACK_ATTR, specs)
+            return fn                      # UNTOUCHED -- see the note above
+        return mark
+
+    @classmethod
+    def onParExec(cls, event_type, owner=None, parameter=None):
+        """Listen to a parameter. `owner` defaults to the extension's own COMP.
+
+        @NoNode.onParExec(NoNode.ParExecType.VALUECHANGE, 'null_hk', 'shift')
+        def shiftChanged(self, par, prev):
+            ...
+        """
+        return cls._markCallback({'kind': 'par', 'event': event_type,
+                                  'target': owner, 'detail': parameter})
+
+    @classmethod
+    def onChopExec(cls, event_type, chop, channels='*'):
+        """Listen to CHOP channels.
+
+        @NoNode.onChopExec(NoNode.ChopExecType.VALUECHANGE, 'null_mod', '*')
+        def modChanged(self, channel, sampleIndex, val, prev):
+            ...
+        """
+        return cls._markCallback({'kind': 'chop', 'event': event_type,
+                                  'target': chop, 'detail': channels})
+
+    @classmethod
+    def onDatExec(cls, event_type, dat):
+        """Listen to a DAT."""
+        return cls._markCallback({'kind': 'dat', 'event': event_type,
+                                  'target': dat, 'detail': None})
+
+    @classmethod
+    def onKeyboardShortcut(cls, shortcut):
+        """Listen to a keyboard shortcut, e.g. 'ctrl.k'."""
+        return cls._markCallback({'kind': 'key', 'event': None,
+                                  'target': None, 'detail': shortcut})
+
+    @classmethod
+    def _resolveTarget(cls, ownerComp, target):
+        """A decorator's target -> an OP. Strings resolve from ownerComp."""
+        if target is None:
+            return ownerComp
+        if isinstance(target, str):
+            return (ownerComp.op(target) if ownerComp else None) or op(target)
+        return target
+
+    @classmethod
+    def _decoratedCallbacks(cls, extension_self):
+        """Every marked method on the extension, base class first."""
+        found, seen = [], set()
+        for klass in reversed(type(extension_self).__mro__):
+            for name, value in vars(klass).items():
+                specs = getattr(value, cls.CALLBACK_ATTR, None)
+                if not specs or name in seen:
+                    continue
+                seen.add(name)
+                found.append((name, getattr(extension_self, name), specs))
+        return found
+
+    @classmethod
+    def HarvestCallbacks(cls, extension_self, ownerComp=None) -> dict:
+        """Register every decorated method on `extension_self`.
+
+        Call AFTER NoNode.Init: Init clears the callback stores, so harvesting
+        after it means the registry is REBUILT from the class rather than added
+        to, and a callback deleted from the code disappears with it. That is the
+        property the imperative Register/Deregister pair could not give.
+
+        Needs nothing from CustomParHelper -- a tool that wants only callbacks
+        can use NoNode.Init + HarvestCallbacks and never touch the rest.
+
+        Returns {'registered': int, 'problems': [str]}. A target that does not
+        resolve is REPORTED, not raised: one bad spec should not stop a tool
+        loading, but it must not vanish silently either, which is exactly what
+        a mistyped onParSpeeed does today.
+        """
+        comp = ownerComp if ownerComp is not None else (
+            getattr(extension_self, 'ownerComp', None) or cls.EXT_OWNER_COMP)
+        registered, problems = 0, []
+        for name, bound, specs in cls._decoratedCallbacks(extension_self):
+            for spec in specs:
+                kind, event = spec['kind'], spec['event']
+                try:
+                    if kind == 'key':
+                        cls.RegisterKeyboardShortcut(spec['detail'], bound)
+                        registered += 1
+                        continue
+                    target = cls._resolveTarget(comp, spec['target'])
+                    if target is None or not target.valid:
+                        problems.append(
+                            '%s: %r does not resolve from %s'
+                            % (name, spec['target'],
+                               comp.path if comp else '(no ownerComp)'))
+                        continue
+                    if kind == 'par':
+                        par = spec['detail']
+                        if isinstance(par, str) and not hasattr(target.par, par):
+                            problems.append(
+                                '%s: %s has no parameter %r -- this callback '
+                                'would never fire' % (name, target.path, par))
+                            continue
+                        cls.RegisterParExec(event, target, par, bound)
+                    elif kind == 'chop':
+                        cls.RegisterChopExec(event, target, spec['detail'], bound)
+                    elif kind == 'dat':
+                        cls.RegisterDatExec(event, target, bound)
+                    else:
+                        problems.append('%s: unknown callback kind %r' % (name, kind))
+                        continue
+                    registered += 1
+                except Exception as e:
+                    problems.append('%s: %s: %s' % (name, type(e).__name__, e))
+        for problem in problems:
+            try:
+                debug('NoNode.HarvestCallbacks: ' + problem)
+            except Exception:
+                pass
+        return {'registered': registered, 'problems': problems}
+
+    @classmethod
+    def Heal(cls) -> dict:
+        """Re-seat registrations whose operator was MOVED.
+
+        A move destroys the operator and creates a new one, so the stored key
+        goes invalid and the exec DAT -- whose target parameter IS the key
+        list -- stops watching. Dispatch can therefore never heal a move on
+        its own; something has to notice out of band, which is what this is.
+
+        The nonode: tag travels with the move, so the replacement can be
+        found and the entry rebound. The project-wide tag search is paid for
+        ONLY when a dead key actually exists; the common case is a cheap scan
+        that writes nothing. Renames need no repair here -- `_entryFor`
+        already tolerates them.
+
+        Called at the top of every Register*; safe to call by hand.
+        """
+        summary = {'checked': 0, 'rebound': 0, 'pruned': 0}
+        stores = (cls.CHOPEXEC_CALLBACKS, cls.DATEXEC_CALLBACKS,
+                  cls.PAREXEC_CALLBACKS)
+
+        dead_tokens = set()
+        for store in stores:
+            for inner in store.getRaw().values():
+                for k in list(inner.keys()):
+                    summary['checked'] += 1
+                    try:
+                        if not k.valid:
+                            tok = cls.WATCH_TOKENS.get(k.id)
+                            if tok:
+                                dead_tokens.add(tok)
+                    except Exception:
+                        pass
+        if not dead_tokens:
+            return summary
+
+        found = {}
+        for tok in dead_tokens:
+            try:
+                hits = op('/').findChildren(tags=[tok])
+            except Exception:
+                hits = []
+            found[tok] = hits[0] if hits else None
+
+        for store in stores:
+            for event_type, inner in list(store.getRaw().items()):
+                rebuilt, changed = {}, False
+                for k, v in inner.items():
+                    try:
+                        alive = k.valid
+                    except Exception:
+                        alive = False
+                    if alive:
+                        rebuilt[k] = v
+                        continue
+                    changed = True
+                    tok = cls.WATCH_TOKENS.pop(k.id, None)
+                    new_op = found.get(tok) if tok else None
+                    if new_op is None:
+                        summary['pruned'] += 1
+                        continue
+                    # a moved owner's Par keys died with it -- re-seat them by
+                    # name against the operator that replaced it
+                    if isinstance(v, dict):
+                        remapped = {}
+                        for pk, pv in v.items():
+                            nm = pk.name if hasattr(pk, 'name') else pk
+                            np = getattr(new_op.par, nm, None) if isinstance(nm, str) else None
+                            remapped[np if np is not None else pk] = pv
+                        v = remapped
+                    rebuilt[new_op] = v
+                    cls.WATCH_TOKENS[new_op.id] = tok
+                    summary['rebound'] += 1
+                if changed:
+                    store.setItem(event_type, rebuilt)
+        return summary
+
+    @classmethod
     def __markOperatorAsWatched(cls, _op: OP) -> None:
-        """Mark an operator as watched by changing its color."""
+        """Colour the operator, and stamp the token a MOVE cannot destroy."""
+        if _op is None or not _op.valid:
+            return
         _op.color = cls.MARK_COLOR
+        try:
+            cls.WATCH_TOKENS[_op.id] = cls._tokenFor(_op)
+        except Exception:
+            pass
 
     @classmethod
     def __resetOperatorColor(cls, _op: OP) -> None:
-        """Reset an operator's color to the default."""
+        """Reset an operator's color to the default, and drop its token."""
+        if _op is None or not _op.valid:
+            return
         _op.color = (0.55, 0.55, 0.55) # td default color, probably available somewhere in the TD API/vars
+        try:
+            for t in list(_op.tags):
+                if t.startswith(cls.NONODE_TAG_PREFIX):
+                    _op.tags.remove(t)
+            cls.WATCH_TOKENS.pop(_op.id, None)
+        except Exception:
+            pass
 
     @classmethod
     def __checkAndResetOperatorColor(cls, _op: OP) -> None:
         """Check if an operator is still registered for any event type, and reset its color if not."""
         for event_type in cls.CHOPEXEC_CALLBACKS.getRaw().keys() | cls.DATEXEC_CALLBACKS.getRaw().keys():
-            if _op in cls.CHOPEXEC_CALLBACKS.getRaw().get(event_type, {}) or _op in cls.DATEXEC_CALLBACKS.getRaw().get(event_type, {}):
+            if (cls._entryFor(cls.CHOPEXEC_CALLBACKS.getRaw().get(event_type, {}), _op) is not None
+                    or cls._entryFor(cls.DATEXEC_CALLBACKS.getRaw().get(event_type, {}), _op) is not None):
                 return
         cls.__resetOperatorColor(_op)
 
@@ -522,7 +915,8 @@ class NoNode:
         # list all registered operators (chops and dats) and update their color
         for event_type in cls.CHOPEXEC_CALLBACKS.getRaw().keys() | cls.DATEXEC_CALLBACKS.getRaw().keys():
             for _op in cls.CHOPEXEC_CALLBACKS.getRaw().get(event_type, {}).keys() | cls.DATEXEC_CALLBACKS.getRaw().get(event_type, {}).keys():
-                _op.color = cls.MARK_COLOR
+                if _op is not None and _op.valid:
+                    _op.color = cls.MARK_COLOR
 
     ### Parameter Exec ###
 
@@ -558,16 +952,19 @@ class NoNode:
             # Using Par object from any operator
             NoNode.RegisterParExec(op('base1'), ParExecType.ValueChange, op('base1').par.v, self.my_callback)
         """
+        cls.Heal()
         if event_type not in cls.PAREXEC_CALLBACKS.getRaw():
             cls.PAREXEC_CALLBACKS.setItem(event_type, {}, raw=True)
 
         current_callbacks = cls.PAREXEC_CALLBACKS.getDependency(event_type)
-        
+
         # Handle owner resolution
         owner = owner or cls.EXT_OWNER_COMP
-        if owner not in current_callbacks.val:
-            current_callbacks.val[owner] = {}
-        
+        entry = cls._entryFor(current_callbacks.val, owner)
+        if entry is None:
+            entry = {}
+            current_callbacks.val[owner] = entry
+
         # Convert string parameter reference to Par object if needed
         if isinstance(parameter, str):
             if not hasattr(owner.par, parameter):
@@ -578,7 +975,7 @@ class NoNode:
         if owner is not cls.EXT_OWNER_COMP:
             cls.__markOperatorAsWatched(owner)
 
-        current_callbacks.val[owner][parameter] = callback
+        entry[parameter] = callback
         cls.PAREXEC_CALLBACKS.setItem(event_type, current_callbacks)
 
         if event_type in cls.PAR_EXEC_MAP:
@@ -604,8 +1001,8 @@ class NoNode:
         owner = owner or cls.EXT_OWNER_COMP
 
         if parameter is None:
-            if owner in current_callbacks.val:
-                del current_callbacks.val[owner]
+            if cls._entryFor(current_callbacks.val, owner) is not None:
+                current_callbacks.val = cls._withoutKey(current_callbacks.val, owner)
                 cls.__checkAndResetOperatorColor(owner)
         else:
             # Convert string parameter reference to Par object if needed
@@ -614,12 +1011,22 @@ class NoNode:
                     return
                 parameter = owner.par[parameter]
 
-            if owner in current_callbacks.val and parameter in current_callbacks.val[owner]:
-                del current_callbacks.val[owner][parameter]
-                
-                # If no more parameters for this owner, remove the owner entry
-                if not current_callbacks.val[owner]:
-                    del current_callbacks.val[owner]
+            params = cls._entryFor(cls._raw(current_callbacks.val), owner)
+            if params is not None and cls._parEntryFor(params, parameter) is not None:
+                remaining = cls._withoutParKey(params, parameter)
+                if remaining:
+                    # rebuild the outer map too: the owner key may itself be
+                    # stranded, so it cannot be reassigned by subscript
+                    rebuilt = {}
+                    for k, v in current_callbacks.val.items():
+                        try:
+                            same = (k is owner) or (k.valid and k.id == owner.id)
+                        except Exception:
+                            same = False
+                        rebuilt[k] = remaining if same else v
+                    current_callbacks.val = rebuilt
+                else:
+                    current_callbacks.val = cls._withoutKey(current_callbacks.val, owner)
                     cls.__checkAndResetOperatorColor(owner)
 
         # Update callbacks
@@ -635,16 +1042,18 @@ class NoNode:
 
         if not cls.PAREXEC_IS_ENABLED:
             return
+        cls.Heal()
 
         if event_type not in cls.PAREXEC_CALLBACKS.getRaw():
             return
 
         owner = parameter.owner
-        if owner not in cls.PAREXEC_CALLBACKS.getRaw()[event_type]:
+        params = cls._entryFor(cls.PAREXEC_CALLBACKS.getRaw()[event_type], owner)
+        if not params:
             return
 
-        callback = cls.PAREXEC_CALLBACKS.getRaw()[event_type][owner].get(parameter)
-        
+        callback = cls._parEntryFor(params, parameter)
+
         if callback:
             arg_count = callback.__code__.co_argcount
             if arg_count == 1:

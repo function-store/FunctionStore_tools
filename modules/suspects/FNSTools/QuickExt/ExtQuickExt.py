@@ -25,6 +25,23 @@ def fnsLog(*args, level='INFO'):
 
 FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
 
+# Issue #125: an extension that finds ExtUtils by its dock alone breaks in a
+# clone. Clone sync rebuilds the children without their docks, the module
+# compiles with nothing docked, the import raises and the class never
+# defines ("module ... has no attribute ..."). The fallback finds the
+# ExtUtils sibling by its tag. Applied to every extension QuickExt injects,
+# so a template written before the fix (the user's own palette copy) still
+# yields a clone-safe extension.
+_DOCK_ONLY = "next(d for d in me.docked if 'ExtUtils' in d.tags)"
+_DOCK_OR_SIBLING = ("(next((d for d in me.docked if 'ExtUtils' in d.tags), None)"
+					" or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None))")
+
+
+def cloneSafeImports(text):
+	"""`text` with every dock-only ExtUtils lookup made clone-safe."""
+	return text.replace(_DOCK_ONLY, _DOCK_OR_SIBLING)
+
+
 class ExtQuickExt:
 	def __init__(self, ownerComp):
 		self.ownerComp = ownerComp
@@ -151,6 +168,7 @@ class ExtQuickExt:
 
 			extensionText = extensionText.replace('QuickExtTemplate',
 												extModuleName)
+			extensionText = cloneSafeImports(extensionText)
 			extDat.nodeX = xPos
 			extDat.nodeY = yPos
 			extDat.viewer = True
@@ -220,7 +238,7 @@ class ExtQuickExt:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Create extension on current')
+	@FNSCommand.fns_command(label='Create extension on current', context='current')
 	def CreateExtOnCurrent(self):
 		"""Run QuickExt's extension creator on the current COMP."""
 		target = ui.panes.current.owner.currentChild

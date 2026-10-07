@@ -17,12 +17,12 @@ Current implementations:
 
 | Registry | Global shortcut | Surface it manages | Master (dev) location |
 |---|---|---|---|
-| `FNS_PaneTypeRegistry` | `op.FNS_PANETYPEREGISTRY` | Panebar pane-type menu (rows, recall, right-click) | `PreviewPanel25/FNS_PaneTypeRegistry` |
+| `FNS_PaneTypeRegistry` | `op.FNS_PANETYPEREGISTRY` | Panebar pane-type menu (rows, recall, right-click) | `FNSTools/FNS_PaneTypeRegistry` |
 | `FNS_ToolbarRegistry` | `op.FNS_TOOLBARREGISTRY` | Toolbar widgets (mirrors in `/ui/dialogs/bookmark_bar`) | `FNSTools/FNS_ToolbarRegistry` |
 | `FNS_NavbarRegistry` | `op.FNS_NAVBARREGISTRY` | TD's pane bars (stamped copies in `panebar_default` + every `/ui/panes/panebar/*`) | `FNSTools/FNS_NavbarRegistry` |
 | `FNS_OpMenuRegistry` | `op.FNS_OPMENUREGISTRY` | TD's Insert Operator dialog (`/ui/dialogs/menu_op`) -- search words, row decorations, right-click items | `FNSTools/FNS_OpMenuRegistry` |
 | `FNS_MainMenuRegistry` | `op.FNS_MAINMENUREGISTRY` | TD's main menu bar (`/ui/dialogs/mainmenu`) -- ordered entries, left/right justification, anchors | `FNSTools/FNS_MainMenuRegistry` |
-| `FNS_ConfigRegistry` | `op.FNS_CONFIGREGISTRY` | The aggregated settings file (`userPaletteFolder/FNStools_ext/config/FNStools_config.json`) -- per-tool par + state persistence | `FNSTools/FNS_ConfigRegistry` |
+| `FNS_ConfigRegistry` | `op.FNS_CONFIGREGISTRY` | The aggregated settings file (`userPaletteFolder/FNSTools/config/FNStools_config.json`) -- per-tool par + state persistence | `FNSTools/FNS_ConfigRegistry` |
 | `FNS_Console` | `op.FNS_CONSOLE` | The toolkit's web front -- one page, a tab per concern; tools publish tabs via `RegisterTab` (see [ConsoleTabContract.md](ConsoleTabContract.md)) | `FNSTools/FNS_Console` |
 | `FNS_HubRegistry` | `op.FNS_HUBREGISTRY` | FNS_Hub's tab bar -- native panels, viewers and parameter pages tools contribute as tabs (mirrors/viewers injected into `FNSTools/FNS_Hub/panel/tabs`; see [HubContract.md](HubContract.md)) | `FNSTools/FNS_HubRegistry` |
 | `FNS_PaletteRegistry` | `op.FNS_PALETTEREGISTRY` | TD's Palette Browser (`/ui/dialogs/palette/palette`) -- tools contribute native panel COMPs as tabs beside the stock Palette tab (see [PaletteTabContract.md](PaletteTabContract.md)) | `FNSTools/FNS_PaletteRegistry` |
@@ -33,13 +33,32 @@ its `SHORTCUT`. Both are `FNS_`-prefixed -- the unprefixed spellings
 globals live in `/sys/FNS_Registries`; see
 [RegistryHomeContract.md](RegistryHomeContract.md).
 
+> **Corrections 2026-09-08** (measured against the live session and the code):
+> the table above lacks `FNS_TimelineRegistry` (the tenth registry, timeline
+> dialog panels, [TimelineRegistryContract.md](TimelineRegistryContract.md)),
+> so "nine registries" below reads ten. **2026-10-01:** eleven, with
+> `FNS_PaneSearchRegistry` (controls in each pane's find bar,
+> [PaneSearchRegistry.md](PaneSearchRegistry.md)). The periodic healing watch described
+> in §3 and in the OpMenu notes is switched off in code
+> (`RegistryBase.REGISTRY_WATCH_ENABLED = False`): healing runs once per
+> project save through `registry_presave_exec.healAllRegistries()`, and the
+> boot re-publish sweep runs inside that heal. The host clone expression in
+> §6 reads `op.FNS.op('FNS_ToolbarRegistry') if hasattr(op, 'FNS') else None`
+> since v3.0.0. The §5 exception paragraph is out of date: since v3.1.1
+> `FNS_CommandRegistry` has a master under `/FNSTools` with its own source
+> (`modules/suspects/FNSTools/FNS_CommandRegistry/FNSCommandRegistryExt.py`,
+> `REGISTRY_VERSION` 1.11.0 since v3.2.15), ships as a store package with a `Pkgversion`,
+> and the launcher carries that released artifact verbatim
+> (`packaging/launcher_mirror.json`). It still holds no entries and stamps no
+> hosts, which is the part of the exception that stands.
+
 ### ConfigRegistry surface specifics (the surface is a FILE)
 
 Scope, the two rails, and what each per-tool hatch really gates:
 [ScopeAndPersistence.md](ScopeAndPersistence.md).
 
 - **What it manages**: ONE aggregated JSON in the user palette
-  (`app.userPaletteFolder/FNStools_ext/config/FNStools_config.json`,
+  (`app.userPaletteFolder/FNSTools/config/FNStools_config.json`,
   override via the master's Config-page `Configfile` par). Per-tool
   sections keyed by `Canonicalname`: `pars` (custom-par mode/val/expr/
   bindExpr of the TOOL COMP -- meta pages About/Version Ctrl/Info/
@@ -425,11 +444,18 @@ On extension init (`postInit`), an instance that is NOT the sys-global runs:
 1. `_installGlobalRegistry()`:
    - A global exists and is **newer or equal** (semver on the `Version` About
      par) → stand down.
-   - A global exists and is **older** → merge its entries, destroy it, copy
-     self into the home (`_become_global_registry`), hand data over via the
-     `post_update` raw-storage handoff (the copy's extension may not compile
-     on the first frames — a 20-attempt `reinitextensions` retry loop
-     recovers), promote (set shortcut, neutralize Registration page, sync surface).
+   - A global exists and is **older** → merge its entries (the incumbent
+     wins every name it holds: it is the live table, whatever this master
+     still stores is history), destroy it, copy self into the home
+     (`_become_global_registry`), hand data over via the `post_update`
+     raw-storage handoff (the copy's extension may not compile on the first
+     frames — a 20-attempt `reinitextensions` retry loop recovers), promote
+     (set shortcut, neutralize Registration page, sync surface), then drop
+     the master's own table. Every registration survives a takeover: the
+     entries are merged, the heal repairs their paths by op id, hosts the
+     new global lacks republish on the boot sweep, and the surface is
+     rebuilt from the entries. Only extension-instance state (caches, the
+     watcher baseline, the shared-surface ownership flags) starts over.
    - No global → reconcile any *parked* (shortcut-less) copies in the home
      (highest version wins, entries merged additively), then self-promote.
    - A global still sitting **directly in `/sys`** predates the
@@ -440,9 +466,16 @@ On extension init (`postInit`), an instance that is NOT the sys-global runs:
      so `1.0` == `1.0.0`) and ties favor the incumbent. This path must
      never prompt — see *Never ask during promotion* below.
 2. `_release_shipped_shortcut()` — a host never keeps the global shortcut.
-3. `_applyHostRegistration()` — publish if `Autoregister` is on.
-4. `_ensureSelectionExecuteRole()` — host disables any surface-handling ops
-   and clears its local entry table (no parallel state).
+3. `_dropParallelTable()` — while a separate global is live, a master or host
+   keeps no entry table. Registrations delegate to the global, so a table
+   here is history from before the global existed or a copy's inheritance,
+   and on the next takeover it would shadow the live entries (the Hub and
+   Palette masters carried one, 2026-09-10). A project with no `/sys` leaves
+   the master as the API, and its table is then the real one.
+4. `_applyHostRegistration()` — publish if `Autoregister` is on.
+5. `_ensureSelectionExecuteRole()` — host disables any surface-handling ops
+   (ConfigRegistry and MainMenuRegistry also clear the table here, from
+   before the base did it).
 
 The sys-global branch instead: drains `post_update`, sanitizes stored
 entries, re-asserts the shortcut, **neutralizes the Registration page**
@@ -907,8 +940,8 @@ mirrors. The order below is the one that worked; the lessons were paid for.
   `enableexternaltox=False` — their own `.tox` files are dead at boot and
   their content is CARRIED BY `modules/suspects/FunctionStore_tools_2025.tox`.
   So a landing is: nested suspects deepest-first, then the root tox, then
-  `save_project`. `PaneTypeRegistry` lives in `/PreviewPanel25` — a separate
-  sweep root, easy to forget.
+  `save_project`. (`FNS_PaneTypeRegistry` moved under `/FNSTools` with the
+  FNS_PreviewPanel package on 2026-09-02, so there is no second sweep root.)
 - **Same-frame verification lies.** Connector lists and par-callback
   effects read stale in the frame that mutated them — verify a destroy or
   re-anchor only after real frames pass.

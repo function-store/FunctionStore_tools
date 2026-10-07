@@ -64,6 +64,9 @@ GetWindowTextW = ctypes.windll.user32.GetWindowTextW
 GetWindowRect = ctypes.windll.user32.GetWindowRect
 GetClientRect = ctypes.windll.user32.GetClientRect
 GetWindowPlacement = ctypes.windll.user32.GetWindowPlacement
+EnumWindows = ctypes.windll.user32.EnumWindows
+IsWindowVisible = ctypes.windll.user32.IsWindowVisible
+WNDENUMPROC = ctypes.WINFUNCTYPE(ctypes.c_bool, ctypes.c_void_p, ctypes.c_void_p)
 
 CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
 FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand') # import
@@ -95,13 +98,23 @@ class ExtBorderlessWindow:#
 		self.saved_foreground_window = GetForegroundWindow()
 		self.is_borderless = self.ownerComp.par.Borderless.eval() # Track borderless state
 		self.is_modified = False  # Track modified state
-		self.IsModifiedAndBorderless = tdu.Dependency(False)
+		self.IsModified = tdu.Dependency(False)                 # the project name's asterisk, in any window mode
+		self.IsModifiedAndBorderless = tdu.Dependency(False)    # the menu's File* marker: the title bar shows it otherwise
 		self.saveStateScriptOp = self.ownerComp.op('saveStateScriptOp')
 		self.__injectUI()
 		self.default_width_offset = 9
 		self.default_height_offset = -9
 		self.applied_offsets = False
 		fnsLog('BorderlessWindow: init (save-state UI injected)')
+
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
 
 
 	def __injectUI(self):
@@ -176,18 +189,46 @@ class ExtBorderlessWindow:#
 
 	@property
 	def TdProjectIsModified(self):
-		return self.td_project_is_modified(self.saved_foreground_window)
+		return self.td_project_is_modified(self.main_td_window())
+
+	def main_td_window(self):
+		"""This process's main TouchDesigner window, or 0 when none is found.
+
+		The handle used to be whatever window had focus when the extension
+		initialised, which can be another application or a second
+		TouchDesigner instance; the modified check then read THAT title bar.
+		Going borderless replaced it with the real window, which is why the
+		asterisk only ever worked there. The remembered handle is kept while
+		it is still ours; otherwise the top-level windows are searched for the
+		visible one this process owns.
+		"""
+		hwnd = self.saved_foreground_window
+		if hwnd and self.is_main_td_window(hwnd):
+			return hwnd
+		found = []
+
+		def visit(h, _lparam):
+			if h and IsWindowVisible(h) and self.is_main_td_window(h):
+				found.append(h)
+				return False                          # stop enumerating
+			return True
+
+		EnumWindows(WNDENUMPROC(visit), 0)
+		if not found:
+			return 0
+		self.saved_foreground_window = found[0]
+		return found[0]
 
 	def UpdateModified(self, force=None):
 		if force is None:
-			is_modified = self.td_project_is_modified(self.saved_foreground_window)
+			is_modified = self.td_project_is_modified(self.main_td_window())
 		else:
 			is_modified = force
 
 		# Only update if the modified state has changed
 		if is_modified != self.is_modified:
 			self.is_modified = is_modified
-			# Update the dependency
+			self.IsModified.val = self.is_modified
 			self.IsModifiedAndBorderless.val = self.is_modified and self.is_borderless
 			
 

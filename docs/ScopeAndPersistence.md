@@ -26,7 +26,7 @@ Local identity between saves is not a feature that has to be switched on;
 it is what happens when nothing overwrites it.
 
 **The JSON is a machine-global overlay.** One aggregated file at
-`<app.userPaletteFolder>/FNStools_ext/config/FNStools_config.json`
+`<app.userPaletteFolder>/FNSTools/config/FNStools_config.json`
 (schema 1, atomic write, override via the master's `Configfile` par —
 `ConfigPath`, `ConfigRegistryExt.py:236`), shared by every project on the
 machine. It is applied **once per session, ~30 frames after each tool
@@ -54,11 +54,24 @@ differently.
 
 | Rail | What it is | Written by | Applied by |
 |---|---|---|---|
-| `pars` | mode/val/expr/bindExpr of the tool COMP's **custom parameters** | `_snapshotPars` `:373` | `_applyPars` `:402` |
+| `pars` | mode/val/eval/expr/bindExpr of the tool COMP's **custom parameters**, plus each par's presentation schema (label, style, page, order, help, menu names and labels, clamped min/max, and the group name for a component of a multi-par group) | `_snapshotPars` + `_parSchema` | `_applyPars` |
 | `state` | any JSON-safe dict the tool returns from `onConfigSave()` in its `config_callbacks` DAT | `_snapshotTool` `:475` | `_applyToolConfig` → `onConfigLoad(data)` `:993` |
 
 Plus a `meta` block (save timestamp, `tool_version`) that is recorded and
 never applied.
+
+**The schema fields beside a value are presentation, and the asymmetry is the
+contract: a stale schema is cosmetic, a stale value is not.** They exist so a
+consumer editing the file with no session running can draw the control the live
+settings page draws and search on more than a par name; they are added 2026-09-10
+for the launcher's offline editor (backlog 24). `_applyPars` reads
+`mode`/`val`/`eval`/`expr`/`bindExpr` and ignores every other key, so they are
+inert on the way back in, and nobody corrects a drifted label by writing this
+file: the tool's own parameter is the authority and the next save rewrites the
+section wholesale. `SCHEMA` deliberately stays **1** -- the version gate is an
+exact match that RETIRES a mismatched file to a `.bak`, so bumping it for an
+additive change that breaks no reader would discard every settings file in the
+field.
 
 **The `pars` rail is conservative by construction.** Meta pages
 (`About`, `Version Ctrl`, `Info`, `Callbacks`, `Common`) are skipped,
@@ -172,17 +185,32 @@ whole toolkit to project scope.
 This is the real gap the hatch table exposes, and it is why the de-facto
 answer today is §7 — non-registration.
 
-## 7. The exceptions list — tools that stay project-local
+## 7. The exceptions list — tools whose STATE stays project-local
 
-These were deliberately never given a `config_callbacks` DAT. Their state
-lives in the `.toe` plus sidecar files and never enters the roaming layer.
-Triage record: `briefs/2026-08-12-config-roaming-handover.md` §2.
+These were deliberately never given a `config_callbacks` DAT for their
+project data, which lives in the `.toe` plus sidecar files. Triage record:
+`briefs/2026-08-12-config-roaming-handover.md` §2.
 
-| Tool | State | Why it stays local |
+**Correction 2026-09-02 (measured live).** "Never enters the roaming layer"
+was true of the STATE rail only. All four carry a registered config host with
+`Persistpars` on, so their PARAMETERS roam, and the roaming file on this
+machine had a section for each. That bit QuickMarks the moment its marks
+moved from StorageManager into the `Mark0..Mark9` pars: operator paths from
+one project were applied into every other project opened on the machine.
+Fixed the same day with `Excludepages = Marks` on its host, and ResetPLS1
+excludes `Root` and `Except` likewise. Two more stale claims: `midiMapper`
+hosts and registers today, so the cooking note is history; and ResetPLS1 does
+return `rows` on the state rail, which is fine because the entries are glob
+patterns (`^*/presets*`), not operator paths. The hosts on QuickMarks and
+ResetPLS1 had also lost the internal docks of their slim ExtUtils, so their
+parameter callbacks (a changed exclusion re-registers the host) were dead
+until repaired -- see `CoreToolsBacklog.md` §21.
+
+| Tool | State kept local | Pars that roam |
 |---|---|---|
-| QuickMarks | network bookmarks (`StorageManager`) | bookmarks are operator paths — meaningless in another project |
-| midiMapper / oscMapper | mapping repo tables (`repo_maker.Repo` via `mapTables`/`ExternalTables`) | documented as "saved into your project folder for easy migration" — project-local by design. `midiMapper` is additionally `allowCooking=False` and cannot host anything |
-| ResetPLS1 | exception list (table + `ExternalTables`) | left local pending a check of whether entries are op-path-based or pattern-based |
+| QuickMarks | the marks (`Mark0..Mark9` on page `Marks`, excluded since 2026-09-02) — operator paths, meaningless in another project | `Active`, `Shortcuts` |
+| midiMapper / oscMapper | mapping repo tables (`repo_maker.Repo` via `mapTables`/`ExternalTables`) — "saved into your project folder for easy migration", project-local by design | device id, ports, addresses, the relative repo reference |
+| ResetPLS1 | `Root` and `Except` (excluded since 2026-09-02) | the per-family toggles and the exception patterns (`rows` on the state rail) — preferences, not project data |
 
 Migrated the other way, for contrast: `ExprHotStrings` (hot-string table)
 and `NoUI`/`HideTimeline` (`timeline_height`) are genuinely user-level and

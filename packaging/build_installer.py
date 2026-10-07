@@ -43,7 +43,7 @@ UPDATER_TOX = 'packaging/dist/FNS_Updater.tox'
 # installer is a copy of the live dev comp, re-stamped so the two rails
 # can never ship different answers), which also makes the live dev comp's
 # own Pkgversion a mirror of this value, not a second source.
-INSTALLER_VERSION = '3.1.0'
+INSTALLER_VERSION = '3.2.45'
 # publish.Stage() runs on the shell with no TD, so the version each rail
 # was built at rides this sidecar from the build to the staged manifest's
 # `rails` block. Without it a rail is recallable only by hash, which no
@@ -385,10 +385,6 @@ ROOT_ENTRY_POINTS = (
      'the bare bootstrap -- the installer\'s own picker. Unchecking an '
      'installed tool removes it; its settings are kept for the next '
      'install.'),
-    ('Openinstaller', 'Installer Parameters',
-     'The FNS_Installer\'s parameter dialog: the manual rail. Point '
-     'Selection at a selection.json, Plan, Install, and choose where '
-     'package files live. Pick Tools is the normal path.'),
     ('Opensettings', 'Open Settings',
      'The FNS console on its Settings tab (in the webBrowser panel beside '
      'the installer when the root has one, else your system browser): '
@@ -396,13 +392,49 @@ ROOT_ENTRY_POINTS = (
      'export/import, and the global/project scope switch. Install & '
      'remove is its second tab.'),
 )
-# Three pulses, three distinct roles, and the console is the hub for two of
-# them: Pick Tools deep-links to its Install & remove tab (#tools) and Open
+# Root pars that used to be entry points and are removed from roots that
+# still carry them. Pulses only, so nothing a user set is lost. Installer
+# Parameters opened FNS_Installer's own parameter dialog, the manual rail;
+# owner decision 2026-09-17: it does not belong on the top-level page (the
+# installer's pars stay reachable on the installer itself).
+ROOT_RETIRED_PARS = ('Openinstaller',)
+# Toggles beside the pulses: plain state the root answers for. They roam
+# with the root's other pars through its config host (only Configscope
+# is excluded there), which is the whole point of the first one -- set
+# it once and every new project on the machine sets itself up.
+ROOT_TOGGLES = (
+    ('Setuplikelast', 'Always Set Up Like Last Time',
+     'On a fresh drop of FNSTools.tox, install this machine\'s last '
+     'recorded setup (the tools of the project you saved last, in the '
+     'same Package Files mode) with nothing to click: no picker, no '
+     'window, progress in the Textport. Roams with your settings, so '
+     'every new project on this machine sets up the same way; the record '
+     'itself updates on every save. Off: the first run opens Pick Tools, '
+     'where Set up like last time stays a card.'),
+)
+# Toggles that answer for THIS project and never roam: the root's config
+# host excludes them (EnsureRootEntryPoints adds each to its Excludepars),
+# or restoring settings in another project would add or remove things
+# there. The value mirrors the project (FNS_Installer syncs it after every
+# install and removal); flipping it acts through the installer.
+ROOT_PROJECT_TOGGLES = (
+    ('Opfamily', 'FNS Tab in OP Create',
+     'Whether this project has the FNS operator family: an FNS tab in the '
+     'OP Create dialog listing the FNS family operators (Random, the scene '
+     'changers, SwitchTools, the sequencers). Off removes the family and '
+     'keeps it off; the operators stay installed and in your palette. On '
+     'adds it back, downloading it first when needed, and needs at least '
+     'one family operator installed. Follows Pick Tools, where the same '
+     'choice is "Add FNS tab to OP Create". Not carried to other projects.'),
+)
+# Two pulses, two distinct roles, and the console is the hub for both: Pick Tools deep-links to its Install & remove tab (#tools) and Open
 # Settings to its Settings tab -- both in the in-TD webBrowser panel when
 # the root has one, so the whole flow stays inside TD (the panel handles
 # the console fully, file dialog included; export also writes its file
-# server-side). Pick Tools falls back to the installer's own picker only
-# while core is not installed yet; Installer Parameters is the manual rail.
+# server-side). Pick Tools falls back to the installer's own picker whenever
+# the console does not confirm it opened -- a registry existing in /sys is
+# not proof core is installed, because the bootstrap's own config host puts
+# one there on drop.
 # Guarded on every side: a root without an installer, or without the config
 # registry, logs and returns rather than raising inside a pulse callback.
 # The registry is resolved the way every cross-tool caller does it -- getattr
@@ -415,7 +447,7 @@ ROOT_PULSE_TEXT = (
     '#   Pick Tools  -> FNS console, Install & remove tab (in-TD panel when\n'
     '#                  present); the installer\'s own picker before core exists\n'
     '#   Open Settings -> FNS console, Settings tab (in-TD panel when present)\n'
-    '#   Installer Parameters -> the manual rail (selection.json / Plan / Install)\n\n'
+    '#   FNS Tab in OP Create -> the installer adds or removes the operator family\n\n'
     'def _console(tab):\n'
     '\t# FNS_Console serves the page; an older core without it still answers\n'
     '\t# through the config registry\'s forward. None = neither is installed.\n'
@@ -435,19 +467,30 @@ ROOT_PULSE_TEXT = (
     '\t\telif isinstance(res, dict) and not res.get("ok"):\n'
     '\t\t\tdebug("FNSTools: console did not open --", res.get("why"))\n'
     '\telif par.name == "Picktools":\n'
+    '\t\t# Handled ONLY when the console says it opened. A refusal is not\n'
+    '\t\t# an answer: the bootstrap ships a config host that promotes the\n'
+    '\t\t# config registry into /sys on drop, and that registry\'s forward\n'
+    '\t\t# refuses while FNS_Console is absent, so treating any reply as\n'
+    '\t\t# handled stranded every fresh install with no picker at all.\n'
     '\t\tres = _console("tools")\n'
-    '\t\tif res is not None:\n'
-    '\t\t\tif isinstance(res, dict) and not res.get("ok"):\n'
-    '\t\t\t\tdebug("FNSTools: console did not open --", res.get("why"))\n'
-    '\t\telif inst is not None:\n'
+    '\t\tif isinstance(res, dict) and res.get("ok"):\n'
+    '\t\t\treturn\n'
+    '\t\tif inst is not None:\n'
     '\t\t\tinst.par.Configure.pulse()\n'
     '\t\telse:\n'
-    '\t\t\tdebug("FNSTools: no installer in this root")\n'
-    '\telif par.name == "Openinstaller":\n'
-    '\t\tif inst is None:\n'
-    '\t\t\tdebug("FNSTools: no installer in this root")\n'
-    '\t\t\treturn\n'
-    '\t\tinst.openParameters()\n' % COMP_NAME)
+    '\t\t\tdebug("FNSTools: no installer in this root --",\n'
+    '\t\t\t\t  (res or {}).get("why") if isinstance(res, dict) else "no console either")\n\n'
+    'def onValueChange(par, prev):\n'
+    '\tif par.name != "Opfamily":\n'
+    '\t\treturn\n'
+    '\tinst = parent().op(%r)\n'
+    '\tif inst is None or not hasattr(inst, "SetFamily"):\n'
+    '\t\tdebug("FNSTools: no installer in this root to add or remove the FNS tab")\n'
+    '\t\treturn\n'
+    '\t# deferred: out of the parameter callback, and removal destroys a COMP\n'
+    '\trun("args[0].valid and args[0].SetFamily(args[1])", inst, bool(par.eval()),\n'
+    '\t\tdelayFrames=1, delayRef=op.TDResources)\n'
+    % (COMP_NAME, COMP_NAME))
 
 
 # The first-run welcome: an Execute DAT whose onCreate fires whenever the
@@ -485,6 +528,47 @@ WELCOME_EXEC_TEXT = ('''\
 FLAG = %(flag)r
 DELAY = %(delay)d
 
+def reveal(root, home_path=None):
+\t# Show a toolkit that did not land where the user was looking: the
+\t# relocation of a nested drop (home_path = the network it was dropped
+\t# in) or the paste rail's loadTox straight into / (no home_path).
+\t# It goes above the topmost operator of its network with 200 units
+\t# of clearance, centred on that operator; the pane that showed
+\t# home_path (the current pane when none did) moves to the network
+\t# and homes on it; it is selected and current. Otherwise the drop
+\t# looks as if it vanished, or lands on top of whatever was there.
+\tdest = root.parent()
+\tif dest is None:
+\t\treturn
+\tothers = [c for c in dest.children if c is not root]
+\tif others:
+\t\ttopmost = max(others, key=lambda c: c.nodeY + c.nodeHeight)
+\t\troot.nodeY = topmost.nodeY + topmost.nodeHeight + 200
+\t\troot.nodeCenterX = topmost.nodeCenterX
+\tpanes = []
+\tfor pane in ui.panes:
+\t\ttry:
+\t\t\tif (home_path and pane.type == PaneType.NETWORKEDITOR
+\t\t\t\t\tand pane.owner is not None and pane.owner.path == home_path):
+\t\t\t\tpanes.append(pane)
+\t\texcept Exception:
+\t\t\tpass
+\tif not panes:
+\t\tcur = ui.panes.current
+\t\tif cur is not None and cur.type == PaneType.NETWORKEDITOR:
+\t\t\tpanes.append(cur)
+\tfor c in others:
+\t\tif c.selected:
+\t\t\tc.selected = False
+\troot.selected = True
+\troot.current = True
+\tfor pane in panes:
+\t\ttry:
+\t\t\tpane.owner = dest
+\t\t\tpane.home(zoom=False, op=root)
+\t\texcept Exception:
+\t\t\tpass
+
 _RELOCATE = \'\'\'
 old = op(@PATH@)
 if old is not None and old.valid and old.fetch(%(flag)r, None, search=False) == "pending":
@@ -492,6 +576,7 @@ if old is not None and old.valid and old.fetch(%(flag)r, None, search=False) == 
 \tdest = op("/")
 \tif dest.op(@NAME@) is None:
 \t\tnew = dest.copy(old)
+\t\thome_path = old.parent().path if old.parent() is not None else ""
 \t\told.destroy()
 \t\tif new.name != @NAME@:
 \t\t\ttry:
@@ -500,6 +585,11 @@ if old is not None and old.valid and old.fetch(%(flag)r, None, search=False) == 
 \t\t\t\tpass
 \t\tnew.store(%(flag)r, "pending")
 \t\twe = new.op(%(exec)r)
+\t\tif we is not None:
+\t\t\ttry:
+\t\t\t\twe.module.reveal(new, home_path)
+\t\t\texcept Exception as e:
+\t\t\t\tdebug("FNSTools: could not show the relocated toolkit --", e)
 \telse:
 \t\twe = old.op(%(exec)r)
 \tif we is not None:
@@ -529,6 +619,31 @@ def onCreate():
 \t    delayFrames=DELAY, delayRef=op.TDResources)
 \treturn
 
+def _setUpLikeLastTime(root):
+\t# Always Set Up Like Last Time (the root's Setuplikelast toggle, read
+\t# live or straight from the roaming config, since the host that
+\t# restores the par may not have run yet): the installer's silent
+\t# rail installs the last recorded setup and nothing opens. Anything
+\t# short of a started install falls through to the picker.
+\tinst = root.op(%(inst)r)
+\tif inst is None:
+\t\treturn False
+\ttry:
+\t\tif not inst.op("InstallerExt").module.AutoSetupWanted(root):
+\t\t\treturn False
+\t\tif not inst.extensionsReady:
+\t\t\tprint("FNSTools: the installer is not ready to set up like last time -- opening Pick Tools")
+\t\t\treturn False
+\t\tres = inst.InstallLastSetup(confirm=True)
+\texcept Exception as e:
+\t\tdebug("FNSTools: set up like last time failed --", e)
+\t\treturn False
+\tif not isinstance(res, dict) or not res.get("ok"):
+\t\tprint("FNSTools: cannot set up like last time --",
+\t\t      (res or {}).get("why", "no reason given"), "-- opening Pick Tools")
+\t\treturn False
+\treturn True
+
 def _isDev(root):
 \t# cannot tell = do not move
 \ttry:
@@ -542,6 +657,8 @@ def welcome():
 \tif root.fetch(FLAG, None, search=False) != "pending":
 \t\treturn          # the paste rail took over, or someone already did
 \troot.store(FLAG, "shown")
+\tif _setUpLikeLastTime(root):
+\t\treturn          # installing the machine's last setup; nothing opens
 \tpar = getattr(root.par, "Picktools", None)
 \tif par is None:
 \t\tdebug("FNSTools: no Pick Tools on this root -- nothing to open")
@@ -551,7 +668,8 @@ def welcome():
 \texcept Exception as e:
 \t\tdebug("FNSTools: first-run welcome could not open Pick Tools --", e)
 ''' % {'flag': WELCOME_FLAG, 'delay': WELCOME_DELAY_FRAMES,
-       'exec': WELCOME_EXEC_NAME, 'relocate': WELCOME_RELOCATE_FRAMES})
+       'exec': WELCOME_EXEC_NAME, 'relocate': WELCOME_RELOCATE_FRAMES,
+       'inst': COMP_NAME})
 
 
 # The root's config callbacks: what the root remembers in the roaming
@@ -567,6 +685,9 @@ def welcome():
 # never written, and the read-back here is skipped too.
 CONFIG_CALLBACKS_NAME = 'config_callbacks'
 ROOT_CANONICAL = 'FNS'
+# The FNS operator family's package: the record says whether it was
+# installed, so "Set up like last time" keeps the FNS tab on or off.
+FAMILY_PACKAGE = 'FNS_OpFamily'
 CONFIG_CALLBACKS_TEXT = (
     '# Root-level config state. Generated by packaging/build_installer.py --\n'
     '# edit it there; EnsureRootEntryPoints re-applies it.\n'
@@ -577,17 +698,23 @@ CONFIG_CALLBACKS_TEXT = (
     '# keeps the record another project wrote instead of erasing it.\n\n'
     'import time\n\n'
     'KEY = "last_install"\n'
-    'CANONICAL = %r\n\n'
+    'CANONICAL = %r\n'
+    'FAMILY = %r\n\n'
     'def onConfigSave():\n'
     '\troot = me.parent()\n'
     '\tt = root.op("installed")\n'
     '\tnames = []\n'
     '\tif t is not None and t.numRows > 1 and t[0, 0].val == "package":\n'
-    '\t\tnames = sorted(t[i, 0].val for i in range(1, t.numRows) if t[i, 0].val)\n'
+    '\t\t# a tool PLACED here only (remember == "0") is not part of the\n'
+    '\t\t# setup and must never ride into the next project (docs/PlaceOnce.md)\n'
+    '\t\tnames = sorted(t[i, 0].val for i in range(1, t.numRows)\n'
+    '\t\t\t\t\t   if t[i, 0].val and not (t.numCols > 4 and t[i, 4].val == "0"))\n'
     '\tif not names:\n'
     '\t\treturn _previous(root)\n'
     '\trec = {"packages": names, "project": project.name,\n'
     '\t\t   "when": time.strftime("%%Y-%%m-%%dT%%H:%%M:%%S")}\n'
+    '\t# the FNS tab in the OP Create dialog: on when the family was here\n'
+    '\trec["family"] = FAMILY in names\n'
     '\tinst = root.op(%r)\n'
     '\tp = getattr(inst.par, "Packagefiles", None) if inst is not None else None\n'
     '\tif p is not None:\n'
@@ -609,7 +736,7 @@ CONFIG_CALLBACKS_TEXT = (
     'def onConfigLoad(data):\n'
     '\t# nothing to re-apply: the record is read by the installer on a bare root\n'
     '\treturn\n'
-    % (ROOT_CANONICAL, COMP_NAME))
+    % (ROOT_CANONICAL, FAMILY_PACKAGE, COMP_NAME))
 
 
 def EnsureRootEntryPoints(root):
@@ -633,21 +760,50 @@ def EnsureRootEntryPoints(root):
             break
     if pg is None:
         pg = root.appendCustomPage(ROOT_PAGE)
+    retired = []
+    for name in ROOT_RETIRED_PARS:
+        par = getattr(root.par, name, None)
+        if par is not None and par.isCustom and par.style == 'Pulse':
+            par.destroy()
+            retired.append(name)
     for name, label, help_text in ROOT_ENTRY_POINTS:
         par = getattr(root.par, name, None)
         if par is None:
             par = pg.appendPulse(name, label=label)[0]
         par.label = label
         par.help = help_text
+    for name, label, help_text in ROOT_TOGGLES:
+        par = getattr(root.par, name, None)
+        if par is None:
+            par = pg.appendToggle(name, label=label)[0]
+            par.default = False
+        par.label = label
+        par.help = help_text
+        par.startSection = True
+    for name, label, help_text in ROOT_PROJECT_TOGGLES:
+        par = getattr(root.par, name, None)
+        if par is None:
+            par = pg.appendToggle(name, label=label)[0]
+        # always off: Revert to Default must never add anything, and the
+        # bootstrap build stamps defaults from the dev root's values
+        par.default = False
+        par.label = label
+        par.help = help_text
+        par.startSection = True
+    # Pulses, then the roaming toggles, then the project toggles; anything
+    # else on the page (Configscope, Packagefiles) keeps its place after.
+    # par.order ties on this page, so the page is sorted by name list.
+    ours = [n for n, _, _ in ROOT_ENTRY_POINTS + ROOT_TOGGLES + ROOT_PROJECT_TOGGLES]
+    pg.sort(*(ours + [p.name for p in pg.pars if p.name not in ours]))
     pe = root.op('parexec_root_pulses')
     if pe is None:
         pe = root.create(parameterexecuteDAT, 'parexec_root_pulses')
         pe.nodeX, pe.nodeY = -350, -250
     pe.par.op = root
-    pe.par.pars = ' '.join(n for n, _, _ in ROOT_ENTRY_POINTS)
+    pe.par.pars = ' '.join(n for n, _, _ in ROOT_ENTRY_POINTS + ROOT_PROJECT_TOGGLES)
     pe.par.custom = True
     pe.par.builtin = False
-    pe.par.valuechange = False
+    pe.par.valuechange = True
     pe.par.onpulse = True
     pe.text = ROOT_PULSE_TEXT
     we = root.op(WELCOME_EXEC_NAME)
@@ -677,8 +833,25 @@ def EnsureRootEntryPoints(root):
             if cb_par.eval() is not cb:
                 cb_par.val = cb.name
             wired = host.path
+        # project toggles never roam: one space-separated pattern each
+        ex = getattr(host.par, 'Excludepars', None)
+        if ex is not None:
+            tokens = str(ex.eval()).split()
+            missing = [n for n, _, _ in ROOT_PROJECT_TOGGLES if n not in tokens]
+            if missing:
+                ex.val = ' '.join(tokens + missing)
+    # the toggle starts from the project, never from its default
+    inst = root.op(COMP_NAME)
+    if inst is not None and hasattr(inst, 'SyncFamilyToggle'):
+        inst.SyncFamilyToggle()
+    else:
+        # a staged build copy, extensions not running: read the root itself
+        fam = getattr(root.par, 'Opfamily', None)
+        if fam is not None:
+            fam.val = root.op(FAMILY_PACKAGE) is not None
     return {'root': root.path, 'page': pg.name,
-            'pars': [n for n, _, _ in ROOT_ENTRY_POINTS],
+            'pars': [n for n, _, _ in ROOT_ENTRY_POINTS + ROOT_PROJECT_TOGGLES],
+            'retired': retired,
             'forwarder': pe.path, 'welcome': we.path,
             'config_callbacks': cb.path, 'config_host': wired}
 
@@ -718,6 +891,21 @@ def _severHost(host):
     for tag in ('pi_suspect',):
         if tag in host.tags:
             host.tags.remove(tag)
+    # A config-file override never leaves the dev checkout. The development
+    # project points its config at FNStools_config.dev.json (docs/
+    # ConfigScope.md), and StampHost copies the master, so a re-stamped root
+    # host would carry that path here. The bootstrap never passes through
+    # pre_release_common, which is where every PACKAGE is scrubbed of it, so
+    # the one host that ships through the rails is scrubbed here. Expression
+    # text first: CONSTANT mode alone leaves it on the par, dormant.
+    p = getattr(host.par, 'Configfile', None)
+    if p is not None:
+        try:
+            p.expr = ''
+            p.mode = ParMode.CONSTANT
+            p.val = p.default
+        except Exception:
+            pass
     # Private Investigator's apparatus is authoring-side only: the Version
     # Ctrl page fronts vc_data through BIND pars, so the table and the page
     # go together (pars before the page -- TD relocates a destroyed page's

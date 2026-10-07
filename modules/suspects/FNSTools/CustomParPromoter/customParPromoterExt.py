@@ -37,7 +37,26 @@ class customParPromoterExt:
 		self.popDialog = self.ownerComp.op('popDialog')
 		self.__parNumTypes = ['Float', 'Int', 'Xy', 'Xyz', 'Xyzw', 'Uv', 'Uvw', 'Wh','Rgb', 'Rgba']
 		self.__saveParamNameBeforePurge = ''
+		self._ensureModulePars()
+		# The registry hosts are not usable during __init__, and a TDXN import
+		# can still replace children after it, so the surface pass is deferred.
+		# Resolved by shortcut at call time, never a cached self -- that goes
+		# stale on the next source save.
+		try:
+			run('op.FNS_CPP.ext.customParPromoterExt.applyModuleGates()',
+				delayFrames=30, delayRef=op.TDResources)
+		except Exception:
+			pass
 		fnsLog('CustomParPromoter: init')
+
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
 
 	@property
 	def Reference(self):
@@ -159,12 +178,13 @@ class customParPromoterExt:
 				continue
 			new_p.val = p.val
 			new_p.startSection = p.startSection
+			# Carried AFTER the last .val write: assigning .val flips the mode
+			# back to CONSTANT, which is what undid the carried expression.
+			self._carryParMode(p, new_p, target)
 			if not refBind:
-				new_p.val = p.val
 				p.expr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
 				p.mode = ParMode.EXPRESSION
 			else:
-				new_p.val = p.val
 				p.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_p.name}"
 				p.mode = ParMode.BIND
 		ui.undo.endBlock()
@@ -235,11 +255,13 @@ class customParPromoterExt:
 		new_par.val = _par.val
 		if new_par.isMenu:
 			new_par.menuSource = target.shortcutPath(self.Reference, toParName = _par.name) 
+		# Carried AFTER the last .val write: assigning .val flips the mode
+		# back to CONSTANT, which is what undid the carried expression.
+		self._carryParMode(_par, new_par[0] if hasattr(new_par, 'pars') else new_par, target)
 		if not refBind:
 			_par.expr = f"{self.Reference.shortcutPath(target)}.par.{new_par.name}"
 			_par.mode = ParMode.EXPRESSION
 		else:
-			new_par.val = _par.val
 			_par.bindExpr = f"{self.Reference.shortcutPath(target)}.par.{new_par.name}"
 			_par.mode = ParMode.BIND
 		ui.undo.endBlock()
@@ -277,6 +299,142 @@ class customParPromoterExt:
 			return new_page.appendFloat(name, label=label)
 		# Unrecognised / future style: copy the member definition as a last resort.
 		return new_page.appendPar(name, label=label, par=_par)
+
+	# --- carrying an expression or bind across a promotion ------------------
+	#
+	# appendPar(par=...) copies the definition, never the mode: a promoted
+	# parameter came out in CONSTANT mode holding the constant-mode value,
+	# and whatever expression or bind the original had was overwritten a
+	# line later when the original was rewired to the new parameter. The
+	# expression now moves UP with the parameter. It was authored on the
+	# reference, so every relative reference in it is rebased to resolve
+	# the same operator from the target.
+
+	# One match per relative reference an expression can carry. The
+	# lookbehind keeps `.op(` (a method on some other operator) and `.me`
+	# out; op('...') is tried first so a `me` inside its string is never
+	# matched on its own.
+	_REF_TOKEN = re.compile(r"""
+		(?<![\w.])(?P<fn>op|mod)\(\s*(?P<q>['"])(?P<path>[^'"]*)(?P=q)\s*\)
+		| (?<![\w.])parent\(\s*(?P<depth>\d*)\s*\)
+		| (?<![\w.])(?P<sc>parent|iop|ipar)\.(?P<name>[A-Za-z_]\w*)
+		| (?<![\w.])me\b
+		""", re.VERBOSE)
+
+	def _carryParMode(self, old_par, new_par, target):
+		"""Move old_par's expression or bind onto new_par, rebased to target.
+
+		Call it BEFORE old_par is rewired to point at new_par. Constant and
+		export modes carry nothing. Returns True when the mode was carried;
+		on any failure new_par keeps a constant value, set to the live value
+		of the original, and the reason is logged.
+		"""
+		mode = old_par.mode
+		if mode == ParMode.EXPRESSION:
+			attr, text = 'expr', old_par.expr
+		elif mode == ParMode.BIND:
+			attr, text = 'bindExpr', old_par.bindExpr
+		else:
+			return False
+		if not text:
+			return False
+		rebased = self._rebaseExpression(text, old_par.owner, target)
+		if rebased is not None:
+			try:
+				setattr(new_par, attr, rebased)
+				new_par.mode = mode
+				fnsLog(f'CustomParPromoter: carried {attr} of {old_par.owner.path}.{old_par.name} '
+					   f'to {target.path}.{new_par.name}: {text!r} -> {rebased!r}')
+				return True
+			except Exception as e:
+				reason = f'{type(e).__name__}: {e}'
+		else:
+			reason = 'a reference in it could not be resolved from the target'
+		try:
+			new_par.mode = ParMode.CONSTANT
+			new_par.val = old_par.eval()
+		except Exception:
+			pass
+		msg = (f'CustomParPromoter: could not carry the {attr} of '
+			   f'{old_par.owner.path}.{old_par.name} ({text!r}) to {target.path}: {reason}. '
+			   f'The promoted parameter holds the value instead.')
+		fnsLog(msg, level='WARNING')
+		debug(msg)
+		return False
+
+	def _rebaseExpression(self, expr, source, target):
+		"""Rewrite expr, authored on source, to resolve the same operators from target.
+
+		Every relative reference (op('..'), mod('..'), me, parent(), parent.X,
+		iop.X, ipar.X) is resolved by evaluating it in the SOURCE's context --
+		TouchDesigner's own resolution, never a hand-parsed path -- and
+		re-expressed with target.shortcutPath(found), which yields `me` for the
+		target itself, a parent/global shortcut where one applies, and a
+		relative path otherwise. The result is then checked by evaluating both
+		expressions and comparing; returns None when a reference does not
+		resolve or the two disagree.
+		"""
+		unresolved = []
+
+		def found(sub):
+			try:
+				return source.evalExpression(sub)
+			except Exception:
+				return None
+
+		def repl(m):
+			text = m.group(0)
+			fn = m.group('fn')
+			if fn == 'mod':
+				dat = found("op(%r)" % m.group('path'))
+				if not isinstance(dat, OP):
+					unresolved.append(text)
+					return text
+				return "mod(%r)" % target.relativePath(dat)
+			if m.group('sc') == 'ipar':
+				host = found('iop.' + m.group('name'))
+				if not isinstance(host, OP):
+					unresolved.append(text)
+					return text
+				return target.shortcutPath(host) + '.par'
+			resolved = source if text == 'me' else found(text)
+			if not isinstance(resolved, OP):
+				unresolved.append(text)
+				return text
+			return target.shortcutPath(resolved)
+
+		rebased = self._REF_TOKEN.sub(repl, expr)
+		if unresolved:
+			fnsLog(f'CustomParPromoter: unresolved in {expr!r}: {unresolved}', level='WARNING')
+			return None
+		# Verify: same value from both sides. An original that already fails
+		# to evaluate is carried as-is -- the user keeps the error they had.
+		try:
+			expected = self._evalKey(source.evalExpression(expr))
+		except Exception:
+			return rebased
+		try:
+			actual = self._evalKey(target.evalExpression(rebased))
+		except Exception as e:
+			fnsLog(f'CustomParPromoter: rebased {rebased!r} does not evaluate from {target.path}: {e}', level='WARNING')
+			return None
+		if expected != actual:
+			fnsLog(f'CustomParPromoter: rebased {rebased!r} evaluates to {actual!r}, original {expr!r} to {expected!r}', level='WARNING')
+			return None
+		return rebased
+
+	@staticmethod
+	def _evalKey(value):
+		"""A comparable stand-in for an expression's value: operators by path,
+		parameters by owner and name, everything else by value."""
+		if isinstance(value, OP):
+			return ('op', value.path)
+		if isinstance(value, Par):
+			return ('par', value.owner.path, value.name)
+		try:
+			return ('num', float(value))
+		except Exception:
+			return ('str', str(value))
 
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ MAIN ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 	
@@ -448,17 +606,28 @@ class customParPromoterExt:
 		elif field in ['min', 'max']:
 			return
 		
+	def _customizeFallbackLabel(self):
+		"""What an empty Label field in the customize dialog stands for: the
+		label of the parameter being promoted (its shader name on a GLSL
+		vector), and only when that is blank the name typed in the dialog."""
+		details = getattr(self, '_pendingCustomize', None) or {}
+		return details.get('sourceLabel') or self.__saveParamNameBeforePurge
+
 	def onFocus(self, field, comp):
-		if field == 'label' and self.__saveParamNameBeforePurge and comp.editText == '':
-			self.popDialog.op('entry2/inputText').par.text = self.__saveParamNameBeforePurge
+		if field == 'label' and comp.editText == '':
+			fallback = self._customizeFallbackLabel()
+			if fallback:
+				self.popDialog.op('entry2/inputText').par.text = fallback
 
 	def onFocusEnd(self, field, comp):
 		if field == 'paramname':
 			text = comp.editText
 			self.__saveParamNameBeforePurge = text
 		elif field == 'label':
-			if comp.editText == '' and self.__saveParamNameBeforePurge:
-				comp.par.text = self.__saveParamNameBeforePurge
+			if comp.editText == '':
+				fallback = self._customizeFallbackLabel()
+				if fallback:
+					comp.par.text = fallback
 			self.purgeParName(self.__saveParamNameBeforePurge, replace=True)
 
 	def OnCustomizeParameterDropped(self, dropParam):
@@ -481,7 +650,12 @@ class customParPromoterExt:
 			self.popDialog.par.Minmaxentryarea = is_num
 
 		glsl_name = self.__glslUniformName(dropParam)
-		textEntries = [self.purgeParName(glsl_name) if glsl_name else dropParam.name.capitalize(), self.__glslLabel(glsl_name) if glsl_name else '']
+		# The Label field opens showing the label the promoted parameter will
+		# get -- the source parameter's own label -- so what is on screen is
+		# what OK produces; clearing it falls back to the same label.
+		source_label = self.__glslLabel(glsl_name) if glsl_name else str(dropParam.label)
+		details['sourceLabel'] = source_label
+		textEntries = [self.purgeParName(glsl_name) if glsl_name else dropParam.name.capitalize(), source_label]
 		if is_num:
 			_max = dropParam.normMax
 			if dropParam.name == 'index':
@@ -521,7 +695,7 @@ class customParPromoterExt:
 		nameEntry = info['enteredText'][0]
 		
 		if not labelEntry:
-			labelEntry = nameEntry
+			labelEntry = details.get('sourceLabel') or nameEntry
 		nameEntry = self.purgeParName(nameEntry)
 		def _num(v):
 			# blank/invalid entry means "leave unset" -- float('') raised here
@@ -576,8 +750,153 @@ class customParPromoterExt:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Promote pars of selected')
+	@FNSCommand.fns_command(label='Promote pars of selected', context='selected')
 	def PromoteSelected(self):
 		"""Promote custom parameters of the selected operators."""
 		self.ownerComp.par.Promote.pulse()
 		return {'ok': True}
+
+
+	### Modules page -- per-sub-module Active switches ###
+
+	# name, label, default, startSection, help
+	_MODULE_PARS = (
+		('Activeparpromote', 'Parameter Promotion', True, True,
+		 'Drop a parameter onto the CustomParTools button to promote it onto '
+		 'the current network COMP. The core action of the tool.'),
+		('Activequickext', 'QuickExt', True, False,
+		 'Create an extension on the current COMP from the button.'),
+		('Activequickparent', 'QuickParent', True, False,
+		 'Set a parent shortcut on the current COMP from the button.'),
+		('Activeclearpars', 'ClearPars', True, False,
+		 'Alt-click (Cmd on macOS) the button to clear the custom parameters '
+		 'of the current child.'),
+		('Activeioppromoter', 'IOP Promoter', True, False,
+		 'Hold the modifier while dropping an operator on the button to '
+		 'promote it as an Internal OP instead of promoting parameters.'),
+		('Activehijackdragdrop', 'Navbar Drag/Drop', True, True,
+		 'Accept operator and parameter drops anywhere on the pane navigation '
+		 'bar. Off UNREGISTERS the widget, removing it from every bar.'),
+		('Activepathcellclickinject', 'Navbar Path Cell Click', True, False,
+		 'Open parameters for the operator whose path cell you click in the '
+		 'pane bar. Off UNREGISTERS the widget, removing it from every bar.'),
+		('Activequickparcustom', 'QuickParCustom', True, True,
+		 "Rollover hotkeys for promoting and customizing the parameter under "
+		 "the mouse. Bound to QuickParCustom's own Active switch."),
+		('Activetdshortcuts', 'Parameter/Editor Hotkeys', True, False,
+		 'The four stock-TouchDesigner hotkeys on the Custom page (open '
+		 'parameters, open component editor). Off deactivates the keyboardins; '
+		 'the matching quick-launch commands stay available.'),
+	)
+
+	# Everything whose only front door is button_custompar_tools. With all of
+	# these off the button has nothing left to do, so the package leaves the
+	# navbar and the toolbar outright. FNS_ConfigRegistry is deliberately NOT
+	# in this cascade: it carries no surface, and it is what persists these
+	# very toggles -- unregistering it would discard the setting that asked
+	# for the unregistration.
+	_BUTTON_MODULE_PARS = ('Activeparpromote', 'Activequickext',
+						   'Activequickparent', 'Activeclearpars',
+						   'Activeioppromoter')
+
+	def ModuleEnabled(self, module):
+		"""True when `module` is switched on, on the Modules page.
+
+		`module` is the sub-module's operator name -- ModuleEnabled('QuickExt'),
+		ModuleEnabled('iopPromoter') -- lowercased onto its Enable* parameter.
+
+		Fails OPEN: a missing parameter reports enabled. FNS_NavbarRegistry
+		COPIES button_custompar_tools into every pane bar, so those copies call
+		this from OUTSIDE the package (which is why it is promoted), and must
+		not go dead against a CustomParTools with no Modules page.
+		"""
+		p = self.ownerComp.par['Active' + str(module).lower()]
+		return True if p is None else bool(p.eval())
+
+	def _ensureModulePars(self):
+		"""Get-or-create the Modules page. Never destroys, never overwrites a value."""
+		c = self.ownerComp
+		page = None
+		for pg in c.customPages:
+			if pg.name == 'Modules':
+				page = pg
+				break
+		if page is None:
+			page = c.appendCustomPage('Modules')
+		for name, label, default, section, help_ in self._MODULE_PARS:
+			p = c.par[name]
+			if p is None:
+				p = page.appendToggle(name, label=label)[0]
+				p.val = default
+			p.default = default
+			p.label = label
+			p.help = help_
+			p.startSection = section
+
+	def _setSurfaceRegistration(self, comp, prefix, on):
+		"""Register or unregister one surface host ('Nb' navbar, 'Tb' toolbar).
+
+		Autoregister on its own is not an off switch -- it only decides what
+		happens at init -- so the Register/Unregister pulse has to follow it for
+		the change to reach the live bars. Writes nothing when the state already
+		matches, so an extension reinit does not churn the surface.
+		"""
+		auto = comp.par[prefix + 'autoregister']
+		act = comp.par[prefix + ('register' if on else 'unregister')]
+		if auto is None or act is None:
+			return False
+		if bool(auto.eval()) == bool(on):
+			return False
+		auto.val = bool(on)
+		act.pulse()
+		fnsLog('CustomParPromoter: %s %s%s' % (
+			comp.name, prefix, 'register' if on else 'unregister'))
+		return True
+
+	def applyModuleGates(self):
+		"""Push the Modules toggles onto everything they gate but do not own.
+
+		The click and drop paths ask ModuleEnabled() at call time, so they need
+		nothing from here. What needs pushing is state owned by ANOTHER
+		operator: a disabled module has to LEAVE its surface, not merely
+		decline to act.
+		"""
+		c = self.ownerComp
+
+		# QuickParCustom already ships its own Active toggle, and a quick-launch
+		# command with state='Active' that writes to it. BIND rather than push,
+		# so a write from either side lands on one value and the two cannot
+		# drift apart.
+		qpc = c.op('QuickParCustom')
+		if qpc is not None and qpc.par['Active'] is not None:
+			want = 'parent.PAR_PROMOTER.par.Activequickparcustom'
+			if (qpc.par.Active.bindExpr != want
+					or qpc.par.Active.mode != ParMode.BIND):
+				qpc.par.Active.bindExpr = want
+				qpc.par.Active.mode = ParMode.BIND
+
+		# the four stock-TD hotkeys: an expression tracks the toggle forever,
+		# where a pushed value goes stale the next time anything sets it.
+		want = 'parent.PAR_PROMOTER.par.Activetdshortcuts'
+		for k in c.children:
+			if k.OPType != 'keyboardinDAT':
+				continue
+			if (k.par.active.expr != want
+					or k.par.active.mode != ParMode.EXPRESSION):
+				k.par.active.expr = want
+				k.par.active.mode = ParMode.EXPRESSION
+
+		# exclusive surfaces: each of these owns its own navbar host, so its
+		# toggle is a straight register/unregister.
+		for name, parname in (('hijack_dragdrop', 'Activehijackdragdrop'),
+							  ('PathCellClickInject', 'Activepathcellclickinject')):
+			sub = c.op(name)
+			p = c.par[parname]
+			if sub is not None and p is not None:
+				self._setSurfaceRegistration(sub, 'Nb', bool(p.eval()))
+
+		# the shared surface.
+		live = [c.par[n] for n in self._BUTTON_MODULE_PARS]
+		button_on = any(bool(p.eval()) for p in live if p is not None)
+		for prefix in ('Nb', 'Tb'):
+			self._setSurfaceRegistration(c, prefix, button_on)

@@ -31,6 +31,15 @@ class ClearParsExt:
 		self.Op = None
 		fnsLog('ClearPars: init')
 
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
 	def ClearPars(self):
 
 		_ops = [self.Op]
@@ -69,7 +78,7 @@ class ClearParsExt:
 		ui.undo.endBlock()
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Clear custom pars of selected')
+	@FNSCommand.fns_command(label='Clear custom pars of selected', context='selected')
 	def ClearSelectedPars(self):
 		"""Remove ALL custom parameters from the selected operators (undoable)."""
 		self.ClearPars()

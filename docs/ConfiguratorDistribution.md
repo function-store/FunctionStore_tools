@@ -13,8 +13,10 @@ of taking the whole toolkit. Companion to
 runtime** relationship between tools and registries.
 
 **Distribution model (decided 2026-08-13): buckets and manifests.** A
-bucket holds `manifest.json` and the per-release artifacts; native
-`.exe`/`.dmg` installers are the bootstrap. Everything downstream —
+bucket holds `manifest.json` and the per-release artifacts; the one-drop
+`FNSTools.tox` is the bootstrap (native `.exe`/`.dmg` installers were deferred
+on 2026-08-21, [NativeInstallerDecision.md](NativeInstallerDecision.md); this
+line corrected 2026-09-08). Everything downstream —
 picking, installing, updating — is manifest-driven. Update decisions are
 made on a **version parameter we govern** (`Pkgversion`), read live off
 the installed component; artifact hashes verify downloads only. See §4.2.
@@ -248,6 +250,26 @@ Assessed all three before touching them; they do not resolve the same way.
   (`cpt.op('iopPromoter')`) so `FNS_IOP` could still be retired. Note the
   audit lesson: constant-mode par VALUES can carry op references too —
   sweep those, not just DAT text and expressions.
+
+  **SUPERSEDED 2026-09-09: hijack_dragdrop MOVED after all**, along with
+  `PathCellClickInject`, into what is now `FNS_CustomParTools`. The owner
+  dissolved `FNS_Navbar` entirely, so "stays a navbar citizen" had no citizenship
+  left to keep: `parent_hierarchy` split into `FNS_iopBrowser` and
+  `FNS_ParentHierarchy`, and with those gone the package was ~80 ops of
+  scaffolding. The `../panenav` objection turned out to be moot and always had
+  been: `panenav` is TouchDesigner's OWN pane-bar element, so the reference
+  cannot resolve at the MASTER and warns there for as long as it ships.
+
+  **Corrected 2026-09-09, same day:** I first read that warning as a dead
+  feature, because at the master `panel1` and `null1` carry 0 channels. That is
+  the wrong place to measure a per-pane widget. NavbarRegistry makes COPIES into
+  each pane bar, where `panenav` IS a sibling: measured in
+  `/ui/panes/panebar/pane1/nbitem_HijackDragdrop`, `panel1` resolves to
+  `pane1/panenav/path` with **67 channels**, and `null1` carries the same 67.
+  The feature works. Clearing the reference at the master -- which I did, to
+  silence the warning -- broke it in every bar, and it has been restored.
+  **The master's warning is the correct, permanent state for this class of
+  widget; do not "fix" it.**
 - **`FNS_Toolbar → midiMapper`: RESOLVED (2026-08-13).** The blocker was
   `allowCooking = False` on midiMapper — a live panel widget cannot move
   into a COMP that does not cook. The owner re-enabled cooking, which took
@@ -558,7 +580,7 @@ Nothing hand-maintains this, so it cannot drift from reality.
 
   The one that matters: **`OpTemplates` ships expecting
   `OPTemplates1.tox` to already exist in the installing user's palette**
-  (`<palette>/FNStools_ext/OpTemplates/OPTemplates1.tox`). On a fresh
+  (`<palette>/FNSTools/OpTemplates/OPTemplates1.tox`). On a fresh
   machine that file is absent and the template library comes up empty.
   Six of its render templates also pin TD's own `Samples/Geo` by version.
   The other palette references (ExprHotStrings, FNS_HotkeyManager,
@@ -705,7 +727,7 @@ The palette is a **store**; projects embed self-contained copies. Two
 deliberately separate motions:
 
 1. **Refresh the store** — fetch the bucket manifest, download changed
-   artifacts into `<palette>/FNStools_ext/store/`. Machine-wide,
+   artifacts into `<palette>/FNSTools/store/`. Machine-wide,
    project-independent.
 2. **Update this project from the store** — compare the open project's
    embedded packages against the store and `replaceOp` only what differs.
@@ -766,7 +788,7 @@ Three pulses on UPDATER, one for each motion, plus `Baseurl` /
 
 | Pulse | Cost | What it does |
 |---|---|---|
-| **Refresh Store** | whole store | manifest + every artifact whose bytes differ → `<palette>/FNStools_ext/store/` |
+| **Refresh Store** | whole store | manifest + every artifact whose bytes differ → `<palette>/FNSTools/store/` |
 | **Check for Updates** | one small JSON | manifest only, then compare — answering "anything new?" must not cost 6 MB |
 | **Update This Project** | only what differs | fetches just the packages this project needs, then replaces them |
 
@@ -821,7 +843,7 @@ its new state in the call that fired the pulse, so the pass records what to
 check and settles it on the next tick.
 
 Settings are safe by construction, not by care: they live in
-`<palette>/FNStools_ext/config/FNStools_config.json`, never in the `.tox`,
+`<palette>/FNSTools/config/FNStools_config.json`, never in the `.tox`,
 and each tool's ConfigRegistry host re-registers on reload with
 `autoload`, which re-applies its section. `SaveAll()` still runs before any
 pass.

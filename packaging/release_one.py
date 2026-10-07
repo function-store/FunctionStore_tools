@@ -30,14 +30,114 @@ tick). upload=False lets several releases batch before one sync.
 """
 
 import json
+import os
 import subprocess
 import time
 from datetime import date
+
+# --- the toolkit's folder in the user palette ------------------------------
+# <user palette>/FNSTools (docs/PaletteFolderContract.md). Until 2026-09-18
+# this was FNStools_ext; a legacy folder is renamed into place the first
+# time any reader looks. This function is carried verbatim by every FNS
+# extension that reads the folder: they ship as separate toxes and cannot
+# share a module, and whichever reader gets there first must be able to
+# migrate on its own. Master copy: FNS_Updater/ExtUpdater.py.
+PALETTE_DIR = 'FNSTools'
+LEGACY_PALETTE_DIR = 'FNStools_ext'
+
+
+def _fnsPaletteRoot():
+    """'<user palette>/FNSTools', migrating a legacy FNStools_ext folder into
+    place on first sight; '' when this install has no user palette folder."""
+    try:
+        base = str(app.userPaletteFolder).replace('\\', '/').rstrip('/')
+    except Exception:
+        return ''
+    if not base:
+        return ''
+    new = '%s/%s' % (base, PALETTE_DIR)
+    legacy = None
+    try:
+        for fn in os.listdir(base):
+            if fn.lower() == LEGACY_PALETTE_DIR.lower() and os.path.isdir('%s/%s' % (base, fn)):
+                legacy = '%s/%s' % (base, fn)
+                break
+    except Exception:
+        pass
+    if legacy is None:
+        return new
+    if not os.path.isdir(new):
+        try:
+            os.rename(legacy, new)
+            return new
+        except OSError as e:
+            # a file held open, most likely; this session keeps using the
+            # old folder and the next start tries again
+            debug('FNS: could not rename %s to %s (%s)' % (legacy, new, e))
+            return legacy
+    # both exist (a race, or an older launcher recreated the legacy
+    # folder): whatever the legacy folder holds that the new one lacks
+    # moves over, and the legacy folder goes once it is empty
+    # entry by entry, each on its own: a folder something still watches
+    # (TDFam's Folder DAT on the old family tree) refuses to move, and that
+    # must not keep the store or the config from moving. A folder both
+    # sides hold is merged the same way one level down, because a reader
+    # that seeds its file when it is missing (OpTemplates) can have made
+    # the new folder before this ran. A FILE both sides hold stays as the
+    # new side has it, and the legacy copy is kept aside under
+    # FNSTools/legacy_<old name>/ at its old relative path, never deleted:
+    # the new side's file is usually the later state, but it can be a seed
+    # (OpTemplates writes its default library when its file is missing)
+    # while the legacy one is the user's work. OpTemplates looks there
+    # before seeding again. Deleting it lost a user's library (2026-09-18).
+    left = []
+
+    def merge(src_dir, dst_dir):
+        for fn in os.listdir(src_dir):
+            src, dst = '%s/%s' % (src_dir, fn), '%s/%s' % (dst_dir, fn)
+            try:
+                if not os.path.exists(dst):
+                    os.rename(src, dst)
+                elif os.path.isdir(src) and os.path.isdir(dst):
+                    merge(src, dst)
+                    if not os.listdir(src):
+                        os.rmdir(src)
+                elif os.path.isfile(src) and os.path.isfile(dst):
+                    rel = os.path.relpath(src, legacy).replace('\\', '/')
+                    keep = '%s/legacy_%s/%s' % (new, LEGACY_PALETTE_DIR, rel)
+                    if os.path.exists(keep):
+                        os.remove(src)
+                    else:
+                        os.makedirs(os.path.dirname(keep), exist_ok=True)
+                        os.rename(src, keep)
+            except OSError as e:
+                left.append('%s (%s)' % (fn, e))
+
+    try:
+        merge(legacy, new)
+        if not os.listdir(legacy):
+            os.rmdir(legacy)
+    except Exception as e:
+        left.append(str(e))
+    if left:
+        debug('FNS: legacy palette folder %s not fully merged: %s' % (legacy, '; '.join(left)))
+    return new
+
 
 # explicit encoding: a TD session launched without a UTF-8 locale
 # defaults open() to ascii, and these files contain section marks/dashes
 exec(open('packaging/build_manifest.py', encoding='utf-8').read())
 exec(open('packaging/publish.py', encoding='utf-8').read())
+
+
+def _catalogDoc():
+    """packaging/catalog.json as a dict, {} when absent or unreadable."""
+    path = _repo(PKG_DIR, 'catalog.json')
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return {}
 
 
 def _verTuple(v):
@@ -76,7 +176,7 @@ def _storeManifest():
         pass
     if not folder:
         try:
-            folder = '%s/FNStools_ext/store' % app.userPaletteFolder
+            folder = '%s/store' % _fnsPaletteRoot()
         except Exception:
             return None
     return os.path.join(folder, 'manifest.json').replace('\\', '/')
@@ -152,6 +252,15 @@ Release notes for the NEXT publish. Write prose about what changed and
 why -- do NOT write version numbers or the release label here: the
 bumped packages and their version transitions are stamped automatically
 at publish time (you see the exact numbers in the confirm dialog).
+
+A line that starts with a package name and a colon rides that package's
+changelog bullet AND ships as its `whatsnew` in the manifest. Attribution
+is by the exact catalog name (FNS_BeatMod, not BeatMod); a typo demotes
+the line to general prose. Everything else is release-level prose.
+
+Accumulate as you work: the commit that changes what a shipped package
+does appends its line here, in the same commit. See RELEASING.md,
+"Release notes".
 
 This file is CLEARED after each successful publish; your text becomes
 that release's entry in packaging/CHANGELOG.md and ships inside the
@@ -283,8 +392,22 @@ def _versionWritePar(comp):
 def ReleaseMany(names, bump='auto', label=None, upload=True, rails=False):
     names = [n.name if isinstance(n, OP) else str(n) for n in names]
     by_name = {c.name: c for c in Packages()}
-    skipped = [n for n in names if n not in by_name]
+    # Foreign packages ride the same release: no bump, no export, no PI
+    # save -- the lock IS their version, foreign_sync.py IS their export.
+    # A foreign name whose mirror is broken is refused here, before the
+    # release label moves, the same way a failed export refuses below.
+    catalog = _catalogDoc()
+    foreign_all = ForeignEntries(catalog)
+    foreign = [n for n in names if n in foreign_all and n not in by_name]
+    skipped = [n for n in names if n not in by_name and n not in foreign_all]
     todo = [n for n in names if n in by_name]
+    if foreign:
+        _frows, fprob = ForeignPackages(catalog, ForeignLock())
+        fprob = [p for p in fprob if p.split(':', 1)[0] in foreign]
+        if fprob:
+            return {'ok': False, 'why': 'foreign package(s) not mirrored: '
+                    + '; '.join(fprob) + ' -- run foreign_sync.py first',
+                    'skipped': skipped}
     if rails:
         # Rails ride into every release automatically (Stage hashes the
         # dist bytes as it goes); ticking them asserts they are WORTH a
@@ -297,12 +420,15 @@ def ReleaseMany(names, bump='auto', label=None, upload=True, rails=False):
         if not todo and not _railsChanged():
             return {'ok': False, 'why': 'rails are identical to the staged '
                     'release -- nothing to ship', 'skipped': skipped}
-    if not todo and not rails:
+    if not todo and not rails and not foreign:
         return {'ok': False, 'why': 'nothing shippable in selection',
                 'skipped': skipped}
 
     published = _publishedVersions()
     versions = {}
+    lock = ForeignLock()
+    for n in foreign:
+        versions[n] = str((lock.get(n) or {}).get('version', ''))
     bumped_live = []          # packages whose LIVE par this call rewrote
     for n in todo:
         comp = by_name[n]
@@ -405,7 +531,8 @@ def ReleaseMany(names, bump='auto', label=None, upload=True, rails=False):
 
     result = {'ok': True, 'packages': versions, 'release': r2['release'],
               'bumped': r2['bumped'], 'skipped': skipped,
-              'rails_only': bool(rails and not todo),
+              'foreign': foreign,
+              'rails_only': bool(rails and not todo and not foreign),
               'pi_saved': pi_saved, 'pi_unsaved': pi_unsaved,
               'notes': bool(per_tool or general), 'uploading': False}
     if upload:
@@ -699,10 +826,18 @@ def _gatedLeakRisks():
             cat = json.load(f).get('packages', {})
     except Exception:
         return []
+    # a preview ships gated whatever its catalog access says
+    # (docs/PreviewPackages.md), so its bytes are guarded the same way
     gated = {n for n, m in cat.items()
-             if str((m or {}).get('access', 'free') or 'free') != 'free'}
+             if str((m or {}).get('access', 'free') or 'free') != 'free'
+             or (m or {}).get('preview') is True}
     out = []
-    for c in Packages():
+    for m in cat.values():
+        for vid, block in ((m or {}).get('variants') or {}).items():
+            src = str((block or {}).get('source', '') or '').strip()
+            if src:
+                gated.add(src)      # a variant master is gated bytes too
+    for c in list(Packages()) + list(VariantSourceComps()):
         if c.name not in gated:
             continue
         try:
@@ -717,6 +852,40 @@ def _gatedLeakRisks():
     return sorted(out)
 
 
+def _variantProblems():
+    """Tier variants (docs/TierVariants.md) that cannot ship as declared:
+    a named source master that is missing or sits inside another master
+    (the Base artifact would carry Pro bytes), or two masters that
+    disagree on Pkgversion (one package, one version line)."""
+    try:
+        with open(_repo(PKG_DIR, 'catalog.json'), encoding='utf-8') as f:
+            cat = json.load(f).get('packages', {})
+    except Exception:
+        return []
+    by_name = {c.name: c for c in Packages()}
+    root = _root()
+    out = []
+    for name, meta in sorted(cat.items()):
+        for vid, block in sorted(((meta or {}).get('variants') or {}).items()):
+            src = str((block or {}).get('source', '') or '').strip()
+            base = by_name.get(name)
+            if not src:
+                continue
+            sc = root.op(src)
+            if sc is None:
+                out.append('%s.%s: source master %s is not a live depth-1 COMP'
+                           % (name, vid, src))
+                continue
+            for other in list(by_name.values()) + [c for c in VariantSourceComps() if c is not sc]:
+                if other.op(src) is not None and other is not sc:
+                    out.append('%s.%s: source master %s sits inside %s -- that '
+                               'artifact would carry its bytes' % (name, vid, src, other.name))
+            if base is not None and _version(sc) != _version(base):
+                out.append('%s.%s: %s is at %s but the package is at %s -- one '
+                           'package, one version line' % (name, vid, src, _version(sc), _version(base)))
+    return out
+
+
 def Preflight(names=None, quiet=False):
     """The checklist, run before anything ships. Nothing here mutates.
 
@@ -728,10 +897,21 @@ def Preflight(names=None, quiet=False):
     package instead of a selection, which is the 'what am I forgetting'
     view."""
     every = sorted(c.name for c in Packages())
-    names = every if names is None else [
+    # Foreign packages (docs/ForeignPackages.md): declared in the catalog,
+    # mirrored by foreign_sync.py. Shippable, but never bumped, exported
+    # or PI-saved -- their checks are the lock and the catalog's rules.
+    catalog = _catalogDoc()
+    foreign_all = ForeignEntries(catalog)
+    names = (every + sorted(foreign_all)) if names is None else [
         n.name if isinstance(n, OP) else str(n) for n in names]
-    unknown = [n for n in names if n not in every]
+    unknown = [n for n in names if n not in every and n not in foreign_all]
     known = [n for n in names if n in every]
+    foreign = [n for n in names if n in foreign_all]
+    _frows, foreign_problems = ForeignPackages(catalog, ForeignLock())
+    foreign_problems = [p for p in foreign_problems
+                        if p.split(':', 1)[0] in foreign]
+    catalog_problems = CatalogProblems(catalog, every, opmenu_hosted=OpMenuHostedNames(),
+                                       family_hosted=FamilyHostedNames())
 
     unlanded, rippled = _unlandedPackages(known)
     rails = _staleRails()
@@ -771,6 +951,22 @@ def Preflight(names=None, quiet=False):
             'gated bytes would ride the published root tox: '
             + '; '.join(leak_risks) + ' -- fix the flag(s), PI-save the '
             'package and the root, then rebuild the manifest')
+    variant_problems = _variantProblems()
+    if variant_problems:
+        blockers.append('tier variants: ' + '; '.join(variant_problems))
+    family_problems = [x for c in Packages() for x in FamilyProblems(c)]
+    if family_problems:
+        blockers.append('FNS family manifests: ' + '; '.join(family_problems)
+                        + ' -- fix the FamManifest DATs, PI-save the package, '
+                        'then rebuild the manifest')
+    if catalog_problems:
+        blockers.append('catalog.json breaks an authority rule: '
+                        + '; '.join(catalog_problems))
+    if foreign_problems:
+        blockers.append('foreign package(s) not mirrored: '
+                        + '; '.join(foreign_problems)
+                        + ' -- run packaging/foreign_sync.py (the CMS '
+                        'Sync foreign button), then rebuild the manifest')
     if unknown:
         warnings.append('not shippable packages, will be skipped: '
                         + _some(unknown))
@@ -787,7 +983,8 @@ def Preflight(names=None, quiet=False):
         warnings.append(f'{len(dirty)} uncommitted file(s) in the repo -- '
                         'fine now, but step 4 is committing what this writes')
 
-    report = {'ok': not blockers, 'packages': known, 'blockers': blockers,
+    report = {'ok': not blockers, 'packages': known, 'foreign': foreign,
+              'blockers': blockers,
               'warnings': warnings, 'unlanded': unlanded, 'rippled': rippled,
               'stale_rails': rails, 'severed_mirrors': severed,
               'gated_leak_risks': leak_risks,

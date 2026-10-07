@@ -32,6 +32,15 @@ class QuickParCustomExt:
 		self.compEditor = op('/sys/TDDialogs/CompEditor')
 		fnsLog('QuickParCustom: init')
 
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
 	@property
 	def customParPromoter(self):
 		"""CustomParTools, which carries customParPromoterExt -- we are its child.
@@ -48,10 +57,46 @@ class QuickParCustomExt:
 	@property
 	def rolloverPar(self):
 		return ui.rolloverPar
-	
+
+	def _rolloverMembers(self, _par):
+		"""The parameters one promote should cover.
+
+		TD exposes both ui.rolloverPar and ui.rolloverParGroup, so hovering tx
+		of t can mean the whole group while hovering a single-value parameter
+		means just that one -- decided by what is under the cursor rather than
+		by a fixed preference.
+
+		Members come back as Pars, NEVER as the ParGroup itself. ParGroup.mode
+		is a TUPLE of modes (and .expr / .bindExpr likewise), so handing a
+		group to the ParMode checks in onShortcut would compare a tuple to an
+		enum, quietly take the wrong branch, and promote the wrong thing.
+		"""
+		pg = getattr(ui, 'rolloverParGroup', None)
+		try:
+			if (pg is not None and len(pg) > 1
+					and pg.owner is _par.owner
+					and pg.name == _par.parGroup.name):
+				return list(pg)
+		except Exception:
+			pass
+		return [_par]
+
+
 	@property
 	def mod(self):
-		return self.ownerComp.op('null_hk')['shift'].eval()
+		"""Is shift held.
+
+		The CHOP latches: TD loses focus with shift down, the keyup never
+		arrives, and the channel stays at 1. FNSModifiers asks the OS
+		instead where it can, and returns the CHOP value unchanged where
+		it cannot -- so this is a fix on Windows and exactly today's
+		behaviour anywhere the OS cannot be asked.
+		"""
+		chop = self.ownerComp.op('null_hk')['shift'].eval()
+		mods = self.ownerComp.op('FNSModifiers')
+		if mods is None:
+			return chop
+		return mods.module.heldOr('shift', chop)
 	
 	def onShortcut(self, shortcutName):
 		_par = self.rolloverPar
@@ -75,8 +120,15 @@ class QuickParCustomExt:
 				if do_promote:
 					self.customParPromoter.Target = _owner.parent() if _target is None else _target
 					self.customParPromoter.Reference = _owner
-					ui.undo.startBlock('Promote param')
-					_new_par = self.customParPromoter.PromotePar(_par, None)
+					_members = self._rolloverMembers(_par)
+					# one undo block for the whole group, not one per member
+					ui.undo.startBlock('Promote param' if len(_members) == 1
+									   else f'Promote {len(_members)} params')
+					_new_par = None
+					for _member in _members:
+						_promoted = self.customParPromoter.PromotePar(_member, None)
+						if _promoted is not None and _new_par is None:
+							_new_par = _promoted
 					ui.undo.endBlock()
 					if _new_par is not None:
 						_par = _new_par[0]

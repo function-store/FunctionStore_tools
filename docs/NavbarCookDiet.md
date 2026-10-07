@@ -132,3 +132,43 @@ load-bearing -- revert the master to `cooktype = always` / `timeslice` on /
   unconditionally time-dependent (928/931 frames with play off *and* viewer
   off), `allowCooking` will not take on a CHOP, and bypassing it starves the
   crossCHOP expressions into a TypeError. Not worth further surgery.
+
+## 2026-09-09: the paths in this document no longer exist
+
+`FNS_Navbar` was dissolved. `parent_hierarchy` split into **FNS_iopBrowser**
+(the OP/IOP browser) and **FNS_ParentHierarchy** (the breadcrumb, the hover chain
+and the nugget); `hijack_dragdrop` and `PathCellClickInject` moved into
+**FNS_CustomParTools**. Read every path above as historical.
+
+## The hand test finally ran, and two thirds of the optimization holds
+
+The owner exercised the hover on 2026-09-09. **It did nothing at all**, silently.
+Bisecting the three changes against a live bar:
+
+| change | verdict | why |
+|---|---|---|
+| `null1`-`null5` -> `cooktype = selective` | **REVERTED** | the nulls cooked 22 times against `panel2`'s 159, so the chopexecs watching them never saw a value change. This is what made the widget dead. |
+| `timeslice` off on `logic1`/`logic2`/`logic5` | **kept** | measured to make no difference to the signal |
+| `chopexec5` inactive | **REVERTED** | it is not a trigger, it is the RESET: `onOnToOff` puts `celloverid` back to -1 when the hover ends. Disabled, the hover latches and the guard `if val == -1: return` can never fire. |
+
+Cost with the nulls back on `automatic`: **2 cooking ops per bar, 10 across five
+bars** -- against 65 for a full revert and 4 for the broken-but-quiet state. Most
+of the saving survives.
+
+**The lesson worth keeping: `cooktype = selective` on a CHOP whose only consumer
+is a CHOP Execute DAT silently disables the callback.** The op stops cooking, the
+DAT never sees a change, and nothing anywhere reports an error. That is why this
+sat "applied and awaiting a hand test" for two weeks looking fine.
+
+**Do not measure this widget class at the master.** `panel2` and
+`hijack_dragdrop/panel1` read `../panenav`, TouchDesigner's own pane-bar element,
+which exists only in the pane-bar COPY. At the master they warn and carry 0
+channels, which reads exactly like a dead feature and is not one.
+
+**The live control is gone.** pane2, pane5 and `panebar_default` held instances on
+the ORIGINAL flags; destroying the old master took them with it. Any future
+comparison has to be staged deliberately.
+
+**`hijack_dragdrop/null1` is still there**, fed by `panel1` on `../panenav/path`,
+and it carries 67 channels in a pane-bar copy. It remains one of the two ops
+`allowCooking` cannot gate.

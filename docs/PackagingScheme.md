@@ -50,7 +50,8 @@ side table can drift out of truth — the component *is* the truth.
 **Dependencies are DERIVED, never declared.** Registry masters live in
 core and tools ship stamped *hosts*, so a package's `requires` is exactly
 the core packages owning the registries it hosts. Every tool needs
-`FNS_Config`; a toolbar button also needs `FNS_Toolbar`. Nothing
+`FNS_Config`; a toolbar button also needs `FNS_Toolbar` (pre-3.0 names; since
+v3.0.0 the owners are `FNS_ConfigRegistry` and `FNS_ToolbarRegistry`). Nothing
 hand-maintains it, so it cannot drift. Package identity = a depth-1 COMP
 that is a tracked `pi_suspect` with its own tox.
 
@@ -64,7 +65,7 @@ several; nothing can, without a content fingerprint (see §6).
 
 | Pulse | Cost | Does |
 |---|---|---|
-| **Refresh Store** | whole store | fetch manifest + every artifact whose bytes differ → `<palette>/FNStools_ext/store/`. Machine-wide; touches no project |
+| **Refresh Store** | whole store | fetch manifest + every artifact whose bytes differ → `<palette>/FNSTools/store/`. Machine-wide; touches no project |
 | **Check for Updates** | one small JSON | fetch the manifest only, then compare. Asking "anything new?" must not cost 6 MB |
 | **Update This Project** | only what differs | fetch just the packages this project needs, then apply them |
 
@@ -103,7 +104,7 @@ store refresh reaches every project sharing it — because some users want
 exactly that. It is not the default.
 
 **Settings are safe by construction**, not by care: they live in
-`<palette>/FNStools_ext/config/FNStools_config.json`, never in a `.tox`,
+`<palette>/FNSTools/config/FNStools_config.json`, never in a `.tox`,
 and `RegisterTool(autoload=True)` re-applies each tool's section when its
 host re-registers after a reload. `SaveAll()` still runs before any pass.
 
@@ -153,6 +154,8 @@ but treat it as unproven until a real bucket install hits it.
 - Copy+destroy of extension-bearing COMPs is crash-prone: one tool per `execute_python`, ending with `comp.save(externaltox)` in the SAME call.
 - Before renaming/destroying a COMP containing stamped registry hosts, grep `externalizations.tsv` for rows under its path — Embody's move detection has re-matched orphaned rows to a different clone and deleted the master `.py` ~20 clones sync from.
 - `parameterexecuteDAT`'s pulse toggle is `onpulse`, not `pulse`.
+- **Forcing a bound par to CONSTANT in a `pre_release` hook ships it UNBOUND** — the value clears, the wiring does not come back, and the artifact then looks healthy from every angle while doing nothing. FNS_TimelineTools shipped v3.1.4 with all twelve of its binds cut this way (`FNS_Waveform`'s Audio File following the package's, the Background's `Mediafile` following `Moviefile`, and every status/readout reporting back up), so the released waveform could not be pointed at a file at all. A hook that must clear a bound par has to force CONSTANT (or the assignment travels UP the bind to the master), so it must RECORD what it unbound and restore it after the sweep — never as it goes. `bindExpr` survives the switch to CONSTANT, and assigning it back is itself enough to return the par to BIND (measured, 2025.33070).
+- **A `pre_release` hook CANNOT fail an export by raising.** Measured 2026-09-09 with a deliberate failure armed in the hook: Embody catches the exception and writes the .tox regardless, `ExportPortableTox` returns `True` (`build_manifest`'s "aborted pre_release hook" comment describes some other failure and is misleading). Worse, a raise mid-hook skips every sweep BELOW it — the author's media paths, storage and `pi_suspect` tags — to report a smaller problem. Hooks report through `op.Embody.Log(msg, 'ERROR')`, which reaches the ring buffer, the log files, and rides back on the MCP response.
 - `inspect.getsource()` on a TD builtin WEDGES the main thread. A responsive Envoy is not proof the main thread is alive — `result = 1+1` is the cheap disambiguator.
 
 **Paid for the hard way:** an artifact was written over the live `AutoRes`,
@@ -184,6 +187,14 @@ Do not re-propose these without new information:
 > discovered by a user; and `Baseurl` is a single value with no fallback and no
 > way to reach the field, so a moved bucket strands every install. The last one
 > cannot be repaired after the fact.
+>
+> **Correction 2026-09-08.** All three closed on 2026-08-27
+> ([RailHardening.md](RailHardening.md) §3): `publish.py` computes `removed`,
+> `upload.py` reads back what it uploaded, and a signed discovery document
+> with `minimum_updater` and `notices` sits above `base_url`
+> (`ExtUpdater.DISCOVERY_PINS`). The `BASE_URL` swap and the `Cache-Control`
+> on the rolling manifest in the list below are done as well (`upload.py`).
+> The paragraph above is kept as the record of what was found.
 
 - Swap `BASE_URL` in `build_manifest.py` and the `Baseurl` par default when the bucket is real. **Nothing else changes** — both rails were built and verified against a local tree precisely so this is a one-constant swap. Assume public-read; a token must never ship inside a distributed tox.
 - Set `Cache-Control` on the rolling `manifest.json` at upload time. A CDN-cached root manifest would silently pin users to an old release; deliberately not worked around client-side.
@@ -209,19 +220,28 @@ packaging/dist/               39 .tox + FNS_Installer.tox (gitignored)
 packaging/publish/            staged bucket tree (gitignored)
 ```
 
-The updater is `UPDATER/ExtUpdater.py`, mirrored at
-`scripts/UPDATER/ExtUpdater.py` (the DAT syncs from the `modules/suspects`
-copy; keep both in step).
+The updater is `modules/suspects/FNSTools/FNS_Updater/ExtUpdater.py`
+(corrected 2026-09-08: the package is `FNS_Updater` since v3.0.0, and
+`scripts/UpdaterExt.py` is Embody's own GitHub self-updater, unrelated). The
+tree above is the 2026-08-13 snapshot; at v3.1.4 the catalog has 58 packages
+and 10 core, and `build_installer.py` builds the rails into `dist/`
+(`FNSTools.tox` bootstrap, `FNS_Installer.tox`).
 
-**Branch `packaging`, LOCAL ONLY — nothing pushed.** Update commits:
+**Branch note, historical (2026-08-13):** the update commits were
 `079515e` (store refresh + project pull) → `c78e8fa` (bound packages
-rewrite in place) → `d746cd4` (governed versions replace hashes).
+rewrite in place) → `d746cd4` (governed versions replace hashes); all merged
+since.
 
 `docs/ConfiguratorDistribution.md` is the design record and is current —
 §4.2 carries the update model including the reversal and its evidence.
 `docs/UvPackagingResearch.md` is research only, not the plan.
 
 ## 9. Release checklist
+
+> Superseded 2026-09-08 as a runbook: releases go through Guided Release in
+> [packaging/RELEASING.md](../packaging/RELEASING.md). The steps below still
+> name the underlying rails; the upload is `packaging/upload.py` (wrangler,
+> with read-back verification), which replaced the `aws s3 sync` line.
 
 ```python
 # 1. bump Pkgversion on every package you changed (Package page)

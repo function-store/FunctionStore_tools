@@ -21,8 +21,16 @@ import os
 import time
 import uuid
 import sys
+import shutil
 import numpy as np
 from dot_chat_util import DotChatUtil
+
+# A file copied in Explorer reaches the clipboard as a file list (CF_HDROP),
+# never as pixels, so it needs its own read. Module level: a capitalized
+# class or instance member would be promoted onto the COMP.
+_CF_HDROP = 15
+_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.bmp', '.tif', '.tiff', '.tga', '.gif',
+                     '.webp', '.exr', '.hdr', '.dds', '.psd')
 
 def fnsLog(*args, level='INFO'):
     """Log via the central FNSTools logger (op.FNS 'logger'); silent no-op when
@@ -70,6 +78,15 @@ class ClipboardImageEXT(DotChatUtil):
         self.popMenu = self.ownerComp.op('popMenu')
         self.PopMenuItemsShortcuts = {'File In':'1', 'ScriptTOP':'2','Annotate':'3','Cancel':'esc'}
         fnsLog('paste_from_clipboard: init')
+
+    def onInitTD(self):
+        # The slim ExtUtils carries no announcer, so this tool registers its
+        # quick-launch commands itself: deferred past the registry's /sys
+        # promotion and this module's own compile.
+        run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+    def _announceCommands(self):
+        FNSCommand.announce(self.ownerComp)
 
 
     def _init_clipboard_ctypes(self):
@@ -144,6 +161,10 @@ class ClipboardImageEXT(DotChatUtil):
         self.GlobalSize = self.kernel32.GlobalSize
         self.GlobalSize.argtypes = [wintypes.HGLOBAL]
         self.GlobalSize.restype = ctypes.c_size_t
+
+        self.DragQueryFile = ctypes.windll.shell32.DragQueryFileW
+        self.DragQueryFile.argtypes = [wintypes.HANDLE, wintypes.UINT, wintypes.LPWSTR, wintypes.UINT]
+        self.DragQueryFile.restype = wintypes.UINT
     
     def get_last_error_message(self):
         """Get detailed Windows error message"""
@@ -196,6 +217,19 @@ class ClipboardImageEXT(DotChatUtil):
                             label='Position at Mouse',
                             default=True,
                             help_text='Position image at current mouse location')
+
+        self.create_parameter('Copyfiles', 'bool', 'Settings',
+                            label='Copy Pasted Files',
+                            default=True,
+                            help_text='When the clipboard holds image files copied in Explorer, '
+                                      'copy each one into the Save Folder so the pasted File In '
+                                      'keeps working if the original moves. Off: the File In reads '
+                                      'the original file where it is.')
+        # create_parameter seeds the value but not the default, and appends
+        # the toggle wherever the page ends: pin both here, every init.
+        copy_files = self.ownerComp.par.Copyfiles
+        copy_files.default = True
+        copy_files.order = self.ownerComp.par.Positionatmouse.order + 0.5
         
         # Status indicators
         self.create_parameter('Status', 'str', 'Settings',
@@ -252,6 +286,13 @@ class ClipboardImageEXT(DotChatUtil):
                 self._is_pasting = False
                 return
             
+            # Image files copied in Explorer come first: the file is the
+            # original, at full depth and with its alpha.
+            image_files = self.get_clipboard_image_files()
+            if image_files:
+                self.paste_image_files(image_files, save_type)
+                return
+
             # Get image from clipboard (now returns numpy array)
             image_array = self.get_clipboard_image()
             if image_array is None:
@@ -387,13 +428,10 @@ class ClipboardImageEXT(DotChatUtil):
                 h_dibv5 = self.GetClipboardData(self.CF_DIBV5)
                 if h_dibv5 and h_dibv5 != 0:
                     return True
-                
-                # Check for bitmap format as last resort
-                h_bitmap = self.GetClipboardData(self.CF_BITMAP)
-                if h_bitmap and h_bitmap != 0:
-                    return True
-                
-                return False
+
+                # CF_BITMAP alone is not accepted: get_clipboard_image cannot
+                # read it, so the menu would open onto "No image found".
+                return bool(self._image_files_open_clipboard())
                 
             finally:
                 # Always close clipboard
@@ -613,12 +651,13 @@ class ClipboardImageEXT(DotChatUtil):
             
     def create_top_from_image(self, image_array):
         """Create a Movie File In TOP with the clipboard image"""
+        fnsLog("[ClipboardImageEXT] Starting create_top_from_image", level='INFO')
+        # Save image to disk first using our dedicated scriptTOP
+        return self.create_top_from_file(self.save_image_to_disk(image_array))
+
+    def create_top_from_file(self, file_path):
+        """Create a Movie File In TOP reading file_path, placed at the mouse."""
         try:
-            fnsLog("[ClipboardImageEXT] Starting create_top_from_image", level='INFO')
-            
-            # Save image to disk first using our dedicated scriptTOP
-            file_path = self.save_image_to_disk(image_array)
-            
             # Determine the current network to paste into
             target_network = self.get_current_network()
             fnsLog(f"[ClipboardImageEXT] Target network for paste: {target_network.path}", level='INFO')
@@ -650,6 +689,143 @@ class ClipboardImageEXT(DotChatUtil):
             fnsLog(f"Error creating movie TOP: {str(e)}", level='ERROR')
             raise
             
+    # --- image files copied in Explorer ------------------------------------------
+
+    def _image_files_open_clipboard(self):
+        """Image file paths in the clipboard's file list; the clipboard must be open."""
+        h_drop = self.GetClipboardData(_CF_HDROP)
+        if not h_drop:
+            return []
+        paths = []
+        count = self.DragQueryFile(h_drop, 0xFFFFFFFF, None, 0)
+        for i in range(count):
+            length = self.DragQueryFile(h_drop, i, None, 0) + 1
+            buf = self.ctypes.create_unicode_buffer(length)
+            self.DragQueryFile(h_drop, i, buf, length)
+            path = buf.value.replace('\\', '/')
+            if os.path.splitext(path)[1].lower() in _IMAGE_EXTENSIONS and os.path.isfile(path):
+                paths.append(path)
+        return paths
+
+    def get_clipboard_image_files(self):
+        """Image files copied in Explorer (the clipboard's file list), in order.
+
+        Anything that is not a readable image file is left out, so a mixed
+        selection pastes its images and ignores the rest."""
+        if not self.is_windows:
+            return []
+        if not self.OpenClipboard(None):
+            return []
+        try:
+            return self._image_files_open_clipboard()
+        except Exception as e:
+            fnsLog(f"Error reading clipboard files: {str(e)}", level='ERROR')
+            return []
+        finally:
+            self.CloseClipboard()
+
+    def copy_file_to_folder(self, path):
+        """Copy an image file into the Save Folder, keeping its name.
+
+        A different file already there under that name gets a numbered name
+        beside it; a file already inside the folder is used where it is."""
+        folder = self.ownerComp.par.Folderpath.eval() or 'clipboard_images'
+        os.makedirs(folder, exist_ok=True)
+        base, ext = os.path.splitext(os.path.basename(path))
+        dest = os.path.join(folder, base + ext)
+        n = 1
+        while os.path.exists(dest):
+            if os.path.samefile(dest, path):
+                return dest.replace('\\', '/')
+            dest = os.path.join(folder, f"{base}_{n}{ext}")
+            n += 1
+        shutil.copy2(path, dest)
+        fnsLog(f"Copied {path} to {dest}", level='INFO')
+        return dest.replace('\\', '/')
+
+    def load_image_file(self, path):
+        """RGBA uint8 array in copyNumpyArray's layout, or None when OpenCV
+        cannot decode the file (psd, dds, and exr without its codec).
+
+        Read through np.fromfile + imdecode so a path with non-ASCII
+        characters works on Windows. OpenCV hands back the top row first,
+        BGR(A), at the file's own depth: flipped, reordered and brought to
+        8 bits. Checked against a Movie File In reading the same file."""
+        import cv2
+        try:
+            data = np.fromfile(path, dtype=np.uint8)
+        except Exception as e:
+            fnsLog(f"Could not read {path}: {str(e)}", level='ERROR')
+            return None
+        img = cv2.imdecode(data, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            return None
+        if img.dtype == np.uint16:
+            img = (img >> 8).astype(np.uint8)
+        elif img.dtype != np.uint8:
+            img = (np.clip(img, 0.0, 1.0) * 255.0).astype(np.uint8)
+        if img.ndim == 2:
+            img = img[:, :, None]
+        channels = img.shape[2]
+        h, w = img.shape[:2]
+        rgba = np.empty((h, w, 4), dtype=np.uint8)
+        if channels == 1:
+            rgba[:, :, 0:3] = img[:, :, 0:1]
+            rgba[:, :, 3] = 255
+        elif channels == 3:
+            rgba[:, :, 0:3] = img[:, :, 2::-1]
+            rgba[:, :, 3] = 255
+        else:
+            # premultiplied, as a Movie File In of the same file hands it over
+            # (its default) and as TD composites; straight alpha would read
+            # brighter wherever the image is partly transparent
+            alpha = img[:, :, 3:4].astype(np.uint16)
+            rgba[:, :, 0:3] = ((img[:, :, 2::-1].astype(np.uint16) * alpha + 127) // 255).astype(np.uint8)
+            rgba[:, :, 3] = img[:, :, 3]
+        return np.ascontiguousarray(rgba[::-1])
+
+    def paste_image_files(self, paths, save_type):
+        """One operator per image file, laid out left to right from the mouse."""
+        created = []
+        skipped = []
+        for path in paths:
+            try:
+                if save_type == 'top':
+                    source = self.copy_file_to_folder(path) if self.ownerComp.par.Copyfiles.eval() else path
+                    created.append(self.create_top_from_file(source))
+                    continue
+                image_array = self.load_image_file(path)
+                if image_array is None:
+                    skipped.append(os.path.basename(path))
+                    continue
+                height, width = image_array.shape[:2]
+                self.ownerComp.par.Imagewidth = width
+                self.ownerComp.par.Imageheight = height
+                if save_type == 'scriptop':
+                    created.append(self.create_script_top_from_image(image_array))
+                elif save_type == 'annotate':
+                    created.append(self.create_annotate_comp_with_image(image_array))
+            except Exception as e:
+                fnsLog(f"Error pasting {path}: {str(e)}", level='ERROR')
+                skipped.append(os.path.basename(path))
+        self._lay_out_in_a_row(created)
+        if skipped:
+            ui.status = f"Paste: could not decode {', '.join(skipped)} (use File In)"
+        fnsLog(f"[ClipboardImageEXT] Pasted {len(created)} image file(s) as {save_type}", level='INFO')
+        return created
+
+    @staticmethod
+    def _lay_out_in_a_row(ops):
+        """Each pasted operator lands where the first did; spread them to the
+        right, carrying docked operators (an annotate's hidden Script TOP)."""
+        ops = [o for o in ops if o is not None and o.valid]
+        for prev, cur in zip(ops, ops[1:]):
+            dx = prev.nodeX + prev.nodeWidth + 20 - cur.nodeX
+            dy = prev.nodeY - cur.nodeY
+            for o in [cur] + list(cur.docked):
+                o.nodeX += dx
+                o.nodeY += dy
+
     def create_script_top_with_image(self, image_array, name='clipboard_image', target_network=None):
         """
         Create a scriptTOP with the clipboard image data
@@ -956,19 +1132,19 @@ class ClipboardImageEXT(DotChatUtil):
 
     ### FNS_CommandRegistry (quick-launch commands) ###
 
-    @FNSCommand.fns_command(label='Paste image')
+    @FNSCommand.fns_command(label='Paste image', context='network')
     def PasteImage(self):
         """Paste the clipboard image into the network."""
         self.ownerComp.par.Pasteimage.pulse()
         return {'ok': True}
 
-    @FNSCommand.fns_command(label='Paste as Script TOP')
+    @FNSCommand.fns_command(label='Paste as Script TOP', context='network')
     def PasteScriptTop(self):
         """Paste the clipboard image as a Script TOP."""
         self.ownerComp.par.Pastescriptop.pulse()
         return {'ok': True}
 
-    @FNSCommand.fns_command(label='Paste as annotate')
+    @FNSCommand.fns_command(label='Paste as annotate', context='network')
     def PasteAnnotate(self):
         """Paste the clipboard image into an annotate."""
         self.ownerComp.par.Pasteannotate.pulse()

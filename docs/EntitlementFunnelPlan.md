@@ -446,7 +446,7 @@ Today both placement axes have exactly one hardcoded answer: every
 package lands inside THE toolkit container (`InstallerExt` resolves the
 container that ships the installer, else the project's, else a new one
 beside Embody), and every artifact lives in the flat machine store at
-`<palette>/FNStools_ext/store` — by contract a MIRROR of the bucket,
+`<palette>/FNSTools/store` — by contract a MIRROR of the bucket,
 where "nothing in it is anyone's work." Products are coming that break
 both assumptions, TDXMap first among them. Two independent axes to make
 explicit:
@@ -461,7 +461,7 @@ explicit:
   fixed path — and it needs a fallback for headless installs (the
   paste rail has no pane).
 - **Disk destination.** TDXMap.tox wants `<palette>/TDXMap/`, not the
-  FNStools_ext store. Keep the invariant rather than bending it: the
+  FNSTools store. Keep the invariant rather than bending it: the
   store stays the flat, sacred bucket mirror (download, verify, one
   copy of each package — `_inStore` and "stale cache, never a
   modification" depend on this), and a new INSTALL-time placement step

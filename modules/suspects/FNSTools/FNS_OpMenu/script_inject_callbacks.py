@@ -1,3 +1,9 @@
+'''Info Header Start
+Name : script_inject_callbacks
+Author : Dan@DAN-4090
+Saveorigin : FNSTools_PRIV.toe
+Saveversion : 2025.33070
+Info Header End'''
 # me - this DAT
 # scriptOp - the OP which is cooking
 #
@@ -80,6 +86,13 @@ def onCook(scriptOp):
 					continue
 				if _res:
 					_lbl = str(_res)
+			# the registry's own mark: ' >>>' for a type with an alternative in
+			# the project, ' >>' when its only alternatives are in the store
+			if registry is not None:
+				try:
+					_lbl = registry.MarkAlternatives(optype, _lbl)
+				except Exception as e:
+					debug('OpMenuRegistry alternatives mark failed:', e)
 			if _lbl != label:
 				new_label = _lbl
 		# ---

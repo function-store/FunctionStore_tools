@@ -105,3 +105,24 @@ to promote.
 Side benefit: the long-standing `ctrl.0` conflict now reports as
 `ResetPLS1.Shortcut` vs `QuickMarks.Shortcuts` instead of naming two
 keyboardins, so it points at something the manager can actually rebind.
+
+## Replica families (2026-09-10)
+
+The T3D package carries a `T3D_utils/bypass_shortcut` Keyboard In DAT inside
+every T3D operator, all bound to `ctrl.shift.b`. Discovery found 25 of them,
+listed 25 rows, and flagged every one as a conflict, because one copy sits
+inside FNS_PreviewPanel's embedded T3D surface and the rest under the T3D
+package: two "tools", one combo. They are one binding: the same component,
+copied.
+
+The manager now groups records into a *family* when kind, par, op name, parent
+name and current value all match, and lists the family as one row (`Tool
+= <parent name> (xN)`, `Path = */<parent>/<op>`). Conflicts group by owner
+identity, and a family is one owner whichever tools its copies live in.
+Rebind, reset and the Persist toggle fan out over every member; a member the
+user rebinds by hand no longer matches the family's value and shows on its own
+row. The persisted table keeps one row per copy, as before, so nothing about
+config persistence changed.
+
+Grouping is by shape, not by declaration, so any vendored component copied
+around a project benefits without touching it.

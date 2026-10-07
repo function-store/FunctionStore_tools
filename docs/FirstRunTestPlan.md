@@ -17,9 +17,9 @@ no `externalizations.tsv`. "Bootstrap" = the `FNSTools.tox` from
 `packaging/dist/` (rebuild with `BuildBootstrap()` after any source
 change — Preflight flags a stale one) or, for the release candidate, the
 one in `packaging/publish/<release>/`. Between runs that need a *clean
-machine*, move `<userPaletteFolder>/FNStools_ext/config/FNStools_config.json`
+machine*, move `<userPaletteFolder>/FNSTools/config/FNStools_config.json`
 aside (the whole roaming config) and clear
-`<userPaletteFolder>/FNStools_ext/store/` if you want to see the catalog
+`<userPaletteFolder>/FNSTools/store/` if you want to see the catalog
 download.
 
 ---

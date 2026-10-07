@@ -8,6 +8,15 @@ tier above it in TIER_LADDER, because Patreon memberships carry only
 their own tier id.
     python packaging/gate_package.py FNS_TimelineTools --gumroad abc123xyz
     python packaging/gate_package.py FNS_TimelineTools --free
+    python packaging/gate_package.py FNS_TimelineTools --preview
+    python packaging/gate_package.py FNS_TimelineTools --release
+
+`--preview` holds a package back from the public (docs/PreviewPackages.md):
+catalog `preview: true`, and its only Patreon grant becomes the pseudo tier
+PREVIEW_TIER, which the Worker gives the creator account alone. Its
+`access` stays what it will ship at. `--release` clears the flag and
+re-derives the real grants from that `access`. Gumroad rows are left alone
+either way, so a key set up ahead of the launch survives the preview.
 
 Gating a package is TWO edits that must agree -- `access` (a Patreon
 TIER ID, never a display name) in packaging/catalog.json, and the grant
@@ -47,6 +56,11 @@ TIER_LADDER = (
 )
 
 
+# Never a Patreon tier id (those are numeric), so no membership can carry
+# it: the Worker adds it to the creator account's tiers, nobody else's.
+PREVIEW_TIER = 'preview'
+
+
 def LadderFrom(tier):
     """`tier` and every tier above it. Unknown ids grant only themselves."""
     ids = [t for t, _ in TIER_LADDER]
@@ -56,6 +70,8 @@ def LadderFrom(tier):
 
 
 def TierName(tier):
+    if tier == PREVIEW_TIER:
+        return 'Preview (creator only)'
     for t, label in TIER_LADDER:
         if t == tier:
             return label
@@ -124,12 +140,101 @@ def _prune(tiers, gumroad, name):
             del gumroad[k]
 
 
+def Variants(meta):
+    """{vid: block} from a catalog entry's `variants` (docs/TierVariants.md):
+    one build per tier above the entry tier, each its own gate product."""
+    v = (meta or {}).get('variants') or {}
+    return {str(k): b for k, b in v.items() if isinstance(b, dict)}
+
+
+def VariantProduct(name, vid):
+    """The gate's product name for one variant build: FNS_Foo.pro. The
+    Worker serves plus/<release>/FNS_Foo.pro.tox to an account whose
+    products list carries exactly this name."""
+    return '%s.%s' % (name, vid)
+
+
+def _grantVariants(name, meta, tiers, gumroad):
+    """Re-derive every variant product's grants from its own access."""
+    granted = {}
+    for vid, block in Variants(meta).items():
+        product = VariantProduct(name, vid)
+        _prune(tiers, gumroad, product)
+        acc = str(block.get('access', '') or '')
+        if not acc.isdigit():
+            continue
+        for t in LadderFrom(acc):
+            tiers.setdefault(t, [])
+            if product not in tiers[t]:
+                tiers[t].append(product)
+        granted[product] = LadderFrom(acc)
+    return granted
+
+
+def IsPreview(meta):
+    return (meta or {}).get('preview') is True
+
+
+def _previewGrants(name, meta, tiers):
+    """While a package is a preview, PREVIEW_TIER is its only Patreon grant,
+    for the package and each of its variant builds."""
+    products = [name] + [VariantProduct(name, vid) for vid in Variants(meta)]
+    for k in list(tiers):
+        tiers[k] = [p for p in tiers[k] if p not in products]
+        if not tiers[k]:
+            del tiers[k]
+    tiers.setdefault(PREVIEW_TIER, [])
+    for prod in products:
+        if prod not in tiers[PREVIEW_TIER]:
+            tiers[PREVIEW_TIER].append(prod)
+
+
+def _realGrants(name, meta, tiers, gumroad):
+    """The public grants, from the catalog's access and variants."""
+    products = [name] + [VariantProduct(name, vid) for vid in Variants(meta)]
+    for k in list(tiers):
+        tiers[k] = [p for p in tiers[k] if p not in products]
+        if not tiers[k]:
+            del tiers[k]
+    acc = str(meta.get('access', '') or '')
+    if acc.isdigit():
+        for t in LadderFrom(acc):
+            tiers.setdefault(t, [])
+            if name not in tiers[t]:
+                tiers[t].append(name)
+    _grantVariants(name, meta, tiers, gumroad)
+
+
+def Preview(name, on=True):
+    """Hold a package back from the public, or release it."""
+    cat = _load_catalog()
+    if name not in cat.get('packages', {}):
+        sys.exit('%s is not in catalog.json' % name)
+    meta = cat['packages'][name]
+    src, tiers, _, gumroad, _ = _maps()
+    if on:
+        meta['preview'] = True
+        _previewGrants(name, meta, tiers)
+    else:
+        meta.pop('preview', None)
+        _realGrants(name, meta, tiers, gumroad)
+    _save_catalog(cat)
+    _save_maps(src, tiers, gumroad)
+    acc = str(meta.get('access', '') or 'free')
+    print(('%s is a preview: only the creator account can see and install it '
+           '(ships at %s when released)' % (name, TierName(acc) if acc != 'free' else 'free'))
+          if on else
+          ('%s is released at %s' % (name, TierName(acc) if acc != 'free' else 'free')))
+    print('remember: `wrangler deploy` for the map to take effect')
+    return Status()
+
+
 def Status():
     cat = _load_catalog()
     _, tiers, _, gumroad, _ = _maps()
     rows, problems = [], []
     for name, meta in sorted(cat.get('packages', {}).items()):
-        acc = str(meta.get('access', 'free') or 'free')
+        acc = PREVIEW_TIER if IsPreview(meta) else str(meta.get('access', 'free') or 'free')
         if acc == 'free':
             continue
         grants = sorted(t for t, pkgs in tiers.items() if name in pkgs)
@@ -156,7 +261,7 @@ def Status():
     return 0
 
 
-def Gate(name, tier=None, gumroad_id=None):
+def Gate(name, tier=None, gumroad_id=None, variant=None):
     cat = _load_catalog()
     if name not in cat.get('packages', {}):
         sys.exit('%s is not in catalog.json -- add its entry first' % name)
@@ -166,6 +271,26 @@ def Gate(name, tier=None, gumroad_id=None):
                  'signing in once through /patreon/start -- a refusal returns '
                  'the tiers array it saw.' % tier)
     src, tiers, _, gumroad, _ = _maps()
+    if variant:
+        # One build above the entry tier: `variants.<vid>.access` records
+        # its own entry tier and the product FNS_Foo.<vid> is granted
+        # from there up; the Base grants are left exactly as they are.
+        if not tier:
+            sys.exit('--variant needs --tier: the tier the %s build unlocks at' % variant)
+        meta = cat['packages'][name]
+        blocks = meta.setdefault('variants', {})
+        block = blocks.setdefault(variant, {})
+        block['access'] = tier
+        granted_v = _grantVariants(name, meta, tiers, gumroad)
+        if IsPreview(meta):
+            _previewGrants(name, meta, tiers)
+        _save_catalog(cat)
+        _save_maps(src, tiers, gumroad)
+        shown = ', '.join('%s (%s)' % (t, TierName(t))
+                          for t in granted_v.get(VariantProduct(name, variant), []))
+        print('gated %s from %s up: %s -- remember: `wrangler deploy` for the '
+              'map to take effect' % (VariantProduct(name, variant), TierName(tier), shown))
+        return Status()
     _prune(tiers, gumroad, name)
     granted = []
     if tier:
@@ -180,6 +305,13 @@ def Gate(name, tier=None, gumroad_id=None):
     if gumroad_id:
         gumroad[gumroad_id] = name
         cat['packages'][name].setdefault('access', tier or 'gumroad')
+    # a variant's grants follow its own access, re-derived on every
+    # regate of the base so the two maps never drift apart
+    _grantVariants(name, cat['packages'][name], tiers, gumroad)
+    # a preview records the access it will ship at, but grants only
+    # PREVIEW_TIER until it is released
+    if IsPreview(cat['packages'][name]):
+        _previewGrants(name, cat['packages'][name], tiers)
     _save_catalog(cat)
     _save_maps(src, tiers, gumroad)
     if granted:
@@ -202,6 +334,11 @@ def Free(name):
             cat['packages'][name].pop('access', None)
     src, tiers, _, gumroad, _ = _maps()
     _prune(tiers, gumroad, name)
+    for vid in Variants(cat['packages'][name]):
+        _prune(tiers, gumroad, VariantProduct(name, vid))
+    cat['packages'][name].pop('variants', None)
+    if IsPreview(cat['packages'][name]):
+        _previewGrants(name, cat['packages'][name], tiers)
     _save_catalog(cat)
     _save_maps(src, tiers, gumroad)
     print('%s is free again (removed from every grant)' % name)
@@ -215,8 +352,15 @@ if __name__ == '__main__':
                                    'tier -- every tier above it is granted '
                                    'too')
     ap.add_argument('--gumroad', help='Gumroad product id (per-tool key)')
+    ap.add_argument('--variant', help='gate one variant build (pro) at --tier '
+                                      'instead of the package itself')
     ap.add_argument('--free', action='store_true', help='ungate the package')
     ap.add_argument('--status', action='store_true')
+    ap.add_argument('--preview', action='store_true',
+                    help='hold the package back: only the creator account '
+                         'sees and installs it')
+    ap.add_argument('--release', action='store_true',
+                    help='end the preview: grant it at its catalog access')
     ap.add_argument('--ladder', action='store_true',
                     help='print the tier ladder as JSON (cheapest way for '
                          'another tool to offer NAMES while writing ids)')
@@ -227,8 +371,12 @@ if __name__ == '__main__':
         sys.exit(0)
     if a.status or not a.package:
         sys.exit(Status())
+    if a.preview:
+        sys.exit(Preview(a.package, True))
+    if a.release:
+        sys.exit(Preview(a.package, False))
     if a.free:
         sys.exit(Free(a.package))
     if not a.tier and not a.gumroad:
         ap.error('give --tier and/or --gumroad (or --free / --status)')
-    sys.exit(Gate(a.package, tier=a.tier, gumroad_id=a.gumroad))
+    sys.exit(Gate(a.package, tier=a.tier, gumroad_id=a.gumroad, variant=a.variant))

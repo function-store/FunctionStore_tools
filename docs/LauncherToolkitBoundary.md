@@ -451,7 +451,7 @@ Derived, never declared, same rule as `surfaces` and `hotkeys`
 
 Bundle a snapshot of the free rail — `manifest.json` plus the free
 artifacts — and on ensure-bootstrap populate
-`<userPalette>/FNStools_ext/store/` from it. The **normal install path
+`<userPalette>/FNSTools/store/` from it. The **normal install path
 then runs offline**: full records, correct placement, correct binding, no
 duplicates, no version skew, because nothing is hand-dropped.
 
@@ -645,6 +645,38 @@ explicitly rather than drifting into it.
 3. **B's branding question**, whenever B is taken up: is TDXLU a product
    beside FNSTools or within it? The gate already behaves as though it is
    within.
+
+## The three `op.TDXLU` lookups are deliberate — do not sweep them
+
+Recorded 2026-08-31, because the next person to run a naming sweep will
+read them as residue and delete them.
+
+The ported packages carry exactly three runtime references to the
+launcher's companion, all of the shape `getattr(op, 'TDXLU', None)`:
+
+| Site | What it does when the companion is absent |
+|---|---|
+| `FNSCollectExt._skipPrefixes` | Scans the whole project (nothing to exclude) |
+| `FNSMediaExt._skipPrefixes` | Same |
+| `FNSRemoteExt` control verbs | `snapshot`/`record` return a clear "needs the companion" error; `save` works regardless |
+
+These are **optional coupling, not a dependency edge**. Every one uses
+`getattr` with a `None` default and degrades to correct standalone
+behaviour — which is precisely the boundary this document argues for: a
+complete tool that ALSO lights up the session view when the launcher is
+there. Removing them would not decouple the products, it would break the
+first two (the packages would scan and offer to repoint the companion's own
+internals) and turn the third's graceful message into an exception.
+
+The class-name references were residue and are gone (`FNSCollectExt` /
+`FNSMediaExt` / `FNSAutosaveExt` / `FNSRemoteExt`, renamed in `14a237f`).
+The distinction to hold: **a shared name is coupling; a guarded lookup for
+a sibling product that may or may not be present is interop.** Only the
+first kind was worth removing.
+
+Comments naming `TDXLURepoint` and "the TDXLU dialog" are provenance for
+behaviour that was ported verbatim, and are kept for the same reason a
+port note is kept — they say where a contract came from.
 
 ## What this does not block
 

@@ -54,3 +54,29 @@ wording rather than broken:
 No unprefixed legacy copies; master Registration page intact;
 `op.FNS_NAVBAR` resolves; zero errors project-wide. The same restart also
 cold-boot-verified the RegistryBase mixin split (RegistryScheme §4).
+
+## 2026-09-09: the checklist's names changed
+
+`FNS_Navbar` was dissolved, so step 4's `op.FNS_NAVBAR` no longer resolves and
+its absence is now correct. The registry itself is untouched:
+`op.FNS_NAVBARREGISTRY` -> `/sys/FNS_Registries/FNS_NavbarRegistry` still governs
+the surface, and step 5's gear still opens the Navbar Configurator, which has
+lived in `FNS_Hub` since before this split.
+
+The `nbitem_*` set to expect is the same five entries under new owners:
+
+| item | now published by |
+|---|---|
+| `nbitem_ParentHierarchy` | `FNS_ParentHierarchy` |
+| `nbitem_iopBrowser` | `FNS_iopBrowser/nbwidget` (new; the browser's button) |
+| `nbitem_CustomParTools` | `FNS_CustomParTools` |
+| `nbitem_PathCellClickInject` | `FNS_CustomParTools/PathCellClickInject` |
+| `nbitem_HijackDragdrop` | `FNS_CustomParTools/hijack_dragdrop` |
+
+Step 3 still holds and gains a case: `iopBrowser`'s registrant is a THIN BUTTON,
+never the package. If a pane bar ever shows an `nbitem` carrying the browser
+itself, the registration is pointed at the wrong COMP, and TouchDesigner will say
+so as *"multiply defined global OP shortcut"* the moment a second bar copies it.
+
+Verified live 2026-09-09 (not a cold boot): 20 instances across the bars, zero
+duplicate shortcuts. **A supervised cold boot is still owed.**

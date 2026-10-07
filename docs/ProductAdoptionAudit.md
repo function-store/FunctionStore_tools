@@ -42,7 +42,7 @@ dormant-group manual pass remains.
   (`packaging/build_manifest.py`); `packaging/catalog.json` is the only
   hand-written data (category + description).
 - Config scope: one machine-global JSON at
-  `<palette>/FNStools_ext/config/FNStools_config.json` (schema 1, atomic
+  `<palette>/FNSTools/config/FNStools_config.json` (schema 1, atomic
   write, last-writer-wins). Per-tool `pars` (host Registration pars are bind
   masters) + `state` via `config_callbacks`. Applies ~30 frames after
   registration; config beats `.toe` values. Verified live: 48 tools

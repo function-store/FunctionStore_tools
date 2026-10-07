@@ -79,8 +79,10 @@ The same steps the wizard walks, by hand:
    result = ReleaseOne('AutoRes', upload=False)     # stage only, batch the sync
    ```
 
-   `Release()`/`ReleaseMany()` run Preflight first and REFUSE on a
-   blocker; `force=True` overrides. `bump='auto'` patch-bumps a package
+   `Release()` runs Preflight first and REFUSES on a blocker (`force=True`
+   overrides); `ReleaseMany()`/`ReleaseOne()` and the PI and CMS buttons that
+   call them do not run it, and the wizard's step 2 shows it without
+   refusing (corrected 2026-09-08: this line used to say both refuse). `bump='auto'` patch-bumps a package
    whose live `Pkgversion` still equals the published one and leaves a
    hand-set version alone; it clamps against the *published* manifest, so
    a `Pkgversion` reverted by a tox reload can never ship as a downgrade.
@@ -103,6 +105,27 @@ The publish UI is stamped into PI by
 inside it. PI reloads from its own `.tox` on every project open, so
 anything typed into it live is temporary; if the ☁ column or the wizard
 button ever disappears, re-run that script and save PI.
+
+## Foreign packages ride the same release
+
+A foreign package (catalog `source` block — `CREATING.md`, "The other
+answer") has no live COMP: nothing to land, bump or export. Its one extra
+step is the mirror:
+
+```bash
+python packaging/foreign_sync.py
+```
+
+(or the row's **Sync** button in the CMS release table, which runs it
+detached and tails `packaging/.foreign_sync.log`). It fetches each
+upstream manifest, downloads and sha-verifies the tox into
+`packaging/dist/`, and pins `packaging/foreign.lock.json`. Preflight
+blocks with `foreign package(s) not mirrored` until the lock and the dist
+bytes agree; then Release & stage ships it like any package, at the lock's
+version, and step 5's commit must include the lock. Nothing in the rail
+polls the upstream on its own — a foreign package only moves when someone
+syncs it, which is the point: the lock in git says exactly which upstream
+build each release mirrored.
 
 ## Rebuilding the rails
 
@@ -131,6 +154,24 @@ result = EnsureDevRails()     # builds missing rails, re-embeds sources in place
 `BuildBootstrap()` performs the same refresh on its staged copy regardless,
 so a forgotten `EnsureDevRails()` only ever leaves the DEV installer stale,
 never a shipped one.
+
+**Rebuild them only when one of those four actually changed.** A rails
+rebuild is not byte-reproducible: rebuilding with no source change at all
+produces different bytes every time (measured across v3.2.44 and v3.2.45).
+So a reflexive rebuild each release leaves you choosing between shipping
+different bytes under one rail version and bumping the version for churn,
+and both are wrong. Preflight calls the rails stale whenever the ROOT
+suspect is newer than the artifact, which a PI save makes true every
+release, so treat that particular staleness as a question rather than an
+instruction. When nothing in their sources moved, copy the previous
+release's rails back into `dist/` from `packaging/publish/<label>/` and ship
+them unchanged.
+
+Order matters when the updater is in the release: `BuildBootstrap()` embeds
+`dist/FNS_Updater.tox`, so it has to run AFTER the bump and export, or the
+bootstrap ships the previous updater. Build the installer first, release,
+then rebuild the bootstrap and stage again. The label is unpublished at that
+point, so the second `Stage()` is free.
 
 The bootstrap embeds the `FNS_Updater` artifact from `dist/`, so
 `Build(export=['FNS_Updater'])` first when the updater itself changed. A
@@ -209,6 +250,18 @@ name, so a typo silently demotes a line to general prose. Do not write
 version numbers or the release label; those are stamped at publish time.
 The file is cleared on a successful publish, its text moving to
 `CHANGELOG.md` and the release's own manifest.
+
+**Accumulate the notes as the work lands, not at release time.** The
+commit that changes what a shipped package does appends that package's
+line to `release_notes.md` in the same commit; a later commit to the same
+package edits the line rather than adding a second one. Between two
+publishes the file is the running answer to "what has changed since the
+last release", which is what the first v3.1.0 notes cost a session to
+reconstruct from 186 commits. Commits that ship no behaviour change (a
+PI re-save, a doc, a test harness) write nothing. The pre-commit hook in
+`scripts/hooks/` warns when a commit touches a package's files and the
+file carries no line for it (`git config core.hooksPath scripts/hooks`
+installs the hooks; the warning never blocks).
 
 ## Testing an install without the bucket
 
@@ -291,6 +344,40 @@ A re-upload cannot fix a read path, so the uploader deliberately refuses
 to retry — the failure is loud precisely so nobody ships on an unverified
 claim.
 
+### And one that IS breakage: restaging a label without `--force`
+
+Objects under `v<release>/` are **release-pinned and immutable**: the
+uploader decides by a public HEAD that an existing key is already done and
+skips it (`upload.py`, "Immutable (release-pinned) objects already in the
+bucket are skipped"). Only `latest/` and the manifest are rewritten.
+
+So a restage of an already-published label lands HALF: the manifest ships
+new digests, the versioned path keeps the old bytes, and every install
+fails its digest check with `download rejected`. It is the worst shape of
+breakage, because staging, upload and the privacy probe all report success
+and the `latest/` alias serves the correct bytes, so a spot check on
+`latest/` passes while users cannot install.
+
+Restaging a published label therefore needs:
+
+```bash
+python packaging/upload.py --force          # overwrite the pinned objects
+python packaging/verify_release.py v3.2.0   # then PROVE both paths agree
+```
+
+The verifier is the point. It fetches every free artifact from BOTH the
+versioned path and the `latest/` alias and compares each against the staged
+bytes; gated ones need the authenticated read in the section above. Run it
+after any restage, and after any upload that reported a skip.
+
+Note the release pipeline tries to stop you first: `bump='auto'` patch-bumps
+a package whose live version equals the published one, precisely so a
+republish becomes a NEW version instead of a mutation of a shipped one.
+Reaching for `bump=False` to hold a label steady is the moment to remember
+this section. Shipping the fix as the next version is the boring, safe path;
+restage only when the release is minutes old and you accept that already
+installed copies will never pull it, since `Pkgversion` governs updates.
+
 ### And one that IS breakage: skipping `wrangler deploy`
 
 `gate_package.py` writes the tier map into `worker/wrangler.toml`, but
@@ -303,3 +390,71 @@ is not finished until:
 ```bash
 cd worker && npx wrangler deploy
 ```
+
+### A refused release retried is a double bump
+
+Cost v3.2.1 three attempts (2026-09-11). `ReleaseMany()` bumps and
+regenerates the manifest, then stages, then uploads; when `Stage()` or
+`StartUpload()` refuses, everything before it has already happened. The
+retry then reads `packaging/publish/` (the tree the refused attempt laid
+out) as a published source, sees every package "already published" at
+the version it was about to ship, and patch-bumps again: 3.2.1 became
+3.2.2, then 3.2.3, under a label that still said v3.2.1.
+
+Before retrying a release that refused **after** the bump: restore
+`manifest.json`, `CHANGELOG.md`, `release_notes.md`, `release.json` and
+`shipped_builds.json` from git, delete `packaging/publish/`, put the live
+`Pkgversion` values back (on the `FNS_About` child, and re-save), and
+retry with `bump=None` and an explicit `label=`.
+
+### The upload cannot start from a TouchDesigner that Envoy launched
+
+`StartUpload()` probes for a shell python with `subprocess.run`; in a TD
+instance started through Envoy's `launch_td` every process creation
+fails with `OSError(22, 'The request is not supported')`, so the release
+reports "no working python for the upload subprocess" although the
+python it names runs fine. `Build()` and `Stage()` are unaffected (no
+subprocess). Release with `upload=False` and run the sync from a shell:
+
+```bash
+PYTHONIOENCODING=utf-8 python packaging/upload.py
+python packaging/verify_release.py v3.2.1
+```
+
+Two smaller things from the same day: `Stage()` needs `sign_release`
+importable, so a Textport release that `exec()`s `release_one.py` should
+put `packaging/` on `sys.path` first (the wizard does), and a scripted
+`Pkgversion` write must land on the `FNS_About` child, never the
+component's own parameter, or Preflight reports the mirror severed.
+
+## Tier variants: one package, one build per tier
+
+`docs/TierVariants.md` (decided 2026-09-15, built 2026-09-17). A tool
+with a Base and a Pro form is ONE package: one catalog entry, one docs
+page, one picker row, one installed name, one version line, and one
+artifact per tier above the entry tier.
+
+- Declare it in `catalog.json`: `"variants": {"pro": {"access": "<tier id>",
+  "summary": "adds ...", "source": "FNS_FooPro"?, "withhold": ["ExtFooPro.py"]?}}`.
+  `source` names a second live master; without it the package's own
+  master exports under the variant's file name (`FNS_Foo.pro.tox`) and its
+  `pre_release` hook builds that edition off the save path. `withhold`
+  names source files only that build may publish (a free Base with a paid
+  variant in one master).
+- Gate it: `python packaging/gate_package.py FNS_Foo --tier <base id>` as
+  before, then `--variant pro --tier <pro id>`; the Worker product is
+  `FNS_Foo.pro`, granted from that tier up; `wrangler deploy` follows.
+- Each master's `FNS_About` carries `Pkgvariant` (`base` / `pro`); a
+  single master's hook sets it per edition. **`Pkgversion` and
+  `Pkgvariant` govern updates**, both read live off the installed copy:
+  a newer version of the installed build updates it, an account that
+  grew swaps upward at the shipping version, and an installed build the
+  account no longer holds is held as it is (never offered anything).
+- The release exports every variant (`dist/FNS_Foo.pro.tox`), stages
+  each under `plus/<release>/`, and `Stage()` refuses a variant that is
+  not authorizable. Preflight refuses a missing source master, one
+  nested in another master, or masters disagreeing on `Pkgversion`.
+- Walk every variant package with a Base test account AND a Pro test
+  account before release: the creator account holds every tier and
+  proves nothing about the gate.
+

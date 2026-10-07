@@ -1,0 +1,30 @@
+{
+ "schema": 2,
+ "note": "The launcher (TDXLPP) imports these PUBLISHED store artifacts verbatim and keeps a byte-identical copy of each at launcher_copy; scripts/check_launcher_mirror.py compares every copy to this record and is run from either repo before a release. The store artifact is the mirror target, never a PI-Release build: a PI-Release build of the same Pkgversion is a DIFFERENT byte stream (tox export is not reproducible), and the launcher must carry the same bytes a store install gets so two copies of one version never disagree. To bump a mirrored registry: publish a release, then the launcher re-fetches by url and verifies sha256, and this record is rewritten to the published entry.",
+ "reimport": "Destroy the old master, let a few frames pass, THEN loadTox the replacement: both in one call crashed TD mid-teardown (2026-09-02). Strip strategy tags (py) AND pi_suspect from the imported subtree, clear any file/syncfile; keep the tdn_exclude tag on the direct child and externaltox pointing at the repo copy with the toggle OFF. A freshly loaded host with Autoregister already on does not register by itself (onParAutoregister fires on change only): pulse Register after the load (observed 2026-09-08).",
+ "packages": [
+  {
+   "package": "FNS_CommandRegistry",
+   "pkgversion": "3.2.1",
+   "registry_version": "1.11.0",
+   "artifact": "packaging/dist/FNS_CommandRegistry.tox",
+   "release": "v3.2.15",
+   "url": "https://storage.functionstore.tools/fnstools/v3.2.15/FNS_CommandRegistry.tox",
+   "size": 88830,
+   "sha256": "d130b18739b17c5c449f78e9a68a530d8181eb0c46cf4eab8fe0521b3594ab2b",
+   "released": "2026-09-15",
+   "launcher_copy": "utility/TDXLauncherUtility/FNS_CommandRegistry.tox"
+  },
+  {
+   "package": "FNS_MainMenuRegistry",
+   "pkgversion": "3.2.0",
+   "artifact": "packaging/dist/FNS_MainMenuRegistry.tox",
+   "release": "v3.2.0",
+   "url": "https://storage.functionstore.tools/fnstools/v3.2.0/FNS_MainMenuRegistry.tox",
+   "size": 82198,
+   "sha256": "cefc1212a6fd30ad5b1ee021a949abef2c04b5312af80ba5ab02059a993066fa",
+   "released": "2026-09-11",
+   "launcher_copy": "utility/TDXLauncherUtility/FNS_MainMenuRegistry.tox"
+  }
+ ]
+}

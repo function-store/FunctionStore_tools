@@ -1,4 +1,5 @@
 
+
 '''Info Header Start
 Name : ExtSwitchOp
 Author : Dan@DAN-4090
@@ -27,7 +28,21 @@ class ExtSwitchOp:
 		self.fifo = self.ownerComp.op('fifo1')
 		fnsLog('SwitchOPs: init')
 
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
 	def OnSelectOP(self, _op):
+		# The selection table changes AFTER a selected op is destroyed too, so
+		# the caller can hand over None (or an op already invalid) in that
+		# frame; nothing to remember then.
+		if _op is None or not _op.valid:
+			return
 		if _op.path not in [row[0] for row in self.fifo.rows(val=True)]:
 			self.fifo.appendRow(_op.path)
 

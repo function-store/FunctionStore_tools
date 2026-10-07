@@ -68,6 +68,49 @@ check('cannot tell = do not move', 'return True' in text)
 check('the paste rail is never fought (only "pending" moves)',
       re.search(r'old\.fetch\(.*?\) == "pending"', text) is not None)
 
+print('4. a toolkit that did not land under the mouse is revealed (owner, 2026-09-16)')
+# Two rails put the toolkit somewhere the user was not looking: the
+# relocation of a nested drop, and the paste rail's loadTox straight into
+# /. Both looked as if the drop vanished, and both left it on top of
+# whatever sat at its stored position. reveal() on the welcome DAT is the
+# one answer: above the topmost operator, the pane moved there, selected.
+reloc = m.group(1) if m else ''
+rv = re.search(r'\ndef reveal\(root, home_path=None\):\n(.*?)\n\n_RELOCATE', text, re.S)
+check('reveal() is a module-level function of the welcome DAT (the paste rail calls it too)',
+      rv is not None)
+body = rv.group(1) if rv else ''
+check('it sits 200 units above the topmost operator of its network, centred on it',
+      'max(others, key=lambda c: c.nodeY + c.nodeHeight)' in body
+      and 'root.nodeY = topmost.nodeY + topmost.nodeHeight + 200' in body
+      and 'root.nodeCenterX = topmost.nodeCenterX' in body)
+check('an empty network leaves the position alone', 'if others:' in body)
+check('only panes that showed the drop network move (the current pane as fallback)',
+      'pane.owner.path == home_path' in body and 'ui.panes.current' in body)
+check('the pane goes to the network and homes on the toolkit without zooming',
+      'pane.owner = dest' in body and 'pane.home(zoom=False, op=root)' in body)
+check('the toolkit is selected and made current, nothing else stays selected',
+      'root.selected = True' in body and 'root.current = True' in body
+      and 'c.selected = False' in body)
+check('the network the drop landed in is read BEFORE the original is destroyed',
+      re.search(r'home_path = old\.parent\(\)\.path.*?\n\s*old\.destroy\(\)', reloc, re.S)
+      is not None)
+check('the relocation reveals the copy through its own welcome DAT, before re-arming',
+      'we.module.reveal(new, home_path)' in reloc
+      and reloc.index('we.module.reveal(new, home_path)') < reloc.index('args[0].module.welcome()'))
+check('a reveal failure is logged, never fatal to the welcome',
+      re.search(r'try:\n\s*we\.module\.reveal\(new, home_path\)\n\s*except Exception as e:\n\s*debug\(',
+                reloc) is not None)
+
+print('5. the paste rail reveals the toolkit it loaded into /')
+PAGE = os.path.join(_ROOT, 'packaging', 'configurator', 'index.html')
+page = io.open(PAGE, encoding='utf-8').read()
+check('right after loadTox, through the welcome DAT, guarded for an older bootstrap',
+      re.search(r'''"root = op\('/'\)\.loadTox\(f\)",\n'''
+                r'''\s*"root\.store\('FNS_welcomed', 'paste'\)",\n'''
+                r'''\s*"w_ = root\.op\('exec_root_welcome'\)",\n'''
+                r'''\s*"_ = w_ is not None and hasattr\(w_\.module, 'reveal'\) and w_\.module\.reveal\(root\)",''',
+                page) is not None)
+
 print()
 if FAILS:
     print('FAILED: %d check(s)' % len(FAILS))

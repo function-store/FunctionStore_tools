@@ -28,11 +28,46 @@ class ExtOpToClipboard:
 		self.regex = lambda _op_ref: rf".*(op\('({re.escape(_op_ref)})'\)\@).*" 
 		self.mod = self.ownerComp.op('null_mod')
 
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
 	def OnCopy(self):
+		# A parameter under the mouse is what is being copied; otherwise the
+		# network's current operator, as before.
+		hovered = self.hoveredParReference(ui.rolloverPar, getattr(ui, 'rolloverParGroup', None))
+		if hovered is not None:
+			owner, suffix = hovered
+			ui.clipboard = self.patternize(owner.name) + suffix
+			self._op_ref = owner
+			fnsLog(f'OpToClipboard: copied parameter reference {owner.path}{suffix}')
+			return
 		if _op := ui.panes.current.owner.currentChild:
 			ui.clipboard = self.patternize(_op.name)
 			self._op_ref = _op
 			fnsLog(f'OpToClipboard: copied op reference {_op.path}')
+
+	@staticmethod
+	def hoveredParReference(par, group):
+		"""(owner, '.par.Name' or '.parGroup.Name') for what is hovered, or None.
+
+		The parameter under the mouse when there is one, else the group, the
+		rule the parameter tools share (docs/BeatModDesign.md item 8): TD's
+		parameter dialog reports a field of Translate as `ui.rolloverPar` and
+		the Translate row as `ui.rolloverParGroup` alone. The suffix rides
+		after the `@`, so OnRolloverPar still finds `op('name')@` and swaps it
+		for the relative or shortcut path, keeping `.par.Name` behind it.
+		"""
+		if par is not None:
+			return par.owner, f'.par.{par.name}'
+		if group is not None:
+			return group.owner, f'.parGroup.{group.name}'
+		return None
 
 	def OnRolloverPar(self, _op_str, _par_str, _expr):
 		_op = op(_op_str)
@@ -72,7 +107,7 @@ class ExtOpToClipboard:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Copy op to clipboard')
+	@FNSCommand.fns_command(label='Copy op to clipboard', context='current')
 	def CopyOpToClipboard(self):
 		"""Copy the current operator to the OS clipboard."""
 		self.OnCopy()

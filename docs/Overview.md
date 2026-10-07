@@ -14,6 +14,16 @@ true somewhere else.
 
 Read this to get oriented. Read the linked doc before changing anything.
 
+> **Published explainer (2026-09-08).** The reader-facing version of this map
+> is the website guide *How FNSTools is built*
+> (`website/content/guides/how-fnstools-is-built.md`, served at
+> `/docs/guides/how-fnstools-is-built/`; the one-page version is
+> `architecture.md` at `/docs/guides/architecture/`): bootstrapping,
+> versioning and updates, dependencies, the launcher ecosystem and the gate.
+> The research
+> record behind it, with every stale claim it found, is
+> [ArchitectureResearch.md](ArchitectureResearch.md).
+
 ---
 
 ## 1. What a package is
@@ -148,25 +158,29 @@ Kept here so it is not rediscovered as a surprise:
 - **An in-place update rebuilds a tool's children**, so internal readers can
   come back blank. Fix is planned, not landed.
   → [ProjectStateAcrossUpdates.md](ProjectStateAcrossUpdates.md)
-- **A package can silently vanish from a release** — `publish.py` guards
-  against a release that bumps nothing, but not against one that drops
-  something. → [RailHardening.md](RailHardening.md) §3.1
-- **Nothing verifies what actually landed in the bucket** after upload.
-  → [RailHardening.md](RailHardening.md) §3.2
-- **One bucket URL, no fallback, no way to reach the field.** A moved or dead
-  host strands every install, and there is no kill switch for a bad updater.
-  This is the one that cannot be fixed after the fact.
-  → [RailHardening.md](RailHardening.md) §2.1–2.2
+- ~~A package can silently vanish from a release~~ **Closed 2026-08-27**:
+  `publish.py` computes `removed` and refuses a drop that `release.json`
+  does not declare as retired. → [RailHardening.md](RailHardening.md) §3
+- ~~Nothing verifies what actually landed in the bucket~~ **Closed
+  2026-08-27**: `upload.py` reads back and hashes every object it wrote and
+  prints the rollback command on a mismatch.
+- ~~One bucket URL, no fallback, no way to reach the field~~ **Closed
+  2026-08-27**: a signed discovery document at pinned URLs carries the
+  endpoint, a `minimum_updater` kill switch and `notices`. Still open on
+  2026-09-08: the third pin's GitHub repository does not exist (404), and the
+  kill switch is enforced by the client only.
+  → [RailHardening.md](RailHardening.md) §2.1–2.2 · [ReleaseSigning.md](ReleaseSigning.md)
 
-## 8. Open research — decided by nobody yet
+## 8. Open research, and the one that got built
 
-- **Gated delivery** — Patreon auth and Gumroad license keys in front of some
-  packages. → [GatedDeliveryResearch.md](GatedDeliveryResearch.md)
-- **The updater as a registry** — whether tools should carry their own update
-  capability. → [UpdaterRegistryResearch.md](UpdaterRegistryResearch.md)
-
-These two touch the same code and should be read together before either is
-built.
+- **Gated delivery**: built and deployed (corrected 2026-09-08; the gate went
+  live on 2026-08-29 and six packages are gated at v3.1.4). Design record:
+  [GatedDeliveryResearch.md](GatedDeliveryResearch.md); lifecycle rules:
+  [EntitlementLifecycle.md](EntitlementLifecycle.md); what is still open:
+  [EntitlementFunnelPlan.md](EntitlementFunnelPlan.md).
+- **The updater as a registry**: whether tools should carry their own update
+  capability. → [UpdaterRegistryResearch.md](UpdaterRegistryResearch.md).
+  Research only; nothing built as of 2026-09-08.
 
 The **work plan** that came out of comparing our rail against a shipping one
 is [RailHardening.md](RailHardening.md) — six adopted ideas and three closed

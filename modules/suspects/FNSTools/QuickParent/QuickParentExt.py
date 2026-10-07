@@ -28,6 +28,15 @@ class QuickParentExt:
 		self.paneParent = None
 		fnsLog('QuickParent: init')
 
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
+
 	
 
 	def AddParentshortcut(self, _target):
@@ -49,7 +58,7 @@ class QuickParentExt:
 
 	### FNS_CommandRegistry (quick-launch commands) ###
 
-	@FNSCommand.fns_command(label='Add parent shortcut')
+	@FNSCommand.fns_command(label='Add parent shortcut', context='current')
 	def AddShortcutToCurrent(self):
 		"""Add a parent shortcut to the current COMP (prompts for the name)."""
 		target = ui.panes.current.owner.currentChild

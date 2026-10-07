@@ -1,11 +1,17 @@
-"""`placement: pane` -- the package-authored install destination.
+"""`placement` -- the package-authored install destination.
 
-A package may declare in catalog.json (edited in the CMS) that it is a
-reusable component: the installer spawns it into the network the user is
-working in instead of the toolkit container. That contract crosses five
-files -- catalog, manifest build, installer, updater, and both UIs -- and
-this pins the load-bearing pieces of each so no single edit silently
-drops one side of it.
+A package may declare in catalog.json (edited in the CMS) where the installer
+puts it: `pane` spawns it into the network the user is working in, `root`
+lands it beside the toolkit container, and `none` places it NOWHERE -- the
+install downloads and records it, and the user reaches it from the FNS tab of
+the OP Create dialog or the family folder on disk. Absent is the default: a
+child of the toolkit container.
+
+`none` arrived 2026-09-18 for the FNS operator family, which used to be forced
+to `pane` by the manifest build and so dropped a copy into the user's network
+at install. That contract crosses five files -- catalog, manifest build,
+installer, updater, and both UIs -- and this pins the load-bearing pieces of
+each so no single edit silently drops one side of it.
 
     python tests/test_placement.py
 """
@@ -37,14 +43,14 @@ def check(label, cond, detail=''):
 print('1. catalog: placement only ever holds a supported value')
 cat = json.load(io.open(CATALOG, encoding='utf-8'))
 bad = {n: e['placement'] for n, e in cat.get('packages', {}).items()
-       if 'placement' in e and e['placement'] not in ('pane', 'root')}
-check('every placement value is "pane" or "root" (stored as presence)',
+       if 'placement' in e and e['placement'] not in ('pane', 'root', 'none')}
+check('every placement value is pane, root or none (stored as presence)',
       not bad, bad)
 
 print('2. the manifest build carries it (as presence, like recommended)')
 gen = io.open(MANIFEST_GEN, encoding='utf-8').read()
-check('placement read from curated meta, pane/root only',
-      re.search(r"meta\.get\('placement'.*?in \('pane', 'root'\)", gen, re.S)
+check('placement read from curated meta, pane/root/none only',
+      re.search(r"meta\.get\('placement'.*?in \('pane', 'root', 'none'\)", gen, re.S)
       is not None)
 check('emitted onto the entry',
       "entry['placement'] = str(meta['placement'])" in gen)
@@ -58,12 +64,29 @@ check('/ui and /sys are refused (rebuilt on open)',
       re.search(r"def PanePlacement.*?\('/ui', '/sys'\)", inst, re.S)
       is not None)
 check('a protected (source) network falls back',
-      re.search(r"def PanePlacement.*?SourceLock\(owner\.path\)", inst, re.S)
+      re.search(r"def PanePlacement.*?\(lock or SourceLock\)\(owner\.path\)", inst, re.S)
       is not None)
-check('presence for a pane package is the install RECORD, not a root '
+check('presence for a pane or not-placed package is the install RECORD, not a root '
       'child',
-      re.search(r"placement == 'pane':\s*\n\s*present = name in recorded",
+      re.search(r"placement in \('pane', 'none'\):\s*\n\s*present = name in recorded",
                 inst) is not None)
+check('a not-placed package loads nothing and is recorded as available',
+      "if step.get('placement') == 'none':" in inst
+      and "'action': 'available (not placed)'" in inst)
+# The record is the ONLY evidence a not-placed package was installed --
+# there is no child to find -- so ResolvePlan's `present` and Compare both
+# depend on it. It was skipped when `none` landed (2026-09-19).
+check('and it IS recorded, or nothing can tell it was installed',
+      # (remember= rides along since place-once, docs/PlaceOnce.md)
+      re.search(r"placement'\) == 'none':.*?RecordInstalled\(parent_comp, name,"
+                r" landed, step\.get\('release', ''\)", inst, re.S)
+      is not None)
+check('a not-placed package whose artifact never arrived fails, not records',
+      re.search(r"placement'\) == 'none':.*?if not os\.path\.exists"
+                r"\(step\['path'\]\):", inst, re.S) is not None)
+check('a family member defaults to not placed, never to a spawn',
+      "entry.setdefault('placement', 'none')" in gen
+      and "entry.setdefault('placement', 'pane')" not in gen)
 check('the record always lands on the plan target',
       'RecordInstalled(parent_comp, name, landed' in inst)
 check('unselecting a pane package clears only the record',
@@ -71,8 +94,10 @@ check('unselecting a pane package clears only the record',
       and 'forgotten; the copies in your networks' in inst)
 check('a spawn sitting in the target root is removed for real, not '
       'double-handled as a forget',
-      re.search(r"to_unrecord = sorted\(\(recorded & spawn_names & tool_names\)"
-                r"\s*\n\s*- set\(wanted\) - set\(to_remove\)\)", inst)
+      # the candidate set grew placed-only names (docs/PlaceOnce.md); what
+      # this pins is that anything in to_remove is never also a forget
+      re.search(r"to_unrecord = sorted\(.*?recorded & spawn_names.*?"
+                r"- set\(wanted\) - set\(to_remove\)", inst, re.S)
       is not None)
 check('root placement: presence is the doorstep comp (a known address)',
       re.search(r"placement == 'root':\s*\n\s*home_path = "
@@ -89,7 +114,7 @@ check('a spawn beside the toolkit container (network root) is removed '
 check('everywhere else stays a record-only forget',
       "stay yours" in inst)
 check('the served page counts recorded spawns as installed',
-      re.search(r"placement'\) in \('pane', 'root'\).*?"
+      re.search(r"placement'\) in \('pane', 'root', 'none'\).*?"
                 r"rec_t\[i, 0\]\.val in spawn_names",
                 inst, re.S) is not None)
 check('a pane spawn never destroys a same-named user op',
@@ -102,8 +127,11 @@ check('console exposure does not apply outside the toolkit',
 print('4. the updater treats a pane package as a component, never missing')
 upd = io.open(UPDATER, encoding='utf-8').read()
 check("Compare has the 'component' state",
-      re.search(r"placement'\) in \('pane', 'root'\).*?'state': 'component'",
+      re.search(r"placement in \('pane', 'root', 'none'\).*?'state': 'component'",
                 upd, re.S) is not None)
+check("a not-placed package is NOT reported missing, and says why",
+      "'on disk and in the FNS tab; nothing is '" in upd
+      and "if placement == 'none' else" in upd)
 check('it is reported before the missing row',
       upd.find("'state': 'component'") < upd.find("'state': 'missing'"))
 check('Compare also walks the doorstep (siblings of the root)',
@@ -124,8 +152,12 @@ print('5. the picker says where a pane package lands')
 page = io.open(PAGE, encoding='utf-8').read()
 check('the card carries the chip',
       "lands in your working network" in page)
-check('the selection sentence counts pane picks',
-      'will spawn into the network you are working in' in page)
+# The footer counts them; the wording was shortened with the rest of the
+# notes in "a calmer app flavour" (3ea45424), so anchor on the count, not
+# on the sentence it used to be written out as.
+check('the selection footer counts pane picks',
+      "if (paneSel) notes.push(paneSel + " in page
+      and "' spawns' : ' spawn'" in page)
 
 print('6. the CMS authors it')
 mjs = io.open(CMS_MJS, encoding='utf-8').read()

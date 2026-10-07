@@ -22,4 +22,17 @@ if got.returncode != 0:
     print('FAILED: a shell carries a stale copy of base.css -- run '
           'python packaging/configurator/sync_base.py --write')
     sys.exit(1)
+# A dialog's action row must stay reachable: an install plan of 51 chips put
+# Install below the fold (field report 2026-09-18). The rule belongs to the
+# shared base, not to one shell -- a page-local copy would be deleted by the
+# next sync, which is exactly how the FNS tab switch lost its styling.
+BASE = os.path.join(_ROOT, 'packaging', 'configurator', 'base.css')
+import io as _io
+_css = _io.open(BASE, encoding='utf-8').read()
+_i = _css.index('.dlg-actions {')
+_rule = _css[_i:_css.index('}', _i)]
+if 'position: sticky' not in _rule or 'bottom: 0' not in _rule:
+    print('FAILED: .dlg-actions is not sticky in base.css -- a long dialog hides its buttons')
+    sys.exit(1)
+print('  PASS  the dialog action row is sticky, in the shared base')
 print('all checks passed')

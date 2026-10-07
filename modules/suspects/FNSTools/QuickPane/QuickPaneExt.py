@@ -1,4 +1,5 @@
 
+
 '''Info Header Start
 Name : QuickPaneExt
 Author : Dan@DAN-4090
@@ -37,6 +38,15 @@ class QuickPaneExt:
 			'bottom': 'bottomPane'
 		}
 		fnsLog('QuickPane: init')
+
+	def onInitTD(self):
+		# The slim ExtUtils carries no announcer, so this tool registers its
+		# quick-launch commands itself: deferred past the registry's /sys
+		# promotion and this module's own compile.
+		run('args[0]._announceCommands()', self, delayFrames=60, delayRef=op.TDResources)
+
+	def _announceCommands(self):
+		FNSCommand.announce(self.ownerComp)
 
 	@property
 	def allPanes(self):

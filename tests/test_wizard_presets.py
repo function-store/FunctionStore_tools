@@ -40,6 +40,10 @@ m = re.search(r'var bundles = \(M\.presets \|\| \[\]\)[\s\S]*?'
               r'\.filter\(function \(b\) \{ return b\.name && b\.packages\.length; \}\);',
               src)
 assert m, 'could not lift the bundles mapping from the page'
+# the filter it calls, lifted too, so a renamed or new predicate runs
+# for real instead of failing the harness
+preds = re.findall(r'^\s*function (?:pickable|bulkPickable)\(p\) \{.*\}$', src, re.M)
+assert len(preds) == 2, 'could not lift pickable()/bulkPickable() from the page'
 harness = """
 var M = {presets: [
   {name: 'VJ essentials', blurb: 'the live set',
@@ -53,16 +57,20 @@ var byName = {
   AutoRes: {name: 'AutoRes', kind: 'tool'},
   FNS_TimelineTools: {name: 'FNS_TimelineTools', kind: 'tool'},
   FNS_Updater: {name: 'FNS_Updater', kind: 'core'},
+  HwOnly: {name: 'HwOnly', kind: 'tool', nopick: true},
 };
+M.presets[0].packages.push('HwOnly');
+%s
 %s
 console.log(JSON.stringify(bundles));
-""" % m.group(0)
+""" % (chr(10).join(preds), m.group(0))
 try:
     got = subprocess.run([os.environ.get('NODE', 'node'), '-e', harness],
                          capture_output=True, text=True, timeout=30)
     out = got.stdout.strip()
     if got.returncode != 0:
-        print('  node stderr: %s' % got.stderr.strip()[:300])
+        # a harness that throws is a failure, not a quiet skip
+        check('the lifted bundles code runs', False, got.stderr.strip()[:300])
         out = ''
 except Exception as e:
     out = ''
@@ -72,7 +80,7 @@ if out:
     bundles = json.loads(out)
     check('one bundle survives', len(bundles) == 1, out)
     b = bundles[0] if bundles else {}
-    check('unknown names are filtered out',
+    check('unknown and nopick names are filtered out',
           b.get('packages') == ['AutoRes', 'FNS_TimelineTools'], out)
     check('the blurb rides along', b.get('blurb') == 'the live set', out)
     check('a bundle emptied by the filter is dropped whole',
