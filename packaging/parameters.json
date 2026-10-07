@@ -1,6 +1,6 @@
 {
  "schema": 1,
- "release": "v3.2.65",
+ "release": "v3.2.67",
  "td_build": "2025.33070",
  "packages": {
   "ChopBank": [
@@ -1775,6 +1775,39 @@
     "default": "",
     "section": true,
     "page": "Common"
+   }
+  ],
+  "CookBar": [
+   {
+    "name": "Active",
+    "label": "Active",
+    "style": "Toggle",
+    "help": "Draw a bar above each operator in the network you are viewing: the top bar is its cook time (CPU + GPU, full at 1 ms), the bottom one its GPU memory. Works while the timeline plays.",
+    "default": true,
+    "page": "CookBar"
+   },
+   {
+    "name": "Maxops",
+    "label": "Max OPs",
+    "style": "Int",
+    "help": "The most operators drawn at once, nearest the middle of the view first (up to 250, what the shader holds). Only operators in view count. More costs GPU time: about 0.1 ms at 50, 0.25 ms at 100 and 1.4 ms at 250 for a 1536x700 pane (measured), growing with the pane's size.",
+    "default": 100,
+    "page": "CookBar"
+   },
+   {
+    "name": "Annotationalpha",
+    "label": "Annotation Alpha",
+    "style": "Float",
+    "help": "While the bars are on, the back colour of every annotation in the network you are viewing is lowered to this alpha so the bars behind it show, and put back when you leave or switch off. An annotation that is already fainter is left as it is.",
+    "default": 0.2,
+    "page": "CookBar"
+   },
+   {
+    "name": "Openhog",
+    "label": "Open Global Hog CHOP",
+    "style": "Pulse",
+    "help": "Open the parameters of the Global Hog CHOP, which eats frame time on purpose so you can watch how the network copes. Ctrl+right-click on the toolbar button does the same. The button turns red while the Hog is on.",
+    "page": "CookBar"
    }
   ],
   "EaseInterpolator": [
@@ -16883,10 +16916,6 @@
     "default": "",
     "menu": [
      {
-      "name": "172.18.112.1",
-      "label": "172.18.112.1"
-     },
-     {
       "name": "192.168.42.66",
       "label": "192.168.42.66"
      }
@@ -16917,10 +16946,6 @@
     "help": "Which network interface talkback is sent from. '*' lets the OS choose.",
     "default": "*",
     "menu": [
-     {
-      "name": "172.18.112.1",
-      "label": "172.18.112.1"
-     },
      {
       "name": "192.168.42.66",
       "label": "192.168.42.66"
@@ -20968,6 +20993,9 @@
    "FNS_ConfigRegistry",
    "FNS_ToolbarRegistry"
   ],
+  "FNS_Collect": [
+   "FNS_HubRegistry"
+  ],
   "FNS_ColorUI": [
    "FNS_ConfigRegistry",
    "FNS_Console",
@@ -21000,6 +21028,9 @@
   "FNS_HydroHomie": [
    "FNS_ConfigRegistry",
    "FNS_ToolbarRegistry"
+  ],
+  "FNS_MediaBrowser": [
+   "FNS_HubRegistry"
   ],
   "FNS_Misc": [
    "FNS_ConfigRegistry"
@@ -21108,6 +21139,9 @@
   "ConstantCHOP": [
    "opmenu"
   ],
+  "CookBar": [
+   "toolbar"
+  ],
   "EaseInterpolator": [],
   "ExpressionPOP": [
    "opmenu"
@@ -21131,7 +21165,9 @@
    "toolbar"
   ],
   "FNS_CamSequencer": [],
-  "FNS_Collect": [],
+  "FNS_Collect": [
+   "hub"
+  ],
   "FNS_ColorUI": [
    "console",
    "hub"
@@ -21172,7 +21208,9 @@
    "navbar"
   ],
   "FNS_MainMenuRegistry": [],
-  "FNS_MediaBrowser": [],
+  "FNS_MediaBrowser": [
+   "hub"
+  ],
   "FNS_Misc": [
    "toolbar"
   ],
@@ -21303,6 +21341,20 @@
     "order": 0
    }
   ],
+  "CookBar": [
+   {
+    "surface": "toolbar",
+    "widget": "button_cookbar",
+    "label": "CookBar",
+    "order": 18,
+    "icon": {
+     "op": "text",
+     "font": "Material Design Icons",
+     "codepoint": "U+F171C",
+     "file": "CookBar-toolbar.png"
+    }
+   }
+  ],
   "ExpressionPOP": [
    {
     "surface": "opmenu",
@@ -21340,7 +21392,7 @@
     "surface": "mainmenu",
     "widget": "BorderlessWindow/projname",
     "label": "ProjName",
-    "order": 4,
+    "order": 5,
     "side": "left"
    },
    {
@@ -21354,6 +21406,14 @@
      "codepoint": "U+F02C2",
      "file": "FNS_BorderlessTD-toolbar.png"
     }
+   }
+  ],
+  "FNS_Collect": [
+   {
+    "surface": "hub",
+    "widget": "FNS_Collect",
+    "label": "Collect",
+    "order": 72
    }
   ],
   "FNS_ColorUI": [
@@ -21529,6 +21589,14 @@
     }
    }
   ],
+  "FNS_MediaBrowser": [
+   {
+    "surface": "hub",
+    "widget": "FNS_MediaBrowser",
+    "label": "Media",
+    "order": 70
+   }
+  ],
   "FNS_Misc": [
    {
     "surface": "toolbar",
@@ -21539,18 +21607,6 @@
      "op": "text",
      "font": "Material Design Icons",
      "codepoint": "U+F0247",
-     "file": "FNS_Misc-toolbar-2.png"
-    }
-   },
-   {
-    "surface": "toolbar",
-    "widget": "button_hog",
-    "label": "HogCHOP",
-    "order": 19,
-    "icon": {
-     "op": "text",
-     "font": "Material Design Icons",
-     "codepoint": "U+F0401",
      "file": "FNS_Misc-toolbar.png"
     }
    },
@@ -21563,7 +21619,7 @@
      "op": "text",
      "font": "Material Design Icons",
      "codepoint": "U+F037D",
-     "file": "FNS_Misc-toolbar-3.png"
+     "file": "FNS_Misc-toolbar-2.png"
     }
    }
   ],
@@ -21603,7 +21659,7 @@
     "surface": "toolbar",
     "widget": "button_templates",
     "label": "OpTemplates",
-    "order": 18,
+    "order": 17,
     "icon": {
      "op": "text",
      "font": "Material Design Icons",
@@ -21617,7 +21673,7 @@
     "surface": "toolbar",
     "widget": "button_perform",
     "label": "Perform",
-    "order": 21,
+    "order": 19,
     "icon": {
      "op": "text",
      "font": "Material Design Icons",
@@ -21686,7 +21742,7 @@
     "surface": "toolbar",
     "widget": "button_quicktime",
     "label": "QuickTime",
-    "order": 17,
+    "order": 16,
     "icon": {
      "op": "text",
      "font": "Material Design Icons",
@@ -21708,11 +21764,11 @@
     "surface": "toolbar",
     "widget": "button_remote",
     "label": "Remote",
-    "order": 16,
+    "order": 21,
     "icon": {
      "op": "text",
      "font": "Material Design Icons",
-     "codepoint": "U+F0815",
+     "codepoint": "U+F0122",
      "file": "FNS_Remote-toolbar.png"
     }
    }

@@ -75,11 +75,13 @@ By leveraging [NoNode] and [CustomParHelper], TouchDesigner developers can creat
 The default extension code will contain the following import statements (complicated looking at first sight) for the utility packages. You can just ignore them, but don't remove them!
 
 > Each line is a fancy import statement that avoids any conflicts when
-> having multiple extension classes with ExtUtils attached. 
+> having multiple extension classes with ExtUtils attached. It finds the
+> ExtUtils docked to your extension, or the one beside it when the dock is
+> missing, which is what keeps a cloned component working.
 
 ```python
-  CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
-  NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+  CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('CustomParHelper').CustomParHelper # import
+  NoNode: NoNode = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('NoNode').NoNode # import
 ```
 
 ## CustomParHelper
@@ -102,7 +104,7 @@ CustomParHelper simplifies the management of custom parameters in TouchDesigner 
 
 1. Import the CustomParHelper class:
     ```python
-    CustomParHelper: CustomParHelper = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('CustomParHelper').CustomParHelper # import
+    CustomParHelper: CustomParHelper = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('CustomParHelper').CustomParHelper # import
     ```
 
 2. Initialize in your extension's __init__ method as follows:
@@ -368,7 +370,7 @@ NoNode is a versatile utility class that centralizes the management of various t
 
 2. Import the NoNode class:
    ```python
-   NoNode: NoNode = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('NoNode').NoNode # import
+   NoNode: NoNode = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('NoNode').NoNode # import
    ```
 
 3. Initialize the NoNode system in your extension:

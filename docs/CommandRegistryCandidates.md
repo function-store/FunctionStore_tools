@@ -18,7 +18,7 @@ in every tool's docked ExtUtils since the 2026-08-21 clone rollout, so any
 tool below can adopt the two-touch pattern:
 
 ```python
-FNSCommand = next(d for d in me.docked if 'ExtUtils' in d.tags).mod('FNSCommand')
+FNSCommand = (next((d for d in me.docked if 'ExtUtils' in d.tags), None) or next((c for c in me.parent().children if 'ExtUtils' in c.tags), None)).mod('FNSCommand')
 
 class MyToolExt:
 	@FNSCommand.fns_command(help='...')

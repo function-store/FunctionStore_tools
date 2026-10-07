@@ -1,5 +1,30 @@
 # FNS tools changelog
 
+## v3.2.67 -- 2026-10-07
+
+- CookBar 1.0.0 -- new tool, Anton Heestand's Cook Bar. A bar above every operator in the network you are viewing shows its cook time and GPU memory, in whichever network editor pane you are working in. FNSTools' copy stays out of your network while it is off, touches only the display flags of the network you are viewing, lowers its annotations' back colour so the bars show through, and puts both back when you leave. A toolbar button switches it on, in the slot the Hog button used to have; right-click opens its parameters like the other toolbar tools, Ctrl+right-click (or the Open Global Hog CHOP pulse) opens the Global Hog CHOP, and the button turns red while the Hog is on. Quick-launch commands: Toggle cook bar, Open Global Hog CHOP. Saving the project, or removing the tool, while the bars are on no longer leaves their changes in your network.
+- FNS_Collect 3.2.4 -- Collect All & Save leaves FNSTools' own files alone; before, it could copy a tool's settings table into the project and repoint the tool at the copy. TimelineTools' movie and audio file are still collected, through its own Movie File and Audio File settings, and its players follow. Collect is also a tab in the Hub.
+- FNS_CommandRegistry 3.2.6 -- carries the same clone-safe About component as the other registries.
+- FNS_ConfigRegistry 3.2.7 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_Console 3.2.15 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_CustomParTools 3.2.8 -> 3.2.9 -- a component with a QuickExt extension keeps working when it is cloned. Its import line now also finds the ExtUtils beside the extension when a clone has not restored the dock, and QuickExt writes that line into every extension it adds, even from a template saved earlier (issue #125).
+- FNS_HubRegistry 3.2.4 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_MainMenuRegistry 3.2.4 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_MediaBrowser 3.2.4 -- the media list no longer shows FNSTools' own files. TimelineTools' movie and audio file show once each, as its Movie File and Audio File settings, without its internal players. Files the toolkit uses still count as in use, so they never show up as unreferenced. The browser is also the Media tab in the Hub, and scans the first time you open it there.
+- FNS_Misc 3.2.6 -> 3.2.7 -- the Global Hog CHOP and its toolbar button moved to CookBar: Ctrl+right-click CookBar's toolbar button to open it.
+- FNS_NavbarRegistry 3.2.4 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_OpMenuRegistry 3.2.5 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_PaletteRegistry 3.2.4 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_PaneSearchRegistry 0.1.2 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_PaneTypeRegistry 3.2.5 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_TimelineRegistry 3.2.4 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+- FNS_TimelineTools 3.2.8 -> 3.2.9 -- the waveform and marker strips no longer redraw on every frame while the timeline plays. Each view is drawn once and redrawn only when what it shows changes (audio, markers, look, the Animation editor's zoom), so playback stops spending GPU time on a picture that has not changed. Marker names still show on hover; the hover check now runs only while the pointer is over the strip or graph.
+- FNS_ToolbarRegistry 3.2.5 -- the About component inside the registry hosts tools carry now loads in a clone; a host could show "module ... has no attribute ExtFnsAbout" after install (issue #125).
+
+## v3.2.66 -- 2026-10-06
+
+- FNS_SearchFix 0.2.4 -- the "ExtFnsAbout" script error in its find-bar registry host no longer comes back after install. 0.2.3 removed the component from the host, but the host, a clone of the registry, copied it back in; it no longer clones.
+
 ## v3.2.65 -- 2026-10-06
 
 - FNS_PaneSearchRegistry 0.1.1 -- a registry host stamped from it no longer carries a copy of the package's About component, which raised an "ExtFnsAbout" script error once the tool shipped.

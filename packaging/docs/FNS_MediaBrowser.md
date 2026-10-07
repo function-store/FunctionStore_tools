@@ -14,8 +14,14 @@ Every movie, image, audio file and geometry file your project references,
 in one list, with the operator that uses it. Filter to **missing only** to
 see what would break on another machine before it breaks there.
 
+The browser is the **Media** tab of [Hub](/docs/fns-hub/) (the **FNS** button in
+the main-menu bar), and **Open Browser** on the tool opens it in a window of its own.
+
 TouchDesigner's own shipped defaults are ignored, so the list is your
-media, and leaves the installation's out.
+media, and leaves the installation's out. FNSTools' own files are left out
+too, except your media inside it: TimelineTools' movie and audio file are
+listed, once each, without its internal players. A tool you placed in your own
+network (a scene changer, a sequencer) is listed like the rest of the project.
 
 ## Replacing and repointing
 

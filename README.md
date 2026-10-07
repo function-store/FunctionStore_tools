@@ -16,6 +16,28 @@ Most tools are free and MIT licensed, and their source is in this repository. So
 
 *Watch the [InSession stream](https://www.youtube.com/watch?v=hnpC5uh-GTs) with the TouchDesigner team, which covers the tools in depth. It was recorded on an earlier release; the tools have grown since, but the ideas are the same.*
 
+## Some of the tools
+
+A few of the free ones, to give you the idea:
+
+- **[CommandPalette](https://functionstore.tools/docs/fns-commandpalette/)**: every command your tools declare, plus TouchDesigner's own palette components, in one ranked list on a hotkey.
+- **[SearchFix](https://functionstore.tools/docs/fns-searchfix/)**: the network editor's find bar finds any part of a name, in any case, with wildcards, optionally fuzzy and inside child networks.
+- **[SearchPalette](https://functionstore.tools/docs/fns-searchpalette/)**: a search field for the palette browser.
+- **[CustomParTools](https://functionstore.tools/docs/fns-custompartools/)**: promote parameters to a parent by drag and drop, with binds or expressions, plus extension creation and parent shortcuts.
+- **[OpTemplates](https://functionstore.tools/docs/fns-optemplates/)**: a library of preconfigured operators to drop into a network.
+- **[OpMenuMods](https://functionstore.tools/docs/fns-opmenumods/)**: extras for the OP Create dialog: IO filters, your own search keywords, and acronym search (type `m f o` for Movie File Out).
+- **[SwapOps](https://functionstore.tools/docs/fns-swapops/)**: swap one operator for another and keep its connections.
+- **[QuickCollapse](https://functionstore.tools/docs/fns-quickcollapse/)**: collapse a selection into a component.
+- **[QuickMarks](https://functionstore.tools/docs/quickmarks/)** and **[QuickPane](https://functionstore.tools/docs/fns-quickpane/)**: bookmark network locations and jump back; pane layout shortcuts.
+- **[ParentHierarchy](https://functionstore.tools/docs/fns-parenthierarchy/)**: hover a parent in the pane bar's path to see its shortcuts, internal operators and custom parameters.
+- **[CookBar](https://functionstore.tools/docs/cookbar/)**: each operator's cook time and GPU memory drawn above it, so the expensive parts of a network stand out.
+- **[midiMapper](https://functionstore.tools/docs/midimapper/)** and **[oscMapper](https://functionstore.tools/docs/oscmapper/)**: map MIDI and OSC to parameters, with a learn mode.
+- **[HotkeyManager](https://functionstore.tools/docs/fns-hotkeymanager/)**: every hotkey in the toolkit in one list, with conflict detection and rebinding.
+- **[ColorUI](https://functionstore.tools/docs/fns-colorui/)** and **[BorderlessTD](https://functionstore.tools/docs/fns-borderlesstd/)**: operator colour palettes; a borderless TouchDesigner window.
+- **[PasteFromClipboard](https://functionstore.tools/docs/pastefromclipboard/)**: paste the image on your clipboard straight into a network (Windows).
+
+That is a small part of it. There is much more, from GPU particle systems and colour generators to parameter randomizers, autosave and a VS Code bridge: **[browse the full catalog on functionstore.tools](https://functionstore.tools/#tools)**.
+
 ## Install
 
 1. **Drop one `.tox`.** Drag `FNSTools.tox` into the root of a project. It arrives empty: the container you drop *is* where your tools will live.
@@ -42,7 +64,7 @@ Everything works except clipboard image paste, which is Windows only. Modifier k
 
 Please report any [issues](https://github.com/function-store/FunctionStore_tools/issues) here on GitHub, or use the **Troubleshoot** channel on the [Discord](https://discord.gg/b4CaCP3g3K). That's where bugs get sorted fastest.
 
-A lot of the tools are made by [Function Store](https://functionstore.xyz), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [DotSimulate](https://www.patreon.com/c/dotsimulate), [Alex Guevara](https://alex-guevara.com), [Yea Chen](https://www.instagram.com/yeataro), [Lake Heckaman](https://www.patreon.com/cw/water__shed) and [Greg Hermanovic](https://derivative.ca). Please support them <3
+A lot of the tools are made by [Function Store](https://functionstore.xyz), with notable contributions from [AlphaMoonbase.berlin](https://alphamoonbase.de/), [DotSimulate](https://www.patreon.com/c/dotsimulate), [Alex Guevara](https://alex-guevara.com), [Yea Chen](https://www.instagram.com/yeataro), [Lake Heckaman](https://www.patreon.com/cw/water__shed), [Anton Heestand](https://heestand.xyz) and [Greg Hermanovic](https://derivative.ca). Please support them <3
 
 While these tools are here for all the community to enjoy, [Patreon](https://patreon.com/function_store) follows are appreciated!
 
@@ -56,6 +78,7 @@ Huge thanks to the contributors:
 - [DotSimulate](https://www.patreon.com/dotsimulate) and [Lake Heckaman](https://www.patreon.com/cw/water__shed) for Clipboard Image Paste.
 - [DotSimulate](https://www.patreon.com/dotsimulate) for the OP Create Dialog OpType Acronyms mod.
 - [Alex Guevara](https://alex-guevara.com) for QuickMarks.
+- [Anton Heestand](https://heestand.xyz) for [Cook Bar](https://github.com/heestand-xyz/cook_bar), which CookBar is.
 - [Acrylicode](https://acrylicode.com/) and [kim0slice](https://www.instagram.com/kim0slice) for the early feedback and testing.
 
 ## Notable Mentions

@@ -239,7 +239,6 @@ path
 /FNSTools/FNS_QuickTime/FNS_About/ExtUtilsMinimal/CustomParHelper
 /FNSTools/FNS_SearchFix/pre_release
 /FNSTools/FNS_SearchFix/SearchFixExt
-/FNSTools/FNS_SearchFix/FNS_PaneSearchRegistry/FNS_About/ExtUtilsMinimal/CustomParHelper
 /FNSTools/FNS_SearchFix/FNS_PaneSearchRegistry/pre_release
 /FNSTools/FNS_SearchFix/FNS_PaneSearchRegistry/PaneSearchRegistryExt
 /FNSTools/FNS_SwitchOPs/FNS_About/ExtUtilsMinimal/CustomParHelper
@@ -507,3 +506,15 @@ path
 /TDXLauncherUtility/TDXLUPalette/FNS_PaletteRegistry/FNS_About/ExtUtils/CustomParHelper
 /TDXLauncherUtility/TDXLUPalette/FNS_PaletteRegistry/RegistryBase
 /TDXLauncherUtility/TDXLUPalette/FNS_PaletteRegistry/PaletteRegistryExt
+/FNSTools/CookBar
+/FNSTools/CookBar/text_funcs
+/FNSTools/CookBar/execute_create
+/FNSTools/CookBar/execute_op_info
+/FNSTools/CookBar/execute_pane_info
+/FNSTools/CookBar/execute_play_state
+/FNSTools/CookBar/parexec_active
+/FNSTools/CookBar/text_store_win_res
+/FNSTools/CookBar/text_cook_bar_frag
+/FNSTools/CookBar/pre_release
+/FNSTools/CookBar/CookBarExt
+/FNSTools/CookBar/execute_save
