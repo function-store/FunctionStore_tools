@@ -162,8 +162,24 @@ Viewport Presets + Create same for viewport mode (Position / Rotate /
                          component, entering a mode creates its external
                          table for you as well.
 Look At Presets + Create same for the Look At target.
+Layout Library + Externalize Layouts  the table the Control Preset
+                         layouts live in. Empty is the factory state, the
+                         table inside this component; Externalize copies
+                         it beside the component (docked to it) and
+                         points Layout Library there, so your own layouts
+                         survive replacing the component. It never
+                         overwrites a library already outside.
 
 ## On a GeoPilot body
+
+Choosing the body happens on the GeoPilot's Pilot page, which reads top
+down: Body Preset (a whole vehicle, labelled with what it is, e.g.
+stuntplane (Flight, Forces)) and Apply Body, then Current Body (what was
+actually applied, marked modified once you change it), Flight Model (Off,
+Flight, Walking, Driving) and, for Flight, Flight Physics: Assisted
+(eased, cosmetic bank), Forces (real banked turns, energy and stalls) or
+Helicopter. Each model page then has its own Preset. For a realistic
+aeroplane pick stuntplane, or Flight with Forces and a Forces preset.
 Coming from camSequencer 2.x or older? There, one camera did everything:
 it walked, flew and drove, and its transform WAS where you were. Now the
 work is split. GeoPilot is the body (walking, driving, flight, ground
@@ -199,6 +215,18 @@ To set it up:
 
 Under Walking the body consumes Yaw, so the camera only pitches and
 rolls.
+
+While this camera rides a pilot (wired under one, or its Source is or
+selects from a pilot's head bus), the controls the pilot owns grey out,
+and their help says so: Control Preset and Apply Layout (a layout would
+wipe the head-bus mapping and read the same keys as the pilot), the
+Forward, Strafe and Rise channels, Move Speed, Dolly Speed, Level
+Heading, both collisions (they only guard flown motion), Dead Zone and
+Control Smoothing (the head bus arrives already dead-zoned and
+smoothed). Look, roll and zoom speeds, Invert Pitch, Look At and Orbit,
+Teleport, Level Horizon, Scrub and Turbulence stay live. On the pilot,
+a Coupling of Rigid or Chase with a camSequencer on it shows a warning
+in its Head status: pick Free or Carry.
 
 What each table records:
 
@@ -243,19 +271,21 @@ plumbing you set once and never look at again.
 Fly the camera from a game controller (or any CHOP) and drive the
 sequencer from the same pad. You teach every control by moving it
 (Learn), so no pad layout is hard-wired and an Xbox pad, a DualShock,
-a MIDI surface or an OSC app all work the same way. Everything the pad
-does is applied to the live camera; presets only change when you
+a MIDI surface or an OSC app all work the same way, or load a whole
+layout at once with Control Preset (see CONTROL PRESET). Everything the
+pad does is applied to the live camera; presets only change when you
 Capture.
 
-  Typical layout      left stick  Forward / Strafe   right stick  Yaw / Pitch
-                      triggers    Rise (two one-way controls, see AXES)
-                      bumpers     Roll left / right, or Scrub back /
-                                  forward, or map Roll onto a stick
-                                  you already use and gate it with a
-                                  Roll Modifier button (see ROLL)
-                      A           Capture       X   Teleport
-                      LB (hold)   Orbit         Y   Look At Pick
-                      d-pad       Next / Prev   1-4 Preset buttons
+  The Xbox preset     left stick  Forward / Strafe   right stick  Yaw / Pitch
+                      triggers    Rise (one bipolar axis on XInput)
+                      bumpers     Roll left / right (or Scrub back /
+                                  forward, or Roll on a stick you
+                                  already use behind a Roll Modifier
+                                  button, see ROLL)
+                      A (hold)    Orbit         B   Teleport
+                      X           Capture       Y   Look At Pick
+                      Back/Start  Prev / Next   right-stick click  Level
+                      Preset buttons are yours to Learn.
 
 SOURCE  (Mapping page)
 Source CHOP   the CHOP whose channels are the controls. Empty = the
@@ -270,6 +300,60 @@ Source CHOP   the CHOP whose channels are the controls. Empty = the
               a controller in and nothing moves, map an axis first.
 Active        mutes every mapped control without losing the mapping.
 Learn Status  what learn mode is waiting for / the last mapping made.
+
+CONTROL PRESET  (top of the Mapping page)
+Control Preset  a whole controller layout in one pulse: Xbox / XInput
+              pad, PlayStation pad, 8BitDo pad, Generic pad, or Keyboard
+              (WASD). The list is the Layout Library (Presets page), so
+              it also holds the layouts you capture.
+              Browsing the list writes nothing; Apply Layout loads it,
+              clearing the previous mapping first so layouts never
+              merge. The component ships unmapped: nothing is applied
+              until you press Apply Layout.
+              Keyboard: WASD moves, Q / E sinks and rises, the arrows
+              turn and look, hold Space to orbit, F picks a Look At, T
+              teleports, L levels the horizon, R captures a preset and
+              Z / X step back and forth. It reads keyboardin_internal
+              and is exact; its Keys list grows to every key the layout
+              names.
+              Pads: left stick Forward / Strafe, right stick Yaw /
+              Pitch, the triggers Rise, the bumpers Roll, a face button
+              each for Orbit, Teleport, Capture and Look At, and Prev /
+              Next on Back / Start (Share / Options on PlayStation, the
+              shoulders on Generic). Pad channel names follow the
+              Joystick CHOP and vary by driver, so treat a pad layout as
+              a starting point and Learn any control that arrives wrong.
+              A pad layout keeps your Source (a MIDI or OSC device stays
+              connected), apart from a Keyboard In, which it sets back
+              to empty so the controller is read.
+Capture Layout / Delete Layout  save this page as a layout under the
+              name in Control Preset (type a new name to add one, keep a
+              name to overwrite it), or remove the named one. A layout
+              holds Source, Dead Zone and every channel field, so a
+              control no factory layout uses (Zoom, Scrub, Preset
+              Channels) is kept too, and a typed Source stays as typed.
+Current Layout  read-only: the layout last applied or captured, with
+              (modified) once a channel, the Source or Dead Zone changes
+              (a Learn, say). Custom means none was applied.
+Keyboard Panel  where the keyboard counts, the way the palette
+              cameraViewport does it. By default it is ./renderView, a
+              panel inside this component that shows its Render TOP.
+              While the camera DRIVES (it rides a GeoPilot, or its Source
+              is a Keyboard In) that panel is also the node viewer;
+              otherwise the node viewer stays the usual TouchDesigner
+              camera viewer with its own navigation. Node View is an
+              expression doing that switch; set it by hand to override.
+              So click into the node viewer to drive: the keys go to that
+              panel and never to the network editor (W no longer toggles
+              wireframe there) or the Textport, and clicking outside
+              hands them back to TouchDesigner. Point it at another
+              panel (a Container COMP, a Window COMP) to drive from
+              there; the node viewer follows. Empty: keys count wherever
+              TouchDesigner has focus.
+              On a GeoPilot body this camera's Source is the pilot's
+              head bus, so the PILOT's Control Preset and Keyboard Panel
+              are the ones that matter. The two keyboard layouts agree
+              on R / Z / X.
 
 BODIES MOVED OUT (2.0)
 The flight models that used to live here (Assisted, Forces, Walking,
@@ -451,6 +535,39 @@ Zoom Speed    Zoom drives whatever the projection really uses: FOV
               FOV in viewport mode.
 Orbit Distance  how far ahead the pivot sits when nothing is picked.
 Invert Pitch  push forward to look down.
+Mouse Look    Off / Left Drag / Right Drag (default Left Drag). Drag
+              inside the viewer panel (Keyboard Panel: by default this
+              component's renderView, its node viewer) to look around,
+              the way the palette cameraViewport does in its Camera
+              navigation mode. Horizontal turns, vertical tilts, within
+              the pitch limit. It works
+              whether or not a controller is mapped. TouchDesigner
+              cannot lock the pointer, so it is a drag. Riding a
+              GeoPilot on Coupling Carry, the pilot takes the camera's
+              yaw every frame, so a sideways drag turns the body: keys
+              walk, the mouse looks. Ignored while a Look At target owns
+              the aim, while Orbit is held, and in viewport mode.
+Mouse Look Speed  degrees turned by a drag across the full width of the
+              viewer; a vertical drag uses the same rate.
+Invert Mouse X / Invert Mouse Y  flip the drag on one axis. The mouse
+              only: Invert Pitch stays the sticks' setting.
+Mouse Smoothing  seconds the view takes to catch up with the drag
+              (default 0.06). 0 follows the pointer exactly; more
+              glides, and a quick flick carries on briefly after you let
+              go. The total turn is never changed, only its timing.
+              Control Smoothing is the sticks' own.
+Pan and Dolly  the rest of the palette cameraViewport's Camera
+              navigation in the viewer (on by default): drag with the
+              OTHER button (right when Mouse Look is Left Drag) to
+              truck and pedestal, drag with the middle button to dolly
+              (vertical) or pan (horizontal), turn the wheel to dolly.
+              Moves along the camera's own axes and eases through
+              Mouse Smoothing. Riding a GeoPilot on Carry the body
+              takes the move (the pilot has its own Pan and Dolly).
+              Ignored while Orbit is held and in viewport mode.
+Mouse Pan Speed  scene units moved by a drag across the full width of
+              the viewer.
+Mouse Wheel Speed  scene units dollied per notch of the wheel.
 Reset Pivot   zero this camera's own Pivot (Xform page) WITHOUT moving
               the view, so a turn is a turn in place. Flying already
               accounts for a pivot, but presets carry pivots too, and a
@@ -647,6 +764,23 @@ the table first (RestorePresets() from Python brings it back).
   fog off without taking your camera over.
 - ON A GEOPILOT BODY explains the coupling and what each preset table
   records.
+- Control Preset on the Mapping page loads a whole layout in one pulse:
+  Xbox, PlayStation, Generic pad, or Keyboard (WASD, with R / Z / X for
+  the sequencer, matching GeoPilot). Keyboard Panel makes keys count
+  only while that panel has focus, the palette cameraViewport's way:
+  by default the component's own node viewer, a panel showing its
+  Render TOP, so you click into the node to drive. Still ships unmapped.
+- Mouse Look: drag inside that viewer to look around, as on the palette
+  cameraViewport. On a GeoPilot with Coupling Carry a sideways drag turns
+  the body, so the keys walk and the mouse looks. Invert Mouse X / Y and
+  Mouse Smoothing are the mouse's own, apart from the sticks'.
+- Pan and Dolly: the other mouse button trucks and pedestals, the middle
+  one dollies and pans, the wheel dollies (Mouse Pan Speed, Mouse Wheel
+  Speed).
+- Your own control layouts: Capture Layout and Delete Layout beside
+  Control Preset, a Layout Library on the Presets page (Externalize
+  Layouts moves it beside the component), an 8BitDo layout, and Current
+  Layout saying which layout is applied and whether it was changed.
 
 Entries before 2.0.0 describe walking, driving and the other flight
 models as they were then; those moved to GeoPilot in 2.0.

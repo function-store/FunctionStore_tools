@@ -2139,6 +2139,14 @@ function fnsBoot() {
     // its card keeps the New badge meanwhile.
     var list = Array.from(unseenAtLoad).map(function (n) { return byName[n]; })
       .filter(function (p) { return p && (!isPlus(p) || entitled(p)); }).sort(byTitle);
+    // A tool already in the selection asks nothing: it could only sit in
+    // the list ticked and greyed out as "already picked". It is recorded as
+    // shown and left out, so a look where every new tool is already picked
+    // opens no dialog at all (owner, 2026-10-07: "a non-state").
+    var had = list.filter(function (p) { return picked.has(p.name); })
+      .map(function (p) { return p.name; });
+    if (had.length) markSeen(had);
+    list = list.filter(function (p) { return !picked.has(p.name); });
     if (!d || !list.length) return;
     var names = list.map(function (p) { return p.name; });
     document.getElementById('newtitle').textContent = list.length === 1

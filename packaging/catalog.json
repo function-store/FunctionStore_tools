@@ -902,6 +902,20 @@
    "access": "8323905",
    "preview": true
   },
+  "FNS_GeoPilot": {
+   "category": "Control & mapping",
+   "homepage": "https://seq.functionstore.tools",
+   "description": "A Geometry COMP that moves itself: map a game controller, the keyboard or any CHOP and it flies, walks or drives, from a stunt plane to a person on foot, with ground contact, jumping and a preset sequencer for its poses. Put a CamSequencer on it for the head and the lens.",
+   "placement": "none",
+   "fits": [
+    "live",
+    "show",
+    "visual",
+    "art"
+   ],
+   "access": "8291595",
+   "preview": true
+  },
   "FNS_MixSequencer": {
    "category": "Time & sequencing",
    "homepage": "https://seq.functionstore.tools",

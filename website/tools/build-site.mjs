@@ -991,6 +991,16 @@ if (fs.existsSync(SURFACE_ICONS)) {
   }
 }
 
+// The published release, fetched before the package pages: a free tool's
+// page links its artifact straight from it. Read from the PUBLISHED
+// manifest only, never the repo one, which can name a release that is
+// built but not yet uploaded.
+const live = await publishedRelease();
+const freeDownload = new Map((live && live.packages || [])
+  .filter((pkg) => pkg.access === 'free' && pkg.artifact && /^https:\/\//.test(pkg.artifact.url || ''))
+  .map((pkg) => [pkg.name, { url: pkg.artifact.url, version: pkg.version }]));
+if (!live) console.log('note: no published manifest reached -- tool pages carry no download link');
+
 for (const p of pages) {
   const dir = path.join(OUT, p.slug);
   fs.mkdirSync(dir, { recursive: true });
@@ -1071,6 +1081,14 @@ for (const p of pages) {
   const variantNote = variantsOf(p.name).length ? `<div class="plus-note">
     ${variantsOf(p.name).map((v) => `<p><strong>The ${esc(variantTier(v))} build</strong> ${esc(v.summary || 'adds more')}. It unlocks at the ${esc(variantTier(v))} tier or higher and installs in place of the ${esc(tierOf(p.name) || 'Base')} build; the picker lands whichever build your account holds.</p>`).join('\n    ')}
   </div>` : '';
+  // Free tools only (owner, 2026-09-29): a gated artifact sits behind the
+  // entitlement Worker, and a preview is not released to everyone. A tool
+  // dropped in alone brings its own registries (tested in a bare project).
+  const dl = !isPlus(p.name) && freeDownload.get(p.name);
+  const downloadNote = dl ? `<p class="dl-line">
+    <a class="btn btn-secondary" href="${esc(dl.url)}" download>Download ${esc(decodeURIComponent(dl.url.split('/').pop()))}</a>
+    <span class="hint">Version ${esc(dl.version)}. Drop it into any project and it works on its own. This copy does not update itself: to get fixes as they ship, install it through <a href="/get/">the picker</a>.</span>
+  </p>` : '';
   const trialNote = !isPlus(p.name) && pricing ? `<div class="plus-note">
     <p><strong>${esc(p.title)} is a family product with its own licence.</strong> ${esc(pricing.detail || pricing.summary)}</p>
     <p class="plus-note-actions">
@@ -1157,7 +1175,7 @@ ${sidebar(p.slug)}
   <h1>${esc(p.title)}</h1>
   ${p.description ? `<p class="lede">${esc(p.description)}</p>` : ''}
   <p class="badges">${badges.join(' ')}</p>
-  ${plusNote}${variantNote}${trialNote}
+  ${plusNote}${variantNote}${trialNote}${downloadNote}
   ${undocumented}
   ${video}
   ${onThisPage}
@@ -1488,8 +1506,6 @@ async function publishedRelease() {
     return null;
   }
 }
-
-const live = await publishedRelease();
 
 const landing = path.join(WEB, 'index.html');
 if (fs.existsSync(landing)) {
